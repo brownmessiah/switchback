@@ -48,6 +48,12 @@ describe('quoteTds (ADR-0016 Section 194-O)', () => {
     ).toThrow(/non-negative/i)
   })
 
+  it('throws when grossRupees is a non-integer (rupee precision required)', () => {
+    expect(() =>
+      quoteTds({ grossRupees: 1.5, vendorIsResident: true, vendorPan: 'ABCDE1234F' }),
+    ).toThrow(/integer/i)
+  })
+
   it('exports the TDS rate constant (1%)', () => {
     expect(TDS_RATE_PERCENT_SECTION_194O).toBe('1.00')
   })

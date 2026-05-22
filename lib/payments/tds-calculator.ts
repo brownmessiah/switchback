@@ -33,6 +33,9 @@ export interface QuoteTdsArgs {
 export function quoteTds(args: QuoteTdsArgs): TdsQuote {
   const { grossRupees, vendorIsResident, vendorPan } = args
 
+  if (!Number.isInteger(grossRupees)) {
+    throw new Error('grossRupees must be an integer (rupee precision)')
+  }
   if (grossRupees < 0) {
     throw new Error('grossRupees must be non-negative')
   }

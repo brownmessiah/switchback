@@ -32,6 +32,9 @@ export interface QuoteGstArgs {
 export function quoteGstOnCommission(args: QuoteGstArgs): GstQuote {
   const { commissionRupees } = args
 
+  if (!Number.isInteger(commissionRupees)) {
+    throw new Error('commissionRupees must be an integer (rupee precision)')
+  }
   if (commissionRupees < 0) {
     throw new Error('commissionRupees must be non-negative')
   }

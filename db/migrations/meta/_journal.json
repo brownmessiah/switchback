@@ -36,6 +36,13 @@
       "when": 1779477900000,
       "tag": "0004_lock_booking_snapshots",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1779478500000,
+      "tag": "0005_audit_immutable_tier_name_slug",
+      "breakpoints": true
     }
   ]
 }

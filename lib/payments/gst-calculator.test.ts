@@ -31,6 +31,10 @@ describe('quoteGstOnCommission (ADR-0016)', () => {
     expect(() => quoteGstOnCommission({ commissionRupees: -1 })).toThrow(/non-negative/i)
   })
 
+  it('throws when commissionRupees is a non-integer (rupee precision required)', () => {
+    expect(() => quoteGstOnCommission({ commissionRupees: 1.5 })).toThrow(/integer/i)
+  })
+
   it('exports the GST rate constant (18%)', () => {
     expect(GST_RATE_ON_COMMISSION).toBe('18.00')
   })

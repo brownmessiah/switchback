@@ -120,7 +120,7 @@ describe('refund_requests schema (ADRs 0004, 0005)', () => {
         .values({ ...baseRefundRequest(), reason })
         .returning({ reason: refundRequests.reason })
       expect(row?.reason).toBe(reason)
-      await db.execute(sql`TRUNCATE TABLE refund_requests CASCADE`)
+      await db.execute(sql`TRUNCATE TABLE payments, refund_requests`)
     }
   })
 
@@ -132,7 +132,7 @@ describe('refund_requests schema (ADRs 0004, 0005)', () => {
         .values({ ...baseRefundRequest(), destination })
         .returning({ destination: refundRequests.destination })
       expect(row?.destination).toBe(destination)
-      await db.execute(sql`TRUNCATE TABLE refund_requests CASCADE`)
+      await db.execute(sql`TRUNCATE TABLE payments, refund_requests`)
     }
   })
 
@@ -144,7 +144,7 @@ describe('refund_requests schema (ADRs 0004, 0005)', () => {
         .values({ ...baseRefundRequest(), state })
         .returning({ state: refundRequests.state })
       expect(row?.state).toBe(state)
-      await db.execute(sql`TRUNCATE TABLE refund_requests CASCADE`)
+      await db.execute(sql`TRUNCATE TABLE payments, refund_requests`)
     }
   })
 
@@ -193,6 +193,64 @@ describe('refund_requests schema (ADRs 0004, 0005)', () => {
     await expect(
       db.execute(sql`DELETE FROM bookings WHERE id = ${bookingId}`),
     ).rejects.toThrow()
+  })
+
+  describe('CHECK constraints on snapshot text fields', () => {
+    it('rejects an unknown cancellation_preset_snapshot value', async () => {
+      await expect(
+        db
+          .insert(refundRequests)
+          .values({ ...baseRefundRequest(), cancellationPresetSnapshot: 'flexxible' }),
+      ).rejects.toThrow()
+    })
+
+    it('rejects an unknown policy_window_basis_snapshot value', async () => {
+      await expect(
+        db
+          .insert(refundRequests)
+          .values({ ...baseRefundRequest(), policyWindowBasisSnapshot: 'almost_free' }),
+      ).rejects.toThrow()
+    })
+
+    it('accepts every legal policy_window_basis_snapshot value', async () => {
+      const bases = [
+        'free_window',
+        '50%_window',
+        'no_refund_window',
+        'vendor_cancelled',
+        'admin_override',
+        'outside_policy',
+      ] as const
+      for (const basis of bases) {
+        await db
+          .insert(refundRequests)
+          .values({ ...baseRefundRequest(), policyWindowBasisSnapshot: basis, state: 'rejected' })
+        await db.execute(sql`TRUNCATE TABLE payments, refund_requests`)
+      }
+    })
+  })
+
+  describe('one_active_refund_per_booking partial unique', () => {
+    it('rejects a second active refund_request on the same booking', async () => {
+      await db.insert(refundRequests).values({ ...baseRefundRequest(), state: 'pending' })
+      await expect(
+        db.insert(refundRequests).values({ ...baseRefundRequest(), state: 'approved' }),
+      ).rejects.toThrow()
+    })
+
+    it('allows a new request after the previous one is rejected', async () => {
+      await db.insert(refundRequests).values({ ...baseRefundRequest(), state: 'rejected' })
+      await db.insert(refundRequests).values({ ...baseRefundRequest(), state: 'pending' })
+      const rows = await db.select().from(refundRequests)
+      expect(rows).toHaveLength(2)
+    })
+
+    it('allows a new request after the previous one failed (Razorpay cashout error)', async () => {
+      await db.insert(refundRequests).values({ ...baseRefundRequest(), state: 'failed' })
+      await db.insert(refundRequests).values({ ...baseRefundRequest(), state: 'pending' })
+      const rows = await db.select().from(refundRequests)
+      expect(rows).toHaveLength(2)
+    })
   })
 
   describe('payments.refund_request_id consistency check', () => {

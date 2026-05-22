@@ -22,6 +22,13 @@
       "when": 1779477363364,
       "tag": "0002_complete_meltdown",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1779477459293,
+      "tag": "0003_lazy_bulldozer",
+      "breakpoints": true
     }
   ]
 }

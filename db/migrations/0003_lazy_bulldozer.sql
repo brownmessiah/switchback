@@ -1,0 +1,4 @@
+CREATE UNIQUE INDEX "one_active_refund_per_booking" ON "refund_requests" USING btree ("booking_id") WHERE state NOT IN ('rejected', 'failed');--> statement-breakpoint
+ALTER TABLE "refund_requests" ADD CONSTRAINT "valid_cancellation_preset_snapshot" CHECK ("refund_requests"."cancellation_preset_snapshot" IN ('flexible','moderate','strict','custom'));--> statement-breakpoint
+ALTER TABLE "refund_requests" ADD CONSTRAINT "valid_policy_window_basis_snapshot" CHECK ("refund_requests"."policy_window_basis_snapshot" IN
+          ('free_window','50%_window','no_refund_window','vendor_cancelled','admin_override','outside_policy'));

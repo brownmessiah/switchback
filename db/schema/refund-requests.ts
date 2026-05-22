@@ -7,6 +7,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core'
 
@@ -92,6 +93,26 @@ export const refundRequests = pgTable(
   },
   (t) => [
     check('non_negative_refund_amount', sql`${t.amount} >= 0`),
+    // Snapshot enums stored as text for forward compat; CHECK enforces the
+    // closed set of legal values so a typo cannot silently corrupt the
+    // audit trail that backs a tax-authority dispute.
+    check(
+      'valid_cancellation_preset_snapshot',
+      sql`${t.cancellationPresetSnapshot} IN ('flexible','moderate','strict','custom')`,
+    ),
+    check(
+      'valid_policy_window_basis_snapshot',
+      sql`${t.policyWindowBasisSnapshot} IN
+          ('free_window','50%_window','no_refund_window','vendor_cancelled','admin_override','outside_policy')`,
+    ),
+    // Block the double-refund race. Two concurrent inside-policy
+    // cancellations on the same Booking cannot both INSERT an active
+    // refund_request — second INSERT raises on this partial unique.
+    // rejected/failed rows are excluded so a Customer can retry after a
+    // Razorpay failure or admin denial.
+    uniqueIndex('one_active_refund_per_booking')
+      .on(t.bookingId)
+      .where(sql`state NOT IN ('rejected', 'failed')`),
     index('refund_requests_by_booking').on(t.bookingId),
     index('refund_requests_by_state').on(t.state),
     index('refund_requests_by_time').on(t.createdAt),

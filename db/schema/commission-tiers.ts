@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { check, numeric, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { check, index, numeric, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 import { timestamps } from './_common'
 
@@ -24,8 +24,11 @@ export const commissionTiers = pgTable(
     startAt: timestamp('start_at', { withTimezone: true }).notNull(),
     endAt: timestamp('end_at', { withTimezone: true }).notNull(),
     appliesToCategories: text('applies_to_categories').array().default([]).notNull(),
+    // Vendor IDs are user_ids (text from better-auth); stay text[]
     appliesToVendorIds: text('applies_to_vendor_ids').array().default([]).notNull(),
-    appliesToExperienceIds: text('applies_to_experience_ids').array().default([]).notNull(),
+    // Experience IDs are uuid — use uuid[] so a malformed scope filter
+    // is rejected at insert time, not silently matched against nothing.
+    appliesToExperienceIds: uuid('applies_to_experience_ids').array().default([]).notNull(),
     rateOverride: numeric('rate_override', { precision: 5, scale: 2 }).notNull(),
     reason: text('reason').notNull(),
     createdByAdminUserId: text('created_by_admin_user_id').notNull(),
@@ -37,6 +40,9 @@ export const commissionTiers = pgTable(
       'commission_rate_in_range',
       sql`${t.rateOverride} >= 0 AND ${t.rateOverride} <= 100`,
     ),
+    // Active-tier lookup on every Booking-create. Composite index covers
+    // both bounds of the BETWEEN-style query Postgres will use.
+    index('commission_tiers_active_window').on(t.startAt, t.endAt),
   ],
 )
 

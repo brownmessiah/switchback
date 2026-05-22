@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import {
   boolean,
   check,
+  index,
   integer,
   numeric,
   pgEnum,
@@ -97,6 +98,21 @@ export const bookings = pgTable(
     tdsAmountSnapshot: numeric('tds_amount_snapshot', { precision: 14, scale: 2 })
       .default('0.00')
       .notNull(),
+    // ADR-0016 — GST rate on Outvers commission. Snapshotted so historical
+    // payout math doesn't drift if the IGST rate changes (currently 18%).
+    gstRateOnCommissionSnapshot: numeric('gst_rate_on_commission_snapshot', {
+      precision: 5,
+      scale: 2,
+    })
+      .default('18.00')
+      .notNull(),
+    // ADR-0016 — TDS under Section 194-O only applies to resident-Indian
+    // Vendors. PAN snapshot is required for quarterly Form 26Q (deductee
+    // identification). Nullable to allow non-resident Vendor edge case.
+    vendorPanSnapshot: text('vendor_pan_snapshot'),
+    vendorIsResidentSnapshot: boolean('vendor_is_resident_snapshot')
+      .default(true)
+      .notNull(),
 
     // Optional ref — set when the Customer chose to book from a TripGroup itinerary
     tripGroupId: uuid('trip_group_id'),
@@ -119,7 +135,15 @@ export const bookings = pgTable(
     check('non_negative_gross', sql`${t.grossTotalSnapshot} >= 0`),
     check('non_negative_price_per_participant', sql`${t.pricePerParticipantSnapshot} >= 0`),
     check('commission_rate_in_range', sql`${t.commissionRateSnapshot} >= 0 AND ${t.commissionRateSnapshot} <= 100`),
+    check(
+      'gst_rate_in_range',
+      sql`${t.gstRateOnCommissionSnapshot} >= 0 AND ${t.gstRateOnCommissionSnapshot} <= 100`,
+    ),
     check('non_negative_tds', sql`${t.tdsAmountSnapshot} >= 0`),
+    index('bookings_by_customer').on(t.customerUserId),
+    index('bookings_by_experience').on(t.experienceId),
+    index('bookings_by_slot').on(t.slotId),
+    index('bookings_by_state').on(t.state),
   ],
 )
 

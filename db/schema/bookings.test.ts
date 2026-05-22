@@ -177,6 +177,47 @@ describe('money-path schema: bookings + payments + commission/pricing tiers (ADR
       ).rejects.toThrow()
     })
 
+    it('defaults gst_rate_on_commission_snapshot to 18.00 (ADR-0016)', async () => {
+      await db.insert(bookings).values(baseBooking())
+      const [row] = await db.select().from(bookings)
+      expect(row?.gstRateOnCommissionSnapshot).toBe('18.00')
+    })
+
+    it('rejects gst_rate_on_commission_snapshot outside 0..100', async () => {
+      await expect(
+        db
+          .insert(bookings)
+          .values({ ...baseBooking(), gstRateOnCommissionSnapshot: '120.00' }),
+      ).rejects.toThrow()
+      await expect(
+        db
+          .insert(bookings)
+          .values({ ...baseBooking(), gstRateOnCommissionSnapshot: '-1.00' }),
+      ).rejects.toThrow()
+    })
+
+    it('persists vendor_pan_snapshot and defaults vendor_is_resident_snapshot to true (ADR-0016)', async () => {
+      await db.insert(bookings).values({
+        ...baseBooking(),
+        vendorPanSnapshot: 'ABCDE1234F',
+      })
+      const [row] = await db.select().from(bookings)
+      expect(row?.vendorPanSnapshot).toBe('ABCDE1234F')
+      expect(row?.vendorIsResidentSnapshot).toBe(true)
+    })
+
+    it('accepts a non-resident Vendor booking with NULL PAN', async () => {
+      await db.insert(bookings).values({
+        ...baseBooking(),
+        vendorPanSnapshot: null,
+        vendorIsResidentSnapshot: false,
+        tdsAmountSnapshot: '0.00', // Section 194-O TDS not applicable
+      })
+      const [row] = await db.select().from(bookings)
+      expect(row?.vendorIsResidentSnapshot).toBe(false)
+      expect(row?.vendorPanSnapshot).toBeNull()
+    })
+
     it('defaults tds_amount_snapshot to 0.00 when not provided', async () => {
       await db.insert(bookings).values({
         customerUserId: 'u_c',
@@ -300,6 +341,41 @@ describe('money-path schema: bookings + payments + commission/pricing tiers (ADR
       ).rejects.toThrow()
     })
 
+    it('enforces razorpay_order_id partial-unique (skips NULLs, blocks duplicates)', async () => {
+      // Two NULL rows allowed (M1 mostly captures via payment_id, order_id often NULL).
+      await db.insert(payments).values([
+        {
+          bookingId,
+          razorpayPaymentId: 'pay_null_1',
+          amount: '500',
+          captureTrigger: 'booking_create',
+        },
+        {
+          bookingId,
+          razorpayPaymentId: 'pay_null_2',
+          amount: '500',
+          captureTrigger: 'auto_capture_t_minus_24h',
+        },
+      ])
+      // Same non-null order_id is rejected.
+      await db.insert(payments).values({
+        bookingId,
+        razorpayPaymentId: 'pay_with_order',
+        razorpayOrderId: 'order_xyz',
+        amount: '500',
+        captureTrigger: 'booking_create',
+      })
+      await expect(
+        db.insert(payments).values({
+          bookingId,
+          razorpayPaymentId: 'pay_with_order_dup',
+          razorpayOrderId: 'order_xyz',
+          amount: '500',
+          captureTrigger: 'auto_capture_t_minus_24h',
+        }),
+      ).rejects.toThrow()
+    })
+
     it('restricts deletion of a Booking that has Payments', async () => {
       await db.insert(payments).values({
         bookingId,
@@ -369,6 +445,24 @@ describe('money-path schema: bookings + payments + commission/pricing tiers (ADR
       const [row] = await db.select().from(commissionTiers)
       expect(row?.appliesToCategories).toEqual(['rafting', 'paragliding'])
       expect(row?.appliesToVendorIds).toEqual(['u_v'])
+    })
+
+    it('rejects malformed uuid values in applies_to_experience_ids (uuid[] not text[])', async () => {
+      await expect(
+        db.insert(commissionTiers).values({
+          name: 'bad',
+          startAt: new Date('2026-01-01T00:00:00Z'),
+          endAt: new Date('2026-12-31T23:59:59Z'),
+          appliesToCategories: [],
+          appliesToVendorIds: [],
+          // Runtime rejection — Postgres uuid[] rejects malformed values
+          // at INSERT time even though TS accepts string[].
+          appliesToExperienceIds: ['not-a-uuid'],
+          rateOverride: '20',
+          reason: 'bad',
+          createdByAdminUserId: 'u_admin',
+        }),
+      ).rejects.toThrow()
     })
   })
 

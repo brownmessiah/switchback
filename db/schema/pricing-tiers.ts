@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { check, numeric, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { check, index, numeric, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 import { timestamps } from './_common'
 
@@ -24,7 +24,8 @@ export const pricingTiers = pgTable(
     endAt: timestamp('end_at', { withTimezone: true }).notNull(),
     appliesToCategories: text('applies_to_categories').array().default([]).notNull(),
     appliesToVendorIds: text('applies_to_vendor_ids').array().default([]).notNull(),
-    appliesToExperienceIds: text('applies_to_experience_ids').array().default([]).notNull(),
+    // Experience IDs are uuid — match the type to reject malformed scope filters.
+    appliesToExperienceIds: uuid('applies_to_experience_ids').array().default([]).notNull(),
     pricePerPersonOverride: numeric('price_per_person_override', { precision: 12, scale: 2 }).notNull(),
     reason: text('reason').notNull(),
     createdByAdminUserId: text('created_by_admin_user_id').notNull(),
@@ -33,6 +34,7 @@ export const pricingTiers = pgTable(
   (t) => [
     check('pricing_tier_time_ordered', sql`${t.endAt} > ${t.startAt}`),
     check('non_negative_price_override', sql`${t.pricePerPersonOverride} >= 0`),
+    index('pricing_tiers_active_window').on(t.startAt, t.endAt),
   ],
 )
 

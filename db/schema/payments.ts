@@ -1,12 +1,14 @@
 import { sql } from 'drizzle-orm'
 import {
   check,
+  index,
   jsonb,
   numeric,
   pgEnum,
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core'
 
@@ -65,6 +67,13 @@ export const payments = pgTable(
       sql`(${t.captureTrigger} = 'refund_reverse' AND ${t.amount} < 0) OR
           (${t.captureTrigger} <> 'refund_reverse' AND ${t.amount} > 0)`,
     ),
+    // Webhook idempotency floor for `order.paid` events — Razorpay can
+    // fire these before individual payment IDs are assigned. Partial
+    // unique allows NULL values for capture rows that pre-date the order.
+    uniqueIndex('payments_razorpay_order_id_unique')
+      .on(t.razorpayOrderId)
+      .where(sql`${t.razorpayOrderId} IS NOT NULL`),
+    index('payments_by_booking').on(t.bookingId),
   ],
 )
 

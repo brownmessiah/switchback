@@ -13,6 +13,8 @@ export default defineConfig({
       'db/**/*.test.ts',
       'lib/**/*.test.ts',
       'lib/**/*.test.tsx',
+      'app/**/*.test.ts',
+      'app/**/*.test.tsx',
     ],
     coverage: {
       provider: 'v8',

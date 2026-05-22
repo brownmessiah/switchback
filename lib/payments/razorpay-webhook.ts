@@ -179,13 +179,25 @@ export async function processRazorpayWebhook(
       await recordRefundProcessed({ db, refund, event })
     }
     return { status: 200, body: { ok: true } }
-  } catch (err) {
-    // Do not include the internal error in the response — Razorpay logs
-    // get noisy and the description could leak. Operators reach for the
-    // structured logs.
+  } catch {
+    // Clear the dedup key so Razorpay's retry policy (24 deliveries over
+    // ~24h) can land the payment on a transient DB / network blip. Without
+    // this, the next retry would see the key, return 200 deduped, and the
+    // payment row would never get written.
+    try {
+      await redis.del(dedupKey)
+    } catch {
+      // If Redis itself is the failure mode, swallowing the secondary
+      // error is fine — the primary 500 still flows back and the missing
+      // dedup key just means future retries re-enter the DB path.
+    }
+    // Do NOT echo the internal error message back to Razorpay. Postgres /
+    // Drizzle messages typically include the offending constraint or
+    // table name, which would leak schema details into Razorpay's
+    // dashboard logs. Operators read the application's own server logs.
     return {
       status: 500,
-      body: { error: 'internal error processing webhook', message: err instanceof Error ? err.message : 'unknown' },
+      body: { error: 'internal error processing webhook' },
     }
   }
 }

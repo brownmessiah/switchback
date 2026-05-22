@@ -10,7 +10,7 @@ import { experiences } from '@/db/schema/experiences'
 import { payments } from '@/db/schema/payments'
 import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
-import { _resetRedisCacheForTests } from '@/lib/redis'
+import { _resetRedisCacheForTests, getRedis } from '@/lib/redis'
 import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 
 import { createBooking } from './booking-create'
@@ -570,6 +570,30 @@ describe('processRazorpayWebhook (ADR-0001)', () => {
       })
       const result = await call({ body })
       expect(result.status).toBe(500)
+      // Internal error message must NOT echo to the response — DB
+      // constraint messages would leak schema details into Razorpay's
+      // dashboard logs.
+      expect(result.body).toEqual({ error: 'internal error processing webhook' })
+    })
+
+    it('clears the dedup key on DB failure so Razorpay retries can land the row', async () => {
+      const body = buildPaymentCapturedBody({
+        eventId: 'evt_retry_after_500',
+        paymentId: 'pay_retry_after_500',
+        orderId: 'order_retry_after_500',
+        bookingId: 'not-a-real-uuid', // will fail FK
+        amountPaise: 500_000,
+      })
+      const first = await call({ body })
+      expect(first.status).toBe(500)
+
+      // Without the key-cleanup fix, a retry would short-circuit via Redis
+      // dedup and return 200 deduped — leaving the booking forever without
+      // a payment row. The fix clears the key on 500 so the retry path
+      // re-enters the DB transaction.
+      const redis = getRedis()
+      const stillCached = await redis.get('razorpay-event:evt_retry_after_500')
+      expect(stillCached).toBeNull()
     })
 
     it('returns 400 when payment.captured payload has no booking_id in notes', async () => {

@@ -111,6 +111,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^4.1.7
         version: 4.1.7(vitest@4.1.7)
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
       dotenv-cli:
         specifier: ^11.0.0
         version: 11.0.0

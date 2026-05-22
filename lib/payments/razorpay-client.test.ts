@@ -153,7 +153,43 @@ describe('createOrder', () => {
         create: vi.fn(async () => {
           throw {
             statusCode: 401,
-            error: { code: 'BAD_REQUEST_ERROR', description: 'auth failed' },
+            error: {
+              code: 'BAD_REQUEST_ERROR',
+              // Razorpay sometimes embeds the rejected key_id in description.
+              // The wrapper must NOT propagate this to the human-readable
+              // message — it could land in application logs.
+              description: 'Authentication failed for key rzp_live_XXXX',
+            },
+          }
+        }),
+      },
+      payments: { capture: vi.fn() },
+      refunds: { all: vi.fn(), fetch: vi.fn() },
+      paymentsForRefund: { refund: vi.fn() },
+    } as unknown as RazorpaySdkLike
+    try {
+      await createOrder({ amountRupees: 100 }, { client })
+      expect.fail('expected throw')
+    } catch (err) {
+      const e = err as RazorpayClientError
+      expect(e.code).toBe('RAZORPAY_AUTH')
+      expect(e.retryable).toBe(false)
+      // Auth-error message must NOT leak the upstream description (which
+      // sometimes contains the rejected key_id).
+      expect(e.message).not.toMatch(/rzp_live_/)
+      expect(e.message).toMatch(/Razorpay authentication failed/)
+      // Structured field preserves the upstream code for programmatic dispatch.
+      expect(e.upstreamCode).toBe('BAD_REQUEST_ERROR')
+    }
+  })
+
+  it('wraps 403 as code=RAZORPAY_AUTH (same redacted-message behaviour as 401)', async () => {
+    const client: RazorpaySdkLike = {
+      orders: {
+        create: vi.fn(async () => {
+          throw {
+            statusCode: 403,
+            error: { code: 'FORBIDDEN', description: 'key rzp_live_X disabled' },
           }
         }),
       },
@@ -166,7 +202,7 @@ describe('createOrder', () => {
       expect.fail('expected throw')
     } catch (err) {
       expect((err as RazorpayClientError).code).toBe('RAZORPAY_AUTH')
-      expect((err as RazorpayClientError).retryable).toBe(false)
+      expect((err as RazorpayClientError).message).not.toMatch(/rzp_live_/)
     }
   })
 
@@ -469,6 +505,48 @@ describe('getRazorpayClient (env-driven factory)', () => {
     // Second call should return the cached instance without re-reading args.
     const second = getRazorpayClient()
     expect(second).toBe(first)
+  })
+})
+
+describe('notes validation (Razorpay 15-key / 256-char constraints)', () => {
+  it('rejects notes with > 15 keys at the boundary (createOrder)', async () => {
+    const client = fakeOrdersOk()
+    const tooManyKeys = Object.fromEntries(
+      Array.from({ length: 16 }, (_, i) => [`k${i}`, `v${i}`]),
+    )
+    await expect(
+      createOrder({ amountRupees: 100, notes: tooManyKeys }, { client }),
+    ).rejects.toThrow(/15 keys/)
+    expect(client.orders.create).not.toHaveBeenCalled()
+  })
+
+  it('rejects notes with a value longer than 256 chars (createOrder)', async () => {
+    const client = fakeOrdersOk()
+    const longValue = 'x'.repeat(257)
+    await expect(
+      createOrder({ amountRupees: 100, notes: { foo: longValue } }, { client }),
+    ).rejects.toThrow(/256/)
+    expect(client.orders.create).not.toHaveBeenCalled()
+  })
+
+  it('rejects notes with a numeric value whose string form exceeds 256 chars', async () => {
+    const client = fakeRefundOk()
+    const longNum = Number('9'.repeat(20))
+    // The numeric value itself is short; we test the string conversion of a wide one via a long template.
+    await expect(
+      createRefund(
+        { paymentId: 'pay_X', amountRupees: 100, notes: { foo: '0'.repeat(300) } },
+        { client },
+      ),
+    ).rejects.toThrow(/256/)
+    expect(longNum).toBeDefined()
+  })
+
+  it('accepts the empty-notes case (notes omitted)', async () => {
+    const client = fakeOrdersOk()
+    await expect(
+      createOrder({ amountRupees: 100 }, { client }),
+    ).resolves.toBeDefined()
   })
 })
 

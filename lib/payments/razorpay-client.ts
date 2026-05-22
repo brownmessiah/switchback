@@ -159,6 +159,14 @@ interface GetClientOpts {
  * Falls back to `env.RAZORPAY_KEY_ID` / `env.RAZORPAY_KEY_SECRET` when
  * no explicit creds are passed. Tests pass `{ keyId, keySecret }` to
  * exercise the init path without depending on env-module load order.
+ *
+ * Singleton caveat: the client is cached for the lifetime of the Node
+ * process. Credentials rotated via secret manager only take effect on
+ * the next cold start (Vercel serverless: a fresh container; long-lived
+ * Node: a process restart). Authentication failures from upstream are
+ * surfaced as `RAZORPAY_AUTH` (non-retryable) so the caller / operator
+ * gets clear signal to redeploy. If hot rotation becomes a requirement,
+ * invalidate the cache on `RAZORPAY_AUTH` here.
  */
 export function getRazorpayClient(opts: GetClientOpts = {}): RazorpaySdkLike {
   if (cachedClient) return cachedClient
@@ -175,13 +183,27 @@ export function getRazorpayClient(opts: GetClientOpts = {}): RazorpaySdkLike {
   return cachedClient
 }
 
-/** Test-only — wipe the cached client. */
+function assertNotProductionForTestHelpers(): void {
+  if (env.NODE_ENV === 'production') {
+    throw new Error(
+      'Razorpay test helpers (_resetRazorpayClientForTests / _setRazorpayClientForTests) must not be called in production',
+    )
+  }
+}
+
+/** Test-only — wipe the cached client. Throws in production. */
 export function _resetRazorpayClientForTests(): void {
+  assertNotProductionForTestHelpers()
   cachedClient = null
 }
 
-/** Test-only — prime the cache with a stub so callers that omit `{ client }` resolve to it. */
+/**
+ * Test-only — prime the cache with a stub so callers that omit `{ client }`
+ * resolve to it. Throws in production to prevent a malicious or buggy
+ * import from swapping the real SDK at runtime.
+ */
 export function _setRazorpayClientForTests(client: RazorpaySdkLike): void {
+  assertNotProductionForTestHelpers()
   cachedClient = client
 }
 
@@ -198,6 +220,33 @@ function assertRupeeAmount(amountRupees: number, allowZero: boolean): void {
   }
   if (!allowZero && amountRupees === 0) {
     throw new Error('amountRupees must be positive')
+  }
+}
+
+const NOTES_MAX_KEYS = 15
+const NOTES_MAX_VALUE_LENGTH = 256
+
+/**
+ * Razorpay enforces 15 keys / 256-char values on the notes field. If
+ * caller-supplied notes ever embed customer-controlled strings, we want
+ * to reject them at the boundary rather than let them poison Razorpay's
+ * own audit trail or trigger an upstream 400 mid-transaction.
+ */
+function assertNotes(notes: Record<string, string | number> | undefined): void {
+  if (notes === undefined) return
+  const entries = Object.entries(notes)
+  if (entries.length > NOTES_MAX_KEYS) {
+    throw new Error(
+      `notes accepts at most ${NOTES_MAX_KEYS} keys (Razorpay constraint)`,
+    )
+  }
+  for (const [key, value] of entries) {
+    const str = String(value)
+    if (str.length > NOTES_MAX_VALUE_LENGTH) {
+      throw new Error(
+        `notes value for "${key}" exceeds ${NOTES_MAX_VALUE_LENGTH} chars (Razorpay constraint)`,
+      )
+    }
   }
 }
 
@@ -243,10 +292,15 @@ function normalizeError(err: unknown): RazorpayClientError {
       )
     }
     if (statusCode === 401 || statusCode === 403) {
+      // Intentionally omit the upstream `description` from the human-readable
+      // message — Razorpay's 401 descriptions sometimes include the rejected
+      // key_id, and this message flows through to application logs / API
+      // error envelopes. The `upstreamCode` (structured field) is retained
+      // for programmatic dispatch.
       return new RazorpayClientError(
         'RAZORPAY_AUTH',
         false,
-        `Razorpay auth failed (${statusCode}): ${description ?? upstreamCode ?? 'unauthorised'}`,
+        `Razorpay authentication failed (${statusCode})`,
         statusCode,
         upstreamCode,
       )
@@ -280,6 +334,7 @@ export async function createOrder(
   opts: ClientOpts = {},
 ): Promise<CreateOrderResult> {
   assertRupeeAmount(args.amountRupees, /* allowZero */ false)
+  assertNotes(args.notes)
 
   const client = opts.client ?? getRazorpayClient()
   const amountPaise = rupeesToPaise(args.amountRupees)
@@ -337,6 +392,7 @@ export async function createRefund(
     throw new Error('paymentId is required')
   }
   assertRupeeAmount(args.amountRupees, /* allowZero */ false)
+  assertNotes(args.notes)
 
   const client = opts.client ?? getRazorpayClient()
   const amountPaise = rupeesToPaise(args.amountRupees)

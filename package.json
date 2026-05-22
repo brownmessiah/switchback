@@ -10,19 +10,51 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.65",
+    "@aws-sdk/client-s3": "^3.1052.0",
+    "@react-email/components": "^1.0.12",
+    "@sentry/nextjs": "^10.53.1",
+    "@upstash/redis": "^1.38.0",
+    "ai": "^6.0.190",
+    "better-auth": "^1.6.11",
+    "drizzle-orm": "^0.45.2",
+    "meilisearch": "^0.58.0",
     "next": "16.2.6",
+    "next-intl": "^4.12.0",
+    "openai": "^6.39.0",
+    "postgres": "^3.4.9",
+    "posthog-js": "^1.376.0",
+    "posthog-node": "^5.35.1",
+    "pusher": "^5.3.3",
+    "pusher-js": "^8.5.0",
+    "razorpay": "^2.9.6",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "react-email": "^6.3.1",
+    "resend": "^6.12.3",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.4.5",
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.0.2",
+    "@vitest/coverage-v8": "^4.1.7",
+    "dotenv-cli": "^11.0.0",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "jsdom": "^29.1.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4.22.3",
+    "typescript": "^5",
+    "vitest": "^4.1.7"
   },
   "packageManager": "pnpm@10.33.0"
 }

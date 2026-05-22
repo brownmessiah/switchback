@@ -32,6 +32,9 @@ const schema = z.object({
   MEILISEARCH_HOST: z.url().optional(),
   MEILISEARCH_KEY: z.string().optional(),
 
+  // ===== Cron auth (M2) =====
+  CRON_SECRET: z.string().optional(),
+
   // ===== Real-time (M3) =====
   PUSHER_APP_ID: z.string().optional(),
   PUSHER_KEY: z.string().optional(),

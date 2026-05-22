@@ -15,6 +15,7 @@ export * from './region-closures'
 export * from './slug-redirects'
 
 export * from './bookings'
+export * from './refund-requests'
 export * from './payments'
 export * from './commission-tiers'
 export * from './pricing-tiers'

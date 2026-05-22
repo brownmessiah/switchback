@@ -9,6 +9,7 @@ import { commissionTiers } from './commission-tiers'
 import { experiences } from './experiences'
 import { payments } from './payments'
 import { pricingTiers } from './pricing-tiers'
+import { refundRequests } from './refund-requests'
 import { users } from './users'
 import { vendorProfiles } from './vendor-profiles'
 
@@ -68,7 +69,9 @@ describe('money-path schema: bookings + payments + commission/pricing tiers (ADR
   })
 
   beforeEach(async () => {
-    await db.execute(sql`TRUNCATE TABLE payments, bookings, commission_tiers, pricing_tiers`)
+    await db.execute(
+      sql`TRUNCATE TABLE payments, refund_requests, bookings, commission_tiers, pricing_tiers`,
+    )
   })
 
   function baseBooking(): typeof bookings.$inferInsert {
@@ -284,12 +287,29 @@ describe('money-path schema: bookings + payments + commission/pricing tiers (ADR
     })
 
     it('accepts refund_reverse only with a negative amount', async () => {
+      // Refund-reverse payments require a refund_requests row (ADR-0004/0005);
+      // seed one so the CHECK is satisfied.
+      const [refundRequest] = await db
+        .insert(refundRequests)
+        .values({
+          bookingId,
+          requestedByUserId: 'u_c',
+          reason: 'inside_policy_cancellation',
+          destination: 'refund_balance',
+          amount: '500.00',
+          cancellationPresetSnapshot: 'flexible',
+          policyWindowBasisSnapshot: '50%_window',
+          state: 'approved',
+        })
+        .returning({ id: refundRequests.id })
+
       await expect(
         db.insert(payments).values({
           bookingId,
           razorpayPaymentId: 'pay_refund_positive',
           amount: '500.00',
           captureTrigger: 'refund_reverse',
+          refundRequestId: refundRequest!.id,
         }),
       ).rejects.toThrow()
 
@@ -298,6 +318,7 @@ describe('money-path schema: bookings + payments + commission/pricing tiers (ADR
         razorpayPaymentId: 'pay_refund_negative',
         amount: '-500.00',
         captureTrigger: 'refund_reverse',
+        refundRequestId: refundRequest!.id,
       })
       const rows = await db.select().from(payments)
       expect(rows).toHaveLength(1)

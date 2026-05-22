@@ -14,6 +14,7 @@ import {
 
 import { timestamps } from './_common'
 import { bookings } from './bookings'
+import { refundRequests } from './refund-requests'
 
 /**
  * Capture trigger per ADR-0001. Each Razorpay capture writes a row
@@ -58,6 +59,13 @@ export const payments = pgTable(
       .default(sql`now()`)
       .notNull(),
     rawWebhookPayload: jsonb('raw_webhook_payload'),
+    // Refund-cause traceability per ADR-0004 / ADR-0005. Every refund_reverse
+    // capture must point back to the refund_requests row that authorised it
+    // (enforced by the refund_reverse_requires_request CHECK below). Non-refund
+    // captures leave this NULL.
+    refundRequestId: uuid('refund_request_id').references(() => refundRequests.id, {
+      onDelete: 'restrict',
+    }),
     ...timestamps,
   },
   (t) => [
@@ -66,6 +74,12 @@ export const payments = pgTable(
       'amount_sign_matches_trigger',
       sql`(${t.captureTrigger} = 'refund_reverse' AND ${t.amount} < 0) OR
           (${t.captureTrigger} <> 'refund_reverse' AND ${t.amount} > 0)`,
+    ),
+    // Refund-cause traceability: refund_reverse rows must point at a
+    // refund_requests row; non-refund rows leave refund_request_id NULL.
+    check(
+      'refund_reverse_requires_request',
+      sql`(${t.captureTrigger} <> 'refund_reverse') OR (${t.refundRequestId} IS NOT NULL)`,
     ),
     // Webhook idempotency floor for `order.paid` events — Razorpay can
     // fire these before individual payment IDs are assigned. Partial

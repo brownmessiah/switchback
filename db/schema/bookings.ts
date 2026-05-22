@@ -1,0 +1,127 @@
+import { sql } from 'drizzle-orm'
+import {
+  boolean,
+  check,
+  integer,
+  numeric,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core'
+
+import { timestamps } from './_common'
+import { availabilitySlots } from './availability-slots'
+import { experiences } from './experiences'
+import { users } from './users'
+
+/**
+ * Booking state machine per ADR-0003.
+ *
+ *   confirmed                  (after payment success, before start_at)
+ *     └─→ awaiting_completion  (at scheduled end_at)
+ *           ├─→ completed      (Vendor mark_complete OR end_at + 24h auto)
+ *           └─→ disputed       (Customer raises before completed)
+ *                 ├─→ completed
+ *                 └─→ cancelled_post_experience
+ *
+ * Plus inside-policy cancellations move to cancelled_by_customer and
+ * Vendor-initiated cancellations move to cancelled_by_vendor (ADR-0005).
+ */
+export const bookingStateEnum = pgEnum('booking_state', [
+  'confirmed',
+  'awaiting_completion',
+  'completed',
+  'disputed',
+  'cancelled_by_customer',
+  'cancelled_by_vendor',
+  'cancelled_post_experience',
+])
+
+/**
+ * Payment-mode enum on Bookings. Mirrors the Experience's
+ * payment_modes_allowed enum, but on the row itself. RNPL is stored
+ * here but rejected by the Server Action layer per ADR-0002.
+ */
+export const paymentModeBookingEnum = pgEnum('payment_mode_booking', [
+  'full_upfront',
+  'partial_pay',
+  'reserve_now_pay_later',
+])
+
+/**
+ * Money-path central table. Every row carries SNAPSHOTS — commission
+ * rate, basis, cancellation preset, per-participant price, pricing
+ * basis, TDS amount — all locked at create. The Booking-create
+ * Server Action will write all of these in a single db.transaction.
+ *
+ * Snapshot rule (ADR-0008 / ADR-0011 / ADR-0016): once the row exists,
+ * the snapshot columns MUST NOT be updated. Enforcement in M2 will be
+ * an UPDATE trigger that raises an exception; for M1 we rely on the
+ * Server Action layer and code review.
+ *
+ * FK semantics:
+ *  - customer_user_id, experience_id, slot_id → ON DELETE RESTRICT.
+ *    Live Bookings block deletion of their dependencies; admin must
+ *    archive instead.
+ *  - trip_group_id is nullable; Trip Groups never own Bookings (ADR-0009).
+ */
+export const bookings = pgTable(
+  'bookings',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    customerUserId: text('customer_user_id')
+      .references(() => users.id, { onDelete: 'restrict' })
+      .notNull(),
+    experienceId: uuid('experience_id')
+      .references(() => experiences.id, { onDelete: 'restrict' })
+      .notNull(),
+    slotId: uuid('slot_id')
+      .references(() => availabilitySlots.id, { onDelete: 'restrict' })
+      .notNull(),
+    participantCount: integer('participant_count').notNull(),
+    state: bookingStateEnum('state').default('confirmed').notNull(),
+    paymentMode: paymentModeBookingEnum('payment_mode').notNull(),
+
+    // ===== Snapshots (LOCKED at create; never recomputed) =====
+    grossTotalSnapshot: numeric('gross_total_snapshot', { precision: 14, scale: 2 }).notNull(),
+    pricePerParticipantSnapshot: numeric('price_per_participant_snapshot', {
+      precision: 12,
+      scale: 2,
+    }).notNull(),
+    pricingBasisSnapshot: text('pricing_basis_snapshot').notNull(),
+    commissionRateSnapshot: numeric('commission_rate_snapshot', { precision: 5, scale: 2 }).notNull(),
+    commissionBasisSnapshot: text('commission_basis_snapshot').notNull(),
+    cancellationPresetSnapshot: text('cancellation_preset_snapshot').notNull(),
+    tdsAmountSnapshot: numeric('tds_amount_snapshot', { precision: 14, scale: 2 })
+      .default('0.00')
+      .notNull(),
+
+    // Optional ref — set when the Customer chose to book from a TripGroup itinerary
+    tripGroupId: uuid('trip_group_id'),
+
+    // Lifecycle timestamps (ADR-0003)
+    confirmedAt: timestamp('confirmed_at', { withTimezone: true })
+      .default(sql`now()`)
+      .notNull(),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+    // True if Completion was triggered by the end_at + 24h auto-transition
+    // (per ADR-0003 — used for Vendor-attestation-laziness SLA tracking).
+    autoCompleted: boolean('auto_completed').default(false).notNull(),
+    cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
+    cancellationReason: text('cancellation_reason'),
+
+    ...timestamps,
+  },
+  (t) => [
+    check('positive_participants', sql`${t.participantCount} > 0`),
+    check('non_negative_gross', sql`${t.grossTotalSnapshot} >= 0`),
+    check('non_negative_price_per_participant', sql`${t.pricePerParticipantSnapshot} >= 0`),
+    check('commission_rate_in_range', sql`${t.commissionRateSnapshot} >= 0 AND ${t.commissionRateSnapshot} <= 100`),
+    check('non_negative_tds', sql`${t.tdsAmountSnapshot} >= 0`),
+  ],
+)
+
+export type Booking = typeof bookings.$inferSelect
+export type NewBooking = typeof bookings.$inferInsert

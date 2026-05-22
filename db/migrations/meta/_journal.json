@@ -43,6 +43,13 @@
       "when": 1779478500000,
       "tag": "0005_audit_immutable_tier_name_slug",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1779479200000,
+      "tag": "0006_payments_one_autocapture_per_booking",
+      "breakpoints": true
     }
   ]
 }

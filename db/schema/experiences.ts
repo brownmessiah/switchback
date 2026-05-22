@@ -1,0 +1,127 @@
+import { sql } from 'drizzle-orm'
+import {
+  boolean,
+  check,
+  numeric,
+  pgEnum,
+  pgTable,
+  text,
+  uuid,
+} from 'drizzle-orm/pg-core'
+
+import { timestamps } from './_common'
+import { vendorProfiles } from './vendor-profiles'
+
+/**
+ * Cancellation policy presets per ADR-0005. `custom` requires admin
+ * approval at Experience-creation time; the plain-language text lives
+ * in `cancellation_policy_text` only for the `custom` case (presets
+ * source their text from a constant in lib/payments/refund-policy.ts).
+ */
+export const cancellationPresetEnum = pgEnum('cancellation_preset', [
+  'flexible',
+  'moderate',
+  'strict',
+  'custom',
+])
+
+/**
+ * Experience lifecycle per ADR-0007 / ADR-0013. Draft is the initial
+ * state on create; pending_review queues for admin approval (Tier-2
+ * vendors' first Experience publish requires approval); published is
+ * the discoverable state.
+ */
+export const experienceStatusEnum = pgEnum('experience_status', [
+  'draft',
+  'pending_review',
+  'published',
+  'paused',
+  'archived',
+])
+
+/**
+ * Payment modes per ADR-0001 + ADR-0002. The `reserve_now_pay_later`
+ * value is stored but rejected by the booking flow in v1 (named in
+ * schema so future enablement is an allow-list flip, not a column
+ * migration). Test coverage: ADR-0002.
+ */
+export const paymentModeEnum = pgEnum('payment_mode', [
+  'full_upfront',
+  'partial_pay',
+  'reserve_now_pay_later',
+])
+
+/**
+ * Experience schema combining ADR-0001, ADR-0002, ADR-0005, ADR-0008,
+ * ADR-0011, ADR-0013, ADR-0015. Each block of fields is annotated with
+ * the ADR that governs it.
+ *
+ * Schema-level CHECKs:
+ *   - combo_has_constituents — non-combo OR ≥2 constituent IDs
+ *   - combo_slug_prefix      — combo XOR slug starts with 'combo-'
+ *
+ * Cross-row invariants (same-Vendor for combo constituents, slug
+ * format reservation against impersonation of activity-city patterns)
+ * are application-layer per ADR-0008 / ADR-0013.
+ */
+export const experiences = pgTable(
+  'experiences',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    vendorUserId: text('vendor_user_id')
+      .references(() => vendorProfiles.userId, { onDelete: 'restrict' })
+      .notNull(),
+
+    slug: text('slug').notNull().unique(),
+    title: text('title').notNull(),
+    shortDescription: text('short_description'),
+    longDescription: text('long_description'),
+
+    // ADR-0008 — Combos
+    isCombo: boolean('is_combo').default(false).notNull(),
+    comboConstituents: uuid('combo_constituents').array(),
+
+    // ADR-0008 — Per-Experience commission override (null = fall through
+    // to vendor base rate); set to 30 when isCombo=true at create time.
+    commissionRateOverride: numeric('commission_rate_override', { precision: 5, scale: 2 }),
+
+    // ADR-0005 — Cancellation policy (snapshotted onto Booking at create).
+    cancellationPreset: cancellationPresetEnum('cancellation_preset').notNull(),
+    cancellationPolicyText: text('cancellation_policy_text'),
+
+    // ADR-0001 / ADR-0002 — Payment modes the Experience accepts.
+    paymentModesAllowed: paymentModeEnum('payment_modes_allowed').array().notNull(),
+
+    // ADR-0011 — Pricing brackets (1-2 / 3-5 / 6+). Flat-priced Vendors
+    // set all three identical. The bracket fires by participant_count at
+    // Booking-create.
+    pricePerPerson_1_2: numeric('price_per_person_1_2', { precision: 12, scale: 2 }).notNull(),
+    pricePerPerson_3_5: numeric('price_per_person_3_5', { precision: 12, scale: 2 }).notNull(),
+    pricePerPerson_6_plus: numeric('price_per_person_6_plus', { precision: 12, scale: 2 }).notNull(),
+
+    // ADR-0011 / ADR-0015 — Permit gating + safety stack.
+    requiredPermits: text('required_permits').array().default([]).notNull(),
+    requiresSafetyStack: boolean('requires_safety_stack').default(false).notNull(),
+
+    // ADR-0013 — Taxonomy (controlled vocabulary in lib/regions, lib/activities).
+    regionSlug: text('region_slug').notNull(),
+    activitySlug: text('activity_slug').notNull(),
+
+    status: experienceStatusEnum('status').default('draft').notNull(),
+
+    ...timestamps,
+  },
+  (t) => [
+    check(
+      'combo_has_constituents',
+      sql`(${t.isCombo} = false) OR (COALESCE(array_length(${t.comboConstituents}, 1), 0) >= 2)`,
+    ),
+    check(
+      'combo_slug_prefix',
+      sql`(${t.isCombo} = true AND ${t.slug} LIKE 'combo-%') OR (${t.isCombo} = false AND ${t.slug} NOT LIKE 'combo-%')`,
+    ),
+  ],
+)
+
+export type Experience = typeof experiences.$inferSelect
+export type NewExperience = typeof experiences.$inferInsert

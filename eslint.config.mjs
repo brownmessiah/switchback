@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Test + coverage artefacts (also in .gitignore but ESLint
+    // doesn't honour .gitignore by default).
+    "coverage/**",
+    "playwright-report/**",
+    "test-results/**",
+    "db/migrations/**",
   ]),
 ]);
 

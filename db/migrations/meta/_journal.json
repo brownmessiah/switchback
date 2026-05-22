@@ -29,6 +29,13 @@
       "when": 1779477459293,
       "tag": "0003_lazy_bulldozer",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1779477900000,
+      "tag": "0004_lock_booking_snapshots",
+      "breakpoints": true
     }
   ]
 }

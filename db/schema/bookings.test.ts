@@ -239,6 +239,61 @@ describe('money-path schema: bookings + payments + commission/pricing tiers (ADR
       expect(row?.tdsAmountSnapshot).toBe('0.00')
     })
 
+    it('defaults payout_method_snapshot and payout_destination_snapshot to NULL (ADR-0016)', async () => {
+      await db.insert(bookings).values(baseBooking())
+      const [row] = await db.select().from(bookings)
+      expect(row?.payoutMethodSnapshot).toBeNull()
+      expect(row?.payoutDestinationSnapshot).toBeNull()
+    })
+
+    it('persists both payout snapshot columns when set together (ADR-0016)', async () => {
+      await db.insert(bookings).values({
+        ...baseBooking(),
+        payoutMethodSnapshot: 'upi',
+        payoutDestinationSnapshot: { vpa: 'vendor@upi' },
+      })
+      const [row] = await db.select().from(bookings)
+      expect(row?.payoutMethodSnapshot).toBe('upi')
+      expect(row?.payoutDestinationSnapshot).toEqual({ vpa: 'vendor@upi' })
+    })
+
+    it('accepts bank_account payout snapshot with destination JSON (ADR-0016)', async () => {
+      await db.insert(bookings).values({
+        ...baseBooking(),
+        payoutMethodSnapshot: 'bank_account',
+        payoutDestinationSnapshot: {
+          accountHolder: 'Test Adventures',
+          ifsc: 'HDFC0000123',
+          accountNumber: '1234567890',
+        },
+      })
+      const [row] = await db.select().from(bookings)
+      expect(row?.payoutMethodSnapshot).toBe('bank_account')
+      expect(
+        (row?.payoutDestinationSnapshot as { ifsc: string })?.ifsc,
+      ).toBe('HDFC0000123')
+    })
+
+    it('rejects payout_method_snapshot set with NULL destination (ADR-0016 consistency)', async () => {
+      await expect(
+        db.insert(bookings).values({
+          ...baseBooking(),
+          payoutMethodSnapshot: 'upi',
+          payoutDestinationSnapshot: null,
+        }),
+      ).rejects.toThrow()
+    })
+
+    it('rejects payout_destination_snapshot set with NULL method (ADR-0016 consistency)', async () => {
+      await expect(
+        db.insert(bookings).values({
+          ...baseBooking(),
+          payoutMethodSnapshot: null,
+          payoutDestinationSnapshot: { vpa: 'orphan@upi' },
+        }),
+      ).rejects.toThrow()
+    })
+
     it('restricts deletion of a User who has Bookings', async () => {
       await db.insert(bookings).values(baseBooking())
       await expect(db.delete(users).where(eq(users.id, 'u_c'))).rejects.toThrow()

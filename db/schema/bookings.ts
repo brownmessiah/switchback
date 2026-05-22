@@ -4,6 +4,7 @@ import {
   check,
   index,
   integer,
+  jsonb,
   numeric,
   pgEnum,
   pgTable,
@@ -16,6 +17,7 @@ import { timestamps } from './_common'
 import { availabilitySlots } from './availability-slots'
 import { experiences } from './experiences'
 import { users } from './users'
+import { payoutMethodEnum } from './vendor-profiles'
 
 /**
  * Booking state machine per ADR-0003.
@@ -113,6 +115,14 @@ export const bookings = pgTable(
     vendorIsResidentSnapshot: boolean('vendor_is_resident_snapshot')
       .default(true)
       .notNull(),
+    // ADR-0016 — Snapshot the Vendor's Payout destination at Booking-create
+    // so a T+7 Payout (M3) honours the destination as it was when the
+    // Customer booked, not the current value. NULL when the Vendor hasn't
+    // configured payouts yet (early-onboarding edge — the Booking is held
+    // by the application layer until destination is provided). Both
+    // columns must be NULL together or both non-NULL — see CHECK below.
+    payoutMethodSnapshot: payoutMethodEnum('payout_method_snapshot'),
+    payoutDestinationSnapshot: jsonb('payout_destination_snapshot'),
 
     // Optional ref — set when the Customer chose to book from a TripGroup itinerary
     tripGroupId: uuid('trip_group_id'),
@@ -140,6 +150,14 @@ export const bookings = pgTable(
       sql`${t.gstRateOnCommissionSnapshot} >= 0 AND ${t.gstRateOnCommissionSnapshot} <= 100`,
     ),
     check('non_negative_tds', sql`${t.tdsAmountSnapshot} >= 0`),
+    // ADR-0016 — Payout snapshot consistency. Either both columns are NULL
+    // (Vendor has not configured payouts yet — the Booking is held by the
+    // application layer until destination is provided) or both are set.
+    check(
+      'payout_snapshot_consistency',
+      sql`(${t.payoutMethodSnapshot} IS NULL AND ${t.payoutDestinationSnapshot} IS NULL)
+       OR (${t.payoutMethodSnapshot} IS NOT NULL AND ${t.payoutDestinationSnapshot} IS NOT NULL)`,
+    ),
     index('bookings_by_customer').on(t.customerUserId),
     index('bookings_by_experience').on(t.experienceId),
     index('bookings_by_slot').on(t.slotId),

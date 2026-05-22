@@ -15,6 +15,13 @@
       "when": 1779477148612,
       "tag": "0001_green_wrecker",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779477363364,
+      "tag": "0002_complete_meltdown",
+      "breakpoints": true
     }
   ]
 }

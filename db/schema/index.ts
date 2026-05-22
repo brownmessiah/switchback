@@ -1,9 +1,10 @@
 // Drizzle schema barrel.
 // Tables ordered roughly in topological dependency order: users first,
-// then per-role profiles, then domain tables, then money path, then
-// cross-cutting ledger tables.
+// then auth infra (better-auth managed), then per-role profiles, then
+// domain tables, then money path, then cross-cutting ledger tables.
 
 export * from './users'
+export * from './auth'
 export * from './customer-profiles'
 export * from './vendor-profiles'
 export * from './admin-profiles'

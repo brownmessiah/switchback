@@ -28,11 +28,11 @@ describe('users + profile schema (ADR-0006)', () => {
     await db.execute(sql`TRUNCATE TABLE users CASCADE`)
   })
 
-  it('inserts a User row with email + phone unique', async () => {
+  it('inserts a User row with email + phoneNumber unique', async () => {
     await db.insert(users).values({
       id: 'u_1',
       email: 'shivam@example.com',
-      phone: '+919876543210',
+      phoneNumber: '+919876543210',
       name: 'Shivam Chauhan',
     })
 
@@ -40,7 +40,7 @@ describe('users + profile schema (ADR-0006)', () => {
     expect(rows).toHaveLength(1)
     expect(rows[0]?.email).toBe('shivam@example.com')
     expect(rows[0]?.emailVerified).toBe(false)
-    expect(rows[0]?.phoneVerified).toBe(false)
+    expect(rows[0]?.phoneNumberVerified).toBe(false)
   })
 
   it('rejects duplicate emails', async () => {
@@ -50,10 +50,10 @@ describe('users + profile schema (ADR-0006)', () => {
     ).rejects.toThrow()
   })
 
-  it('rejects duplicate phones', async () => {
-    await db.insert(users).values({ id: 'u_1', phone: '+919999999999' })
+  it('rejects duplicate phoneNumbers', async () => {
+    await db.insert(users).values({ id: 'u_1', phoneNumber: '+919999999999' })
     await expect(
-      db.insert(users).values({ id: 'u_2', phone: '+919999999999' }),
+      db.insert(users).values({ id: 'u_2', phoneNumber: '+919999999999' }),
     ).rejects.toThrow()
   })
 

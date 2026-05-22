@@ -2,7 +2,7 @@
 
 Indian adventure-activity marketplace — rafting, paragliding, scuba, trekking, multi-day expeditions. Ground-up rebuild of the legacy app at `/Users/aishwaryechauhan/Personal/travel-app/` on a portable, owned stack.
 
-Status: **M1 Foundation complete**. See `PLAN.md` for milestone schedule.
+Status: **M2 Money-path backend complete** (Tasks 1–18, 22 of `docs/plans/2026-05-23-m2-money-path.md`). UI tasks (Experience detail, Razorpay Checkout.js, confirmation page, faceted search) + E2E pending — see `docs/plans/m2-verification.md`. See `PLAN.md` for the milestone schedule.
 
 ---
 
@@ -126,19 +126,34 @@ See `PLAN.md` "Engineering workflow" for the full skill + agent map. The non-neg
 
 - Next.js 16 scaffold + Tailwind v4 + Turbopack
 - Drizzle schema for 16 tables covering users, profiles, experiences, availability, money path, wallet, audit, AI generations, slug redirects
-- 109 unit + integration tests, all green (95% statement coverage)
-- Playwright smoke test
 - better-auth with Drizzle adapter, Google OAuth, MSG91 phone OTP
 - Service wirings: Redis (Upstash), R2 (Cloudflare), Resend, Pusher, Sentry
 - Typed env validation with Zod 4
 - GitHub Actions CI: lint + typecheck + unit (coverage) + e2e
-- `TODO_FOR_SHIVAM.md` operational items list
 
-## What's next (M2 — Money path, 6 weeks)
+## What's done (M2 backend — 2026-05-23)
 
-The headline M2 deliverables: browse → experience detail → book → Razorpay → confirm → vendor payout, with partial payment (25% advance / 75% T-24h), refund flow with SLA-backed wallet auto-refund, Meilisearch indexer + facets, SEO URL shape with JSON-LD schemas, Razorpay webhook idempotency.
+The full money path is wired and exercised by **430 unit + integration tests** (≥95% line coverage on `lib/payments/*`). All commits security-reviewed pre-merge.
 
-See `docs/plans/` for the per-milestone implementation plan when M2 begins.
+- **Schema gaps (Tasks 1–3):** `refund_requests` table; `payments.refund_request_id` FK + consistency CHECK; bookings `payout_method_snapshot` + `payout_destination_snapshot`; structural UPDATE-block trigger on the 12 booking snapshot columns; append-only trigger on `audit_logs`; slug CHECK on tier names.
+- **Pure resolvers (Tasks 4–8):** `quoteRefund` (Flexible/Moderate/Strict windows), `resolveCommission` (festival → exp override → vendor → default), `resolvePricing` (tier → group-size bracket → base), `quoteTds` (Section 194-O), `quoteGstOnCommission` (18% IGST), centralised `writeAuditLog`.
+- **Booking-create transaction (Task 9):** single `db.transaction` SELECT FOR UPDATE the slot, all 12 snapshots populated, capacity decrement, RNPL rejected, partial-pay <48h coerced + >Rs.25k escrow-flavoured, Redis-backed 24h idempotency.
+- **Razorpay (Tasks 10–12):** SDK wrapper with paise conversion + error normalisation (no key_id echo in auth errors); HMAC-SHA256 webhook signature verifier (`crypto.timingSafeEqual`); idempotent webhook handler — Redis dedup (14-day TTL) + DB unique on `razorpay_payment_id`; 1000x serial replay yields exactly one payment row.
+- **Wallet + refund flow + cancellation (Tasks 13–15):** two-bucket wallet (Outvers credit, Refund balance) with spend-order and ownership-checked cashout; `processRefund` orchestrates inside/outside-policy + vendor-cancelled with snapshot-rule respect and defense-in-depth ownership guard; `cancelBookingAction` Server Action wired to better-auth session with sanitised user-facing messages.
+- **Partial-pay auto-capture (Tasks 16–17):** Vercel Cron every 15 minutes; selection by `(state=confirmed, payment_mode=partial_pay, slot.startAt ∈ T-24h ± 30min)`; TOCTOU-closed via SELECT FOR UPDATE + structural partial unique index `payments_one_autocapture_per_booking`; Razorpay-returned amount validated; terminal failure audits but keeps booking `confirmed` (no silent M3 auto-complete).
+- **SEO scaffolding (Tasks 18, 22):** Region + activity registries (controlled vocabulary, 10 each); JSON-LD generators (BreadcrumbList, ItemList of Products with INR offers, FAQPage); activity-city Server Component page at `/{lng}/adventure/{activity}-in-{city}`; Meilisearch client + Experience indexer.
+
+## What's pending (M2 UI — next session)
+
+See `docs/plans/m2-verification.md` for the full inventory. Needs a session with browser access + live Razorpay test account:
+
+- **Task 19** Experience detail page (Product + AggregateRating + Review + FAQPage JSON-LD, slug-redirect handling, permit panel)
+- **Task 20** Checkout Server Action + Razorpay Checkout.js client component
+- **Task 21** Booking confirmation page + React Email template
+- **Task 23** Faceted search route (`/{lng}/search`)
+- **Task 24** Playwright happy-path E2E: register → browse → checkout → Razorpay test card → confirmation → cancel inside-policy → refund_balance credited
+
+See `docs/plans/` for the per-milestone implementation plan.
 
 ---
 

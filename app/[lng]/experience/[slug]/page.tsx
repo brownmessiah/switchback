@@ -38,7 +38,7 @@ export default async function ExperienceDetailPage({
   const redis = getRedis()
   const cachedRedirect = await redis.get(cacheKey)
   if (cachedRedirect) {
-    const prefix = lng === 'en' ? '' : `/${lng}`
+    const prefix = `/${lng}`
     redirect(`${prefix}/experience/${cachedRedirect}`)
   }
 
@@ -50,13 +50,13 @@ export default async function ExperienceDetailPage({
 
   if (result.type === 'redirect') {
     await redis.set(cacheKey, result.canonicalSlug, { ex: 24 * 60 * 60 })
-    const prefix = lng === 'en' ? '' : `/${lng}`
+    const prefix = `/${lng}`
     redirect(`${prefix}/experience/${result.canonicalSlug}`)
   }
 
   const detail = result.data
   const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
-  const prefix = lng === 'en' ? '' : `/${lng}`
+  const prefix = `/${lng}`
   const canonicalUrl = `${baseUrl}${prefix}/experience/${detail.slug}`
   const activityDisplay =
     lng === 'hi' ? detail.activity.displayName.hi : detail.activity.displayName.en
@@ -228,7 +228,7 @@ export async function generateMetadata({ params }: PageProps): Promise<{
 
   const detail = result.data
   const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
-  const prefix = lng === 'en' ? '' : `/${lng}`
+  const prefix = `/${lng}`
   const activityDisplay =
     lng === 'hi' ? detail.activity.displayName.hi : detail.activity.displayName.en
   const regionDisplay =

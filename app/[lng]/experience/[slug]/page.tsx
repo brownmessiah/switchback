@@ -101,7 +101,6 @@ export default async function ExperienceDetailPage({
 
   return (
     <main>
-      <link rel="canonical" href={canonicalUrl} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productJson) }}

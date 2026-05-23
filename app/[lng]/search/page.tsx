@@ -52,13 +52,10 @@ export default async function SearchPage({
   const filtered = isFilteredSearch(parsed)
   const { hits } = await searchExperiences(parsed)
 
-  const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
   const prefix = lng === 'en' ? '' : `/${lng}`
-  const canonicalUrl = `${baseUrl}${prefix}/search`
 
   return (
     <main>
-      <link rel="canonical" href={canonicalUrl} />
       {filtered ? (
         <meta name="robots" content="noindex, follow" />
       ) : (

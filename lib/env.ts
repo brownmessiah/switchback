@@ -2,9 +2,9 @@ import { z } from 'zod'
 
 const schema = z.object({
   // ===== Required =====
-  DATABASE_URL: z.url(),
+  DATABASE_URL: z.string().min(1),
   BETTER_AUTH_SECRET: z.string().min(32, 'BETTER_AUTH_SECRET must be at least 32 chars'),
-  NEXT_PUBLIC_APP_URL: z.url(),
+  NEXT_PUBLIC_APP_URL: z.string().url(),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 
   // ===== Auth (optional in M1; required by M2) =====

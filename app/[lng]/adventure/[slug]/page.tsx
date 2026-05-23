@@ -69,7 +69,7 @@ export default async function ActivityCityCollectionPage({
         name: `Top ${activityDisplay} Experiences in ${regionDisplay}`,
         items: data.experiences.map((exp) => ({
           name: exp.title,
-          url: `${baseUrl}/${lng === 'en' ? '' : `${lng}/`}experience/${exp.slug}`,
+          url: `${baseUrl}/${lng}/experience/${exp.slug}`,
           priceRupees: exp.pricePerParticipantRupees,
         })),
       })
@@ -101,7 +101,6 @@ export default async function ActivityCityCollectionPage({
 
   return (
     <main>
-      <link rel="canonical" href={canonicalUrl} />
       {itemListJson && (
         <script
           type="application/ld+json"
@@ -142,7 +141,7 @@ export default async function ActivityCityCollectionPage({
             {data.experiences.map((exp) => (
               <li key={exp.id}>
                 <a
-                  href={`/${lng === 'en' ? '' : `${lng}/`}experience/${exp.slug}`}
+                  href={`/${lng}/experience/${exp.slug}`}
                 >
                   <h2>{exp.title}</h2>
                   {exp.shortDescription && <p>{exp.shortDescription}</p>}

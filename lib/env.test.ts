@@ -7,10 +7,10 @@ describe('parseEnv', () => {
     expect(() => parseEnv({})).toThrow(/DATABASE_URL/)
   })
 
-  it('throws when DATABASE_URL is not a valid URL', () => {
+  it('throws when DATABASE_URL is empty string', () => {
     expect(() =>
       parseEnv({
-        DATABASE_URL: 'not-a-url',
+        DATABASE_URL: '',
         BETTER_AUTH_SECRET: 'a'.repeat(32),
         NEXT_PUBLIC_APP_URL: 'http://localhost:3000',
       }),

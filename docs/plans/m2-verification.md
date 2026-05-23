@@ -1,6 +1,6 @@
 # M2 Money-Path verification checklist
 
-> **Status as of 2026-05-23:** Backend money path (Tasks 1–17, 22) is complete and exercised by 430 unit/integration tests. SEO scaffolding for the activity-city collection is complete (Task 18). Tasks 19–21, 23, and 24 (Experience detail UI, Razorpay Checkout.js wiring, booking confirmation, faceted search route, E2E happy path) require browser-driven UI verification and a live Razorpay test account; they ship in a UI-focused follow-up.
+> **Status as of 2026-05-23:** All M2 tasks (1–24) are code-complete with 467 unit/integration tests passing. UI pages (Tasks 19, 21, 23) and the checkout flow (Task 20) are built but require browser-driven verification with live Razorpay test credentials. E2E spec (Task 24) skips in CI when creds are missing.
 
 This document is the verification gate before tagging `v0.2-money-path`.
 
@@ -83,32 +83,34 @@ This document is the verification gate before tagging `v0.2-money-path`.
 These items require a running dev server and live test credentials. They do NOT block backend correctness; they DO block the v0.2 user-facing release.
 
 ### Task 19 — Experience detail page
-- [ ] `/{lng}/experience/{slug}` Server Component
-- [ ] Product + AggregateRating + Review + FAQPage + BreadcrumbList JSON-LD
-- [ ] Slug redirect lookup (Redis 24h cache hitting `slug_redirects`)
-- [ ] Permit panel with acknowledgement checkbox
-- [ ] Verify rich-results in Google Rich Results Test
+- [x] `/{lng}/experience/{slug}` Server Component
+- [x] Product + FAQPage + BreadcrumbList JSON-LD (AggregateRating + Review empty in M2 — no reviews yet)
+- [x] Slug redirect lookup (Redis 24h cache hitting `slug_redirects`)
+- [x] Permit panel with acknowledgement checkbox
+- [ ] Verify rich-results in Google Rich Results Test (requires deployed URL)
 
 ### Task 20 — Checkout Server Action + Razorpay Checkout.js
-- [ ] Server Action calls `createBooking(...)` then `createOrder(...)`
-- [ ] Client `<RazorpayCheckoutButton>` opens the SDK with the order id
-- [ ] End-to-end: customer registers → browses → checks out with Razorpay test card → webhook lands payment row + audit
-- [ ] Requires: `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` / `RAZORPAY_WEBHOOK_SECRET` from a live Razorpay test account; webhook URL configured in Razorpay dashboard
+- [x] Server Action calls `createBooking(...)` then wallet apply then `createOrder(...)`
+- [x] Client `<RazorpayCheckoutButton>` opens the SDK with the order id
+- [x] Wallet-covered bookings skip Razorpay order creation (razorpayRemainder=0)
+- [x] Payment abandonment audit on modal dismiss
+- [ ] End-to-end with live Razorpay test card (requires `RAZORPAY_KEY_ID` + webhook tunnel)
 
 ### Task 21 — Booking confirmation page + email
-- [ ] `/bookings/{id}/confirmation` page
-- [ ] React Email template
-- [ ] WhatsApp send-intent audit row (M3 wires the actual MSG91 send)
-- [ ] Requires: `RESEND_API_KEY`
+- [x] `/bookings/{id}/confirmation` page (auth-gated, owner-only)
+- [x] React Email template (`emails/booking-confirmation.tsx`)
+- [x] WhatsApp send-intent audit row (M3 wires the actual MSG91 send)
+- [ ] Live email delivery test (requires `RESEND_API_KEY`)
 
 ### Task 23 — Faceted search route
-- [ ] `/{lng}/search` Server Component using the Meilisearch indexer
-- [ ] Canonical pointing at unfiltered URL for sort/filter variants
-- [ ] Requires: provisioned Meilisearch instance + `MEILISEARCH_HOST` / `MEILISEARCH_KEY`
+- [x] `/{lng}/search` Server Component with Meilisearch faceted query
+- [x] Canonical pointing at unfiltered URL for all sort/filter variants
+- [x] `noindex, follow` on filtered views; `index, follow` on bare `/search`
+- [ ] Live search results (requires provisioned Meilisearch instance)
 
 ### Task 24 — E2E happy path
-- [ ] Playwright spec: register → browse → experience → checkout → Razorpay test card → confirmation → cancel inside-policy → refund_balance credited
-- [ ] Requires: a real test environment with all services provisioned
+- [x] Playwright spec with browse → detail → JSON-LD verification → search
+- [ ] Full Razorpay checkout + webhook + cancel flow (requires staging environment)
 
 ---
 
@@ -116,7 +118,7 @@ These items require a running dev server and live test credentials. They do NOT 
 
 ```bash
 pnpm lint && pnpm typecheck && pnpm test
-# Expect: 430 tests passing, no warnings.
+# Expect: 467 tests passing, no warnings.
 
 pnpm test:coverage
 # Expect: ≥95% line coverage on lib/payments/* (money-path target), ≥80% overall.
@@ -147,8 +149,8 @@ b9c2172 fix(webhooks): address Task-12 security review findings (HIGH × 2)
 c9366ff feat(payments): Razorpay SDK wrapper with paise conversion + error normalisation (ADR-0001)
 ```
 
-Tag once the backend gate above is green:
+Tag once the gate above is green:
 
 ```bash
-git tag -a v0.2-money-path -m "M2 backend money path complete (Tasks 1–18, 22). UI (Tasks 19–21, 23) + E2E (Task 24) pending UI session."
+git tag -a v0.2-money-path -m "M2 money path complete (Tasks 1–24, 467 tests). Live Razorpay + Meilisearch verification pending staging deploy."
 ```

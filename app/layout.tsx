@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
+
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,7 +18,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Outvers — adventure activities in India",
-  description: "Book rafting, paragliding, scuba, trekking and more across India. Vendor-verified Experiences with transparent refund policy.",
+  description:
+    "Book rafting, paragliding, scuba, trekking and more across India. Vendor-verified Experiences with transparent refund policy.",
 };
 
 export default function RootLayout({
@@ -27,7 +32,11 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-white text-zinc-900 dark:bg-black dark:text-zinc-50">
+        <SiteHeader />
+        <div className="flex-1">{children}</div>
+        <SiteFooter />
+      </body>
     </html>
   );
 }

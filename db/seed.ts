@@ -233,7 +233,11 @@ async function seed(): Promise<void> {
         shortDescription: e.shortDescription,
         longDescription: e.longDescription,
         cancellationPreset: 'flexible' as const,
-        paymentModesAllowed: ['full_upfront', 'partial_pay'] as const,
+        paymentModesAllowed: ['full_upfront', 'partial_pay'] as (
+          | 'full_upfront'
+          | 'partial_pay'
+          | 'reserve_now_pay_later'
+        )[],
         pricePerPerson_1_2: e.pricePerPerson_1_2,
         pricePerPerson_3_5: e.pricePerPerson_3_5,
         pricePerPerson_6_plus: e.pricePerPerson_6_plus,

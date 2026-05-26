@@ -20,25 +20,22 @@ import { itemList } from '@/lib/seo/schemas/item-list'
 export const revalidate = 60
 
 interface PageProps {
-  params: Promise<{ lng: string; slug: string }>
+  params: Promise<{ slug: string }>
 }
 
 export default async function ActivityCityCollectionPage({
   params,
 }: PageProps): Promise<ReactElement> {
-  const { lng, slug } = await params
+  const { slug } = await params
 
-  const data = await loadActivityCityCollection(db, { lng, slug })
+  const data = await loadActivityCityCollection(db, { lng: 'en', slug })
   if (!data) notFound()
 
   const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
-  const prefix = lng === 'en' ? '' : `/${lng}`
-  const collectionPath = `${prefix}/adventure/${slug}`
+  const collectionPath = `/adventure/${slug}`
   const canonicalUrl = `${baseUrl}${collectionPath}`
-  const activityDisplay =
-    lng === 'hi' ? data.activity.displayName.hi : data.activity.displayName.en
-  const regionDisplay =
-    lng === 'hi' ? data.region.displayName.hi : data.region.displayName.en
+  const activityDisplay = data.activity.displayName.en
+  const regionDisplay = data.region.displayName.en
   const pageTitle = `${activityDisplay} in ${regionDisplay}`
 
   const itemListJson = data.experiences.length
@@ -46,13 +43,13 @@ export default async function ActivityCityCollectionPage({
         name: `Top ${activityDisplay} Experiences in ${regionDisplay}`,
         items: data.experiences.map((exp) => ({
           name: exp.title,
-          url: `${baseUrl}/${lng}/experience/${exp.slug}`,
+          url: `${baseUrl}/experience/${exp.slug}`,
           priceRupees: exp.pricePerParticipantRupees,
         })),
       })
     : null
   const breadcrumbsJson = breadcrumbList([
-    { name: 'Home', url: `${baseUrl}${prefix || '/'}` },
+    { name: 'Home', url: `${baseUrl}/` },
     { name: pageTitle, url: canonicalUrl },
   ])
   const faqItems = [
@@ -95,7 +92,7 @@ export default async function ActivityCityCollectionPage({
       <nav aria-label="Breadcrumb" className="mb-6">
         <ol className="flex items-center gap-1.5 text-sm text-muted-foreground">
           <li>
-            <Link href={prefix || '/'} className="hover:text-foreground">
+            <Link href="/" className="hover:text-foreground">
               Home
             </Link>
           </li>
@@ -139,7 +136,6 @@ export default async function ActivityCityCollectionPage({
             {data.experiences.map((exp) => (
               <ExperienceCard
                 key={exp.id}
-                prefix={`/${lng}`}
                 experience={{
                   id: exp.id,
                   slug: exp.slug,
@@ -180,8 +176,8 @@ export async function generateMetadata({ params }: PageProps): Promise<{
   description: string
   alternates: { canonical: string }
 }> {
-  const { lng, slug } = await params
-  const data = await loadActivityCityCollection(db, { lng, slug })
+  const { slug } = await params
+  const data = await loadActivityCityCollection(db, { lng: 'en', slug })
   if (!data) {
     return {
       title: 'Not found · Outvers',
@@ -189,17 +185,14 @@ export async function generateMetadata({ params }: PageProps): Promise<{
       alternates: { canonical: '' },
     }
   }
-  const activityDisplay =
-    lng === 'hi' ? data.activity.displayName.hi : data.activity.displayName.en
-  const regionDisplay =
-    lng === 'hi' ? data.region.displayName.hi : data.region.displayName.en
+  const activityDisplay = data.activity.displayName.en
+  const regionDisplay = data.region.displayName.en
   const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
-  const prefix = lng === 'en' ? '' : `/${lng}`
   return {
     title: `${activityDisplay} in ${regionDisplay} · Outvers`,
     description: `Book ${activityDisplay} Experiences in ${regionDisplay} from KYC-verified Vendors. Transparent pricing, 24-hour refund SLA, real-time slot availability.`,
     alternates: {
-      canonical: `${baseUrl}${prefix}/adventure/${slug}`,
+      canonical: `${baseUrl}/adventure/${slug}`,
     },
   }
 }

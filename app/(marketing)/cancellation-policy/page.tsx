@@ -19,19 +19,14 @@ import { env } from '@/lib/env'
  * Content is fully static — no DB query. Server Component, ISR n/a.
  */
 
-interface PageProps {
-  params: Promise<{ lng: string }>
-}
-
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { lng } = await params
+export async function generateMetadata(): Promise<Metadata> {
   const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
   return {
     title: 'Refund and cancellation policy · Outvers',
     description:
       'Outvers refund policy explained — Flexible, Moderate, Strict presets, refund SLA, vendor-cancelled bookings, and how to request a cashout from your wallet.',
     alternates: {
-      canonical: `${baseUrl}/${lng === 'en' ? '' : `${lng}/`}cancellation-policy`,
+      canonical: `${baseUrl}/cancellation-policy`,
     },
   }
 }
@@ -75,17 +70,12 @@ const PRESETS: PresetRow[] = [
   },
 ]
 
-export default async function CancellationPolicyPage({
-  params,
-}: PageProps): Promise<ReactElement> {
-  const { lng } = await params
-  const prefix = lng === 'en' ? '' : `/${lng}`
-
+export default async function CancellationPolicyPage(): Promise<ReactElement> {
   return (
     <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
       <header className="mb-10">
         <nav aria-label="Breadcrumb" className="mb-4 text-sm text-zinc-500">
-          <Link href={`${prefix}/`} className="hover:text-zinc-700 dark:hover:text-zinc-300">
+          <Link href="/" className="hover:text-zinc-700 dark:hover:text-zinc-300">
             Home
           </Link>{' '}
           <span aria-hidden>›</span>{' '}

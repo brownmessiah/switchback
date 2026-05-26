@@ -11,7 +11,7 @@ import { experiences, vendorProfiles } from '@/db/schema'
 import { env } from '@/lib/env'
 
 interface PageProps {
-  params: Promise<{ lng: string; slug: string }>
+  params: Promise<{ slug: string }>
 }
 
 const KYC_LABELS: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
@@ -21,8 +21,7 @@ const KYC_LABELS: Record<string, { label: string; variant: 'default' | 'secondar
 }
 
 export default async function VendorProfilePage({ params }: PageProps) {
-  const { lng, slug } = await params
-  const prefix = lng === 'en' ? '' : `/${lng}`
+  const { slug } = await params
 
   const [vendor] = await db
     .select()
@@ -108,7 +107,6 @@ export default async function VendorProfilePage({ params }: PageProps) {
             {vendorExperiences.map((exp) => (
               <ExperienceCard
                 key={exp.id}
-                prefix={prefix}
                 experience={{
                   id: exp.id,
                   slug: exp.slug,
@@ -129,7 +127,7 @@ export default async function VendorProfilePage({ params }: PageProps) {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { lng, slug } = await params
+  const { slug } = await params
   const [vendor] = await db
     .select({ businessName: vendorProfiles.businessName })
     .from(vendorProfiles)
@@ -141,13 +139,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
-  const prefix = lng === 'en' ? '' : `/${lng}`
 
   return {
     title: `${vendor.businessName} · Outvers Vendor`,
     description: `Book adventure experiences from ${vendor.businessName} on Outvers. KYC-verified, transparent pricing, 24-hour refund SLA.`,
     alternates: {
-      canonical: `${baseUrl}${prefix}/vendor/${slug}`,
+      canonical: `${baseUrl}/vendor/${slug}`,
     },
   }
 }

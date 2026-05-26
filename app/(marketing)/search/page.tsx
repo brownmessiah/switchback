@@ -21,7 +21,6 @@ import {
 export const revalidate = 60
 
 interface PageProps {
-  params: Promise<{ lng: string }>
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
@@ -58,15 +57,12 @@ const ACTIVITIES = [
 ]
 
 export default async function SearchPage({
-  params,
   searchParams,
 }: PageProps): Promise<ReactElement> {
-  const { lng } = await params
   const rawParams = await searchParams
   const parsed = parseSearchParams(rawParams)
   const filtered = isFilteredSearch(parsed)
   const { hits } = await searchExperiences(parsed)
-  const prefix = lng === 'en' ? '' : `/${lng}`
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-12">
@@ -88,7 +84,7 @@ export default async function SearchPage({
       <div className="grid gap-8 lg:grid-cols-4">
         {/* Filter sidebar */}
         <aside className="lg:col-span-1">
-          <form method="get" action={`${prefix}/search`} className="space-y-5">
+          <form method="get" action="/search" className="space-y-5">
             {parsed.q && <input type="hidden" name="q" value={parsed.q} />}
 
             <div className="space-y-2">
@@ -168,7 +164,6 @@ export default async function SearchPage({
               {hits.map((hit) => (
                 <ExperienceCard
                   key={hit.id}
-                  prefix={prefix}
                   experience={{
                     id: hit.id,
                     slug: hit.slug,
@@ -188,20 +183,18 @@ export default async function SearchPage({
   )
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<{
+export async function generateMetadata(): Promise<{
   title: string
   description: string
   alternates: { canonical: string }
 }> {
-  const { lng } = await params
   const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
-  const prefix = lng === 'en' ? '' : `/${lng}`
   return {
     title: 'Search Experiences · Outvers',
     description:
       'Search and filter adventure Experiences across India. Rafting, paragliding, trekking, scuba diving, and more from KYC-verified Vendors.',
     alternates: {
-      canonical: `${baseUrl}${prefix}/search`,
+      canonical: `${baseUrl}/search`,
     },
   }
 }

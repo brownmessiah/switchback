@@ -6,17 +6,13 @@ import { useEffect, useState } from 'react'
 import { UserMenu } from './user-menu'
 import { authClient } from '@/lib/auth/client'
 
-interface AuthStatusProps {
-  prefix: string
-}
-
 interface UserData {
   name: string
   email: string
   image?: string | null
 }
 
-export function AuthStatus({ prefix }: AuthStatusProps) {
+export function AuthStatus() {
   const [user, setUser] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -40,12 +36,12 @@ export function AuthStatus({ prefix }: AuthStatusProps) {
   }
 
   if (user) {
-    return <UserMenu user={user} prefix={prefix} />
+    return <UserMenu user={user} />
   }
 
   return (
     <Link
-      href={`${prefix}/sign-in`}
+      href="/sign-in"
       className="rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
     >
       Sign in

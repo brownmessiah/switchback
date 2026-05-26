@@ -16,7 +16,6 @@ export interface ExperienceCardData {
 
 interface ExperienceCardProps {
   experience: ExperienceCardData
-  prefix?: string
 }
 
 const ACTIVITY_LABELS: Record<string, string> = {
@@ -45,13 +44,13 @@ const REGION_LABELS: Record<string, string> = {
   coorg: 'Coorg',
 }
 
-export function ExperienceCard({ experience, prefix = '' }: ExperienceCardProps) {
+export function ExperienceCard({ experience }: ExperienceCardProps) {
   const activityLabel = ACTIVITY_LABELS[experience.activitySlug] ?? experience.activitySlug
   const regionLabel = REGION_LABELS[experience.regionSlug] ?? experience.regionSlug
 
   return (
     <Link
-      href={`${prefix}/experience/${experience.slug}`}
+      href={`/experience/${experience.slug}`}
       className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition hover:border-foreground/20 hover:shadow-md"
     >
       <div className="aspect-[16/10] w-full bg-muted">

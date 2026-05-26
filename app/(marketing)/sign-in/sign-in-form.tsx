@@ -18,13 +18,8 @@ import { authClient } from '@/lib/auth/client'
 
 type Mode = 'signin' | 'signup'
 
-interface SignInFormProps {
-  lng: string
-}
-
-export function SignInForm({ lng }: SignInFormProps) {
+export function SignInForm() {
   const router = useRouter()
-  const prefix = lng === 'en' ? '' : `/${lng}`
 
   const [mode, setMode] = useState<Mode>('signin')
   const [email, setEmail] = useState('')
@@ -49,7 +44,7 @@ export function SignInForm({ lng }: SignInFormProps) {
         return
       }
 
-      router.push(`${prefix}/`)
+      router.push('/')
       router.refresh()
     } catch {
       setError('Network error. Please try again.')
@@ -75,7 +70,7 @@ export function SignInForm({ lng }: SignInFormProps) {
         return
       }
 
-      router.push(`${prefix}/`)
+      router.push('/')
       router.refresh()
     } catch {
       setError('Network error. Please try again.')

@@ -3,18 +3,12 @@ import type { ReactElement } from 'react'
 
 import { AuthStatus } from './auth-status'
 
-interface SiteHeaderProps {
-  lng?: string
-}
-
-export function SiteHeader({ lng = 'en' }: SiteHeaderProps): ReactElement {
-  const prefix = lng === 'en' ? '' : `/${lng}`
-
+export function SiteHeader(): ReactElement {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
         <Link
-          href={`${prefix}/`}
+          href="/"
           className="text-lg font-semibold tracking-tight"
           aria-label="Outvers home"
         >
@@ -23,24 +17,24 @@ export function SiteHeader({ lng = 'en' }: SiteHeaderProps): ReactElement {
 
         <nav aria-label="Primary" className="hidden items-center gap-6 sm:flex">
           <Link
-            href={`${prefix}/search`}
+            href="/search"
             className="text-sm text-muted-foreground hover:text-foreground"
           >
             Search
           </Link>
           <Link
-            href={`${prefix}/adventure/rafting-in-rishikesh`}
+            href="/adventure/rafting-in-rishikesh"
             className="text-sm text-muted-foreground hover:text-foreground"
           >
             Adventures
           </Link>
           <Link
-            href={`${prefix}/cancellation-policy`}
+            href="/cancellation-policy"
             className="text-sm text-muted-foreground hover:text-foreground"
           >
             Refund policy
           </Link>
-          <AuthStatus prefix={prefix} />
+          <AuthStatus />
         </nav>
 
         <details className="sm:hidden">
@@ -67,25 +61,25 @@ export function SiteHeader({ lng = 'en' }: SiteHeaderProps): ReactElement {
             className="absolute right-4 mt-2 flex w-48 flex-col gap-1 rounded-lg border bg-popover p-2 shadow-lg"
           >
             <Link
-              href={`${prefix}/search`}
+              href="/search"
               className="rounded px-3 py-2 text-sm text-muted-foreground hover:bg-accent"
             >
               Search
             </Link>
             <Link
-              href={`${prefix}/adventure/rafting-in-rishikesh`}
+              href="/adventure/rafting-in-rishikesh"
               className="rounded px-3 py-2 text-sm text-muted-foreground hover:bg-accent"
             >
               Adventures
             </Link>
             <Link
-              href={`${prefix}/cancellation-policy`}
+              href="/cancellation-policy"
               className="rounded px-3 py-2 text-sm text-muted-foreground hover:bg-accent"
             >
               Refund policy
             </Link>
             <Link
-              href={`${prefix}/sign-in`}
+              href="/sign-in"
               className="rounded px-3 py-2 text-sm font-medium hover:bg-accent"
             >
               Sign in

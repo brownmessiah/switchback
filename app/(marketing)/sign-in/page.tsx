@@ -7,16 +7,10 @@ export const metadata: Metadata = {
   description: 'Sign in to Outvers to book adventure experiences across India.',
 }
 
-interface Props {
-  params: Promise<{ lng: string }>
-}
-
-export default async function SignInPage({ params }: Props) {
-  const { lng } = await params
-
+export default function SignInPage() {
   return (
     <main className="flex min-h-[80vh] items-center justify-center px-4">
-      <SignInForm lng={lng} />
+      <SignInForm />
     </main>
   )
 }

@@ -28,7 +28,7 @@ import { product } from '@/lib/seo/schemas/product'
 export const revalidate = 60
 
 interface PageProps {
-  params: Promise<{ lng: string; slug: string }>
+  params: Promise<{ slug: string }>
 }
 
 const KYC_BADGE: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
@@ -48,22 +48,22 @@ const CANCELLATION_DESCRIPTIONS: Record<string, string> = {
 export default async function ExperienceDetailPage({
   params,
 }: PageProps): Promise<ReactElement> {
-  const { lng, slug } = await params
+  const { slug } = await params
 
   const cacheKey = `slug-redirect:experience:${slug}`
   const redis = getRedis()
   const cachedRedirect = await redis.get(cacheKey)
   if (cachedRedirect) {
-    redirect(`/${lng}/experience/${cachedRedirect}`)
+    redirect(`/experience/${cachedRedirect}`)
   }
 
-  const result = await loadExperienceDetail(db, { lng, slug })
+  const result = await loadExperienceDetail(db, { lng: 'en', slug })
 
   if (!result) notFound()
 
   if (result.type === 'redirect') {
     await redis.set(cacheKey, result.canonicalSlug, { ex: 24 * 60 * 60 })
-    redirect(`/${lng}/experience/${result.canonicalSlug}`)
+    redirect(`/experience/${result.canonicalSlug}`)
   }
 
   const detail = result.data
@@ -93,12 +93,9 @@ export default async function ExperienceDetailPage({
   }))
 
   const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
-  const prefix = `/${lng}`
-  const canonicalUrl = `${baseUrl}${prefix}/experience/${detail.slug}`
-  const activityDisplay =
-    lng === 'hi' ? detail.activity.displayName.hi : detail.activity.displayName.en
-  const regionDisplay =
-    lng === 'hi' ? detail.region.displayName.hi : detail.region.displayName.en
+  const canonicalUrl = `${baseUrl}/experience/${detail.slug}`
+  const activityDisplay = detail.activity.displayName.en
+  const regionDisplay = detail.region.displayName.en
 
   const productJson = product({
     name: detail.title,
@@ -107,10 +104,10 @@ export default async function ExperienceDetailPage({
     priceRupees: detail.pricePerPerson_1_2,
   })
   const breadcrumbsJson = breadcrumbList([
-    { name: 'Home', url: `${baseUrl}${prefix || '/'}` },
+    { name: 'Home', url: `${baseUrl}/` },
     {
       name: `${activityDisplay} in ${regionDisplay}`,
-      url: `${baseUrl}${prefix}/adventure/${detail.activity.slug}-in-${detail.region.slug}`,
+      url: `${baseUrl}/adventure/${detail.activity.slug}-in-${detail.region.slug}`,
     },
     { name: detail.title, url: canonicalUrl },
   ])
@@ -154,14 +151,14 @@ export default async function ExperienceDetailPage({
       <nav aria-label="Breadcrumb" className="mb-6">
         <ol className="flex items-center gap-1.5 text-sm text-muted-foreground">
           <li>
-            <Link href={prefix || '/'} className="hover:text-foreground">
+            <Link href="/" className="hover:text-foreground">
               Home
             </Link>
           </li>
           <li aria-hidden="true">/</li>
           <li>
             <Link
-              href={`${prefix}/adventure/${detail.activity.slug}-in-${detail.region.slug}`}
+              href={`/adventure/${detail.activity.slug}-in-${detail.region.slug}`}
               className="hover:text-foreground"
             >
               {activityDisplay} in {regionDisplay}
@@ -201,7 +198,7 @@ export default async function ExperienceDetailPage({
             </h1>
             <div className="mt-3 flex items-center gap-3">
               <Link
-                href={`${prefix}/vendor/${detail.vendor.slug}`}
+                href={`/vendor/${detail.vendor.slug}`}
                 className="text-sm text-muted-foreground hover:text-foreground"
               >
                 by {detail.vendor.businessName}
@@ -363,8 +360,8 @@ export async function generateMetadata({ params }: PageProps): Promise<{
   description: string
   alternates: { canonical: string }
 }> {
-  const { lng, slug } = await params
-  const result = await loadExperienceDetail(db, { lng, slug })
+  const { slug } = await params
+  const result = await loadExperienceDetail(db, { lng: 'en', slug })
 
   if (!result || result.type !== 'found') {
     return {
@@ -376,11 +373,8 @@ export async function generateMetadata({ params }: PageProps): Promise<{
 
   const detail = result.data
   const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
-  const prefix = `/${lng}`
-  const activityDisplay =
-    lng === 'hi' ? detail.activity.displayName.hi : detail.activity.displayName.en
-  const regionDisplay =
-    lng === 'hi' ? detail.region.displayName.hi : detail.region.displayName.en
+  const activityDisplay = detail.activity.displayName.en
+  const regionDisplay = detail.region.displayName.en
 
   return {
     title: `${detail.title} · ${activityDisplay} in ${regionDisplay} · Outvers`,
@@ -388,7 +382,7 @@ export async function generateMetadata({ params }: PageProps): Promise<{
       detail.shortDescription ??
       `Book ${detail.title} in ${regionDisplay} from a KYC-verified Vendor. Transparent pricing, 24-hour refund SLA.`,
     alternates: {
-      canonical: `${baseUrl}${prefix}/experience/${detail.slug}`,
+      canonical: `${baseUrl}/experience/${detail.slug}`,
     },
   }
 }

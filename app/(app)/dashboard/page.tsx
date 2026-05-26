@@ -20,7 +20,7 @@ const STATE_VARIANTS: Record<string, 'default' | 'secondary' | 'outline' | 'dest
 
 export default async function CustomerDashboardPage() {
   const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) redirect('/en/sign-in')
+  if (!session?.user) redirect('/sign-in')
 
   const userId = session.user.id
 

@@ -8,19 +8,14 @@ import type { ReactElement } from 'react'
  * load-bearing link (ADR-0005 — "link to it from every Experience card")
  * so it appears in both header and footer.
  */
-interface SiteFooterProps {
-  lng?: string
-}
 
-export function SiteFooter({ lng = 'en' }: SiteFooterProps): ReactElement {
-  const prefix = lng === 'en' ? '' : `/${lng}`
-
+export function SiteFooter(): ReactElement {
   return (
     <footer className="mt-16 border-t border-zinc-200 bg-white py-10 dark:border-zinc-800 dark:bg-black">
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 sm:flex-row sm:items-start sm:justify-between sm:px-6">
         <div>
           <Link
-            href={`${prefix}/`}
+            href="/"
             className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
           >
             Outvers
@@ -36,13 +31,13 @@ export function SiteFooter({ lng = 'en' }: SiteFooterProps): ReactElement {
             Explore
           </span>
           <Link
-            href={`${prefix}/search`}
+            href="/search"
             className="text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-50"
           >
             Search
           </Link>
           <Link
-            href={`${prefix}/adventure/rafting-in-rishikesh`}
+            href="/adventure/rafting-in-rishikesh"
             className="text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-50"
           >
             Adventures
@@ -52,7 +47,7 @@ export function SiteFooter({ lng = 'en' }: SiteFooterProps): ReactElement {
             Trust
           </span>
           <Link
-            href={`${prefix}/cancellation-policy`}
+            href="/cancellation-policy"
             className="text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-50"
           >
             Refund policy

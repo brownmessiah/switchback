@@ -16,10 +16,9 @@ import { authClient } from '@/lib/auth/client'
 
 interface UserMenuProps {
   user: { name: string; email: string; image?: string | null }
-  prefix: string
 }
 
-export function UserMenu({ user, prefix }: UserMenuProps) {
+export function UserMenu({ user }: UserMenuProps) {
   const router = useRouter()
 
   const initials = user.name
@@ -31,7 +30,7 @@ export function UserMenu({ user, prefix }: UserMenuProps) {
 
   async function handleSignOut() {
     await authClient.signOut()
-    router.push(`${prefix}/`)
+    router.push('/')
     router.refresh()
   }
 

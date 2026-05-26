@@ -15,7 +15,7 @@ interface PageProps {
 export default async function CheckoutPage({ searchParams }: PageProps) {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) {
-    redirect('/en/sign-in')
+    redirect('/sign-in')
   }
 
   const params = await searchParams

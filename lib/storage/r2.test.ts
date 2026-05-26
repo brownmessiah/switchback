@@ -12,14 +12,15 @@ describe('R2 storage wiring', () => {
   })
 
   describe('getR2Client', () => {
-    it('throws a descriptive error when R2 credentials are absent', () => {
-      expect(() => getR2Client()).toThrow(/R2_ACCESS_KEY_ID/)
+    it('returns a fallback S3Client when R2 credentials are absent', () => {
+      const client = getR2Client()
+      expect(client).toBeDefined()
     })
   })
 
   describe('getR2BucketName', () => {
-    it('throws when R2_BUCKET is unset', () => {
-      expect(() => getR2BucketName()).toThrow(/R2_BUCKET/)
+    it('returns demo bucket name when R2_BUCKET is unset', () => {
+      expect(getR2BucketName()).toBe('outvers-demo')
     })
   })
 })

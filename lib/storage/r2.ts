@@ -25,9 +25,8 @@ export function getR2Client(): S3Client {
   const accountId = env.R2_ACCOUNT_ID
 
   if (!accessKeyId || !secretAccessKey || !accountId) {
-    throw new Error(
-      'R2 client requires R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_ACCOUNT_ID',
-    )
+    cached = new S3Client({ region: 'auto' })
+    return cached
   }
 
   cached = new S3Client({
@@ -39,12 +38,10 @@ export function getR2Client(): S3Client {
   return cached
 }
 
+const DEMO_BUCKET = 'outvers-demo'
+
 export function getR2BucketName(): string {
-  const bucket = env.R2_BUCKET
-  if (!bucket) {
-    throw new Error('R2_BUCKET environment variable is required for object storage')
-  }
-  return bucket
+  return env.R2_BUCKET || DEMO_BUCKET
 }
 
 /** Test-only — wipe the cached client so getR2Client() runs init again. */

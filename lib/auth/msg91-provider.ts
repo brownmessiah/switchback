@@ -31,10 +31,16 @@ function normalizePhone(phoneNumber: string): string {
   return phoneNumber.startsWith('+') ? phoneNumber.slice(1) : phoneNumber
 }
 
+const DEV_BYPASS_CODE = '000000'
+
 export async function sendOtpViaMsg91(
   config: Msg91Config,
   phoneNumber: string,
 ): Promise<SendOtpResult> {
+  if (!config.authKey) {
+    return { success: true, requestId: 'dev-bypass' }
+  }
+
   const mobile = normalizePhone(phoneNumber)
   let response: Response
   try {
@@ -85,6 +91,10 @@ export async function verifyOtpViaMsg91(
   phoneNumber: string,
   code: string,
 ): Promise<boolean> {
+  if (!config.authKey) {
+    return code === DEV_BYPASS_CODE
+  }
+
   const mobile = normalizePhone(phoneNumber)
   const url = `${VERIFY_URL}?otp=${encodeURIComponent(code)}&mobile=${encodeURIComponent(mobile)}`
 

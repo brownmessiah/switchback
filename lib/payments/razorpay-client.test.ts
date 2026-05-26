@@ -475,22 +475,30 @@ describe('getRazorpayClient (env-driven factory)', () => {
     _resetRazorpayClientForTests()
   })
 
-  it('throws when keyId / keySecret are missing', () => {
-    expect(() =>
-      getRazorpayClient({ keyId: undefined, keySecret: undefined }),
-    ).toThrow(/RAZORPAY_KEY_ID/)
+  it('returns demo stub when keyId / keySecret are missing', () => {
+    const client = getRazorpayClient({ keyId: undefined, keySecret: undefined })
+    expect(client).toBeDefined()
+    expect(client.orders).toBeDefined()
+    expect(client.payments).toBeDefined()
   })
 
-  it('throws when only keyId is set', () => {
-    expect(() =>
-      getRazorpayClient({ keyId: 'rzp_test', keySecret: undefined }),
-    ).toThrow(/RAZORPAY_KEY_ID/)
+  it('returns demo stub when only keyId is set', () => {
+    const client = getRazorpayClient({ keyId: 'rzp_test', keySecret: undefined })
+    expect(client.orders.create).toBeTypeOf('function')
   })
 
-  it('throws when only keySecret is set', () => {
-    expect(() =>
-      getRazorpayClient({ keyId: undefined, keySecret: 'secret' }),
-    ).toThrow(/RAZORPAY_KEY_ID/)
+  it('returns demo stub when only keySecret is set', () => {
+    const client = getRazorpayClient({ keyId: undefined, keySecret: 'secret' })
+    expect(client.payments.capture).toBeTypeOf('function')
+  })
+
+  it('demo stub creates orders with demo_ prefix', async () => {
+    _resetRazorpayClientForTests()
+    const client = getRazorpayClient({ keyId: undefined, keySecret: undefined })
+    const order = await client.orders.create({ amount: 10000, currency: 'INR' })
+    expect(order.id).toMatch(/^order_demo_/)
+    expect(order.amount).toBe(10000)
+    expect(order.status).toBe('created')
   })
 
   it('constructs a Razorpay SDK instance when both creds are provided', () => {

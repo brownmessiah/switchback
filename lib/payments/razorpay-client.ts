@@ -168,15 +168,60 @@ interface GetClientOpts {
  * gets clear signal to redeploy. If hot rotation becomes a requirement,
  * invalidate the cache on `RAZORPAY_AUTH` here.
  */
+function makeDemoStub(): RazorpaySdkLike {
+  let orderCounter = 0
+  let paymentCounter = 0
+  let refundCounter = 0
+  return {
+    orders: {
+      async create(params: OrdersCreateParams): Promise<OrdersCreateResponse> {
+        orderCounter++
+        return {
+          id: `order_demo_${Date.now()}_${orderCounter}`,
+          amount: params.amount,
+          currency: params.currency,
+          receipt: params.receipt ?? null,
+          status: 'created',
+        }
+      },
+    },
+    payments: {
+      async capture(
+        paymentId: string,
+        amount: number,
+      ): Promise<PaymentsCaptureResponse> {
+        paymentCounter++
+        return {
+          id: paymentId || `pay_demo_${Date.now()}_${paymentCounter}`,
+          amount,
+          status: 'captured',
+          captured: true,
+        }
+      },
+      async refund(
+        paymentId: string,
+        params: PaymentsRefundParams,
+      ): Promise<RefundResponse> {
+        refundCounter++
+        return {
+          id: `rfnd_demo_${Date.now()}_${refundCounter}`,
+          amount: params.amount,
+          payment_id: paymentId,
+          status: 'processed',
+        }
+      },
+    },
+  }
+}
+
 export function getRazorpayClient(opts: GetClientOpts = {}): RazorpaySdkLike {
   if (cachedClient) return cachedClient
 
   const keyId = opts.keyId ?? env.RAZORPAY_KEY_ID
   const keySecret = opts.keySecret ?? env.RAZORPAY_KEY_SECRET
   if (!keyId || !keySecret) {
-    throw new Error(
-      'RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set to use the Razorpay client',
-    )
+    cachedClient = makeDemoStub()
+    return cachedClient
   }
 
   cachedClient = new Razorpay({ key_id: keyId, key_secret: keySecret }) as unknown as RazorpaySdkLike

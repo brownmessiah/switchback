@@ -1,42 +1,21 @@
 import type { ReactElement } from 'react'
 
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
+import { ExperienceCard } from '@/components/experience-card'
 import { db } from '@/db/client'
 import { env } from '@/lib/env'
 import { loadActivityCityCollection } from '@/lib/collections/activity-city-loader'
 import { breadcrumbList } from '@/lib/seo/schemas/breadcrumb-list'
 import { faqPage } from '@/lib/seo/schemas/faq-page'
 import { itemList } from '@/lib/seo/schemas/item-list'
-
-/**
- * Activity-city collection page per ADR-0013. Server Component, no
- * client-side data fetching — crawlers must see the full product list
- * + JSON-LD on first byte. The discoverable URL pattern Thrillophilia
- * ranks on (`<activity>-in-<city>`) is the highest-leverage SEO surface
- * Outvers has, so this page must be served fully-rendered every time.
- *
- * Order of concerns:
- *   1. Parse + validate the slug via parseActivityCitySlug against the
- *      controlled-vocabulary registries (lib/regions, lib/activities).
- *   2. Load up to 12 published Experiences matching the activity+region.
- *      Empty product list is allowed — the editorial intro alone has
- *      SEO value while inventory fills in.
- *   3. Emit JSON-LD: ItemList of Products, BreadcrumbList, FAQPage.
- *   4. Render the H1 + intro + product cards.
- *
- * The canonical for this page IS itself — sort/filter variants of the
- * collection emit `<link rel='canonical'>` pointing here per ADR-0013.
- *
- * ISR: revalidate every 60s for the data; on-demand revalidation fires
- * when an Experience in scope publishes / unpublishes (M3 webhook).
- *
- * NOTE: This page renders only the SEO scaffolding for M2. The visual
- * polish (hero imagery, FAQ accordion, responsive grid, locale-switched
- * editorial copy) is a Phase-5b follow-up that requires UI verification
- * in a real browser. The Vitest tests on the loader + schema generators
- * cover the data-layer invariants.
- */
 
 export const revalidate = 60
 
@@ -50,18 +29,16 @@ export default async function ActivityCityCollectionPage({
   const { lng, slug } = await params
 
   const data = await loadActivityCityCollection(db, { lng, slug })
-  if (!data) {
-    notFound()
-  }
+  if (!data) notFound()
 
   const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
-  const collectionPath = `/${lng === 'en' ? '' : `${lng}/`}adventure/${slug}`
+  const prefix = lng === 'en' ? '' : `/${lng}`
+  const collectionPath = `${prefix}/adventure/${slug}`
   const canonicalUrl = `${baseUrl}${collectionPath}`
   const activityDisplay =
     lng === 'hi' ? data.activity.displayName.hi : data.activity.displayName.en
   const regionDisplay =
     lng === 'hi' ? data.region.displayName.hi : data.region.displayName.en
-
   const pageTitle = `${activityDisplay} in ${regionDisplay}`
 
   const itemListJson = data.experiences.length
@@ -74,14 +51,11 @@ export default async function ActivityCityCollectionPage({
         })),
       })
     : null
-
   const breadcrumbsJson = breadcrumbList([
-    { name: 'Home', url: `${baseUrl}/${lng === 'en' ? '' : lng}` },
-    { name: 'Adventure', url: `${baseUrl}/${lng === 'en' ? '' : `${lng}/`}adventure` },
+    { name: 'Home', url: `${baseUrl}${prefix || '/'}` },
     { name: pageTitle, url: canonicalUrl },
   ])
-
-  const faqJson = faqPage([
+  const faqItems = [
     {
       question: `Is ${activityDisplay} in ${regionDisplay} safe?`,
       answer:
@@ -97,10 +71,11 @@ export default async function ActivityCityCollectionPage({
       answer:
         'Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours.',
     },
-  ])
+  ]
+  const faqJson = faqPage(faqItems)
 
   return (
-    <main>
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-12">
       {itemListJson && (
         <script
           type="application/ld+json"
@@ -115,42 +90,86 @@ export default async function ActivityCityCollectionPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJson) }}
       />
-      <header>
-        <nav aria-label="Breadcrumb">
-          <ol>
-            <li>
-              <a href={`/${lng === 'en' ? '' : lng}`}>Home</a>
-            </li>
-            <li>
-              <a href={`/${lng === 'en' ? '' : `${lng}/`}adventure`}>Adventure</a>
-            </li>
-            <li aria-current="page">{pageTitle}</li>
-          </ol>
-        </nav>
-        <h1>{pageTitle}</h1>
+
+      {/* Breadcrumb */}
+      <nav aria-label="Breadcrumb" className="mb-6">
+        <ol className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <li>
+            <Link href={prefix || '/'} className="hover:text-foreground">
+              Home
+            </Link>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li className="text-foreground" aria-current="page">
+            {pageTitle}
+          </li>
+        </ol>
+      </nav>
+
+      {/* Hero */}
+      <header className="mb-10">
+        <div className="mb-6 aspect-[3/1] overflow-hidden rounded-xl bg-muted">
+          <div className="flex h-full items-center justify-center text-lg text-muted-foreground">
+            {pageTitle}
+          </div>
+        </div>
+        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+          {pageTitle}
+        </h1>
+        <p className="mt-3 max-w-2xl text-muted-foreground">
+          Book {activityDisplay.toLowerCase()} experiences in {regionDisplay} from
+          KYC-verified vendors. Transparent pricing, real-time slot availability,
+          and a 24-hour refund SLA.
+        </p>
       </header>
 
-      <section aria-label={`${activityDisplay} Experiences`}>
+      {/* Experiences grid */}
+      <section aria-label={`${activityDisplay} Experiences`} className="mb-12">
         {data.experiences.length === 0 ? (
-          <p>
-            No published {activityDisplay} Experiences in {regionDisplay} yet.
-            Check back soon.
-          </p>
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center">
+            <p className="text-lg font-medium">
+              No {activityDisplay.toLowerCase()} experiences in {regionDisplay} yet
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Check back soon — new listings added regularly.
+            </p>
+          </div>
         ) : (
-          <ul>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {data.experiences.map((exp) => (
-              <li key={exp.id}>
-                <a
-                  href={`/${lng}/experience/${exp.slug}`}
-                >
-                  <h2>{exp.title}</h2>
-                  {exp.shortDescription && <p>{exp.shortDescription}</p>}
-                  <p>From ₹{exp.pricePerParticipantRupees} per person</p>
-                </a>
-              </li>
+              <ExperienceCard
+                key={exp.id}
+                prefix={`/${lng}`}
+                experience={{
+                  id: exp.id,
+                  slug: exp.slug,
+                  title: exp.title,
+                  shortDescription: exp.shortDescription,
+                  pricePerParticipantRupees: exp.pricePerParticipantRupees,
+                  regionSlug: data.region.slug,
+                  activitySlug: data.activity.slug,
+                }}
+              />
             ))}
-          </ul>
+          </div>
         )}
+      </section>
+
+      {/* FAQ */}
+      <section>
+        <h2 className="mb-4 text-xl font-semibold">Frequently asked questions</h2>
+        <Accordion multiple className="w-full">
+          {faqItems.map((item, i) => (
+            <AccordionItem key={i} value={`faq-${i}`}>
+              <AccordionTrigger className="text-left text-sm font-medium">
+                {item.question}
+              </AccordionTrigger>
+              <AccordionContent className="text-sm text-muted-foreground">
+                {item.answer}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
       </section>
     </main>
   )
@@ -175,11 +194,12 @@ export async function generateMetadata({ params }: PageProps): Promise<{
   const regionDisplay =
     lng === 'hi' ? data.region.displayName.hi : data.region.displayName.en
   const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
+  const prefix = lng === 'en' ? '' : `/${lng}`
   return {
     title: `${activityDisplay} in ${regionDisplay} · Outvers`,
     description: `Book ${activityDisplay} Experiences in ${regionDisplay} from KYC-verified Vendors. Transparent pricing, 24-hour refund SLA, real-time slot availability.`,
     alternates: {
-      canonical: `${baseUrl}/${lng === 'en' ? '' : `${lng}/`}adventure/${slug}`,
+      canonical: `${baseUrl}${prefix}/adventure/${slug}`,
     },
   }
 }

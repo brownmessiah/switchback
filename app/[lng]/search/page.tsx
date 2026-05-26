@@ -1,20 +1,22 @@
 import type { ReactElement } from 'react'
 
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { ExperienceCard } from '@/components/experience-card'
 import { env } from '@/lib/env'
 import {
   isFilteredSearch,
   searchExperiences,
   type SearchExperiencesParams,
 } from '@/lib/search/search-experiences'
-
-/**
- * Faceted search route per ADR-0013 (Task 23).
- *
- * Canonical: `/{lng}/search` for ALL filter/sort variants — no
- * canonical fragmentation. `noindex, follow` when any filter beyond
- * the bare canonical is active; `index, follow` only on the unfiltered
- * view so Google indexes one canonical URL.
- */
 
 export const revalidate = 60
 
@@ -42,6 +44,19 @@ function parseSearchParams(
   }
 }
 
+const ACTIVITIES = [
+  { value: 'rafting', label: 'Rafting' },
+  { value: 'paragliding', label: 'Paragliding' },
+  { value: 'trekking', label: 'Trekking' },
+  { value: 'scuba', label: 'Scuba diving' },
+  { value: 'camping', label: 'Camping' },
+  { value: 'bungee', label: 'Bungee jumping' },
+  { value: 'skiing', label: 'Skiing' },
+  { value: 'kayaking', label: 'Kayaking' },
+  { value: 'surfing', label: 'Surfing' },
+  { value: 'canyoning', label: 'Canyoning' },
+]
+
 export default async function SearchPage({
   params,
   searchParams,
@@ -51,92 +66,124 @@ export default async function SearchPage({
   const parsed = parseSearchParams(rawParams)
   const filtered = isFilteredSearch(parsed)
   const { hits } = await searchExperiences(parsed)
-
   const prefix = lng === 'en' ? '' : `/${lng}`
 
   return (
-    <main>
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-12">
       {filtered ? (
         <meta name="robots" content="noindex, follow" />
       ) : (
         <meta name="robots" content="index, follow" />
       )}
 
-      <header>
-        <h1>Search Experiences</h1>
-        {parsed.q && <p>Results for &ldquo;{parsed.q}&rdquo;</p>}
+      <header className="mb-8">
+        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+          {parsed.q ? `Results for "${parsed.q}"` : 'Explore experiences'}
+        </h1>
+        <p className="mt-2 text-muted-foreground">
+          {hits.length} experience{hits.length === 1 ? '' : 's'} found
+        </p>
       </header>
 
-      <section aria-label="Filters">
-        <form method="get" action={`${prefix}/search`}>
-          <label>
-            Activity
-            <select name="activity" defaultValue={parsed.activity ?? ''}>
-              <option value="">All</option>
-              <option value="rafting">Rafting</option>
-              <option value="paragliding">Paragliding</option>
-              <option value="trekking">Trekking</option>
-              <option value="scuba-diving">Scuba Diving</option>
-              <option value="camping">Camping</option>
-              <option value="bungee-jumping">Bungee Jumping</option>
-              <option value="skiing">Skiing</option>
-              <option value="kayaking">Kayaking</option>
-              <option value="rock-climbing">Rock Climbing</option>
-              <option value="zip-lining">Zip Lining</option>
-            </select>
-          </label>
+      <div className="grid gap-8 lg:grid-cols-4">
+        {/* Filter sidebar */}
+        <aside className="lg:col-span-1">
+          <form method="get" action={`${prefix}/search`} className="space-y-5">
+            {parsed.q && <input type="hidden" name="q" value={parsed.q} />}
 
-          <label>
-            Sort by
-            <select name="sort" defaultValue={parsed.sort ?? 'relevance'}>
-              <option value="relevance">Relevance</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-              <option value="newest">Newest</option>
-            </select>
-          </label>
+            <div className="space-y-2">
+              <Label htmlFor="activity">Activity</Label>
+              <Select name="activity" defaultValue={parsed.activity ?? ''}>
+                <SelectTrigger id="activity">
+                  <SelectValue placeholder="All activities" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All activities</SelectItem>
+                  {ACTIVITIES.map((a) => (
+                    <SelectItem key={a.value} value={a.value}>
+                      {a.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <label>
-            Min price
-            <input
-              type="number"
-              name="minPrice"
-              defaultValue={parsed.minPrice ?? ''}
-              min={0}
-            />
-          </label>
+            <div className="space-y-2">
+              <Label htmlFor="sort">Sort by</Label>
+              <Select name="sort" defaultValue={parsed.sort ?? 'relevance'}>
+                <SelectTrigger id="sort">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="relevance">Relevance</SelectItem>
+                  <SelectItem value="price_asc">Price: Low to High</SelectItem>
+                  <SelectItem value="price_desc">Price: High to Low</SelectItem>
+                  <SelectItem value="newest">Newest</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <label>
-            Max price
-            <input
-              type="number"
-              name="maxPrice"
-              defaultValue={parsed.maxPrice ?? ''}
-              min={0}
-            />
-          </label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="minPrice">Min ₹</Label>
+                <Input
+                  id="minPrice"
+                  type="number"
+                  name="minPrice"
+                  defaultValue={parsed.minPrice ?? ''}
+                  min={0}
+                  placeholder="0"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="maxPrice">Max ₹</Label>
+                <Input
+                  id="maxPrice"
+                  type="number"
+                  name="maxPrice"
+                  defaultValue={parsed.maxPrice ?? ''}
+                  min={0}
+                  placeholder="Any"
+                />
+              </div>
+            </div>
 
-          <button type="submit">Search</button>
-        </form>
-      </section>
+            <Button type="submit" className="w-full">
+              Apply filters
+            </Button>
+          </form>
+        </aside>
 
-      <section aria-label="Search results">
-        {hits.length === 0 ? (
-          <p>No Experiences found. Try adjusting your filters.</p>
-        ) : (
-          <ul>
-            {hits.map((hit) => (
-              <li key={hit.id}>
-                <a href={`${prefix}/experience/${hit.slug}`}>
-                  <h2>{hit.title}</h2>
-                  {hit.shortDescription && <p>{hit.shortDescription}</p>}
-                  <p>From ₹{hit.pricePerPersonRupees} per person</p>
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+        {/* Results grid */}
+        <section aria-label="Search results" className="lg:col-span-3">
+          {hits.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center">
+              <p className="text-lg font-medium">No experiences found</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Try adjusting your filters or search for something else.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {hits.map((hit) => (
+                <ExperienceCard
+                  key={hit.id}
+                  prefix={prefix}
+                  experience={{
+                    id: hit.id,
+                    slug: hit.slug,
+                    title: hit.title,
+                    shortDescription: hit.shortDescription,
+                    pricePerParticipantRupees: hit.pricePerPersonRupees,
+                    regionSlug: hit.regionSlug,
+                    activitySlug: hit.activitySlug,
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </main>
   )
 }

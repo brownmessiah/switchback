@@ -1,8 +1,23 @@
 import type { ReactElement } from 'react'
 
+import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
+import { and, eq } from 'drizzle-orm'
+
+import { ReviewList, type ReviewData } from '@/components/reviews/review-list'
+import { Badge } from '@/components/ui/badge'
+import { buttonVariants } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
 import { db } from '@/db/client'
+import { reviews, users } from '@/db/schema'
 import { env } from '@/lib/env'
 import { loadExperienceDetail } from '@/lib/experiences/detail-loader'
 import { getRedis } from '@/lib/redis'
@@ -10,23 +25,24 @@ import { breadcrumbList } from '@/lib/seo/schemas/breadcrumb-list'
 import { faqPage } from '@/lib/seo/schemas/faq-page'
 import { product } from '@/lib/seo/schemas/product'
 
-/**
- * Experience detail page per ADR-0013. Canonical URL for every Experience
- * regardless of inbound path. Server Component, ISR revalidate=60.
- *
- * Flow:
- *   1. Try loading the Experience by slug (published only).
- *   2. If not found, check slug_redirects (Redis-cached 24h, DB fallback).
- *   3. If redirect found → 301 to canonical slug.
- *   4. If neither → notFound().
- *   5. Render with Product + FAQPage + BreadcrumbList JSON-LD.
- *   6. If required permits present, render the permit acknowledgement panel.
- */
-
 export const revalidate = 60
 
 interface PageProps {
   params: Promise<{ lng: string; slug: string }>
+}
+
+const KYC_BADGE: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
+  business: { label: 'Business verified', variant: 'default' },
+  identity: { label: 'Identity verified', variant: 'secondary' },
+  phone: { label: 'Phone verified', variant: 'outline' },
+}
+
+const CANCELLATION_DESCRIPTIONS: Record<string, string> = {
+  flexible:
+    'Free cancellation up to 24 hours before the Experience. 50% refund within 2 hours. No refund after.',
+  moderate:
+    'Free cancellation up to 7 days before. 50% refund within 48 hours. No refund after.',
+  strict: '50% refund up to 7 days before. No refund after.',
 }
 
 export default async function ExperienceDetailPage({
@@ -38,23 +54,44 @@ export default async function ExperienceDetailPage({
   const redis = getRedis()
   const cachedRedirect = await redis.get(cacheKey)
   if (cachedRedirect) {
-    const prefix = `/${lng}`
-    redirect(`${prefix}/experience/${cachedRedirect}`)
+    redirect(`/${lng}/experience/${cachedRedirect}`)
   }
 
   const result = await loadExperienceDetail(db, { lng, slug })
 
-  if (!result) {
-    notFound()
-  }
+  if (!result) notFound()
 
   if (result.type === 'redirect') {
     await redis.set(cacheKey, result.canonicalSlug, { ex: 24 * 60 * 60 })
-    const prefix = `/${lng}`
-    redirect(`${prefix}/experience/${result.canonicalSlug}`)
+    redirect(`/${lng}/experience/${result.canonicalSlug}`)
   }
 
   const detail = result.data
+
+  const reviewRows = await db
+    .select({
+      id: reviews.id,
+      rating: reviews.rating,
+      title: reviews.title,
+      body: reviews.body,
+      customerName: users.name,
+      createdAt: reviews.createdAt,
+    })
+    .from(reviews)
+    .innerJoin(users, eq(reviews.customerUserId, users.id))
+    .where(and(eq(reviews.experienceId, detail.id), eq(reviews.status, 'published')))
+    .orderBy(reviews.createdAt)
+    .limit(20)
+
+  const experienceReviews: ReviewData[] = reviewRows.map((r) => ({
+    id: r.id,
+    rating: r.rating,
+    title: r.title,
+    body: r.body,
+    customerName: r.customerName ?? 'Customer',
+    createdAt: r.createdAt,
+  }))
+
   const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
   const prefix = `/${lng}`
   const canonicalUrl = `${baseUrl}${prefix}/experience/${detail.slug}`
@@ -69,7 +106,6 @@ export default async function ExperienceDetailPage({
     description: detail.shortDescription ?? `${activityDisplay} Experience in ${regionDisplay}`,
     priceRupees: detail.pricePerPerson_1_2,
   })
-
   const breadcrumbsJson = breadcrumbList([
     { name: 'Home', url: `${baseUrl}${prefix || '/'}` },
     {
@@ -78,7 +114,6 @@ export default async function ExperienceDetailPage({
     },
     { name: detail.title, url: canonicalUrl },
   ])
-
   const faqItems = [
     {
       question: `Is ${detail.title} safe?`,
@@ -91,16 +126,17 @@ export default async function ExperienceDetailPage({
     },
     {
       question: 'How does payment work?',
-      answer:
-        detail.paymentModesAllowed.includes('partial_pay')
-          ? 'You can pay 25% now and the rest 24 hours before the Experience starts. Full upfront payment is also available.'
-          : 'Full payment is collected at booking time.',
+      answer: detail.paymentModesAllowed.includes('partial_pay')
+        ? 'You can pay 25% now and the rest 24 hours before the Experience starts. Full upfront payment is also available.'
+        : 'Full payment is collected at booking time.',
     },
   ]
   const faqJson = faqPage(faqItems)
 
+  const kycBadge = KYC_BADGE.phone
+
   return (
-    <main>
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-12">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productJson) }}
@@ -114,98 +150,210 @@ export default async function ExperienceDetailPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJson) }}
       />
 
-      <header>
-        <nav aria-label="Breadcrumb">
-          <ol>
-            <li>
-              <a href={`${prefix || '/'}`}>Home</a>
-            </li>
-            <li>
-              <a
-                href={`${prefix}/adventure/${detail.activity.slug}-in-${detail.region.slug}`}
-              >
-                {activityDisplay} in {regionDisplay}
-              </a>
-            </li>
-            <li aria-current="page">{detail.title}</li>
-          </ol>
-        </nav>
-        <h1>{detail.title}</h1>
-        <p>
-          by{' '}
-          <a href={`${prefix}/vendor/${detail.vendor.slug}`}>
-            {detail.vendor.businessName}
-          </a>
-        </p>
-      </header>
+      {/* Breadcrumb */}
+      <nav aria-label="Breadcrumb" className="mb-6">
+        <ol className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <li>
+            <Link href={prefix || '/'} className="hover:text-foreground">
+              Home
+            </Link>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li>
+            <Link
+              href={`${prefix}/adventure/${detail.activity.slug}-in-${detail.region.slug}`}
+              className="hover:text-foreground"
+            >
+              {activityDisplay} in {regionDisplay}
+            </Link>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li className="truncate text-foreground" aria-current="page">
+            {detail.title}
+          </li>
+        </ol>
+      </nav>
 
-      {detail.shortDescription && (
-        <section aria-label="Overview">
-          <p>{detail.shortDescription}</p>
-        </section>
-      )}
-
-      {detail.longDescription && (
-        <section aria-label="Details">
-          <p>{detail.longDescription}</p>
-        </section>
-      )}
-
-      <section aria-label="Pricing">
-        <h2>Pricing</h2>
-        <dl>
-          <dt>1-2 participants</dt>
-          <dd>₹{detail.pricePerPerson_1_2} per person</dd>
-          <dt>3-5 participants</dt>
-          <dd>₹{detail.pricePerPerson_3_5} per person</dd>
-          <dt>6+ participants</dt>
-          <dd>₹{detail.pricePerPerson_6_plus} per person</dd>
-        </dl>
-      </section>
-
-      <section aria-label="Cancellation policy">
-        <h2>Cancellation Policy</h2>
-        <p>
-          This Experience follows the <strong>{detail.cancellationPreset}</strong>{' '}
-          cancellation policy.
-        </p>
-      </section>
-
-      {detail.requiredPermits.length > 0 && (
-        <section aria-label="Required permits">
-          <h2>Required Permits</h2>
-          <p>
-            You need the following permits before participating in this
-            Experience. Outvers does not obtain permits on your behalf.
-          </p>
-          <ul>
-            {detail.requiredPermits.map((permit) => (
-              <li key={permit}>{permit.replace(/_/g, ' ')}</li>
-            ))}
-          </ul>
-          <label>
-            <input
-              type="checkbox"
-              name="acknowledgedPermits"
-              value="true"
-            />
-            I acknowledge that I need to obtain the listed permits before the
-            Experience date
-          </label>
-        </section>
-      )}
-
-      <section aria-label="FAQ">
-        <h2>Frequently Asked Questions</h2>
-        <dl>
-          {faqItems.map((item) => (
-            <div key={item.question}>
-              <dt>{item.question}</dt>
-              <dd>{item.answer}</dd>
+      <div className="grid gap-8 lg:grid-cols-3">
+        {/* Left column — details */}
+        <div className="space-y-8 lg:col-span-2">
+          {/* Image placeholder */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="col-span-2 aspect-[16/9] rounded-xl bg-muted sm:col-span-1 sm:aspect-[4/3]">
+              <div className="flex h-full items-center justify-center text-muted-foreground">
+                {activityDisplay}
+              </div>
             </div>
-          ))}
-        </dl>
-      </section>
+            <div className="hidden gap-2 sm:grid sm:grid-rows-2">
+              <div className="rounded-xl bg-muted" />
+              <div className="rounded-xl bg-muted" />
+            </div>
+          </div>
+
+          {/* Title + vendor */}
+          <div>
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <Badge variant="secondary">{activityDisplay}</Badge>
+              <Badge variant="outline">{regionDisplay}</Badge>
+            </div>
+            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+              {detail.title}
+            </h1>
+            <div className="mt-3 flex items-center gap-3">
+              <Link
+                href={`${prefix}/vendor/${detail.vendor.slug}`}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                by {detail.vendor.businessName}
+              </Link>
+              <Badge variant={kycBadge.variant}>{kycBadge.label}</Badge>
+            </div>
+          </div>
+
+          {/* Description */}
+          {detail.shortDescription && (
+            <section>
+              <p className="text-base leading-relaxed text-muted-foreground">
+                {detail.shortDescription}
+              </p>
+            </section>
+          )}
+          {detail.longDescription && (
+            <section>
+              <h2 className="mb-3 text-xl font-semibold">About this experience</h2>
+              <p className="leading-relaxed text-muted-foreground">
+                {detail.longDescription}
+              </p>
+            </section>
+          )}
+
+          <Separator />
+
+          {/* Cancellation policy */}
+          <section>
+            <h2 className="mb-3 text-xl font-semibold">Cancellation policy</h2>
+            <div className="rounded-lg border bg-muted/50 p-4">
+              <Badge variant="secondary" className="mb-2 capitalize">
+                {detail.cancellationPreset}
+              </Badge>
+              <p className="text-sm text-muted-foreground">
+                {CANCELLATION_DESCRIPTIONS[detail.cancellationPreset] ??
+                  `This Experience follows the ${detail.cancellationPreset} cancellation policy.`}
+              </p>
+            </div>
+          </section>
+
+          {/* Required permits */}
+          {detail.requiredPermits.length > 0 && (
+            <section>
+              <h2 className="mb-3 text-xl font-semibold">Required permits</h2>
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+                <p className="mb-3 text-sm text-muted-foreground">
+                  You need the following permits before participating. Outvers does
+                  not obtain permits on your behalf.
+                </p>
+                <ul className="space-y-1">
+                  {detail.requiredPermits.map((permit) => (
+                    <li
+                      key={permit}
+                      className="flex items-center gap-2 text-sm font-medium"
+                    >
+                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-destructive" />
+                      {permit.replace(/_/g, ' ')}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          )}
+
+          <Separator />
+
+          {/* Reviews */}
+          <section>
+            <h2 className="mb-4 text-xl font-semibold">Reviews</h2>
+            <ReviewList reviews={experienceReviews} />
+          </section>
+
+          <Separator />
+
+          {/* FAQ */}
+          <section>
+            <h2 className="mb-4 text-xl font-semibold">Frequently asked questions</h2>
+            <Accordion multiple className="w-full">
+              {faqItems.map((item, i) => (
+                <AccordionItem key={i} value={`faq-${i}`}>
+                  <AccordionTrigger className="text-left text-sm font-medium">
+                    {item.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-sm text-muted-foreground">
+                    {item.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </section>
+        </div>
+
+        {/* Right column — sticky pricing card */}
+        <div className="lg:sticky lg:top-24 lg:self-start">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Pricing</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-baseline justify-between">
+                  <span className="text-sm text-muted-foreground">1-2 participants</span>
+                  <span className="text-lg font-semibold">
+                    ₹{detail.pricePerPerson_1_2.toLocaleString('en-IN')}
+                    <span className="ml-1 text-xs font-normal text-muted-foreground">
+                      / person
+                    </span>
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-sm text-muted-foreground">3-5 participants</span>
+                  <span className="text-lg font-semibold">
+                    ₹{detail.pricePerPerson_3_5.toLocaleString('en-IN')}
+                    <span className="ml-1 text-xs font-normal text-muted-foreground">
+                      / person
+                    </span>
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-sm text-muted-foreground">6+ participants</span>
+                  <span className="text-lg font-semibold">
+                    ₹{detail.pricePerPerson_6_plus.toLocaleString('en-IN')}
+                    <span className="ml-1 text-xs font-normal text-muted-foreground">
+                      / person
+                    </span>
+                  </span>
+                </div>
+              </div>
+
+              <Separator />
+
+              {detail.paymentModesAllowed.includes('partial_pay') && (
+                <p className="text-xs text-muted-foreground">
+                  Pay 25% now, rest 24h before the experience.
+                </p>
+              )}
+
+              <Link
+                href={`/checkout?experienceId=${detail.id}`}
+                className={buttonVariants({ size: 'lg', className: 'w-full' })}
+              >
+                Book now
+              </Link>
+
+              <p className="text-center text-xs text-muted-foreground">
+                Free cancellation · 24h refund SLA
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </main>
   )
 }

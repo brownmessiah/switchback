@@ -28,10 +28,13 @@ import { db } from './client'
 import {
   adminProfiles,
   availabilitySlots,
+  bookings,
   customerProfiles,
   experiences,
+  reviews,
   users,
   vendorProfiles,
+  walletBalances,
 } from './schema'
 
 interface SeededExperience {
@@ -268,8 +271,106 @@ async function seed(): Promise<void> {
       .onConflictDoNothing()
   }
 
+  // ----- BOOKINGS — mix of states for demo dashboards -----
+  const slotRows = await db
+    .select({ id: availabilitySlots.id, experienceId: availabilitySlots.experienceId })
+    .from(availabilitySlots)
+    .limit(5)
+
+  const BOOKING_SEEDS = [
+    { state: 'confirmed' as const, participants: 2 },
+    { state: 'confirmed' as const, participants: 4 },
+    { state: 'completed' as const, participants: 3 },
+    { state: 'completed' as const, participants: 2 },
+    { state: 'cancelled_by_customer' as const, participants: 1 },
+  ]
+
+  const seededBookings: { id: string; experienceId: string; state: string }[] = []
+
+  for (let i = 0; i < Math.min(BOOKING_SEEDS.length, slotRows.length); i++) {
+    const slot = slotRows[i]
+    const seed = BOOKING_SEEDS[i]
+    const exp = allExperiences.find((e) => e.id === slot.experienceId)
+    if (!exp) continue
+
+    const expData = EXPERIENCES.find((e) => e.slug === exp.slug)
+    const price = Math.floor(Number(expData?.pricePerPerson_1_2 ?? '2000'))
+    const gross = price * seed.participants
+
+    try {
+      const [row] = await db
+        .insert(bookings)
+        .values({
+          customerUserId: 'u_seed_customer',
+          experienceId: slot.experienceId,
+          slotId: slot.id,
+          participantCount: seed.participants,
+          state: seed.state,
+          paymentMode: 'full_upfront',
+          grossTotalSnapshot: String(gross),
+          pricePerParticipantSnapshot: String(price),
+          pricingBasisSnapshot: 'base_price',
+          commissionRateSnapshot: '20.00',
+          commissionBasisSnapshot: 'platform_default',
+          gstRateOnCommissionSnapshot: '18.00',
+          tdsAmountSnapshot: String(Math.floor(gross * 0.01)),
+          cancellationPresetSnapshot: 'flexible',
+          vendorIsResidentSnapshot: true,
+          confirmedAt: seed.state !== 'cancelled_by_customer' ? new Date() : undefined,
+          completedAt: seed.state === 'completed' ? new Date() : undefined,
+          cancelledAt: seed.state === 'cancelled_by_customer' ? new Date() : undefined,
+        })
+        .onConflictDoNothing()
+        .returning({ id: bookings.id })
+
+      if (row) {
+        seededBookings.push({ id: row.id, experienceId: slot.experienceId, state: seed.state })
+      }
+    } catch {
+      // Booking may already exist — skip
+    }
+  }
+
+  // ----- REVIEWS — on completed bookings -----
+  const REVIEW_TEXTS = [
+    { rating: 5, title: 'Best adventure experience ever!', body: 'The guides were fantastic and safety protocols were top-notch. Beautiful views and perfect weather. Would recommend to anyone visiting.' },
+    { rating: 4, title: 'Great experience, minor logistics issues', body: 'The activity itself was amazing. Only downside was the pickup was 20 minutes late. But once we got there, everything was perfect.' },
+    { rating: 5, title: 'Incredible guides and scenery', body: 'Our guide was extremely knowledgeable and made the experience both safe and fun. The scenery was breathtaking. Already planning our next trip.' },
+  ]
+
+  const completedBookings = seededBookings.filter((b) => b.state === 'completed')
+  for (let i = 0; i < Math.min(REVIEW_TEXTS.length, completedBookings.length); i++) {
+    const booking = completedBookings[i]
+    const review = REVIEW_TEXTS[i]
+    const exp = allExperiences.find((e) => e.id === booking.experienceId)
+    const expData = EXPERIENCES.find((e) => e.slug === exp?.slug)
+
+    await db
+      .insert(reviews)
+      .values({
+        bookingId: booking.id,
+        customerUserId: 'u_seed_customer',
+        experienceId: booking.experienceId,
+        vendorUserId: expData?.vendorUserId ?? 'u_seed_v_identity',
+        rating: review.rating,
+        title: review.title,
+        body: review.body,
+        status: 'published',
+      })
+      .onConflictDoNothing()
+  }
+
+  // ----- WALLET — give the seed customer some refund balance -----
+  await db
+    .insert(walletBalances)
+    .values([
+      { userId: 'u_seed_customer', balanceType: 'refund_balance' as const, amount: '500.00' },
+      { userId: 'u_seed_customer', balanceType: 'outvers_credit' as const, amount: '200.00' },
+    ])
+    .onConflictDoNothing()
+
   console.warn(
-    `seeded ${VENDORS.length} vendors, ${EXPERIENCES.length} experiences, ${allExperiences.length} slots`,
+    `seeded ${VENDORS.length} vendors, ${EXPERIENCES.length} experiences, ${allExperiences.length} slots, ${seededBookings.length} bookings, ${completedBookings.length} reviews`,
   )
 }
 

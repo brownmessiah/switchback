@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import type { ReactElement } from 'react'
 
+import { ExperienceCard } from '@/components/experience-card'
 import { db } from '@/db/client'
 import { env } from '@/lib/env'
 import { loadHomePageData } from '@/lib/home/queries'
@@ -215,36 +216,23 @@ export default async function HomePage({ params }: PageProps): Promise<ReactElem
               View all →
             </Link>
           </header>
-          <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {data.featuredExperiences.map((exp) => (
-              <li
+              <ExperienceCard
                 key={exp.id}
-                className="rounded-xl border border-zinc-200 bg-white p-5 transition hover:border-zinc-400 hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-600"
-              >
-                <Link href={`${prefix}/experience/${exp.slug}`} className="block">
-                  <h3 className="text-lg font-semibold leading-snug text-zinc-900 dark:text-zinc-50">
-                    {exp.title}
-                  </h3>
-                  {exp.shortDescription && (
-                    <p className="mt-2 line-clamp-3 text-sm text-zinc-600 dark:text-zinc-400">
-                      {exp.shortDescription}
-                    </p>
-                  )}
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-base font-medium text-zinc-900 dark:text-zinc-50">
-                      From ₹{exp.pricePerParticipantRupees.toLocaleString('en-IN')}
-                      <span className="ml-1 text-xs font-normal text-zinc-500">
-                        / person
-                      </span>
-                    </span>
-                    <span className="text-xs text-zinc-500 dark:text-zinc-500">
-                      {exp.regionSlug}
-                    </span>
-                  </div>
-                </Link>
-              </li>
+                prefix={prefix}
+                experience={{
+                  id: exp.id,
+                  slug: exp.slug,
+                  title: exp.title,
+                  shortDescription: exp.shortDescription,
+                  pricePerParticipantRupees: exp.pricePerParticipantRupees,
+                  regionSlug: exp.regionSlug,
+                  activitySlug: exp.activitySlug,
+                }}
+              />
             ))}
-          </ul>
+          </div>
         </section>
       )}
     </main>

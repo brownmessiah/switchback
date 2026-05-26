@@ -1,31 +1,14 @@
-import { headers } from 'next/headers'
 import Link from 'next/link'
 import type { ReactElement } from 'react'
 
-import { auth } from '@/lib/auth'
-
-import { UserMenu } from './user-menu'
+import { AuthStatus } from './auth-status'
 
 interface SiteHeaderProps {
   lng?: string
 }
 
-export async function SiteHeader({ lng = 'en' }: SiteHeaderProps): Promise<ReactElement> {
+export function SiteHeader({ lng = 'en' }: SiteHeaderProps): ReactElement {
   const prefix = lng === 'en' ? '' : `/${lng}`
-
-  let user: { name: string; email: string; image?: string | null } | null = null
-  try {
-    const session = await auth.api.getSession({ headers: await headers() })
-    if (session?.user) {
-      user = {
-        name: session.user.name ?? session.user.email ?? 'User',
-        email: session.user.email ?? '',
-        image: session.user.image ?? null,
-      }
-    }
-  } catch {
-    // No session — show sign-in link
-  }
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur">
@@ -57,16 +40,7 @@ export async function SiteHeader({ lng = 'en' }: SiteHeaderProps): Promise<React
           >
             Refund policy
           </Link>
-          {user ? (
-            <UserMenu user={user} prefix={prefix} />
-          ) : (
-            <Link
-              href={`${prefix}/sign-in`}
-              className="rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              Sign in
-            </Link>
-          )}
+          <AuthStatus prefix={prefix} />
         </nav>
 
         <details className="sm:hidden">
@@ -110,22 +84,12 @@ export async function SiteHeader({ lng = 'en' }: SiteHeaderProps): Promise<React
             >
               Refund policy
             </Link>
-            {user ? (
-              <>
-                <div className="my-1 border-t border-border" />
-                <span className="px-3 py-1 text-xs text-muted-foreground">{user.name}</span>
-                <Link href="/dashboard" className="rounded px-3 py-2 text-sm hover:bg-accent">
-                  My bookings
-                </Link>
-              </>
-            ) : (
-              <Link
-                href={`${prefix}/sign-in`}
-                className="rounded px-3 py-2 text-sm font-medium hover:bg-accent"
-              >
-                Sign in
-              </Link>
-            )}
+            <Link
+              href={`${prefix}/sign-in`}
+              className="rounded px-3 py-2 text-sm font-medium hover:bg-accent"
+            >
+              Sign in
+            </Link>
           </nav>
         </details>
       </div>

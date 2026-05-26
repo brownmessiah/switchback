@@ -22,7 +22,7 @@
  * loads real Vendor + Experience records from the legacy travel-app.
  */
 
-import { sql } from 'drizzle-orm'
+import { inArray } from 'drizzle-orm'
 
 import { db } from './client'
 import {
@@ -259,7 +259,7 @@ async function seed(): Promise<void> {
     : await db
         .select({ id: experiences.id, slug: experiences.slug })
         .from(experiences)
-        .where(sql`${experiences.slug} = ANY(${EXPERIENCES.map((e) => e.slug)})`)
+        .where(inArray(experiences.slug, EXPERIENCES.map((e) => e.slug)))
 
   // ----- AVAILABILITY SLOTS — one slot T+7d per Experience, capacity 8 -----
   const startAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)

@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
@@ -11,6 +12,7 @@ import {
 } from '@/components/ui/accordion'
 import { ExperienceCard } from '@/components/experience-card'
 import { db } from '@/db/client'
+import { getActivityImage } from '@/lib/images'
 import { env } from '@/lib/env'
 import { loadActivityCityCollection } from '@/lib/collections/activity-city-loader'
 import { breadcrumbList } from '@/lib/seo/schemas/breadcrumb-list'
@@ -105,9 +107,18 @@ export default async function ActivityCityCollectionPage({
 
       {/* Hero */}
       <header className="mb-10">
-        <div className="mb-6 aspect-[3/1] overflow-hidden rounded-xl bg-muted">
-          <div className="flex h-full items-center justify-center text-lg text-muted-foreground">
-            {pageTitle}
+        <div className="relative mb-6 aspect-[3/1] overflow-hidden rounded-2xl">
+          <Image
+            src={getActivityImage(data.activity.slug)}
+            alt={pageTitle}
+            fill
+            className="object-cover"
+            priority
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-6">
+            <p className="text-lg font-semibold text-white">{pageTitle}</p>
           </div>
         </div>
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">

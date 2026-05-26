@@ -10,6 +10,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { and, eq } from 'drizzle-orm'
+import Image from 'next/image'
 
 import { ReviewList, type ReviewData } from '@/components/reviews/review-list'
 import { Badge } from '@/components/ui/badge'
@@ -20,6 +21,7 @@ import { db } from '@/db/client'
 import { reviews, users } from '@/db/schema'
 import { env } from '@/lib/env'
 import { loadExperienceDetail } from '@/lib/experiences/detail-loader'
+import { getActivityImage } from '@/lib/images'
 import { getRedis } from '@/lib/redis'
 import { breadcrumbList } from '@/lib/seo/schemas/breadcrumb-list'
 import { faqPage } from '@/lib/seo/schemas/faq-page'
@@ -174,16 +176,37 @@ export default async function ExperienceDetailPage({
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Left column — details */}
         <div className="space-y-8 lg:col-span-2">
-          {/* Image placeholder */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="col-span-2 aspect-[16/9] rounded-xl bg-muted sm:col-span-1 sm:aspect-[4/3]">
-              <div className="flex h-full items-center justify-center text-muted-foreground">
-                {activityDisplay}
-              </div>
+          {/* Image gallery */}
+          <div className="grid grid-cols-2 gap-2 overflow-hidden rounded-2xl">
+            <div className="relative col-span-2 aspect-[16/9] sm:col-span-1 sm:aspect-[4/3]">
+              <Image
+                src={getActivityImage(detail.activity.slug)}
+                alt={detail.title}
+                fill
+                className="object-cover"
+                priority
+                sizes="(max-width: 640px) 100vw, 50vw"
+              />
             </div>
             <div className="hidden gap-2 sm:grid sm:grid-rows-2">
-              <div className="rounded-xl bg-muted" />
-              <div className="rounded-xl bg-muted" />
+              <div className="relative overflow-hidden">
+                <Image
+                  src={getActivityImage(detail.activity.slug).replace('w=800', 'w=400').replace('fit=crop', 'fit=crop&crop=top')}
+                  alt={`${detail.title} detail`}
+                  fill
+                  className="object-cover"
+                  sizes="25vw"
+                />
+              </div>
+              <div className="relative overflow-hidden">
+                <Image
+                  src={getActivityImage(detail.activity.slug).replace('w=800', 'w=400').replace('fit=crop', 'fit=crop&crop=bottom')}
+                  alt={`${detail.title} view`}
+                  fill
+                  className="object-cover"
+                  sizes="25vw"
+                />
+              </div>
             </div>
           </div>
 

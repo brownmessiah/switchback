@@ -32,6 +32,7 @@ const msg91Config: Msg91Config = {
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.NEXT_PUBLIC_APP_URL,
+  emailAndPassword: { enabled: true },
   database: drizzleAdapter(db, {
     provider: 'pg',
     schema: {

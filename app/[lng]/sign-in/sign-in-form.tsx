@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { authClient } from '@/lib/auth/client'
 
-type Step = 'phone' | 'otp'
+type Mode = 'signin' | 'signup'
 
 interface SignInFormProps {
   lng: string
@@ -26,30 +26,31 @@ export function SignInForm({ lng }: SignInFormProps) {
   const router = useRouter()
   const prefix = lng === 'en' ? '' : `/${lng}`
 
-  const [step, setStep] = useState<Step>('phone')
-  const [phone, setPhone] = useState('')
-  const [otp, setOtp] = useState('')
+  const [mode, setMode] = useState<Mode>('signin')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  async function handleSendOtp(e: React.FormEvent) {
+  async function handleSignIn(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setLoading(true)
 
-    const fullPhone = phone.startsWith('+') ? phone : `+91${phone}`
-
     try {
-      const res = await authClient.phoneNumber.sendOtp({
-        phoneNumber: fullPhone,
+      const res = await authClient.signIn.email({
+        email,
+        password,
       })
 
       if (res.error) {
-        setError(res.error.message ?? 'Failed to send OTP. Try again.')
+        setError(res.error.message ?? 'Sign in failed. Check your credentials.')
         return
       }
 
-      setStep('otp')
+      router.push(`${prefix}/`)
+      router.refresh()
     } catch {
       setError('Network error. Please try again.')
     } finally {
@@ -57,28 +58,27 @@ export function SignInForm({ lng }: SignInFormProps) {
     }
   }
 
-  async function handleVerifyOtp(e: React.FormEvent) {
+  async function handleSignUp(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setLoading(true)
 
-    const fullPhone = phone.startsWith('+') ? phone : `+91${phone}`
-
     try {
-      const res = await authClient.signIn.phoneNumber({
-        phoneNumber: fullPhone,
-        password: otp,
+      const res = await authClient.signUp.email({
+        email,
+        password,
+        name: name || email.split('@')[0],
       })
 
       if (res.error) {
-        setError(res.error.message ?? 'Invalid OTP. Please try again.')
+        setError(res.error.message ?? 'Sign up failed. Try a different email.')
         return
       }
 
       router.push(`${prefix}/`)
       router.refresh()
     } catch {
-      setError('Verification failed. Please try again.')
+      setError('Network error. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -87,91 +87,105 @@ export function SignInForm({ lng }: SignInFormProps) {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Sign in to Outvers</CardTitle>
+        <CardTitle className="text-2xl">
+          {mode === 'signin' ? 'Sign in to Outvers' : 'Create an account'}
+        </CardTitle>
         <CardDescription>
-          {step === 'phone'
-            ? 'Enter your phone number to get started'
-            : `We sent a code to +91${phone}`}
+          {mode === 'signin'
+            ? 'Enter your email to continue'
+            : 'Sign up to book adventures'}
         </CardDescription>
       </CardHeader>
 
       <CardContent>
-        {step === 'phone' ? (
-          <form onSubmit={handleSendOtp} className="space-y-4">
+        <form
+          onSubmit={mode === 'signin' ? handleSignIn : handleSignUp}
+          className="space-y-4"
+        >
+          {mode === 'signup' && (
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone number</Label>
-              <div className="flex gap-2">
-                <span className="flex items-center rounded-md border border-input bg-muted px-3 text-sm text-muted-foreground">
-                  +91
-                </span>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="9876543210"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                  required
-                  minLength={10}
-                  maxLength={10}
-                  autoFocus
-                />
-              </div>
-            </div>
-
-            {error && (
-              <p className="text-sm text-destructive">{error}</p>
-            )}
-
-            <Button type="submit" className="w-full" disabled={loading || phone.length !== 10}>
-              {loading ? 'Sending...' : 'Send OTP'}
-            </Button>
-
-            <Separator />
-
-            <p className="text-center text-xs text-muted-foreground">
-              In demo mode, use code <strong>000000</strong> to verify.
-            </p>
-          </form>
-        ) : (
-          <form onSubmit={handleVerifyOtp} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="otp">Verification code</Label>
+              <Label htmlFor="name">Name</Label>
               <Input
-                id="otp"
+                id="name"
                 type="text"
-                inputMode="numeric"
-                placeholder="000000"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                required
-                minLength={6}
-                maxLength={6}
+                placeholder="Your name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 autoFocus
               />
             </div>
+          )}
 
-            {error && (
-              <p className="text-sm text-destructive">{error}</p>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoFocus={mode === 'signin'}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="At least 8 characters"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={8}
+            />
+          </div>
+
+          {error && (
+            <p className="text-sm text-destructive">{error}</p>
+          )}
+
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={loading || !email || password.length < 8}
+          >
+            {loading
+              ? 'Please wait...'
+              : mode === 'signin'
+                ? 'Sign in'
+                : 'Create account'}
+          </Button>
+
+          <Separator />
+
+          <p className="text-center text-sm text-muted-foreground">
+            {mode === 'signin' ? (
+              <>
+                New here?{' '}
+                <button
+                  type="button"
+                  className="font-medium text-foreground underline-offset-4 hover:underline"
+                  onClick={() => { setMode('signup'); setError('') }}
+                >
+                  Create an account
+                </button>
+              </>
+            ) : (
+              <>
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  className="font-medium text-foreground underline-offset-4 hover:underline"
+                  onClick={() => { setMode('signin'); setError('') }}
+                >
+                  Sign in
+                </button>
+              </>
             )}
-
-            <Button type="submit" className="w-full" disabled={loading || otp.length !== 6}>
-              {loading ? 'Verifying...' : 'Verify & sign in'}
-            </Button>
-
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full"
-              onClick={() => {
-                setStep('phone')
-                setOtp('')
-                setError('')
-              }}
-            >
-              Change number
-            </Button>
-          </form>
-        )}
+          </p>
+        </form>
       </CardContent>
     </Card>
   )

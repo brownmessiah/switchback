@@ -1,11 +1,12 @@
 import { eq, sql } from 'drizzle-orm'
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { auditLogs } from '@/db/schema/audit-logs'
 import { experiences } from '@/db/schema/experiences'
 import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { setupTestDb, type TestDB } from '@/tests/helpers/db'
+import type { MeiliLike } from '@/lib/search/meilisearch-client'
 
 import {
   executeApproveExperience,
@@ -345,6 +346,127 @@ describe('Admin experience moderation actions', () => {
       if (!result.ok) {
         expect(result.error).toContain('published')
       }
+    })
+  })
+
+  // ── Search indexing integration ──────────────────────────────────
+
+  describe('Meilisearch indexing on moderation actions', () => {
+    function spyMeili(): MeiliLike & {
+      addedDocs: unknown[][]
+      deletedIds: string[]
+    } {
+      const addedDocs: unknown[][] = []
+      const deletedIds: string[] = []
+      return {
+        addedDocs,
+        deletedIds,
+        index: () => ({
+          async addDocuments(docs: unknown[]) {
+            addedDocs.push(docs)
+            return { taskUid: null }
+          },
+          async deleteDocument(id: string) {
+            deletedIds.push(id)
+            return { taskUid: null }
+          },
+          async search() {
+            return { hits: [] }
+          },
+        }),
+      }
+    }
+
+    it('indexes experience after approve (pending_review → published)', async () => {
+      const adminId = await seedAdmin(db)
+      const vendorId = await seedVendor(db)
+      const expId = await seedExperience(db, vendorId, {
+        status: 'pending_review',
+        slug: 'exp-index-test',
+      })
+
+      const meili = spyMeili()
+      const result = await executeApproveExperience(db, adminId, {
+        experienceId: expId,
+      }, { searchClient: meili })
+
+      expect(result).toEqual({ ok: true })
+      expect(meili.addedDocs).toHaveLength(1)
+      const indexed = meili.addedDocs[0]![0] as Record<string, unknown>
+      expect(indexed['id']).toBe(expId)
+      expect(indexed['slug']).toBe('exp-index-test')
+      expect(indexed['title']).toBe('White Water Rafting')
+    })
+
+    it('does not index when approve fails (wrong status)', async () => {
+      const adminId = await seedAdmin(db)
+      const vendorId = await seedVendor(db)
+      const expId = await seedExperience(db, vendorId, { status: 'draft' })
+
+      const meili = spyMeili()
+      await executeApproveExperience(db, adminId, {
+        experienceId: expId,
+      }, { searchClient: meili })
+
+      expect(meili.addedDocs).toHaveLength(0)
+    })
+
+    it('deindexes experience after pause (published → paused)', async () => {
+      const adminId = await seedAdmin(db)
+      const vendorId = await seedVendor(db)
+      const expId = await seedExperience(db, vendorId, { status: 'published' })
+
+      const meili = spyMeili()
+      const result = await executePauseExperience(db, adminId, {
+        experienceId: expId,
+      }, { searchClient: meili })
+
+      expect(result).toEqual({ ok: true })
+      expect(meili.deletedIds).toEqual([expId])
+    })
+
+    it('deindexes experience after archive (published → archived)', async () => {
+      const adminId = await seedAdmin(db)
+      const vendorId = await seedVendor(db)
+      const expId = await seedExperience(db, vendorId, { status: 'published' })
+
+      const meili = spyMeili()
+      const result = await executeArchiveExperience(db, adminId, {
+        experienceId: expId,
+      }, { searchClient: meili })
+
+      expect(result).toEqual({ ok: true })
+      expect(meili.deletedIds).toEqual([expId])
+    })
+
+    it('deindexes experience after reject (pending_review → archived)', async () => {
+      const adminId = await seedAdmin(db)
+      const vendorId = await seedVendor(db)
+      const expId = await seedExperience(db, vendorId, {
+        status: 'pending_review',
+      })
+
+      const meili = spyMeili()
+      const result = await executeRejectExperience(db, adminId, {
+        experienceId: expId,
+        reason: 'Safety violations.',
+      }, { searchClient: meili })
+
+      expect(result).toEqual({ ok: true })
+      expect(meili.deletedIds).toEqual([expId])
+    })
+
+    it('does not deindex when pause fails (wrong status)', async () => {
+      const adminId = await seedAdmin(db)
+      const vendorId = await seedVendor(db)
+      const expId = await seedExperience(db, vendorId, { status: 'draft' })
+
+      const meili = spyMeili()
+      await executePauseExperience(db, adminId, {
+        experienceId: expId,
+      }, { searchClient: meili })
+
+      expect(meili.deletedIds).toHaveLength(0)
     })
   })
 })

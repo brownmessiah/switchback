@@ -217,6 +217,14 @@ function makeDemoStub(): RazorpaySdkLike {
 export function getRazorpayClient(opts: GetClientOpts = {}): RazorpaySdkLike {
   if (cachedClient) return cachedClient
 
+  // E2E test-mode: force the demo stub even when real credentials are
+  // present. This lets the full app run as a real server against fake
+  // Razorpay responses during Playwright / integration tests.
+  if (process.env['RAZORPAY_TEST_MODE'] === 'true') {
+    cachedClient = makeDemoStub()
+    return cachedClient
+  }
+
   const keyId = opts.keyId ?? env.RAZORPAY_KEY_ID
   const keySecret = opts.keySecret ?? env.RAZORPAY_KEY_SECRET
   if (!keyId || !keySecret) {

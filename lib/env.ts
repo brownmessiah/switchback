@@ -18,6 +18,8 @@ const schema = z.object({
   RAZORPAY_KEY_ID: z.string().optional(),
   RAZORPAY_KEY_SECRET: z.string().optional(),
   RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
+  /** E2E test-mode: forces demo stub + signature bypass even with real creds */
+  RAZORPAY_TEST_MODE: z.enum(['true', 'false']).optional(),
 
   // ===== AI (M4) =====
   OPENAI_API_KEY: z.string().optional(),

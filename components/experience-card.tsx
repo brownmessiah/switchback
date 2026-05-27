@@ -54,14 +54,14 @@ export function ExperienceCard({ experience }: ExperienceCardProps) {
   return (
     <Link
       href={`/experience/${experience.slug}`}
-      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:shadow-md"
     >
       <div className="relative aspect-[3/2] w-full overflow-hidden">
         <Image
           src={imageUrl}
           alt={experience.title}
           fill
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          className="object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:group-hover:scale-100"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
         />
         <div className="absolute left-2 top-2">
@@ -78,7 +78,7 @@ export function ExperienceCard({ experience }: ExperienceCardProps) {
 
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
@@ -87,7 +87,7 @@ export function ExperienceCard({ experience }: ExperienceCardProps) {
         </div>
 
         <div className="mt-auto pt-1">
-          <span className="text-sm font-bold text-primary">
+          <span className="text-sm font-bold text-foreground">
             ₹{experience.pricePerParticipantRupees.toLocaleString('en-IN')}
           </span>
           <span className="ml-1 text-xs text-muted-foreground">/ person</span>

@@ -29,76 +29,78 @@ export function SiteFooter(): ReactElement {
             </p>
           </div>
 
-          {/* Explore */}
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Explore
-            </h3>
-            <ul className="mt-3 space-y-2 text-sm">
-              <li>
-                <Link href="/search" className="text-foreground/80 transition hover:text-primary">
-                  Search
-                </Link>
-              </li>
-              <li>
-                <Link href="/adventure/rafting-in-rishikesh" className="text-foreground/80 transition hover:text-primary">
-                  Adventures
-                </Link>
-              </li>
-              <li>
-                <Link href="/search?activity=paragliding" className="text-foreground/80 transition hover:text-primary">
-                  Paragliding
-                </Link>
-              </li>
-              <li>
-                <Link href="/search?activity=scuba" className="text-foreground/80 transition hover:text-primary">
-                  Scuba diving
-                </Link>
-              </li>
-            </ul>
-          </div>
+          <nav aria-label="Footer navigation" className="col-span-2 grid grid-cols-2 gap-8 sm:col-span-3 sm:grid-cols-3">
+            {/* Explore */}
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Explore
+              </h3>
+              <ul className="mt-3 space-y-2 text-sm">
+                <li>
+                  <Link href="/search" className="text-foreground/80 transition hover:text-foreground">
+                    Search
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/adventure/rafting-in-rishikesh" className="text-foreground/80 transition hover:text-foreground">
+                    Adventures
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/search?activity=paragliding" className="text-foreground/80 transition hover:text-foreground">
+                    Paragliding
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/search?activity=scuba" className="text-foreground/80 transition hover:text-foreground">
+                    Scuba diving
+                  </Link>
+                </li>
+              </ul>
+            </div>
 
-          {/* Support */}
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Support
-            </h3>
-            <ul className="mt-3 space-y-2 text-sm">
-              <li>
-                <Link href="/cancellation-policy" className="text-foreground/80 transition hover:text-primary">
-                  Refund policy
-                </Link>
-              </li>
-              <li>
-                <span className="text-muted-foreground">Help centre (soon)</span>
-              </li>
-              <li>
-                <span className="text-muted-foreground">Contact us (soon)</span>
-              </li>
-            </ul>
-          </div>
+            {/* Support */}
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Support
+              </h3>
+              <ul className="mt-3 space-y-2 text-sm">
+                <li>
+                  <Link href="/cancellation-policy" className="text-foreground/80 transition hover:text-foreground">
+                    Refund policy
+                  </Link>
+                </li>
+                <li>
+                  <span className="text-muted-foreground">Help centre (soon)</span>
+                </li>
+                <li>
+                  <span className="text-muted-foreground">Contact us (soon)</span>
+                </li>
+              </ul>
+            </div>
 
-          {/* For Vendors */}
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              For Vendors
-            </h3>
-            <ul className="mt-3 space-y-2 text-sm">
-              <li>
-                <Link href="/vendor/onboarding" className="text-foreground/80 transition hover:text-primary">
-                  List your experience
-                </Link>
-              </li>
-              <li>
-                <Link href="/vendor/dashboard" className="text-foreground/80 transition hover:text-primary">
-                  Vendor dashboard
-                </Link>
-              </li>
-              <li>
-                <span className="text-muted-foreground">Vendor KYC (soon)</span>
-              </li>
-            </ul>
-          </div>
+            {/* For Vendors */}
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                For Vendors
+              </h3>
+              <ul className="mt-3 space-y-2 text-sm">
+                <li>
+                  <Link href="/vendor/onboarding" className="text-foreground/80 transition hover:text-foreground">
+                    List your experience
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/vendor/dashboard" className="text-foreground/80 transition hover:text-foreground">
+                    Vendor dashboard
+                  </Link>
+                </li>
+                <li>
+                  <span className="text-muted-foreground">Vendor KYC (soon)</span>
+                </li>
+              </ul>
+            </div>
+          </nav>
         </div>
       </div>
 

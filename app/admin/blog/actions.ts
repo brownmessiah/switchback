@@ -26,7 +26,7 @@ export type BlogActionResult =
  * - Lowercases, strips non-alphanumeric (except spaces/hyphens),
  *   collapses consecutive hyphens, trims leading/trailing hyphens.
  */
-export function generateSlug(title: string): string {
+export async function generateSlug(title: string): Promise<string> {
   return title
     .toLowerCase()
     .trim()
@@ -45,7 +45,7 @@ export async function generateUniqueSlug(
   title: string,
   excludeId?: string,
 ): Promise<string> {
-  const base = generateSlug(title)
+  const base = await generateSlug(title)
   if (!base) return `post-${Date.now()}`
 
   let candidate = base

@@ -59,8 +59,8 @@ export default async function HomePage(): Promise<ReactElement> {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJson) }}
       />
 
-      {/* HERO — full-width adventure image */}
-      <section className="relative overflow-hidden">
+      {/* CINEMATIC HERO — full-viewport */}
+      <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <Image
             src={getHeroImage()}
@@ -70,111 +70,86 @@ export default async function HomePage(): Promise<ReactElement> {
             priority
             sizes="100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-transparent to-black/65" />
         </div>
 
-        <div className="relative mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-32 lg:py-40">
-          <div className="flex flex-col items-start gap-5">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
-                <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-                KYC-verified vendors
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
-                <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                </svg>
-                24-hour refund SLA
-              </span>
-            </div>
+        <div className="relative z-10 flex flex-col items-center px-4 text-center">
+          <h1 className="max-w-3xl text-5xl font-bold leading-[1.08] tracking-tight text-white sm:text-6xl lg:text-7xl">
+            Book the scene you
+            <br />
+            want to live.
+          </h1>
 
-            <h1 className="max-w-2xl text-4xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-6xl">
-              Find your next
-              <br />
-              adventure in India.
-            </h1>
+          <p className="mt-5 max-w-lg text-base text-white/80 sm:text-lg">
+            Rafting in Rishikesh. Paragliding in Bir Billing. Scuba in Goa.
+            Verified vendors, transparent pricing.
+          </p>
 
-            <p className="max-w-lg text-base text-white/80 sm:text-lg">
-              Rafting in Rishikesh. Paragliding in Bir Billing. Scuba in Goa.
-              Book from verified operators with transparent pricing.
-            </p>
-
-            <form
-              action="/search"
-              method="get"
-              className="mt-2 flex w-full max-w-lg flex-col gap-2 sm:flex-row"
+          {/* Glassmorphic search bar */}
+          <form
+            action="/search"
+            method="get"
+            className="mt-8 flex w-full max-w-xl flex-col gap-2 rounded-2xl border border-white/25 bg-white/15 p-2 backdrop-blur-xl sm:flex-row"
+          >
+            <label htmlFor="home-search" className="sr-only">
+              Search experiences
+            </label>
+            <input
+              id="home-search"
+              name="q"
+              type="search"
+              placeholder='Try "rafting Rishikesh" or "scuba Goa"'
+              className="flex-1 rounded-xl bg-white/10 px-5 py-3 text-sm text-white placeholder:text-white/60 focus:bg-white/20 focus:outline-none"
+            />
+            <button
+              type="submit"
+              className="rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-lg transition hover:opacity-90"
             >
-              <label htmlFor="home-search" className="sr-only">
-                Search experiences
-              </label>
-              <input
-                id="home-search"
-                name="q"
-                type="search"
-                placeholder='Try "rafting Rishikesh" or "scuba Goa"'
-                className="flex-1 rounded-xl border-0 bg-white px-5 py-3.5 text-sm text-foreground shadow-lg placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <button
-                type="submit"
-                className="rounded-xl bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-lg transition hover:opacity-90"
-              >
-                Search
-              </button>
-            </form>
+              Search
+            </button>
+          </form>
+
+          {/* Trust badges on hero */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+            <div className="flex items-center gap-2 text-white/80">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              <span className="text-xs font-medium sm:text-sm">KYC-verified vendors</span>
+            </div>
+            <div className="flex items-center gap-2 text-white/80">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-xs font-medium sm:text-sm">24-hour refund SLA</span>
+            </div>
+            <div className="flex items-center gap-2 text-white/80">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+              <span className="text-xs font-medium sm:text-sm">Transparent pricing</span>
+            </div>
           </div>
         </div>
-      </section>
 
-      {/* DESTINATIONS — image cards */}
-      <section
-        aria-label="Popular destinations"
-        className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20"
-      >
-        <header className="mb-8 flex items-baseline justify-between">
-          <h2 className="text-2xl font-bold tracking-tight">
-            Popular destinations
-          </h2>
-          <Link href="/search" className="text-sm font-medium text-primary hover:underline">
-            Browse all →
-          </Link>
-        </header>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {data.featuredDestinations.map((d) => (
-            <Link
-              key={d.slug}
-              href={`/adventure/${DEFAULT_DESTINATION_ACTIVITY}-in-${d.slug}`}
-              className="group relative overflow-hidden rounded-2xl"
-            >
-              <div className="relative aspect-[4/3]">
-                <Image
-                  src={getRegionImage(d.slug)}
-                  alt={d.displayNameEn}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-              </div>
-              <div className="absolute inset-x-0 bottom-0 p-4">
-                <p className="text-base font-semibold text-white">{d.displayNameEn}</p>
-                <p className="text-xs text-white/70">{d.state}</p>
-                {d.experienceCount > 0 && (
-                  <p className="mt-1 text-xs text-white/60">
-                    {d.experienceCount} experience{d.experienceCount === 1 ? '' : 's'}
-                  </p>
-                )}
-              </div>
-            </Link>
-          ))}
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 animate-bounce">
+          <svg
+            className="h-6 w-6 text-white/60"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
         </div>
       </section>
 
       {/* ACTIVITIES — pill chips */}
       <section
         aria-label="Activities"
-        className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 sm:pb-20"
+        className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16"
       >
         <h2 className="mb-6 text-2xl font-bold tracking-tight">
           Browse by activity
@@ -197,7 +172,51 @@ export default async function HomePage(): Promise<ReactElement> {
         </div>
       </section>
 
-      {/* FEATURED EXPERIENCES */}
+      {/* DESTINATIONS — 4-col image grid */}
+      <section
+        aria-label="Popular destinations"
+        className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 sm:pb-20"
+      >
+        <header className="mb-8 flex items-baseline justify-between">
+          <h2 className="text-2xl font-bold tracking-tight">
+            Popular destinations
+          </h2>
+          <Link href="/search" className="text-sm font-medium text-primary hover:underline">
+            Browse all
+          </Link>
+        </header>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {data.featuredDestinations.map((d) => (
+            <Link
+              key={d.slug}
+              href={`/adventure/${DEFAULT_DESTINATION_ACTIVITY}-in-${d.slug}`}
+              className="group relative overflow-hidden rounded-xl"
+            >
+              <div className="relative aspect-[3/2]">
+                <Image
+                  src={getRegionImage(d.slug)}
+                  alt={d.displayNameEn}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              </div>
+              <div className="absolute inset-x-0 bottom-0 p-3">
+                <p className="text-sm font-semibold text-white">{d.displayNameEn}</p>
+                <p className="text-xs text-white/70">{d.state}</p>
+                {d.experienceCount > 0 && (
+                  <p className="mt-0.5 text-xs text-white/60">
+                    {d.experienceCount} experience{d.experienceCount === 1 ? '' : 's'}
+                  </p>
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* FEATURED EXPERIENCES — 4-col compact grid */}
       {data.featuredExperiences.length > 0 && (
         <section
           aria-label="Featured experiences"
@@ -208,10 +227,10 @@ export default async function HomePage(): Promise<ReactElement> {
               Featured experiences
             </h2>
             <Link href="/search" className="text-sm font-medium text-primary hover:underline">
-              View all →
+              View all
             </Link>
           </header>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {data.featuredExperiences.map((exp) => (
               <ExperienceCard
                 key={exp.id}
@@ -229,45 +248,6 @@ export default async function HomePage(): Promise<ReactElement> {
           </div>
         </section>
       )}
-
-      {/* TRUST BAR */}
-      <section className="border-t bg-muted/50">
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-8 px-4 py-16 sm:flex-row sm:justify-between sm:px-6">
-          <div className="flex items-center gap-3 text-center sm:text-left">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-              <svg className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-semibold">Verified vendors</p>
-              <p className="text-xs text-muted-foreground">KYC-checked operators</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 text-center sm:text-left">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-              <svg className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-semibold">24-hour refund SLA</p>
-              <p className="text-xs text-muted-foreground">Credited to your wallet</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 text-center sm:text-left">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-              <svg className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-semibold">Transparent pricing</p>
-              <p className="text-xs text-muted-foreground">No hidden fees</p>
-            </div>
-          </div>
-        </div>
-      </section>
     </main>
   )
 }

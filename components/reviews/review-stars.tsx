@@ -9,7 +9,7 @@ export function ReviewStars({ rating, max = 5 }: ReviewStarsProps) {
       {Array.from({ length: max }, (_, i) => (
         <svg
           key={i}
-          className={`h-4 w-4 ${i < rating ? 'text-yellow-500' : 'text-muted-foreground/30'}`}
+          className={`h-4 w-4 ${i < rating ? 'text-foreground' : 'text-muted-foreground/30'}`}
           fill="currentColor"
           viewBox="0 0 20 20"
         >

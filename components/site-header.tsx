@@ -1,15 +1,27 @@
+'use client'
+
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import type { ReactElement } from 'react'
 
 import { AuthStatus } from './auth-status'
 
 export function SiteHeader(): ReactElement {
+  const pathname = usePathname()
+  const isHome = pathname === '/'
+
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur">
+    <header
+      className={
+        isHome
+          ? 'absolute top-0 z-40 w-full'
+          : 'sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur'
+      }
+    >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
         <Link
           href="/"
-          className="text-lg font-semibold tracking-tight"
+          className={`text-lg font-semibold tracking-tight ${isHome ? 'text-white' : ''}`}
           aria-label="Outvers home"
         >
           Outvers
@@ -18,19 +30,31 @@ export function SiteHeader(): ReactElement {
         <nav aria-label="Primary" className="hidden items-center gap-6 sm:flex">
           <Link
             href="/search"
-            className="text-sm text-muted-foreground hover:text-foreground"
+            className={
+              isHome
+                ? 'text-sm text-white/80 hover:text-white'
+                : 'text-sm text-muted-foreground hover:text-foreground'
+            }
           >
             Search
           </Link>
           <Link
             href="/adventure/rafting-in-rishikesh"
-            className="text-sm text-muted-foreground hover:text-foreground"
+            className={
+              isHome
+                ? 'text-sm text-white/80 hover:text-white'
+                : 'text-sm text-muted-foreground hover:text-foreground'
+            }
           >
             Adventures
           </Link>
           <Link
             href="/cancellation-policy"
-            className="text-sm text-muted-foreground hover:text-foreground"
+            className={
+              isHome
+                ? 'text-sm text-white/80 hover:text-white'
+                : 'text-sm text-muted-foreground hover:text-foreground'
+            }
           >
             Refund policy
           </Link>
@@ -39,7 +63,7 @@ export function SiteHeader(): ReactElement {
 
         <details className="sm:hidden">
           <summary
-            className="cursor-pointer list-none rounded-md p-2 text-muted-foreground"
+            className={`cursor-pointer list-none rounded-md p-2 ${isHome ? 'text-white' : 'text-muted-foreground'}`}
             aria-label="Open menu"
           >
             <svg
@@ -62,25 +86,25 @@ export function SiteHeader(): ReactElement {
           >
             <Link
               href="/search"
-              className="rounded px-3 py-2 text-sm text-muted-foreground hover:bg-accent"
+              className="rounded px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             >
               Search
             </Link>
             <Link
               href="/adventure/rafting-in-rishikesh"
-              className="rounded px-3 py-2 text-sm text-muted-foreground hover:bg-accent"
+              className="rounded px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             >
               Adventures
             </Link>
             <Link
               href="/cancellation-policy"
-              className="rounded px-3 py-2 text-sm text-muted-foreground hover:bg-accent"
+              className="rounded px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             >
               Refund policy
             </Link>
             <Link
               href="/sign-in"
-              className="rounded px-3 py-2 text-sm font-medium hover:bg-accent"
+              className="rounded px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
             >
               Sign in
             </Link>

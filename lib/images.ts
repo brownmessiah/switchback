@@ -6,7 +6,7 @@ const ACTIVITY_IMAGES: Record<string, string> = {
   trekking:
     'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&q=80',
   paragliding:
-    'https://images.unsplash.com/photo-1503097581674-a2dcc178922f?w=800&h=600&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1597400473366-371a80b251eb?w=800&h=600&fit=crop&q=80',
   scuba:
     'https://images.unsplash.com/photo-1583364512105-951b6f7080ae?w=800&h=600&fit=crop&q=80',
   'scuba-diving':
@@ -25,11 +25,11 @@ const ACTIVITY_IMAGES: Record<string, string> = {
 
 const REGION_IMAGES: Record<string, string> = {
   rishikesh:
-    'https://images.unsplash.com/photo-1609766856923-7e0a66d63d72?w=800&h=600&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&h=600&fit=crop&q=80',
   manali:
     'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800&h=600&fit=crop&q=80',
   'bir-billing':
-    'https://images.unsplash.com/photo-1503097581674-a2dcc178922f?w=800&h=600&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1597400473366-371a80b251eb?w=800&h=600&fit=crop&q=80',
   goa:
     'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&h=600&fit=crop&q=80',
   ladakh:

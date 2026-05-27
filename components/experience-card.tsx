@@ -1,7 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
-import { Badge } from '@/components/ui/badge'
 import { getActivityImage } from '@/lib/images'
 
 export interface ExperienceCardData {
@@ -55,44 +54,40 @@ export function ExperienceCard({ experience }: ExperienceCardProps) {
   return (
     <Link
       href={`/experience/${experience.slug}`}
-      className="group flex flex-col overflow-hidden rounded-2xl bg-card transition-shadow hover:shadow-lg"
+      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden">
+      <div className="relative aspect-[3/2] w-full overflow-hidden">
         <Image
           src={imageUrl}
           alt={experience.title}
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
         />
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent p-4 pt-12">
-          <Badge className="bg-white/90 text-foreground hover:bg-white text-xs font-medium">
+        <div className="absolute left-2 top-2">
+          <span className="inline-flex items-center rounded-full bg-black/40 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
             {activityLabel}
-          </Badge>
+          </span>
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-1.5 p-4">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          {regionLabel}
-        </div>
-
-        <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug tracking-tight">
+      <div className="flex flex-1 flex-col gap-1 p-3">
+        <h3 className="line-clamp-2 text-sm font-semibold leading-snug tracking-tight">
           {experience.title}
         </h3>
 
-        {experience.vendorName && (
-          <p className="text-xs text-muted-foreground">
-            by {experience.vendorName}
-          </p>
-        )}
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            {regionLabel}
+          </span>
+        </div>
 
-        <div className="mt-auto pt-3">
-          <span className="text-[15px] font-semibold">
+        <div className="mt-auto pt-1">
+          <span className="text-sm font-bold text-primary">
             ₹{experience.pricePerParticipantRupees.toLocaleString('en-IN')}
           </span>
           <span className="ml-1 text-xs text-muted-foreground">/ person</span>

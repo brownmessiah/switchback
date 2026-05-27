@@ -1,0 +1,439 @@
+import { and, eq, sql } from 'drizzle-orm'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+
+import { auditLogs } from '@/db/schema/audit-logs'
+import { availabilitySlots } from '@/db/schema/availability-slots'
+import { bookings } from '@/db/schema/bookings'
+import { experiences } from '@/db/schema/experiences'
+import { refundRequests } from '@/db/schema/refund-requests'
+import { users } from '@/db/schema/users'
+import { vendorProfiles } from '@/db/schema/vendor-profiles'
+import { walletBalances } from '@/db/schema/wallet-balances'
+import { setupTestDb, type TestDB } from '@/tests/helpers/db'
+
+import {
+  executeMarkComplete,
+  executeVendorCancel,
+  VendorActionError,
+} from './vendor-actions'
+
+/**
+ * Vendor booking actions per ADR-0003. Two pure-function entry points:
+ *
+ *  - executeMarkComplete: awaiting_completion → completed
+ *  - executeVendorCancel: confirmed|awaiting_completion → cancelled_by_vendor
+ *
+ * Each function accepts a DBOrTx so tests run against PGlite without
+ * mocking Next.js request infrastructure.
+ */
+describe('vendor booking actions (ADR-0003)', () => {
+  let db: TestDB
+  let teardown: () => Promise<void>
+  let experienceId: string
+
+  beforeAll(async () => {
+    const setup = await setupTestDb()
+    db = setup.db
+    teardown = setup.teardown
+
+    await db.insert(users).values([
+      { id: 'u_v', email: 'vendor@test.com', name: 'Test Vendor' },
+      { id: 'u_c', email: 'customer@test.com', name: 'Test Customer' },
+      { id: 'u_other_v', email: 'other-vendor@test.com', name: 'Other Vendor' },
+    ])
+    await db.insert(vendorProfiles).values([
+      {
+        userId: 'u_v',
+        businessName: 'Test Adventures',
+        slug: 'test-adventures',
+        pan: 'ABCDE1234F',
+        commissionRate: '20.00',
+        responseTimeSlaScore: '100.00',
+        payoutMethod: 'upi',
+        payoutDestination: { vpa: 'vendor@upi' },
+      },
+      {
+        userId: 'u_other_v',
+        businessName: 'Other Adventures',
+        slug: 'other-adventures',
+        responseTimeSlaScore: '100.00',
+      },
+    ])
+  })
+
+  afterAll(async () => {
+    await teardown()
+  })
+
+  beforeEach(async () => {
+    await db.execute(
+      sql`TRUNCATE TABLE audit_logs, payments, refund_requests, bookings, availability_slots, experiences, wallet_balances CASCADE`,
+    )
+    // Reset SLA score before each test
+    await db
+      .update(vendorProfiles)
+      .set({ responseTimeSlaScore: '100.00' })
+      .where(eq(vendorProfiles.userId, 'u_v'))
+
+    const [exp] = await db
+      .insert(experiences)
+      .values({
+        vendorUserId: 'u_v',
+        slug: 'rafting-day',
+        title: 'Rafting Day',
+        cancellationPreset: 'flexible',
+        paymentModesAllowed: ['full_upfront'],
+        pricePerPerson_1_2: '1500.00',
+        pricePerPerson_3_5: '1300.00',
+        pricePerPerson_6_plus: '1100.00',
+        regionSlug: 'rishikesh',
+        activitySlug: 'rafting',
+        status: 'published',
+      })
+      .returning({ id: experiences.id })
+    experienceId = exp!.id
+  })
+
+  /**
+   * Seed a booking in a given state. Returns booking ID and slot ID.
+   */
+  async function seedBooking(args: {
+    state: 'confirmed' | 'awaiting_completion' | 'completed' | 'cancelled_by_customer'
+    grossRupees?: number
+  }): Promise<{ bookingId: string; slotId: string }> {
+    const startAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    const endAt = new Date(startAt.getTime() + 4 * 60 * 60 * 1000)
+    const [slot] = await db
+      .insert(availabilitySlots)
+      .values({ experienceId, startAt, endAt, capacity: 8 })
+      .returning({ id: availabilitySlots.id })
+
+    const gross = args.grossRupees ?? 3000
+    const [booking] = await db
+      .insert(bookings)
+      .values({
+        customerUserId: 'u_c',
+        experienceId,
+        slotId: slot!.id,
+        participantCount: 2,
+        paymentMode: 'full_upfront',
+        state: args.state,
+        grossTotalSnapshot: gross.toFixed(2),
+        pricePerParticipantSnapshot: (gross / 2).toFixed(2),
+        pricingBasisSnapshot: 'experience_bracket:1_2',
+        commissionRateSnapshot: '20.00',
+        commissionBasisSnapshot: 'vendor_default',
+        cancellationPresetSnapshot: 'flexible',
+        tdsAmountSnapshot: (gross * 0.01).toFixed(2),
+        gstRateOnCommissionSnapshot: '18.00',
+        vendorPanSnapshot: 'ABCDE1234F',
+        vendorIsResidentSnapshot: true,
+        payoutMethodSnapshot: 'upi',
+        payoutDestinationSnapshot: { vpa: 'vendor@upi' },
+      })
+      .returning({ id: bookings.id })
+
+    return { bookingId: booking!.id, slotId: slot!.id }
+  }
+
+  async function readRefundBalance(userId: string): Promise<number> {
+    const [row] = await db
+      .select()
+      .from(walletBalances)
+      .where(
+        and(
+          eq(walletBalances.userId, userId),
+          eq(walletBalances.balanceType, 'refund_balance'),
+        ),
+      )
+    return row ? Math.floor(Number(row.amount)) : 0
+  }
+
+  async function readSlaScore(userId: string): Promise<string> {
+    const [row] = await db
+      .select({ score: vendorProfiles.responseTimeSlaScore })
+      .from(vendorProfiles)
+      .where(eq(vendorProfiles.userId, userId))
+    return row?.score ?? '0.00'
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Mark-complete
+  // ═══════════════════════════════════════════════════════════════════
+
+  describe('executeMarkComplete', () => {
+    it('transitions awaiting_completion → completed and sets completedAt', async () => {
+      const { bookingId } = await seedBooking({ state: 'awaiting_completion' })
+
+      const result = await executeMarkComplete(db, bookingId, 'u_v')
+
+      expect(result.bookingId).toBe(bookingId)
+      expect(result.completedAt).toBeInstanceOf(Date)
+
+      const [row] = await db
+        .select({ state: bookings.state, completedAt: bookings.completedAt })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+
+      expect(row?.state).toBe('completed')
+      expect(row?.completedAt).toBeInstanceOf(Date)
+    })
+
+    it('writes a booking.mark_complete audit log entry', async () => {
+      const { bookingId } = await seedBooking({ state: 'awaiting_completion' })
+
+      await executeMarkComplete(db, bookingId, 'u_v')
+
+      const rows = await db
+        .select()
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.action, 'booking.mark_complete'),
+            eq(auditLogs.entityId, bookingId),
+          ),
+        )
+      expect(rows).toHaveLength(1)
+      expect(rows[0]?.actorUserId).toBe('u_v')
+      const payload = rows[0]?.payload as Record<string, unknown>
+      expect(payload.previousState).toBe('awaiting_completion')
+      expect(payload.newState).toBe('completed')
+      expect(payload.autoCompleted).toBe(false)
+    })
+
+    it('rejects if booking is not in awaiting_completion state (confirmed)', async () => {
+      const { bookingId } = await seedBooking({ state: 'confirmed' })
+
+      await expect(
+        executeMarkComplete(db, bookingId, 'u_v'),
+      ).rejects.toThrow(VendorActionError)
+
+      await expect(
+        executeMarkComplete(db, bookingId, 'u_v'),
+      ).rejects.toThrow(/only awaiting_completion/i)
+
+      // Booking state unchanged
+      const [row] = await db
+        .select({ state: bookings.state })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+      expect(row?.state).toBe('confirmed')
+    })
+
+    it('rejects if booking is already completed', async () => {
+      const { bookingId } = await seedBooking({ state: 'completed' })
+
+      await expect(
+        executeMarkComplete(db, bookingId, 'u_v'),
+      ).rejects.toThrow(VendorActionError)
+    })
+
+    it('rejects if wrong vendor', async () => {
+      const { bookingId } = await seedBooking({ state: 'awaiting_completion' })
+
+      await expect(
+        executeMarkComplete(db, bookingId, 'u_other_v'),
+      ).rejects.toThrow(/does not own/i)
+
+      // Booking state unchanged
+      const [row] = await db
+        .select({ state: bookings.state })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+      expect(row?.state).toBe('awaiting_completion')
+    })
+
+    it('rejects if booking does not exist', async () => {
+      await expect(
+        executeMarkComplete(db, crypto.randomUUID(), 'u_v'),
+      ).rejects.toThrow(VendorActionError)
+    })
+  })
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Vendor-cancel
+  // ═══════════════════════════════════════════════════════════════════
+
+  describe('executeVendorCancel', () => {
+    it('transitions confirmed → cancelled_by_vendor', async () => {
+      const { bookingId } = await seedBooking({ state: 'confirmed' })
+
+      const result = await executeVendorCancel(
+        db,
+        bookingId,
+        'u_v',
+        'Customer requested date change',
+      )
+
+      expect(result.bookingId).toBe(bookingId)
+
+      const [row] = await db
+        .select({
+          state: bookings.state,
+          cancelledAt: bookings.cancelledAt,
+          cancellationReason: bookings.cancellationReason,
+        })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+
+      expect(row?.state).toBe('cancelled_by_vendor')
+      expect(row?.cancelledAt).toBeInstanceOf(Date)
+      expect(row?.cancellationReason).toBe('Customer requested date change')
+    })
+
+    it('transitions awaiting_completion → cancelled_by_vendor', async () => {
+      const { bookingId } = await seedBooking({ state: 'awaiting_completion' })
+
+      const result = await executeVendorCancel(
+        db,
+        bookingId,
+        'u_v',
+        'Weather emergency',
+      )
+
+      const [row] = await db
+        .select({ state: bookings.state })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+      expect(row?.state).toBe('cancelled_by_vendor')
+    })
+
+    it('creates full refund to Customer Refund balance', async () => {
+      const { bookingId } = await seedBooking({ state: 'confirmed', grossRupees: 5000 })
+
+      const result = await executeVendorCancel(
+        db,
+        bookingId,
+        'u_v',
+        'Equipment failure',
+      )
+
+      expect(result.refundAmountRupees).toBe(5000)
+      expect(await readRefundBalance('u_c')).toBe(5000)
+
+      // Verify the refund_requests row
+      const [reqRow] = await db
+        .select()
+        .from(refundRequests)
+        .where(eq(refundRequests.id, result.refundRequestId))
+      expect(reqRow?.reason).toBe('vendor_cancelled')
+      expect(reqRow?.state).toBe('credited')
+      expect(reqRow?.amount).toBe('5000.00')
+      expect(reqRow?.destination).toBe('refund_balance')
+      expect(reqRow?.policyWindowBasisSnapshot).toBe('vendor_cancelled')
+    })
+
+    it('decrements SLA score by 5.00', async () => {
+      const { bookingId } = await seedBooking({ state: 'confirmed' })
+
+      const scoreBefore = await readSlaScore('u_v')
+      expect(scoreBefore).toBe('100.00')
+
+      const result = await executeVendorCancel(
+        db,
+        bookingId,
+        'u_v',
+        'Cannot accommodate',
+      )
+
+      expect(result.slaScoreAfter).toBe('95.00')
+      expect(await readSlaScore('u_v')).toBe('95.00')
+    })
+
+    it('floors SLA score at 0 (never goes negative)', async () => {
+      // Set score to 3.00 before cancel
+      await db
+        .update(vendorProfiles)
+        .set({ responseTimeSlaScore: '3.00' })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+
+      const { bookingId } = await seedBooking({ state: 'confirmed' })
+
+      const result = await executeVendorCancel(
+        db,
+        bookingId,
+        'u_v',
+        'Force majeure',
+      )
+
+      expect(result.slaScoreAfter).toBe('0.00')
+      expect(await readSlaScore('u_v')).toBe('0.00')
+    })
+
+    it('requires reason text (rejects empty string)', async () => {
+      const { bookingId } = await seedBooking({ state: 'confirmed' })
+
+      await expect(
+        executeVendorCancel(db, bookingId, 'u_v', ''),
+      ).rejects.toThrow(/reason.*required/i)
+
+      // State unchanged
+      const [row] = await db
+        .select({ state: bookings.state })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+      expect(row?.state).toBe('confirmed')
+    })
+
+    it('requires reason text (rejects whitespace-only)', async () => {
+      const { bookingId } = await seedBooking({ state: 'confirmed' })
+
+      await expect(
+        executeVendorCancel(db, bookingId, 'u_v', '   \n\t  '),
+      ).rejects.toThrow(/reason.*required/i)
+    })
+
+    it('rejects if booking is already completed', async () => {
+      const { bookingId } = await seedBooking({ state: 'completed' })
+
+      await expect(
+        executeVendorCancel(db, bookingId, 'u_v', 'Too late'),
+      ).rejects.toThrow(VendorActionError)
+    })
+
+    it('rejects if booking is already cancelled', async () => {
+      const { bookingId } = await seedBooking({ state: 'cancelled_by_customer' })
+
+      await expect(
+        executeVendorCancel(db, bookingId, 'u_v', 'Double cancel'),
+      ).rejects.toThrow(VendorActionError)
+    })
+
+    it('rejects if wrong vendor', async () => {
+      const { bookingId } = await seedBooking({ state: 'confirmed' })
+
+      await expect(
+        executeVendorCancel(db, bookingId, 'u_other_v', 'Not my booking'),
+      ).rejects.toThrow(/does not own/i)
+    })
+
+    it('rejects if booking does not exist', async () => {
+      await expect(
+        executeVendorCancel(db, crypto.randomUUID(), 'u_v', 'Ghost booking'),
+      ).rejects.toThrow(VendorActionError)
+    })
+
+    it('writes a booking.vendor_cancel audit log entry', async () => {
+      const { bookingId } = await seedBooking({ state: 'confirmed', grossRupees: 3000 })
+
+      await executeVendorCancel(db, bookingId, 'u_v', 'Audit test reason')
+
+      const rows = await db
+        .select()
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.action, 'booking.vendor_cancel'),
+            eq(auditLogs.entityId, bookingId),
+          ),
+        )
+      expect(rows).toHaveLength(1)
+      expect(rows[0]?.actorUserId).toBe('u_v')
+      const payload = rows[0]?.payload as Record<string, unknown>
+      expect(payload.reason).toBe('Audit test reason')
+      expect(payload.refundAmountRupees).toBe(3000)
+      expect(payload.slaPenalty).toBe('5.00')
+      expect(payload.newState).toBe('cancelled_by_vendor')
+    })
+  })
+})

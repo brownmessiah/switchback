@@ -1,8 +1,10 @@
-import { and, eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
+import Link from 'next/link'
 import { headers } from 'next/headers'
 
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -15,6 +17,9 @@ import { db } from '@/db/client'
 import { availabilitySlots, bookings, experiences, users } from '@/db/schema'
 import { auth } from '@/lib/auth'
 
+import { MarkCompleteButton } from './mark-complete-button'
+import { VendorCancelButton } from './vendor-cancel-button'
+
 const STATE_VARIANTS: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
   confirmed: 'default',
   awaiting_completion: 'secondary',
@@ -23,6 +28,9 @@ const STATE_VARIANTS: Record<string, 'default' | 'secondary' | 'outline' | 'dest
   cancelled_by_vendor: 'destructive',
   disputed: 'destructive',
 }
+
+/** States in which the vendor can cancel. */
+const VENDOR_CANCELLABLE_STATES = new Set(['confirmed', 'awaiting_completion'])
 
 export default async function VendorBookingsPage() {
   const session = await auth.api.getSession({ headers: await headers() })
@@ -75,6 +83,7 @@ export default async function VendorBookingsPage() {
                   <TableHead>Guests</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -104,6 +113,21 @@ export default async function VendorBookingsPage() {
                       >
                         {row.state.replace(/_/g, ' ')}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Link href={`/vendor/bookings/${row.bookingId}`}>
+                          <Button variant="outline" size="sm">
+                            View
+                          </Button>
+                        </Link>
+                        {row.state === 'awaiting_completion' && (
+                          <MarkCompleteButton bookingId={row.bookingId} />
+                        )}
+                        {VENDOR_CANCELLABLE_STATES.has(row.state) && (
+                          <VendorCancelButton bookingId={row.bookingId} />
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

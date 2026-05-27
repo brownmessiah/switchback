@@ -11,6 +11,7 @@ export * from './admin-profiles'
 
 export * from './experiences'
 export * from './media-assets'
+export * from './availability-patterns'
 export * from './availability-slots'
 export * from './region-closures'
 export * from './slug-redirects'

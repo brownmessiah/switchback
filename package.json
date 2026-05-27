@@ -17,7 +17,10 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "dotenv -e .env.local -- tsx db/seed.ts"
+    "db:seed": "dotenv -e .env.local -- tsx db/seed.ts",
+    "i18n:check": "tsx scripts/i18n-check.ts",
+    "i18n:missing": "tsx scripts/i18n-missing-report.ts",
+    "i18n:merge": "tsx scripts/i18n-merge-translations.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.65",

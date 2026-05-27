@@ -48,7 +48,7 @@ const RAZORPAY_MOCK_SCRIPT = `
  * ```
  */
 export async function mockRazorpayCheckout(page: Page): Promise<void> {
-  await page.route('**/checkout.js', async (route) => {
+  await page.route('*://checkout.razorpay.com/**/checkout.js', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/javascript',

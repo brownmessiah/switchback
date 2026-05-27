@@ -14,6 +14,8 @@ import { execSync } from 'node:child_process'
 
 import postgres from 'postgres'
 
+import { e2eDbUrl } from './config'
+
 /**
  * Derives a connection URL pointing at the `postgres` maintenance
  * database (used for CREATE/DROP operations).
@@ -22,15 +24,6 @@ function maintenanceDbUrl(): string {
   const base = process.env.DATABASE_URL
   if (!base) throw new Error('DATABASE_URL env var is required')
   return base.replace(/\/[^/?]+(\?|$)/, '/postgres$1')
-}
-
-/**
- * Derives the E2E database URL from `DATABASE_URL`.
- */
-function e2eDbUrl(): string {
-  const base = process.env.DATABASE_URL
-  if (!base) throw new Error('DATABASE_URL env var is required')
-  return base.replace(/\/[^/?]+(\?|$)/, '/outvers_e2e$1')
 }
 
 const E2E_DB_NAME = 'outvers_e2e'
@@ -43,6 +36,12 @@ export async function resetDatabase(): Promise<void> {
   // 1. Connect to postgres maintenance database to manage the E2E DB
   const maintenance = postgres(maintenanceDbUrl(), { max: 1 })
   try {
+    // Guard: E2E_DB_NAME is a hardcoded const today, but assert its shape
+    // to prevent SQL injection if it ever becomes configurable.
+    if (!/^[a-z_]+$/.test(E2E_DB_NAME)) {
+      throw new Error(`Invalid E2E database name: ${E2E_DB_NAME}`)
+    }
+
     // Terminate existing connections to the E2E DB
     await maintenance`
       SELECT pg_terminate_backend(pg_stat_activity.pid)
@@ -51,7 +50,7 @@ export async function resetDatabase(): Promise<void> {
         AND pid <> pg_backend_pid()
     `
 
-    // Drop and recreate
+    // Drop and recreate — uses string interpolation with a validated const
     await maintenance.unsafe(`DROP DATABASE IF EXISTS ${E2E_DB_NAME}`)
     await maintenance.unsafe(`CREATE DATABASE ${E2E_DB_NAME}`)
   } finally {
@@ -66,8 +65,9 @@ export async function resetDatabase(): Promise<void> {
     timeout: 30_000,
   })
 
-  // 3. Run the seed script against the E2E database
-  execSync('pnpm db:seed', {
+  // 3. Run the seed script directly (bypass `pnpm db:seed` which wraps
+  //    with `dotenv -e .env.local`, overriding our DATABASE_URL).
+  execSync('npx tsx db/seed.ts', {
     env: { ...process.env, DATABASE_URL: dbUrl },
     stdio: 'pipe',
     timeout: 30_000,

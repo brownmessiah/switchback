@@ -15,6 +15,8 @@ import path from 'node:path'
 
 import postgres from 'postgres'
 
+import { e2eDbUrl } from './config'
+
 type Role = 'customer' | 'vendor' | 'admin'
 
 /** Seed user IDs — must match db/seed.ts */
@@ -31,17 +33,6 @@ const AUTH_DIR = path.resolve(__dirname, '../.auth')
  * In development (non-HTTPS) it drops the `__Secure-` prefix.
  */
 const SESSION_COOKIE_NAME = 'better-auth.session_token'
-
-/**
- * Derives the E2E database URL from `DATABASE_URL` by replacing the
- * database name component with `outvers_e2e`.
- */
-function e2eDbUrl(): string {
-  const base = process.env.DATABASE_URL
-  if (!base) throw new Error('DATABASE_URL env var is required')
-  // Replace the last path segment (database name) with outvers_e2e
-  return base.replace(/\/[^/?]+(\?|$)/, '/outvers_e2e$1')
-}
 
 /**
  * Injects a session for the given role's seed user.
@@ -71,7 +62,6 @@ export async function injectSession(role: Role): Promise<string> {
         NOW(),
         NOW()
       )
-      ON CONFLICT (id) DO NOTHING
     `
   } finally {
     await sql.end()

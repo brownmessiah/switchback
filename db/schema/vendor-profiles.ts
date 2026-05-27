@@ -40,6 +40,7 @@ export const vendorProfiles = pgTable('vendor_profiles', {
     .references(() => users.id, { onDelete: 'cascade' }),
   businessName: text('business_name').notNull(),
   slug: text('slug').notNull().unique(),
+  about: text('about'),
 
   // ADR-0007 — KYC state.
   kycTier: kycTierEnum('kyc_tier').default('phone').notNull(),

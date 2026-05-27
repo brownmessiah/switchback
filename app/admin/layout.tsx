@@ -8,6 +8,14 @@ import { adminProfiles } from '@/db/schema'
 import { auth } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 
+/*
+ * Child routes should call `requirePermission(db, userId, '<permission>')`
+ * from `@/lib/auth/permissions` to gate access to specific admin features.
+ * The layout only verifies admin_profiles row existence; per-page permission
+ * checks belong in the page/route handler (e.g., the Vendors page checks
+ * 'vendors', the Payouts page checks 'payouts').
+ */
+
 const NAV_ITEMS = [
   { href: '/admin/dashboard', label: 'Overview' },
   { href: '/admin/vendors', label: 'Vendors' },

@@ -1,7 +1,9 @@
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 
+import { db } from '@/db/client'
 import { auth } from '@/lib/auth'
+import { requireVendorProfile } from '@/lib/auth/permissions'
 
 import { VendorSidebar } from './vendor-sidebar'
 
@@ -14,6 +16,10 @@ export default async function VendorLayout({
   if (!session?.user) {
     redirect('/sign-in')
   }
+
+  // Gate: user must have a vendor_profiles row. Redirects to
+  // /vendor/onboarding if no vendor profile exists (per ADR-0006).
+  await requireVendorProfile(db, session.user.id)
 
   return (
     <div className="flex min-h-[80vh]">

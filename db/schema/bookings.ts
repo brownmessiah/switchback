@@ -20,6 +20,22 @@ import { users } from './users'
 import { payoutMethodEnum } from './vendor-profiles'
 
 /**
+ * Payout processing state per ADR-0016. Tracks admin approval flow
+ * for Vendor payouts. Only applies to completed Bookings.
+ *
+ *   pending     → default; awaiting payout processing
+ *   approved    → admin-approved; ready for Razorpay X disbursement
+ *   rejected    → admin-rejected with reason
+ *   held        → dispute-paused; payout timer frozen
+ */
+export const payoutStateEnum = pgEnum('payout_state', [
+  'pending',
+  'approved',
+  'rejected',
+  'held',
+])
+
+/**
  * Booking state machine per ADR-0003.
  *
  *   confirmed                  (after payment success, before start_at)
@@ -124,6 +140,12 @@ export const bookings = pgTable(
     payoutMethodSnapshot: payoutMethodEnum('payout_method_snapshot'),
     payoutDestinationSnapshot: jsonb('payout_destination_snapshot'),
 
+    // ADR-0016 — Payout processing state. Tracks the admin approval flow
+    // for Vendor payouts. Only meaningful for completed Bookings. Defaults
+    // to 'pending'; admin can approve/reject/hold.
+    payoutState: payoutStateEnum('payout_state').default('pending').notNull(),
+    payoutRejectionReason: text('payout_rejection_reason'),
+
     // Optional ref — set when the Customer chose to book from a TripGroup itinerary
     tripGroupId: uuid('trip_group_id'),
 
@@ -162,6 +184,7 @@ export const bookings = pgTable(
     index('bookings_by_experience').on(t.experienceId),
     index('bookings_by_slot').on(t.slotId),
     index('bookings_by_state').on(t.state),
+    index('bookings_by_payout_state').on(t.payoutState),
   ],
 )
 

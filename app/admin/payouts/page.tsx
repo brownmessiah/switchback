@@ -1,7 +1,7 @@
 import { eq, inArray } from 'drizzle-orm'
 
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -13,17 +13,23 @@ import {
 import { db } from '@/db/client'
 import { bookings, experiences, vendorProfiles } from '@/db/schema'
 
+import { PayoutActionsCell } from './payout-actions-cell'
+
 export default async function AdminPayoutsPage() {
   const rows = await db
     .select({
       bookingId: bookings.id,
       state: bookings.state,
+      payoutState: bookings.payoutState,
       gross: bookings.grossTotalSnapshot,
       commissionRate: bookings.commissionRateSnapshot,
       tdsAmount: bookings.tdsAmountSnapshot,
       vendorName: vendorProfiles.businessName,
+      vendorUserId: vendorProfiles.userId,
+      manualPayoutsRemaining: vendorProfiles.manualPayoutsRemaining,
       expTitle: experiences.title,
       completedAt: bookings.completedAt,
+      payoutRejectionReason: bookings.payoutRejectionReason,
     })
     .from(bookings)
     .innerJoin(experiences, eq(bookings.experienceId, experiences.id))
@@ -31,12 +37,17 @@ export default async function AdminPayoutsPage() {
     .where(inArray(bookings.state, ['completed', 'awaiting_completion']))
     .orderBy(bookings.completedAt)
 
+  const pendingCount = rows.filter((r) => r.payoutState === 'pending').length
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Payout queue</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {rows.length} booking{rows.length === 1 ? '' : 's'} pending payout
+          {rows.length} booking{rows.length === 1 ? '' : 's'} in queue
+          {pendingCount > 0 && (
+            <> ({pendingCount} pending approval)</>
+          )}
         </p>
       </div>
 
@@ -57,6 +68,7 @@ export default async function AdminPayoutsPage() {
                   <TableHead>TDS</TableHead>
                   <TableHead>Net</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -70,7 +82,9 @@ export default async function AdminPayoutsPage() {
                     <TableRow key={row.bookingId}>
                       <TableCell className="font-medium">{row.vendorName}</TableCell>
                       <TableCell className="text-sm">{row.expTitle}</TableCell>
-                      <TableCell className="text-sm">₹{gross.toLocaleString('en-IN')}</TableCell>
+                      <TableCell className="text-sm">
+                        ₹{gross.toLocaleString('en-IN')}
+                      </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         -₹{commission.toLocaleString('en-IN')}
                       </TableCell>
@@ -84,6 +98,13 @@ export default async function AdminPayoutsPage() {
                         <Badge variant="outline" className="capitalize text-xs">
                           {row.state.replace(/_/g, ' ')}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <PayoutActionsCell
+                          bookingId={row.bookingId}
+                          payoutState={row.payoutState}
+                          manualPayoutsRemaining={row.manualPayoutsRemaining}
+                        />
                       </TableCell>
                     </TableRow>
                   )

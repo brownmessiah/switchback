@@ -1,12 +1,14 @@
 import { eq } from 'drizzle-orm'
 import { headers } from 'next/headers'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { db } from '@/db/client'
 import { adminProfiles } from '@/db/schema'
 import { auth } from '@/lib/auth'
-import { cn } from '@/lib/utils'
+
+import { getAdminBadgeCounts } from './admin-badge-counts'
+import { filterNavByPermissions } from './admin-nav'
+import { AdminSidebar } from './admin-sidebar'
 
 /*
  * Child routes should call `requirePermission(db, userId, '<permission>')`
@@ -15,12 +17,6 @@ import { cn } from '@/lib/utils'
  * checks belong in the page/route handler (e.g., the Vendors page checks
  * 'vendors', the Payouts page checks 'payouts').
  */
-
-const NAV_ITEMS = [
-  { href: '/admin/dashboard', label: 'Overview' },
-  { href: '/admin/vendors', label: 'Vendors' },
-  { href: '/admin/payouts', label: 'Payouts' },
-]
 
 export default async function AdminLayout({
   children,
@@ -38,25 +34,15 @@ export default async function AdminLayout({
 
   if (!admin) notFound()
 
+  const [groups, badgeCounts] = await Promise.all([
+    Promise.resolve(filterNavByPermissions(admin.permissions)),
+    getAdminBadgeCounts(),
+  ])
+
   return (
-    <div className="min-h-[80vh]">
-      <div className="border-b">
-        <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 sm:px-6">
-          <span className="py-3 text-sm font-semibold text-primary">Admin</span>
-          <nav className="flex gap-4">
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="border-b-2 border-transparent py-3 text-sm text-muted-foreground hover:text-foreground"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      </div>
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">{children}</main>
+    <div className="flex min-h-[80vh]">
+      <AdminSidebar groups={groups} badgeCounts={badgeCounts} />
+      <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8">{children}</main>
     </div>
   )
 }

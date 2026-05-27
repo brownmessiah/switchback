@@ -1,7 +1,9 @@
 import { defineConfig, devices } from '@playwright/test'
+import path from 'node:path'
+
+const AUTH_DIR = path.resolve(__dirname, 'tests/e2e/.auth')
 
 export default defineConfig({
-  testDir: './tests/e2e',
   timeout: 30_000,
   expect: { timeout: 5_000 },
   fullyParallel: true,
@@ -18,6 +20,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     locale: 'en-IN',
     timezoneId: 'Asia/Kolkata',
+    ...devices['Desktop Chrome'],
   },
   webServer: {
     command: 'pnpm dev',
@@ -26,6 +29,58 @@ export default defineConfig({
     timeout: 120_000,
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    // ── Setup: reset DB + inject auth sessions ──────────────────
+    {
+      name: 'setup',
+      testDir: './tests/e2e/setup',
+      testMatch: /global-setup\.ts/,
+    },
+
+    // ── Unauthenticated: no storage state ───────────────────────
+    {
+      name: 'unauthenticated',
+      testDir: './tests/e2e/specs/unauthenticated',
+      dependencies: ['setup'],
+    },
+
+    // ── Customer: customer session injected ─────────────────────
+    {
+      name: 'customer',
+      testDir: './tests/e2e/specs/customer',
+      dependencies: ['setup'],
+      use: {
+        storageState: path.join(AUTH_DIR, 'customer-storage.json'),
+      },
+    },
+
+    // ── Vendor: vendor session injected ─────────────────────────
+    {
+      name: 'vendor',
+      testDir: './tests/e2e/specs/vendor',
+      dependencies: ['setup'],
+      use: {
+        storageState: path.join(AUTH_DIR, 'vendor-storage.json'),
+      },
+    },
+
+    // ── Admin: admin session injected ───────────────────────────
+    {
+      name: 'admin',
+      testDir: './tests/e2e/specs/admin',
+      dependencies: ['setup'],
+      use: {
+        storageState: path.join(AUTH_DIR, 'admin-storage.json'),
+      },
+    },
+
+    // ── Cross-surface: admin session, depends on admin ──────────
+    {
+      name: 'cross-surface',
+      testDir: './tests/e2e/specs/cross-surface',
+      dependencies: ['admin'],
+      use: {
+        storageState: path.join(AUTH_DIR, 'admin-storage.json'),
+      },
+    },
   ],
 })

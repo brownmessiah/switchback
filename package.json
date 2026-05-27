@@ -53,6 +53,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@electric-sql/pglite": "^0.4.5",
     "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4",

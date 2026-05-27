@@ -611,6 +611,20 @@ describe('RAZORPAY_TEST_MODE forces demo stub even with real creds', () => {
     // The client should not be the demo stub — it should be a real Razorpay instance
     // We verify this by checking it's a different object type than what the stub produces
   })
+
+  it('throws when RAZORPAY_TEST_MODE=true AND NODE_ENV=production', () => {
+    process.env['RAZORPAY_TEST_MODE'] = 'true'
+    const envRecord = process.env as Record<string, string | undefined>
+    const origNodeEnv = envRecord['NODE_ENV']
+    envRecord['NODE_ENV'] = 'production'
+    try {
+      expect(() => getRazorpayClient()).toThrow(
+        /RAZORPAY_TEST_MODE must not be enabled in production/,
+      )
+    } finally {
+      envRecord['NODE_ENV'] = origNodeEnv
+    }
+  })
 })
 
 describe('cached-client fallback in createOrder/capturePayment/createRefund', () => {

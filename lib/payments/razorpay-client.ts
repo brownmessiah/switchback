@@ -221,6 +221,9 @@ export function getRazorpayClient(opts: GetClientOpts = {}): RazorpaySdkLike {
   // present. This lets the full app run as a real server against fake
   // Razorpay responses during Playwright / integration tests.
   if (process.env['RAZORPAY_TEST_MODE'] === 'true') {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('RAZORPAY_TEST_MODE must not be enabled in production')
+    }
     cachedClient = makeDemoStub()
     return cachedClient
   }

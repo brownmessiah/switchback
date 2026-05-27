@@ -1,5 +1,5 @@
 import { eq, sql } from 'drizzle-orm'
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import { auditLogs } from '@/db/schema/audit-logs'
 import { experiences } from '@/db/schema/experiences'

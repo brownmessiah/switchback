@@ -127,5 +127,19 @@ describe('verifyWebhookSignature', () => {
         verifyWebhookSignature('any-body', 'wrong-signature', 'wrong-secret'),
       ).toBe(false)
     })
+
+    it('throws when RAZORPAY_TEST_MODE=true AND NODE_ENV=production', () => {
+      process.env['RAZORPAY_TEST_MODE'] = 'true'
+      const envRecord = process.env as Record<string, string | undefined>
+      const origNodeEnv = envRecord['NODE_ENV']
+      envRecord['NODE_ENV'] = 'production'
+      try {
+        expect(() =>
+          verifyWebhookSignature('any-body', 'any-sig', 'any-secret'),
+        ).toThrow(/RAZORPAY_TEST_MODE must not be enabled in production/)
+      } finally {
+        envRecord['NODE_ENV'] = origNodeEnv
+      }
+    })
   })
 })

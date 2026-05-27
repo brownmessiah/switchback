@@ -1,5 +1,7 @@
 import type { ReactElement } from 'react'
 
+import { getTranslations, setRequestLocale } from 'next-intl/server'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -21,6 +23,7 @@ import {
 export const revalidate = 60
 
 interface PageProps {
+  params: Promise<{ locale: string }>
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
@@ -57,8 +60,14 @@ const ACTIVITIES = [
 ]
 
 export default async function SearchPage({
+  params,
   searchParams,
 }: PageProps): Promise<ReactElement> {
+  const { locale } = await params
+  setRequestLocale(locale)
+
+  const t = await getTranslations({ locale, namespace: 'SearchPage' })
+
   const rawParams = await searchParams
   const parsed = parseSearchParams(rawParams)
   const filtered = isFilteredSearch(parsed)
@@ -74,10 +83,10 @@ export default async function SearchPage({
 
       <header className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          {parsed.q ? `Results for "${parsed.q}"` : 'Explore experiences'}
+          {parsed.q ? t('heading.withQuery', { query: parsed.q }) : t('heading.default')}
         </h1>
         <p className="mt-2 text-muted-foreground">
-          {hits.length} experience{hits.length === 1 ? '' : 's'} found
+          {t('results.count', { count: hits.length })}
         </p>
       </header>
 
@@ -88,13 +97,13 @@ export default async function SearchPage({
             {parsed.q && <input type="hidden" name="q" value={parsed.q} />}
 
             <div className="space-y-2">
-              <Label htmlFor="activity">Activity</Label>
+              <Label htmlFor="activity">{t('filters.activity')}</Label>
               <Select name="activity" defaultValue={parsed.activity ?? ''}>
                 <SelectTrigger id="activity">
-                  <SelectValue placeholder="All activities" />
+                  <SelectValue placeholder={t('filters.allActivities')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All activities</SelectItem>
+                  <SelectItem value="all">{t('filters.allActivities')}</SelectItem>
                   {ACTIVITIES.map((a) => (
                     <SelectItem key={a.value} value={a.value}>
                       {a.label}
@@ -105,23 +114,23 @@ export default async function SearchPage({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="sort">Sort by</Label>
+              <Label htmlFor="sort">{t('filters.sortBy')}</Label>
               <Select name="sort" defaultValue={parsed.sort ?? 'relevance'}>
                 <SelectTrigger id="sort">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="relevance">Relevance</SelectItem>
-                  <SelectItem value="price_asc">Price: Low to High</SelectItem>
-                  <SelectItem value="price_desc">Price: High to Low</SelectItem>
-                  <SelectItem value="newest">Newest</SelectItem>
+                  <SelectItem value="relevance">{t('filters.relevance')}</SelectItem>
+                  <SelectItem value="price_asc">{t('filters.priceLowHigh')}</SelectItem>
+                  <SelectItem value="price_desc">{t('filters.priceHighLow')}</SelectItem>
+                  <SelectItem value="newest">{t('filters.newest')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="minPrice">Min ₹</Label>
+                <Label htmlFor="minPrice">{t('filters.minPrice')}</Label>
                 <Input
                   id="minPrice"
                   type="number"
@@ -132,7 +141,7 @@ export default async function SearchPage({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="maxPrice">Max ₹</Label>
+                <Label htmlFor="maxPrice">{t('filters.maxPrice')}</Label>
                 <Input
                   id="maxPrice"
                   type="number"
@@ -145,7 +154,7 @@ export default async function SearchPage({
             </div>
 
             <Button type="submit" className="w-full">
-              Apply filters
+              {t('filters.applyFilters')}
             </Button>
           </form>
         </aside>
@@ -154,9 +163,9 @@ export default async function SearchPage({
         <section aria-label="Search results" className="lg:col-span-3">
           {hits.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center">
-              <p className="text-lg font-medium">No experiences found</p>
+              <p className="text-lg font-medium">{t('results.empty')}</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Try adjusting your filters or search for something else.
+                {t('results.emptyHint')}
               </p>
             </div>
           ) : (
@@ -183,16 +192,17 @@ export default async function SearchPage({
   )
 }
 
-export async function generateMetadata(): Promise<{
+export async function generateMetadata({ params }: PageProps): Promise<{
   title: string
   description: string
   alternates: { canonical: string }
 }> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'SearchPage' })
   const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
   return {
-    title: 'Search Experiences · Outvers',
-    description:
-      'Search and filter adventure Experiences across India. Rafting, paragliding, trekking, scuba diving, and more from KYC-verified Vendors.',
+    title: t('metadata.title'),
+    description: t('metadata.description'),
     alternates: {
       canonical: `${baseUrl}/search`,
     },

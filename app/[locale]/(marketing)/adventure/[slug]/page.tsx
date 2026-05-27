@@ -3,6 +3,7 @@ import type { ReactElement } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 import {
   Accordion,
@@ -22,13 +23,17 @@ import { itemList } from '@/lib/seo/schemas/item-list'
 export const revalidate = 60
 
 interface PageProps {
-  params: Promise<{ slug: string }>
+  params: Promise<{ locale: string; slug: string }>
 }
 
 export default async function ActivityCityCollectionPage({
   params,
 }: PageProps): Promise<ReactElement> {
-  const { slug } = await params
+  const { locale, slug } = await params
+  setRequestLocale(locale)
+
+  const t = await getTranslations({ locale, namespace: 'AdventurePage' })
+  const tCommon = await getTranslations({ locale, namespace: 'Common' })
 
   const data = await loadActivityCityCollection(db, { lng: 'en', slug })
   if (!data) notFound()
@@ -42,7 +47,7 @@ export default async function ActivityCityCollectionPage({
 
   const itemListJson = data.experiences.length
     ? itemList({
-        name: `Top ${activityDisplay} Experiences in ${regionDisplay}`,
+        name: t('itemList.name', { activity: activityDisplay, region: regionDisplay }),
         items: data.experiences.map((exp) => ({
           name: exp.title,
           url: `${baseUrl}/experience/${exp.slug}`,
@@ -51,24 +56,21 @@ export default async function ActivityCityCollectionPage({
       })
     : null
   const breadcrumbsJson = breadcrumbList([
-    { name: 'Home', url: `${baseUrl}/` },
+    { name: tCommon('breadcrumb.home'), url: `${baseUrl}/` },
     { name: pageTitle, url: canonicalUrl },
   ])
   const faqItems = [
     {
-      question: `Is ${activityDisplay} in ${regionDisplay} safe?`,
-      answer:
-        'All Outvers-listed Experiences are run by KYC-verified Vendors. Safety-stack Experiences require a trusted contact and feature in-trip check-in pings.',
+      question: t('faq.safetyQuestion', { activity: activityDisplay, region: regionDisplay }),
+      answer: t('faq.safetyAnswer'),
     },
     {
-      question: `When is the best time for ${activityDisplay} in ${regionDisplay}?`,
-      answer:
-        'Refer to each Experience listing for seasonality and region-closure windows. Monsoon and weather closures are surfaced inline at the booking step.',
+      question: t('faq.bestTimeQuestion', { activity: activityDisplay, region: regionDisplay }),
+      answer: t('faq.bestTimeAnswer'),
     },
     {
-      question: 'What is the cancellation policy?',
-      answer:
-        'Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours.',
+      question: t('faq.cancellationQuestion'),
+      answer: t('faq.cancellationAnswer'),
     },
   ]
   const faqJson = faqPage(faqItems)
@@ -95,7 +97,7 @@ export default async function ActivityCityCollectionPage({
         <ol className="flex items-center gap-1.5 text-sm text-muted-foreground">
           <li>
             <Link href="/" className="hover:text-foreground">
-              Home
+              {tCommon('breadcrumb.home')}
             </Link>
           </li>
           <li aria-hidden="true">/</li>
@@ -125,21 +127,19 @@ export default async function ActivityCityCollectionPage({
           {pageTitle}
         </h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
-          Book {activityDisplay.toLowerCase()} experiences in {regionDisplay} from
-          KYC-verified vendors. Transparent pricing, real-time slot availability,
-          and a 24-hour refund SLA.
+          {t('hero.description', { activity: activityDisplay.toLowerCase(), region: regionDisplay })}
         </p>
       </header>
 
       {/* Experiences grid */}
-      <section aria-label={`${activityDisplay} Experiences`} className="mb-12">
+      <section aria-label={t('experiences.sectionLabel', { activity: activityDisplay })} className="mb-12">
         {data.experiences.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center">
             <p className="text-lg font-medium">
-              No {activityDisplay.toLowerCase()} experiences in {regionDisplay} yet
+              {t('experiences.emptyTitle', { activity: activityDisplay.toLowerCase(), region: regionDisplay })}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Check back soon — new listings added regularly.
+              {t('experiences.emptySubtitle')}
             </p>
           </div>
         ) : (
@@ -164,7 +164,7 @@ export default async function ActivityCityCollectionPage({
 
       {/* FAQ */}
       <section>
-        <h2 className="mb-4 text-xl font-semibold">Frequently asked questions</h2>
+        <h2 className="mb-4 text-xl font-semibold">{t('faq.heading')}</h2>
         <Accordion multiple className="w-full">
           {faqItems.map((item, i) => (
             <AccordionItem key={i} value={`faq-${i}`}>
@@ -187,21 +187,23 @@ export async function generateMetadata({ params }: PageProps): Promise<{
   description: string
   alternates: { canonical: string }
 }> {
-  const { slug } = await params
+  const { locale, slug } = await params
   const data = await loadActivityCityCollection(db, { lng: 'en', slug })
   if (!data) {
+    const tCommon = await getTranslations({ locale, namespace: 'Common' })
     return {
-      title: 'Not found · Outvers',
+      title: tCommon('notFound'),
       description: '',
       alternates: { canonical: '' },
     }
   }
+  const t = await getTranslations({ locale, namespace: 'AdventurePage' })
   const activityDisplay = data.activity.displayName.en
   const regionDisplay = data.region.displayName.en
   const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
   return {
-    title: `${activityDisplay} in ${regionDisplay} · Outvers`,
-    description: `Book ${activityDisplay} Experiences in ${regionDisplay} from KYC-verified Vendors. Transparent pricing, 24-hour refund SLA, real-time slot availability.`,
+    title: t('metadata.title', { activity: activityDisplay, region: regionDisplay }),
+    description: t('metadata.description', { activity: activityDisplay, region: regionDisplay }),
     alternates: {
       canonical: `${baseUrl}/adventure/${slug}`,
     },

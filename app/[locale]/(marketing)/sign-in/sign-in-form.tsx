@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -20,6 +21,7 @@ type Mode = 'signin' | 'signup'
 
 export function SignInForm() {
   const router = useRouter()
+  const t = useTranslations('SignInPage.form')
 
   const [mode, setMode] = useState<Mode>('signin')
   const [email, setEmail] = useState('')
@@ -40,14 +42,14 @@ export function SignInForm() {
       })
 
       if (res.error) {
-        setError(res.error.message ?? 'Sign in failed. Check your credentials.')
+        setError(res.error.message ?? t('signInError'))
         return
       }
 
       router.push('/')
       router.refresh()
     } catch {
-      setError('Network error. Please try again.')
+      setError(t('networkError'))
     } finally {
       setLoading(false)
     }
@@ -66,14 +68,14 @@ export function SignInForm() {
       })
 
       if (res.error) {
-        setError(res.error.message ?? 'Sign up failed. Try a different email.')
+        setError(res.error.message ?? t('signUpError'))
         return
       }
 
       router.push('/')
       router.refresh()
     } catch {
-      setError('Network error. Please try again.')
+      setError(t('networkError'))
     } finally {
       setLoading(false)
     }
@@ -83,12 +85,12 @@ export function SignInForm() {
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">
-          {mode === 'signin' ? 'Sign in to Outvers' : 'Create an account'}
+          {mode === 'signin' ? t('signInTitle') : t('signUpTitle')}
         </CardTitle>
         <CardDescription>
           {mode === 'signin'
-            ? 'Enter your email to continue'
-            : 'Sign up to book adventures'}
+            ? t('signInSubtitle')
+            : t('signUpSubtitle')}
         </CardDescription>
       </CardHeader>
 
@@ -99,11 +101,11 @@ export function SignInForm() {
         >
           {mode === 'signup' && (
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{t('nameLabel')}</Label>
               <Input
                 id="name"
                 type="text"
-                placeholder="Your name"
+                placeholder={t('namePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoFocus
@@ -112,11 +114,11 @@ export function SignInForm() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('emailLabel')}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="you@example.com"
+              placeholder={t('emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -125,11 +127,11 @@ export function SignInForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t('passwordLabel')}</Label>
             <Input
               id="password"
               type="password"
-              placeholder="At least 8 characters"
+              placeholder={t('passwordPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -147,10 +149,10 @@ export function SignInForm() {
             disabled={loading || !email || password.length < 8}
           >
             {loading
-              ? 'Please wait...'
+              ? t('loading')
               : mode === 'signin'
-                ? 'Sign in'
-                : 'Create account'}
+                ? t('signInButton')
+                : t('signUpButton')}
           </Button>
 
           <Separator />
@@ -158,24 +160,24 @@ export function SignInForm() {
           <p className="text-center text-sm text-muted-foreground">
             {mode === 'signin' ? (
               <>
-                New here?{' '}
+                {t('newHere')}{' '}
                 <button
                   type="button"
                   className="font-medium text-foreground underline-offset-4 hover:underline"
                   onClick={() => { setMode('signup'); setError('') }}
                 >
-                  Create an account
+                  {t('createAccount')}
                 </button>
               </>
             ) : (
               <>
-                Already have an account?{' '}
+                {t('alreadyHaveAccount')}{' '}
                 <button
                   type="button"
                   className="font-medium text-foreground underline-offset-4 hover:underline"
                   onClick={() => { setMode('signin'); setError('') }}
                 >
-                  Sign in
+                  {t('signInLink')}
                 </button>
               </>
             )}

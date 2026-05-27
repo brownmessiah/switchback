@@ -46,3 +46,4 @@ yarn-error.log*
 next-env.d.ts
 tests/e2e/screenshots/
 .gstack/
+.worktrees/

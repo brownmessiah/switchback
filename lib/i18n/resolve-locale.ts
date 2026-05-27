@@ -38,11 +38,18 @@ export function resolveLocale(input: LocaleResolutionInput): SupportedLocale {
     return input.cookieLocale
   }
 
-  // 3. Accept-Language header
+  // 3. Accept-Language header (sorted by quality value per RFC 7231 §5.3.5)
   if (input.acceptLanguage) {
     const match = input.acceptLanguage
       .split(',')
-      .map((part) => part.split(';')[0].trim().split('-')[0])
+      .map((part) => {
+        const [lang, ...params] = part.trim().split(';')
+        const qParam = params.find((p) => p.trim().startsWith('q='))
+        const q = qParam ? parseFloat(qParam.trim().slice(2)) : 1.0
+        return { code: lang.trim().split('-')[0], q }
+      })
+      .sort((a, b) => b.q - a.q)
+      .map(({ code }) => code)
       .find((code): code is SupportedLocale => isValidLocale(code))
     if (match) return match
   }

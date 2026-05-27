@@ -91,6 +91,26 @@ describe('resolveLocale()', () => {
         }),
       ).toBe('en')
     })
+
+    it('respects quality-value ordering (higher q wins)', () => {
+      expect(
+        resolveLocale({
+          requestLocale: undefined,
+          cookieLocale: undefined,
+          acceptLanguage: 'en-US;q=0.5, hi-IN;q=0.9',
+        }),
+      ).toBe('hi')
+    })
+
+    it('treats missing q as 1.0 (implicit highest priority)', () => {
+      expect(
+        resolveLocale({
+          requestLocale: undefined,
+          cookieLocale: undefined,
+          acceptLanguage: 'hi-IN, en-US;q=0.9',
+        }),
+      ).toBe('hi')
+    })
   })
 
   describe('priority 4: default fallback', () => {

@@ -7,7 +7,7 @@
  * For server components, use getLocale() from next-intl/server instead.
  */
 
-import { NextIntlClientProvider, useLocale } from 'next-intl'
+import { NextIntlClientProvider } from 'next-intl'
 import { useRouter, usePathname } from 'next/navigation'
 import {
   createContext,

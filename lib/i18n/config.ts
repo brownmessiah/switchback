@@ -39,7 +39,8 @@ export function getLocaleFromCookie(): SupportedLocale {
 
 /** Set the locale cookie (max-age 1 year, SameSite=Lax). */
 export function setLocaleCookie(locale: SupportedLocale): void {
-  document.cookie = `locale=${locale};path=/;max-age=31536000;SameSite=Lax`
+  const secure = typeof location !== 'undefined' && location.protocol === 'https:' ? ';Secure' : ''
+  document.cookie = `locale=${locale};path=/;max-age=31536000;SameSite=Lax${secure}`
 }
 
 /**

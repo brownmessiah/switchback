@@ -67,7 +67,7 @@ export async function requirePermission(
     .where(eq(adminProfiles.userId, userId))
     .limit(1)
 
-  if (!admin || !admin.permissions.includes(permission)) {
+  if (!admin || !(admin.permissions.includes('*') || admin.permissions.includes(permission))) {
     notFound()
   }
 }

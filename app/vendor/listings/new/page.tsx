@@ -81,7 +81,6 @@ export default function NewListingPage() {
       }
 
       router.push('/vendor/listings')
-      router.refresh()
     } catch {
       setError('Something went wrong. Please try again.')
     } finally {

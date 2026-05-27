@@ -21,20 +21,7 @@ export type BlogActionResult =
 
 // ── Slug generation ─────────────────────────────────────────────────
 
-/**
- * Generate a URL-safe slug from a title.
- * - Lowercases, strips non-alphanumeric (except spaces/hyphens),
- *   collapses consecutive hyphens, trims leading/trailing hyphens.
- */
-export function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/[\s]+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-}
+import { generateSlug } from './slug-utils'
 
 /**
  * Generate a unique slug by appending a numeric suffix when collisions

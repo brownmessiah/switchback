@@ -38,7 +38,7 @@ export async function resetDatabase(): Promise<void> {
   try {
     // Guard: E2E_DB_NAME is a hardcoded const today, but assert its shape
     // to prevent SQL injection if it ever becomes configurable.
-    if (!/^[a-z_]+$/.test(E2E_DB_NAME)) {
+    if (!/^[a-z0-9_]+$/.test(E2E_DB_NAME)) {
       throw new Error(`Invalid E2E database name: ${E2E_DB_NAME}`)
     }
 
@@ -59,7 +59,7 @@ export async function resetDatabase(): Promise<void> {
 
   // 2. Run drizzle-kit push against the E2E database
   const dbUrl = e2eDbUrl()
-  execSync('pnpm db:push', {
+  execSync('npx drizzle-kit push --force', {
     env: { ...process.env, DATABASE_URL: dbUrl },
     stdio: 'pipe',
     timeout: 30_000,

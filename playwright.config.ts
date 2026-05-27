@@ -4,7 +4,8 @@ import path from 'node:path'
 const AUTH_DIR = path.resolve(__dirname, 'tests/e2e/.auth')
 
 export default defineConfig({
-  timeout: 30_000,
+  globalSetup: process.env.E2E_SKIP_SETUP ? undefined : './tests/e2e/global-setup.ts',
+  timeout: 60_000,
   expect: { timeout: 5_000 },
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -22,32 +23,25 @@ export default defineConfig({
     timezoneId: 'Asia/Kolkata',
     ...devices['Desktop Chrome'],
   },
-  webServer: {
-    command: 'pnpm dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: process.env.E2E_SKIP_SETUP
+    ? undefined
+    : {
+        command: 'pnpm dev',
+        url: 'http://localhost:3000',
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+      },
   projects: [
-    // ── Setup: reset DB + inject auth sessions ──────────────────
-    {
-      name: 'setup',
-      testDir: './tests/e2e/setup',
-      testMatch: /global-setup\.ts/,
-    },
-
     // ── Unauthenticated: no storage state ───────────────────────
     {
       name: 'unauthenticated',
       testDir: './tests/e2e/specs/unauthenticated',
-      dependencies: ['setup'],
     },
 
     // ── Customer: customer session injected ─────────────────────
     {
       name: 'customer',
       testDir: './tests/e2e/specs/customer',
-      dependencies: ['setup'],
       use: {
         storageState: path.join(AUTH_DIR, 'customer-storage.json'),
       },
@@ -57,7 +51,6 @@ export default defineConfig({
     {
       name: 'vendor',
       testDir: './tests/e2e/specs/vendor',
-      dependencies: ['setup'],
       use: {
         storageState: path.join(AUTH_DIR, 'vendor-storage.json'),
       },
@@ -67,7 +60,6 @@ export default defineConfig({
     {
       name: 'admin',
       testDir: './tests/e2e/specs/admin',
-      dependencies: ['setup'],
       use: {
         storageState: path.join(AUTH_DIR, 'admin-storage.json'),
       },

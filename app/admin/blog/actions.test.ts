@@ -10,9 +10,9 @@ import {
   executeCreateBlogPost,
   executeUpdateBlogPost,
   executeDeleteBlogPost,
-  generateSlug,
   generateUniqueSlug,
 } from './actions'
+import { generateSlug } from './slug-utils'
 
 // ── Test helpers ────────────────────────────────────────────────────
 

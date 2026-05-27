@@ -9,10 +9,8 @@ import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 
-import {
-  executeSubmitVendorResponse,
-  computeAverageRating,
-} from './actions'
+import { executeSubmitVendorResponse } from './actions'
+import { computeAverageRating } from './utils'
 
 describe('executeSubmitVendorResponse', () => {
   let db: TestDB

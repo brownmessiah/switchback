@@ -83,8 +83,9 @@ export function filterNavByPermissions(
   permissions: readonly string[],
 ): readonly AdminNavGroup[] {
   const permSet = new Set(permissions)
+  const isFullAdmin = permSet.has('*')
   return ADMIN_NAV_GROUPS.map((group) => ({
     ...group,
-    items: group.items.filter((item) => permSet.has(item.permission)),
+    items: group.items.filter((item) => isFullAdmin || permSet.has(item.permission)),
   })).filter((group) => group.items.length > 0)
 }

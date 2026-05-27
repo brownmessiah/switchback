@@ -125,7 +125,7 @@ export default async function VendorDashboardPage() {
           data={data.revenueTrend}
           color="hsl(142, 71%, 45%)"
           type="bar"
-          formatValue={(v) => `₹${Math.floor(v).toLocaleString('en-IN')}`}
+          formatAs="currency"
         />
       </div>
 

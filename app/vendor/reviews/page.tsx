@@ -8,7 +8,7 @@ import { db } from '@/db/client'
 import { experiences, reviews, users } from '@/db/schema'
 import { auth } from '@/lib/auth'
 
-import { computeAverageRating } from './actions'
+import { computeAverageRating } from './utils'
 import { VendorResponseForm } from './vendor-response-form'
 
 export default async function VendorReviewsPage() {

@@ -17,6 +17,19 @@ import postgres from 'postgres'
 
 import { e2eDbUrl } from './config'
 
+async function signSessionToken(token: string, secret: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  )
+  const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(token))
+  const b64 = Buffer.from(signature).toString('base64')
+  return `${token}.${b64}`
+}
+
 type Role = 'customer' | 'vendor' | 'admin'
 
 /** Seed user IDs — must match db/seed.ts */
@@ -72,6 +85,11 @@ export async function injectSession(role: Role): Promise<string> {
     fs.mkdirSync(AUTH_DIR, { recursive: true })
   }
 
+  // Sign the token using HMAC-SHA256 (matching better-auth's makeSignature)
+  const secret = process.env.BETTER_AUTH_SECRET
+  if (!secret) throw new Error('BETTER_AUTH_SECRET env var is required for session signing')
+  const signedToken = await signSessionToken(token, secret)
+
   // Derive the base URL for the cookie domain
   const baseURL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
   const url = new URL(baseURL)
@@ -82,7 +100,7 @@ export async function injectSession(role: Role): Promise<string> {
     cookies: [
       {
         name: SESSION_COOKIE_NAME,
-        value: token,
+        value: signedToken,
         domain: url.hostname,
         path: '/',
         expires: Math.floor(expiresAt.getTime() / 1000),

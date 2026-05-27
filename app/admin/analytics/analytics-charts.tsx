@@ -87,7 +87,7 @@ export function RevenueTrendChart({ data }: RevenueTrendChartProps) {
                 tickFormatter={(v: number) => `₹${(v / 1000).toFixed(0)}k`}
               />
               <Tooltip
-                content={({ active, payload }: { active?: boolean; payload?: Array<{ payload: unknown }> }) => {
+                content={({ active, payload }: { active?: boolean; payload?: ReadonlyArray<{ payload?: unknown }> }) => {
                   if (!active || !payload?.length) return null
                   const point = payload[0]!.payload as MonthDataPoint & { label: string }
                   return (
@@ -148,7 +148,7 @@ export function BookingVolumeChart({ data }: BookingVolumeChartProps) {
                 allowDecimals={false}
               />
               <Tooltip
-                content={({ active, payload }: { active?: boolean; payload?: Array<{ payload: unknown }> }) => {
+                content={({ active, payload }: { active?: boolean; payload?: ReadonlyArray<{ payload?: unknown }> }) => {
                   if (!active || !payload?.length) return null
                   const point = payload[0]!.payload as WeekDataPoint
                   return (
@@ -206,7 +206,7 @@ export function VendorGrowthChart({ data }: VendorGrowthChartProps) {
                 allowDecimals={false}
               />
               <Tooltip
-                content={({ active, payload }: { active?: boolean; payload?: Array<{ payload: unknown }> }) => {
+                content={({ active, payload }: { active?: boolean; payload?: ReadonlyArray<{ payload?: unknown }> }) => {
                   if (!active || !payload?.length) return null
                   const point = payload[0]!.payload as MonthDataPoint & { label: string }
                   return (
@@ -274,8 +274,8 @@ export function CategoryPerformanceChart({ data }: CategoryPerformanceChartProps
                   outerRadius={100}
                   paddingAngle={2}
                   dataKey="value"
-                  label={({ name, percent }: { name: string; percent: number }) =>
-                    `${name} (${(percent * 100).toFixed(0)}%)`
+                  label={({ name, percent }: { name?: string; percent?: number }) =>
+                    `${name ?? ''} (${((percent ?? 0) * 100).toFixed(0)}%)`
                   }
                 >
                   {chartData.map((_, i) => (
@@ -283,7 +283,7 @@ export function CategoryPerformanceChart({ data }: CategoryPerformanceChartProps
                   ))}
                 </Pie>
                 <Tooltip
-                  content={({ active, payload }: { active?: boolean; payload?: Array<{ payload: unknown }> }) => {
+                  content={({ active, payload }: { active?: boolean; payload?: ReadonlyArray<{ payload?: unknown }> }) => {
                     if (!active || !payload?.length) return null
                     const point = payload[0]!.payload as CategoryDataPoint & { name: string }
                     return (

@@ -19,7 +19,8 @@ interface TrendChartProps {
   readonly title: string
   readonly data: readonly DayDataPoint[]
   readonly color: string
-  readonly formatValue?: (v: number) => string
+  /** When 'currency', formats as ₹X,XXX. Otherwise shows raw number. */
+  readonly formatAs?: 'currency'
   readonly type: 'area' | 'bar'
 }
 
@@ -28,8 +29,10 @@ function formatDateLabel(dateStr: string): string {
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 }
 
-export function TrendChart({ title, data, color, formatValue, type }: TrendChartProps) {
-  const formatter = formatValue ?? ((v: number) => String(v))
+export function TrendChart({ title, data, color, formatAs, type }: TrendChartProps) {
+  const formatter = formatAs === 'currency'
+    ? (v: number) => `₹${Math.floor(v).toLocaleString('en-IN')}`
+    : (v: number) => String(v)
 
   // Show every 5th label to avoid crowding
   const chartData = data.map((d, i) => ({
@@ -70,7 +73,7 @@ export function TrendChart({ title, data, color, formatValue, type }: TrendChart
                   tickFormatter={formatter}
                 />
                 <Tooltip
-                  content={({ active, payload }) => {
+                  content={({ active, payload }: { active?: boolean; payload?: ReadonlyArray<{ payload?: unknown }> }) => {
                     if (!active || !payload?.length) return null
                     const point = payload[0]!.payload as DayDataPoint
                     return (
@@ -110,7 +113,7 @@ export function TrendChart({ title, data, color, formatValue, type }: TrendChart
                   tickFormatter={formatter}
                 />
                 <Tooltip
-                  content={({ active, payload }) => {
+                  content={({ active, payload }: { active?: boolean; payload?: ReadonlyArray<{ payload?: unknown }> }) => {
                     if (!active || !payload?.length) return null
                     const point = payload[0]!.payload as DayDataPoint
                     return (

@@ -29,10 +29,10 @@ test.describe('Admin dashboard', () => {
     await expect(h1).toContainText('Admin overview')
 
     // Stat cards are visible -- the dashboard shows 5 KPI cards
-    await expect(page.getByText('Users')).toBeVisible()
-    await expect(page.getByText('Vendors')).toBeVisible()
-    await expect(page.getByText('Experiences')).toBeVisible()
-    await expect(page.getByText('Bookings')).toBeVisible()
+    await expect(page.getByText('Users', { exact: true })).toBeVisible()
+    await expect(page.getByText('Vendors', { exact: true })).toBeVisible()
+    await expect(page.getByText('Experiences', { exact: true })).toBeVisible()
+    await expect(page.getByText('Bookings', { exact: true })).toBeVisible()
     await expect(page.getByText('Total revenue')).toBeVisible()
 
     // Pending actions section

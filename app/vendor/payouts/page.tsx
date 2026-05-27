@@ -94,7 +94,7 @@ export default async function VendorPayoutsPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              TDS (1%)
+              TDS (0.1%)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -150,7 +150,7 @@ export default async function VendorPayoutsPage() {
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>Payouts are processed T+7 days after experience completion.</li>
             <li>Outvers deducts platform commission ({vendor?.commissionRate ?? '20'}%) + 18% GST on commission.</li>
-            <li>1% TDS (Section 194-O) is withheld for resident Indian vendors.</li>
+            <li>0.1% TDS (Section 194-O, Finance Act 2024) is withheld for resident Indian vendors.</li>
             <li>The first 3 payouts after KYC Tier 2 require manual admin approval.</li>
           </ul>
         </CardContent>

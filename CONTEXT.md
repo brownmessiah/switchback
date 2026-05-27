@@ -77,7 +77,7 @@ Money Outvers transfers to a Vendor for completed Experiences, net of commission
 _Avoid_: Settlement, disbursement, transfer.
 
 **TDS (Tax Deducted at Source)**:
-The 1% deduction Outvers must withhold on the gross Booking value paid to resident-Indian Vendors under Section 194-O of the Income Tax Act. Filed quarterly via Form 26Q; Vendor receives Form 16A. Not optional. See ADR-0016.
+The 0.1% deduction Outvers must withhold on the gross Booking value paid to resident-Indian Vendors under Section 194-O of the Income Tax Act (rate reduced from 1% to 0.1% by Finance Act 2024, effective 1 Oct 2024). Filed quarterly via Form 26Q; Vendor receives Form 16A. Not optional. See ADR-0016.
 _Avoid_: Tax withholding, deduction (ambiguous).
 
 **Extended dispute window**:

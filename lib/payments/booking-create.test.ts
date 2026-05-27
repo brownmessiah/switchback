@@ -148,7 +148,7 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
       expect(row?.commissionRateSnapshot).toBe('20.00')
       expect(row?.commissionBasisSnapshot).toBe('vendor_default')
       expect(row?.cancellationPresetSnapshot).toBe('flexible')
-      expect(row?.tdsAmountSnapshot).toBe('30.00') // 1% of 3000 = 30
+      expect(row?.tdsAmountSnapshot).toBe('3.00') // 0.1% of 3000 = 3
       expect(row?.gstRateOnCommissionSnapshot).toBe('18.00')
       expect(row?.vendorPanSnapshot).toBe('ABCDE1234F')
       expect(row?.vendorIsResidentSnapshot).toBe(true)
@@ -240,7 +240,7 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
       const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
       expect(row?.pricePerParticipantSnapshot).toBe('1300.00')
       expect(row?.grossTotalSnapshot).toBe('5200.00')
-      expect(row?.tdsAmountSnapshot).toBe('52.00') // 1% of 5200
+      expect(row?.tdsAmountSnapshot).toBe('5.00') // 0.1% of 5200 = 5.2, floored to 5
     })
 
     it('snapshots vendor PAN as resident at time of booking', async () => {

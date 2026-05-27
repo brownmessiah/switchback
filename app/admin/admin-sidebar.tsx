@@ -13,6 +13,7 @@ import type { AdminNavGroup } from './admin-nav'
 export interface AdminBadgeCounts {
   readonly pendingKyc?: number
   readonly pendingExperiences?: number
+  readonly disputedBookings?: number
 }
 
 interface AdminSidebarProps {

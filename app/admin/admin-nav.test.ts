@@ -25,9 +25,9 @@ describe('admin-nav', () => {
       ])
     })
 
-    it('has exactly 18 nav items across all groups', () => {
+    it('has exactly 19 nav items across all groups', () => {
       const allItems = getAllNavItems()
-      expect(allItems).toHaveLength(18)
+      expect(allItems).toHaveLength(19)
     })
 
     it('every nav item has a non-empty href, label, and permission', () => {
@@ -58,23 +58,24 @@ describe('admin-nav', () => {
   })
 
   describe('filterNavByPermissions', () => {
-    it('full admin (all 16 permissions) sees all 18 nav items', () => {
+    it('full admin (all 16 permissions) sees all 19 nav items', () => {
       const filtered = filterNavByPermissions([...ADMIN_PERMISSIONS])
       const totalItems = filtered.reduce((sum, g) => sum + g.items.length, 0)
-      expect(totalItems).toBe(18)
+      expect(totalItems).toBe(19)
       expect(filtered).toHaveLength(5) // all 5 groups visible
     })
 
-    it('sub-admin with [vendors, bookings] sees exactly 2 items', () => {
+    it('sub-admin with [vendors, bookings] sees exactly 3 items', () => {
       const filtered = filterNavByPermissions(['vendors', 'bookings'])
       const totalItems = filtered.reduce((sum, g) => sum + g.items.length, 0)
-      expect(totalItems).toBe(2)
+      expect(totalItems).toBe(3) // Vendors, Bookings, Disputes
     })
 
-    it('sub-admin with [vendors, bookings] only sees Marketplace group', () => {
+    it('sub-admin with [vendors, bookings] sees Marketplace and Finance groups', () => {
       const filtered = filterNavByPermissions(['vendors', 'bookings'])
-      expect(filtered).toHaveLength(1)
-      expect(filtered[0].label).toBe('Marketplace')
+      expect(filtered).toHaveLength(2)
+      expect(filtered[0]!.label).toBe('Marketplace')
+      expect(filtered[1]!.label).toBe('Finance')
     })
 
     it('empty permissions sees 0 items and 0 groups', () => {
@@ -98,7 +99,7 @@ describe('admin-nav', () => {
       expect(ADMIN_NAV_GROUPS).toHaveLength(originalLength)
       // Verify items within groups are unchanged
       const allItems = getAllNavItems()
-      expect(allItems).toHaveLength(18)
+      expect(allItems).toHaveLength(19)
     })
 
     it('badge keys are preserved on filtered items', () => {

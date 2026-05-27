@@ -46,6 +46,7 @@ export const ADMIN_NAV_GROUPS: readonly AdminNavGroup[] = [
       { href: '/admin/commission', label: 'Commission', permission: 'commission' },
       { href: '/admin/payouts', label: 'Payouts', permission: 'payouts' },
       { href: '/admin/refunds', label: 'Refunds', permission: 'refunds' },
+      { href: '/admin/disputes', label: 'Disputes', permission: 'bookings', badgeKey: 'disputedBookings' },
       { href: '/admin/promo', label: 'Promo Codes', permission: 'commission' },
       { href: '/admin/loyalty', label: 'Loyalty', permission: 'commission' },
     ],

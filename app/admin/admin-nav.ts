@@ -8,6 +8,8 @@ import type { AdminPermission } from '@/lib/auth/permissions'
 export interface AdminNavItem {
   readonly href: string
   readonly label: string
+  /** Translation key in AdminNav.items namespace (e.g. 'overview', 'vendors'). */
+  readonly labelKey: string
   readonly permission: AdminPermission
   /** Optional badge key — layout passes badge counts by key */
   readonly badgeKey?: string
@@ -15,6 +17,8 @@ export interface AdminNavItem {
 
 export interface AdminNavGroup {
   readonly label: string
+  /** Translation key in AdminNav.groups namespace (e.g. 'dashboard', 'marketplace'). */
+  readonly labelKey: string
   readonly items: readonly AdminNavItem[]
 }
 
@@ -26,46 +30,51 @@ export interface AdminNavGroup {
 export const ADMIN_NAV_GROUPS: readonly AdminNavGroup[] = [
   {
     label: 'Dashboard',
+    labelKey: 'dashboard',
     items: [
-      { href: '/admin/dashboard', label: 'Overview', permission: 'overview' },
-      { href: '/admin/analytics', label: 'Analytics', permission: 'analytics' },
+      { href: '/admin/dashboard', label: 'Overview', labelKey: 'overview', permission: 'overview' },
+      { href: '/admin/analytics', label: 'Analytics', labelKey: 'analytics', permission: 'analytics' },
     ],
   },
   {
     label: 'Marketplace',
+    labelKey: 'marketplace',
     items: [
-      { href: '/admin/vendors', label: 'Vendors', permission: 'vendors', badgeKey: 'pendingKyc' },
-      { href: '/admin/experiences', label: 'Experiences', permission: 'experiences', badgeKey: 'pendingExperiences' },
-      { href: '/admin/bookings', label: 'Bookings', permission: 'bookings' },
-      { href: '/admin/reviews', label: 'Reviews', permission: 'reviews' },
+      { href: '/admin/vendors', label: 'Vendors', labelKey: 'vendors', permission: 'vendors', badgeKey: 'pendingKyc' },
+      { href: '/admin/experiences', label: 'Experiences', labelKey: 'experiences', permission: 'experiences', badgeKey: 'pendingExperiences' },
+      { href: '/admin/bookings', label: 'Bookings', labelKey: 'bookings', permission: 'bookings' },
+      { href: '/admin/reviews', label: 'Reviews', labelKey: 'reviews', permission: 'reviews' },
     ],
   },
   {
     label: 'Finance',
+    labelKey: 'finance',
     items: [
-      { href: '/admin/commission', label: 'Commission', permission: 'commission' },
-      { href: '/admin/payouts', label: 'Payouts', permission: 'payouts' },
-      { href: '/admin/refunds', label: 'Refunds', permission: 'refunds' },
-      { href: '/admin/disputes', label: 'Disputes', permission: 'bookings', badgeKey: 'disputedBookings' },
-      { href: '/admin/promo', label: 'Promo Codes', permission: 'commission' },
-      { href: '/admin/loyalty', label: 'Loyalty', permission: 'commission' },
+      { href: '/admin/commission', label: 'Commission', labelKey: 'commission', permission: 'commission' },
+      { href: '/admin/payouts', label: 'Payouts', labelKey: 'payouts', permission: 'payouts' },
+      { href: '/admin/refunds', label: 'Refunds', labelKey: 'refunds', permission: 'refunds' },
+      { href: '/admin/disputes', label: 'Disputes', labelKey: 'disputes', permission: 'bookings', badgeKey: 'disputedBookings' },
+      { href: '/admin/promo', label: 'Promo Codes', labelKey: 'promoCodes', permission: 'commission' },
+      { href: '/admin/loyalty', label: 'Loyalty', labelKey: 'loyalty', permission: 'commission' },
     ],
   },
   {
     label: 'Content',
+    labelKey: 'content',
     items: [
-      { href: '/admin/blog', label: 'Blog', permission: 'blog' },
-      { href: '/admin/site-builder', label: 'Site Builder', permission: 'site_builder' },
+      { href: '/admin/blog', label: 'Blog', labelKey: 'blog', permission: 'blog' },
+      { href: '/admin/site-builder', label: 'Site Builder', labelKey: 'siteBuilder', permission: 'site_builder' },
     ],
   },
   {
     label: 'Operations',
+    labelKey: 'operations',
     items: [
-      { href: '/admin/support', label: 'Support', permission: 'support' },
-      { href: '/admin/region-closures', label: 'Region Closures', permission: 'region_closures' },
-      { href: '/admin/audit', label: 'Audit Logs', permission: 'audit' },
-      { href: '/admin/sub-admins', label: 'Sub-Admins', permission: 'sub_admins' },
-      { href: '/admin/reports', label: 'Reports', permission: 'reports' },
+      { href: '/admin/support', label: 'Support', labelKey: 'support', permission: 'support' },
+      { href: '/admin/region-closures', label: 'Region Closures', labelKey: 'regionClosures', permission: 'region_closures' },
+      { href: '/admin/audit', label: 'Audit Logs', labelKey: 'auditLogs', permission: 'audit' },
+      { href: '/admin/sub-admins', label: 'Sub-Admins', labelKey: 'subAdmins', permission: 'sub_admins' },
+      { href: '/admin/reports', label: 'Reports', labelKey: 'reports', permission: 'reports' },
     ],
   },
 ]

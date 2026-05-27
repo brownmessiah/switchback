@@ -33,7 +33,89 @@
     "breadcrumb": {
       "home": "होम"
     },
-    "notFound": "नहीं मिला · Outvers"
+    "notFound": "नहीं मिला · Outvers",
+    "actions": {
+      "save": "सहेजें",
+      "cancel": "रद्द करें",
+      "delete": "हटाएँ",
+      "back": "वापस",
+      "edit": "संपादित करें",
+      "submit": "जमा करें",
+      "confirm": "पुष्टि करें",
+      "close": "बंद करें",
+      "search": "खोजें",
+      "loading": "लोड हो रहा है..."
+    },
+    "status": {
+      "confirmed": "पुष्टि",
+      "pending": "लंबित",
+      "completed": "पूर्ण",
+      "cancelled": "रद्द",
+      "disputed": "विवादित",
+      "active": "सक्रिय",
+      "inactive": "निष्क्रिय",
+      "draft": "ड्राफ़्ट",
+      "published": "प्रकाशित",
+      "pendingReview": "समीक्षा लंबित"
+    }
+  },
+  "AdminNav": {
+    "sidebarTitle": "व्यवस्थापक",
+    "groups": {
+      "dashboard": "डैशबोर्ड",
+      "marketplace": "मार्केटप्लेस",
+      "finance": "वित्त",
+      "content": "सामग्री",
+      "operations": "संचालन"
+    },
+    "items": {
+      "overview": "अवलोकन",
+      "analytics": "विश्लेषण",
+      "vendors": "विक्रेता",
+      "experiences": "अनुभव",
+      "bookings": "बुकिंग",
+      "reviews": "समीक्षाएँ",
+      "commission": "कमीशन",
+      "payouts": "भुगतान",
+      "refunds": "रिफ़ंड",
+      "disputes": "विवाद",
+      "promoCodes": "प्रोमो कोड",
+      "loyalty": "लॉयल्टी",
+      "blog": "ब्लॉग",
+      "siteBuilder": "साइट बिल्डर",
+      "support": "सहायता",
+      "regionClosures": "क्षेत्र बंदी",
+      "auditLogs": "ऑडिट लॉग",
+      "subAdmins": "उप-व्यवस्थापक",
+      "reports": "रिपोर्ट"
+    }
+  },
+  "VendorNav": {
+    "portalTitle": "विक्रेता पोर्टल",
+    "completeSetup": "सेटअप पूरा करें",
+    "items": {
+      "dashboard": "डैशबोर्ड",
+      "listings": "लिस्टिंग",
+      "bookings": "बुकिंग",
+      "payouts": "भुगतान",
+      "reviews": "समीक्षाएँ",
+      "messages": "संदेश",
+      "settings": "सेटिंग"
+    }
+  },
+  "CustomerNav": {
+    "pageTitle": "मेरी बुकिंग",
+    "wallet": {
+      "refundBalance": "रिफ़ंड शेष",
+      "refundHint": "नकद या अगली बुकिंग पर उपयोग करें",
+      "outversCredit": "Outvers क्रेडिट",
+      "creditHint": "प्रचारात्मक क्रेडिट — किसी भी बुकिंग पर उपयोग करें"
+    },
+    "bookings": {
+      "empty": "अभी तक कोई बुकिंग नहीं",
+      "emptyHint": "अनुभव खोजें और अपना पहला रोमांच बुक करें।",
+      "explore": "खोजें"
+    }
   },
   "AdventurePage": {
     "metadata": {

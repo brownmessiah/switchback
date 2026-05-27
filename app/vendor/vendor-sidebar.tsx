@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { usePathname } from 'next/navigation'
 
 import { cn } from '@/lib/utils'
@@ -25,11 +26,12 @@ function SidebarContent({
   readonly onNavigate?: () => void
 }) {
   const pathname = usePathname()
+  const t = useTranslations('VendorNav')
 
   return (
     <div className="flex h-full flex-col">
       <div className="border-b px-6 py-5">
-        <p className="text-sm font-semibold">Vendor Portal</p>
+        <p className="text-sm font-semibold">{t('portalTitle')}</p>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">{userName}</p>
       </div>
 
@@ -49,7 +51,7 @@ function SidebarContent({
               )}
             >
               <span className="w-5 text-center text-xs">{item.icon}</span>
-              {item.label}
+              {t(`items.${item.labelKey}`)}
             </Link>
           )
         })}
@@ -61,7 +63,7 @@ function SidebarContent({
           onClick={onNavigate}
           className="block rounded-lg bg-primary px-4 py-2 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
-          Complete setup
+          {t('completeSetup')}
         </Link>
       </div>
     </div>
@@ -123,6 +125,7 @@ function CloseIcon() {
 
 export function VendorSidebar({ userName }: VendorSidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const t = useTranslations('VendorNav')
 
   // Close mobile sidebar on route change
   const pathname = usePathname()
@@ -142,6 +145,8 @@ export function VendorSidebar({ userName }: VendorSidebarProps) {
     }
   }, [mobileOpen])
 
+  const portalTitle = t('portalTitle')
+
   return (
     <>
       {/* Mobile header bar */}
@@ -154,7 +159,7 @@ export function VendorSidebar({ userName }: VendorSidebarProps) {
         >
           <HamburgerIcon />
         </button>
-        <span className="text-sm font-semibold text-primary">Vendor Portal</span>
+        <span className="text-sm font-semibold text-primary">{portalTitle}</span>
       </div>
 
       {/* Mobile overlay */}
@@ -169,7 +174,7 @@ export function VendorSidebar({ userName }: VendorSidebarProps) {
           {/* Sidebar panel */}
           <div className="absolute inset-y-0 left-0 w-72 bg-background shadow-lg">
             <div className="flex items-center justify-between border-b px-4 py-3">
-              <span className="text-sm font-semibold text-primary">Vendor Portal</span>
+              <span className="text-sm font-semibold text-primary">{portalTitle}</span>
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}

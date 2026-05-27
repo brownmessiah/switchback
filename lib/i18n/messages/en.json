@@ -33,7 +33,89 @@
     "breadcrumb": {
       "home": "Home"
     },
-    "notFound": "Not found · Outvers"
+    "notFound": "Not found · Outvers",
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "back": "Back",
+      "edit": "Edit",
+      "submit": "Submit",
+      "confirm": "Confirm",
+      "close": "Close",
+      "search": "Search",
+      "loading": "Loading..."
+    },
+    "status": {
+      "confirmed": "Confirmed",
+      "pending": "Pending",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "disputed": "Disputed",
+      "active": "Active",
+      "inactive": "Inactive",
+      "draft": "Draft",
+      "published": "Published",
+      "pendingReview": "Pending review"
+    }
+  },
+  "AdminNav": {
+    "sidebarTitle": "Admin",
+    "groups": {
+      "dashboard": "Dashboard",
+      "marketplace": "Marketplace",
+      "finance": "Finance",
+      "content": "Content",
+      "operations": "Operations"
+    },
+    "items": {
+      "overview": "Overview",
+      "analytics": "Analytics",
+      "vendors": "Vendors",
+      "experiences": "Experiences",
+      "bookings": "Bookings",
+      "reviews": "Reviews",
+      "commission": "Commission",
+      "payouts": "Payouts",
+      "refunds": "Refunds",
+      "disputes": "Disputes",
+      "promoCodes": "Promo Codes",
+      "loyalty": "Loyalty",
+      "blog": "Blog",
+      "siteBuilder": "Site Builder",
+      "support": "Support",
+      "regionClosures": "Region Closures",
+      "auditLogs": "Audit Logs",
+      "subAdmins": "Sub-Admins",
+      "reports": "Reports"
+    }
+  },
+  "VendorNav": {
+    "portalTitle": "Vendor Portal",
+    "completeSetup": "Complete setup",
+    "items": {
+      "dashboard": "Dashboard",
+      "listings": "Listings",
+      "bookings": "Bookings",
+      "payouts": "Payouts",
+      "reviews": "Reviews",
+      "messages": "Messages",
+      "settings": "Settings"
+    }
+  },
+  "CustomerNav": {
+    "pageTitle": "My bookings",
+    "wallet": {
+      "refundBalance": "Refund balance",
+      "refundHint": "Cashable or usable on next booking",
+      "outversCredit": "Outvers credit",
+      "creditHint": "Promotional credit — use on any booking"
+    },
+    "bookings": {
+      "empty": "No bookings yet",
+      "emptyHint": "Explore experiences and book your first adventure.",
+      "explore": "Explore"
+    }
   },
   "AdventurePage": {
     "metadata": {

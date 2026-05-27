@@ -1,10 +1,12 @@
 import { eq } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
+import { getLocale, getMessages } from 'next-intl/server'
 
 import { db } from '@/db/client'
 import { adminProfiles } from '@/db/schema'
 import { auth } from '@/lib/auth'
+import { IntlProvider } from '@/lib/i18n/provider'
 
 import { getAdminBadgeCounts } from './admin-badge-counts'
 import { filterNavByPermissions } from './admin-nav'
@@ -34,15 +36,19 @@ export default async function AdminLayout({
 
   if (!admin) notFound()
 
-  const [groups, badgeCounts] = await Promise.all([
+  const [groups, badgeCounts, locale, messages] = await Promise.all([
     Promise.resolve(filterNavByPermissions(admin.permissions)),
     getAdminBadgeCounts(),
+    getLocale(),
+    getMessages(),
   ])
 
   return (
-    <div className="flex min-h-[80vh]">
-      <AdminSidebar groups={groups} badgeCounts={badgeCounts} />
-      <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8">{children}</main>
-    </div>
+    <IntlProvider locale={locale} messages={messages as Record<string, unknown>}>
+      <div className="flex min-h-[80vh]">
+        <AdminSidebar groups={groups} badgeCounts={badgeCounts} />
+        <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8">{children}</main>
+      </div>
+    </IntlProvider>
   )
 }

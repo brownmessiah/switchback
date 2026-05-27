@@ -1,4 +1,5 @@
 import {
+  boolean,
   integer,
   jsonb,
   numeric,
@@ -68,6 +69,10 @@ export const vendorProfiles = pgTable('vendor_profiles', {
   responseTimeSlaScore: numeric('response_time_sla_score', { precision: 5, scale: 2 })
     .default('100.00')
     .notNull(),
+
+  // Admin-controlled suspension. Suspended vendors cannot accept new
+  // bookings; their Experiences should display as paused.
+  suspended: boolean('suspended').default(false).notNull(),
 
   ...timestamps,
 })

@@ -1,4 +1,5 @@
-import { count, eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
+import Link from 'next/link'
 
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -11,7 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { db } from '@/db/client'
-import { experiences, users, vendorProfiles } from '@/db/schema'
+import { users, vendorProfiles } from '@/db/schema'
 
 const KYC_VARIANTS: Record<string, 'default' | 'secondary' | 'outline'> = {
   business: 'default',
@@ -28,6 +29,7 @@ export default async function AdminVendorsPage() {
       kycTier: vendorProfiles.kycTier,
       commissionRate: vendorProfiles.commissionRate,
       responseTimeSlaScore: vendorProfiles.responseTimeSlaScore,
+      suspended: vendorProfiles.suspended,
       createdAt: vendorProfiles.createdAt,
       userName: users.name,
       userEmail: users.email,
@@ -61,7 +63,19 @@ export default async function AdminVendorsPage() {
             <TableBody>
               {vendors.map((v) => (
                 <TableRow key={v.userId}>
-                  <TableCell className="font-medium">{v.businessName}</TableCell>
+                  <TableCell className="font-medium">
+                    <Link
+                      href={`/admin/vendors/${v.userId}`}
+                      className="hover:underline"
+                    >
+                      {v.businessName}
+                    </Link>
+                    {v.suspended && (
+                      <Badge variant="destructive" className="ml-2 text-xs">
+                        Suspended
+                      </Badge>
+                    )}
+                  </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {v.userEmail ?? v.userName ?? '—'}
                   </TableCell>

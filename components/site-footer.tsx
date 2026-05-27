@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import type { ReactElement } from 'react'
 
+import { LanguageSelector } from './language-selector'
+
 /**
  * Bottom-of-page footer present on every public route. v2 with
  * 4-column link grid (Explore, Company, Support, For Vendors).
@@ -27,6 +29,9 @@ export function SiteFooter(): ReactElement {
               Adventure activities across India from KYC-verified vendors.
               Transparent refund policy, real-time slot availability.
             </p>
+            <div className="mt-4">
+              <LanguageSelector variant="full" />
+            </div>
           </div>
 
           <nav aria-label="Footer navigation" className="col-span-2 grid grid-cols-2 gap-8 sm:col-span-3 sm:grid-cols-3">

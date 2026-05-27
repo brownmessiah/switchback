@@ -12,6 +12,14 @@ export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
 
 export const DEFAULT_LOCALE: SupportedLocale = 'en'
 
+/**
+ * Launch locales — only these appear in the language selector at v1.
+ * ta, mr, bn are infrastructure-supported but hidden until they have content.
+ */
+export const LAUNCH_LOCALES = ['en', 'hi'] as const satisfies readonly SupportedLocale[]
+
+export type LaunchLocale = (typeof LAUNCH_LOCALES)[number]
+
 export const LOCALE_NAMES: Record<SupportedLocale, string> = {
   en: 'English',
   hi: 'हिन्दी',

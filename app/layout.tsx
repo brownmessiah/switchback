@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Sans } from "next/font/google";
+import { DM_Sans, Noto_Sans_Devanagari } from "next/font/google";
 import { getLocale } from "next-intl/server";
 
 import { SiteFooter } from "@/components/site-footer";
@@ -10,6 +10,19 @@ import "./globals.css";
 const dmSans = DM_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
+});
+
+/**
+ * Noto Sans Devanagari — loaded as a supplementary font for Hindi (hi) locale.
+ * The font file is always available (module-level instantiation required by
+ * next/font), but the CSS variable is only applied to the <html> element when
+ * the resolved locale is "hi". This prevents unnecessary font downloads for
+ * English-only sessions.
+ */
+const notoDevanagari = Noto_Sans_Devanagari({
+  subsets: ["devanagari"],
+  variable: "--font-devanagari",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -24,12 +37,18 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getLocale();
+  const isHindi = locale === "hi";
+
+  const fontClasses = [
+    dmSans.variable,
+    isHindi ? notoDevanagari.variable : "",
+    "h-full antialiased",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <html
-      lang={locale}
-      className={`${dmSans.variable} h-full antialiased`}
-    >
+    <html lang={locale} className={fontClasses} data-locale={locale}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <SiteHeader />
         <div className="flex-1">{children}</div>

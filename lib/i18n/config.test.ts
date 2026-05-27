@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import {
   DEFAULT_LOCALE,
+  LAUNCH_LOCALES,
   LOCALE_NAMES,
   SUPPORTED_LOCALES,
   detectLocale,
@@ -37,6 +38,24 @@ describe('SUPPORTED_LOCALES', () => {
 describe('DEFAULT_LOCALE', () => {
   it('is "en"', () => {
     expect(DEFAULT_LOCALE).toBe('en')
+  })
+})
+
+describe('LAUNCH_LOCALES', () => {
+  it('contains exactly en and hi', () => {
+    expect([...LAUNCH_LOCALES]).toEqual(['en', 'hi'])
+  })
+
+  it('is a subset of SUPPORTED_LOCALES', () => {
+    for (const code of LAUNCH_LOCALES) {
+      expect((SUPPORTED_LOCALES as readonly string[]).includes(code)).toBe(true)
+    }
+  })
+
+  it('does not contain infrastructure locales ta, mr, bn', () => {
+    expect(LAUNCH_LOCALES).not.toContain('ta')
+    expect(LAUNCH_LOCALES).not.toContain('mr')
+    expect(LAUNCH_LOCALES).not.toContain('bn')
   })
 })
 

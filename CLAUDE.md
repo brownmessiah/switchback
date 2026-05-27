@@ -22,6 +22,9 @@ Default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `
 ### Domain docs
 Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
 
+### i18n-translator
+Enforces i18n conventions when working on UI strings. Use when adding/modifying user-facing text, translation keys, or locale files. See `.claude/agents/i18n-translator.md`.
+
 ## Project structure
 - `app/` — Next.js App Router routes
 - `db/` — Drizzle schema, migrations, query helpers

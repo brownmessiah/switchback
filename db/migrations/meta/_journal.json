@@ -50,6 +50,13 @@
       "when": 1779479200000,
       "tag": "0006_payments_one_autocapture_per_booking",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1779560000000,
+      "tag": "0007_add_media_assets",
+      "breakpoints": true
     }
   ]
 }

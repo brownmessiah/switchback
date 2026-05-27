@@ -3,6 +3,7 @@ import {
   pgEnum,
   pgTable,
   text,
+  timestamp,
   uuid,
 } from 'drizzle-orm/pg-core'
 
@@ -40,6 +41,12 @@ export const reviews = pgTable('reviews', {
   body: text('body'),
 
   status: reviewStatusEnum('status').default('published').notNull(),
+
+  // Vendor response — one per review. Nullable; set once by the Vendor
+  // via the respond action. vendor_responded_at is set atomically with
+  // vendor_response.
+  vendorResponse: text('vendor_response'),
+  vendorRespondedAt: timestamp('vendor_responded_at', { withTimezone: true }),
 
   ...timestamps,
 })

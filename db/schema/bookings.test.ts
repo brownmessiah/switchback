@@ -70,7 +70,7 @@ describe('money-path schema: bookings + payments + commission/pricing tiers (ADR
 
   beforeEach(async () => {
     await db.execute(
-      sql`TRUNCATE TABLE payments, refund_requests, bookings, commission_tiers, pricing_tiers`,
+      sql`TRUNCATE TABLE reviews, payments, refund_requests, bookings, commission_tiers, pricing_tiers`,
     )
   })
 

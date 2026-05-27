@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { DM_Sans, Noto_Sans_Devanagari } from "next/font/google";
-import { getLocale } from "next-intl/server";
+import { getLocale, getMessages } from "next-intl/server";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { IntlProvider } from "@/lib/i18n/provider";
 
 import "./globals.css";
 
@@ -37,6 +38,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getLocale();
+  const messages = await getMessages();
   const isHindi = locale === "hi";
 
   const fontClasses = [
@@ -50,9 +52,11 @@ export default async function RootLayout({
   return (
     <html lang={locale} className={fontClasses} data-locale={locale}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <SiteHeader />
-        <div className="flex-1">{children}</div>
-        <SiteFooter />
+        <IntlProvider locale={locale} messages={messages as Record<string, unknown>}>
+          <SiteHeader />
+          <div className="flex-1">{children}</div>
+          <SiteFooter />
+        </IntlProvider>
       </body>
     </html>
   );

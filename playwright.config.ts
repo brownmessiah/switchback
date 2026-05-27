@@ -79,7 +79,6 @@ export default defineConfig({
     {
       name: 'i18n',
       testDir: './tests/e2e/specs/i18n',
-      dependencies: ['setup'],
     },
   ],
 })

@@ -1,4 +1,9 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
+
+const withNextIntl = createNextIntlPlugin({
+  requestConfig: "./lib/i18n/request.ts",
+});
 
 const nextConfig: NextConfig = {
   images: {
@@ -9,6 +14,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/sitemap-:locale.xml',
+        destination: '/api/sitemap/:locale',
+      },
+    ]
+  },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

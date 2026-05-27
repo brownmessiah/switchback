@@ -74,5 +74,12 @@ export default defineConfig({
         storageState: path.join(AUTH_DIR, 'admin-storage.json'),
       },
     },
+
+    // ── i18n: multilingual tests, no auth required ──────────────
+    {
+      name: 'i18n',
+      testDir: './tests/e2e/specs/i18n',
+      dependencies: ['setup'],
+    },
   ],
 })

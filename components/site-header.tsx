@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import type { ReactElement } from 'react'
 
 import { AuthStatus } from './auth-status'
+import { LanguageSelector } from './language-selector'
 
 export function SiteHeader(): ReactElement {
   const pathname = usePathname()
@@ -58,6 +59,7 @@ export function SiteHeader(): ReactElement {
           >
             Refund policy
           </Link>
+          <LanguageSelector variant="compact" />
           <AuthStatus />
         </nav>
 
@@ -103,6 +105,9 @@ export function SiteHeader(): ReactElement {
             >
               Refund policy
             </Link>
+            <div className="px-1 py-1">
+              <LanguageSelector variant="compact" />
+            </div>
             <Link
               href="/sign-in"
               className="rounded px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"

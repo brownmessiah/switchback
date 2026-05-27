@@ -129,4 +129,8 @@
   html {
     @apply font-sans;
   }
+  /* When locale is Hindi, add Noto Sans Devanagari to the font stack */
+  html[data-locale="hi"] {
+    font-family: var(--font-devanagari), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  }
 }

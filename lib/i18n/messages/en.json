@@ -1,0 +1,327 @@
+{
+  "HomePage": {
+    "hero": {
+      "title": "Book the scene you\nwant to live.",
+      "subtitle": "Rafting in Rishikesh. Paragliding in Bir Billing. Scuba in Goa. Verified vendors, transparent pricing.",
+      "searchLabel": "Search experiences",
+      "searchPlaceholder": "Try \"rafting Rishikesh\" or \"scuba Goa\"",
+      "searchButton": "Search"
+    },
+    "trustBadges": {
+      "kycVerified": "KYC-verified vendors",
+      "refundSla": "24-hour refund SLA",
+      "transparentPricing": "Transparent pricing"
+    },
+    "activities": {
+      "heading": "Browse by activity"
+    },
+    "destinations": {
+      "heading": "Popular destinations",
+      "browseAll": "Browse all",
+      "experienceCount": "{count, plural, one {# experience} other {# experiences}}"
+    },
+    "featured": {
+      "heading": "Featured experiences",
+      "viewAll": "View all"
+    }
+  },
+  "Metadata": {
+    "title": "Outvers — adventure activities in India",
+    "description": "Book rafting, paragliding, scuba, trekking and more across India. Vendor-verified Experiences with transparent refund policy and a 24-hour refund SLA."
+  },
+  "Common": {
+    "breadcrumb": {
+      "home": "Home"
+    },
+    "notFound": "Not found · Outvers",
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "back": "Back",
+      "edit": "Edit",
+      "submit": "Submit",
+      "confirm": "Confirm",
+      "close": "Close",
+      "search": "Search",
+      "loading": "Loading..."
+    },
+    "status": {
+      "confirmed": "Confirmed",
+      "pending": "Pending",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "disputed": "Disputed",
+      "active": "Active",
+      "inactive": "Inactive",
+      "draft": "Draft",
+      "published": "Published",
+      "pendingReview": "Pending review"
+    }
+  },
+  "AdminNav": {
+    "sidebarTitle": "Admin",
+    "groups": {
+      "dashboard": "Dashboard",
+      "marketplace": "Marketplace",
+      "finance": "Finance",
+      "content": "Content",
+      "operations": "Operations"
+    },
+    "items": {
+      "overview": "Overview",
+      "analytics": "Analytics",
+      "vendors": "Vendors",
+      "experiences": "Experiences",
+      "bookings": "Bookings",
+      "reviews": "Reviews",
+      "commission": "Commission",
+      "payouts": "Payouts",
+      "refunds": "Refunds",
+      "disputes": "Disputes",
+      "promoCodes": "Promo Codes",
+      "loyalty": "Loyalty",
+      "blog": "Blog",
+      "siteBuilder": "Site Builder",
+      "support": "Support",
+      "regionClosures": "Region Closures",
+      "auditLogs": "Audit Logs",
+      "subAdmins": "Sub-Admins",
+      "reports": "Reports"
+    }
+  },
+  "VendorNav": {
+    "portalTitle": "Vendor Portal",
+    "completeSetup": "Complete setup",
+    "items": {
+      "dashboard": "Dashboard",
+      "listings": "Listings",
+      "bookings": "Bookings",
+      "payouts": "Payouts",
+      "reviews": "Reviews",
+      "messages": "Messages",
+      "settings": "Settings"
+    }
+  },
+  "CustomerNav": {
+    "pageTitle": "My bookings",
+    "wallet": {
+      "refundBalance": "Refund balance",
+      "refundHint": "Cashable or usable on next booking",
+      "outversCredit": "Outvers credit",
+      "creditHint": "Promotional credit — use on any booking"
+    },
+    "bookings": {
+      "empty": "No bookings yet",
+      "emptyHint": "Explore experiences and book your first adventure.",
+      "explore": "Explore"
+    }
+  },
+  "AdventurePage": {
+    "metadata": {
+      "title": "{activity} in {region} · Outvers",
+      "description": "Book {activity} Experiences in {region} from KYC-verified Vendors. Transparent pricing, 24-hour refund SLA, real-time slot availability."
+    },
+    "hero": {
+      "description": "Book {activity} experiences in {region} from KYC-verified vendors. Transparent pricing, real-time slot availability, and a 24-hour refund SLA."
+    },
+    "experiences": {
+      "sectionLabel": "{activity} Experiences",
+      "emptyTitle": "No {activity} experiences in {region} yet",
+      "emptySubtitle": "Check back soon — new listings added regularly."
+    },
+    "faq": {
+      "heading": "Frequently asked questions",
+      "safetyQuestion": "Is {activity} in {region} safe?",
+      "safetyAnswer": "All Outvers-listed Experiences are run by KYC-verified Vendors. Safety-stack Experiences require a trusted contact and feature in-trip check-in pings.",
+      "bestTimeQuestion": "When is the best time for {activity} in {region}?",
+      "bestTimeAnswer": "Refer to each Experience listing for seasonality and region-closure windows. Monsoon and weather closures are surfaced inline at the booking step.",
+      "cancellationQuestion": "What is the cancellation policy?",
+      "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
+    },
+    "itemList": {
+      "name": "Top {activity} Experiences in {region}"
+    }
+  },
+  "ExperiencePage": {
+    "metadata": {
+      "title": "{title} · {activity} in {region} · Outvers",
+      "description": "Book {title} in {region} from a KYC-verified Vendor. Transparent pricing, 24-hour refund SLA."
+    },
+    "vendor": {
+      "by": "by {name}"
+    },
+    "sections": {
+      "about": "About this experience",
+      "cancellationPolicy": "Cancellation policy",
+      "requiredPermits": "Required permits",
+      "permitsNotice": "You need the following permits before participating. Outvers does not obtain permits on your behalf.",
+      "reviews": "Reviews",
+      "faq": "Frequently asked questions"
+    },
+    "pricing": {
+      "heading": "Pricing",
+      "tier1_2": "1-2 participants",
+      "tier3_5": "3-5 participants",
+      "tier6Plus": "6+ participants",
+      "perPerson": "/ person",
+      "partialPay": "Pay 25% now, rest 24h before the experience.",
+      "bookNow": "Book now",
+      "freeCancellation": "Free cancellation · 24h refund SLA"
+    },
+    "cancellation": {
+      "flexible": "Free cancellation up to 24 hours before the Experience. 50% refund within 2 hours. No refund after.",
+      "moderate": "Free cancellation up to 7 days before. 50% refund within 48 hours. No refund after.",
+      "strict": "50% refund up to 7 days before. No refund after.",
+      "fallback": "This Experience follows the {preset} cancellation policy."
+    },
+    "faq": {
+      "safetyQuestion": "Is {title} safe?",
+      "safetyAnswer": "All Outvers-listed Experiences are run by KYC-verified Vendors. Safety-stack Experiences require a trusted contact and feature in-trip check-in pings.",
+      "cancellationQuestion": "What is the cancellation policy for {title}?",
+      "cancellationAnswer": "This Experience follows the {preset} cancellation policy. Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours.",
+      "paymentQuestion": "How does payment work?",
+      "paymentAnswerPartial": "You can pay 25% now and the rest 24 hours before the Experience starts. Full upfront payment is also available.",
+      "paymentAnswerFull": "Full payment is collected at booking time."
+    },
+    "kyc": {
+      "business": "Business verified",
+      "identity": "Identity verified",
+      "phone": "Phone verified"
+    }
+  },
+  "SearchPage": {
+    "metadata": {
+      "title": "Search Experiences · Outvers",
+      "description": "Search and filter adventure Experiences across India. Rafting, paragliding, trekking, scuba diving, and more from KYC-verified Vendors."
+    },
+    "heading": {
+      "withQuery": "Results for \"{query}\"",
+      "default": "Explore experiences"
+    },
+    "results": {
+      "count": "{count} experience{count, plural, one {} other {s}} found",
+      "empty": "No experiences found",
+      "emptyHint": "Try adjusting your filters or search for something else."
+    },
+    "filters": {
+      "activity": "Activity",
+      "allActivities": "All activities",
+      "sortBy": "Sort by",
+      "relevance": "Relevance",
+      "priceLowHigh": "Price: Low to High",
+      "priceHighLow": "Price: High to Low",
+      "newest": "Newest",
+      "minPrice": "Min ₹",
+      "maxPrice": "Max ₹",
+      "applyFilters": "Apply filters"
+    }
+  },
+  "SignInPage": {
+    "metadata": {
+      "title": "Sign in — Outvers",
+      "description": "Sign in to Outvers to book adventure experiences across India."
+    },
+    "form": {
+      "signInTitle": "Sign in to Outvers",
+      "signUpTitle": "Create an account",
+      "signInSubtitle": "Enter your email to continue",
+      "signUpSubtitle": "Sign up to book adventures",
+      "nameLabel": "Name",
+      "namePlaceholder": "Your name",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "At least 8 characters",
+      "signInButton": "Sign in",
+      "signUpButton": "Create account",
+      "loading": "Please wait...",
+      "newHere": "New here?",
+      "createAccount": "Create an account",
+      "alreadyHaveAccount": "Already have an account?",
+      "signInLink": "Sign in",
+      "networkError": "Network error. Please try again.",
+      "signInError": "Sign in failed. Check your credentials.",
+      "signUpError": "Sign up failed. Try a different email."
+    }
+  },
+  "VendorPage": {
+    "metadata": {
+      "title": "{name} · Outvers Vendor",
+      "description": "Book adventure experiences from {name} on Outvers. KYC-verified, transparent pricing, 24-hour refund SLA.",
+      "notFound": "Vendor not found · Outvers"
+    },
+    "stats": {
+      "experiences": "Experiences",
+      "verification": "Verification",
+      "responseRate": "Response rate",
+      "responseScore": "Response score: {score}%"
+    },
+    "experiencesList": {
+      "heading": "Experiences by {name}",
+      "empty": "No published experiences yet."
+    },
+    "kyc": {
+      "business": "Business verified",
+      "identity": "Identity verified",
+      "phone": "Phone verified"
+    }
+  },
+  "CancellationPolicyPage": {
+    "metadata": {
+      "title": "Refund and cancellation policy · Outvers",
+      "description": "Outvers refund policy explained — Flexible, Moderate, Strict presets, refund SLA, vendor-cancelled bookings, and how to request a cashout from your wallet."
+    },
+    "breadcrumb": {
+      "refundPolicy": "Refund policy"
+    },
+    "hero": {
+      "title": "Refund and cancellation policy",
+      "description": "Every Outvers Experience has one of three named cancellation presets — Flexible, Moderate, or Strict. The preset is locked when you book and is shown on every Experience card, the checkout page, the confirmation email, and the WhatsApp confirmation. Refund math is a pure function of the preset, your cancellation timestamp, and the booking total. No human review inside the policy window."
+    },
+    "presets": {
+      "heading": "The three presets",
+      "columnPreset": "Preset",
+      "columnFullRefund": "Full refund up to",
+      "columnHalfRefund": "50% refund up to",
+      "columnAfter": "After that",
+      "flexible": "Flexible",
+      "moderate": "Moderate",
+      "strict": "Strict",
+      "flexibleFull": "Up to 24 hours before start",
+      "flexibleHalf": "Up to 2 hours before start",
+      "moderateFull": "Up to 72 hours before start",
+      "moderateHalf": "Up to 24 hours before start",
+      "strictFull": "Up to 14 days before start",
+      "strictHalf": "Up to 7 days before start",
+      "noRefund": "No refund"
+    },
+    "examples": {
+      "heading": "Worked examples",
+      "flexibleTitle": "A short day trip — Rishikesh rafting at 9 AM Saturday",
+      "flexibleBody": "Cancel by Friday 9 AM → full refund. Cancel Friday 9 AM to Saturday 7 AM → 50% refund. After 7 AM Saturday → no refund.",
+      "moderateTitle": "A weekend trek starting Saturday 6 AM",
+      "moderateBody": "Cancel by Wednesday 6 AM → full refund. Cancel Wednesday 6 AM to Friday 6 AM → 50% refund. After Friday 6 AM → no refund.",
+      "strictTitle": "A multi-day Himalayan trek starting on the 20th",
+      "strictBody": "Cancel by the 6th → full refund. Cancel between the 6th and the 13th → 50% refund. After the 13th → no refund."
+    },
+    "specialCases": {
+      "heading": "Special cases",
+      "vendorCancelledTitle": "Vendor-cancelled bookings",
+      "vendorCancelledBody": "If a vendor cancels — weather, equipment failure, staffing — you receive a 100% refund regardless of preset. The vendor's response-time SLA score takes a hit.",
+      "outsideWindowTitle": "Bookings outside the policy window",
+      "outsideWindowBody": "If you cancel after the experience start time, the cancellation opens a dispute. Resolution is at admin discretion; declined by default except in clear vendor-fault cases.",
+      "customPoliciesTitle": "Custom policies",
+      "customPoliciesBody": "A small number of high-altitude expeditions and festival-day experiences have a Custom policy with non-refundable permits or guide deposits. These are admin-approved at listing time and shown in plain language on the Experience page."
+    },
+    "refundSla": {
+      "heading": "When you'll see the money",
+      "body": "Eligible refunds credit to your Outvers wallet within 24 hours of an inside-policy cancellation. The wallet balance is spendable on any future booking; you can request a cashout to your original payment method any time — Razorpay round-trips bank transfers in 5–7 working days."
+    },
+    "questions": {
+      "heading": "Still have questions?",
+      "body": "Email {email} or use the in-app chat on any booking — disputes filed inside the policy window are resolved within 48 hours.",
+      "emailAddress": "support@outvers.com"
+    }
+  }
+}

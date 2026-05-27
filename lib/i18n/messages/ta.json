@@ -1,0 +1,32 @@
+{
+  "HomePage": {
+    "hero": {
+      "title": "Book the scene you\nwant to live.",
+      "subtitle": "Rafting in Rishikesh. Paragliding in Bir Billing. Scuba in Goa. Verified vendors, transparent pricing.",
+      "searchLabel": "Search experiences",
+      "searchPlaceholder": "Try \"rafting Rishikesh\" or \"scuba Goa\"",
+      "searchButton": "Search"
+    },
+    "trustBadges": {
+      "kycVerified": "KYC-verified vendors",
+      "refundSla": "24-hour refund SLA",
+      "transparentPricing": "Transparent pricing"
+    },
+    "activities": {
+      "heading": "Browse by activity"
+    },
+    "destinations": {
+      "heading": "Popular destinations",
+      "browseAll": "Browse all",
+      "experienceCount": "{count, plural, one {# experience} other {# experiences}}"
+    },
+    "featured": {
+      "heading": "Featured experiences",
+      "viewAll": "View all"
+    }
+  },
+  "Metadata": {
+    "title": "Outvers — adventure activities in India",
+    "description": "Book rafting, paragliding, scuba, trekking and more across India. Vendor-verified Experiences with transparent refund policy and a 24-hour refund SLA."
+  }
+}

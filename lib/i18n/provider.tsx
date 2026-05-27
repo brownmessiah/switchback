@@ -1,0 +1,92 @@
+'use client'
+
+/**
+ * IntlProvider — wraps NextIntlClientProvider and provides a useIntl() hook
+ * that exposes the current locale and a switchLocale() function.
+ *
+ * For server components, use getLocale() from next-intl/server instead.
+ */
+
+import { NextIntlClientProvider } from 'next-intl'
+import { useRouter, usePathname } from 'next/navigation'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  type ReactNode,
+} from 'react'
+
+import { type SupportedLocale, setLocaleCookie, isValidLocale, DEFAULT_LOCALE } from './config'
+
+interface IntlContextValue {
+  readonly locale: SupportedLocale
+  readonly switchLocale: (newLocale: SupportedLocale) => void
+}
+
+const IntlContext = createContext<IntlContextValue | null>(null)
+
+/**
+ * Access the current locale and a function to switch locales.
+ * Must be used within an IntlProvider.
+ */
+export function useIntl(): IntlContextValue {
+  const ctx = useContext(IntlContext)
+  if (!ctx) {
+    throw new Error('useIntl must be used within an IntlProvider')
+  }
+  return ctx
+}
+
+interface IntlProviderProps {
+  readonly locale: string
+  readonly messages: Record<string, unknown>
+  readonly children: ReactNode
+}
+
+/**
+ * Client-side i18n provider. Wraps NextIntlClientProvider and adds
+ * locale switching via the useIntl() hook.
+ */
+export function IntlProvider({ locale, messages, children }: IntlProviderProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const validLocale: SupportedLocale = isValidLocale(locale)
+    ? locale
+    : DEFAULT_LOCALE
+
+  const switchLocale = useCallback(
+    (newLocale: SupportedLocale) => {
+      setLocaleCookie(newLocale)
+
+      if (typeof document !== 'undefined') {
+        document.documentElement.lang = newLocale
+        document.documentElement.setAttribute('data-locale', newLocale)
+      }
+
+      const pathWithoutLocale = pathname.replace(
+        new RegExp(`^/${validLocale}(?=/|$)`),
+        '',
+      )
+      const newPath =
+        newLocale === DEFAULT_LOCALE
+          ? pathWithoutLocale || '/'
+          : `/${newLocale}${pathWithoutLocale || '/'}`
+
+      router.push(newPath)
+    },
+    [router, pathname, validLocale],
+  )
+
+  const value = useMemo<IntlContextValue>(
+    () => ({ locale: validLocale, switchLocale }),
+    [validLocale, switchLocale],
+  )
+
+  return (
+    <NextIntlClientProvider locale={validLocale} messages={messages}>
+      <IntlContext value={value}>{children}</IntlContext>
+    </NextIntlClientProvider>
+  )
+}

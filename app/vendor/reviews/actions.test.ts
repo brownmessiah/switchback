@@ -238,24 +238,24 @@ describe('executeSubmitVendorResponse', () => {
 })
 
 describe('computeAverageRating', () => {
-  it('computes average for multiple ratings', () => {
-    const result = computeAverageRating([4, 5, 3])
+  it('computes average for multiple ratings', async () => {
+    const result = await computeAverageRating([4, 5, 3])
     expect(result).toBe(4.0)
   })
 
-  it('returns 0 for empty array', () => {
-    const result = computeAverageRating([])
+  it('returns 0 for empty array', async () => {
+    const result = await computeAverageRating([])
     expect(result).toBe(0)
   })
 
-  it('handles single rating', () => {
-    const result = computeAverageRating([3])
+  it('handles single rating', async () => {
+    const result = await computeAverageRating([3])
     expect(result).toBe(3.0)
   })
 
-  it('rounds to one decimal', () => {
+  it('rounds to one decimal', async () => {
     // (4 + 4 + 5) / 3 = 4.333...
-    const result = computeAverageRating([4, 4, 5])
+    const result = await computeAverageRating([4, 4, 5])
     expect(result).toBe(4.3)
   })
 })

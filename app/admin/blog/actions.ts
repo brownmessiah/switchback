@@ -32,7 +32,7 @@ export async function generateUniqueSlug(
   title: string,
   excludeId?: string,
 ): Promise<string> {
-  const base = generateSlug(title)
+  const base = await generateSlug(title)
   if (!base) return `post-${Date.now()}`
 
   let candidate = base

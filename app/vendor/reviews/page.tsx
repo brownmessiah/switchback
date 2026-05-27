@@ -33,7 +33,7 @@ export default async function VendorReviewsPage() {
     .where(eq(reviews.vendorUserId, userId))
     .orderBy(desc(reviews.createdAt))
 
-  const avgRating = computeAverageRating(rows.map((r) => r.rating))
+  const avgRating = await computeAverageRating(rows.map((r) => r.rating))
   const totalReviews = rows.length
 
   return (

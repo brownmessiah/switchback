@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,6 +24,7 @@ export default async function CustomerDashboardPage() {
   if (!session?.user) redirect('/sign-in')
 
   const userId = session.user.id
+  const t = await getTranslations('CustomerNav')
 
   const userBookings = await db
     .select({
@@ -57,14 +59,14 @@ export default async function CustomerDashboardPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:py-12">
-      <h1 className="mb-8 text-2xl font-semibold tracking-tight">My bookings</h1>
+      <h1 className="mb-8 text-2xl font-semibold tracking-tight">{t('pageTitle')}</h1>
 
       {/* Wallet */}
       <div className="mb-8 grid gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Refund balance
+              {t('wallet.refundBalance')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -72,14 +74,14 @@ export default async function CustomerDashboardPage() {
               ₹{refundBalance.toLocaleString('en-IN')}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Cashable or usable on next booking
+              {t('wallet.refundHint')}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Outvers credit
+              {t('wallet.outversCredit')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -87,7 +89,7 @@ export default async function CustomerDashboardPage() {
               ₹{outversCredit.toLocaleString('en-IN')}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Promotional credit — use on any booking
+              {t('wallet.creditHint')}
             </p>
           </CardContent>
         </Card>
@@ -98,15 +100,15 @@ export default async function CustomerDashboardPage() {
       {/* Bookings list */}
       {userBookings.length === 0 ? (
         <div className="rounded-xl border border-dashed py-16 text-center">
-          <p className="text-lg font-medium">No bookings yet</p>
+          <p className="text-lg font-medium">{t('bookings.empty')}</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Explore experiences and book your first adventure.
+            {t('bookings.emptyHint')}
           </p>
           <Link
             href="/en/search"
             className="mt-4 inline-block rounded-lg bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
-            Explore
+            {t('bookings.explore')}
           </Link>
         </div>
       ) : (

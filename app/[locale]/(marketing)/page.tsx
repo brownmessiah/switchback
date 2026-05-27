@@ -9,6 +9,7 @@ import { db } from '@/db/client'
 import { env } from '@/lib/env'
 import { loadHomePageData } from '@/lib/home/queries'
 import { getHeroImage, getRegionImage } from '@/lib/images'
+import { generateAlternates } from '@/lib/seo/hreflang'
 
 export const revalidate = 60
 
@@ -21,11 +22,11 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'Metadata' })
-  const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
+  const alternates = generateAlternates('/', locale)
   return {
     title: t('title'),
     description: t('description'),
-    alternates: { canonical: baseUrl },
+    alternates,
   }
 }
 

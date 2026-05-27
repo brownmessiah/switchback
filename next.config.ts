@@ -14,6 +14,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/sitemap-:locale.xml',
+        destination: '/api/sitemap/:locale',
+      },
+    ]
+  },
 };
 
 export default withNextIntl(nextConfig);

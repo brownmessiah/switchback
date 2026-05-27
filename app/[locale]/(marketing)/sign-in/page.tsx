@@ -1,5 +1,7 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
+import { generateAlternates } from '@/lib/seo/hreflang'
+
 import { SignInForm } from './sign-in-form'
 
 interface PageProps {
@@ -12,6 +14,7 @@ export async function generateMetadata({ params }: PageProps) {
   return {
     title: t('metadata.title'),
     description: t('metadata.description'),
+    alternates: generateAlternates('/sign-in', locale),
   }
 }
 

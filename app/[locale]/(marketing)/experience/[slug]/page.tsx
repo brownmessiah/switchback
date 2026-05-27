@@ -24,6 +24,7 @@ import { env } from '@/lib/env'
 import { loadExperienceDetail } from '@/lib/experiences/detail-loader'
 import { getActivityImage } from '@/lib/images'
 import { getRedis } from '@/lib/redis'
+import { generateAlternates } from '@/lib/seo/hreflang'
 import { breadcrumbList } from '@/lib/seo/schemas/breadcrumb-list'
 import { faqPage } from '@/lib/seo/schemas/faq-page'
 import { product } from '@/lib/seo/schemas/product'
@@ -391,11 +392,7 @@ export default async function ExperienceDetailPage({
   )
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<{
-  title: string
-  description: string
-  alternates: { canonical: string }
-}> {
+export async function generateMetadata({ params }: PageProps) {
   const { locale, slug } = await params
   const result = await loadExperienceDetail(db, { lng: 'en', slug })
 
@@ -410,7 +407,6 @@ export async function generateMetadata({ params }: PageProps): Promise<{
 
   const t = await getTranslations({ locale, namespace: 'ExperiencePage' })
   const detail = result.data
-  const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
   const activityDisplay = detail.activity.displayName.en
   const regionDisplay = detail.region.displayName.en
 
@@ -419,8 +415,6 @@ export async function generateMetadata({ params }: PageProps): Promise<{
     description:
       detail.shortDescription ??
       t('metadata.description', { title: detail.title, region: regionDisplay }),
-    alternates: {
-      canonical: `${baseUrl}/experience/${detail.slug}`,
-    },
+    alternates: generateAlternates(`/experience/${detail.slug}`, locale),
   }
 }

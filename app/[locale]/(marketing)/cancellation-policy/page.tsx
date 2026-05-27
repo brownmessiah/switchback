@@ -3,7 +3,7 @@ import Link from 'next/link'
 import type { ReactElement } from 'react'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
-import { env } from '@/lib/env'
+import { generateAlternates } from '@/lib/seo/hreflang'
 
 /**
  * Cancellation policy SEO + trust content per ADR-0005.
@@ -27,13 +27,10 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'CancellationPolicyPage' })
-  const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
   return {
     title: t('metadata.title'),
     description: t('metadata.description'),
-    alternates: {
-      canonical: `${baseUrl}/cancellation-policy`,
-    },
+    alternates: generateAlternates('/cancellation-policy', locale),
   }
 }
 

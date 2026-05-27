@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ExperienceCard } from '@/components/experience-card'
-import { env } from '@/lib/env'
+import { generateAlternates } from '@/lib/seo/hreflang'
 import {
   isFilteredSearch,
   searchExperiences,
@@ -192,19 +192,12 @@ export default async function SearchPage({
   )
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<{
-  title: string
-  description: string
-  alternates: { canonical: string }
-}> {
+export async function generateMetadata({ params }: PageProps) {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'SearchPage' })
-  const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
   return {
     title: t('metadata.title'),
     description: t('metadata.description'),
-    alternates: {
-      canonical: `${baseUrl}/search`,
-    },
+    alternates: generateAlternates('/search', locale),
   }
 }

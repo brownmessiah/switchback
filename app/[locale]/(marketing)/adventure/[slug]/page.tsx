@@ -16,6 +16,7 @@ import { db } from '@/db/client'
 import { getActivityImage } from '@/lib/images'
 import { env } from '@/lib/env'
 import { loadActivityCityCollection } from '@/lib/collections/activity-city-loader'
+import { generateAlternates } from '@/lib/seo/hreflang'
 import { breadcrumbList } from '@/lib/seo/schemas/breadcrumb-list'
 import { faqPage } from '@/lib/seo/schemas/faq-page'
 import { itemList } from '@/lib/seo/schemas/item-list'
@@ -182,11 +183,7 @@ export default async function ActivityCityCollectionPage({
   )
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<{
-  title: string
-  description: string
-  alternates: { canonical: string }
-}> {
+export async function generateMetadata({ params }: PageProps) {
   const { locale, slug } = await params
   const data = await loadActivityCityCollection(db, { lng: 'en', slug })
   if (!data) {
@@ -200,12 +197,9 @@ export async function generateMetadata({ params }: PageProps): Promise<{
   const t = await getTranslations({ locale, namespace: 'AdventurePage' })
   const activityDisplay = data.activity.displayName.en
   const regionDisplay = data.region.displayName.en
-  const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
   return {
     title: t('metadata.title', { activity: activityDisplay, region: regionDisplay }),
     description: t('metadata.description', { activity: activityDisplay, region: regionDisplay }),
-    alternates: {
-      canonical: `${baseUrl}/adventure/${slug}`,
-    },
+    alternates: generateAlternates(`/adventure/${slug}`, locale),
   }
 }

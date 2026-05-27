@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { db } from '@/db/client'
 import { experiences, vendorProfiles } from '@/db/schema'
-import { env } from '@/lib/env'
+import { generateAlternates } from '@/lib/seo/hreflang'
 
 interface PageProps {
   params: Promise<{ locale: string; slug: string }>
@@ -153,13 +153,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const t = await getTranslations({ locale, namespace: 'VendorPage' })
-  const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
 
   return {
     title: t('metadata.title', { name: vendor.businessName }),
     description: t('metadata.description', { name: vendor.businessName }),
-    alternates: {
-      canonical: `${baseUrl}/vendor/${slug}`,
-    },
+    alternates: generateAlternates(`/vendor/${slug}`, locale),
   }
 }

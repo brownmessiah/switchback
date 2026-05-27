@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 
 import { NotificationBell } from './notification-bell'
@@ -38,6 +39,8 @@ export function AuthStatus() {
     return <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
   }
 
+  const t = useTranslations('Nav')
+
   if (user) {
     return (
       <div className="flex items-center gap-2">
@@ -52,7 +55,7 @@ export function AuthStatus() {
       href="/sign-in"
       className="rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
     >
-      Sign in
+      {t('signIn')}
     </Link>
   )
 }

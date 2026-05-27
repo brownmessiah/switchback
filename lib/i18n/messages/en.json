@@ -323,5 +323,47 @@
       "body": "Email {email} or use the in-app chat on any booking — disputes filed inside the policy window are resolved within 48 hours.",
       "emailAddress": "support@outvers.com"
     }
+  },
+  "Nav": {
+    "home": "Outvers",
+    "homeAriaLabel": "Outvers home",
+    "search": "Search",
+    "adventures": "Adventures",
+    "refundPolicy": "Refund policy",
+    "signIn": "Sign in",
+    "openMenu": "Open menu",
+    "footer": {
+      "tagline": "Adventure activities across India from KYC-verified vendors. Transparent refund policy, real-time slot availability.",
+      "explore": "Explore",
+      "paragliding": "Paragliding",
+      "scubaDiving": "Scuba diving",
+      "support": "Support",
+      "helpCentre": "Help centre (soon)",
+      "contactUs": "Contact us (soon)",
+      "forVendors": "For Vendors",
+      "listYourExperience": "List your experience",
+      "vendorDashboard": "Vendor dashboard",
+      "vendorKyc": "Vendor KYC (soon)",
+      "copyright": "All experiences are operated by third-party vendors."
+    }
+  },
+  "NotFound": {
+    "heading": "404",
+    "message": "This page doesn't exist or has been moved.",
+    "backToHome": "Back to home"
+  },
+  "CheckoutPage": {
+    "title": "Checkout",
+    "orderSummary": "Order summary",
+    "paymentBreakdown": "Payment breakdown",
+    "experience": "Experience",
+    "participants": "Participants",
+    "pricePerPerson": "Price per person",
+    "dueNow": "Due now (25%)",
+    "dueLater": "Due 24h before experience",
+    "cancellationPolicy": "cancellation policy",
+    "autoCapture": "The remaining amount is auto-captured 24 hours before the experience starts.",
+    "payWithRazorpay": "Pay with Razorpay",
+    "error": "Something went wrong. Please try again."
   }
 }

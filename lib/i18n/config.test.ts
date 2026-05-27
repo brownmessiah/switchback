@@ -16,22 +16,20 @@ import {
 // ---------------------------------------------------------------------------
 
 describe('SUPPORTED_LOCALES', () => {
-  it('contains exactly 5 locale codes', () => {
-    expect(SUPPORTED_LOCALES).toHaveLength(5)
+  it('contains exactly 13 locale codes', () => {
+    expect(SUPPORTED_LOCALES).toHaveLength(13)
   })
 
-  it('contains en, hi, ta, mr, bn', () => {
-    expect(SUPPORTED_LOCALES).toContain('en')
-    expect(SUPPORTED_LOCALES).toContain('hi')
-    expect(SUPPORTED_LOCALES).toContain('ta')
-    expect(SUPPORTED_LOCALES).toContain('mr')
-    expect(SUPPORTED_LOCALES).toContain('bn')
+  it('contains all 13 Indian language locales', () => {
+    for (const code of ['en', 'hi', 'ta', 'te', 'kn', 'bn', 'mr', 'ml', 'gu', 'pa', 'or', 'as', 'ur']) {
+      expect(SUPPORTED_LOCALES).toContain(code)
+    }
   })
 
   it('does NOT contain unsupported codes', () => {
     expect(SUPPORTED_LOCALES).not.toContain('fr')
     expect(SUPPORTED_LOCALES).not.toContain('de')
-    expect(SUPPORTED_LOCALES).not.toContain('te')
+    expect(SUPPORTED_LOCALES).not.toContain('zh')
   })
 })
 
@@ -91,7 +89,7 @@ describe('isValidLocale()', () => {
   it('returns false for unsupported locale codes', () => {
     expect(isValidLocale('fr')).toBe(false)
     expect(isValidLocale('de')).toBe(false)
-    expect(isValidLocale('te')).toBe(false)
+    expect(isValidLocale('zh')).toBe(false)
   })
 
   it('returns false for empty string', () => {

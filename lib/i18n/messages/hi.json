@@ -323,5 +323,47 @@
       "body": "{email} पर ईमेल करें या किसी भी बुकिंग पर इन-ऐप चैट का उपयोग करें — नीति विंडो के अंदर दायर विवाद 48 घंटों के भीतर हल हो जाते हैं।",
       "emailAddress": "support@outvers.com"
     }
+  },
+  "Nav": {
+    "home": "Outvers",
+    "homeAriaLabel": "Outvers होम",
+    "search": "खोजें",
+    "adventures": "साहसिक गतिविधियाँ",
+    "refundPolicy": "रिफ़ंड नीति",
+    "signIn": "साइन इन",
+    "openMenu": "मेनू खोलें",
+    "footer": {
+      "tagline": "KYC-सत्यापित विक्रेताओं से भारत भर में साहसिक गतिविधियाँ। पारदर्शी रिफ़ंड नीति, रियल-टाइम स्लॉट उपलब्धता।",
+      "explore": "खोजें",
+      "paragliding": "पैराग्लाइडिंग",
+      "scubaDiving": "स्कूबा डाइविंग",
+      "support": "सहायता",
+      "helpCentre": "सहायता केंद्र (जल्द)",
+      "contactUs": "संपर्क करें (जल्द)",
+      "forVendors": "विक्रेताओं के लिए",
+      "listYourExperience": "अपना अनुभव सूचीबद्ध करें",
+      "vendorDashboard": "विक्रेता डैशबोर्ड",
+      "vendorKyc": "विक्रेता KYC (जल्द)",
+      "copyright": "सभी अनुभव तृतीय-पक्ष विक्रेताओं द्वारा संचालित हैं।"
+    }
+  },
+  "NotFound": {
+    "heading": "404",
+    "message": "यह पृष्ठ मौजूद नहीं है या स्थानांतरित कर दिया गया है।",
+    "backToHome": "होम पर वापस जाएँ"
+  },
+  "CheckoutPage": {
+    "title": "चेकआउट",
+    "orderSummary": "ऑर्डर सारांश",
+    "paymentBreakdown": "भुगतान विवरण",
+    "experience": "अनुभव",
+    "participants": "प्रतिभागी",
+    "pricePerPerson": "प्रति व्यक्ति कीमत",
+    "dueNow": "अभी देय (25%)",
+    "dueLater": "अनुभव से 24 घंटे पहले देय",
+    "cancellationPolicy": "रद्दीकरण नीति",
+    "autoCapture": "शेष राशि अनुभव शुरू होने से 24 घंटे पहले स्वचालित रूप से ली जाती है।",
+    "payWithRazorpay": "Razorpay से भुगतान करें",
+    "error": "कुछ गलत हो गया। कृपया पुनः प्रयास करें।"
   }
 }

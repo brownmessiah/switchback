@@ -1,32 +1,369 @@
 {
   "HomePage": {
     "hero": {
-      "title": "Book the scene you\nwant to live.",
-      "subtitle": "Rafting in Rishikesh. Paragliding in Bir Billing. Scuba in Goa. Verified vendors, transparent pricing.",
-      "searchLabel": "Search experiences",
-      "searchPlaceholder": "Try \"rafting Rishikesh\" or \"scuba Goa\"",
-      "searchButton": "Search"
+      "title": "तुम्हाला जगायचं असलेलं\nदृश्य बुक करा.",
+      "subtitle": "ऋषिकेशमध्ये राफ्टिंग. बीर बिलिंगमध्ये पॅराग्लायडिंग. गोव्यात स्कूबा. सत्यापित विक्रेते, पारदर्शक किंमत.",
+      "searchLabel": "अनुभव शोधा",
+      "searchPlaceholder": "\"राफ्टिंग ऋषिकेश\" किंवा \"स्कूबा गोवा\" वापरून पहा",
+      "searchButton": "शोधा"
     },
     "trustBadges": {
-      "kycVerified": "KYC-verified vendors",
-      "refundSla": "24-hour refund SLA",
-      "transparentPricing": "Transparent pricing"
+      "kycVerified": "KYC-सत्यापित विक्रेते",
+      "refundSla": "24 तासांचा परतावा SLA",
+      "transparentPricing": "पारदर्शक किंमत निर्धारण"
     },
     "activities": {
-      "heading": "Browse by activity"
+      "heading": "कार्यक्रमानुसार ब्राउझ करा"
     },
     "destinations": {
-      "heading": "Popular destinations",
-      "browseAll": "Browse all",
-      "experienceCount": "{count, plural, one {# experience} other {# experiences}}"
+      "heading": "लोकप्रिय ठिकाणे",
+      "browseAll": "सर्व पहा",
+      "experienceCount": "{count, plural, one {# अनुभव} other {# अनुभव}}"
     },
     "featured": {
-      "heading": "Featured experiences",
-      "viewAll": "View all"
+      "heading": "वैशिष्ट्यपूर्ण अनुभव",
+      "viewAll": "सर्व पहा"
     }
   },
   "Metadata": {
-    "title": "Outvers — adventure activities in India",
-    "description": "Book rafting, paragliding, scuba, trekking and more across India. Vendor-verified Experiences with transparent refund policy and a 24-hour refund SLA."
+    "title": "Outvers — भारतातील साहसी कार्यक्रम",
+    "description": "संपूर्ण भारतात राफ्टिंग, पॅराग्लायडिंग, स्कूबा, ट्रेकिंग आणि बरेच काही बुक करा. विक्रेता-सत्यापित अनुभव, पारदर्शक परतावा धोरण आणि 24 तासांचा परतावा SLA."
+  },
+  "Common": {
+    "breadcrumb": {
+      "home": "मुखपृष्ठ"
+    },
+    "notFound": "सापडले नाही · Outvers",
+    "actions": {
+      "save": "जतन करा",
+      "cancel": "रद्द करा",
+      "delete": "हटवा",
+      "back": "मागे",
+      "edit": "संपादन",
+      "submit": "सादर करा",
+      "confirm": "पुष्टी करा",
+      "close": "बंद करा",
+      "search": "शोधा",
+      "loading": "लोड होत आहे..."
+    },
+    "status": {
+      "confirmed": "पुष्टी",
+      "pending": "प्रलंबित",
+      "completed": "पूर्ण",
+      "cancelled": "रद्द",
+      "disputed": "विवादित",
+      "active": "सक्रिय",
+      "inactive": "निष्क्रिय",
+      "draft": "मसुदा",
+      "published": "प्रकाशित",
+      "pendingReview": "पुनरावलोकन प्रलंबित"
+    }
+  },
+  "AdminNav": {
+    "sidebarTitle": "प्रशासक",
+    "groups": {
+      "dashboard": "डॅशबोर्ड",
+      "marketplace": "मार्केटप्लेस",
+      "finance": "वित्त",
+      "content": "सामग्री",
+      "operations": "कार्यसंचालन"
+    },
+    "items": {
+      "overview": "आढावा",
+      "analytics": "विश्लेषण",
+      "vendors": "विक्रेते",
+      "experiences": "अनुभव",
+      "bookings": "बुकिंग",
+      "reviews": "पुनरावलोकने",
+      "commission": "कमिशन",
+      "payouts": "देयके",
+      "refunds": "परतावे",
+      "disputes": "विवाद",
+      "promoCodes": "प्रोमो कोड",
+      "loyalty": "लॉयल्टी",
+      "blog": "ब्लॉग",
+      "siteBuilder": "साइट बिल्डर",
+      "support": "सहाय्य",
+      "regionClosures": "प्रदेश बंद",
+      "auditLogs": "ऑडिट लॉग",
+      "subAdmins": "उप-प्रशासक",
+      "reports": "अहवाल"
+    }
+  },
+  "VendorNav": {
+    "portalTitle": "विक्रेता पोर्टल",
+    "completeSetup": "सेटअप पूर्ण करा",
+    "items": {
+      "dashboard": "डॅशबोर्ड",
+      "listings": "लिस्टिंग",
+      "bookings": "बुकिंग",
+      "payouts": "देयके",
+      "reviews": "पुनरावलोकने",
+      "messages": "संदेश",
+      "settings": "सेटिंग्ज"
+    }
+  },
+  "CustomerNav": {
+    "pageTitle": "माझी बुकिंग",
+    "wallet": {
+      "refundBalance": "परतावा शिल्लक",
+      "refundHint": "रोख किंवा पुढील बुकिंगमध्ये वापरा",
+      "outversCredit": "Outvers क्रेडिट",
+      "creditHint": "प्रचार क्रेडिट — कोणत्याही बुकिंगवर वापरा"
+    },
+    "bookings": {
+      "empty": "अजून बुकिंग नाही",
+      "emptyHint": "अनुभव शोधा आणि तुमचे पहिले साहस बुक करा.",
+      "explore": "शोधा"
+    }
+  },
+  "AdventurePage": {
+    "metadata": {
+      "title": "{region} मध्ये {activity} · Outvers",
+      "description": "KYC-सत्यापित विक्रेत्यांकडून {region} मध्ये {activity} अनुभव बुक करा. पारदर्शक किंमत, 24 तासांचा परतावा SLA, रिअल-टाइम स्लॉट उपलब्धता."
+    },
+    "hero": {
+      "description": "KYC-सत्यापित विक्रेत्यांकडून {region} मध्ये {activity} अनुभव बुक करा. पारदर्शक किंमत, रिअल-टाइम स्लॉट उपलब्धता, आणि 24 तासांचा परतावा SLA."
+    },
+    "experiences": {
+      "sectionLabel": "{activity} अनुभव",
+      "emptyTitle": "{region} मध्ये अजून {activity} अनुभव नाहीत",
+      "emptySubtitle": "लवकरच परत या — नवीन लिस्टिंग नियमितपणे जोडल्या जातात."
+    },
+    "faq": {
+      "heading": "वारंवार विचारले जाणारे प्रश्न",
+      "safetyQuestion": "{region} मध्ये {activity} सुरक्षित आहे का?",
+      "safetyAnswer": "Outvers वर सूचीबद्ध सर्व अनुभव KYC-सत्यापित विक्रेत्यांद्वारे चालवले जातात. सेफ्टी-स्टॅक अनुभवांसाठी विश्वसनीय संपर्क आणि ट्रिप-चेक-इन पिंग आवश्यक आहेत.",
+      "bestTimeQuestion": "{region} मध्ये {activity} साठी सर्वोत्तम वेळ कधी आहे?",
+      "bestTimeAnswer": "हंगाम आणि प्रदेश-बंद कालावधीसाठी प्रत्येक अनुभव लिस्टिंग पहा. पावसाळा आणि हवामान बंद बुकिंग टप्प्यावर इनलाइन दाखवले जातात.",
+      "cancellationQuestion": "रद्दीकरण धोरण काय आहे?",
+      "cancellationAnswer": "प्रत्येक अनुभवाचे स्वतःचे रद्दीकरण धोरण आहे (लवचिक / मध्यम / कठोर). धोरणातील रद्दीकरणासाठी परतावा 24 तासांत तुमच्या Outvers वॉलेटमध्ये जमा होतो."
+    },
+    "itemList": {
+      "name": "{region} मधील अग्रगण्य {activity} अनुभव"
+    }
+  },
+  "ExperiencePage": {
+    "metadata": {
+      "title": "{title} · {region} मध्ये {activity} · Outvers",
+      "description": "KYC-सत्यापित विक्रेत्याकडून {region} मध्ये {title} बुक करा. पारदर्शक किंमत, 24 तासांचा परतावा SLA."
+    },
+    "vendor": {
+      "by": "{name} कडून"
+    },
+    "sections": {
+      "about": "या अनुभवाबद्दल",
+      "cancellationPolicy": "रद्दीकरण धोरण",
+      "requiredPermits": "आवश्यक परवानग्या",
+      "permitsNotice": "सहभागी होण्यापूर्वी तुम्हाला खालील परवानग्या आवश्यक आहेत. Outvers तुमच्या वतीने परवानग्या मिळवत नाही.",
+      "reviews": "पुनरावलोकने",
+      "faq": "वारंवार विचारले जाणारे प्रश्न"
+    },
+    "pricing": {
+      "heading": "किंमत",
+      "tier1_2": "1-2 सहभागी",
+      "tier3_5": "3-5 सहभागी",
+      "tier6Plus": "6+ सहभागी",
+      "perPerson": "/ व्यक्ती",
+      "partialPay": "आता 25% भरा, उर्वरित अनुभवाच्या 24 तास आधी.",
+      "bookNow": "आता बुक करा",
+      "freeCancellation": "मोफत रद्दीकरण · 24 तास परतावा SLA"
+    },
+    "cancellation": {
+      "flexible": "अनुभवाच्या 24 तास आधी मोफत रद्दीकरण. 2 तासांत 50% परतावा. त्यानंतर परतावा नाही.",
+      "moderate": "7 दिवस आधी मोफत रद्दीकरण. 48 तासांत 50% परतावा. त्यानंतर परतावा नाही.",
+      "strict": "7 दिवस आधी 50% परतावा. त्यानंतर परतावा नाही.",
+      "fallback": "हा अनुभव {preset} रद्दीकरण धोरणाचे पालन करतो."
+    },
+    "faq": {
+      "safetyQuestion": "{title} सुरक्षित आहे का?",
+      "safetyAnswer": "Outvers वर सूचीबद्ध सर्व अनुभव KYC-सत्यापित विक्रेत्यांद्वारे चालवले जातात. सेफ्टी-स्टॅक अनुभवांसाठी विश्वसनीय संपर्क आणि ट्रिप-चेक-इन पिंग आवश्यक आहेत.",
+      "cancellationQuestion": "{title} साठी रद्दीकरण धोरण काय आहे?",
+      "cancellationAnswer": "हा अनुभव {preset} रद्दीकरण धोरणाचे पालन करतो. धोरणातील रद्दीकरणासाठी परतावा 24 तासांत तुमच्या Outvers वॉलेटमध्ये जमा होतो.",
+      "paymentQuestion": "पेमेंट कसे काम करते?",
+      "paymentAnswerPartial": "तुम्ही आता 25% भरू शकता आणि उर्वरित अनुभव सुरू होण्याच्या 24 तास आधी. संपूर्ण आगाऊ पेमेंटही उपलब्ध आहे.",
+      "paymentAnswerFull": "बुकिंगच्या वेळी संपूर्ण पेमेंट घेतले जाते."
+    },
+    "kyc": {
+      "business": "व्यवसाय सत्यापित",
+      "identity": "ओळख सत्यापित",
+      "phone": "फोन सत्यापित"
+    }
+  },
+  "SearchPage": {
+    "metadata": {
+      "title": "अनुभव शोधा · Outvers",
+      "description": "संपूर्ण भारतात साहसी अनुभव शोधा आणि फिल्टर करा. KYC-सत्यापित विक्रेत्यांकडून राफ्टिंग, पॅराग्लायडिंग, ट्रेकिंग, स्कूबा डायव्हिंग, आणि बरेच काही."
+    },
+    "heading": {
+      "withQuery": "\"{query}\" चे निकाल",
+      "default": "अनुभव शोधा"
+    },
+    "results": {
+      "count": "{count} अनुभव सापडले",
+      "empty": "कोणतेही अनुभव सापडले नाहीत",
+      "emptyHint": "तुमचे फिल्टर समायोजित करा किंवा काहीतरी वेगळे शोधा."
+    },
+    "filters": {
+      "activity": "कार्यक्रम",
+      "allActivities": "सर्व कार्यक्रम",
+      "sortBy": "क्रमवारी",
+      "relevance": "संबंधितता",
+      "priceLowHigh": "किंमत: कमी ते जास्त",
+      "priceHighLow": "किंमत: जास्त ते कमी",
+      "newest": "नवीनतम",
+      "minPrice": "किमान ₹",
+      "maxPrice": "कमाल ₹",
+      "applyFilters": "फिल्टर लागू करा"
+    }
+  },
+  "SignInPage": {
+    "metadata": {
+      "title": "साइन इन — Outvers",
+      "description": "भारतभर साहसी अनुभव बुक करण्यासाठी Outvers वर साइन इन करा."
+    },
+    "form": {
+      "signInTitle": "Outvers वर साइन इन करा",
+      "signUpTitle": "खाते तयार करा",
+      "signInSubtitle": "पुढे जाण्यासाठी तुमचा ईमेल प्रविष्ट करा",
+      "signUpSubtitle": "साहस बुक करण्यासाठी साइन अप करा",
+      "nameLabel": "नाव",
+      "namePlaceholder": "तुमचे नाव",
+      "emailLabel": "ईमेल",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "पासवर्ड",
+      "passwordPlaceholder": "किमान 8 अक्षरे",
+      "signInButton": "साइन इन",
+      "signUpButton": "खाते तयार करा",
+      "loading": "कृपया प्रतीक्षा करा...",
+      "newHere": "नवीन आहात?",
+      "createAccount": "खाते तयार करा",
+      "alreadyHaveAccount": "आधीच खाते आहे?",
+      "signInLink": "साइन इन",
+      "networkError": "नेटवर्क त्रुटी. कृपया पुन्हा प्रयत्न करा.",
+      "signInError": "साइन इन अयशस्वी. तुमची क्रेडेन्शियल्स तपासा.",
+      "signUpError": "साइन अप अयशस्वी. वेगळा ईमेल वापरून पहा."
+    }
+  },
+  "VendorPage": {
+    "metadata": {
+      "title": "{name} · Outvers विक्रेता",
+      "description": "Outvers वर {name} कडून साहसी अनुभव बुक करा. KYC-सत्यापित, पारदर्शक किंमत, 24 तासांचा परतावा SLA.",
+      "notFound": "विक्रेता सापडला नाही · Outvers"
+    },
+    "stats": {
+      "experiences": "अनुभव",
+      "verification": "सत्यापन",
+      "responseRate": "प्रतिसाद दर",
+      "responseScore": "प्रतिसाद स्कोर: {score}%"
+    },
+    "experiencesList": {
+      "heading": "{name} चे अनुभव",
+      "empty": "अजून प्रकाशित अनुभव नाहीत."
+    },
+    "kyc": {
+      "business": "व्यवसाय सत्यापित",
+      "identity": "ओळख सत्यापित",
+      "phone": "फोन सत्यापित"
+    }
+  },
+  "CancellationPolicyPage": {
+    "metadata": {
+      "title": "परतावा आणि रद्दीकरण धोरण · Outvers",
+      "description": "Outvers परतावा धोरण — लवचिक, मध्यम, कठोर प्रीसेट, परतावा SLA, विक्रेता-रद्द बुकिंग, आणि वॉलेटमधून कॅशआउट कसे करावे."
+    },
+    "breadcrumb": {
+      "refundPolicy": "परतावा धोरण"
+    },
+    "hero": {
+      "title": "परतावा आणि रद्दीकरण धोरण",
+      "description": "प्रत्येक Outvers अनुभवामध्ये तीन नामांकित रद्दीकरण प्रीसेटपैकी एक असतो — लवचिक, मध्यम, किंवा कठोर. बुकिंगच्या वेळी प्रीसेट लॉक होतो आणि प्रत्येक अनुभव कार्ड, चेकआउट पृष्ठ, पुष्टी ईमेल, आणि WhatsApp पुष्टीवर दाखवला जातो. परतावा गणित प्रीसेट, तुमच्या रद्दीकरण वेळ, आणि बुकिंग एकूणाचे शुद्ध फलन आहे. धोरण कालावधीत कोणतेही मानवी पुनरावलोकन नाही."
+    },
+    "presets": {
+      "heading": "तीन प्रीसेट",
+      "columnPreset": "प्रीसेट",
+      "columnFullRefund": "पूर्ण परतावा पर्यंत",
+      "columnHalfRefund": "50% परतावा पर्यंत",
+      "columnAfter": "त्यानंतर",
+      "flexible": "लवचिक",
+      "moderate": "मध्यम",
+      "strict": "कठोर",
+      "flexibleFull": "सुरू होण्याच्या 24 तास आधी पर्यंत",
+      "flexibleHalf": "सुरू होण्याच्या 2 तास आधी पर्यंत",
+      "moderateFull": "सुरू होण्याच्या 72 तास आधी पर्यंत",
+      "moderateHalf": "सुरू होण्याच्या 24 तास आधी पर्यंत",
+      "strictFull": "सुरू होण्याच्या 14 दिवस आधी पर्यंत",
+      "strictHalf": "सुरू होण्याच्या 7 दिवस आधी पर्यंत",
+      "noRefund": "परतावा नाही"
+    },
+    "examples": {
+      "heading": "उदाहरणे",
+      "flexibleTitle": "एक छोटी डे ट्रिप — शनिवारी सकाळी 9 वाजता ऋषिकेश राफ्टिंग",
+      "flexibleBody": "शुक्रवारी सकाळी 9 वाजेपर्यंत रद्द करा → पूर्ण परतावा. शुक्रवार 9 AM ते शनिवार 7 AM → 50% परतावा. शनिवार 7 AM नंतर → परतावा नाही.",
+      "moderateTitle": "शनिवारी सकाळी 6 वाजता सुरू होणारा वीकेंड ट्रेक",
+      "moderateBody": "बुधवारी सकाळी 6 वाजेपर्यंत रद्द करा → पूर्ण परतावा. बुधवार 6 AM ते शुक्रवार 6 AM → 50% परतावा. शुक्रवार 6 AM नंतर → परतावा नाही.",
+      "strictTitle": "20 तारखेला सुरू होणारा बहु-दिवसीय हिमालय ट्रेक",
+      "strictBody": "6 तारखेपर्यंत रद्द करा → पूर्ण परतावा. 6 ते 13 तारखेदरम्यान → 50% परतावा. 13 तारखेनंतर → परतावा नाही."
+    },
+    "specialCases": {
+      "heading": "विशेष प्रकरणे",
+      "vendorCancelledTitle": "विक्रेता-रद्द बुकिंग",
+      "vendorCancelledBody": "जर विक्रेत्याने रद्द केले — हवामान, उपकरण बिघाड, कर्मचारी समस्या — प्रीसेट काहीही असो तुम्हाला 100% परतावा मिळतो. विक्रेत्याचा प्रतिसाद-वेळ SLA स्कोर प्रभावित होतो.",
+      "outsideWindowTitle": "धोरण कालावधीबाहेरील बुकिंग",
+      "outsideWindowBody": "अनुभव सुरू झाल्यानंतर तुम्ही रद्द केल्यास, रद्दीकरण विवाद उघडतो. निराकरण प्रशासकाच्या विवेकबुद्धीवर आहे; स्पष्ट विक्रेता-दोष प्रकरणे वगळता डीफॉल्टने नाकारले जाते.",
+      "customPoliciesTitle": "कस्टम धोरणे",
+      "customPoliciesBody": "काही उंचीवरील मोहिमा आणि सण-दिवसाच्या अनुभवांमध्ये परत न करता येणाऱ्या परवानग्या किंवा मार्गदर्शक ठेवींसह कस्टम धोरण असते. या लिस्टिंगच्या वेळी प्रशासक-मंजूर असतात आणि अनुभव पृष्ठावर सोप्या भाषेत दाखवल्या जातात."
+    },
+    "refundSla": {
+      "heading": "पैसे कधी दिसतील",
+      "body": "धोरणातील रद्दीकरणाच्या 24 तासांत पात्र परतावा तुमच्या Outvers वॉलेटमध्ये जमा होतो. वॉलेट शिल्लक कोणत्याही भविष्यातील बुकिंगवर खर्च करता येते; तुम्ही कधीही तुमच्या मूळ पेमेंट पद्धतीवर कॅशआउट विनंती करू शकता — Razorpay 5–7 कार्यदिवसांत बँक ट्रान्सफर करतो."
+    },
+    "questions": {
+      "heading": "अजून प्रश्न आहेत?",
+      "body": "{email} वर ईमेल करा किंवा कोणत्याही बुकिंगवर इन-अॅप चॅट वापरा — धोरण कालावधीत दाखल केलेले विवाद 48 तासांत निराकरण होतात.",
+      "emailAddress": "support@outvers.com"
+    }
+  },
+  "Nav": {
+    "home": "Outvers",
+    "homeAriaLabel": "Outvers मुखपृष्ठ",
+    "search": "शोधा",
+    "adventures": "साहसे",
+    "refundPolicy": "परतावा धोरण",
+    "signIn": "साइन इन",
+    "openMenu": "मेनू उघडा",
+    "footer": {
+      "tagline": "KYC-सत्यापित विक्रेत्यांकडून संपूर्ण भारतात साहसी कार्यक्रम. पारदर्शक परतावा धोरण, रिअल-टाइम स्लॉट उपलब्धता.",
+      "explore": "शोधा",
+      "paragliding": "पॅराग्लायडिंग",
+      "scubaDiving": "स्कूबा डायव्हिंग",
+      "support": "सहाय्य",
+      "helpCentre": "सहाय्य केंद्र (लवकरच)",
+      "contactUs": "आमच्याशी संपर्क करा (लवकरच)",
+      "forVendors": "विक्रेत्यांसाठी",
+      "listYourExperience": "तुमचा अनुभव सूचीबद्ध करा",
+      "vendorDashboard": "विक्रेता डॅशबोर्ड",
+      "vendorKyc": "विक्रेता KYC (लवकरच)",
+      "copyright": "सर्व अनुभव तृतीय-पक्ष विक्रेत्यांद्वारे चालवले जातात."
+    }
+  },
+  "NotFound": {
+    "heading": "404",
+    "message": "हे पृष्ठ अस्तित्वात नाही किंवा हलवले गेले आहे.",
+    "backToHome": "मुखपृष्ठावर परत जा"
+  },
+  "CheckoutPage": {
+    "title": "चेकआउट",
+    "orderSummary": "ऑर्डर सारांश",
+    "paymentBreakdown": "पेमेंट तपशील",
+    "experience": "अनुभव",
+    "participants": "सहभागी",
+    "pricePerPerson": "प्रति व्यक्ती किंमत",
+    "dueNow": "आता देय (25%)",
+    "dueLater": "अनुभवाच्या 24 तास आधी देय",
+    "cancellationPolicy": "रद्दीकरण धोरण",
+    "autoCapture": "अनुभव सुरू होण्याच्या 24 तास आधी उर्वरित रक्कम स्वयंचलितपणे गोळा केली जाते.",
+    "payWithRazorpay": "Razorpay ने पैसे भरा",
+    "error": "काहीतरी चूक झाली. कृपया पुन्हा प्रयत्न करा."
   }
 }

@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import type { ReactElement } from 'react'
 
 import { LanguageSelector } from './language-selector'
@@ -12,6 +15,8 @@ import { LanguageSelector } from './language-selector'
  */
 
 export function SiteFooter(): ReactElement {
+  const t = useTranslations('Nav')
+  const tf = useTranslations('Nav.footer')
   return (
     <footer className="mt-16 border-t border-border bg-card">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
@@ -21,13 +26,12 @@ export function SiteFooter(): ReactElement {
             <Link
               href="/"
               className="text-lg font-semibold tracking-tight"
-              aria-label="Outvers home"
+              aria-label={t('homeAriaLabel')}
             >
-              Outvers
+              {t('home')}
             </Link>
             <p className="mt-3 max-w-xs text-sm text-muted-foreground">
-              Adventure activities across India from KYC-verified vendors.
-              Transparent refund policy, real-time slot availability.
+              {tf('tagline')}
             </p>
             <div className="mt-4">
               <LanguageSelector variant="full" />
@@ -38,70 +42,68 @@ export function SiteFooter(): ReactElement {
             {/* Explore */}
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Explore
+                {tf('explore')}
               </h3>
               <ul className="mt-3 space-y-2 text-sm">
                 <li>
                   <Link href="/search" className="text-foreground/80 transition hover:text-foreground">
-                    Search
+                    {t('search')}
                   </Link>
                 </li>
                 <li>
                   <Link href="/adventure/rafting-in-rishikesh" className="text-foreground/80 transition hover:text-foreground">
-                    Adventures
+                    {t('adventures')}
                   </Link>
                 </li>
                 <li>
                   <Link href="/search?activity=paragliding" className="text-foreground/80 transition hover:text-foreground">
-                    Paragliding
+                    {tf('paragliding')}
                   </Link>
                 </li>
                 <li>
                   <Link href="/search?activity=scuba" className="text-foreground/80 transition hover:text-foreground">
-                    Scuba diving
+                    {tf('scubaDiving')}
                   </Link>
                 </li>
               </ul>
             </div>
 
-            {/* Support */}
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Support
+                {tf('support')}
               </h3>
               <ul className="mt-3 space-y-2 text-sm">
                 <li>
                   <Link href="/cancellation-policy" className="text-foreground/80 transition hover:text-foreground">
-                    Refund policy
+                    {t('refundPolicy')}
                   </Link>
                 </li>
                 <li>
-                  <span className="text-muted-foreground">Help centre (soon)</span>
+                  <span className="text-muted-foreground">{tf('helpCentre')}</span>
                 </li>
                 <li>
-                  <span className="text-muted-foreground">Contact us (soon)</span>
+                  <span className="text-muted-foreground">{tf('contactUs')}</span>
                 </li>
               </ul>
             </div>
 
-            {/* For Vendors */}
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                For Vendors
+                {tf('forVendors')}
               </h3>
               <ul className="mt-3 space-y-2 text-sm">
                 <li>
                   <Link href="/vendor/onboarding" className="text-foreground/80 transition hover:text-foreground">
-                    List your experience
+                    {tf('listYourExperience')}
                   </Link>
                 </li>
                 <li>
                   <Link href="/vendor/dashboard" className="text-foreground/80 transition hover:text-foreground">
-                    Vendor dashboard
+                    {tf('vendorDashboard')}
                   </Link>
                 </li>
                 <li>
-                  <span className="text-muted-foreground">Vendor KYC (soon)</span>
+                  <span className="text-muted-foreground">{tf('vendorKyc')}</span>
                 </li>
               </ul>
             </div>
@@ -111,8 +113,7 @@ export function SiteFooter(): ReactElement {
 
       <div className="border-t border-border">
         <p className="mx-auto max-w-6xl px-4 py-6 text-xs text-muted-foreground sm:px-6">
-          &copy; {new Date().getFullYear()} Outvers. All experiences are operated by
-          third-party vendors.
+          &copy; {new Date().getFullYear()} Outvers. {tf('copyright')}
         </p>
       </div>
     </footer>

@@ -6,7 +6,7 @@
  * ta, mr, bn are infrastructure-supported with content rolling in across v1.x.
  */
 
-export const SUPPORTED_LOCALES = ['en', 'hi', 'ta', 'mr', 'bn'] as const
+export const SUPPORTED_LOCALES = ['en', 'hi', 'ta', 'te', 'kn', 'bn', 'mr', 'ml', 'gu', 'pa', 'or', 'as', 'ur'] as const
 
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
 
@@ -24,8 +24,16 @@ export const LOCALE_NAMES: Record<SupportedLocale, string> = {
   en: 'English',
   hi: 'हिन्दी',
   ta: 'தமிழ்',
-  mr: 'मराठी',
+  te: 'తెలుగు',
+  kn: 'ಕನ್ನಡ',
   bn: 'বাংলা',
+  mr: 'मराठी',
+  ml: 'മലയാളം',
+  gu: 'ગુજરાતી',
+  pa: 'ਪੰਜਾਬੀ',
+  or: 'ଓଡ଼ିଆ',
+  as: 'অসমীয়া',
+  ur: 'اردو',
 }
 
 /** Type guard — returns true when the given string is a supported locale code. */

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { usePathname } from 'next/navigation'
 import type { ReactElement } from 'react'
 
@@ -10,6 +11,7 @@ import { LanguageSelector } from './language-selector'
 export function SiteHeader(): ReactElement {
   const pathname = usePathname()
   const isHome = pathname === '/'
+  const t = useTranslations('Nav')
 
   return (
     <header
@@ -23,9 +25,9 @@ export function SiteHeader(): ReactElement {
         <Link
           href="/"
           className={`text-lg font-semibold tracking-tight ${isHome ? 'text-white' : ''}`}
-          aria-label="Outvers home"
+          aria-label={t('homeAriaLabel')}
         >
-          Outvers
+          {t('home')}
         </Link>
 
         <nav aria-label="Primary" className="hidden items-center gap-6 sm:flex">
@@ -37,7 +39,7 @@ export function SiteHeader(): ReactElement {
                 : 'text-sm text-muted-foreground hover:text-foreground'
             }
           >
-            Search
+            {t('search')}
           </Link>
           <Link
             href="/adventure/rafting-in-rishikesh"
@@ -47,7 +49,7 @@ export function SiteHeader(): ReactElement {
                 : 'text-sm text-muted-foreground hover:text-foreground'
             }
           >
-            Adventures
+            {t('adventures')}
           </Link>
           <Link
             href="/cancellation-policy"
@@ -57,7 +59,7 @@ export function SiteHeader(): ReactElement {
                 : 'text-sm text-muted-foreground hover:text-foreground'
             }
           >
-            Refund policy
+            {t('refundPolicy')}
           </Link>
           <LanguageSelector variant="compact" />
           <AuthStatus />
@@ -66,7 +68,7 @@ export function SiteHeader(): ReactElement {
         <details className="sm:hidden">
           <summary
             className={`cursor-pointer list-none rounded-md p-2 ${isHome ? 'text-white' : 'text-muted-foreground'}`}
-            aria-label="Open menu"
+            aria-label={t('openMenu')}
           >
             <svg
               width="20"
@@ -91,19 +93,19 @@ export function SiteHeader(): ReactElement {
               href="/search"
               className="rounded px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             >
-              Search
+              {t('search')}
             </Link>
             <Link
               href="/adventure/rafting-in-rishikesh"
               className="rounded px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             >
-              Adventures
+              {t('adventures')}
             </Link>
             <Link
               href="/cancellation-policy"
               className="rounded px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             >
-              Refund policy
+              {t('refundPolicy')}
             </Link>
             <div className="px-1 py-1">
               <LanguageSelector variant="compact" />
@@ -112,7 +114,7 @@ export function SiteHeader(): ReactElement {
               href="/sign-in"
               className="rounded px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
             >
-              Sign in
+              {t('signIn')}
             </Link>
           </nav>
         </details>

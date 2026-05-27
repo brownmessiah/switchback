@@ -22,6 +22,7 @@ import {
 import {
   LAUNCH_LOCALES,
   LOCALE_NAMES,
+  type LaunchLocale,
   type SupportedLocale,
 } from '@/lib/i18n/config'
 import { useIntl } from '@/lib/i18n/provider'
@@ -86,8 +87,10 @@ export function LanguageSelector({
     }
   }, [open, focusedIndex])
 
+  const listboxId = 'language-selector-listbox'
+
   const handleSelect = useCallback(
-    (code: SupportedLocale) => {
+    (code: LaunchLocale) => {
       if (code !== locale) {
         switchLocale(code)
       }
@@ -109,7 +112,7 @@ export function LanguageSelector({
   )
 
   const handleOptionKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLLIElement>, code: SupportedLocale, index: number) => {
+    (e: KeyboardEvent<HTMLLIElement>, code: LaunchLocale, index: number) => {
       switch (e.key) {
         case 'Enter':
         case ' ':
@@ -144,8 +147,9 @@ export function LanguageSelector({
         ref={triggerRef}
         type="button"
         aria-label="Select language"
-        aria-expanded={open ? 'true' : 'false'}
+        aria-expanded={open}
         aria-haspopup="listbox"
+        aria-controls={listboxId}
         onClick={handleTriggerClick}
         onKeyDown={handleTriggerKeyDown}
         className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -156,6 +160,7 @@ export function LanguageSelector({
 
       {open && (
         <ul
+          id={listboxId}
           ref={listboxRef}
           role="listbox"
           aria-label="Available languages"
@@ -166,7 +171,7 @@ export function LanguageSelector({
               key={code}
               role="option"
               aria-selected={code === locale ? 'true' : 'false'}
-              tabIndex={0}
+              tabIndex={focusedIndex === index ? 0 : -1}
               onClick={() => handleSelect(code)}
               onKeyDown={(e) => handleOptionKeyDown(e, code, index)}
               className={`flex cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm outline-none transition focus:bg-accent focus:text-accent-foreground ${

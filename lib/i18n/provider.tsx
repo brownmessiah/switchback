@@ -60,7 +60,11 @@ export function IntlProvider({ locale, messages, children }: IntlProviderProps) 
     (newLocale: SupportedLocale) => {
       setLocaleCookie(newLocale)
 
-      // Strip the current locale prefix from the pathname
+      if (typeof document !== 'undefined') {
+        document.documentElement.lang = newLocale
+        document.documentElement.setAttribute('data-locale', newLocale)
+      }
+
       const pathWithoutLocale = pathname.replace(
         new RegExp(`^/${validLocale}(?=/|$)`),
         '',

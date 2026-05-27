@@ -1,16 +1,16 @@
-import { renderHook } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { renderHook, act } from '@testing-library/react'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 import type { ReactNode } from 'react'
 
 import { useIntl, IntlProvider } from './provider'
 
-// Mock next/navigation
+const mockPush = vi.fn()
+
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: mockPush }),
   usePathname: () => '/',
 }))
 
-// Mock next-intl client provider
 vi.mock('next-intl', () => ({
   NextIntlClientProvider: ({ children }: { children: ReactNode }) => children,
   useLocale: () => 'en',
@@ -25,6 +25,12 @@ function wrapper({ children }: { children: ReactNode }) {
 }
 
 describe('useIntl()', () => {
+  beforeEach(() => {
+    mockPush.mockClear()
+    document.documentElement.lang = 'en'
+    document.documentElement.removeAttribute('data-locale')
+  })
+
   it('returns the current locale', () => {
     const { result } = renderHook(() => useIntl(), { wrapper })
     expect(result.current.locale).toBe('en')
@@ -39,5 +45,14 @@ describe('useIntl()', () => {
     expect(() => {
       renderHook(() => useIntl())
     }).toThrow('useIntl must be used within an IntlProvider')
+  })
+
+  it('updates document.documentElement.lang immediately on switchLocale', () => {
+    const { result } = renderHook(() => useIntl(), { wrapper })
+    act(() => {
+      result.current.switchLocale('hi')
+    })
+    expect(document.documentElement.lang).toBe('hi')
+    expect(document.documentElement.getAttribute('data-locale')).toBe('hi')
   })
 })

@@ -3,10 +3,12 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
+import { NotificationBell } from './notification-bell'
 import { UserMenu } from './user-menu'
 import { authClient } from '@/lib/auth/client'
 
 interface UserData {
+  id: string
   name: string
   email: string
   image?: string | null
@@ -20,6 +22,7 @@ export function AuthStatus() {
     authClient.getSession().then((res) => {
       if (res.data?.user) {
         setUser({
+          id: res.data.user.id,
           name: res.data.user.name ?? res.data.user.email ?? 'User',
           email: res.data.user.email ?? '',
           image: res.data.user.image ?? null,
@@ -36,7 +39,12 @@ export function AuthStatus() {
   }
 
   if (user) {
-    return <UserMenu user={user} />
+    return (
+      <div className="flex items-center gap-2">
+        <NotificationBell userId={user.id} />
+        <UserMenu user={user} />
+      </div>
+    )
   }
 
   return (

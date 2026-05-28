@@ -328,7 +328,7 @@
     "home": "Outvers",
     "homeAriaLabel": "Outvers मुखपृष्ठ",
     "search": "शोधा",
-    "adventures": "साहसे",
+    "adventures": "साहसी कार्यक्रम",
     "refundPolicy": "परतावा धोरण",
     "signIn": "साइन इन",
     "openMenu": "मेनू उघडा",
@@ -338,8 +338,8 @@
       "paragliding": "पॅराग्लायडिंग",
       "scubaDiving": "स्कूबा डायव्हिंग",
       "support": "सहाय्य",
-      "helpCentre": "सहाय्य केंद्र (लवकरच)",
-      "contactUs": "आमच्याशी संपर्क करा (लवकरच)",
+      "helpCentre": "मदत केंद्र (लवकरच)",
+      "contactUs": "आमच्याशी संपर्क साधा (लवकरच)",
       "forVendors": "विक्रेत्यांसाठी",
       "listYourExperience": "तुमचा अनुभव सूचीबद्ध करा",
       "vendorDashboard": "विक्रेता डॅशबोर्ड",
@@ -362,8 +362,8 @@
     "dueNow": "आता देय (25%)",
     "dueLater": "अनुभवाच्या 24 तास आधी देय",
     "cancellationPolicy": "रद्दीकरण धोरण",
-    "autoCapture": "अनुभव सुरू होण्याच्या 24 तास आधी उर्वरित रक्कम स्वयंचलितपणे गोळा केली जाते.",
-    "payWithRazorpay": "Razorpay ने पैसे भरा",
+    "autoCapture": "उर्वरित रक्कम अनुभव सुरू होण्याच्या 24 तास आधी स्वयंचलितपणे वसूल केली जाते.",
+    "payWithRazorpay": "Razorpay ने पेमेंट करा",
     "error": "काहीतरी चूक झाली. कृपया पुन्हा प्रयत्न करा."
   }
 }

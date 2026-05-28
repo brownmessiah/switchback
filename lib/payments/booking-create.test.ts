@@ -492,4 +492,84 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
       expect(row?.vendorPanSnapshot).toBeNull()
     })
   })
+
+  describe('GST TCS (Section 52) + 194-O threshold (ADR-0016)', () => {
+    // The 'non-resident vendor edge' suite above nulls vendor.pan and the
+    // top-level beforeEach does not reset vendor_profiles — restore a known
+    // resident vendor with no taxpayer type so each test starts clean.
+    beforeEach(async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ pan: 'ABCDE1234F', taxpayerType: null })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+    })
+
+    it('snapshots 0.5% TCS on the booking gross', async () => {
+      const r = await createBooking(db, defaultInput())
+      const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
+      expect(row?.tcsAmountSnapshot).toBe('15.00') // 0.5% of 3000
+      expect(row?.tcsRateSnapshot).toBe('0.50')
+    })
+
+    it('records TCS in the booking.create audit payload', async () => {
+      const r = await createBooking(db, defaultInput())
+      const [auditRow] = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.entityId, r.bookingId))
+      const payload = auditRow?.payload as Record<string, unknown>
+      expect(payload.tcsRupees).toBe(15)
+    })
+
+    it('exempts an individual vendor under ₹5L FY gross from TDS (Section 194-O(2))', async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ taxpayerType: 'individual' })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+      const r = await createBooking(db, defaultInput())
+      const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
+      expect(row?.tdsAmountSnapshot).toBe('0.00')
+      const [auditRow] = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.entityId, r.bookingId))
+      const payload = auditRow?.payload as Record<string, unknown>
+      expect(payload.tdsBasis).toBe('section_194o_below_threshold')
+    })
+
+    it('starts deducting TDS once the vendor crosses ₹5L cumulative FY gross', async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ taxpayerType: 'individual' })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+      await db
+        .update(experiences)
+        .set({
+          pricePerPerson_1_2: '150000.00',
+          pricePerPerson_3_5: '150000.00',
+          pricePerPerson_6_plus: '150000.00',
+        })
+        .where(eq(experiences.id, experienceId))
+
+      // Booking 1: gross 300000, cumulative 300000 ≤ ₹5L → exempt.
+      const r1 = await createBooking(db, defaultInput())
+      const [row1] = await db.select().from(bookings).where(eq(bookings.id, r1.bookingId))
+      expect(row1?.tdsAmountSnapshot).toBe('0.00')
+
+      // Booking 2: gross 300000, cumulative 600000 > ₹5L → deduct 0.1% of 300000 = 300.
+      const r2 = await createBooking(db, defaultInput())
+      const [row2] = await db.select().from(bookings).where(eq(bookings.id, r2.bookingId))
+      expect(row2?.tdsAmountSnapshot).toBe('300.00')
+    })
+
+    it('does not exempt a company vendor even under ₹5L', async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ taxpayerType: 'company' })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+      const r = await createBooking(db, defaultInput())
+      const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
+      expect(row?.tdsAmountSnapshot).toBe('3.00') // 0.1% of 3000, not exempt
+    })
+  })
 })

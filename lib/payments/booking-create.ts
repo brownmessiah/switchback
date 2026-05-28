@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, gte, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
 import { availabilitySlots } from '@/db/schema/availability-slots'
@@ -11,6 +11,7 @@ import { getRedis } from '@/lib/redis'
 import { resolveCommission, type DBOrTx } from './commission-resolver'
 import { GST_RATE_ON_COMMISSION } from './gst-calculator'
 import { resolvePricing } from './pricing-resolver'
+import { quoteTcs } from './tcs-calculator'
 import { quoteTds } from './tds-calculator'
 
 /**
@@ -20,8 +21,8 @@ import { quoteTds } from './tds-calculator'
  *
  * Single db.transaction(...) — SELECT FOR UPDATE the slot, validate
  * permits + payment mode + capacity, resolve commission + pricing +
- * TDS + GST, decrement capacity, insert the booking row with all 12
- * snapshot columns populated, write the booking.create audit row.
+ * TDS + GST TCS + GST-on-commission, decrement capacity, insert the
+ * booking row with all snapshot columns populated, write the audit row.
  * Rollback is atomic on any step's failure.
  *
  * Carve-outs for partial-pay per ADR-0001:
@@ -83,6 +84,17 @@ export class BookingCreateError extends Error {
 
 const PARTIAL_PAY_UNDER_HOURS = 48
 const PARTIAL_PAY_ESCROW_THRESHOLD_RUPEES = 25_000
+
+/**
+ * Start of the Indian financial year (1 April, 00:00 UTC) for the FY that
+ * contains `now`. Bounds the Section 194-O(2) ₹5L FY-cumulative gross. UTC is
+ * a documented approximation of the IST boundary (immaterial except within
+ * ~5.5h of 1 April midnight IST) — see ADR-0016.
+ */
+function indianFinancialYearStartUtc(now: Date): Date {
+  const year = now.getUTCMonth() >= 3 ? now.getUTCFullYear() : now.getUTCFullYear() - 1
+  return new Date(Date.UTC(year, 3, 1, 0, 0, 0))
+}
 
 export interface BookingCreateResult {
   bookingId: string
@@ -195,14 +207,43 @@ export async function createBooking(
       experienceId: parsed.experienceId,
     })
 
-    // 8. TDS + GST. Residency proxy in v1: PAN IS NOT NULL → resident.
-    // M3 KYC swaps in an explicit vendor_profiles.is_resident column.
+    // 8. Tax: TDS u/s 194-O + GST TCS u/s Section 52. Residency proxy in v1:
+    // PAN IS NOT NULL → resident. M3 KYC swaps in an explicit is_resident column.
     const vendorIsResident = vendor.pan !== null
+
+    // Section 194-O(2) ₹5L threshold exemption applies only to individual/HUF
+    // Vendors — compute the FY-cumulative gross (prior bookings this FY + this
+    // one) only when the Vendor could qualify, otherwise skip the query.
+    // NOTE (ADR-0016 / .scratch/tax-compliance-gaps): the FY-gross base counts
+    // ALL of the Vendor's bookings in the FY regardless of state — the
+    // conservative read (favours deducting). Exact base pending CA confirmation.
+    let vendorFyGrossRupees: number | undefined
+    if (vendor.taxpayerType === 'individual' || vendor.taxpayerType === 'huf') {
+      const fyStart = indianFinancialYearStartUtc(new Date())
+      const [agg] = await tx
+        .select({
+          priorGross: sql<string>`coalesce(sum(${bookings.grossTotalSnapshot}), 0)`,
+        })
+        .from(bookings)
+        .innerJoin(experiences, eq(bookings.experienceId, experiences.id))
+        .where(
+          and(eq(experiences.vendorUserId, vendor.userId), gte(bookings.confirmedAt, fyStart)),
+        )
+      vendorFyGrossRupees = Math.floor(Number(agg?.priorGross ?? 0)) + grossRupees
+    }
+
     const tds = quoteTds({
       grossRupees,
       vendorIsResident,
       vendorPan: vendor.pan ?? null,
+      vendorTaxpayerType: vendor.taxpayerType ?? undefined,
+      vendorFyGrossRupees,
     })
+
+    // GST TCS on the Vendor's supply value. Base = booking gross in v1 (the
+    // Vendor's price); the exact net-of-GST/returns base is pending CA
+    // confirmation per ADR-0016 / .scratch/tax-compliance-gaps.
+    const tcs = quoteTcs({ taxableValueRupees: grossRupees })
 
     // 9. Determine effective payment mode + audit capture trigger label
     // per ADR-0001 carve-outs. RNPL was rejected at the function entry,
@@ -236,7 +277,7 @@ export async function createBooking(
       })
       .where(eq(availabilitySlots.id, parsed.slotId))
 
-    // 11. Insert Booking with all 12 snapshot columns populated.
+    // 11. Insert Booking with all snapshot columns populated.
     const [booking] = await tx
       .insert(bookings)
       .values({
@@ -253,6 +294,8 @@ export async function createBooking(
         commissionBasisSnapshot: commission.basis,
         cancellationPresetSnapshot: exp.cancellationPreset,
         tdsAmountSnapshot: tds.tdsRupees.toFixed(2),
+        tcsAmountSnapshot: tcs.tcsRupees.toFixed(2),
+        tcsRateSnapshot: tcs.tcsRatePercent,
         gstRateOnCommissionSnapshot: GST_RATE_ON_COMMISSION,
         vendorPanSnapshot: vendor.pan,
         vendorIsResidentSnapshot: vendorIsResident,
@@ -283,6 +326,8 @@ export async function createBooking(
         commissionBasisSnapshot: commission.basis,
         tdsRupees: tds.tdsRupees,
         tdsBasis: tds.basis,
+        tcsRupees: tcs.tcsRupees,
+        tcsRatePercent: tcs.tcsRatePercent,
         gstRateOnCommissionSnapshot: GST_RATE_ON_COMMISSION,
         cancellationPresetSnapshot: exp.cancellationPreset,
         requestedPaymentMode: parsed.paymentMode,

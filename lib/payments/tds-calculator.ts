@@ -18,7 +18,25 @@
 
 export const TDS_RATE_PERCENT_SECTION_194O = '0.10'
 
-export type TdsBasis = 'section_194o_resident' | 'non_resident_exempt'
+/**
+ * Section 194-O(2) annual threshold per ADR-0016. A resident individual/HUF
+ * Vendor whose gross supplies through the platform are at or below this in
+ * the financial year (PAN furnished) is exempt from TDS. Above it, deduct
+ * on the full gross.
+ */
+export const TDS_194O_THRESHOLD_RUPEES = 500000
+
+/**
+ * Vendor income-tax classification. Only `individual` and `huf` qualify for
+ * the Section 194-O(2) ₹5L threshold exemption; every other type is always
+ * subject to TDS once resident with PAN.
+ */
+export type VendorTaxpayerType = 'individual' | 'huf' | 'company' | 'firm' | 'other'
+
+export type TdsBasis =
+  | 'section_194o_resident'
+  | 'section_194o_below_threshold'
+  | 'non_resident_exempt'
 
 export interface TdsQuote {
   tdsRupees: number
@@ -30,10 +48,24 @@ export interface QuoteTdsArgs {
   grossRupees: number
   vendorIsResident: boolean
   vendorPan: string | null
+  /**
+   * Vendor's income-tax classification. Only individual/HUF can qualify for
+   * the Section 194-O(2) exemption. Omit to skip the exemption check entirely
+   * (deduct as normal) — keeps the calculator backward compatible.
+   */
+  vendorTaxpayerType?: VendorTaxpayerType
+  /**
+   * FY-cumulative gross supplies through the platform INCLUDING the current
+   * Booking, supplied by the caller. Required alongside an individual/HUF
+   * taxpayer type to evaluate the ₹5L threshold; omit and no exemption
+   * applies (conservative deduct).
+   */
+  vendorFyGrossRupees?: number
 }
 
 export function quoteTds(args: QuoteTdsArgs): TdsQuote {
-  const { grossRupees, vendorIsResident, vendorPan } = args
+  const { grossRupees, vendorIsResident, vendorPan, vendorTaxpayerType, vendorFyGrossRupees } =
+    args
 
   if (!Number.isInteger(grossRupees)) {
     throw new Error('grossRupees must be an integer (rupee precision)')
@@ -65,6 +97,21 @@ export function quoteTds(args: QuoteTdsArgs): TdsQuote {
     throw new Error(
       'TDS u/s 194-O requires the Vendor PAN for quarterly Form 26Q filing; reject the Booking-create call at the application layer',
     )
+  }
+  // Section 194-O(2) threshold exemption: resident individual/HUF Vendors at
+  // or below ₹5L FY gross (PAN furnished, checked above) deduct no TDS. The
+  // exemption only fires when the caller supplies both the taxpayer type and
+  // the FY-cumulative gross — otherwise we conservatively deduct.
+  if (
+    (vendorTaxpayerType === 'individual' || vendorTaxpayerType === 'huf') &&
+    vendorFyGrossRupees !== undefined &&
+    vendorFyGrossRupees <= TDS_194O_THRESHOLD_RUPEES
+  ) {
+    return {
+      tdsRupees: 0,
+      tdsRatePercent: '0.00',
+      basis: 'section_194o_below_threshold',
+    }
   }
   return {
     tdsRupees: Math.floor((grossRupees * 1) / 1000),

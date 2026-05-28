@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { quoteTds, TDS_RATE_PERCENT_SECTION_194O } from './tds-calculator'
+import { quoteTds, TDS_194O_THRESHOLD_RUPEES, TDS_RATE_PERCENT_SECTION_194O } from './tds-calculator'
 
 /**
  * TDS u/s 194-O of the Income Tax Act per ADR-0016.
@@ -92,5 +92,98 @@ describe('quoteTds (ADR-0016 Section 194-O)', () => {
     const r2 = quoteTds({ grossRupees: 100000, vendorIsResident: true, vendorPan: 'ZZZZZ9999Z' })
     expect(r1.tdsRupees).toBe(r2.tdsRupees)
     expect(r1.tdsRupees).toBe(100) // 0.1% of 100000
+  })
+})
+
+/**
+ * Section 194-O(2) threshold exemption per ADR-0016: no TDS for a resident
+ * individual / HUF Vendor whose gross supplies through the platform are
+ * ≤ ₹5,00,000 in the financial year AND who has furnished PAN/Aadhaar.
+ * Above the threshold (or for non-individual/HUF Vendors), deduct on the
+ * full gross. `vendorFyGrossRupees` is the FY-cumulative gross INCLUDING
+ * the current Booking, supplied by the caller (booking-create).
+ */
+describe('quoteTds — Section 194-O(2) ₹5L individual/HUF exemption', () => {
+  it('exports the ₹5L threshold constant', () => {
+    expect(TDS_194O_THRESHOLD_RUPEES).toBe(500000)
+  })
+
+  it('exempts an individual Vendor under ₹5L FY gross', () => {
+    const r = quoteTds({
+      grossRupees: 10000,
+      vendorIsResident: true,
+      vendorPan: 'ABCDE1234F',
+      vendorTaxpayerType: 'individual',
+      vendorFyGrossRupees: 400000,
+    })
+    expect(r.tdsRupees).toBe(0)
+    expect(r.tdsRatePercent).toBe('0.00')
+    expect(r.basis).toBe('section_194o_below_threshold')
+  })
+
+  it('exempts a HUF Vendor exactly at the ₹5L boundary (inclusive)', () => {
+    const r = quoteTds({
+      grossRupees: 10000,
+      vendorIsResident: true,
+      vendorPan: 'ABCDE1234F',
+      vendorTaxpayerType: 'huf',
+      vendorFyGrossRupees: 500000,
+    })
+    expect(r.tdsRupees).toBe(0)
+    expect(r.basis).toBe('section_194o_below_threshold')
+  })
+
+  it('deducts 0.1% once an individual Vendor crosses ₹5L FY gross', () => {
+    const r = quoteTds({
+      grossRupees: 10000,
+      vendorIsResident: true,
+      vendorPan: 'ABCDE1234F',
+      vendorTaxpayerType: 'individual',
+      vendorFyGrossRupees: 500001,
+    })
+    expect(r.tdsRupees).toBe(10)
+    expect(r.basis).toBe('section_194o_resident')
+  })
+
+  it('does NOT exempt a company Vendor even under ₹5L (exemption is individual/HUF only)', () => {
+    const r = quoteTds({
+      grossRupees: 10000,
+      vendorIsResident: true,
+      vendorPan: 'ABCDE1234F',
+      vendorTaxpayerType: 'company',
+      vendorFyGrossRupees: 100000,
+    })
+    expect(r.tdsRupees).toBe(10)
+    expect(r.basis).toBe('section_194o_resident')
+  })
+
+  it('does NOT exempt an individual Vendor when FY gross is unknown (conservative deduct)', () => {
+    const r = quoteTds({
+      grossRupees: 10000,
+      vendorIsResident: true,
+      vendorPan: 'ABCDE1234F',
+      vendorTaxpayerType: 'individual',
+      // vendorFyGrossRupees omitted — cannot confirm threshold
+    })
+    expect(r.tdsRupees).toBe(10)
+    expect(r.basis).toBe('section_194o_resident')
+  })
+
+  it('is backward compatible: no taxpayer info → deducts 0.1% as before', () => {
+    const r = quoteTds({ grossRupees: 10000, vendorIsResident: true, vendorPan: 'ABCDE1234F' })
+    expect(r.tdsRupees).toBe(10)
+    expect(r.basis).toBe('section_194o_resident')
+  })
+
+  it('still throws for a resident individual with no PAN even under the threshold', () => {
+    expect(() =>
+      quoteTds({
+        grossRupees: 10000,
+        vendorIsResident: true,
+        vendorPan: null,
+        vendorTaxpayerType: 'individual',
+        vendorFyGrossRupees: 100000,
+      }),
+    ).toThrow(/PAN/)
   })
 })

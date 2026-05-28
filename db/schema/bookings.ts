@@ -124,6 +124,17 @@ export const bookings = pgTable(
     })
       .default('18.00')
       .notNull(),
+    // ADR-0016 — GST TCS under Section 52 (e-commerce operator). 0.5% on the
+    // Vendor's net taxable supply value, collected per Booking and remitted
+    // monthly via GSTR-8. Amount + rate snapshot at create so historical
+    // payout math doesn't drift if the rate changes. Separate from and
+    // additional to the commission GST above.
+    tcsAmountSnapshot: numeric('tcs_amount_snapshot', { precision: 14, scale: 2 })
+      .default('0.00')
+      .notNull(),
+    tcsRateSnapshot: numeric('tcs_rate_snapshot', { precision: 5, scale: 2 })
+      .default('0.50')
+      .notNull(),
     // ADR-0016 — TDS under Section 194-O only applies to resident-Indian
     // Vendors. PAN snapshot is required for quarterly Form 26Q (deductee
     // identification). Nullable to allow non-resident Vendor edge case.
@@ -172,6 +183,8 @@ export const bookings = pgTable(
       sql`${t.gstRateOnCommissionSnapshot} >= 0 AND ${t.gstRateOnCommissionSnapshot} <= 100`,
     ),
     check('non_negative_tds', sql`${t.tdsAmountSnapshot} >= 0`),
+    check('non_negative_tcs', sql`${t.tcsAmountSnapshot} >= 0`),
+    check('tcs_rate_in_range', sql`${t.tcsRateSnapshot} >= 0 AND ${t.tcsRateSnapshot} <= 100`),
     // ADR-0016 — Payout snapshot consistency. Either both columns are NULL
     // (Vendor has not configured payouts yet — the Booking is held by the
     // application layer until destination is provided) or both are set.

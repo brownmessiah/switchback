@@ -471,7 +471,7 @@ test.describe('Hindi UI chrome on authenticated pages', () => {
     // VendorNav.sidebarTitle is the vendor sidebar title in Hindi
     // Check for any Hindi text in the sidebar (e.g., navigation group labels)
     // VendorNav.groups.dashboard = "डैशबोर्ड" in hi.json
-    await expect(vendorPage.getByText('डैशबोर्ड')).toBeVisible({ timeout: 10_000 })
+    await expect(vendorPage.getByText('डैशबोर्ड').first()).toBeVisible({ timeout: 10_000 })
 
     // URL should still be un-prefixed
     const url = new URL(vendorPage.url())

@@ -18,6 +18,7 @@ interface UserData {
 export function AuthStatus() {
   const [user, setUser] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(true)
+  const t = useTranslations('Nav')
 
   useEffect(() => {
     authClient.getSession().then((res) => {
@@ -38,8 +39,6 @@ export function AuthStatus() {
   if (loading) {
     return <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
   }
-
-  const t = useTranslations('Nav')
 
   if (user) {
     return (

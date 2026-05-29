@@ -1,6 +1,7 @@
 import { eq, sql } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
+import { auditLogs } from '@/db/schema/audit-logs'
 import { experiences } from '@/db/schema/experiences'
 import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
@@ -332,6 +333,34 @@ describe('executeUpdateExperience', () => {
         .from(experiences)
         .where(eq(experiences.id, experienceId))
       expect(exp?.price).toBe('1500.00')
+    })
+
+    it('writes a vendor.experience.tier_cap_rejected audit row when an over-cap edit of a published listing is blocked (ADR-0007)', async () => {
+      await setVendorTier('identity')
+      await setStatus('published')
+
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        validInput({
+          pricePerPerson_1_2: 9000,
+          pricePerPerson_3_5: 9000,
+          pricePerPerson_6_plus: 9000,
+        }),
+      )
+      expect(result.ok).toBe(false)
+
+      const logs = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.entityId, experienceId))
+      const rejection = logs.find(
+        (l) => l.action === 'vendor.experience.tier_cap_rejected',
+      )
+      expect(rejection).toBeDefined()
+      expect(rejection?.entityType).toBe('experience')
+      expect(rejection?.actorUserId).toBe('u_vendor_edit')
+      expect((rejection?.payload as { code?: string }).code).toBe('PRICE_OVER_CAP')
     })
 
     it('blocks turning a published listing into a combo for an identity Vendor', async () => {

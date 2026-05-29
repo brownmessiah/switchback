@@ -91,7 +91,7 @@ export async function assertExperienceWithinTier(
   if (!facts) {
     return {
       ok: false,
-      code: 'PRICE_OVER_CAP',
+      code: 'EXPERIENCE_NOT_FOUND',
       reason: 'Experience not found for tier-cap check.',
     }
   }
@@ -128,7 +128,7 @@ export async function assertBookingWithinTier(
   if (!facts) {
     return {
       ok: false,
-      code: 'PRICE_OVER_CAP',
+      code: 'EXPERIENCE_NOT_FOUND',
       reason: 'Experience not found for tier-cap check.',
     }
   }

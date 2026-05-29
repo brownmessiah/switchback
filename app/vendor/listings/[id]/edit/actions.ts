@@ -9,6 +9,7 @@ import { experiences, mediaAssets } from '@/db/schema'
 import { availabilitySlots } from '@/db/schema/availability-slots'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { auth } from '@/lib/auth'
+import { writeAuditLog } from '@/lib/audit/write'
 import { assertWithinTier, type KycTier } from '@/lib/kyc/tier-caps'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 import { LocalFileAdapter } from '@/lib/storage/local'
@@ -106,6 +107,18 @@ export async function executeUpdateExperience(
       slots,
     })
     if (!tierCheck.ok) {
+      // ADR-0007 — record the tier-cap rejection in audit_logs (the publish
+      // and booking-create paths do the same) before refusing the edit.
+      await writeAuditLog(db, {
+        actorUserId: userId,
+        action: 'vendor.experience.tier_cap_rejected',
+        entityType: 'experience',
+        entityId: data.id,
+        payload: {
+          code: tierCheck.code,
+          reason: tierCheck.reason,
+        },
+      })
       return { ok: false, error: tierCheck.reason }
     }
   }

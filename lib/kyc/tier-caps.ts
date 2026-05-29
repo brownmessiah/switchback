@@ -60,6 +60,7 @@ export type TierCapViolationCode =
   | 'CAPACITY_OVER_CAP'
   | 'COMBO_NOT_ALLOWED'
   | 'MULTI_DAY_NOT_ALLOWED'
+  | 'EXPERIENCE_NOT_FOUND'
 
 export type TierCapResult =
   | { ok: true }

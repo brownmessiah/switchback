@@ -6,6 +6,7 @@ import { availabilitySlots } from '@/db/schema/availability-slots'
 import { bookings } from '@/db/schema/bookings'
 import { commissionTiers } from '@/db/schema/commission-tiers'
 import { experiences } from '@/db/schema/experiences'
+import { pricingTiers } from '@/db/schema/pricing-tiers'
 import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { _resetRedisCacheForTests } from '@/lib/redis'
@@ -102,14 +103,31 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
       .returning({ id: experiences.id })
     experienceId = exp!.id
 
-    const startAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // T+7d
-    const endAt = new Date(startAt.getTime() + 4 * 60 * 60 * 1000)
+    // T+7d but PINNED to 06:00 UTC so the +4h slot never crosses UTC
+    // midnight (which would trip the Tier-2 single-day cap). Anchoring on
+    // Date.now()'s wall-clock hour made the fixture flaky after ~20:00 UTC.
+    const { startAt, endAt } = futureSingleDaySlot(7)
     const [slot] = await db
       .insert(availabilitySlots)
       .values({ experienceId, startAt, endAt, capacity: 8 })
       .returning({ id: availabilitySlots.id })
     slotId = slot!.id
   })
+
+  /**
+   * Build a single-day slot `daysAhead` days from now, pinned to 06:00-10:00
+   * UTC. Pinning the hour keeps the slot inside one UTC calendar day
+   * regardless of the wall-clock time the suite runs at, so the Tier-2
+   * single-day cap never spuriously fires on the happy-path fixture.
+   */
+  function futureSingleDaySlot(daysAhead: number): { startAt: Date; endAt: Date } {
+    const base = new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000)
+    const startAt = new Date(
+      Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate(), 6, 0, 0),
+    )
+    const endAt = new Date(startAt.getTime() + 4 * 60 * 60 * 1000)
+    return { startAt, endAt }
+  }
 
   function uuid(): string {
     return crypto.randomUUID()
@@ -317,9 +335,9 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
     })
 
     it('coerces partial_pay to full_upfront when booking is <48h before slot (ADR-0001)', async () => {
-      // Re-create slot at T+24h
-      const startAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
-      const endAt = new Date(startAt.getTime() + 4 * 60 * 60 * 1000)
+      // Tomorrow 06:00-10:00 UTC: always in the future and strictly <48h
+      // out, and single-day regardless of the wall-clock run time.
+      const { startAt, endAt } = futureSingleDaySlot(1)
       const [slot] = await db
         .insert(availabilitySlots)
         .values({ experienceId, startAt, endAt, capacity: 8 })
@@ -615,12 +633,138 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
     })
   })
 
+  // ── Pricing precedence snapshotted at booking-create (ADR-0011) ───
+  //
+  // The resolver-level precedence is unit-tested in pricing-resolver.test.ts.
+  // These assert the INTEGRATION fact: at booking-create the resolved arm is
+  // locked onto bookings.price_per_participant_snapshot + pricing_basis_snapshot
+  // and never recomputed — pricing_tier override beats the group-size bracket,
+  // and the bracket itself is chosen by participant_count.
+  describe('pricing precedence snapshot (ADR-0011)', () => {
+    // Reset the shared Vendor to a clean identity tier — sibling suites mutate
+    // kyc_tier / taxpayer_type and vendor_profiles is not truncated in the
+    // top-level beforeEach.
+    beforeEach(async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ kycTier: 'identity', pan: 'ABCDE1234F', taxpayerType: null })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+    })
+
+    /**
+     * A fresh capacity-8 single-day slot `daysAhead` out so each booking has
+     * its own seats AND a distinct start_at (the unique index is on
+     * (experience_id, start_at)).
+     */
+    async function freshSlot(daysAhead: number): Promise<string> {
+      const { startAt, endAt } = futureSingleDaySlot(daysAhead)
+      const [slot] = await db
+        .insert(availabilitySlots)
+        .values({ experienceId, startAt, endAt, capacity: 8 })
+        .returning({ id: availabilitySlots.id })
+      return slot!.id
+    }
+
+    it('locks the group-size bracket chosen by participant_count (1-2 / 3-5 / 6+)', async () => {
+      // 2 → 1_2 (1500), 4 → 3_5 (1300), 7 → 6_plus (1100). Distinct values
+      // make the fired bracket observable on the snapshot. Each booking
+      // takes its own capacity-8 slot on a distinct day.
+      const r2 = await createBooking(db, {
+        ...defaultInput(),
+        slotId: await freshSlot(8),
+        participantCount: 2,
+      })
+      const [b2] = await db.select().from(bookings).where(eq(bookings.id, r2.bookingId))
+      expect(b2?.pricePerParticipantSnapshot).toBe('1500.00')
+      expect(b2?.pricingBasisSnapshot).toBe('experience_bracket:1_2')
+
+      const r4 = await createBooking(db, {
+        ...defaultInput(),
+        slotId: await freshSlot(9),
+        participantCount: 4,
+      })
+      const [b4] = await db.select().from(bookings).where(eq(bookings.id, r4.bookingId))
+      expect(b4?.pricePerParticipantSnapshot).toBe('1300.00')
+      expect(b4?.pricingBasisSnapshot).toBe('experience_bracket:3_5')
+
+      const r7 = await createBooking(db, {
+        ...defaultInput(),
+        slotId: await freshSlot(10),
+        participantCount: 7,
+      })
+      const [b7] = await db.select().from(bookings).where(eq(bookings.id, r7.bookingId))
+      expect(b7?.pricePerParticipantSnapshot).toBe('1100.00')
+      expect(b7?.pricingBasisSnapshot).toBe('experience_bracket:6_plus')
+    })
+
+    it('an active pricing_tier override beats the bracket and is snapshotted', async () => {
+      // Pricing resolves as-of slot.start_at (T+7d). A tier window that spans
+      // now → far future fires over the 1_2 bracket (which would be 1500).
+      const start = new Date(Date.now() - 24 * 60 * 60 * 1000)
+      const end = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)
+      await db.insert(pricingTiers).values({
+        name: 'monsoon_2026',
+        startAt: start,
+        endAt: end,
+        pricePerPersonOverride: '999.00',
+        reason: 'Monsoon promo',
+        createdByAdminUserId: 'u_v',
+      })
+
+      const r = await createBooking(db, { ...defaultInput(), participantCount: 2 })
+      const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
+      // Override wins over the 1_2 bracket (1500): snapshot is the tier price.
+      expect(row?.pricePerParticipantSnapshot).toBe('999.00')
+      expect(row?.pricingBasisSnapshot).toBe('pricing_tier:monsoon_2026')
+      // gross = 999 × 2 = 1998 (floored).
+      expect(row?.grossTotalSnapshot).toBe('1998.00')
+    })
+
+    it('does not re-resolve pricing when the tier price changes after booking (snapshot rule)', async () => {
+      const start = new Date(Date.now() - 24 * 60 * 60 * 1000)
+      const end = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)
+      const [tier] = await db
+        .insert(pricingTiers)
+        .values({
+          name: 'monsoon_2026',
+          startAt: start,
+          endAt: end,
+          pricePerPersonOverride: '999.00',
+          reason: 'Monsoon promo',
+          createdByAdminUserId: 'u_v',
+        })
+        .returning({ id: pricingTiers.id })
+
+      const r = await createBooking(db, { ...defaultInput(), participantCount: 2 })
+      // Mutate the tier price AFTER the booking.
+      await db
+        .update(pricingTiers)
+        .set({ pricePerPersonOverride: '111.00' })
+        .where(eq(pricingTiers.id, tier!.id))
+
+      const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
+      // Snapshot is frozen at the booking-time value.
+      expect(row?.pricePerParticipantSnapshot).toBe('999.00')
+      expect(row?.pricingBasisSnapshot).toBe('pricing_tier:monsoon_2026')
+    })
+  })
+
   // ── Tier-2 cap re-check at booking-create (ADR-0007) ──────────────
   //
   // The caps are double-checked at booking-create because the Vendor's
   // KYC tier may have been downgraded AFTER the Experience was published.
   // An over-cap Booking against a now-downgraded Vendor must be refused.
   describe('Tier-2 cap re-check (ADR-0007)', () => {
+    // Restore a clean identity-tier Vendor before each case — sibling suites
+    // mutate kyc_tier and vendor_profiles is not truncated in the top-level
+    // beforeEach, so ordering would otherwise leak prior state in.
+    beforeEach(async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ kycTier: 'identity', pan: 'ABCDE1234F', taxpayerType: null })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+    })
+
     it('rejects a booking when the Vendor has been downgraded to phone', async () => {
       await db
         .update(vendorProfiles)
@@ -638,6 +782,35 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
         .select()
         .from(availabilitySlots)
         .where(eq(availabilitySlots.id, slotId))
+      expect(slot?.capacityTaken).toBe(0)
+    })
+
+    it('rejects a booking when the booked slot now spans multiple days for an identity Vendor (single-day cap)', async () => {
+      // Vendor stays identity; the booked slot crosses a calendar-day
+      // boundary (an Experience published while business-verified, then
+      // downgraded). The single-day cap is re-checked at booking-create
+      // against the actual booked slot — this is the multi-day arm that
+      // the publish-time suite covers at publish but was untested here.
+      const startAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      const endAt = new Date(startAt.getTime() + 26 * 60 * 60 * 1000) // +26h → next day
+      const [multiDaySlot] = await db
+        .insert(availabilitySlots)
+        .values({ experienceId, startAt, endAt, capacity: 8 })
+        .returning({ id: availabilitySlots.id })
+
+      const err = await expectBookingCreateError(
+        createBooking(db, { ...defaultInput(), slotId: multiDaySlot!.id }),
+      )
+      expect(err.code).toBe('TIER_CAP_EXCEEDED')
+      expect(err.tierCapViolationCode).toBe('MULTI_DAY_NOT_ALLOWED')
+
+      // No booking row; the multi-day slot's capacity is untouched.
+      const rows = await db.select().from(bookings)
+      expect(rows).toHaveLength(0)
+      const [slot] = await db
+        .select()
+        .from(availabilitySlots)
+        .where(eq(availabilitySlots.id, multiDaySlot!.id))
       expect(slot?.capacityTaken).toBe(0)
     })
 

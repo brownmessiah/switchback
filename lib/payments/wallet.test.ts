@@ -190,6 +190,27 @@ describe('wallet operations (ADR-0004)', () => {
       expect(await readBalance('u_c', 'refund_balance')).toBe(4000)
     })
 
+    it('applies all three sources in ADR-0004 order: Outvers credit, then Refund balance, then Razorpay (500 + 300 + 1000 → 500/300/200)', async () => {
+      // The canonical three-bucket split: Outvers credit (expires) drains
+      // first, then Refund balance (cashable), then Razorpay charges the
+      // remainder. Both buckets nonzero AND a nonzero Razorpay remainder.
+      await seedBalance('u_c', 'outvers_credit', 500)
+      await seedBalance('u_c', 'refund_balance', 300)
+      const r = await applyWalletToCheckout(db, { userId: 'u_c', grossRupees: 1000 })
+      expect(r.outversCreditAppliedRupees).toBe(500)
+      expect(r.refundBalanceAppliedRupees).toBe(300)
+      expect(r.razorpayRemainderRupees).toBe(200)
+      // Both buckets fully drained; Razorpay covers the 200 remainder.
+      expect(await readBalance('u_c', 'outvers_credit')).toBe(0)
+      expect(await readBalance('u_c', 'refund_balance')).toBe(0)
+      // And the split reconstitutes the gross.
+      expect(
+        r.outversCreditAppliedRupees +
+          r.refundBalanceAppliedRupees +
+          r.razorpayRemainderRupees,
+      ).toBe(1000)
+    })
+
     it('does not touch Refund balance when Outvers credit alone covers gross', async () => {
       await seedBalance('u_c', 'outvers_credit', 10000)
       await seedBalance('u_c', 'refund_balance', 5000)

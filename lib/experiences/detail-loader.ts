@@ -9,6 +9,10 @@ import {
 } from '@/lib/activities/registry'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 import {
+  type PermitMeta,
+  resolvePermits,
+} from '@/lib/permits/registry'
+import {
   type RegionMeta,
   getRegion,
 } from '@/lib/regions/registry'
@@ -31,7 +35,15 @@ export interface ExperienceDetailData {
   pricePerPerson_1_2: number
   pricePerPerson_3_5: number
   pricePerPerson_6_plus: number
+  /** Raw permit slugs as stored on the Experience. */
   requiredPermits: string[]
+  /**
+   * Resolved permit metadata for the Booking Permits panel (ADR-0011),
+   * in the order the Experience listed them. Empty when no permits are
+   * required. Unknown slugs are dropped here — see resolvePermits for the
+   * separated `unknown` channel when ops needs to flag a stale catalogue.
+   */
+  permits: PermitMeta[]
   vendor: ExperienceDetailVendor
   activity: ActivityMeta
   region: RegionMeta
@@ -161,6 +173,7 @@ async function hydrateDetail(
       pricePerPerson_3_5: Math.floor(Number(exp.pricePerPerson_3_5)),
       pricePerPerson_6_plus: Math.floor(Number(exp.pricePerPerson_6_plus)),
       requiredPermits: exp.requiredPermits,
+      permits: resolvePermits(exp.requiredPermits).resolved,
       vendor,
       activity,
       region,

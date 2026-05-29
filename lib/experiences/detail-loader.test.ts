@@ -182,6 +182,49 @@ describe('Experience detail loader (ADR-0013)', () => {
     expect(result!.data.requiredPermits).toEqual([])
   })
 
+  // ---- Permit registry surfacing (ADR-0011 Permits panel) ----
+  it('surfaces resolved permit metadata for the Permits panel, not just slugs', async () => {
+    // The Experience stores controlled slugs; the loader resolves them
+    // against lib/permits/registry.ts so the Booking Permits panel can
+    // render authority/URL/cost without the page knowing the catalogue.
+    await seedExperience({
+      slug: 'sikkim-corbett-combo-route',
+      activitySlug: 'trekking',
+      regionSlug: 'manali',
+      requiredPermits: ['ilp_sikkim', 'wildlife_corbett'],
+    })
+
+    const result = await loadExperienceDetail(db, {
+      lng: 'en',
+      slug: 'sikkim-corbett-combo-route',
+    })
+    expect(result!.type).toBe('found')
+    if (result!.type !== 'found') throw new Error('unreachable')
+
+    // Raw slugs still present for backward compatibility.
+    expect(result!.data.requiredPermits).toEqual(['ilp_sikkim', 'wildlife_corbett'])
+    // Resolved metadata in listed order with real catalogue values.
+    expect(result!.data.permits.map((p) => p.slug)).toEqual([
+      'ilp_sikkim',
+      'wildlife_corbett',
+    ])
+    expect(result!.data.permits[0]?.authority).toMatch(/Sikkim/i)
+    expect(result!.data.permits[0]?.officialUrl).toMatch(/^https?:\/\//)
+    expect(result!.data.permits[1]?.name).toMatch(/Corbett/i)
+  })
+
+  it('returns an empty permits panel for an Experience with no required permits', async () => {
+    await seedExperience({ slug: 'no-permit-panel-exp', requiredPermits: [] })
+
+    const result = await loadExperienceDetail(db, {
+      lng: 'en',
+      slug: 'no-permit-panel-exp',
+    })
+    expect(result!.type).toBe('found')
+    if (result!.type !== 'found') throw new Error('unreachable')
+    expect(result!.data.permits).toEqual([])
+  })
+
   // ---- Locale passthrough ----
   it('passes the lng field through in the result', async () => {
     await seedExperience({ slug: 'hindi-exp' })

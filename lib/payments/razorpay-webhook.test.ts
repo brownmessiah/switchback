@@ -157,7 +157,14 @@ describe('processRazorpayWebhook (ADR-0001)', () => {
       })
       .returning({ id: experiences.id })
 
-    const startAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    // T+7d PINNED to 06:00-10:00 UTC so the slot stays inside one UTC
+    // calendar day regardless of the wall-clock run time — otherwise the
+    // Tier-2 single-day cap spuriously fires on the identity Vendor when
+    // the suite runs late in the UTC day.
+    const base = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    const startAt = new Date(
+      Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate(), 6, 0, 0),
+    )
     const endAt = new Date(startAt.getTime() + 4 * 60 * 60 * 1000)
     const [slot] = await db
       .insert(availabilitySlots)

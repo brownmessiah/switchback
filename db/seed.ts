@@ -22,7 +22,7 @@
  * loads real Vendor + Experience records from the legacy travel-app.
  */
 
-import { inArray } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 
 import { db } from './client'
 import {
@@ -272,16 +272,42 @@ async function seed(): Promise<void> {
   }
 
   // ----- BOOKINGS — mix of states for demo dashboards -----
-  const slotRows = await db
-    .select({ id: availabilitySlots.id, experienceId: availabilitySlots.experienceId })
+  // Order slots deterministically by Experience slug so the same
+  // Experiences always receive bookings + reviews across reseeds. This
+  // keeps Review JSON-LD (ADR-0013) on a known Experience for E2E.
+  const slotsBySlug = await db
+    .select({
+      id: availabilitySlots.id,
+      experienceId: availabilitySlots.experienceId,
+      slug: experiences.slug,
+    })
     .from(availabilitySlots)
-    .limit(5)
+    .innerJoin(experiences, eq(availabilitySlots.experienceId, experiences.id))
+
+  // Stable, well-known order: completed (reviewed) Experiences first so
+  // the flagship rafting + paragliding Experiences always carry reviews.
+  const SLOT_PRIORITY = [
+    'rishikesh-rafting-grade-iii',
+    'manali-solang-paragliding-tandem',
+    'goa-scuba-diving-padi-dsd',
+    'bir-billing-paragliding-full-day',
+    'manali-hampta-pass-trek-5d',
+  ]
+  const slotRows = [...slotsBySlug].sort((a, b) => {
+    const ai = SLOT_PRIORITY.indexOf(a.slug)
+    const bi = SLOT_PRIORITY.indexOf(b.slug)
+    const aRank = ai === -1 ? Number.MAX_SAFE_INTEGER : ai
+    const bRank = bi === -1 ? Number.MAX_SAFE_INTEGER : bi
+    if (aRank !== bRank) return aRank - bRank
+    return a.slug.localeCompare(b.slug)
+  })
 
   const BOOKING_SEEDS = [
-    { state: 'confirmed' as const, participants: 2 },
-    { state: 'confirmed' as const, participants: 4 },
+    // First two completed → these Experiences carry published reviews.
     { state: 'completed' as const, participants: 3 },
     { state: 'completed' as const, participants: 2 },
+    { state: 'confirmed' as const, participants: 2 },
+    { state: 'confirmed' as const, participants: 4 },
     { state: 'cancelled_by_customer' as const, participants: 1 },
   ]
 

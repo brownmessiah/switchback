@@ -28,6 +28,7 @@ import { generateAlternates } from '@/lib/seo/hreflang'
 import { breadcrumbList } from '@/lib/seo/schemas/breadcrumb-list'
 import { faqPage } from '@/lib/seo/schemas/faq-page'
 import { product } from '@/lib/seo/schemas/product'
+import { reviewList } from '@/lib/seo/schemas/review'
 
 export const revalidate = 60
 
@@ -98,12 +99,40 @@ export default async function ExperienceDetailPage({
   const activityDisplay = detail.activity.displayName.en
   const regionDisplay = detail.region.displayName.en
 
+  // AggregateRating (ADR-0013) — only when at least one published Review exists.
+  const reviewCount = experienceReviews.length
+  const aggregateRating =
+    reviewCount > 0
+      ? {
+          ratingValue:
+            Math.round(
+              (experienceReviews.reduce((sum, r) => sum + r.rating, 0) /
+                reviewCount) *
+                10,
+            ) / 10,
+          ratingCount: reviewCount,
+        }
+      : undefined
+
   const productJson = product({
     name: detail.title,
     url: canonicalUrl,
     description: detail.shortDescription ?? `${activityDisplay} Experience in ${regionDisplay}`,
     priceRupees: detail.pricePerPerson_1_2,
+    ratingValue: aggregateRating?.ratingValue,
+    ratingCount: aggregateRating?.ratingCount,
   })
+
+  // Review JSON-LD (ADR-0013) — one node per published Customer review.
+  const reviewsJson = reviewList(
+    experienceReviews.map((r) => ({
+      author: r.customerName,
+      rating: r.rating,
+      title: r.title,
+      body: r.body,
+      datePublished: r.createdAt,
+    })),
+  )
   const breadcrumbsJson = breadcrumbList([
     { name: tCommon('breadcrumb.home'), url: `${baseUrl}/` },
     {
@@ -163,6 +192,13 @@ export default async function ExperienceDetailPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJson) }}
       />
+      {reviewsJson.map((reviewJson, i) => (
+        <script
+          key={`review-jsonld-${i}`}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewJson) }}
+        />
+      ))}
 
       {/* Breadcrumb */}
       <nav aria-label="Breadcrumb" className="mb-6">

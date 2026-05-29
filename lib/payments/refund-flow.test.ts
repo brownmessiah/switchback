@@ -420,6 +420,217 @@ describe('processRefund (ADRs 0003/0004/0005)', () => {
     })
   })
 
+  describe('Combo Experience cancellation (ADR-0008)', () => {
+    /**
+     * Seed a confirmed Booking on a Combo Experience (is_combo=true) with
+     * its OWN cancellation preset and commission override. ADR-0008: the
+     * Combo's preset governs the refund — NOT a min/max across constituents.
+     * The Booking snapshots the Combo's preset + commission rate at create,
+     * so the refund flow must read those snapshots verbatim.
+     */
+    async function seedConfirmedComboBooking(args: {
+      hoursAhead: number
+      comboPreset: 'flexible' | 'moderate' | 'strict'
+      comboCommissionRate: string
+      grossRupees?: number
+    }): Promise<{ bookingId: string }> {
+      // Two stub constituent ids — the Combo's preset, not these, governs.
+      const constituentA = crypto.randomUUID()
+      const constituentB = crypto.randomUUID()
+      const [combo] = await db
+        .insert(experiences)
+        .values({
+          vendorUserId: 'u_v',
+          slug: 'combo-rafting-and-trek',
+          title: 'Rafting + Trek Combo',
+          isCombo: true,
+          comboConstituents: [constituentA, constituentB],
+          commissionRateOverride: '30.00',
+          cancellationPreset: args.comboPreset,
+          paymentModesAllowed: ['full_upfront'],
+          pricePerPerson_1_2: '2500.00',
+          pricePerPerson_3_5: '2200.00',
+          pricePerPerson_6_plus: '2000.00',
+          regionSlug: 'rishikesh',
+          activitySlug: 'rafting',
+        })
+        .returning({ id: experiences.id })
+      const comboId = combo!.id
+
+      const startAt = new Date(Date.now() + args.hoursAhead * 60 * 60 * 1000)
+      const endAt = new Date(startAt.getTime() + 6 * 60 * 60 * 1000)
+      const [slot] = await db
+        .insert(availabilitySlots)
+        .values({ experienceId: comboId, startAt, endAt, capacity: 8 })
+        .returning({ id: availabilitySlots.id })
+      const gross = args.grossRupees ?? 5000
+      const [booking] = await db
+        .insert(bookings)
+        .values({
+          customerUserId: 'u_c',
+          experienceId: comboId,
+          slotId: slot!.id,
+          participantCount: 2,
+          paymentMode: 'full_upfront',
+          state: 'confirmed',
+          grossTotalSnapshot: gross.toFixed(2),
+          pricePerParticipantSnapshot: (gross / 2).toFixed(2),
+          pricingBasisSnapshot: 'experience_bracket:1_2',
+          commissionRateSnapshot: args.comboCommissionRate,
+          commissionBasisSnapshot: 'combo_override',
+          cancellationPresetSnapshot: args.comboPreset,
+          tdsAmountSnapshot: (gross * 0.01).toFixed(2),
+          gstRateOnCommissionSnapshot: '18.00',
+          vendorPanSnapshot: 'ABCDE1234F',
+          vendorIsResidentSnapshot: true,
+          payoutMethodSnapshot: 'upi',
+          payoutDestinationSnapshot: { vpa: 'vendor@upi' },
+        })
+        .returning({ id: bookings.id })
+      return { bookingId: booking!.id }
+    }
+
+    it('refunds 50% using the Combo’s OWN moderate preset (not a constituent min/max)', async () => {
+      // Combo preset = moderate (free T-72h | 50% T-24h | 0% after).
+      // Cancel at T-48h → moderate 50% window. If the flow had (wrongly)
+      // applied a constituent's Flexible preset, T-48h would be free (100%);
+      // a Strict constituent would be free (T-14d). Only the Combo's own
+      // moderate preset yields exactly 50%.
+      const { bookingId } = await seedConfirmedComboBooking({
+        hoursAhead: 48,
+        comboPreset: 'moderate',
+        comboCommissionRate: '30.00',
+        grossRupees: 5000,
+      })
+
+      const result = await processRefund(db, { bookingId, actorUserId: 'u_c' })
+      expect(result.basis).toBe('50%_window')
+      expect(result.refundAmountRupees).toBe(2500)
+      expect(result.cancellationFeeRupees).toBe(2500)
+      expect(result.bookingState).toBe('cancelled_by_customer')
+
+      const [reqRow] = await db
+        .select()
+        .from(refundRequests)
+        .where(eq(refundRequests.id, result.refundRequestId!))
+      expect(reqRow?.cancellationPresetSnapshot).toBe('moderate')
+      expect(reqRow?.policyWindowBasisSnapshot).toBe('50%_window')
+      expect(reqRow?.amount).toBe('2500.00')
+
+      expect(await readRefundBalance('u_c')).toBe(2500)
+    })
+
+    it('refunds 100% in the Combo’s OWN strict free window at T-15d', async () => {
+      // Strict free window is T-14d; T-15d (360h) is inside it → full refund.
+      const { bookingId } = await seedConfirmedComboBooking({
+        hoursAhead: 15 * 24,
+        comboPreset: 'strict',
+        comboCommissionRate: '30.00',
+        grossRupees: 5000,
+      })
+
+      const result = await processRefund(db, { bookingId, actorUserId: 'u_c' })
+      expect(result.basis).toBe('free_window')
+      expect(result.refundAmountRupees).toBe(5000)
+      expect(result.cancellationFeeRupees).toBe(0)
+      expect(await readRefundBalance('u_c')).toBe(5000)
+    })
+
+    it('records the cancellation-fee commission using the Combo’s 30% snapshot rate', async () => {
+      // Combo override = 30%. Cancel at T-48h on moderate → 50% window, fee 2500.
+      // Commission on the retained fee = 30% * 2500 = 750 (uses the snapshot
+      // rate, not the vendor's 20% base rate).
+      const { bookingId } = await seedConfirmedComboBooking({
+        hoursAhead: 48,
+        comboPreset: 'moderate',
+        comboCommissionRate: '30.00',
+        grossRupees: 5000,
+      })
+      await processRefund(db, { bookingId, actorUserId: 'u_c' })
+      const [auditRow] = await db
+        .select()
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.action, 'booking.cancel'),
+            eq(auditLogs.entityId, bookingId),
+          ),
+        )
+      const payload = auditRow?.payload as Record<string, unknown>
+      expect(payload.commissionRateSnapshot).toBe('30.00')
+      expect(payload.adjustedCommissionOnFeeRupees).toBe(750)
+    })
+  })
+
+  describe('cancellation-fee revenue uses the LOCKED commission snapshot rate (ADR-0008)', () => {
+    it('computes the cancellation-fee commission from the Booking’s snapshot rate, not the vendor’s current live rate', async () => {
+      // Booking snapshotted commission at 20% (seedConfirmedBooking default).
+      // Simulate an upstream rate change AFTER the Booking was created: bump
+      // the vendor's live commission rate to 35%. Per ADR-0008 the snapshot
+      // is locked at create; the cancellation-fee commission must use 20%,
+      // never the new 35%.
+      const { bookingId } = await seedConfirmedBooking({ hoursAhead: 3 })
+      await db
+        .update(vendorProfiles)
+        .set({ commissionRate: '35.00' })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+
+      const result = await processRefund(db, { bookingId, actorUserId: 'u_c' })
+      // T-3h on flexible → 50% window, gross 3000 → fee 1500.
+      expect(result.basis).toBe('50%_window')
+      expect(result.cancellationFeeRupees).toBe(1500)
+
+      const [auditRow] = await db
+        .select()
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.action, 'booking.cancel'),
+            eq(auditLogs.entityId, bookingId),
+          ),
+        )
+      const payload = auditRow?.payload as Record<string, unknown>
+      // Snapshot 20% * 1500 = 300. Live 35% would give 525 — must NOT appear.
+      expect(payload.commissionRateSnapshot).toBe('20.00')
+      expect(payload.adjustedCommissionOnFeeRupees).toBe(300)
+      expect(payload.adjustedCommissionOnFeeRupees).not.toBe(525)
+    })
+
+    it('vendor-cancelled = full refund (fee 0) regardless of the live vendor rate', async () => {
+      // Vendor-cancel → 100% refund, fee 0, so commission-on-fee is 0
+      // irrespective of any rate. Asserts the full-refund override holds even
+      // when the live vendor rate has drifted upward post-create.
+      const { bookingId } = await seedConfirmedBooking({ hoursAhead: 1 })
+      await db
+        .update(vendorProfiles)
+        .set({ commissionRate: '35.00' })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+
+      const result = await processRefund(db, {
+        bookingId,
+        actorUserId: 'u_v',
+        vendorCancelled: true,
+      })
+      expect(result.basis).toBe('vendor_cancelled')
+      expect(result.refundAmountRupees).toBe(3000)
+      expect(result.cancellationFeeRupees).toBe(0)
+
+      const [auditRow] = await db
+        .select()
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.action, 'booking.cancel'),
+            eq(auditLogs.entityId, bookingId),
+          ),
+        )
+      const payload = auditRow?.payload as Record<string, unknown>
+      // Fee 0 → commission on fee 0, and the snapshot (20%) is what's recorded.
+      expect(payload.commissionRateSnapshot).toBe('20.00')
+      expect(payload.adjustedCommissionOnFeeRupees).toBe(0)
+    })
+  })
+
   describe('idempotency / state guards', () => {
     it('refuses a second cancellation on a Booking already in a cancelled_* state', async () => {
       const { bookingId } = await seedConfirmedBooking({ hoursAhead: 25 })

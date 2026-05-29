@@ -1,6 +1,6 @@
 'use server'
 
-import { and, eq, gte, lte, sql } from 'drizzle-orm'
+import { and, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { db as prodDb } from '@/db/client'
 import { bookings } from '@/db/schema/bookings'
 import { commissionTiers } from '@/db/schema/commission-tiers'
+import { experiences } from '@/db/schema/experiences'
 import { auth } from '@/lib/auth'
 import { writeAuditLog } from '@/lib/audit/write'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
@@ -279,16 +280,38 @@ export async function getAffectedBookingCount(
 
   if (!tier) return 0
 
-  // Count bookings that fall within the tier's time window
-  // and match the scope filters (empty arrays mean "all")
+  // Count bookings that fall within the tier's time window AND match the
+  // tier's scope filters (empty arrays mean "all" — no constraint on that
+  // dimension). A Booking's scope values come from its Experience:
+  //   Booking.experienceId → experiences.id          (experience dimension)
+  //                        → experiences.activitySlug (category dimension)
+  //                        → experiences.vendorUserId (vendor dimension)
+  // so we join bookings → experiences. Per ADR-0008, a Booking counts only
+  // when it satisfies EVERY non-empty scope dimension (AND across
+  // dimensions). The "length IS NULL OR value = ANY(array)" form treats an
+  // empty array (array_length → NULL) as unconstrained — mirroring the
+  // commission-resolver tier-matching predicate.
   const conditions = [
     gte(bookings.createdAt, tier.startAt),
     lte(bookings.createdAt, tier.endAt),
   ]
+  // Empty array on a dimension = no constraint. The tier row is already
+  // loaded, so we evaluate emptiness in JS and only emit a SQL predicate
+  // for the dimensions that are actually scoped.
+  if (tier.appliesToCategories.length > 0) {
+    conditions.push(inArray(experiences.activitySlug, tier.appliesToCategories))
+  }
+  if (tier.appliesToVendorIds.length > 0) {
+    conditions.push(inArray(experiences.vendorUserId, tier.appliesToVendorIds))
+  }
+  if (tier.appliesToExperienceIds.length > 0) {
+    conditions.push(inArray(experiences.id, tier.appliesToExperienceIds))
+  }
 
   const [result] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(bookings)
+    .innerJoin(experiences, eq(bookings.experienceId, experiences.id))
     .where(and(...conditions))
 
   return result?.count ?? 0

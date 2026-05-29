@@ -470,18 +470,21 @@ describe('Admin commission tier actions', () => {
      * deterministically inside/outside a tier's time window. All other snapshot
      * columns are filled with valid placeholders.
      */
-    async function seedBookingAt(createdAt: Date): Promise<string> {
+    async function seedBookingAt(
+      createdAt: Date,
+      experienceId: string = affectExperienceId,
+    ): Promise<string> {
       const startAt = new Date(createdAt.getTime() + 30 * 24 * 60 * 60 * 1000)
       const endAt = new Date(startAt.getTime() + 4 * 60 * 60 * 1000)
       const [slot] = await db
         .insert(availabilitySlots)
-        .values({ experienceId: affectExperienceId, startAt, endAt, capacity: 8 })
+        .values({ experienceId, startAt, endAt, capacity: 8 })
         .returning({ id: availabilitySlots.id })
       const [booking] = await db
         .insert(bookings)
         .values({
           customerUserId: 'u_c_affect',
-          experienceId: affectExperienceId,
+          experienceId,
           slotId: slot!.id,
           participantCount: 2,
           paymentMode: 'full_upfront',
@@ -504,7 +507,11 @@ describe('Admin commission tier actions', () => {
       return booking!.id
     }
 
+    // Matching experience: vendor u_v_affect, category 'rafting'.
     let affectExperienceId: string
+    // Non-matching experience: a DIFFERENT vendor (u_v_other), category
+    // 'trekking'. Used to prove each scope dimension discriminates.
+    let otherExperienceId: string
 
     beforeEach(async () => {
       // The top-level beforeEach truncates audit_logs/commission_tiers/users.
@@ -515,14 +522,23 @@ describe('Admin commission tier actions', () => {
       )
       await db.insert(users).values([
         { id: 'u_v_affect', email: 'v-affect@test.com' },
+        { id: 'u_v_other', email: 'v-other@test.com' },
         { id: 'u_c_affect', email: 'c-affect@test.com' },
       ])
-      await db.insert(vendorProfiles).values({
-        userId: 'u_v_affect',
-        businessName: 'Affect Adventures',
-        slug: 'affect-adventures',
-        commissionRate: '20.00',
-      })
+      await db.insert(vendorProfiles).values([
+        {
+          userId: 'u_v_affect',
+          businessName: 'Affect Adventures',
+          slug: 'affect-adventures',
+          commissionRate: '20.00',
+        },
+        {
+          userId: 'u_v_other',
+          businessName: 'Other Adventures',
+          slug: 'other-adventures',
+          commissionRate: '20.00',
+        },
+      ])
       const [exp] = await db
         .insert(experiences)
         .values({
@@ -539,6 +555,22 @@ describe('Admin commission tier actions', () => {
         })
         .returning({ id: experiences.id })
       affectExperienceId = exp!.id
+      const [other] = await db
+        .insert(experiences)
+        .values({
+          vendorUserId: 'u_v_other',
+          slug: 'other-trekking',
+          title: 'Other Trekking',
+          cancellationPreset: 'flexible',
+          paymentModesAllowed: ['full_upfront'],
+          pricePerPerson_1_2: '1500',
+          pricePerPerson_3_5: '1300',
+          pricePerPerson_6_plus: '1100',
+          regionSlug: 'manali',
+          activitySlug: 'trekking',
+        })
+        .returning({ id: experiences.id })
+      otherExperienceId = other!.id
     })
 
     it('returns 0 for a non-existent tier id', async () => {
@@ -623,6 +655,146 @@ describe('Admin commission tier actions', () => {
 
       const count = await getAffectedBookingCount(db, tier!.id)
       expect(count).toBe(2)
+    })
+
+    // ── Scope filtering (ADR-0008) ──────────────────────────────────
+    //
+    // A scoped tier (non-empty applies_to_* arrays) must only count
+    // in-window Bookings whose Experience matches the scope dimension.
+    // Booking → experienceId → experiences.activitySlug (category),
+    // experiences.vendorUserId (vendor), experiences.id (experience).
+
+    it('counts only category-matching Bookings for a category-scoped tier', async () => {
+      const adminId = await seedAdmin(db)
+      const windowStart = new Date('2026-09-01T00:00:00Z')
+      const windowEnd = new Date('2026-09-30T23:59:59Z')
+
+      await executeCreateCommissionTier(db, adminId, {
+        name: 'rafting-only',
+        startAt: windowStart,
+        endAt: windowEnd,
+        rateOverride: 12,
+        reason: 'rafting category promo',
+        appliesToCategories: ['rafting'],
+        appliesToVendorIds: [],
+        appliesToExperienceIds: [],
+      })
+      const [tier] = await db.select().from(commissionTiers)
+
+      // Two in-window rafting Bookings (match) + one in-window trekking
+      // Booking (no match). Over-counting impl would return 3.
+      await seedBookingAt(new Date('2026-09-10T08:00:00Z'), affectExperienceId)
+      await seedBookingAt(new Date('2026-09-20T08:00:00Z'), affectExperienceId)
+      await seedBookingAt(new Date('2026-09-15T08:00:00Z'), otherExperienceId)
+
+      const count = await getAffectedBookingCount(db, tier!.id)
+      expect(count).toBe(2)
+    })
+
+    it('counts only vendor-matching Bookings for a vendor-scoped tier', async () => {
+      const adminId = await seedAdmin(db)
+      const windowStart = new Date('2026-09-01T00:00:00Z')
+      const windowEnd = new Date('2026-09-30T23:59:59Z')
+
+      await executeCreateCommissionTier(db, adminId, {
+        name: 'affect-vendor-only',
+        startAt: windowStart,
+        endAt: windowEnd,
+        rateOverride: 11,
+        reason: 'vendor promo',
+        appliesToCategories: [],
+        appliesToVendorIds: ['u_v_affect'],
+        appliesToExperienceIds: [],
+      })
+      const [tier] = await db.select().from(commissionTiers)
+
+      // One in-window Booking on the scoped vendor's Experience (match) +
+      // one on the other vendor's Experience (no match).
+      await seedBookingAt(new Date('2026-09-10T08:00:00Z'), affectExperienceId)
+      await seedBookingAt(new Date('2026-09-15T08:00:00Z'), otherExperienceId)
+
+      const count = await getAffectedBookingCount(db, tier!.id)
+      expect(count).toBe(1)
+    })
+
+    it('counts only experience-matching Bookings for an experience-scoped tier', async () => {
+      const adminId = await seedAdmin(db)
+      const windowStart = new Date('2026-09-01T00:00:00Z')
+      const windowEnd = new Date('2026-09-30T23:59:59Z')
+
+      await executeCreateCommissionTier(db, adminId, {
+        name: 'single-experience',
+        startAt: windowStart,
+        endAt: windowEnd,
+        rateOverride: 9,
+        reason: 'one experience only',
+        appliesToCategories: [],
+        appliesToVendorIds: [],
+        appliesToExperienceIds: [affectExperienceId],
+      })
+      const [tier] = await db.select().from(commissionTiers)
+
+      // Two in-window Bookings on the scoped Experience (match) + one on a
+      // different Experience (no match).
+      await seedBookingAt(new Date('2026-09-10T08:00:00Z'), affectExperienceId)
+      await seedBookingAt(new Date('2026-09-12T08:00:00Z'), affectExperienceId)
+      await seedBookingAt(new Date('2026-09-15T08:00:00Z'), otherExperienceId)
+
+      const count = await getAffectedBookingCount(db, tier!.id)
+      expect(count).toBe(2)
+    })
+
+    it('counts all in-window Bookings when every scope filter is empty', async () => {
+      const adminId = await seedAdmin(db)
+      const windowStart = new Date('2026-09-01T00:00:00Z')
+      const windowEnd = new Date('2026-09-30T23:59:59Z')
+
+      await executeCreateCommissionTier(db, adminId, {
+        name: 'all-scope',
+        startAt: windowStart,
+        endAt: windowEnd,
+        rateOverride: 15,
+        reason: 'platform-wide',
+        appliesToCategories: [],
+        appliesToVendorIds: [],
+        appliesToExperienceIds: [],
+      })
+      const [tier] = await db.select().from(commissionTiers)
+
+      // Mixed categories/vendors — all in-window, all count (empty = all).
+      await seedBookingAt(new Date('2026-09-10T08:00:00Z'), affectExperienceId)
+      await seedBookingAt(new Date('2026-09-15T08:00:00Z'), otherExperienceId)
+
+      const count = await getAffectedBookingCount(db, tier!.id)
+      expect(count).toBe(2)
+    })
+
+    it('requires ALL non-empty scope dimensions to match (AND across dimensions)', async () => {
+      const adminId = await seedAdmin(db)
+      const windowStart = new Date('2026-09-01T00:00:00Z')
+      const windowEnd = new Date('2026-09-30T23:59:59Z')
+
+      // Category 'rafting' AND vendor 'u_v_affect'. The affect Experience
+      // satisfies both; the other Experience (trekking, u_v_other) fails
+      // both. A Booking only counts when it satisfies every non-empty
+      // dimension.
+      await executeCreateCommissionTier(db, adminId, {
+        name: 'rafting-and-affect-vendor',
+        startAt: windowStart,
+        endAt: windowEnd,
+        rateOverride: 10,
+        reason: 'category AND vendor',
+        appliesToCategories: ['rafting'],
+        appliesToVendorIds: ['u_v_affect'],
+        appliesToExperienceIds: [],
+      })
+      const [tier] = await db.select().from(commissionTiers)
+
+      await seedBookingAt(new Date('2026-09-10T08:00:00Z'), affectExperienceId)
+      await seedBookingAt(new Date('2026-09-15T08:00:00Z'), otherExperienceId)
+
+      const count = await getAffectedBookingCount(db, tier!.id)
+      expect(count).toBe(1)
     })
   })
 })

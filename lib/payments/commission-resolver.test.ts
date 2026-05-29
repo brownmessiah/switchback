@@ -227,6 +227,15 @@ describe('resolveCommission (ADR-0008)', () => {
       const r = await resolveCommission(stubDb, { experienceId: 'exp-stub' })
       expect(r.rate).toBe(PLATFORM_DEFAULT_COMMISSION_RATE)
       expect(r.basis).toBe('platform_default')
+      // Structural guard: pin the resolver's query sequence so this test fails
+      // loudly if the resolver short-circuits or reorders its lookups. Reaching
+      // arm 4 requires walking the full chain — experience (1), festival tiers
+      // (none match, but the query still runs), vendor (absent) — i.e. exactly
+      // two select() entries on the stub (the festival-tier branch resolves via
+      // orderBy().limit(), not the limit-counting branch, so it does not
+      // increment selectCall). selectCall therefore lands on 2: arm 1 reads the
+      // experience, arm 3 reads the (empty) vendor row.
+      expect(selectCall).toBe(2)
     })
   })
 

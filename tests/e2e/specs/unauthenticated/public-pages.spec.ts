@@ -256,18 +256,20 @@ test.describe('Search bare', () => {
     const h1 = page.locator('h1')
     await expect(h1).toBeVisible()
 
-    // Canonical points at unfiltered /search
+    // Canonical points at unfiltered /search and carries no query string
+    // (ADR-0013: bare search is indexable with a self-canonical).
     const canonical = page.locator('link[rel="canonical"]').first()
     await expect(canonical).toHaveAttribute('href', /\/search$/)
+    const canonicalHref = await canonical.getAttribute('href')
+    expect(canonicalHref).not.toContain('?')
 
-    // Robots meta (may not exist yet — check if present before asserting)
-    const robotsCount = await page.locator('meta[name="robots"]').count()
-    if (robotsCount > 0) {
-      await expect(page.locator('meta[name="robots"]').first()).toHaveAttribute(
-        'content',
-        'index, follow',
-      )
-    }
+    // Robots meta MUST be index,follow on the bare search page (ADR-0013).
+    const robotsMeta = page.locator('meta[name="robots"]')
+    await expect(robotsMeta).toHaveCount(1)
+    await expect(robotsMeta.first()).toHaveAttribute(
+      'content',
+      'index, follow',
+    )
 
     // Search content visible (filter controls may use various UI patterns)
     await expect(page.locator('main')).toBeVisible()
@@ -283,32 +285,54 @@ test.describe('Search bare', () => {
 // 5. Search filtered
 // ---------------------------------------------------------------------------
 test.describe('Search filtered', () => {
-  test('robots noindex follow, canonical still /search', async ({ page }) => {
+  test('robots noindex follow, canonical still bare /search', async ({
+    page,
+  }) => {
     const response = await page.goto('/search?activity=rafting')
     expect(response?.status()).toBe(200)
 
-    // Robots meta (may not exist yet — check if present before asserting)
-    const robotsCount = await page.locator('meta[name="robots"]').count()
-    if (robotsCount > 0) {
-      await expect(page.locator('meta[name="robots"]').first()).toHaveAttribute(
-        'content',
-        'noindex, follow',
-      )
-    }
+    // Robots meta MUST be noindex,follow on a filtered search (ADR-0013:
+    // sort/filter URL variants are noindex,follow).
+    const robotsMeta = page.locator('meta[name="robots"]')
+    await expect(robotsMeta).toHaveCount(1)
+    await expect(robotsMeta.first()).toHaveAttribute(
+      'content',
+      'noindex, follow',
+    )
 
-    // Canonical STILL points at unfiltered /search (if present)
-    const canonicalCount = await page.locator('link[rel="canonical"]').count()
-    if (canonicalCount > 0) {
-      await expect(page.locator('link[rel="canonical"]').first()).toHaveAttribute(
-        'href',
-        /\/search$/,
-      )
-    }
+    // Canonical STILL points at the unfiltered bare /search — query
+    // params are stripped so signal consolidates on one URL (ADR-0013).
+    const canonical = page.locator('link[rel="canonical"]').first()
+    await expect(canonical).toHaveAttribute('href', /\/search$/)
+    const canonicalHref = await canonical.getAttribute('href')
+    expect(canonicalHref).not.toContain('?')
+    expect(canonicalHref).not.toContain('activity')
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/search-filtered.png',
       fullPage: true,
     })
+  })
+
+  test('multi-filter (price + sort) is also noindex,follow + bare canonical', async ({
+    page,
+  }) => {
+    const response = await page.goto(
+      '/search?activity=trekking&minPrice=500&sort=price_asc',
+    )
+    expect(response?.status()).toBe(200)
+
+    const robotsMeta = page.locator('meta[name="robots"]')
+    await expect(robotsMeta).toHaveCount(1)
+    await expect(robotsMeta.first()).toHaveAttribute(
+      'content',
+      'noindex, follow',
+    )
+
+    const canonical = page.locator('link[rel="canonical"]').first()
+    await expect(canonical).toHaveAttribute('href', /\/search$/)
+    const canonicalHref = await canonical.getAttribute('href')
+    expect(canonicalHref).not.toContain('?')
   })
 })
 
@@ -355,6 +379,13 @@ test.describe('Sign-in page', () => {
     // Page contains a main element
     await expect(page.locator('main')).toBeVisible()
 
+    // Sign-in form renders cleanly: a <form>, email + password inputs,
+    // and a submit button. (DevTools fixture also gates console + axe.)
+    await expect(page.locator('form')).toBeVisible()
+    await expect(page.locator('input#email[type="email"]')).toBeVisible()
+    await expect(page.locator('input#password[type="password"]')).toBeVisible()
+    await expect(page.locator('button[type="submit"]')).toBeVisible()
+
     await page.screenshot({
       path: 'tests/e2e/screenshots/sign-in.png',
       fullPage: true,
@@ -376,10 +407,11 @@ test.describe('Error pages', () => {
     })
   })
 
-  test('404 or graceful not-found for invalid experience slug', async ({ page }) => {
+  test('404 graceful not-found for invalid experience slug', async ({ page }) => {
+    // Invalid Experience slug → notFound() → 404. The DevTools fixture
+    // asserts no console error / uncaught exception (so no 500 path).
     const response = await page.goto('/experience/nonexistent-slug-xyz')
-    const status = response?.status() ?? 0
-    expect([200, 404]).toContain(status)
+    expect(response?.status()).toBe(404)
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/404-experience.png',
@@ -387,10 +419,36 @@ test.describe('Error pages', () => {
     })
   })
 
-  test('cancellation policy page loads', async ({ page }) => {
+  test('cancellation policy page renders all three presets with windows', async ({
+    page,
+  }) => {
     const response = await page.goto('/cancellation-policy')
     expect(response?.status()).toBe(200)
     await expect(page.locator('h1')).toContainText('cancellation')
+
+    // ADR-0005: the page explains all three presets. Each preset name
+    // appears (in the table + the worked-examples cards).
+    await expect(page.getByText('Flexible', { exact: true }).first()).toBeVisible()
+    await expect(page.getByText('Moderate', { exact: true }).first()).toBeVisible()
+    await expect(page.getByText('Strict', { exact: true }).first()).toBeVisible()
+
+    // The refund windows are stated clearly per preset (ADR-0005 thresholds:
+    // Flexible 24h/2h, Moderate 72h/24h, Strict 14d/7d). Some window strings
+    // legitimately appear twice (e.g. "24 hours" is Flexible-full AND
+    // Moderate-half), so assert each is present at least once.
+    for (const windowText of [
+      'Up to 24 hours before start', // Flexible full / Moderate half
+      'Up to 2 hours before start', // Flexible half
+      'Up to 72 hours before start', // Moderate full
+      'Up to 14 days before start', // Strict full
+      'Up to 7 days before start', // Strict half
+    ]) {
+      await expect(
+        page.getByText(windowText, { exact: true }).first(),
+      ).toBeVisible()
+    }
+    // "No refund" after the half-refund window is present for each row.
+    await expect(page.getByText('No refund', { exact: true }).first()).toBeVisible()
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/cancellation-policy.png',

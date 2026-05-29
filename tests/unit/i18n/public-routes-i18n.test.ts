@@ -17,7 +17,9 @@ describe('public routes under [locale]/(marketing)', () => {
   const routes = [
     'app/[locale]/(marketing)/adventure/[slug]/page.tsx',
     'app/[locale]/(marketing)/experience/[slug]/page.tsx',
-    'app/[locale]/(marketing)/experience/[slug]/loading.tsx',
+    // experience/[slug]/loading.tsx was removed: its route-level Suspense
+    // boundary streamed a 200 before notFound() resolved, so dead Experience
+    // slugs returned HTTP 200 instead of 404 (ADR-0013 dead-slug → 404).
     'app/[locale]/(marketing)/search/page.tsx',
     'app/[locale]/(marketing)/search/loading.tsx',
     'app/[locale]/(marketing)/sign-in/page.tsx',

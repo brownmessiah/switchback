@@ -70,17 +70,10 @@ export default async function SearchPage({
 
   const rawParams = await searchParams
   const parsed = parseSearchParams(rawParams)
-  const filtered = isFilteredSearch(parsed)
   const { hits } = await searchExperiences(parsed)
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-12">
-      {filtered ? (
-        <meta name="robots" content="noindex, follow" />
-      ) : (
-        <meta name="robots" content="index, follow" />
-      )}
-
       <header className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
           {parsed.q ? t('heading.withQuery', { query: parsed.q }) : t('heading.default')}
@@ -192,12 +185,23 @@ export default async function SearchPage({
   )
 }
 
-export async function generateMetadata({ params }: PageProps) {
+export async function generateMetadata({ params, searchParams }: PageProps) {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'SearchPage' })
+
+  // ADR-0013: bare search is indexable (index,follow, self-canonical);
+  // any filter/sort variant is noindex,follow and canonicalises to the
+  // unfiltered /search URL. Robots is emitted via the Metadata API so it
+  // lands in <head> (in-body <meta> is not hoisted reliably).
+  const parsed = parseSearchParams(await searchParams)
+  const filtered = isFilteredSearch(parsed)
+
   return {
     title: t('metadata.title'),
     description: t('metadata.description'),
+    robots: filtered
+      ? { index: false, follow: true }
+      : { index: true, follow: true },
     alternates: generateAlternates('/search', locale),
   }
 }

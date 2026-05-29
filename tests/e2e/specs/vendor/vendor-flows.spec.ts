@@ -17,6 +17,14 @@ import postgres from 'postgres'
 
 import { test, expect } from '../../fixtures/devtools'
 import { e2eDbUrl } from '../../helpers/config'
+import {
+  getExperienceByTitle,
+  getExperienceById,
+  getPublishedExperienceForVendor,
+  getMediaAssetsForExperience,
+} from '../../helpers/db-assertions'
+import { getIndexedExperience } from '../../helpers/meili-assertions'
+import { storageFileExists } from '../../helpers/storage-assertions'
 
 // ---------------------------------------------------------------------------
 // 1. Onboarding page — already-onboarded vendor redirects to dashboard
@@ -174,10 +182,19 @@ test.describe('Vendor listings', () => {
 })
 
 // ---------------------------------------------------------------------------
-// 3. Create listing — fill new experience form → save → appears in table
+// 3. Create listing — fill new experience form → save → persists as draft →
+//    appears in the vendor Experiences list (AC #1: create path).
 // ---------------------------------------------------------------------------
+const SEED_BUSINESS_VENDOR_ID = 'u_seed_v_business'
+
 test.describe('Create listing', () => {
-  test('fill form, save, and verify new listing appears', async ({ page }) => {
+  test('fill form, save, persist as draft, and verify new listing appears', async ({
+    page,
+  }) => {
+    // Deterministic, unique title per run so retries / parallel runs don't
+    // collide (the action appends a base36 timestamp to the slug).
+    const title = `E2E Create Experience — Sunset Kayaking ${Date.now()}`
+
     // Navigate to the new listing form
     await page.goto('/vendor/listings/new')
     const h1 = page.locator('h1')
@@ -185,7 +202,7 @@ test.describe('Create listing', () => {
     await expect(h1).toContainText('Create listing')
 
     // Fill title
-    await page.fill('#title', 'E2E Test Experience — Sunset Kayaking')
+    await page.fill('#title', title)
 
     // Fill description
     await page.fill(
@@ -221,10 +238,21 @@ test.describe('Create listing', () => {
     // Wait for the client-side navigation to the listings page
     await page.waitForURL(/\/vendor\/listings$/, { timeout: 15_000 })
 
-    // Verify the new listing appears on the listings page
-    await expect(
-      page.getByText('E2E Test Experience — Sunset Kayaking').first(),
-    ).toBeVisible({ timeout: 10_000 })
+    // Verify the new listing appears on the listings page (list rendering)
+    await expect(page.getByText(title).first()).toBeVisible({ timeout: 10_000 })
+
+    // ── Assert against the DB: the row persisted as a DRAFT for this vendor ─
+    const created = await getExperienceByTitle(SEED_BUSINESS_VENDOR_ID, title)
+    expect(created).not.toBeNull()
+    expect(created!.status).toBe('draft')
+    expect(created!.pricePerPerson_1_2).toBe(2500)
+    expect(created!.vendorUserId).toBe(SEED_BUSINESS_VENDOR_ID)
+
+    // The list card carries the draft status badge.
+    const card = page
+      .locator('a[href*="/vendor/listings/"]')
+      .filter({ has: page.getByText(title) })
+    await expect(card.getByText('draft')).toBeVisible()
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/vendor-create-listing.png',
@@ -234,39 +262,211 @@ test.describe('Create listing', () => {
 })
 
 // ---------------------------------------------------------------------------
-// 4. Edit listing — click listing → edit price → save → verify updated price
+// 4. Edit listing — open a PUBLISHED listing → change price → save →
+//    price survives reload (DB) AND re-indexes into Meilisearch (AC #1).
 // ---------------------------------------------------------------------------
 test.describe('Edit listing', () => {
-  test('edit experience price and verify update persists', async ({ page }) => {
-    // Navigate to listings
-    await page.goto('/vendor/listings')
-    await expect(page.locator('h1')).toContainText('Listings')
+  // A within-cap published listing owned by the business-tier vendor. A
+  // business Vendor is unrestricted, so any new price is allowed; we pick a
+  // value below the identity cap to keep the change unambiguous.
+  const PUBLISHED_SLUG = 'goa-scuba-diving-padi-dsd'
+  const NEW_PRICE = 4750
 
-    // Click the first listing card to go to the edit page
-    const listingLink = page.locator('a[href*="/vendor/listings/"]').filter({
-      has: page.locator('h3'),
-    }).first()
-    await expect(listingLink).toBeVisible()
-    await listingLink.click()
+  test('change price on a published listing, verify it persists and re-indexes', async ({
+    page,
+  }) => {
+    // Resolve the published experience id directly so the edit is deterministic.
+    const target = await getPublishedExperienceForVendor(
+      SEED_BUSINESS_VENDOR_ID,
+      PUBLISHED_SLUG,
+    )
+    expect(target, `seed published experience ${PUBLISHED_SLUG} must exist`).not.toBeNull()
+    const experienceId = target!.id
+    // Guard against a stale value from a prior retry on the reused DB.
+    expect(target!.pricePerPerson_1_2).not.toBe(NEW_PRICE)
 
-    // Wait for the edit page to load
-    await page.waitForURL(/\/vendor\/listings\/[^/]+\/edit/)
+    await page.goto(`/vendor/listings/${experienceId}/edit`)
     await expect(page.locator('h1')).toContainText('Edit experience')
 
-    // Verify the form fields are populated from the database
+    // Verify the form fields are populated from the database.
     const priceInput = page.locator('#price12')
     await expect(priceInput).toBeVisible()
     const initialValue = await priceInput.inputValue()
     expect(Number(initialValue)).toBeGreaterThan(0)
-
-    // Verify additional fields are populated
     await expect(page.locator('#title')).toHaveValue(/.+/)
-    await expect(page.locator('button[type="submit"]')).toBeVisible()
+
+    // Change the headline (1-2) price and save.
+    await priceInput.fill(String(NEW_PRICE))
+    await page.locator('button[type="submit"]').click()
+
+    // The form surfaces an inline success state on a persisted update.
+    await expect(page.getByText('Experience updated.')).toBeVisible({ timeout: 15_000 })
+
+    // ── Assert: price persisted in the DB ────────────────────────────────
+    const afterSave = await getExperienceById(experienceId)
+    expect(afterSave!.pricePerPerson_1_2).toBe(NEW_PRICE)
+    expect(afterSave!.status).toBe('published')
+
+    // ── Assert: price SURVIVES RELOAD (form re-populates from the DB) ─────
+    // The numeric column round-trips as e.g. "4750.00"; compare the value
+    // rather than the exact string format.
+    await page.reload()
+    const reloadedValue = await page.locator('#price12').inputValue()
+    expect(Number(reloadedValue)).toBe(NEW_PRICE)
+
+    // ── Assert: the published listing RE-INDEXED into Meilisearch ────────
+    // ADR-0013: the canonical search row reflects the edited facet price.
+    const doc = await getIndexedExperience(experienceId)
+    expect(doc, 'edited published experience must be (re)indexed in Meilisearch').not.toBeNull()
+    expect(doc!.id).toBe(experienceId)
+    expect(doc!.slug).toBe(PUBLISHED_SLUG)
+    expect(doc!.pricePerPersonRupees).toBe(NEW_PRICE)
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/vendor-edit-listing.png',
       fullPage: true,
     })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 4b. Images — upload via the storage mock → media_assets row + on-disk file;
+//     delete → row + file removed (AC #2).
+// ---------------------------------------------------------------------------
+test.describe('Listing images', () => {
+  const PUBLISHED_SLUG = 'goa-scuba-diving-fun-dive-cert'
+
+  test('upload an image to a listing then delete it (storage mock)', async ({
+    page,
+  }) => {
+    const target = await getPublishedExperienceForVendor(
+      SEED_BUSINESS_VENDOR_ID,
+      PUBLISHED_SLUG,
+    )
+    expect(target).not.toBeNull()
+    const experienceId = target!.id
+
+    await page.goto(`/vendor/listings/${experienceId}/edit`)
+    await expect(page.locator('h1')).toContainText('Edit experience')
+
+    // A tiny but VALID 1x1 PNG so next/image's optimizer can fetch it without
+    // emitting a 4xx (which the DevTools fixture would fail on).
+    const pngBase64 =
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+    const fileInput = page.locator('input[type="file"]')
+    await fileInput.setInputFiles({
+      name: 'e2e-listing-photo.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(pngBase64, 'base64'),
+    })
+
+    // The preview tile (with its Delete button) appears once the upload action
+    // resolves and the client state updates.
+    const deleteButton = page.getByRole('button', { name: 'Delete image' })
+    await expect(deleteButton).toBeVisible({ timeout: 15_000 })
+
+    // ── Assert: a media_assets row exists AND the file landed on the mock ─
+    const assetsAfterUpload = await getMediaAssetsForExperience(experienceId)
+    expect(assetsAfterUpload.length).toBeGreaterThanOrEqual(1)
+    const asset = assetsAfterUpload[assetsAfterUpload.length - 1]
+    expect(asset.url).toContain('/uploads/experiences/')
+    expect(asset.uploadedBy).toBe(SEED_BUSINESS_VENDOR_ID)
+    expect(storageFileExists(asset.storageKey)).toBe(true)
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/vendor-listing-image-uploaded.png',
+      fullPage: true,
+    })
+
+    // ── Delete the image → row removed AND file removed from the mock ────
+    await deleteButton.click()
+    await expect(deleteButton).toBeHidden({ timeout: 15_000 })
+
+    const assetsAfterDelete = await getMediaAssetsForExperience(experienceId)
+    expect(assetsAfterDelete.find((a) => a.id === asset.id)).toBeUndefined()
+    expect(storageFileExists(asset.storageKey)).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 4c. Over-cap publish rejection — an IDENTITY-tier Vendor editing a LIVE
+//     (published) over-cap listing is rejected by the ADR-0007 guard from
+//     #10 (AC #3). #21 runs the full tier-cap matrix; here we confirm the
+//     edit path surfaces the rejection in the UI and does not persist.
+// ---------------------------------------------------------------------------
+const IDENTITY_VENDOR_STORAGE = path.resolve(
+  __dirname,
+  '../../.auth/identity-vendor-storage.json',
+)
+const IDENTITY_VENDOR_ID = 'u_seed_v_identity'
+
+test.describe('Over-cap publish rejection (Identity tier, ADR-0007)', () => {
+  test.use({ storageState: IDENTITY_VENDOR_STORAGE })
+
+  test('rejects an over-cap edit of a published listing and does not persist', async ({
+    page,
+  }) => {
+    // The seeded identity vendor's 5-day Hampta trek is published at
+    // Rs.12,500/pp — already over the Rs.5,000 cap. Editing it live must be
+    // rejected by the guard before any DB write.
+    const target = await getPublishedExperienceForVendor(
+      IDENTITY_VENDOR_ID,
+      'manali-hampta-pass-trek-5d',
+    )
+    expect(target).not.toBeNull()
+    const experienceId = target!.id
+    const originalPrice = target!.pricePerPerson_1_2
+
+    await page.goto(`/vendor/listings/${experienceId}/edit`)
+    await expect(page.locator('h1')).toContainText('Edit experience')
+
+    // Submit an edit that keeps the price over the cap (still Rs.9,000).
+    await page.locator('#price12').fill('9000')
+    await page.locator('#price35').fill('9000')
+    await page.locator('#price6').fill('9000')
+    await page.locator('button[type="submit"]').click()
+
+    // The guard's rejection reason is surfaced inline (mentions the cap).
+    await expect(page.getByText(/per person|Rs\.?\s*5000|5,?000/i)).toBeVisible({
+      timeout: 15_000,
+    })
+    // The success banner must NOT appear.
+    await expect(page.getByText('Experience updated.')).toHaveCount(0)
+
+    // ── Assert: the over-cap price was NOT persisted ─────────────────────
+    const after = await getExperienceById(experienceId)
+    expect(after!.pricePerPerson_1_2).toBe(originalPrice)
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/vendor-overcap-rejected.png',
+      fullPage: true,
+    })
+  })
+
+  test('allows a within-cap edit of a published listing for an Identity Vendor', async ({
+    page,
+  }) => {
+    // The identity vendor's beginner kayaking listing is published at
+    // Rs.1,800/pp (within cap). A within-cap price change must succeed.
+    const target = await getPublishedExperienceForVendor(
+      IDENTITY_VENDOR_ID,
+      'rishikesh-kayaking-introduction',
+    )
+    expect(target).not.toBeNull()
+    const experienceId = target!.id
+    const newPrice = 1900
+    expect(target!.pricePerPerson_1_2).not.toBe(newPrice)
+
+    await page.goto(`/vendor/listings/${experienceId}/edit`)
+    await expect(page.locator('h1')).toContainText('Edit experience')
+
+    await page.locator('#price12').fill(String(newPrice))
+    await page.locator('button[type="submit"]').click()
+
+    await expect(page.getByText('Experience updated.')).toBeVisible({ timeout: 15_000 })
+
+    const after = await getExperienceById(experienceId)
+    expect(after!.pricePerPerson_1_2).toBe(newPrice)
   })
 })
 

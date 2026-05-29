@@ -30,7 +30,12 @@ async function signSessionToken(token: string, secret: string): Promise<string> 
   return `${token}.${b64}`
 }
 
-type Role = 'customer' | 'vendor' | 'admin' | 'vendor-onboarding'
+type Role =
+  | 'customer'
+  | 'vendor'
+  | 'admin'
+  | 'vendor-onboarding'
+  | 'identity-vendor'
 
 /** Seed user IDs — must match db/seed.ts */
 const SEED_USERS: Record<Role, string> = {
@@ -40,6 +45,10 @@ const SEED_USERS: Record<Role, string> = {
   // A signed-up vendor with NO vendor_profile yet — drives the onboarding
   // flow (#16). Distinct from `vendor`, which is already onboarded.
   'vendor-onboarding': 'u_seed_v_onboarding',
+  // An Identity-tier (Tier-2) vendor — drives the ADR-0007 over-cap publish
+  // rejection on the edit path (#17). Caps: single-day, ≤Rs.5000/pp,
+  // ≤8/slot, no combo.
+  'identity-vendor': 'u_seed_v_identity',
 }
 
 const AUTH_DIR = path.resolve(__dirname, '../.auth')

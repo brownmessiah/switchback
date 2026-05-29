@@ -347,3 +347,141 @@ export async function countBookingCancelAuditRows(
     return Number(rows[0]?.n ?? '0')
   })
 }
+
+// ---------------------------------------------------------------------------
+// Vendor listing create / edit / images assertions (Issue #17)
+// ---------------------------------------------------------------------------
+
+export interface ExperienceRow {
+  id: string
+  slug: string
+  title: string
+  status: string
+  pricePerPerson_1_2: number
+  vendorUserId: string
+}
+
+/** Fetch a vendor's most-recently-created Experience whose title matches. */
+export async function getExperienceByTitle(
+  vendorUserId: string,
+  title: string,
+): Promise<ExperienceRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        id: string
+        slug: string
+        title: string
+        status: string
+        price_per_person_1_2: string
+        vendor_user_id: string
+      }[]
+    >`
+      SELECT id, slug, title, status, price_per_person_1_2, vendor_user_id
+      FROM experiences
+      WHERE vendor_user_id = ${vendorUserId}
+        AND title = ${title}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    const row = rows[0]
+    if (!row) return null
+    return {
+      id: row.id,
+      slug: row.slug,
+      title: row.title,
+      status: row.status,
+      pricePerPerson_1_2: Math.floor(Number(row.price_per_person_1_2)),
+      vendorUserId: row.vendor_user_id,
+    }
+  })
+}
+
+/** Fetch an Experience by id (for reload / price-survives assertions). */
+export async function getExperienceById(
+  experienceId: string,
+): Promise<ExperienceRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        id: string
+        slug: string
+        title: string
+        status: string
+        price_per_person_1_2: string
+        vendor_user_id: string
+      }[]
+    >`
+      SELECT id, slug, title, status, price_per_person_1_2, vendor_user_id
+      FROM experiences
+      WHERE id = ${experienceId}
+      LIMIT 1
+    `
+    const row = rows[0]
+    if (!row) return null
+    return {
+      id: row.id,
+      slug: row.slug,
+      title: row.title,
+      status: row.status,
+      pricePerPerson_1_2: Math.floor(Number(row.price_per_person_1_2)),
+      vendorUserId: row.vendor_user_id,
+    }
+  })
+}
+
+/** Resolve a published Experience id + slug for a given vendor (for edit). */
+export async function getPublishedExperienceForVendor(
+  vendorUserId: string,
+  slug: string,
+): Promise<{ id: string; slug: string; pricePerPerson_1_2: number } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { id: string; slug: string; price_per_person_1_2: string }[]
+    >`
+      SELECT id, slug, price_per_person_1_2
+      FROM experiences
+      WHERE vendor_user_id = ${vendorUserId}
+        AND slug = ${slug}
+        AND status = 'published'
+      LIMIT 1
+    `
+    const row = rows[0]
+    if (!row) return null
+    return {
+      id: row.id,
+      slug: row.slug,
+      pricePerPerson_1_2: Math.floor(Number(row.price_per_person_1_2)),
+    }
+  })
+}
+
+export interface MediaAssetRow {
+  id: string
+  storageKey: string
+  url: string
+  uploadedBy: string
+}
+
+/** Fetch media_assets rows for an Experience id. */
+export async function getMediaAssetsForExperience(
+  experienceId: string,
+): Promise<MediaAssetRow[]> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { id: string; storage_key: string; url: string; uploaded_by: string }[]
+    >`
+      SELECT id, storage_key, url, uploaded_by
+      FROM media_assets
+      WHERE entity_type = 'experience'
+        AND entity_id = ${experienceId}
+      ORDER BY created_at ASC
+    `
+    return rows.map((r) => ({
+      id: r.id,
+      storageKey: r.storage_key,
+      url: r.url,
+      uploadedBy: r.uploaded_by,
+    }))
+  })
+}

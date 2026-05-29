@@ -2,7 +2,6 @@
 
 import { eq } from 'drizzle-orm'
 import { headers } from 'next/headers'
-import { z } from 'zod'
 
 import { db as prodDb } from '@/db/client'
 import { experiences, mediaAssets } from '@/db/schema'
@@ -12,30 +11,20 @@ import { auth } from '@/lib/auth'
 import { writeAuditLog } from '@/lib/audit/write'
 import { assertWithinTier, type KycTier } from '@/lib/kyc/tier-caps'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
+import { indexExperience, type ExperienceSearchDoc } from '@/lib/search/indexer'
 import { LocalFileAdapter } from '@/lib/storage/local'
 
-// ── Validation schema ────────────────────────────────────────────
+// A `'use server'` file may export ONLY async functions. The Zod schema and
+// the derived types live in ./schema so this module exports nothing else.
+import {
+  updateExperienceSchema,
+  type UpdateExperienceInput,
+  type UpdateExperienceOpts,
+} from './schema'
 
-export const updateExperienceSchema = z.object({
-  id: z.string().uuid(),
-  title: z.string().min(1, 'Title is required').max(200),
-  shortDescription: z.string().max(500).nullable().optional(),
-  longDescription: z.string().max(5000).nullable().optional(),
-  activitySlug: z.string().min(1, 'Activity is required'),
-  regionSlug: z.string().min(1, 'Region is required'),
-  pricePerPerson_1_2: z.number().positive('Price must be positive'),
-  pricePerPerson_3_5: z.number().positive('Price must be positive'),
-  pricePerPerson_6_plus: z.number().positive('Price must be positive'),
-  cancellationPreset: z.enum(['flexible', 'moderate', 'strict', 'custom']),
-  paymentModesAllowed: z
-    .array(z.enum(['full_upfront', 'partial_pay', 'reserve_now_pay_later']))
-    .min(1, 'At least one payment mode is required'),
-  isCombo: z.boolean(),
-  requiredPermits: z.array(z.string()),
-  requiresSafetyStack: z.boolean(),
-})
-
-export type UpdateExperienceInput = z.infer<typeof updateExperienceSchema>
+// Re-export the types (type-only, erased at build) so existing importers and
+// the form keep a single import surface. The schema VALUE stays in ./schema.
+export type { UpdateExperienceInput, UpdateExperienceOpts } from './schema'
 
 type UpdateExperienceResult =
   | { ok: true }
@@ -47,6 +36,7 @@ export async function executeUpdateExperience(
   db: DBOrTx,
   userId: string,
   input: UpdateExperienceInput,
+  opts: UpdateExperienceOpts = {},
 ): Promise<UpdateExperienceResult> {
   const parsed = updateExperienceSchema.safeParse(input)
   if (!parsed.success) {
@@ -67,7 +57,9 @@ export async function executeUpdateExperience(
       id: experiences.id,
       vendorUserId: experiences.vendorUserId,
       status: experiences.status,
+      slug: experiences.slug,
       kycTier: vendorProfiles.kycTier,
+      vendorSlug: vendorProfiles.slug,
     })
     .from(experiences)
     .innerJoin(vendorProfiles, eq(experiences.vendorUserId, vendorProfiles.userId))
@@ -124,6 +116,7 @@ export async function executeUpdateExperience(
   }
 
   try {
+    const now = new Date()
     await db
       .update(experiences)
       .set({
@@ -140,9 +133,32 @@ export async function executeUpdateExperience(
         isCombo: data.isCombo,
         requiredPermits: data.requiredPermits,
         requiresSafetyStack: data.requiresSafetyStack,
-        updatedAt: new Date(),
+        updatedAt: now,
       })
       .where(eq(experiences.id, data.id))
+
+    // ADR-0013 — a PUBLISHED Experience is the canonical search row. Keep the
+    // Meilisearch document in sync with the edited facet fields (title, price,
+    // activity/region, combo). Drafts, paused, archived, and pending_review
+    // listings are not searchable (admin pause/archive deindex them), so we
+    // only re-index when the listing is currently published. The headline
+    // 1-2 Group-size bracket is the "From" facet price, matching the admin
+    // approve path (app/admin/experiences/actions.ts).
+    if (existing.status === 'published') {
+      const searchDoc: ExperienceSearchDoc = {
+        id: data.id,
+        slug: existing.slug,
+        title: data.title,
+        shortDescription: data.shortDescription ?? null,
+        activitySlug: data.activitySlug,
+        regionSlug: data.regionSlug,
+        vendorSlug: existing.vendorSlug,
+        pricePerPersonRupees: Math.round(data.pricePerPerson_1_2),
+        isCombo: data.isCombo,
+        publishedAt: now,
+      }
+      await indexExperience(searchDoc, { client: opts.searchClient })
+    }
 
     return { ok: true }
   } catch (err: unknown) {

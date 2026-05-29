@@ -17,6 +17,9 @@
 /playwright/.cache
 tests/e2e/.auth/
 
+# uploaded media (LocalFileAdapter storage mock — runtime/test artifacts)
+/public/uploads/
+
 # next.js
 /.next/
 /out/
@@ -37,6 +40,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
+
+# Local MCP server config (contains API keys — do not commit)
+.mcp.json
 
 # vercel
 .vercel

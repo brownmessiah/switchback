@@ -456,6 +456,184 @@ export async function getPublishedExperienceForVendor(
   })
 }
 
+// ---------------------------------------------------------------------------
+// Availability — patterns, materialised slots, region closures (#18)
+// ---------------------------------------------------------------------------
+
+export interface AvailabilityPatternRow {
+  id: string
+  experienceId: string
+  dayOfWeek: number
+  startTime: string
+  endTime: string
+  capacity: number
+  effectiveFrom: string | null
+  effectiveUntil: string | null
+}
+
+/** Fetch all availability_patterns rows for an Experience (oldest first). */
+export async function getAvailabilityPatterns(
+  experienceId: string,
+): Promise<AvailabilityPatternRow[]> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        id: string
+        experience_id: string
+        day_of_week: number
+        start_time: string
+        end_time: string
+        capacity: number
+        effective_from: string | null
+        effective_until: string | null
+      }[]
+    >`
+      SELECT id, experience_id, day_of_week, start_time, end_time,
+             capacity, effective_from, effective_until
+      FROM availability_patterns
+      WHERE experience_id = ${experienceId}
+      ORDER BY created_at ASC
+    `
+    return rows.map((r) => ({
+      id: r.id,
+      experienceId: r.experience_id,
+      dayOfWeek: r.day_of_week,
+      startTime: r.start_time,
+      endTime: r.end_time,
+      capacity: r.capacity,
+      effectiveFrom: r.effective_from,
+      effectiveUntil: r.effective_until,
+    }))
+  })
+}
+
+export interface AvailabilitySlotRow {
+  id: string
+  startAt: Date
+  endAt: Date
+  capacity: number
+  capacityTaken: number
+  status: string
+}
+
+/**
+ * Fetch availability_slots for an Experience whose start_at lands on the
+ * given UTC calendar date ("YYYY-MM-DD"). Used to assert per-day slot shape.
+ */
+export async function getSlotsForExperienceOnDate(
+  experienceId: string,
+  date: string,
+): Promise<AvailabilitySlotRow[]> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        id: string
+        start_at: Date
+        end_at: Date
+        capacity: number
+        capacity_taken: number
+        status: string
+      }[]
+    >`
+      SELECT id, start_at, end_at, capacity, capacity_taken, status
+      FROM availability_slots
+      WHERE experience_id = ${experienceId}
+        AND start_at >= ${`${date}T00:00:00.000Z`}::timestamptz
+        AND start_at <  (${`${date}T00:00:00.000Z`}::timestamptz + interval '1 day')
+      ORDER BY start_at ASC
+    `
+    return rows.map((r) => ({
+      id: r.id,
+      startAt: new Date(r.start_at),
+      endAt: new Date(r.end_at),
+      capacity: r.capacity,
+      capacityTaken: r.capacity_taken,
+      status: r.status,
+    }))
+  })
+}
+
+/** Count availability_slots for an Experience in a closed-open UTC date range. */
+export async function countSlotsForExperienceInRange(
+  experienceId: string,
+  startDate: string,
+  endDateExclusive: string,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT COUNT(*) AS n
+      FROM availability_slots
+      WHERE experience_id = ${experienceId}
+        AND start_at >= ${`${startDate}T00:00:00.000Z`}::timestamptz
+        AND start_at <  ${`${endDateExclusive}T00:00:00.000Z`}::timestamptz
+    `
+    return Number(rows[0]?.n ?? 0)
+  })
+}
+
+/** Insert a region_closure row; returns its id. */
+export async function insertRegionClosure(input: {
+  regionSlug: string
+  startAt: string
+  endAt: string
+  reason: string
+  source: 'admin' | 'vendor'
+}): Promise<string> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ id: string }[]>`
+      INSERT INTO region_closures (region_slug, start_at, end_at, reason, source)
+      VALUES (${input.regionSlug}, ${input.startAt}::timestamptz,
+              ${input.endAt}::timestamptz, ${input.reason}, ${input.source})
+      RETURNING id
+    `
+    return rows[0].id
+  })
+}
+
+/** Delete a region_closure row by id (test cleanup). */
+export async function deleteRegionClosure(id: string): Promise<void> {
+  await withSql(async (sql) => {
+    await sql`DELETE FROM region_closures WHERE id = ${id}`
+  })
+}
+
+/**
+ * Reset an Experience's availability to a clean slate for a test:
+ *  - delete all availability_patterns
+ *  - delete availability_slots that are NOT referenced by a Booking
+ *
+ * Seed Bookings reference a slot (FK onDelete:'restrict'), so those slots
+ * are deliberately preserved — deleting them would violate the FK and would
+ * also corrupt the seeded booking dashboards used by other specs. The
+ * availability tests anchor their assertions on the future 2026-07-xx window,
+ * which is disjoint from the seeded T±7d booking slots, so the preserved rows
+ * never interfere.
+ */
+export async function clearAvailabilityForExperience(
+  experienceId: string,
+): Promise<void> {
+  await withSql(async (sql) => {
+    await sql`DELETE FROM availability_patterns WHERE experience_id = ${experienceId}`
+    await sql`
+      DELETE FROM availability_slots
+      WHERE experience_id = ${experienceId}
+        AND id NOT IN (SELECT slot_id FROM bookings WHERE slot_id IS NOT NULL)
+    `
+  })
+}
+
+/** Fetch the region_slug of an Experience. */
+export async function getExperienceRegionSlug(
+  experienceId: string,
+): Promise<string | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ region_slug: string }[]>`
+      SELECT region_slug FROM experiences WHERE id = ${experienceId} LIMIT 1
+    `
+    return rows[0]?.region_slug ?? null
+  })
+}
+
 export interface MediaAssetRow {
   id: string
   storageKey: string

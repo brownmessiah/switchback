@@ -3,6 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import { availabilitySlots } from '@/db/schema/availability-slots'
 import { experiences } from '@/db/schema/experiences'
+import { regionClosures } from '@/db/schema/region-closures'
 import { slugRedirects } from '@/db/schema/slug-redirects'
 import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
@@ -33,6 +34,7 @@ describe('Experience detail loader (ADR-0013)', () => {
 
   beforeEach(async () => {
     await db.execute(sql`TRUNCATE TABLE availability_slots CASCADE`)
+    await db.execute(sql`TRUNCATE TABLE region_closures CASCADE`)
     await db.execute(sql`TRUNCATE TABLE slug_redirects CASCADE`)
     await db.execute(sql`TRUNCATE TABLE experiences CASCADE`)
   })
@@ -306,6 +308,117 @@ describe('Experience detail loader (ADR-0013)', () => {
     expect(result!.type).toBe('found')
     if (result!.type !== 'found') throw new Error('unreachable')
     expect(result!.data.nextAvailableSlotId).toBeNull()
+  })
+
+  // ---- Region closure surfacing (ADR-0011 inline closure notice) ----
+  it('surfaces an active region closure overlapping the booking window', async () => {
+    await seedExperience({ slug: 'goa-dive-closed', regionSlug: 'goa' })
+
+    // An admin monsoon closure on the "goa" region that is active right now.
+    const start = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    const end = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    await db.insert(regionClosures).values({
+      regionSlug: 'goa',
+      startAt: start,
+      endAt: end,
+      reason: 'Closed for monsoon — reopens August',
+      source: 'admin',
+    })
+
+    const result = await loadExperienceDetail(db, { lng: 'en', slug: 'goa-dive-closed' })
+    expect(result!.type).toBe('found')
+    if (result!.type !== 'found') throw new Error('unreachable')
+
+    expect(result!.data.activeClosure).not.toBeNull()
+    expect(result!.data.activeClosure!.reason).toBe('Closed for monsoon — reopens August')
+    expect(result!.data.activeClosure!.endAt.getTime()).toBe(end.getTime())
+  })
+
+  it('surfaces an upcoming closure that falls inside the 90-day booking window', async () => {
+    // Mirrors the slot materialiser, which skips dates inside a closure that
+    // overlaps the rolling window even when it has not started yet — the
+    // customer needs to know why those future dates are unbookable.
+    await seedExperience({ slug: 'goa-dive-upcoming', regionSlug: 'goa' })
+
+    const start = new Date(Date.now() + 20 * 24 * 60 * 60 * 1000)
+    const end = new Date(Date.now() + 50 * 24 * 60 * 60 * 1000)
+    await db.insert(regionClosures).values({
+      regionSlug: 'goa',
+      startAt: start,
+      endAt: end,
+      reason: 'Closed for monsoon — reopens later',
+      source: 'admin',
+    })
+
+    const result = await loadExperienceDetail(db, { lng: 'en', slug: 'goa-dive-upcoming' })
+    expect(result!.type).toBe('found')
+    if (result!.type !== 'found') throw new Error('unreachable')
+    expect(result!.data.activeClosure).not.toBeNull()
+    expect(result!.data.activeClosure!.reason).toBe('Closed for monsoon — reopens later')
+  })
+
+  it('does not surface a closure beyond the 90-day booking window', async () => {
+    await seedExperience({ slug: 'goa-dive-faraway', regionSlug: 'goa' })
+
+    // Closure starts ~120 days out — outside the materialiser window, so the
+    // bookable calendar is unaffected and no inline notice is shown.
+    const start = new Date(Date.now() + 120 * 24 * 60 * 60 * 1000)
+    const end = new Date(Date.now() + 150 * 24 * 60 * 60 * 1000)
+    await db.insert(regionClosures).values({
+      regionSlug: 'goa',
+      startAt: start,
+      endAt: end,
+      reason: 'Far-future closure',
+      source: 'admin',
+    })
+
+    const result = await loadExperienceDetail(db, { lng: 'en', slug: 'goa-dive-faraway' })
+    expect(result!.type).toBe('found')
+    if (result!.type !== 'found') throw new Error('unreachable')
+    expect(result!.data.activeClosure).toBeNull()
+  })
+
+  it('does not surface a closure for a different region', async () => {
+    await seedExperience({ slug: 'rishikesh-open', regionSlug: 'rishikesh' })
+
+    await db.insert(regionClosures).values({
+      regionSlug: 'goa',
+      startAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+      endAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      reason: 'Goa monsoon',
+      source: 'admin',
+    })
+
+    const result = await loadExperienceDetail(db, { lng: 'en', slug: 'rishikesh-open' })
+    expect(result!.type).toBe('found')
+    if (result!.type !== 'found') throw new Error('unreachable')
+    expect(result!.data.activeClosure).toBeNull()
+  })
+
+  it('does not surface a closure that has already ended', async () => {
+    await seedExperience({ slug: 'goa-reopened', regionSlug: 'goa' })
+
+    await db.insert(regionClosures).values({
+      regionSlug: 'goa',
+      startAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
+      endAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      reason: 'Past monsoon',
+      source: 'admin',
+    })
+
+    const result = await loadExperienceDetail(db, { lng: 'en', slug: 'goa-reopened' })
+    expect(result!.type).toBe('found')
+    if (result!.type !== 'found') throw new Error('unreachable')
+    expect(result!.data.activeClosure).toBeNull()
+  })
+
+  it('returns null activeClosure when no closure exists for the region', async () => {
+    await seedExperience({ slug: 'goa-no-closure', regionSlug: 'goa' })
+
+    const result = await loadExperienceDetail(db, { lng: 'en', slug: 'goa-no-closure' })
+    expect(result!.type).toBe('found')
+    if (result!.type !== 'found') throw new Error('unreachable')
+    expect(result!.data.activeClosure).toBeNull()
   })
 
   // ---- Locale passthrough ----

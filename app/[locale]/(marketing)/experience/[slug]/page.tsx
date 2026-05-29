@@ -410,20 +410,64 @@ export default async function ExperienceDetailPage({
                 </p>
               )}
 
-              <Link
-                href={
-                  detail.nextAvailableSlotId
-                    ? `/checkout?experienceId=${detail.id}&slotId=${detail.nextAvailableSlotId}`
-                    : `/checkout?experienceId=${detail.id}`
-                }
-                className={buttonVariants({ size: 'lg', className: 'w-full' })}
-              >
-                {t('pricing.bookNow')}
-              </Link>
+              {detail.activeClosure ? (
+                <>
+                  {/* ADR-0011: an active Region closure pauses booking and is
+                      surfaced inline (e.g. "closed for monsoon — reopens X"). */}
+                  <div
+                    role="status"
+                    className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
+                  >
+                    <p className="font-medium text-amber-700 dark:text-amber-400">
+                      {t('closure.heading')}
+                    </p>
+                    <p className="mt-1 text-muted-foreground">
+                      {detail.activeClosure.reason}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {t('closure.reopens', {
+                        date: detail.activeClosure.endAt.toLocaleDateString('en-IN', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                          timeZone: 'UTC',
+                        }),
+                      })}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled
+                    aria-disabled="true"
+                    className={buttonVariants({
+                      size: 'lg',
+                      className: 'w-full cursor-not-allowed opacity-60',
+                    })}
+                  >
+                    {t('pricing.bookNow')}
+                  </button>
+                  <p className="text-center text-xs text-muted-foreground">
+                    {t('closure.bookingDisabled')}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href={
+                      detail.nextAvailableSlotId
+                        ? `/checkout?experienceId=${detail.id}&slotId=${detail.nextAvailableSlotId}`
+                        : `/checkout?experienceId=${detail.id}`
+                    }
+                    className={buttonVariants({ size: 'lg', className: 'w-full' })}
+                  >
+                    {t('pricing.bookNow')}
+                  </Link>
 
-              <p className="text-center text-xs text-muted-foreground">
-                {t('pricing.freeCancellation')}
-              </p>
+                  <p className="text-center text-xs text-muted-foreground">
+                    {t('pricing.freeCancellation')}
+                  </p>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>

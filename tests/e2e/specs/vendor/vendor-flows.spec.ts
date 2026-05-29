@@ -22,6 +22,12 @@ import {
   getExperienceById,
   getPublishedExperienceForVendor,
   getMediaAssetsForExperience,
+  getAvailabilityPatterns,
+  getSlotsForExperienceOnDate,
+  countSlotsForExperienceInRange,
+  insertRegionClosure,
+  deleteRegionClosure,
+  clearAvailabilityForExperience,
 } from '../../helpers/db-assertions'
 import { getIndexedExperience } from '../../helpers/meili-assertions'
 import { storageFileExists } from '../../helpers/storage-assertions'
@@ -471,9 +477,43 @@ test.describe('Over-cap publish rejection (Identity tier, ADR-0007)', () => {
 })
 
 // ---------------------------------------------------------------------------
-// 5. Availability management — add a pattern → verify it appears
+// 5. Availability management (#18) — patterns, slot materialisation,
+//    block/unblock, region closure. Asserts UI behaviour AND the DB.
+//
+//    All tests run on the business-tier vendor's published Goa scuba listing
+//    (region "goa") so the region-closure test can target the "goa" region.
+//    Each test resets that Experience's availability up-front so reruns on a
+//    reused CI database stay deterministic.
 // ---------------------------------------------------------------------------
+// Each availability test targets a DISTINCT seeded business-vendor published
+// Experience so the suite is safe to run with Playwright's fullyParallel mode
+// (no two tests clobber the same patterns/slots/closures). The closure test
+// must use a "goa"-region Experience so the region closure it inserts applies.
+const AVAIL_SLUG_PATTERN_CRUD = 'bir-billing-camping-mountain-stay' // bir-billing, no booking
+const AVAIL_SLUG_MATERIALISE = 'bir-billing-paragliding-full-day' // bir-billing
+const AVAIL_SLUG_BLOCK = 'goa-scuba-diving-padi-dsd' // goa
+const AVAIL_SLUG_CLOSURE = 'goa-scuba-diving-fun-dive-cert' // goa, no booking
+
+// 2026-07-15 is a Wednesday (UTC dayOfWeek = 3) — used by the block/unblock
+// and closure assertions. It sits inside the materialiser's rolling 90-day
+// window relative to the seed/run date.
+const BLOCK_DATE = '2026-07-15'
+const BLOCK_DOW = 3 // Wednesday
+
+async function resolveAvailExperienceId(slug: string): Promise<string> {
+  const target = await getPublishedExperienceForVendor(SEED_BUSINESS_VENDOR_ID, slug)
+  expect(target, `seed published experience ${slug} must exist`).not.toBeNull()
+  return target!.id
+}
+
 test.describe('Availability management', () => {
+  // Serial: the region-closure test inserts a "goa" closure (removed in a
+  // finally) that would otherwise race the goa-region block/unblock test's
+  // materialise step under fullyParallel. Serial mode keeps the closure
+  // scoped to its own test window. Distinct per-test Experiences additionally
+  // isolate pattern/slot state.
+  test.describe.configure({ mode: 'serial' })
+
   test('navigate to availability, add pattern, verify it appears', async ({
     page,
   }) => {
@@ -531,7 +571,255 @@ test.describe('Availability management', () => {
       fullPage: true,
     })
   })
+
+  // ── AC #1 — pattern CRUD persists; the calendar loads (no stuck spinner) ──
+  test('pattern create + delete persists to the DB and the calendar renders', async ({
+    page,
+  }) => {
+    const experienceId = await resolveAvailExperienceId(AVAIL_SLUG_PATTERN_CRUD)
+    await clearAvailabilityForExperience(experienceId)
+
+    await page.goto(`/vendor/listings/${experienceId}/availability`)
+    await expect(page.locator('h1')).toContainText('Availability')
+
+    // The calendar must finish loading — the spinner must NOT be stuck.
+    // (Regression guard for the variant-synth #52 "infinite spinner".)
+    const spinner = page.locator('.animate-spin')
+    await expect(spinner).toHaveCount(0, { timeout: 15_000 })
+    await expect(page.getByText('Calendar')).toBeVisible()
+
+    // ── Create a pattern via the UI ──────────────────────────────────────
+    await page.locator('button').filter({ hasText: 'Add Pattern' }).click()
+    await page.locator('#dayOfWeek').click()
+    await page.locator('[data-slot="select-item"]').filter({ hasText: 'Wednesday' }).click()
+    await page.fill('#startTime', '09:00')
+    await page.fill('#endTime', '12:00')
+    await page.fill('#capacity', '12')
+    await page.locator('button').filter({ hasText: 'Save Pattern' }).click()
+
+    await expect(page.getByText('Pattern created.')).toBeVisible({ timeout: 10_000 })
+
+    // ── Assert: the pattern persisted to availability_patterns ───────────
+    let patterns = await getAvailabilityPatterns(experienceId)
+    expect(patterns).toHaveLength(1)
+    expect(patterns[0].dayOfWeek).toBe(BLOCK_DOW)
+    expect(patterns[0].startTime).toBe('09:00')
+    expect(patterns[0].endTime).toBe('12:00')
+    expect(patterns[0].capacity).toBe(12)
+
+    // ── Delete the pattern via the UI ────────────────────────────────────
+    // The pattern row is the bordered flex container that holds the Wednesday
+    // badge; its trailing destructive icon button removes the pattern.
+    const patternRow = page
+      .locator('div.rounded-lg.border')
+      .filter({ has: page.getByText('Wednesday') })
+      .first()
+    await patternRow.locator('button').last().click()
+    await expect(page.getByText('Pattern deleted.')).toBeVisible({ timeout: 10_000 })
+
+    // ── Assert: the row is gone from the DB ──────────────────────────────
+    patterns = await getAvailabilityPatterns(experienceId)
+    expect(patterns).toHaveLength(0)
+  })
+
+  // ── AC #1 — materializeSlotsAction generates slots for the next 90 days ──
+  test('Generate Slots materialises availability slots for the pattern', async ({
+    page,
+  }) => {
+    const experienceId = await resolveAvailExperienceId(AVAIL_SLUG_MATERIALISE)
+    await clearAvailabilityForExperience(experienceId)
+
+    // Seed one weekly Wednesday pattern directly, then drive materialise.
+    await page.goto(`/vendor/listings/${experienceId}/availability`)
+    await expect(page.locator('.animate-spin')).toHaveCount(0, { timeout: 15_000 })
+
+    await page.locator('button').filter({ hasText: 'Add Pattern' }).click()
+    await page.locator('#dayOfWeek').click()
+    await page.locator('[data-slot="select-item"]').filter({ hasText: 'Wednesday' }).click()
+    await page.fill('#startTime', '06:00')
+    await page.fill('#endTime', '09:00')
+    await page.fill('#capacity', '10')
+    await page.locator('button').filter({ hasText: 'Save Pattern' }).click()
+    await expect(page.getByText('Pattern created.')).toBeVisible({ timeout: 10_000 })
+
+    // Click "Generate Slots" (materializeSlotsAction).
+    await page.locator('button').filter({ hasText: 'Generate Slots' }).click()
+    await expect(page.getByText(/Slots generated:/)).toBeVisible({ timeout: 15_000 })
+
+    // ── Assert: the target Wednesday (2026-07-15) now has exactly one slot ─
+    const slots = await getSlotsForExperienceOnDate(experienceId, BLOCK_DATE)
+    expect(slots, 'one slot should exist on the target Wednesday').toHaveLength(1)
+    const slot = slots[0]
+    expect(slot.capacity).toBe(10)
+    expect(slot.status).toBe('open')
+    // start_at = 06:00 UTC, end_at = 09:00 UTC on 2026-07-15.
+    expect(slot.startAt.toISOString()).toBe('2026-07-15T06:00:00.000Z')
+    expect(slot.endAt.toISOString()).toBe('2026-07-15T09:00:00.000Z')
+
+    // ── Assert: only Wednesdays are materialised (a Monday has no slot) ────
+    const mondaySlots = await getSlotsForExperienceOnDate(experienceId, '2026-07-13')
+    expect(mondaySlots).toHaveLength(0)
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/vendor-availability-materialise.png',
+      fullPage: true,
+    })
+  })
+
+  // ── AC #2 — block 2026-07-15 removes the bookable slot; unblock restores ─
+  test('block a date closes that day’s slot; unblock reopens it', async ({
+    page,
+  }) => {
+    const experienceId = await resolveAvailExperienceId(AVAIL_SLUG_BLOCK)
+    await clearAvailabilityForExperience(experienceId)
+
+    // Seed + materialise a Wednesday pattern so 2026-07-15 has a slot.
+    await page.goto(`/vendor/listings/${experienceId}/availability`)
+    await expect(page.locator('.animate-spin')).toHaveCount(0, { timeout: 15_000 })
+    await page.locator('button').filter({ hasText: 'Add Pattern' }).click()
+    await page.locator('#dayOfWeek').click()
+    await page.locator('[data-slot="select-item"]').filter({ hasText: 'Wednesday' }).click()
+    await page.fill('#startTime', '06:00')
+    await page.fill('#endTime', '09:00')
+    await page.fill('#capacity', '10')
+    await page.locator('button').filter({ hasText: 'Save Pattern' }).click()
+    await expect(page.getByText('Pattern created.')).toBeVisible({ timeout: 10_000 })
+    await page.locator('button').filter({ hasText: 'Generate Slots' }).click()
+    await expect(page.getByText(/Slots generated:/)).toBeVisible({ timeout: 15_000 })
+
+    // Pre-condition: an OPEN slot exists on the block date.
+    let slots = await getSlotsForExperienceOnDate(experienceId, BLOCK_DATE)
+    expect(slots).toHaveLength(1)
+    expect(slots[0].status).toBe('open')
+
+    // Navigate the calendar to July 2026 so the block date cell is visible,
+    // then drive the Block control the UI exposes (the hover button invokes
+    // blockDateAction). The rich calendar UX is the #78 redesign; here we
+    // validate the FUNCTIONAL block/unblock path through the current UI.
+    await gotoCalendarMonth(page, 'July', 2026)
+
+    // The day-15 cell holds the slot + (on hover) the Block control. The
+    // Block button carries title="Block date" but its accessible name is its
+    // visible text "Block" (likewise "Unblock").
+    const cell = page.locator(`div:has(> div > span:text-is("15"))`).first()
+    await cell.scrollIntoViewIfNeeded()
+    await cell.hover()
+    const blockBtn = cell.getByRole('button', { name: 'Block', exact: true })
+    await expect(blockBtn).toBeVisible({ timeout: 10_000 })
+    await blockBtn.click()
+    await expect(page.getByText(/Blocked 2026-07-15/)).toBeVisible({ timeout: 10_000 })
+
+    // ── Assert: the slot on the block date is now CLOSED (not bookable) ───
+    slots = await getSlotsForExperienceOnDate(experienceId, BLOCK_DATE)
+    expect(slots).toHaveLength(1)
+    expect(slots[0].status).toBe('closed')
+
+    // ── Unblock via the calendar's Unblock control ───────────────────────
+    await cell.hover()
+    const unblockBtn = cell.getByRole('button', { name: 'Unblock', exact: true })
+    await expect(unblockBtn).toBeVisible({ timeout: 10_000 })
+    await unblockBtn.click()
+    await expect(page.getByText(/Unblocked 2026-07-15/)).toBeVisible({ timeout: 10_000 })
+
+    // ── Assert: the slot is OPEN (bookable) again ────────────────────────
+    slots = await getSlotsForExperienceOnDate(experienceId, BLOCK_DATE)
+    expect(slots).toHaveLength(1)
+    expect(slots[0].status).toBe('open')
+  })
+
+  // ── AC #3 — an active region closure hides slots + is shown inline ───────
+  test('an active region closure skips slot generation and is shown inline', async ({
+    page,
+  }) => {
+    const experienceId = await resolveAvailExperienceId(AVAIL_SLUG_CLOSURE)
+    await clearAvailabilityForExperience(experienceId)
+
+    // Insert an admin monsoon closure over the whole of July 2026 for "goa"
+    // (the region of the AVAIL_SLUG experience). Cleaned up in a finally.
+    const closureId = await insertRegionClosure({
+      regionSlug: 'goa',
+      startAt: '2026-07-01T00:00:00.000Z',
+      endAt: '2026-08-01T00:00:00.000Z',
+      reason: 'Closed for monsoon — reopens August',
+      source: 'admin',
+    })
+
+    try {
+      // Seed a Wednesday pattern, then materialise.
+      await page.goto(`/vendor/listings/${experienceId}/availability`)
+      await expect(page.locator('.animate-spin')).toHaveCount(0, { timeout: 15_000 })
+      await page.locator('button').filter({ hasText: 'Add Pattern' }).click()
+      await page.locator('#dayOfWeek').click()
+      await page.locator('[data-slot="select-item"]').filter({ hasText: 'Wednesday' }).click()
+      await page.fill('#startTime', '06:00')
+      await page.fill('#endTime', '09:00')
+      await page.fill('#capacity', '10')
+      await page.locator('button').filter({ hasText: 'Save Pattern' }).click()
+      await expect(page.getByText('Pattern created.')).toBeVisible({ timeout: 10_000 })
+      await page.locator('button').filter({ hasText: 'Generate Slots' }).click()
+      await expect(page.getByText(/Slots generated:/)).toBeVisible({ timeout: 15_000 })
+
+      // ── Assert: NO slots were materialised inside the July closure ───────
+      const julyCount = await countSlotsForExperienceInRange(
+        experienceId,
+        '2026-07-01',
+        '2026-08-01',
+      )
+      expect(julyCount, 'closure window must have zero materialised slots').toBe(0)
+      const onClosedWed = await getSlotsForExperienceOnDate(experienceId, BLOCK_DATE)
+      expect(onClosedWed).toHaveLength(0)
+
+      // ── Assert: the closure is shown inline on the vendor calendar ───────
+      await gotoCalendarMonth(page, 'July', 2026)
+      await expect(
+        page.getByText('Closed for monsoon — reopens August').first(),
+      ).toBeVisible({ timeout: 10_000 })
+
+      // ── Assert: the closure is shown inline on the CUSTOMER experience ───
+      // page (ADR-0011: customers see "closed for monsoon — reopens X").
+      await page.goto(`/experience/${AVAIL_SLUG_CLOSURE}`)
+      await expect(
+        page.getByText(/Closed for monsoon|reopens|monsoon/i).first(),
+      ).toBeVisible({ timeout: 10_000 })
+
+      await page.screenshot({
+        path: 'tests/e2e/screenshots/vendor-availability-closure.png',
+        fullPage: true,
+      })
+    } finally {
+      await deleteRegionClosure(closureId)
+    }
+  })
 })
+
+/** Navigate the availability calendar to a specific month + year. */
+async function gotoCalendarMonth(
+  page: import('@playwright/test').Page,
+  monthName: string,
+  year: number,
+): Promise<void> {
+  const MONTH_LABEL =
+    /^(January|February|March|April|May|June|July|August|September|October|November|December) \d{4}$/
+  // The month label is the only span matching "<Month> <Year>". The two
+  // calendar-nav icon buttons sit immediately before/after it; "next" is the
+  // last icon-sm button in the Calendar card header.
+  const label = page.locator('span').filter({ hasText: MONTH_LABEL }).first()
+  await expect(label).toBeVisible({ timeout: 10_000 })
+  const next = page
+    .locator('button')
+    .filter({ has: page.locator('svg.lucide-chevron-right') })
+    .first()
+
+  // Click forward until the label matches the target (guard against runaway).
+  for (let i = 0; i < 24; i++) {
+    const current = (await label.textContent())?.trim() ?? ''
+    if (current === `${monthName} ${year}`) return
+    await next.click()
+    // Allow the month-change transition + data load to settle.
+    await expect(page.locator('.animate-spin')).toHaveCount(0, { timeout: 10_000 })
+  }
+  throw new Error(`Could not navigate calendar to ${monthName} ${year}`)
+}
 
 // ---------------------------------------------------------------------------
 // 6. Bookings page — smoke test

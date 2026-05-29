@@ -1,7 +1,8 @@
-import { and, asc, eq, sql } from 'drizzle-orm'
+import { and, asc, eq, gte, lte, sql } from 'drizzle-orm'
 
 import { availabilitySlots } from '@/db/schema/availability-slots'
 import { experiences } from '@/db/schema/experiences'
+import { regionClosures } from '@/db/schema/region-closures'
 import { slugRedirects } from '@/db/schema/slug-redirects'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import {
@@ -22,6 +23,18 @@ export interface ExperienceDetailVendor {
   userId: string
   businessName: string
   slug: string
+}
+
+/**
+ * A Region closure (ADR-0011) overlapping the Experience's bookable window.
+ * Surfaced inline at the booking step so customers see e.g.
+ * "closed for monsoon — reopens X" instead of a silent empty calendar.
+ */
+export interface ExperienceActiveClosure {
+  reason: string
+  startAt: Date
+  endAt: Date
+  source: 'admin' | 'vendor'
 }
 
 export interface ExperienceDetailData {
@@ -55,6 +68,14 @@ export interface ExperienceDetailData {
    * rich date/slot picker is the #70 redesign; v1 books the next slot.
    */
   nextAvailableSlotId: string | null
+  /**
+   * A Region closure (ADR-0011) overlapping this Experience's bookable window
+   * (now → now + 90d), or null when the region is open. When set, the booking
+   * step surfaces the closure reason inline (e.g. "closed for monsoon —
+   * reopens X"); the slot materialiser skips the closed dates, so
+   * `nextAvailableSlotId` points to the first slot AFTER the closure (if any).
+   */
+  activeClosure: ExperienceActiveClosure | null
 }
 
 export type ExperienceDetailResult =
@@ -180,6 +201,35 @@ async function hydrateDetail(
     .orderBy(asc(availabilitySlots.startAt))
     .limit(1)
 
+  // Region closure (ADR-0011) overlapping the bookable window for this
+  // Experience's region. The slot materialiser skips every date inside an
+  // active closure, so a closure that overlaps [now, now + 90d] is exactly
+  // the one that explains a gap in the customer's bookable calendar. We
+  // surface it inline ("closed for monsoon — reopens X"). The window mirrors
+  // the materialiser's default 90-day horizon. Among overlapping closures we
+  // take the soonest-ending so "reopens" reflects the nearest reopening.
+  const now = new Date()
+  const bookingWindowEnd = new Date(now)
+  bookingWindowEnd.setUTCDate(bookingWindowEnd.getUTCDate() + 90)
+  const [closure] = await db
+    .select({
+      reason: regionClosures.reason,
+      startAt: regionClosures.startAt,
+      endAt: regionClosures.endAt,
+      source: regionClosures.source,
+    })
+    .from(regionClosures)
+    .where(
+      and(
+        eq(regionClosures.regionSlug, exp.regionSlug),
+        // Overlaps the booking window: starts before window end AND ends after now.
+        lte(regionClosures.startAt, bookingWindowEnd),
+        gte(regionClosures.endAt, now),
+      ),
+    )
+    .orderBy(asc(regionClosures.endAt))
+    .limit(1)
+
   return {
     type: 'found',
     lng,
@@ -201,6 +251,14 @@ async function hydrateDetail(
       activity,
       region,
       nextAvailableSlotId: nextSlot?.id ?? null,
+      activeClosure: closure
+        ? {
+            reason: closure.reason,
+            startAt: closure.startAt,
+            endAt: closure.endAt,
+            source: closure.source,
+          }
+        : null,
     },
   }
 }

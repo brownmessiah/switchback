@@ -171,6 +171,11 @@
       "bookNow": "Book now",
       "freeCancellation": "Free cancellation · 24h refund SLA"
     },
+    "closure": {
+      "heading": "Currently closed",
+      "reopens": "Reopens {date}",
+      "bookingDisabled": "Booking is paused while this region is closed."
+    },
     "cancellation": {
       "flexible": "Free cancellation up to 24 hours before the Experience. 50% refund within 2 hours. No refund after.",
       "moderate": "Free cancellation up to 72 hours before the Experience. 50% refund up to 24 hours before. No refund after.",

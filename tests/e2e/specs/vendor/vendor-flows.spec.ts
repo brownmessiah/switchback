@@ -28,6 +28,12 @@ import {
   insertRegionClosure,
   deleteRegionClosure,
   clearAvailabilityForExperience,
+  getVendorBookingByStateAndSlug,
+  getBookingLifecycle,
+  getVendorSlaScore,
+  getPaymentsForBooking,
+  getRefundRequestForBooking,
+  getRefundBalanceCreditAuditForBooking,
 } from '../../helpers/db-assertions'
 import { getIndexedExperience } from '../../helpers/meili-assertions'
 import { storageFileExists } from '../../helpers/storage-assertions'
@@ -955,3 +961,305 @@ test.describe('Vendor settings', () => {
     })
   })
 })
+
+// ---------------------------------------------------------------------------
+// 11. Vendor booking management (#19) — mark-complete, vendor-cancel, booking
+//     detail (payment timeline + commission), dashboard stats. Drives the
+//     real UI controls and asserts against the E2E database.
+//
+//     The business-tier Vendor (u_seed_v_business — this project's session)
+//     owns three seeded manageable Bookings (db/seed.ts, owned by the
+//     dedicated u_seed_customer_biz):
+//       - awaiting_completion on goa-scuba-diving-fun-dive-cert (partial_pay)
+//       - confirmed           on bir-billing-camping-mountain-stay (full_upfront)
+//       - disputed            on goa-scuba-diving-padi-dsd (partial_pay)
+//
+//     Serial: the vendor-cancel test DECREASES the shared Vendor's
+//     Response-time SLA score, so these tests run in a fixed order and the
+//     dashboard test reads its SLA value live from the DB rather than
+//     hard-coding it.
+// ---------------------------------------------------------------------------
+const FUN_DIVE_SLUG = 'goa-scuba-diving-fun-dive-cert'
+const CAMPING_SLUG = 'bir-billing-camping-mountain-stay'
+const PADI_DSD_SLUG = 'goa-scuba-diving-padi-dsd'
+const SLA_CANCEL_PENALTY = 5
+
+test.describe('Vendor booking management (#19)', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  // ── AC#1 — mark-complete after start_at → completed + Payout countdown ────
+  test('mark-complete transitions awaiting_completion → completed and starts the Payout countdown', async ({
+    page,
+  }) => {
+    const booking = await getVendorBookingByStateAndSlug(
+      SEED_BUSINESS_VENDOR_ID,
+      FUN_DIVE_SLUG,
+      'awaiting_completion',
+    )
+    expect(
+      booking,
+      'seed must provide an awaiting_completion business-vendor booking',
+    ).not.toBeNull()
+    const bookingId = booking!.id
+
+    // Pre-condition: not yet completed; payout still pending (no countdown).
+    const before = await getBookingLifecycle(bookingId)
+    expect(before!.state).toBe('awaiting_completion')
+    expect(before!.completedAt).toBeNull()
+
+    await page.goto(`/vendor/bookings/${bookingId}`)
+    await expect(page.locator('h1')).toContainText('Booking Detail')
+
+    // The detail page offers the Mark Complete control for this state.
+    const markCompleteBtn = page.getByRole('button', { name: 'Mark Complete' })
+    await expect(markCompleteBtn).toBeVisible()
+    await markCompleteBtn.click()
+
+    // The badge flips to "completed" once the action resolves + page refreshes.
+    await expect(page.getByText('completed', { exact: false }).first()).toBeVisible({
+      timeout: 15_000,
+    })
+
+    // ── Assert: state machine advanced + completion timestamp set ─────────
+    const after = await getBookingLifecycle(bookingId)
+    expect(after!.state).toBe('completed')
+    expect(after!.completedAt, 'completedAt anchors the T+7 Payout countdown').not.toBeNull()
+    // ADR-0016: the Payout countdown is T+7 from Completion; payout is still
+    // pending admin processing (the countdown just started).
+    expect(after!.payoutState).toBe('pending')
+    expect(after!.autoCompleted).toBe(false)
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/vendor-mark-complete.png',
+      fullPage: true,
+    })
+  })
+
+  // ── AC#1 — mark-complete is BLOCKED while a Dispute is open (ADR-0003) ────
+  test('mark-complete is blocked for a disputed booking (no completion control, no transition)', async ({
+    page,
+  }) => {
+    const booking = await getVendorBookingByStateAndSlug(
+      SEED_BUSINESS_VENDOR_ID,
+      PADI_DSD_SLUG,
+      'disputed',
+    )
+    expect(booking, 'seed must provide a disputed business-vendor booking').not.toBeNull()
+    const bookingId = booking!.id
+
+    await page.goto(`/vendor/bookings/${bookingId}`)
+    await expect(page.locator('h1')).toContainText('Booking Detail')
+
+    // The dispute state is surfaced on the detail page.
+    await expect(page.getByText('disputed', { exact: false }).first()).toBeVisible()
+
+    // ADR-0003: an open Dispute BLOCKS completion — the Mark Complete control
+    // must NOT be offered for a disputed Booking.
+    await expect(page.getByRole('button', { name: 'Mark Complete' })).toHaveCount(0)
+
+    // ── Assert: the Booking is still disputed (no transition occurred) ────
+    const after = await getBookingLifecycle(bookingId)
+    expect(after!.state).toBe('disputed')
+    expect(after!.completedAt).toBeNull()
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/vendor-mark-complete-blocked.png',
+      fullPage: true,
+    })
+  })
+
+  // ── AC#2 — vendor-cancel: reason required + full refund + SLA score drop ──
+  test('vendor-cancel requires a reason, issues a full refund, and drops the SLA score', async ({
+    page,
+  }) => {
+    const booking = await getVendorBookingByStateAndSlug(
+      SEED_BUSINESS_VENDOR_ID,
+      CAMPING_SLUG,
+      'confirmed',
+    )
+    expect(booking, 'seed must provide a confirmed business-vendor booking').not.toBeNull()
+    const bookingId = booking!.id
+    const grossRupees = booking!.grossRupees
+    const customerUserId = booking!.customerUserId
+
+    const slaBefore = await getVendorSlaScore(SEED_BUSINESS_VENDOR_ID)
+    expect(Number.isFinite(slaBefore)).toBe(true)
+
+    await page.goto(`/vendor/bookings/${bookingId}`)
+    await expect(page.locator('h1')).toContainText('Booking Detail')
+
+    // Open the cancel form.
+    await page.getByRole('button', { name: 'Cancel Booking' }).click()
+    const reasonField = page.getByPlaceholder(/Reason for cancellation/i)
+    await expect(reasonField).toBeVisible()
+
+    // A reason is REQUIRED — confirming with an empty reason surfaces the
+    // inline validation error and does NOT cancel.
+    await page.getByRole('button', { name: 'Confirm Cancellation' }).click()
+    await expect(page.getByText(/cancellation reason is required/i)).toBeVisible()
+
+    // Still confirmed — the empty submit was rejected client-side.
+    expect((await getBookingLifecycle(bookingId))!.state).toBe('confirmed')
+
+    // Now supply a reason and confirm.
+    const reason = 'Guide injured — cannot run this date safely'
+    await reasonField.fill(reason)
+    await page.getByRole('button', { name: 'Confirm Cancellation' }).click()
+
+    // The badge flips to the vendor-cancelled state once the action resolves.
+    await expect(
+      page.getByText('cancelled by vendor', { exact: false }).first(),
+    ).toBeVisible({ timeout: 15_000 })
+
+    // ── Assert: state transition + reason persisted ──────────────────────
+    const after = await getBookingLifecycle(bookingId)
+    expect(after!.state).toBe('cancelled_by_vendor')
+    expect(after!.cancelledAt).not.toBeNull()
+    expect(after!.cancellationReason).toBe(reason)
+
+    // ── Assert: FULL refund regardless of preset (ADR-0005) ──────────────
+    // The cancellation preset is "flexible", but vendor-cancel always
+    // full-refunds the gross. Assert via the credited refund_requests row +
+    // the immutable wallet-credit audit (race-free proof of the bucket).
+    const refundReq = await getRefundRequestForBooking(bookingId)
+    expect(refundReq).not.toBeNull()
+    expect(refundReq!.state).toBe('credited')
+    expect(refundReq!.destination).toBe('refund_balance')
+    expect(refundReq!.reason).toBe('vendor_cancelled')
+    expect(refundReq!.policyWindowBasisSnapshot).toBe('vendor_cancelled')
+    expect(refundReq!.amount, 'full gross refunded regardless of preset').toBe(grossRupees)
+
+    const creditAudit = await getRefundBalanceCreditAuditForBooking(bookingId)
+    expect(creditAudit).not.toBeNull()
+    expect(creditAudit!.amountRupees).toBe(grossRupees)
+    expect(creditAudit!.userId).toBe(customerUserId)
+
+    // ── Assert: the Vendor's Response-time SLA score DROPPED ──────────────
+    const slaAfter = await getVendorSlaScore(SEED_BUSINESS_VENDOR_ID)
+    expect(slaAfter).toBeLessThan(slaBefore)
+    expect(slaAfter).toBeCloseTo(Math.max(slaBefore - SLA_CANCEL_PENALTY, 0), 2)
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/vendor-cancel.png',
+      fullPage: true,
+    })
+  })
+
+  // ── AC#3 — booking detail shows the payment timeline + Commission ────────
+  test('booking detail shows the partial-pay payment timeline and commission breakdown', async ({
+    page,
+  }) => {
+    // The awaiting_completion fun-dive booking was marked complete by the
+    // first test in this serial block, so resolve it by its current state.
+    const booking = await getVendorBookingByStateAndSlug(
+      SEED_BUSINESS_VENDOR_ID,
+      FUN_DIVE_SLUG,
+      'completed',
+    )
+    expect(
+      booking,
+      'the partial-pay fun-dive booking should exist (completed after mark-complete)',
+    ).not.toBeNull()
+    const bookingId = booking!.id
+    const grossRupees = booking!.grossRupees
+
+    // Sanity: the seed funded this Booking with a REAL partial-pay schedule
+    // (Advance at booking-create + balance at T-24h), so the timeline panel
+    // must render those events — not the dead "No payments recorded yet"
+    // empty state flagged by variant-synth #53.
+    const payments = await getPaymentsForBooking(bookingId)
+    expect(payments.length, 'seeded partial-pay funding timeline').toBe(2)
+    expect(payments.map((p) => p.captureTrigger)).toEqual([
+      'booking_create',
+      'auto_capture_t_minus_24h',
+    ])
+    expect(payments[0].amountRupees + payments[1].amountRupees).toBe(grossRupees)
+
+    await page.goto(`/vendor/bookings/${bookingId}`)
+    await expect(page.locator('h1')).toContainText('Booking Detail')
+
+    // ── Payment Timeline panel shows the REAL events (not the empty state) ─
+    const timeline = page
+      .locator('div')
+      .filter({ has: page.getByText('Payment Timeline') })
+      .first()
+    await expect(page.getByText('Payment Timeline')).toBeVisible()
+    await expect(page.getByText('No payments recorded yet.')).toHaveCount(0)
+    // The Advance (booking-create) and the T-24h balance capture both render.
+    await expect(page.getByText('Initial capture')).toBeVisible()
+    await expect(page.getByText('T-24h auto-capture')).toBeVisible()
+    // Both capture amounts appear (formatted with the ₹ + thousands sep).
+    await expect(
+      timeline.getByText(`₹${payments[0].amountRupees.toLocaleString('en-IN')}`),
+    ).toBeVisible()
+    await expect(
+      timeline.getByText(`₹${payments[1].amountRupees.toLocaleString('en-IN')}`),
+    ).toBeVisible()
+
+    // ── Commission breakdown panel ───────────────────────────────────────
+    await expect(page.getByText('Commission Breakdown')).toBeVisible()
+    await expect(page.getByText('Gross Total')).toBeVisible()
+    // 20% commission on the gross is surfaced as a negative line item.
+    const commissionRupees = Math.floor(grossRupees * 0.2)
+    await expect(page.getByText('Commission (20%)')).toBeVisible()
+    await expect(
+      page.getByText(`-₹${commissionRupees.toLocaleString('en-IN')}`),
+    ).toBeVisible()
+    await expect(page.getByText('Estimated Vendor Payout')).toBeVisible()
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/vendor-booking-detail.png',
+      fullPage: true,
+    })
+  })
+
+  // ── AC#4 — dashboard stats reflect the seeded business-vendor bookings ───
+  test('dashboard stats reflect the business-vendor bookings and live SLA score', async ({
+    page,
+  }) => {
+    await page.goto('/vendor/dashboard')
+    await expect(page.locator('h1')).toContainText('Dashboard')
+
+    // The "total all time" booking count must reflect the seeded + mutated
+    // business-vendor bookings. Count them live from the DB for a race-free
+    // assertion (other serial tests above mutate states, not counts).
+    const totalBookings = await countBusinessVendorBookings()
+    expect(totalBookings).toBeGreaterThanOrEqual(5)
+    await expect(
+      page.getByText(new RegExp(`${totalBookings} total all time`)),
+    ).toBeVisible()
+
+    // Revenue cards render real rupee figures (non-empty), reflecting the
+    // seeded gross + captured payments.
+    await expect(page.getByText("This month's revenue")).toBeVisible()
+    await expect(page.getByText('SLA score')).toBeVisible()
+
+    // The SLA score card shows the LIVE score (dropped by the vendor-cancel
+    // test earlier in this serial block).
+    const slaScore = await getVendorSlaScore(SEED_BUSINESS_VENDOR_ID)
+    await expect(
+      page.getByText(new RegExp(`${slaScore.toFixed(1)}%`)),
+    ).toBeVisible()
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/vendor-dashboard-stats.png',
+      fullPage: true,
+    })
+  })
+})
+
+/** Count all Bookings owned by the business-tier seed Vendor. */
+async function countBusinessVendorBookings(): Promise<number> {
+  const sql = postgres(e2eDbUrl(), { max: 1 })
+  try {
+    const rows = await sql<{ n: string }[]>`
+      SELECT count(*)::text AS n
+      FROM bookings b
+      JOIN experiences e ON b.experience_id = e.id
+      WHERE e.vendor_user_id = ${SEED_BUSINESS_VENDOR_ID}
+    `
+    return Number(rows[0]?.n ?? '0')
+  } finally {
+    await sql.end()
+  }
+}

@@ -34,6 +34,7 @@ import {
   bookings,
   customerProfiles,
   experiences,
+  payments,
   reviews,
   users,
   vendorProfiles,
@@ -97,6 +98,20 @@ const NO_PROFILE_VENDOR = {
   userId: 'u_seed_v_onboarding',
   email: 'onboarding@seed.outvers.dev',
   name: 'Onboarding Candidate',
+} as const
+
+/**
+ * A SECOND customer who owns the business-tier Vendor's manageable
+ * Bookings (mark-complete / vendor-cancel / dispute targets seeded for
+ * Issue #19). Kept DISTINCT from `u_seed_customer` so the business-Vendor
+ * booking-management E2E (vendor-cancel issues a full Refund to THIS
+ * customer's Refund balance, and SLA-score mutations) never disturbs the
+ * `u_seed_customer` wallet/booking determinism asserted by #13–#15.
+ */
+const BUSINESS_VENDOR_CUSTOMER = {
+  userId: 'u_seed_customer_biz',
+  email: 'customer-biz@seed.outvers.dev',
+  name: 'Seed Customer (Business-Vendor Bookings)',
 } as const
 
 const EXPERIENCES: SeededExperience[] = [
@@ -209,6 +224,11 @@ async function seed(): Promise<void> {
     .values([
       { id: 'u_seed_admin', email: 'admin@seed.outvers.dev', name: 'Seed Admin' },
       { id: 'u_seed_customer', email: 'customer@seed.outvers.dev', name: 'Seed Customer' },
+      {
+        id: BUSINESS_VENDOR_CUSTOMER.userId,
+        email: BUSINESS_VENDOR_CUSTOMER.email,
+        name: BUSINESS_VENDOR_CUSTOMER.name,
+      },
       ...VENDORS.map((v) => ({ id: v.userId, email: v.email, name: v.businessName })),
       // Signed-up vendor with no profile yet (drives onboarding E2E #16).
       {
@@ -225,10 +245,13 @@ async function seed(): Promise<void> {
     .values({ userId: 'u_seed_admin', permissions: ['*'] })
     .onConflictDoNothing()
 
-  // ----- CUSTOMER -----
+  // ----- CUSTOMERS -----
   await db
     .insert(customerProfiles)
-    .values({ userId: 'u_seed_customer' })
+    .values([
+      { userId: 'u_seed_customer' },
+      { userId: BUSINESS_VENDOR_CUSTOMER.userId },
+    ])
     .onConflictDoNothing()
 
   // ----- VENDORS -----
@@ -460,6 +483,200 @@ async function seed(): Promise<void> {
       }
     } catch {
       // Booking may already exist — skip
+    }
+  }
+
+  // ===================================================================
+  // BUSINESS-VENDOR MANAGEABLE BOOKINGS (Issue #19)
+  // ===================================================================
+  // The business-tier Vendor (u_seed_v_business — the E2E vendor session)
+  // owns the Bookings the vendor booking-management surfaces operate on:
+  //   - mark-complete         → an `awaiting_completion` Booking
+  //   - vendor-cancel         → a `confirmed` Booking
+  //   - mark-complete BLOCKED → a `disputed` Booking (ADR-0003)
+  //
+  // Each lands on a DISTINCT business-Vendor Experience and a DISTINCT,
+  // fixed-UTC-hour slot disjoint from BOTH the future T+7d demo slots AND
+  // the 2026-07-xx window the availability E2E (#18) materialises into, so
+  // neither suite clobbers the other. Slots referenced by a Booking survive
+  // `clearAvailabilityForExperience` (FK onDelete:'restrict'), so the
+  // availability tests' resets leave these Bookings intact.
+  //
+  // They are owned by BUSINESS_VENDOR_CUSTOMER (not u_seed_customer) so the
+  // vendor-cancel full Refund + SLA-score hit never disturbs #13–#15.
+  //
+  // Payments are seeded directly (NOT via the booking-create Server Action)
+  // so the Booking-detail Payment Timeline shows the real funding schedule
+  // (Advance captured → T-24h balance) instead of a dead empty state, and
+  // so no `booking.create`/`booking.cancel` audit rows are written for seed
+  // Bookings (which would break the per-booking audit-count assertions).
+  //
+  // The slot hour is pinned to 02:00 UTC (a different hour from the 04:00
+  // UTC demo slots) so these inserts never collide with the demo slot on
+  // the same Experience+startAt unique pairing.
+  interface ManageableBookingSeed {
+    readonly slug: string
+    readonly state: 'awaiting_completion' | 'confirmed' | 'disputed'
+    readonly participants: number
+    readonly paymentMode: 'full_upfront' | 'partial_pay'
+    readonly dayOffset: number // days from now; negative = past
+  }
+
+  const MANAGEABLE_BOOKINGS: ManageableBookingSeed[] = [
+    // mark-complete target: experience already happened (start_at in the
+    // past) and the Booking advanced to awaiting_completion. partial_pay so
+    // the timeline carries BOTH the Advance and the T-24h balance capture.
+    {
+      slug: 'goa-scuba-diving-fun-dive-cert',
+      state: 'awaiting_completion',
+      participants: 2,
+      paymentMode: 'partial_pay',
+      dayOffset: -2,
+    },
+    // vendor-cancel target: a future, still-confirmed Booking.
+    {
+      slug: 'bir-billing-camping-mountain-stay',
+      state: 'confirmed',
+      participants: 2,
+      paymentMode: 'full_upfront',
+      dayOffset: 10,
+    },
+    // mark-complete BLOCKED target: an open Dispute (ADR-0003) — a Customer
+    // raised an issue before completion, so completion is blocked.
+    {
+      slug: 'goa-scuba-diving-padi-dsd',
+      state: 'disputed',
+      participants: 2,
+      paymentMode: 'partial_pay',
+      dayOffset: -3,
+    },
+  ]
+
+  const ADVANCE_FRACTION = 0.25
+
+  for (const mb of MANAGEABLE_BOOKINGS) {
+    const exp = allExperiences.find((e) => e.slug === mb.slug)
+    const expData = EXPERIENCES.find((e) => e.slug === mb.slug)
+    if (!exp || !expData) continue
+
+    // A distinct, deterministic slot at a fixed UTC hour for this Booking.
+    const mbStartAt = new Date(Date.now() + mb.dayOffset * 24 * 60 * 60 * 1000)
+    mbStartAt.setUTCHours(2, 0, 0, 0)
+    const mbEndAt = new Date(mbStartAt.getTime() + 4 * 60 * 60 * 1000)
+
+    const [mbSlot] = await db
+      .insert(availabilitySlots)
+      .values({
+        experienceId: exp.id,
+        startAt: mbStartAt,
+        endAt: mbEndAt,
+        capacity: 8,
+        capacityTaken: mb.participants,
+      })
+      .onConflictDoNothing()
+      .returning({ id: availabilitySlots.id })
+
+    const mbSlotId =
+      mbSlot?.id ??
+      (
+        await db
+          .select({ id: availabilitySlots.id })
+          .from(availabilitySlots)
+          .where(eq(availabilitySlots.startAt, mbStartAt))
+      ).find(() => true)?.id
+
+    if (!mbSlotId) continue
+
+    const mbPrice = Math.floor(Number(expData.pricePerPerson_1_2))
+    const mbGross = mbPrice * mb.participants
+    const confirmedAt = new Date(mbStartAt.getTime() - 5 * 24 * 60 * 60 * 1000)
+
+    const [mbRow] = await db
+      .insert(bookings)
+      .values({
+        customerUserId: BUSINESS_VENDOR_CUSTOMER.userId,
+        experienceId: exp.id,
+        slotId: mbSlotId,
+        participantCount: mb.participants,
+        state: mb.state,
+        paymentMode: mb.paymentMode,
+        grossTotalSnapshot: String(mbGross),
+        pricePerParticipantSnapshot: String(mbPrice),
+        pricingBasisSnapshot: 'base_price',
+        commissionRateSnapshot: '20.00',
+        commissionBasisSnapshot: 'platform_default',
+        gstRateOnCommissionSnapshot: '18.00',
+        tdsAmountSnapshot: String(Math.floor(mbGross * 0.001)),
+        cancellationPresetSnapshot: 'flexible',
+        vendorPanSnapshot: 'GHIJK5678L',
+        vendorIsResidentSnapshot: true,
+        payoutMethodSnapshot: 'bank_account',
+        payoutDestinationSnapshot: {
+          accountHolder: 'Goa Dive Center',
+          ifsc: 'HDFC0000123',
+          accountNumber: '1234567890',
+        },
+        confirmedAt,
+      })
+      .onConflictDoNothing()
+      .returning({ id: bookings.id })
+
+    if (!mbRow) continue
+    seededBookings.push({ id: mbRow.id, experienceId: exp.id, state: mb.state })
+
+    // ----- PAYMENTS — funding timeline for the Payment Timeline panel -----
+    // full_upfront: single 100% Advance at booking-create.
+    // partial_pay : 25% Advance at booking-create + 75% T-24h auto-capture,
+    //               using floor-on-the-advance so advance+balance === gross
+    //               (matches lib/payments/partial-pay-autocapture rounding).
+    const paymentRows: {
+      razorpayPaymentId: string
+      amount: string
+      captureTrigger: 'booking_create' | 'auto_capture_t_minus_24h'
+      capturedAt: Date
+    }[] = []
+
+    if (mb.paymentMode === 'full_upfront') {
+      paymentRows.push({
+        razorpayPaymentId: `seed_pay_${mb.slug}_full`,
+        amount: String(mbGross),
+        captureTrigger: 'booking_create',
+        capturedAt: confirmedAt,
+      })
+    } else {
+      const advance = Math.floor(mbGross * ADVANCE_FRACTION)
+      const balance = mbGross - advance
+      paymentRows.push({
+        razorpayPaymentId: `seed_pay_${mb.slug}_advance`,
+        amount: String(advance),
+        captureTrigger: 'booking_create',
+        capturedAt: confirmedAt,
+      })
+      paymentRows.push({
+        razorpayPaymentId: `seed_pay_${mb.slug}_balance`,
+        amount: String(balance),
+        captureTrigger: 'auto_capture_t_minus_24h',
+        // Balance captured ~24h before the slot start.
+        capturedAt: new Date(mbStartAt.getTime() - 24 * 60 * 60 * 1000),
+      })
+    }
+
+    for (const p of paymentRows) {
+      await db
+        .insert(payments)
+        .values({
+          bookingId: mbRow.id,
+          razorpayPaymentId: p.razorpayPaymentId,
+          // Each capture is its own Razorpay order in the seed. The schema's
+          // partial-unique index on razorpay_order_id (WHERE NOT NULL) means
+          // a shared order id across the Advance + balance rows would drop
+          // the second row via onConflictDoNothing — so key it per payment.
+          razorpayOrderId: `seed_order_${p.razorpayPaymentId}`,
+          amount: p.amount,
+          captureTrigger: p.captureTrigger,
+          capturedAt: p.capturedAt,
+        })
+        .onConflictDoNothing()
     }
   }
 

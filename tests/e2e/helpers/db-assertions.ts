@@ -663,3 +663,136 @@ export async function getMediaAssetsForExperience(
     }))
   })
 }
+
+// ---------------------------------------------------------------------------
+// Vendor booking management assertions (Issue #19)
+// ---------------------------------------------------------------------------
+
+export interface VendorBookingRow {
+  id: string
+  state: string
+  paymentMode: string
+  grossRupees: number
+  customerUserId: string
+}
+
+/**
+ * Fetch the (single) Booking owned by `vendorUserId` on the Experience with
+ * `slug` whose state matches `state`. The business-Vendor manageable
+ * Bookings (#19) are seeded one-per-(state, slug), so this resolves them
+ * deterministically without depending on table position.
+ */
+export async function getVendorBookingByStateAndSlug(
+  vendorUserId: string,
+  slug: string,
+  state: string,
+): Promise<VendorBookingRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        id: string
+        state: string
+        payment_mode: string
+        gross_total_snapshot: string
+        customer_user_id: string
+      }[]
+    >`
+      SELECT b.id, b.state, b.payment_mode, b.gross_total_snapshot, b.customer_user_id
+      FROM bookings b
+      JOIN experiences e ON b.experience_id = e.id
+      WHERE e.vendor_user_id = ${vendorUserId}
+        AND e.slug = ${slug}
+        AND b.state = ${state}
+      ORDER BY b.created_at DESC
+      LIMIT 1
+    `
+    const row = rows[0]
+    if (!row) return null
+    return {
+      id: row.id,
+      state: row.state,
+      paymentMode: row.payment_mode,
+      grossRupees: Math.floor(Number(row.gross_total_snapshot)),
+      customerUserId: row.customer_user_id,
+    }
+  })
+}
+
+export interface BookingLifecycleRow {
+  state: string
+  completedAt: Date | null
+  autoCompleted: boolean
+  payoutState: string
+  cancelledAt: Date | null
+  cancellationReason: string | null
+}
+
+/** Fetch a booking's lifecycle columns (state machine + payout state). */
+export async function getBookingLifecycle(
+  bookingId: string,
+): Promise<BookingLifecycleRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        state: string
+        completed_at: Date | null
+        auto_completed: boolean
+        payout_state: string
+        cancelled_at: Date | null
+        cancellation_reason: string | null
+      }[]
+    >`
+      SELECT state, completed_at, auto_completed, payout_state,
+             cancelled_at, cancellation_reason
+      FROM bookings
+      WHERE id = ${bookingId}
+      LIMIT 1
+    `
+    const row = rows[0]
+    if (!row) return null
+    return {
+      state: row.state,
+      completedAt: row.completed_at,
+      autoCompleted: row.auto_completed,
+      payoutState: row.payout_state,
+      cancelledAt: row.cancelled_at,
+      cancellationReason: row.cancellation_reason,
+    }
+  })
+}
+
+/** Fetch the Vendor's current Response-time SLA score as a number. */
+export async function getVendorSlaScore(vendorUserId: string): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ response_time_sla_score: string }[]>`
+      SELECT response_time_sla_score
+      FROM vendor_profiles
+      WHERE user_id = ${vendorUserId}
+      LIMIT 1
+    `
+    return rows[0] ? Number(rows[0].response_time_sla_score) : NaN
+  })
+}
+
+export interface PaymentTimelineRow {
+  captureTrigger: string
+  amountRupees: number
+}
+
+/** Fetch a booking's payment rows ordered by capture time (the timeline). */
+export async function getPaymentsForBooking(
+  bookingId: string,
+): Promise<PaymentTimelineRow[]> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ capture_trigger: string; amount: string }[]>`
+      SELECT capture_trigger, amount
+      FROM payments
+      WHERE booking_id = ${bookingId}
+      ORDER BY captured_at ASC
+    `
+    return rows.map((r) => ({
+      captureTrigger: r.capture_trigger,
+      amountRupees: Math.floor(Number(r.amount)),
+    }))
+  })
+}

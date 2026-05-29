@@ -343,6 +343,18 @@ describe('vendor booking actions (ADR-0003)', () => {
         .where(eq(bookings.id, bookingId))
       expect(row?.autoCompleted).toBe(false)
     })
+
+    // AC#1 auto-completion path (end_at+24h → completed, autoCompleted=true) is
+    // M3-DEFERRED, not a coverage gap: no completion cron exists (the only cron
+    // is app/api/cron/partial-pay-autocapture/route.ts), and the production code
+    // explicitly defers it — see lib/payments/partial-pay-autocapture.ts:
+    // "M3's completion auto-trigger ... M3 will introduce a dedicated ... state".
+    // The autoCompleted column and the false-stamping mark_complete path are built
+    // and tested above; the auto-trigger itself is outside this program's
+    // built-surface scope (ADR-0003 defines it; M3 wires the cron).
+    it.todo(
+      'auto-completes at end_at+24h with autoCompleted=true (M3 completion cron — not yet built)',
+    )
   })
 
   // ═══════════════════════════════════════════════════════════════════

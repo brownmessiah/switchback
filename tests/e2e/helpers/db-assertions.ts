@@ -162,3 +162,188 @@ export async function getBookingCreateAuditPayload(
     return rows[0]?.payload ?? null
   })
 }
+
+// ---------------------------------------------------------------------------
+// Cancel → refund flow assertions (Issue #14)
+// ---------------------------------------------------------------------------
+
+/** Resolve the booking id for a confirmed booking on the given experience slug. */
+export async function getConfirmedBookingForExperienceSlug(
+  slug: string,
+): Promise<{ bookingId: string; grossRupees: number } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ id: string; gross_total_snapshot: string }[]>`
+      SELECT b.id, b.gross_total_snapshot
+      FROM bookings b
+      JOIN experiences e ON e.id = b.experience_id
+      WHERE e.slug = ${slug}
+        AND b.state = 'confirmed'
+      ORDER BY b.created_at ASC
+      LIMIT 1
+    `
+    const row = rows[0]
+    if (!row) return null
+    return { bookingId: row.id, grossRupees: Math.floor(Number(row.gross_total_snapshot)) }
+  })
+}
+
+/** Fetch a user's wallet balance for a given bucket (refund_balance / outvers_credit). */
+export async function getWalletBalanceRupees(
+  userId: string,
+  balanceType: 'refund_balance' | 'outvers_credit',
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ amount: string }[]>`
+      SELECT amount
+      FROM wallet_balances
+      WHERE user_id = ${userId}
+        AND balance_type = ${balanceType}
+      LIMIT 1
+    `
+    return rows[0] ? Math.floor(Number(rows[0].amount)) : 0
+  })
+}
+
+/** Fetch a booking's current state, or null if it does not exist. */
+export async function getBookingState(bookingId: string): Promise<string | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ state: string }[]>`
+      SELECT state FROM bookings WHERE id = ${bookingId} LIMIT 1
+    `
+    return rows[0]?.state ?? null
+  })
+}
+
+export interface RefundRequestRow {
+  state: string
+  destination: string
+  reason: string
+  amount: number
+  policyWindowBasisSnapshot: string
+}
+
+/** Fetch the refund_requests row for a booking id (the credited refund), or null. */
+export async function getRefundRequestForBooking(
+  bookingId: string,
+): Promise<RefundRequestRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        state: string
+        destination: string
+        reason: string
+        amount: string
+        policy_window_basis_snapshot: string
+      }[]
+    >`
+      SELECT state, destination, reason, amount, policy_window_basis_snapshot
+      FROM refund_requests
+      WHERE booking_id = ${bookingId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    const row = rows[0]
+    if (!row) return null
+    return {
+      state: row.state,
+      destination: row.destination,
+      reason: row.reason,
+      amount: Math.floor(Number(row.amount)),
+      policyWindowBasisSnapshot: row.policy_window_basis_snapshot,
+    }
+  })
+}
+
+/** Count refund_requests rows for a booking id. */
+export async function countRefundRequestsForBooking(
+  bookingId: string,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT count(*)::text AS n FROM refund_requests WHERE booking_id = ${bookingId}
+    `
+    return Number(rows[0]?.n ?? '0')
+  })
+}
+
+/** Fetch the `dispute.opened` audit payload for a booking id, or null. */
+export async function getDisputeOpenedAuditPayload(
+  bookingId: string,
+): Promise<Record<string, unknown> | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ payload: Record<string, unknown> }[]>`
+      SELECT payload
+      FROM audit_logs
+      WHERE action = 'dispute.opened'
+        AND entity_type = 'booking'
+        AND entity_id = ${bookingId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    return rows[0]?.payload ?? null
+  })
+}
+
+/**
+ * Fetch the `wallet.credit_refund_balance` audit payload for a booking id.
+ * This row is written immutably at credit time, so it is the race-free
+ * proof that the refund landed in the Refund balance bucket (the live
+ * wallet_balances row is shared across the seed customer's bookings and can
+ * be moved by concurrent checkouts in other parallel specs).
+ */
+export async function getRefundBalanceCreditAuditForBooking(
+  bookingId: string,
+): Promise<{ amountRupees: number; userId: string; refundRequestId: string } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ payload: Record<string, unknown> }[]>`
+      SELECT payload
+      FROM audit_logs
+      WHERE action = 'wallet.credit_refund_balance'
+        AND payload->>'bookingId' = ${bookingId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    const payload = rows[0]?.payload
+    if (!payload) return null
+    return {
+      amountRupees: Math.floor(Number(payload.amountRupees)),
+      userId: String(payload.userId),
+      refundRequestId: String(payload.refundRequestId),
+    }
+  })
+}
+
+/**
+ * Count `wallet.credit_outvers_credit` audit rows for a booking id. The
+ * inside-policy refund must NEVER credit the Outvers (promo) bucket — this
+ * proves the refund went to the cashable Refund balance, not promo credit.
+ */
+export async function countOutversCreditAuditForBooking(
+  bookingId: string,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT count(*)::text AS n
+      FROM audit_logs
+      WHERE action = 'wallet.credit_outvers_credit'
+        AND payload->>'bookingId' = ${bookingId}
+    `
+    return Number(rows[0]?.n ?? '0')
+  })
+}
+
+/** Count `booking.cancel` audit rows for a booking id (the inside-policy path). */
+export async function countBookingCancelAuditRows(
+  bookingId: string,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT count(*)::text AS n
+      FROM audit_logs
+      WHERE action = 'booking.cancel'
+        AND entity_type = 'booking'
+        AND entity_id = ${bookingId}
+    `
+    return Number(rows[0]?.n ?? '0')
+  })
+}

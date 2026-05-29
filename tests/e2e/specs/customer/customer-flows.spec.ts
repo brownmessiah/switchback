@@ -13,13 +13,41 @@
 
 import { test, expect } from '../../fixtures/devtools'
 import {
+  countBookingCancelAuditRows,
   countBookingCreateAuditRows,
+  countOutversCreditAuditForBooking,
+  countRefundRequestsForBooking,
   getBooking,
   getBookingCreateAuditPayload,
+  getBookingState,
+  getConfirmedBookingForExperienceSlug,
+  getDisputeOpenedAuditPayload,
   getOpenSlotForExperienceSlug,
+  getRefundBalanceCreditAuditForBooking,
+  getRefundRequestForBooking,
   getSlotCapacity,
+  getWalletBalanceRupees,
 } from '../../helpers/db-assertions'
 import { mockRazorpayCheckout } from '../../helpers/razorpay-mock'
+
+// Seeded customer (db/seed.ts) — owns every seeded booking + wallet.
+const SEED_CUSTOMER = 'u_seed_customer'
+// Each cancel test cancels a DISTINCT seeded booking so they stay isolated
+// under Playwright's parallel workers (fullyParallel: true). The seed
+// (db/seed.ts) makes goa-scuba-diving-padi-dsd and bir-billing-paragliding-
+// full-day `confirmed` on T+7d slots (inside the flexible free window), and
+// rishikesh-kayaking-introduction `confirmed` on a PAST slot (outside policy).
+//
+// Inside-policy cancel target: goa-scuba-diving-padi-dsd. T+7d slot under the
+// flexible preset → cancellation now is inside the free window → full refund.
+// gross = ₹4,500 × 2 = ₹9,000.
+const INSIDE_POLICY_SLUG = 'goa-scuba-diving-padi-dsd'
+// Read-only "link reaches the page" target — never cancelled, so it stays
+// confirmed for parallel runs.
+const CANCEL_LINK_SLUG = 'bir-billing-paragliding-full-day'
+// Outside-policy cancel target: a confirmed Booking on a PAST slot.
+// gross = ₹1,800 × 2 = ₹3,600.
+const KAYAKING_SLUG = 'rishikesh-kayaking-introduction'
 
 // Seeded flagship rafting Experience — see db/seed.ts.
 //   pricePerPerson_1_2 = ₹1,500; slot T+7d (>48h out), capacity 8.
@@ -283,48 +311,163 @@ test.describe('Revenue spine: checkout → confirmation', () => {
 })
 
 // ---------------------------------------------------------------------------
-// 4. Cancel booking
+// 4. Cancel → refund (WIRED flow — Issue #14)
+//    The pure refund math + the cancellation×refund matrix is validated at
+//    the integration layer (#33: lib/payments/refund-policy.test.ts +
+//    refund-flow.test.ts). Here we validate that the customer cancelling
+//    FROM THE UI lands the right WIRED outcome in the DB: inside-policy →
+//    Refund balance credited, no dispute; outside-policy → Dispute routed
+//    to support, no auto-refund.
 // ---------------------------------------------------------------------------
 test.describe('Cancel booking', () => {
-  test('confirmation page has cancel link, navigating shows cancel route', async ({
+  // Serial: these tests mutate the shared seed (booking states + the seeded
+  // customer's single wallet). Running them serially keeps each test's
+  // before/after wallet readings free of cross-worker races. Each test still
+  // targets a DISTINCT booking, so a failure in one doesn't cascade.
+  test.describe.configure({ mode: 'serial' })
+
+  test('confirmation page Cancel link reaches a working cancel page (no 404)', async ({
     page,
   }) => {
-    // Navigate to the dashboard and click the first booking
-    await page.goto('/dashboard')
-    await expect(page.locator('h1')).toContainText('My bookings')
+    // Resolve a confirmed booking deterministically from the DB. This test
+    // never cancels it, so it stays confirmed for parallel workers.
+    const booking = await getConfirmedBookingForExperienceSlug(CANCEL_LINK_SLUG)
+    expect(booking, 'a confirmed booking must be seeded').toBeTruthy()
 
-    // Find a confirmed booking (look for the "confirmed" badge)
-    const confirmedBooking = page
-      .locator('a[href*="/bookings/"]')
-      .filter({ hasText: /confirmed/i })
-      .first()
-    const hasConfirmed = (await confirmedBooking.count()) > 0
+    // From the confirmation page, the Cancel link must NAVIGATE to a real
+    // page (it previously 404'd because no page.tsx existed at /cancel).
+    const confResponse = await page.goto(
+      `/bookings/${booking!.bookingId}/confirmation`,
+    )
+    expect(confResponse?.status()).toBe(200)
 
-    // Fall back to any booking link if no confirmed one
-    const bookingLink = hasConfirmed
-      ? confirmedBooking
-      : page.locator('a[href*="/bookings/"]').first()
-
-    const bookingCount = await bookingLink.count()
-    expect(bookingCount).toBeGreaterThanOrEqual(1)
-
-    // Navigate to the confirmation page
-    await bookingLink.click()
-    await page.waitForURL(/\/bookings\/[^/]+\/confirmation/)
-
-    // Verify the confirmation page loaded
-    await expect(page.locator('h1')).toContainText('Booking confirmed')
-
-    // The cancel booking link should be present
     const cancelLink = page.locator('a:has-text("Cancel booking")')
     await expect(cancelLink).toBeVisible()
+    await cancelLink.click()
 
-    // Verify the cancel link points to the correct route
-    const cancelHref = await cancelLink.getAttribute('href')
-    expect(cancelHref).toMatch(/\/bookings\/[^/]+\/cancel/)
+    await page.waitForURL(/\/bookings\/[^/]+\/cancel/)
+    // The cancel page renders (200, not 404) with the confirm control.
+    await expect(page.locator('h1')).toContainText('Cancel booking')
+    await expect(page.getByTestId('confirm-cancel')).toBeVisible()
 
     await page.screenshot({
-      path: 'tests/e2e/screenshots/customer-cancel-booking.png',
+      path: 'tests/e2e/screenshots/customer-cancel-page.png',
+      fullPage: true,
+    })
+  })
+
+  test('INSIDE-policy cancel auto-credits the Refund balance, no dispute', async ({
+    page,
+  }) => {
+    // The scuba booking sits on a T+7d slot under the flexible preset → a
+    // cancellation now is inside the free window → full refund auto-credited
+    // to the Refund balance bucket (ADR-0004/0005). gross = ₹9,000.
+    const booking = await getConfirmedBookingForExperienceSlug(INSIDE_POLICY_SLUG)
+    expect(booking, 'a confirmed booking must be seeded').toBeTruthy()
+    const { bookingId, grossRupees } = booking!
+    expect(grossRupees).toBeGreaterThan(0)
+
+    await page.goto(`/bookings/${bookingId}/cancel`)
+    await expect(page.locator('h1')).toContainText('Cancel booking')
+
+    await page.getByTestId('confirm-cancel').click()
+
+    // The UI surfaces the inside-policy success branch.
+    const outcome = page.getByTestId('cancel-outcome')
+    await expect(outcome).toBeVisible({ timeout: 15_000 })
+    await expect(outcome).toHaveAttribute('data-routed-to-dispute', 'false')
+    await expect(outcome).toContainText('Refund balance')
+
+    // ── WIRED outcome 1: booking transitioned to cancelled_by_customer ──
+    expect(await getBookingState(bookingId)).toBe('cancelled_by_customer')
+
+    // ── WIRED outcome 2: the credit landed in the Refund balance bucket
+    //    (NOT Outvers credit), for the full free-window amount. Asserted
+    //    against the immutable wallet.credit_refund_balance audit row rather
+    //    than the live wallet_balances delta — the seed customer's single
+    //    wallet is shared across bookings and concurrent checkouts in other
+    //    parallel specs may move it, but the audit row for THIS booking is
+    //    written once and never changes. ──
+    const creditAudit = await getRefundBalanceCreditAuditForBooking(bookingId)
+    expect(creditAudit, 'a refund-balance credit audit row must exist').toBeTruthy()
+    expect(creditAudit!.amountRupees).toBe(grossRupees)
+    expect(creditAudit!.userId).toBe(SEED_CUSTOMER)
+    // The refund must NOT have been routed to the Outvers (promo) bucket.
+    expect(await countOutversCreditAuditForBooking(bookingId)).toBe(0)
+    // Live balance sanity: it reflects at least the credited amount.
+    expect(
+      await getWalletBalanceRupees(SEED_CUSTOMER, 'refund_balance'),
+    ).toBeGreaterThanOrEqual(grossRupees)
+
+    // ── WIRED outcome 3: a credited refund_requests row to refund_balance,
+    //    free_window basis — and NO dispute audit row ──
+    const refundReq = await getRefundRequestForBooking(bookingId)
+    expect(refundReq, 'a refund_requests row must exist').toBeTruthy()
+    expect(refundReq!.state).toBe('credited')
+    expect(refundReq!.destination).toBe('refund_balance')
+    expect(refundReq!.reason).toBe('inside_policy_cancellation')
+    expect(refundReq!.amount).toBe(grossRupees)
+    expect(refundReq!.policyWindowBasisSnapshot).toBe('free_window')
+
+    expect(await countBookingCancelAuditRows(bookingId)).toBe(1)
+    expect(
+      await getDisputeOpenedAuditPayload(bookingId),
+      'inside-policy cancel must NOT open a dispute',
+    ).toBeNull()
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/customer-cancel-inside-policy.png',
+      fullPage: true,
+    })
+  })
+
+  test('OUTSIDE-policy cancel creates a Dispute routed to support, no auto-refund', async ({
+    page,
+  }) => {
+    // Kayaking booking sits on a PAST slot → the flexible window has fully
+    // closed → outside_policy. Cancelling routes to a Dispute (booking
+    // state = disputed + dispute.opened audit row pendingAdminResolution),
+    // with NO refund_requests row and NO Refund balance credit (ADR-0003/05).
+    const booking = await getConfirmedBookingForExperienceSlug(KAYAKING_SLUG)
+    expect(booking, 'a confirmed outside-policy kayaking booking must be seeded').toBeTruthy()
+    const { bookingId } = booking!
+
+    await page.goto(`/bookings/${bookingId}/cancel`)
+    await expect(page.locator('h1')).toContainText('Cancel booking')
+
+    await page.getByTestId('confirm-cancel').click()
+
+    // The UI surfaces the outside-policy "under review" branch.
+    const outcome = page.getByTestId('cancel-outcome')
+    await expect(outcome).toBeVisible({ timeout: 15_000 })
+    await expect(outcome).toHaveAttribute('data-routed-to-dispute', 'true')
+    await expect(outcome).toContainText('review')
+
+    // ── WIRED outcome 1: booking transitioned to disputed ──
+    expect(await getBookingState(bookingId)).toBe('disputed')
+
+    // ── WIRED outcome 2: a dispute.opened audit row routed to support
+    //    (pendingAdminResolution), NOT an auto-refund ──
+    const disputePayload = await getDisputeOpenedAuditPayload(bookingId)
+    expect(disputePayload, 'a dispute.opened audit row must exist').toBeTruthy()
+    expect(disputePayload!.pendingAdminResolution).toBe(true)
+    expect(disputePayload!.basis).toBe('outside_policy')
+
+    // ── WIRED outcome 3: NO refund of any kind for this booking — no
+    //    refund_requests row, no Refund balance credit, no Outvers credit,
+    //    and no inside-policy booking.cancel audit row. Asserted per-booking
+    //    (not against the shared live wallet balance) so a concurrent
+    //    checkout in another parallel spec cannot perturb the result. ──
+    expect(await countRefundRequestsForBooking(bookingId)).toBe(0)
+    expect(
+      await getRefundBalanceCreditAuditForBooking(bookingId),
+      'outside-policy cancel must NOT credit the Refund balance',
+    ).toBeNull()
+    expect(await countOutversCreditAuditForBooking(bookingId)).toBe(0)
+    expect(await countBookingCancelAuditRows(bookingId)).toBe(0)
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/customer-cancel-outside-policy.png',
       fullPage: true,
     })
   })

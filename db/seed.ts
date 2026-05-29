@@ -322,6 +322,81 @@ async function seed(): Promise<void> {
 
   const seededBookings: { id: string; experienceId: string; state: string }[] = []
 
+  // ----- OUTSIDE-POLICY BOOKING — confirmed Booking on a PAST slot -----
+  // The flexible preset's 50%-window closes at T-2h; a Booking whose slot
+  // already started is unambiguously `outside_policy` at cancel time, so
+  // cancelling it routes to a Dispute rather than auto-crediting (ADR-0005).
+  // It lives on `rishikesh-kayaking-introduction`, an Experience that does
+  // NOT receive any of the five demo bookings above and is NOT in the review
+  // priority list, so this addition cannot disturb Issue #11's review
+  // determinism on rishikesh-rafting-grade-iii. The slot is anchored to a
+  // fixed past UTC hour (T-7d, 04:00 UTC) so its start_at is deterministic
+  // across reseeds and never collides with the future T+7d slot above.
+  const OUTSIDE_POLICY_SLUG = 'rishikesh-kayaking-introduction'
+  const pastStartAt = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+  pastStartAt.setUTCHours(4, 0, 0, 0)
+  const pastEndAt = new Date(pastStartAt.getTime() + 4 * 60 * 60 * 1000)
+  const outsidePolicyExp = allExperiences.find((e) => e.slug === OUTSIDE_POLICY_SLUG)
+  if (outsidePolicyExp) {
+    const [pastSlot] = await db
+      .insert(availabilitySlots)
+      .values({
+        experienceId: outsidePolicyExp.id,
+        startAt: pastStartAt,
+        endAt: pastEndAt,
+        capacity: 8,
+      })
+      .onConflictDoNothing()
+      .returning({ id: availabilitySlots.id })
+
+    const pastSlotId =
+      pastSlot?.id ??
+      (
+        await db
+          .select({ id: availabilitySlots.id })
+          .from(availabilitySlots)
+          .where(eq(availabilitySlots.startAt, pastStartAt))
+      )[0]?.id
+
+    if (pastSlotId) {
+      const kayakPrice = Math.floor(
+        Number(
+          EXPERIENCES.find((e) => e.slug === OUTSIDE_POLICY_SLUG)?.pricePerPerson_1_2 ?? '1800',
+        ),
+      )
+      const kayakGross = kayakPrice * 2
+      const [row] = await db
+        .insert(bookings)
+        .values({
+          customerUserId: 'u_seed_customer',
+          experienceId: outsidePolicyExp.id,
+          slotId: pastSlotId,
+          participantCount: 2,
+          state: 'confirmed',
+          paymentMode: 'full_upfront',
+          grossTotalSnapshot: String(kayakGross),
+          pricePerParticipantSnapshot: String(kayakPrice),
+          pricingBasisSnapshot: 'base_price',
+          commissionRateSnapshot: '20.00',
+          commissionBasisSnapshot: 'platform_default',
+          gstRateOnCommissionSnapshot: '18.00',
+          tdsAmountSnapshot: String(Math.floor(kayakGross * 0.01)),
+          cancellationPresetSnapshot: 'flexible',
+          vendorIsResidentSnapshot: true,
+          confirmedAt: new Date(),
+        })
+        .onConflictDoNothing()
+        .returning({ id: bookings.id })
+      if (row) {
+        seededBookings.push({
+          id: row.id,
+          experienceId: outsidePolicyExp.id,
+          state: 'confirmed',
+        })
+      }
+    }
+  }
+
   for (let i = 0; i < Math.min(BOOKING_SEEDS.length, slotRows.length); i++) {
     const slot = slotRows[i]
     const seed = BOOKING_SEEDS[i]

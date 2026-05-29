@@ -31,7 +31,6 @@ const RAFTING_PRICE_1_2 = 1500
 const DEFAULT_PARTICIPANTS = 2
 const EXPECTED_GROSS = RAFTING_PRICE_1_2 * DEFAULT_PARTICIPANTS // 3000
 const EXPECTED_ADVANCE = Math.floor(EXPECTED_GROSS * 0.25) // 750
-const EXPECTED_BALANCE = EXPECTED_GROSS - EXPECTED_ADVANCE // 2250
 
 // ---------------------------------------------------------------------------
 // 1. Dashboard loads
@@ -277,10 +276,9 @@ test.describe('Revenue spine: checkout → confirmation', () => {
     expect(payload!.captureTrigger).toBe('booking_create')
     expect(payload!.coercedUnder48h).toBe(false)
     expect(Math.floor(Number(payload!.grossRupees))).toBe(EXPECTED_GROSS)
-    // Documented worked-example amounts (computed from gross, asserted above):
-    //   Advance now = 25% × ₹3,000 = ₹750 ; Balance T-24h = ₹2,250.
-    expect(EXPECTED_ADVANCE).toBe(750)
-    expect(EXPECTED_BALANCE).toBe(2250)
+    // Worked example: gross ₹3,000 (≤ ₹25,000, ≥48h out) → partial_pay, with the
+    // 25% Advance (₹750) asserted on the pay button above and the ₹2,250 balance
+    // scheduled for T-24h. (No constant-vs-constant assertion — that proves nothing.)
   })
 })
 

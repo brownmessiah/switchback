@@ -88,6 +88,14 @@ describe('executeStartCheckout (Task 20)', () => {
     await db.execute(sql`TRUNCATE TABLE availability_slots CASCADE`)
     await db.execute(sql`TRUNCATE TABLE experiences CASCADE`)
 
+    // Reset the vendor to business tier each test (vendor_profiles is not
+    // truncated) so a tier-cap test that downgrades it cannot leak into later
+    // tests if it throws before its inline restore.
+    await db
+      .update(vendorProfiles)
+      .set({ kycTier: 'business' })
+      .where(eq(vendorProfiles.userId, 'u_vendor'))
+
     const [exp] = await db
       .insert(experiences)
       .values({
@@ -241,12 +249,8 @@ describe('executeStartCheckout (Task 20)', () => {
     if (result.ok) throw new Error('unreachable')
     expect(result.error).toBe('tier_cap_exceeded')
     expect(result.message).not.toBe('An unexpected error occurred.')
-
-    // Restore for any later tests in this block.
-    await db
-      .update(vendorProfiles)
-      .set({ kycTier: 'business' })
-      .where(eq(vendorProfiles.userId, 'u_vendor'))
+    // Vendor tier is reset to business in beforeEach — no inline restore needed,
+    // so isolation holds even if an assertion above throws.
   })
 
   // ---- RNPL rejected ----

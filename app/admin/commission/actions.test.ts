@@ -2,14 +2,19 @@ import { eq, sql } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import { auditLogs } from '@/db/schema/audit-logs'
+import { availabilitySlots } from '@/db/schema/availability-slots'
+import { bookings } from '@/db/schema/bookings'
 import { commissionTiers } from '@/db/schema/commission-tiers'
+import { experiences } from '@/db/schema/experiences'
 import { users } from '@/db/schema/users'
+import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 
 import {
   executeCreateCommissionTier,
   executeUpdateCommissionTier,
   executeDeleteCommissionTier,
+  getAffectedBookingCount,
 } from './actions'
 
 // ── Test helpers ────────────────────────────────────────────────────
@@ -448,6 +453,176 @@ describe('Admin commission tier actions', () => {
       if (!result.ok) {
         expect(result.error).toContain('not found')
       }
+    })
+  })
+
+  // ── getAffectedBookingCount ───────────────────────────────────────
+  //
+  // Counts Bookings whose created_at falls inside the tier's [start_at, end_at]
+  // window — the "blast radius" preview an admin sees before editing/deleting a
+  // tier. Snapshots are immutable (ADR-0008), so this is a forward-looking count
+  // of which future Bookings the live tier change would influence, not a count
+  // of rows whose snapshot would change.
+
+  describe('getAffectedBookingCount', () => {
+    /**
+     * Seed a confirmed Booking with an explicit created_at so we can place it
+     * deterministically inside/outside a tier's time window. All other snapshot
+     * columns are filled with valid placeholders.
+     */
+    async function seedBookingAt(createdAt: Date): Promise<string> {
+      const startAt = new Date(createdAt.getTime() + 30 * 24 * 60 * 60 * 1000)
+      const endAt = new Date(startAt.getTime() + 4 * 60 * 60 * 1000)
+      const [slot] = await db
+        .insert(availabilitySlots)
+        .values({ experienceId: affectExperienceId, startAt, endAt, capacity: 8 })
+        .returning({ id: availabilitySlots.id })
+      const [booking] = await db
+        .insert(bookings)
+        .values({
+          customerUserId: 'u_c_affect',
+          experienceId: affectExperienceId,
+          slotId: slot!.id,
+          participantCount: 2,
+          paymentMode: 'full_upfront',
+          state: 'confirmed',
+          createdAt,
+          grossTotalSnapshot: '3000.00',
+          pricePerParticipantSnapshot: '1500.00',
+          pricingBasisSnapshot: 'experience_bracket:1_2',
+          commissionRateSnapshot: '20.00',
+          commissionBasisSnapshot: 'vendor_default',
+          cancellationPresetSnapshot: 'flexible',
+          tdsAmountSnapshot: '30.00',
+          gstRateOnCommissionSnapshot: '18.00',
+          vendorPanSnapshot: 'ABCDE1234F',
+          vendorIsResidentSnapshot: true,
+          payoutMethodSnapshot: 'upi',
+          payoutDestinationSnapshot: { vpa: 'vendor@upi' },
+        })
+        .returning({ id: bookings.id })
+      return booking!.id
+    }
+
+    let affectExperienceId: string
+
+    beforeEach(async () => {
+      // The top-level beforeEach truncates audit_logs/commission_tiers/users.
+      // Re-seed the vendor + experience + customer this block needs, and clear
+      // any bookings/slots left from prior tests in this block.
+      await db.execute(
+        sql`TRUNCATE TABLE bookings, availability_slots, experiences, vendor_profiles CASCADE`,
+      )
+      await db.insert(users).values([
+        { id: 'u_v_affect', email: 'v-affect@test.com' },
+        { id: 'u_c_affect', email: 'c-affect@test.com' },
+      ])
+      await db.insert(vendorProfiles).values({
+        userId: 'u_v_affect',
+        businessName: 'Affect Adventures',
+        slug: 'affect-adventures',
+        commissionRate: '20.00',
+      })
+      const [exp] = await db
+        .insert(experiences)
+        .values({
+          vendorUserId: 'u_v_affect',
+          slug: 'affect-rafting',
+          title: 'Affect Rafting',
+          cancellationPreset: 'flexible',
+          paymentModesAllowed: ['full_upfront'],
+          pricePerPerson_1_2: '1500',
+          pricePerPerson_3_5: '1300',
+          pricePerPerson_6_plus: '1100',
+          regionSlug: 'rishikesh',
+          activitySlug: 'rafting',
+        })
+        .returning({ id: experiences.id })
+      affectExperienceId = exp!.id
+    })
+
+    it('returns 0 for a non-existent tier id', async () => {
+      const count = await getAffectedBookingCount(
+        db,
+        '00000000-0000-0000-0000-000000000000',
+      )
+      expect(count).toBe(0)
+    })
+
+    it('counts only Bookings whose created_at falls inside the tier window', async () => {
+      const adminId = await seedAdmin(db)
+      const windowStart = new Date('2026-09-01T00:00:00Z')
+      const windowEnd = new Date('2026-09-30T23:59:59Z')
+
+      await executeCreateCommissionTier(db, adminId, {
+        name: 'september-window',
+        startAt: windowStart,
+        endAt: windowEnd,
+        rateOverride: 15,
+        reason: 'window test',
+        appliesToCategories: [],
+        appliesToVendorIds: [],
+        appliesToExperienceIds: [],
+      })
+      const [tier] = await db.select().from(commissionTiers)
+
+      // Two inside the window, one before, one after.
+      await seedBookingAt(new Date('2026-09-10T08:00:00Z')) // inside
+      await seedBookingAt(new Date('2026-09-20T08:00:00Z')) // inside
+      await seedBookingAt(new Date('2026-08-15T08:00:00Z')) // before window
+      await seedBookingAt(new Date('2026-10-05T08:00:00Z')) // after window
+
+      const count = await getAffectedBookingCount(db, tier!.id)
+      expect(count).toBe(2)
+    })
+
+    it('returns 0 when no Bookings fall inside the tier window', async () => {
+      const adminId = await seedAdmin(db)
+      await executeCreateCommissionTier(db, adminId, {
+        name: 'empty-window',
+        startAt: new Date('2027-01-01T00:00:00Z'),
+        endAt: new Date('2027-01-31T23:59:59Z'),
+        rateOverride: 10,
+        reason: 'no bookings',
+        appliesToCategories: [],
+        appliesToVendorIds: [],
+        appliesToExperienceIds: [],
+      })
+      const [tier] = await db.select().from(commissionTiers)
+
+      // All bookings fall well outside the 2027 January window.
+      await seedBookingAt(new Date('2026-06-01T08:00:00Z'))
+      await seedBookingAt(new Date('2026-12-31T08:00:00Z'))
+
+      const count = await getAffectedBookingCount(db, tier!.id)
+      expect(count).toBe(0)
+    })
+
+    it('counts Bookings on the inclusive window boundaries (start_at, end_at)', async () => {
+      const adminId = await seedAdmin(db)
+      const windowStart = new Date('2026-09-01T00:00:00.000Z')
+      const windowEnd = new Date('2026-09-30T23:59:59.000Z')
+
+      await executeCreateCommissionTier(db, adminId, {
+        name: 'boundary-window',
+        startAt: windowStart,
+        endAt: windowEnd,
+        rateOverride: 12,
+        reason: 'boundary test',
+        appliesToCategories: [],
+        appliesToVendorIds: [],
+        appliesToExperienceIds: [],
+      })
+      const [tier] = await db.select().from(commissionTiers)
+
+      // Exactly on the inclusive boundaries (gte start, lte end) → both count.
+      await seedBookingAt(windowStart)
+      await seedBookingAt(windowEnd)
+      // One millisecond before start → excluded.
+      await seedBookingAt(new Date(windowStart.getTime() - 1))
+
+      const count = await getAffectedBookingCount(db, tier!.id)
+      expect(count).toBe(2)
     })
   })
 })

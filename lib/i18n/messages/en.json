@@ -171,8 +171,8 @@
     },
     "cancellation": {
       "flexible": "Free cancellation up to 24 hours before the Experience. 50% refund within 2 hours. No refund after.",
-      "moderate": "Free cancellation up to 7 days before. 50% refund within 48 hours. No refund after.",
-      "strict": "50% refund up to 7 days before. No refund after.",
+      "moderate": "Free cancellation up to 72 hours before the Experience. 50% refund up to 24 hours before. No refund after.",
+      "strict": "Free cancellation up to 14 days before the Experience. 50% refund up to 7 days before. No refund after.",
       "fallback": "This Experience follows the {preset} cancellation policy."
     },
     "faq": {

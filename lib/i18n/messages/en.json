@@ -108,8 +108,10 @@
     "wallet": {
       "refundBalance": "Refund balance",
       "refundHint": "Cashable or usable on next booking",
+      "cashoutOption": "Cash out to your original payment method in 5–7 working days, or spend it on your next booking.",
       "outversCredit": "Outvers credit",
-      "creditHint": "Promotional credit — use on any booking"
+      "creditHint": "Promotional credit — use on any booking",
+      "creditExpiry": "Expires {date}"
     },
     "bookings": {
       "empty": "No bookings yet",

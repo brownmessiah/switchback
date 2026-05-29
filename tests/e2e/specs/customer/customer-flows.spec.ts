@@ -94,6 +94,100 @@ test.describe('Customer dashboard', () => {
       fullPage: true,
     })
   })
+
+  // -------------------------------------------------------------------------
+  // 1b. Functional deepening (Issue #15): correct Booking statuses, two
+  //     SEPARATE Wallet buckets with correct totals, Outvers credit EXPIRY,
+  //     and the Refund balance CASHABLE-to-original-method option (ADR-0004).
+  // -------------------------------------------------------------------------
+  test('lists Bookings with their correct seeded statuses', async ({ page }) => {
+    // The seed (db/seed.ts) creates a deterministic mix of states for the
+    // seed customer's bookings: two `completed`, several `confirmed`, and one
+    // `cancelled_by_customer`. The status badge text mirrors the state with
+    // underscores replaced by spaces. Assert each distinct status renders so
+    // a regression in status mapping is caught (cancel specs run in their own
+    // serial describe and target DISTINCT bookings, but the completed/
+    // cancelled_by_customer demo bookings here are never touched by them).
+    const dashboard = page.getByTestId('customer-dashboard')
+    await page.goto('/dashboard')
+    await expect(dashboard).toBeVisible()
+
+    // `completed` demo booking — never mutated by any spec.
+    await expect(
+      dashboard.getByTestId('booking-status').filter({ hasText: /^completed$/i }).first(),
+    ).toBeVisible()
+    // `cancelled by customer` demo booking — never mutated by any spec.
+    await expect(
+      dashboard
+        .getByTestId('booking-status')
+        .filter({ hasText: /^cancelled by customer$/i })
+        .first(),
+    ).toBeVisible()
+    // At least one `confirmed` booking is seeded.
+    await expect(
+      dashboard.getByTestId('booking-status').filter({ hasText: /^confirmed$/i }).first(),
+    ).toBeVisible()
+  })
+
+  test('Wallet shows Outvers credit and Refund balance as separate buckets with correct totals', async ({
+    page,
+  }) => {
+    await page.goto('/dashboard')
+
+    // Two structurally distinct bucket cards, each tagged by balance type.
+    const creditCard = page.getByTestId('wallet-bucket-outvers_credit')
+    const refundCard = page.getByTestId('wallet-bucket-refund_balance')
+    await expect(creditCard).toBeVisible()
+    await expect(refundCard).toBeVisible()
+
+    // Each card labels its own bucket — they are NOT merged into one number.
+    await expect(creditCard).toContainText('Outvers credit')
+    await expect(refundCard).toContainText('Refund balance')
+
+    // Correct per-bucket totals. Read the live balances from the DB rather
+    // than hard-coding the seed values: the revenue-spine checkout spec runs
+    // a real `applyWalletToCheckout` in parallel, which can debit either
+    // bucket, so the only race-free source of truth is the DB at read time.
+    const creditRupees = await getWalletBalanceRupees(SEED_CUSTOMER, 'outvers_credit')
+    const refundRupees = await getWalletBalanceRupees(SEED_CUSTOMER, 'refund_balance')
+    await expect(creditCard.getByTestId('wallet-amount')).toHaveText(
+      `₹${creditRupees.toLocaleString('en-IN')}`,
+    )
+    await expect(refundCard.getByTestId('wallet-amount')).toHaveText(
+      `₹${refundRupees.toLocaleString('en-IN')}`,
+    )
+  })
+
+  test('Outvers credit shows an expiry; Refund balance shows the cash-out option (ADR-0004)', async ({
+    page,
+  }) => {
+    await page.goto('/dashboard')
+
+    const creditCard = page.getByTestId('wallet-bucket-outvers_credit')
+    const refundCard = page.getByTestId('wallet-bucket-refund_balance')
+
+    // ── Outvers credit EXPIRES (12–18mo from issue, ADR-0004). The card must
+    //    surface an expiry date for the credit so the Customer knows the
+    //    closed-loop credit is time-bound. ──
+    const expiry = creditCard.getByTestId('wallet-credit-expiry')
+    await expect(expiry).toBeVisible()
+    await expect(expiry).toContainText(/expires/i)
+    // The seed issues the credit with a deterministic +12-month expiry; the
+    // year component must render (catches "renders the literal word with no
+    // date" regressions).
+    await expect(expiry).toContainText(/\d{4}/)
+
+    // ── Refund balance is CASHABLE back to the original payment method via
+    //    Razorpay (5–7 working days, ADR-0004). The card must surface that
+    //    option — copy + an affordance — which distinguishes it from the
+    //    never-cashable Outvers credit. ──
+    const cashout = refundCard.getByTestId('wallet-cashout-option')
+    await expect(cashout).toBeVisible()
+    await expect(cashout).toContainText(/original payment method/i)
+    await expect(cashout).toContainText(/5[–-]7 working days/i)
+    // The Outvers credit card must NOT offer cashout (it is never cashable).
+    await expect(creditCard.getByTestId('wallet-cashout-option')).toHaveCount(0)
+  })
 })
 
 // ---------------------------------------------------------------------------

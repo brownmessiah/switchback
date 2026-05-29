@@ -35,6 +35,7 @@ import {
   users,
   vendorProfiles,
   walletBalances,
+  walletTransactions,
 } from './schema'
 
 interface SeededExperience {
@@ -470,13 +471,38 @@ async function seed(): Promise<void> {
       .onConflictDoNothing()
   }
 
-  // ----- WALLET — give the seed customer some refund balance -----
+  // ----- WALLET — give the seed customer both buckets (ADR-0004) -----
+  // Two SEPARATE balance buckets:
+  //   refund_balance  — cashable to the original payment method (5–7 day
+  //                     Razorpay round-trip). Real liability on the books.
+  //   outvers_credit  — closed-loop promo credit, never cashable, EXPIRES
+  //                     12–18 months from issue.
   await db
     .insert(walletBalances)
     .values([
       { userId: 'u_seed_customer', balanceType: 'refund_balance' as const, amount: '500.00' },
       { userId: 'u_seed_customer', balanceType: 'outvers_credit' as const, amount: '200.00' },
     ])
+    .onConflictDoNothing()
+
+  // The Outvers credit aggregate carries no expiry of its own — expiry lives
+  // on the immutable ledger (wallet_transactions.expires_at) per ADR-0004.
+  // Seed the matching grant transaction so the dashboard can surface the
+  // credit's expiry. Anchor the expiry deterministically to a fixed issue
+  // date + 12 months (the short end of the 12–18mo window) so reseeds and
+  // E2E assertions stay stable across runs.
+  const creditIssuedAt = new Date('2026-01-01T00:00:00.000Z')
+  const creditExpiresAt = new Date('2027-01-01T00:00:00.000Z') // +12 months
+  await db
+    .insert(walletTransactions)
+    .values({
+      userId: 'u_seed_customer',
+      balanceType: 'outvers_credit',
+      amount: '200.00',
+      source: 'promo',
+      expiresAt: creditExpiresAt,
+      createdAt: creditIssuedAt,
+    })
     .onConflictDoNothing()
 
   console.warn(

@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { and, asc, eq, gt, isNotNull } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { db } from '@/db/client'
-import { bookings, experiences, walletBalances } from '@/db/schema'
+import { bookings, experiences, walletBalances, walletTransactions } from '@/db/schema'
 import { auth } from '@/lib/auth'
 
 const STATE_VARIANTS: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
@@ -57,40 +57,90 @@ export default async function CustomerDashboardPage() {
     Number(walletRows.find((r) => r.balanceType === 'outvers_credit')?.amount ?? 0),
   )
 
+  // Outvers credit expires 12–18mo from issue (ADR-0004). The aggregate
+  // wallet_balances row has no expiry of its own — expiry lives on the
+  // immutable ledger. Surface the SOONEST upcoming expiry for the credit
+  // bucket so the Customer knows their closed-loop credit is time-bound.
+  const [nextCreditExpiry] = await db
+    .select({ expiresAt: walletTransactions.expiresAt })
+    .from(walletTransactions)
+    .where(
+      and(
+        eq(walletTransactions.userId, userId),
+        eq(walletTransactions.balanceType, 'outvers_credit'),
+        isNotNull(walletTransactions.expiresAt),
+        gt(walletTransactions.expiresAt, new Date()),
+      ),
+    )
+    .orderBy(asc(walletTransactions.expiresAt))
+    .limit(1)
+
+  const creditExpiresAt =
+    outversCredit > 0 ? (nextCreditExpiry?.expiresAt ?? null) : null
+
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:py-12">
+    <main
+      data-testid="customer-dashboard"
+      className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:py-12"
+    >
       <h1 className="mb-8 text-2xl font-semibold tracking-tight">{t('pageTitle')}</h1>
 
-      {/* Wallet */}
+      {/* Wallet — two SEPARATE buckets (ADR-0004) */}
       <div className="mb-8 grid gap-4 sm:grid-cols-2">
-        <Card>
+        {/* Refund balance — cashable to original payment method */}
+        <Card data-testid="wallet-bucket-refund_balance">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {t('wallet.refundBalance')}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold">
+            <p data-testid="wallet-amount" className="text-2xl font-semibold">
               ₹{refundBalance.toLocaleString('en-IN')}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
               {t('wallet.refundHint')}
             </p>
+            {/* Cashable-to-original-method option (ADR-0004). The cashout flow
+                itself is deferred (M3 / #72); the OPTION must be surfaced. */}
+            <p
+              data-testid="wallet-cashout-option"
+              className="mt-2 text-xs text-muted-foreground"
+            >
+              {t('wallet.cashoutOption')}
+            </p>
           </CardContent>
         </Card>
-        <Card>
+        {/* Outvers credit — closed-loop, never cashable, EXPIRES */}
+        <Card data-testid="wallet-bucket-outvers_credit">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {t('wallet.outversCredit')}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold">
+            <p data-testid="wallet-amount" className="text-2xl font-semibold">
               ₹{outversCredit.toLocaleString('en-IN')}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
               {t('wallet.creditHint')}
             </p>
+            {/* Expiry (12–18mo from issue, ADR-0004) — closed-loop credit is
+                time-bound, so the soonest upcoming expiry is surfaced. */}
+            {creditExpiresAt ? (
+              <p
+                data-testid="wallet-credit-expiry"
+                className="mt-2 text-xs text-muted-foreground"
+              >
+                {t('wallet.creditExpiry', {
+                  date: new Date(creditExpiresAt).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  }),
+                })}
+              </p>
+            ) : null}
           </CardContent>
         </Card>
       </div>
@@ -121,6 +171,7 @@ export default async function CustomerDashboardPage() {
                     <div className="flex items-center gap-2">
                       <h3 className="truncate font-medium">{b.expTitle}</h3>
                       <Badge
+                        data-testid="booking-status"
                         variant={STATE_VARIANTS[b.state] ?? 'outline'}
                         className="shrink-0 capitalize text-xs"
                       >

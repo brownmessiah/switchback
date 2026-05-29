@@ -518,4 +518,96 @@ describe('processPartialPayAutocapture (ADR-0001)', () => {
       expect(bookingRow?.state).toBe('confirmed')
     })
   })
+
+  describe('Advance(25%) + balance(75%) split end-to-end (#35 integration)', () => {
+    it('captures exactly the 75% balance so advance + autocapture === gross', async () => {
+      // gross 4000 → advance floor(4000*0.25)=1000 (booking_create row),
+      // balance = 4000-1000 = 3000 (auto_capture_t_minus_24h row). The two
+      // capture rows together must reconstitute the full Booking gross.
+      const { bookingId } = await seedPartialPayBooking({ hoursAhead: 24, grossRupees: 4000 })
+      const { client, captures } = makeStubRazorpay()
+      _setRazorpayClientForTests(client)
+
+      const result = await processPartialPayAutocapture({ db })
+      expect(result.succeeded).toBe(1)
+
+      // Razorpay charged the balance (75% = 3000 rupees = 300000 paise).
+      expect(captures).toHaveLength(1)
+      expect(captures[0]!.amount).toBe(300_000)
+
+      const rows = await db
+        .select()
+        .from(payments)
+        .where(eq(payments.bookingId, bookingId))
+      const advance = rows.find((r) => r.captureTrigger === 'booking_create')
+      const balance = rows.find((r) => r.captureTrigger === 'auto_capture_t_minus_24h')
+      expect(advance?.amount).toBe('1000.00') // 25% Advance at booking
+      expect(balance?.amount).toBe('3000.00') // 75% balance at T-24h
+      // The split must be exact — no rupee lost or double-counted.
+      expect(Number(advance!.amount) + Number(balance!.amount)).toBe(4000)
+    })
+
+    it('rejects a SECOND autocapture row for the same Booking via the unique constraint', async () => {
+      // The cron's SELECT-based idempotency skips an already-autocaptured
+      // Booking, but the structural floor is the
+      // payments_one_autocapture_per_booking partial unique index. Assert
+      // the DB itself refuses a duplicate auto_capture_t_minus_24h row even
+      // when the in-process guard is bypassed (e.g. two racing containers).
+      const { bookingId } = await seedPartialPayBooking({ hoursAhead: 24, grossRupees: 4000 })
+      const { client } = makeStubRazorpay()
+      _setRazorpayClientForTests(client)
+
+      // First cron run captures the balance.
+      await processPartialPayAutocapture({ db })
+      const afterFirst = await db
+        .select()
+        .from(payments)
+        .where(eq(payments.captureTrigger, 'auto_capture_t_minus_24h'))
+      expect(afterFirst).toHaveLength(1)
+
+      // Direct duplicate insert (bypassing the worker's SELECT guard) must
+      // be rejected by the partial unique index — proving the constraint,
+      // not just the application check, enforces one autocapture per Booking.
+      await expect(
+        db.insert(payments).values({
+          bookingId,
+          razorpayPaymentId: `pay_dup_autocap_${bookingId.slice(0, 8)}`,
+          amount: '3000.00',
+          captureTrigger: 'auto_capture_t_minus_24h',
+        }),
+      ).rejects.toThrow()
+
+      // Exactly one balance capture exists after the rejected duplicate.
+      const finalRows = await db
+        .select()
+        .from(payments)
+        .where(eq(payments.captureTrigger, 'auto_capture_t_minus_24h'))
+      expect(finalRows).toHaveLength(1)
+      expect(finalRows[0]!.bookingId).toBe(bookingId)
+    })
+
+    it('a re-run of the cron after a successful capture is a no-op (one balance row, no second Razorpay charge)', async () => {
+      const { bookingId } = await seedPartialPayBooking({ hoursAhead: 24, grossRupees: 4000 })
+      const first = makeStubRazorpay()
+      _setRazorpayClientForTests(first.client)
+      await processPartialPayAutocapture({ db })
+      expect(first.captures).toHaveLength(1)
+
+      // Fresh stub on the second run: if the worker tried to re-capture, the
+      // new stub would record a call. It must skip via the existing-row guard.
+      const second = makeStubRazorpay()
+      _setRazorpayClientForTests(second.client)
+      const result = await processPartialPayAutocapture({ db })
+      expect(result.skipped).toBe(1)
+      expect(result.succeeded).toBe(0)
+      expect(second.captures).toHaveLength(0)
+
+      const balanceRows = await db
+        .select()
+        .from(payments)
+        .where(eq(payments.captureTrigger, 'auto_capture_t_minus_24h'))
+      expect(balanceRows).toHaveLength(1)
+      expect(balanceRows[0]!.bookingId).toBe(bookingId)
+    })
+  })
 })

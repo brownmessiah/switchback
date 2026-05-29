@@ -286,6 +286,36 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
       expect(err.code).toBe('PAYMENT_MODE_NOT_ALLOWED')
     })
 
+    it('keeps partial_pay (25% Advance route) for the default case: ≥48h out AND ≤Rs.25,000 (ADR-0001, #35)', async () => {
+      // Default partial-pay: the seeded slot is T+7d (≥48h) and gross is
+      // 3000 (≤Rs.25,000), so the Booking stays partial_pay with the
+      // booking_create capture trigger — the 25% Advance is taken now and
+      // the 75% balance is auto-captured at T-24h by the cron. Advance basis
+      // = floor(3000*0.25) = 750; balance = 3000-750 = 2250.
+      const r = await createBooking(db, { ...defaultInput(), paymentMode: 'partial_pay' })
+      expect(r.effectivePaymentMode).toBe('partial_pay')
+
+      const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
+      expect(row?.paymentMode).toBe('partial_pay')
+      expect(row?.grossTotalSnapshot).toBe('3000.00')
+
+      const [auditRow] = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.entityId, r.bookingId))
+      const payload = auditRow?.payload as Record<string, unknown>
+      // booking_create (NOT escrow_full_capture) ⇒ the 25% Advance route,
+      // distinguishing the default from the >Rs.25,000 escrow carve-out.
+      expect(payload.captureTrigger).toBe('booking_create')
+      expect(payload.effectivePaymentMode).toBe('partial_pay')
+      expect(payload.coercedUnder48h).toBe(false)
+      // Advance + balance reconstitute the gross with the worker's rounding.
+      const gross = Number(payload.grossRupees)
+      const advance = Math.floor(gross * 0.25)
+      expect(advance).toBe(750)
+      expect(gross - advance).toBe(2250)
+    })
+
     it('coerces partial_pay to full_upfront when booking is <48h before slot (ADR-0001)', async () => {
       // Re-create slot at T+24h
       const startAt = new Date(Date.now() + 24 * 60 * 60 * 1000)

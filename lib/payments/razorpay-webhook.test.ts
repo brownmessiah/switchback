@@ -353,6 +353,88 @@ describe('processRazorpayWebhook (ADR-0001)', () => {
       expect(paymentRows).toHaveLength(1)
     })
 
+    it('replaying the SAME captured event N times yields a SINGLE Booking + one state transition (#35 idempotency)', async () => {
+      // AC: assert exactly one Booking / one state transition after N
+      // replays. The webhook records a capture against an existing Booking;
+      // the "single state transition" invariant is one webhook.payment.captured
+      // audit row + an unchanged Booking count, regardless of how many times
+      // Razorpay re-delivers the same event.
+      const bookingsBefore = await db.select().from(bookings)
+      expect(bookingsBefore).toHaveLength(1)
+
+      const body = buildPaymentCapturedBody({
+        eventId: 'evt_single_transition',
+        paymentId: 'pay_single_transition',
+        orderId: 'order_single_transition',
+        bookingId,
+        amountPaise: 500_000,
+      })
+
+      const N = 25
+      for (let i = 0; i < N; i++) {
+        const r = await call({ body })
+        expect(r.status).toBe(200)
+      }
+
+      // Exactly one capture row applied (no double-capture across replays).
+      const paymentRows = await db.select().from(payments)
+      expect(paymentRows).toHaveLength(1)
+
+      // Exactly one state transition: a single webhook.payment.captured
+      // audit row despite N deliveries.
+      const captureAudit = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.action, 'webhook.payment.captured'))
+      expect(captureAudit).toHaveLength(1)
+
+      // No second Booking was created by the replays.
+      const bookingsAfter = await db.select().from(bookings)
+      expect(bookingsAfter).toHaveLength(1)
+      expect(bookingsAfter[0]!.id).toBe(bookingId)
+    })
+
+    it('replaying the same captured event after a Redis eviction still applies ONE capture + ONE audit row (#35)', async () => {
+      // Combines the DB-floor path with the single-state-transition AC: even
+      // when Redis evicts the dedup key between deliveries (so every replay
+      // re-enters the DB transaction), the razorpay_payment_id unique index
+      // + onConflictDoNothing keep it at one capture row and one audit row.
+      const body = buildPaymentCapturedBody({
+        eventId: 'evt_evict_replay',
+        paymentId: 'pay_evict_replay',
+        orderId: 'order_evict_replay',
+        bookingId,
+        amountPaise: 500_000,
+      })
+
+      for (let i = 0; i < 5; i++) {
+        // New event id each delivery + cache wipe ⇒ Redis dedup always misses,
+        // forcing the DB unique constraint to be the sole idempotency floor.
+        _resetRedisCacheForTests()
+        const reDelivered = buildPaymentCapturedBody({
+          eventId: `evt_evict_replay_${i}`,
+          paymentId: 'pay_evict_replay', // same payment id across deliveries
+          orderId: 'order_evict_replay',
+          bookingId,
+          amountPaise: 500_000,
+        })
+        const r = await call({ body: i === 0 ? body : reDelivered })
+        expect(r.status).toBe(200)
+      }
+
+      const paymentRows = await db.select().from(payments)
+      expect(paymentRows).toHaveLength(1)
+      const captureAudit = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.action, 'webhook.payment.captured'))
+      // onConflictDoNothing skips the audit write on the duplicate inserts,
+      // so exactly one capture audit row survives all deliveries.
+      expect(captureAudit).toHaveLength(1)
+      const bookingsAfter = await db.select().from(bookings)
+      expect(bookingsAfter).toHaveLength(1)
+    })
+
     it('DB-level idempotency: when Redis evicts the dedup key, a re-delivered event with a new event id no-ops via ON CONFLICT', async () => {
       const body = buildPaymentCapturedBody({
         eventId: 'evt_db_1',

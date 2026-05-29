@@ -411,7 +411,11 @@ export default async function ExperienceDetailPage({
               )}
 
               <Link
-                href={`/checkout?experienceId=${detail.id}`}
+                href={
+                  detail.nextAvailableSlotId
+                    ? `/checkout?experienceId=${detail.id}&slotId=${detail.nextAvailableSlotId}`
+                    : `/checkout?experienceId=${detail.id}`
+                }
                 className={buttonVariants({ size: 'lg', className: 'w-full' })}
               >
                 {t('pricing.bookNow')}

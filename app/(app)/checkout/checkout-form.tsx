@@ -51,7 +51,10 @@ export function CheckoutForm({
         participantCount,
         paymentMode: supportsPartialPay ? 'partial_pay' : 'full_upfront',
         acknowledgedPermits: true,
-        idempotencyKey: `checkout-${experienceId}-${Date.now()}`,
+        // booking-create requires a UUID idempotency key (z.string().uuid()).
+        // A non-UUID key (e.g. `checkout-<id>-<ts>`) fails the parse and the
+        // whole checkout silently errors — Issue #13.
+        idempotencyKey: crypto.randomUUID(),
       })
 
       if (!result.ok) {

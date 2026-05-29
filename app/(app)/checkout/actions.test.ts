@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import { availabilitySlots } from '@/db/schema/availability-slots'
@@ -196,6 +196,57 @@ describe('executeStartCheckout (Task 20)', () => {
     expect(result.ok).toBe(false)
     if (result.ok) throw new Error('unreachable')
     expect(result.error).toBe('payment_failed')
+  })
+
+  // ---- Missing slot → specific field error, not a generic crash ----
+  it('returns a specific slot field error when slotId is empty', async () => {
+    const result = await executeStartCheckout(db, makeInput({ slotId: '' }))
+
+    expect(result.ok).toBe(false)
+    if (result.ok) throw new Error('unreachable')
+    expect(result.error).toBe('slot_unavailable')
+    expect(result.message).toMatch(/slot|date/i)
+    // Must NOT leak as the generic "unexpected error" path.
+    expect(result.message).not.toBe('An unexpected error occurred.')
+  })
+
+  it('returns a specific slot field error when slotId is not a uuid', async () => {
+    const result = await executeStartCheckout(
+      db,
+      makeInput({ slotId: 'not-a-uuid' }),
+    )
+
+    expect(result.ok).toBe(false)
+    if (result.ok) throw new Error('unreachable')
+    expect(result.error).toBe('slot_unavailable')
+  })
+
+  // ---- Tier-cap rejection → specific error, not generic "unknown" ----
+  it('maps a tier-cap rejection to a specific error, not unknown', async () => {
+    // Downgrade the vendor to identity tier and give the slot a capacity
+    // above the Tier-2 per-slot cap (8) so booking-create's tier re-check
+    // throws TIER_CAP_EXCEEDED.
+    await db
+      .update(vendorProfiles)
+      .set({ kycTier: 'identity' })
+      .where(eq(vendorProfiles.userId, 'u_vendor'))
+    await db
+      .update(availabilitySlots)
+      .set({ capacity: 20 })
+      .where(eq(availabilitySlots.id, slotId))
+
+    const result = await executeStartCheckout(db, makeInput())
+
+    expect(result.ok).toBe(false)
+    if (result.ok) throw new Error('unreachable')
+    expect(result.error).toBe('tier_cap_exceeded')
+    expect(result.message).not.toBe('An unexpected error occurred.')
+
+    // Restore for any later tests in this block.
+    await db
+      .update(vendorProfiles)
+      .set({ kycTier: 'business' })
+      .where(eq(vendorProfiles.userId, 'u_vendor'))
   })
 
   // ---- RNPL rejected ----

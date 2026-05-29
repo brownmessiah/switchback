@@ -1,5 +1,6 @@
-import { and, eq } from 'drizzle-orm'
+import { and, asc, eq, sql } from 'drizzle-orm'
 
+import { availabilitySlots } from '@/db/schema/availability-slots'
 import { experiences } from '@/db/schema/experiences'
 import { slugRedirects } from '@/db/schema/slug-redirects'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
@@ -47,6 +48,13 @@ export interface ExperienceDetailData {
   vendor: ExperienceDetailVendor
   activity: ActivityMeta
   region: RegionMeta
+  /**
+   * The earliest open Availability slot (capacity remaining) for this
+   * Experience, or null when none is bookable. Wired into the Book-now
+   * link so the Checkout flow receives a real `slotId` (Issue #13). The
+   * rich date/slot picker is the #70 redesign; v1 books the next slot.
+   */
+  nextAvailableSlotId: string | null
 }
 
 export type ExperienceDetailResult =
@@ -157,6 +165,21 @@ async function hydrateDetail(
     return null as unknown as ExperienceDetailResult
   }
 
+  // Earliest open slot with capacity remaining — drives the Book-now link
+  // so Checkout gets a real slotId (Issue #13).
+  const [nextSlot] = await db
+    .select({ id: availabilitySlots.id })
+    .from(availabilitySlots)
+    .where(
+      and(
+        eq(availabilitySlots.experienceId, exp.id),
+        eq(availabilitySlots.status, 'open'),
+        sql`${availabilitySlots.capacityTaken} < ${availabilitySlots.capacity}`,
+      ),
+    )
+    .orderBy(asc(availabilitySlots.startAt))
+    .limit(1)
+
   return {
     type: 'found',
     lng,
@@ -177,6 +200,7 @@ async function hydrateDetail(
       vendor,
       activity,
       region,
+      nextAvailableSlotId: nextSlot?.id ?? null,
     },
   }
 }

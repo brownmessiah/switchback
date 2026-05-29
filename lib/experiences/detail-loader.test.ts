@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
+import { availabilitySlots } from '@/db/schema/availability-slots'
 import { experiences } from '@/db/schema/experiences'
 import { slugRedirects } from '@/db/schema/slug-redirects'
 import { users } from '@/db/schema/users'
@@ -31,6 +32,7 @@ describe('Experience detail loader (ADR-0013)', () => {
   })
 
   beforeEach(async () => {
+    await db.execute(sql`TRUNCATE TABLE availability_slots CASCADE`)
     await db.execute(sql`TRUNCATE TABLE slug_redirects CASCADE`)
     await db.execute(sql`TRUNCATE TABLE experiences CASCADE`)
   })
@@ -223,6 +225,87 @@ describe('Experience detail loader (ADR-0013)', () => {
     expect(result!.type).toBe('found')
     if (result!.type !== 'found') throw new Error('unreachable')
     expect(result!.data.permits).toEqual([])
+  })
+
+  // ---- Next available slot (revenue-spine wiring, Issue #13) ----
+  it('surfaces the earliest open availability slot id for the Book-now link', async () => {
+    const expId = await seedExperience({ slug: 'rafting-with-slots' })
+
+    const later = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+    const earlier = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    // Insert later-first to prove ordering by start_at, not insert order.
+    await db.insert(availabilitySlots).values([
+      {
+        experienceId: expId,
+        startAt: later,
+        endAt: new Date(later.getTime() + 4 * 60 * 60 * 1000),
+        capacity: 8,
+      },
+    ])
+    const [earlierSlot] = await db
+      .insert(availabilitySlots)
+      .values({
+        experienceId: expId,
+        startAt: earlier,
+        endAt: new Date(earlier.getTime() + 4 * 60 * 60 * 1000),
+        capacity: 8,
+      })
+      .returning({ id: availabilitySlots.id })
+
+    const result = await loadExperienceDetail(db, {
+      lng: 'en',
+      slug: 'rafting-with-slots',
+    })
+    expect(result!.type).toBe('found')
+    if (result!.type !== 'found') throw new Error('unreachable')
+    expect(result!.data.nextAvailableSlotId).toBe(earlierSlot!.id)
+  })
+
+  it('skips sold-out and closed slots when picking the next available one', async () => {
+    const expId = await seedExperience({ slug: 'rafting-soldout-first' })
+
+    const soonest = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
+    const next = new Date(Date.now() + 9 * 24 * 60 * 60 * 1000)
+    await db.insert(availabilitySlots).values([
+      {
+        experienceId: expId,
+        startAt: soonest,
+        endAt: new Date(soonest.getTime() + 4 * 60 * 60 * 1000),
+        capacity: 4,
+        capacityTaken: 4,
+        status: 'sold_out',
+      },
+    ])
+    const [openSlot] = await db
+      .insert(availabilitySlots)
+      .values({
+        experienceId: expId,
+        startAt: next,
+        endAt: new Date(next.getTime() + 4 * 60 * 60 * 1000),
+        capacity: 8,
+        status: 'open',
+      })
+      .returning({ id: availabilitySlots.id })
+
+    const result = await loadExperienceDetail(db, {
+      lng: 'en',
+      slug: 'rafting-soldout-first',
+    })
+    expect(result!.type).toBe('found')
+    if (result!.type !== 'found') throw new Error('unreachable')
+    expect(result!.data.nextAvailableSlotId).toBe(openSlot!.id)
+  })
+
+  it('returns null nextAvailableSlotId when no open slot exists', async () => {
+    await seedExperience({ slug: 'rafting-no-slots' })
+
+    const result = await loadExperienceDetail(db, {
+      lng: 'en',
+      slug: 'rafting-no-slots',
+    })
+    expect(result!.type).toBe('found')
+    if (result!.type !== 'found') throw new Error('unreachable')
+    expect(result!.data.nextAvailableSlotId).toBeNull()
   })
 
   // ---- Locale passthrough ----

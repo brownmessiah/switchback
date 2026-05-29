@@ -12,6 +12,26 @@
  */
 
 import { test, expect } from '../../fixtures/devtools'
+import {
+  countBookingCreateAuditRows,
+  getBooking,
+  getBookingCreateAuditPayload,
+  getOpenSlotForExperienceSlug,
+  getSlotCapacity,
+} from '../../helpers/db-assertions'
+import { mockRazorpayCheckout } from '../../helpers/razorpay-mock'
+
+// Seeded flagship rafting Experience — see db/seed.ts.
+//   pricePerPerson_1_2 = ₹1,500; slot T+7d (>48h out), capacity 8.
+//   paymentModesAllowed = ['full_upfront', 'partial_pay'].
+// At 2 participants: gross = ₹3,000 (≤ ₹25,000) AND ≥ 48h out
+//   → partial pay: 25% Advance = ₹750 captured now, ₹2,250 scheduled T-24h.
+const RAFTING_SLUG = 'rishikesh-rafting-grade-iii'
+const RAFTING_PRICE_1_2 = 1500
+const DEFAULT_PARTICIPANTS = 2
+const EXPECTED_GROSS = RAFTING_PRICE_1_2 * DEFAULT_PARTICIPANTS // 3000
+const EXPECTED_ADVANCE = Math.floor(EXPECTED_GROSS * 0.25) // 750
+const EXPECTED_BALANCE = EXPECTED_GROSS - EXPECTED_ADVANCE // 2250
 
 // ---------------------------------------------------------------------------
 // 1. Dashboard loads
@@ -166,6 +186,105 @@ test.describe('Payment and confirmation', () => {
 })
 
 // ---------------------------------------------------------------------------
+// 3b. Full revenue spine — browse → PDP → checkout → pay → confirmation
+//     with DB-level invariant assertions (Issue #13).
+// ---------------------------------------------------------------------------
+test.describe('Revenue spine: checkout → confirmation', () => {
+  test('completes a partial-pay checkout and locks all booking invariants', async ({
+    page,
+  }) => {
+    // Capacity baseline before the booking, for the decrement assertion.
+    const slotBefore = await getOpenSlotForExperienceSlug(RAFTING_SLUG)
+    expect(slotBefore, 'seeded rafting slot must exist').toBeTruthy()
+    const capacityTakenBefore = (await getSlotCapacity(slotBefore!.slotId))!
+      .capacityTaken
+
+    // Browser-side Razorpay mock — fires handler.success on open().
+    await mockRazorpayCheckout(page)
+
+    // Browse: collection → experience detail.
+    await page.goto(`/adventure/rafting-in-rishikesh`)
+    await expect(page.locator('h1')).toBeVisible()
+
+    const raftingLink = page
+      .locator(`a[href*="/experience/${RAFTING_SLUG}"]`)
+      .first()
+    await expect(raftingLink).toBeVisible()
+    await raftingLink.click()
+    await expect(page.locator('h1')).toBeVisible()
+
+    // Book now → checkout.
+    const bookNow = page.locator('a:has-text("Book now")')
+    await expect(bookNow).toBeVisible()
+    await bookNow.click()
+    await expect(page.locator('h1')).toContainText('Checkout')
+
+    // Worked example surfaced in the UI: ₹3,000 total, ₹750 due now.
+    await expect(page.getByText('Order summary')).toBeVisible()
+    await expect(
+      page.getByText(`₹${EXPECTED_GROSS.toLocaleString('en-IN')}`).first(),
+    ).toBeVisible()
+    const payButton = page.locator('button:has-text("Pay")')
+    await expect(payButton).toContainText(
+      `₹${EXPECTED_ADVANCE.toLocaleString('en-IN')}`,
+    )
+
+    // Pay → confirmation.
+    await payButton.click()
+    await page.waitForURL(/\/bookings\/[^/]+\/confirmation/, {
+      timeout: 15_000,
+    })
+    await expect(page.locator('h1')).toContainText('Booking confirmed')
+
+    // Extract the new booking id from the URL.
+    const match = page.url().match(/\/bookings\/([^/]+)\/confirmation/)
+    expect(match).toBeTruthy()
+    const bookingId = match![1]
+
+    // ── DB invariant 1: Booking row created with the right snapshots ──
+    const booking = await getBooking(bookingId)
+    expect(booking, 'booking row must exist').toBeTruthy()
+    expect(booking!.customerUserId).toBe('u_seed_customer')
+    expect(booking!.slotId).toBe(slotBefore!.slotId)
+    expect(booking!.participantCount).toBe(DEFAULT_PARTICIPANTS)
+    expect(booking!.state).toBe('confirmed')
+
+    // Partial-pay worked example (ADR-0001): ≥48h out + gross ≤ ₹25,000.
+    expect(Math.floor(Number(booking!.grossTotalSnapshot))).toBe(EXPECTED_GROSS)
+    expect(booking!.paymentMode).toBe('partial_pay')
+    expect(Math.floor(Number(booking!.pricePerParticipantSnapshot))).toBe(
+      RAFTING_PRICE_1_2,
+    )
+
+    // ── DB invariant 2: Commission snapshot (rate + basis) locked ──
+    expect(Number(booking!.commissionRateSnapshot)).toBeGreaterThan(0)
+    expect(booking!.commissionBasisSnapshot.length).toBeGreaterThan(0)
+
+    // ── DB invariant 3: Capacity decremented atomically ──
+    const slotAfter = await getSlotCapacity(slotBefore!.slotId)
+    expect(slotAfter!.capacityTaken).toBe(
+      capacityTakenBefore + DEFAULT_PARTICIPANTS,
+    )
+
+    // ── DB invariant 4: Exactly one booking.create audit row ──
+    expect(await countBookingCreateAuditRows(bookingId)).toBe(1)
+
+    // ── Partial-pay worked example in the audit payload ──
+    // 25% Advance captured now (booking_create trigger), balance T-24h.
+    const payload = await getBookingCreateAuditPayload(bookingId)
+    expect(payload, 'booking.create audit payload must exist').toBeTruthy()
+    expect(payload!.effectivePaymentMode).toBe('partial_pay')
+    expect(payload!.captureTrigger).toBe('booking_create')
+    expect(payload!.coercedUnder48h).toBe(false)
+    expect(Math.floor(Number(payload!.grossRupees))).toBe(EXPECTED_GROSS)
+    // Documented worked-example amounts (computed from gross, asserted above):
+    //   Advance now = 25% × ₹3,000 = ₹750 ; Balance T-24h = ₹2,250.
+    expect(EXPECTED_ADVANCE).toBe(750)
+    expect(EXPECTED_BALANCE).toBe(2250)
+  })
+})
+
+// ---------------------------------------------------------------------------
 // 4. Cancel booking
 // ---------------------------------------------------------------------------
 test.describe('Cancel booking', () => {
@@ -231,51 +350,40 @@ test.describe('Checkout validation', () => {
     })
   })
 
-  test('checkout without slotId still renders but slot is null', async ({
+  test('checkout with no slot selected shows a specific field error, no crash', async ({
     page,
   }) => {
-    // Navigate to the collection to find a real experience ID
-    await page.goto('/adventure/rafting-in-rishikesh')
-    const experienceLinks = page.locator('a[href*="/experience/"]')
-    const linkCount = await experienceLinks.count()
-    expect(linkCount).toBeGreaterThanOrEqual(1)
+    // Resolve a real experienceId via the seeded rafting experience.
+    const slot = await getOpenSlotForExperienceSlug(RAFTING_SLUG)
+    expect(slot, 'seeded rafting experience must exist').toBeTruthy()
+    const experienceId = slot!.experienceId
 
-    // Go to experience detail to extract the experienceId from the
-    // "Book now" link's href
-    await experienceLinks.first().click()
-    await expect(page.locator('h1')).toBeVisible()
-
-    const bookNowLink = page.locator('a:has-text("Book now")')
-    const bookNowHref = await bookNowLink.getAttribute('href')
-    expect(bookNowHref).toBeTruthy()
-
-    // Extract experienceId from href (format: /checkout?experienceId=xxx)
-    const experienceIdMatch = bookNowHref!.match(/experienceId=([^&]+)/)
-    expect(experienceIdMatch).toBeTruthy()
-    const experienceId = experienceIdMatch![1]
-
-    // Navigate to checkout with experienceId but no slotId
-    // This should render the checkout page (slotId is optional/nullable)
+    // Navigate to checkout with experienceId but NO slotId — the page
+    // renders (slotId is optional on the route), but paying must fail
+    // with a specific slot field error rather than crashing.
     const response = await page.goto(
       `/checkout?experienceId=${experienceId}`,
     )
     expect(response?.status()).toBe(200)
 
-    // Checkout form renders — the page does not error even without slotId
     await expect(page.locator('h1')).toContainText('Checkout')
     await expect(page.getByText('Order summary')).toBeVisible()
 
-    // Pay button visible — clicking without a valid slot should trigger
-    // a server-side validation error (slot_unavailable) rather than crash
     const payButton = page.locator('button:has-text("Pay")')
     await expect(payButton).toBeVisible()
     await payButton.click()
 
-    // The server action should return an error since slotId is empty
-    // Wait for the error message to appear (rendered as a paragraph
-    // inside a destructive-bordered container)
-    const errorMessage = page.getByText('An unexpected error occurred')
+    // Specific, actionable field error — NOT a generic "unexpected error".
+    const errorMessage = page.getByText(
+      /select an available date and slot/i,
+    )
     await expect(errorMessage).toBeVisible({ timeout: 10_000 })
+    await expect(
+      page.getByText('An unexpected error occurred'),
+    ).toHaveCount(0)
+
+    // No booking was created for this no-slot attempt — page stays put.
+    await expect(page).toHaveURL(/\/checkout/)
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/customer-checkout-no-slot.png',

@@ -1,4 +1,4 @@
-import { and, eq, lte, sql, type ExtractTablesWithRelations } from 'drizzle-orm'
+import { and, eq, gt, lte, sql, type ExtractTablesWithRelations } from 'drizzle-orm'
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core'
 
 import * as schema from '@/db/schema'
@@ -97,7 +97,11 @@ export async function resolveCommission(
     .where(
       and(
         lte(commissionTiers.startAt, now),
-        sql`${commissionTiers.endAt} > ${now}`,
+        // `gt` (not raw `sql`) so the Date binds as the column type — a raw
+        // interpolation passes a JS Date to postgres-js and throws
+        // ERR_INVALID_ARG_TYPE on the real driver (PGlite tolerates it).
+        // Same money-path defect class as pricing-resolver. (Issue #13)
+        gt(commissionTiers.endAt, now),
         sql`(
           array_length(${commissionTiers.appliesToCategories}, 1) IS NULL
           OR ${exp.activitySlug} = ANY(${commissionTiers.appliesToCategories})

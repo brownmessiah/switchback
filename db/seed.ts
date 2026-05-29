@@ -262,7 +262,16 @@ async function seed(): Promise<void> {
         .where(inArray(experiences.slug, EXPERIENCES.map((e) => e.slug)))
 
   // ----- AVAILABILITY SLOTS — one slot T+7d per Experience, capacity 8 -----
+  // Anchor the slot to a fixed morning hour (04:00 UTC = 09:30 IST) so the
+  // 4-hour activity window (→ 08:00 UTC / 13:30 IST) stays within a single
+  // calendar day in BOTH UTC and IST. The ADR-0007 identity-tier cap
+  // forbids multi-day Experiences via a same-calendar-day(UTC) check; a
+  // floating `Date.now() + 7d` start can push end-time past UTC midnight
+  // depending on the wall-clock time the seed runs, which would falsely
+  // trip MULTI_DAY_NOT_ALLOWED and make identity-tier Experiences
+  // un-bookable. Pinning the hour keeps every seeded slot single-day.
   const startAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+  startAt.setUTCHours(4, 0, 0, 0)
   const endAt = new Date(startAt.getTime() + 4 * 60 * 60 * 1000)
   for (const exp of allExperiences) {
     await db

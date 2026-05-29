@@ -42,15 +42,31 @@ export type StartCheckoutResult =
         | 'permits_not_acknowledged'
         | 'slot_unavailable'
         | 'experience_not_found'
+        | 'tier_cap_exceeded'
         | 'payment_failed'
         | 'unknown'
       message: string
     }
 
+/** RFC 4122 UUID — matches the slotId shape booking-create requires. */
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export async function executeStartCheckout(
   database: DBOrTx,
   input: StartCheckoutInput,
 ): Promise<StartCheckoutResult> {
+  // Validate the required slot at the boundary so a missing/invalid slot
+  // surfaces as a specific field error rather than a raw ZodError that
+  // collapses into the generic "unexpected error" path (Issue #13).
+  if (typeof input.slotId !== 'string' || !UUID_RE.test(input.slotId)) {
+    return {
+      ok: false,
+      error: 'slot_unavailable',
+      message: 'Please select an available date and slot before paying.',
+    }
+  }
+
   try {
     const bookingResult = await createBooking(database, input)
 
@@ -150,6 +166,13 @@ function mapBookingError(err: BookingCreateError): StartCheckoutResult & { ok: f
       ok: false,
       error: 'experience_not_found',
       message: 'Experience not found.',
+    },
+    TIER_CAP_EXCEEDED: {
+      ok: false,
+      error: 'tier_cap_exceeded',
+      // err.message carries the ADR-0007 reason, which is already
+      // user-facing — surface it instead of the generic fallback.
+      message: err.message,
     },
   }
   return (

@@ -30,13 +30,16 @@ async function signSessionToken(token: string, secret: string): Promise<string> 
   return `${token}.${b64}`
 }
 
-type Role = 'customer' | 'vendor' | 'admin'
+type Role = 'customer' | 'vendor' | 'admin' | 'vendor-onboarding'
 
 /** Seed user IDs — must match db/seed.ts */
 const SEED_USERS: Record<Role, string> = {
   admin: 'u_seed_admin',
   customer: 'u_seed_customer',
   vendor: 'u_seed_v_business',
+  // A signed-up vendor with NO vendor_profile yet — drives the onboarding
+  // flow (#16). Distinct from `vendor`, which is already onboarded.
+  'vendor-onboarding': 'u_seed_v_onboarding',
 }
 
 const AUTH_DIR = path.resolve(__dirname, '../.auth')

@@ -11,7 +11,12 @@
  * the global setup project — seed user `u_seed_v_business`, business-verified).
  */
 
+import path from 'node:path'
+
+import postgres from 'postgres'
+
 import { test, expect } from '../../fixtures/devtools'
+import { e2eDbUrl } from '../../helpers/config'
 
 // ---------------------------------------------------------------------------
 // 1. Onboarding page — already-onboarded vendor redirects to dashboard
@@ -32,6 +37,100 @@ test.describe('Vendor onboarding', () => {
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/vendor-onboarding-redirect.png',
+      fullPage: true,
+    })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 1b. Onboarding flow — a signed-up vendor WITHOUT a profile completes the
+//     wizard and a phone-tier Vendor profile is created (functional #16).
+//
+//     Uses the `u_seed_v_onboarding` seed user (no vendor_profile) via its
+//     own injected session, overriding the project's default vendor storage.
+// ---------------------------------------------------------------------------
+const ONBOARDING_STORAGE = path.resolve(
+  __dirname,
+  '../../.auth/vendor-onboarding-storage.json',
+)
+const ONBOARDING_USER_ID = 'u_seed_v_onboarding'
+
+test.describe('Vendor onboarding flow (no profile yet)', () => {
+  test.use({ storageState: ONBOARDING_STORAGE })
+
+  test('completes the wizard and creates a phone-tier vendor profile', async ({
+    page,
+  }) => {
+    // Deterministic, slug-unique business name for this run.
+    const businessName = 'E2E Onboarding Outfitters'
+    const expectedSlug = 'e2e-onboarding-outfitters'
+
+    // Make the test retry-safe: ensure this user has no profile before we
+    // drive the wizard (globalSetup reseeds, but CI retries reuse the DB).
+    {
+      const cleanup = postgres(e2eDbUrl(), { max: 1 })
+      try {
+        await cleanup`DELETE FROM vendor_profiles WHERE user_id = ${ONBOARDING_USER_ID}`
+      } finally {
+        await cleanup.end()
+      }
+    }
+
+    await page.goto('/vendor/onboarding')
+
+    // The onboarding wizard renders (not a redirect) because this user has
+    // no vendor profile yet.
+    await expect(page.locator('h1')).toContainText('Become a vendor')
+
+    // ── Step 1: business details ──────────────────────────────────────
+    await page.fill('#businessName', businessName)
+    // Slug auto-derives from the business name; confirm it.
+    await expect(page.locator('#slug')).toHaveValue(expectedSlug)
+
+    await page.locator('button', { hasText: 'Continue' }).click()
+
+    // ── Step 2: verification (mocked manual-approve path, no live Aadhaar) ─
+    // PAN is optional here; we intentionally leave it blank to assert the
+    // profile is created at the phone tier with no self-promotion. The
+    // step explicitly defers Aadhaar/document upload to a connected
+    // external service — i.e. the mocked manual-approve path.
+    await expect(
+      page.getByText(/Aadhaar verification and document upload will be available/i),
+    ).toBeVisible()
+
+    await page.locator('button', { hasText: 'Continue' }).click()
+
+    // ── Step 3: confirm & create ──────────────────────────────────────
+    await expect(page.getByText('Confirm & create profile')).toBeVisible()
+    await page.locator('button', { hasText: 'Create vendor profile' }).click()
+
+    // On success the form redirects to the dashboard.
+    await page.waitForURL(/\/vendor\/dashboard/, { timeout: 15_000 })
+    await expect(page.locator('h1')).toContainText('Dashboard')
+
+    // ── Assert against the DB: a phone-tier profile now exists ────────
+    const sql = postgres(e2eDbUrl(), { max: 1 })
+    try {
+      const rows = await sql<
+        { kyc_tier: string; slug: string; pan: string | null }[]
+      >`
+        SELECT kyc_tier, slug, pan
+        FROM vendor_profiles
+        WHERE user_id = ${ONBOARDING_USER_ID}
+        LIMIT 1
+      `
+      expect(rows).toHaveLength(1)
+      expect(rows[0].slug).toBe(expectedSlug)
+      // ADR-0007: a freshly-onboarded vendor is ALWAYS phone tier. The
+      // identity tier is reached only via the admin manual-approve path.
+      expect(rows[0].kyc_tier).toBe('phone')
+      expect(rows[0].pan).toBeNull()
+    } finally {
+      await sql.end()
+    }
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/vendor-onboarding-create.png',
       fullPage: true,
     })
   })

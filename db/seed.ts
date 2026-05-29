@@ -10,6 +10,9 @@
  *     identity-tier (caps apply), one business-tier (unrestricted +
  *     payouts configured + PAN snapshotted so booking-create works
  *     against resident-Vendor TDS path)
+ *   - 1 vendor User with NO vendor_profile yet — a signed-up user who
+ *     has not onboarded. Used by the onboarding E2E (#16) to drive
+ *     createVendorProfileAction against a clean "no profile" state.
  *   - ~8 Experiences across (rishikesh, manali, bir-billing, goa) ×
  *     (rafting, paragliding, scuba-diving, trekking). Status='published'
  *     so adventure-city collections find them.
@@ -83,6 +86,18 @@ const VENDORS = [
     },
   },
 ]
+
+/**
+ * A vendor User who has signed up (MSG91 OTP, mocked) but has NOT yet
+ * created a vendor_profile. Deterministic ID so the onboarding E2E can
+ * inject a session and drive createVendorProfileAction against a clean
+ * "no profile" state. Intentionally NOT inserted into vendor_profiles.
+ */
+const NO_PROFILE_VENDOR = {
+  userId: 'u_seed_v_onboarding',
+  email: 'onboarding@seed.outvers.dev',
+  name: 'Onboarding Candidate',
+} as const
 
 const EXPERIENCES: SeededExperience[] = [
   // identity-tier vendor — Rishikesh + Manali Experiences
@@ -195,6 +210,12 @@ async function seed(): Promise<void> {
       { id: 'u_seed_admin', email: 'admin@seed.outvers.dev', name: 'Seed Admin' },
       { id: 'u_seed_customer', email: 'customer@seed.outvers.dev', name: 'Seed Customer' },
       ...VENDORS.map((v) => ({ id: v.userId, email: v.email, name: v.businessName })),
+      // Signed-up vendor with no profile yet (drives onboarding E2E #16).
+      {
+        id: NO_PROFILE_VENDOR.userId,
+        email: NO_PROFILE_VENDOR.email,
+        name: NO_PROFILE_VENDOR.name,
+      },
     ])
     .onConflictDoNothing()
 

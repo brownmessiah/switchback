@@ -30,6 +30,7 @@ async function globalSetup() {
   await injectSession('customer')
   await injectSession('vendor')
   await injectSession('admin')
+  await injectSession('vendor-onboarding')
   console.log('[E2E] Sessions injected. Starting webServer...')
 }
 

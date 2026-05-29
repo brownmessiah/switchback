@@ -493,17 +493,23 @@ async function seed(): Promise<void> {
   // E2E assertions stay stable across runs.
   const creditIssuedAt = new Date('2026-01-01T00:00:00.000Z')
   const creditExpiresAt = new Date('2027-01-01T00:00:00.000Z') // +12 months
+  // Reseed-idempotent: wallet_transactions has no natural unique key, so
+  // onConflictDoNothing would be a no-op and repeated seeds against a
+  // non-reset DB would accumulate duplicate credit grants. Key the seed grant
+  // on a fixed referenceId and delete any prior copy before inserting.
+  const SEED_CREDIT_GRANT_REF = 'seed-credit-grant-u_seed_customer'
   await db
-    .insert(walletTransactions)
-    .values({
-      userId: 'u_seed_customer',
-      balanceType: 'outvers_credit',
-      amount: '200.00',
-      source: 'promo',
-      expiresAt: creditExpiresAt,
-      createdAt: creditIssuedAt,
-    })
-    .onConflictDoNothing()
+    .delete(walletTransactions)
+    .where(eq(walletTransactions.referenceId, SEED_CREDIT_GRANT_REF))
+  await db.insert(walletTransactions).values({
+    userId: 'u_seed_customer',
+    balanceType: 'outvers_credit',
+    amount: '200.00',
+    source: 'promo',
+    referenceId: SEED_CREDIT_GRANT_REF,
+    expiresAt: creditExpiresAt,
+    createdAt: creditIssuedAt,
+  })
 
   console.warn(
     `seeded ${VENDORS.length} vendors, ${EXPERIENCES.length} experiences, ${allExperiences.length} slots, ${seededBookings.length} bookings, ${completedBookings.length} reviews`,

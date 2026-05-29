@@ -10,6 +10,7 @@ import { experiences } from '@/db/schema/experiences'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { auth } from '@/lib/auth'
 import { writeAuditLog } from '@/lib/audit/write'
+import { assertExperienceWithinTier } from '@/lib/kyc/enforce-tier-caps'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 import { indexExperience, deindexExperience, type ExperienceSearchDoc } from '@/lib/search/indexer'
 import type { MeiliLike } from '@/lib/search/meilisearch-client'
@@ -97,6 +98,25 @@ export async function executeApproveExperience(
       ok: false,
       error: `Cannot approve: experience must be in pending_review status (current: ${exp.status}).`,
     }
+  }
+
+  // ADR-0007 — enforce the Vendor's KYC-tier caps before publishing. An
+  // over-cap Experience (price, combo, multi-day, or per-slot capacity) is
+  // rejected; the rejection reason is written to audit_logs and the status
+  // stays pending_review.
+  const tierCheck = await assertExperienceWithinTier(db, experienceId)
+  if (!tierCheck.ok) {
+    await writeAuditLog(db, {
+      actorUserId: adminUserId,
+      action: 'admin.experience.tier_cap_rejected',
+      entityType: 'experience',
+      entityId: experienceId,
+      payload: {
+        code: tierCheck.code,
+        reason: tierCheck.reason,
+      },
+    })
+    return { ok: false, error: tierCheck.reason }
   }
 
   const now = new Date()

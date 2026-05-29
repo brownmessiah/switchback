@@ -6,6 +6,8 @@ import { bookings } from '@/db/schema/bookings'
 import { experiences } from '@/db/schema/experiences'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { writeAuditLog } from '@/lib/audit/write'
+import { assertBookingWithinTier } from '@/lib/kyc/enforce-tier-caps'
+import type { TierCapViolationCode } from '@/lib/kyc/tier-caps'
 import { getRedis } from '@/lib/redis'
 
 import { resolveCommission, type DBOrTx } from './commission-resolver'
@@ -71,14 +73,24 @@ export type BookingCreateErrorCode =
   | 'EXPERIENCE_NOT_FOUND'
   | 'VENDOR_NOT_FOUND'
   | 'VENDOR_PAYOUT_NOT_CONFIGURED'
+  | 'TIER_CAP_EXCEEDED'
 
 export class BookingCreateError extends Error {
+  /**
+   * For TIER_CAP_EXCEEDED, the underlying ADR-0007 violation code so the
+   * top-level handler can write a rejection audit row that survives the
+   * rolled-back booking transaction.
+   */
+  public tierCapViolationCode?: TierCapViolationCode
+
   constructor(
     public code: BookingCreateErrorCode,
     message: string,
+    tierCapViolationCode?: TierCapViolationCode,
   ) {
     super(message)
     this.name = 'BookingCreateError'
+    this.tierCapViolationCode = tierCapViolationCode
   }
 }
 
@@ -129,7 +141,9 @@ export async function createBooking(
     }
   }
 
-  const result = await db.transaction(async (tx) => {
+  let result: BookingCreateResult
+  try {
+    result = await db.transaction(async (tx) => {
     // 3. SELECT FOR UPDATE on the slot — serialises concurrent attempts.
     const [slot] = await tx
       .select()
@@ -189,6 +203,24 @@ export async function createBooking(
       throw new BookingCreateError(
         'VENDOR_NOT_FOUND',
         `vendor ${exp.vendorUserId} not found`,
+      )
+    }
+
+    // 5b. ADR-0007 Tier-2 cap re-check. The Vendor's KYC tier may have been
+    // downgraded after the Experience was published, so the caps are
+    // double-checked here against the CURRENT tier + the booked slot. An
+    // over-cap Booking is refused; the rollback is atomic. The rejection
+    // audit row is written by the top-level handler so it survives.
+    const tierCheck = await assertBookingWithinTier(tx, parsed.experienceId, {
+      startAt: slot.startAt,
+      endAt: slot.endAt,
+      capacity: slot.capacity,
+    })
+    if (!tierCheck.ok) {
+      throw new BookingCreateError(
+        'TIER_CAP_EXCEEDED',
+        tierCheck.reason,
+        tierCheck.code,
       )
     }
 
@@ -341,7 +373,40 @@ export async function createBooking(
     })
 
     return { bookingId: booking.id, effectivePaymentMode }
-  })
+    })
+  } catch (err: unknown) {
+    // ADR-0007: a Tier-2 cap rejection rolls back the booking transaction.
+    // Record the rejection in an audit row using the top-level db handle so
+    // it survives the rollback (the transaction's own writes did not commit).
+    if (err instanceof BookingCreateError && err.code === 'TIER_CAP_EXCEEDED') {
+      const [exp] = await db
+        .select({ vendorUserId: experiences.vendorUserId })
+        .from(experiences)
+        .where(eq(experiences.id, parsed.experienceId))
+        .limit(1)
+      const [vendor] = exp
+        ? await db
+            .select({ kycTier: vendorProfiles.kycTier })
+            .from(vendorProfiles)
+            .where(eq(vendorProfiles.userId, exp.vendorUserId))
+            .limit(1)
+        : []
+      await writeAuditLog(db, {
+        actorUserId: parsed.customerUserId,
+        action: 'booking.tier_cap_rejected',
+        entityType: 'experience',
+        entityId: parsed.experienceId,
+        payload: {
+          code: err.tierCapViolationCode ?? null,
+          reason: err.message,
+          kycTier: vendor?.kycTier ?? null,
+          slotId: parsed.slotId,
+          participantCount: parsed.participantCount,
+        },
+      })
+    }
+    throw err
+  }
 
   // 13. Idempotency cache after transaction commits.
   await redis.set(idempKey, `${result.bookingId}|${result.effectivePaymentMode}`, {

@@ -6,7 +6,10 @@ import { z } from 'zod'
 
 import { db as prodDb } from '@/db/client'
 import { experiences, mediaAssets } from '@/db/schema'
+import { availabilitySlots } from '@/db/schema/availability-slots'
+import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { auth } from '@/lib/auth'
+import { assertWithinTier, type KycTier } from '@/lib/kyc/tier-caps'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 import { LocalFileAdapter } from '@/lib/storage/local'
 
@@ -59,8 +62,14 @@ export async function executeUpdateExperience(
 
   // Verify ownership — vendor can only edit their own Experiences.
   const [existing] = await db
-    .select({ id: experiences.id, vendorUserId: experiences.vendorUserId })
+    .select({
+      id: experiences.id,
+      vendorUserId: experiences.vendorUserId,
+      status: experiences.status,
+      kycTier: vendorProfiles.kycTier,
+    })
     .from(experiences)
+    .innerJoin(vendorProfiles, eq(experiences.vendorUserId, vendorProfiles.userId))
     .where(eq(experiences.id, data.id))
     .limit(1)
 
@@ -69,6 +78,36 @@ export async function executeUpdateExperience(
   }
   if (existing.vendorUserId !== userId) {
     return { ok: false, error: 'You do not own this experience.' }
+  }
+
+  // ADR-0007 — enforce the Vendor's KYC-tier caps when editing a LIVE
+  // listing (published / pending_review / paused). Editing a draft is
+  // unrestricted. The check runs against the PROPOSED price/combo (this
+  // edit's input) combined with the Experience's existing slots, so a
+  // Vendor cannot escalate a live listing past their tier via the form.
+  if (existing.status !== 'draft' && existing.status !== 'archived') {
+    const slots = await db
+      .select({
+        startAt: availabilitySlots.startAt,
+        endAt: availabilitySlots.endAt,
+        capacity: availabilitySlots.capacity,
+      })
+      .from(availabilitySlots)
+      .where(eq(availabilitySlots.experienceId, data.id))
+
+    const tierCheck = assertWithinTier({
+      kycTier: existing.kycTier as KycTier,
+      pricePerPersonRupees: Math.max(
+        data.pricePerPerson_1_2,
+        data.pricePerPerson_3_5,
+        data.pricePerPerson_6_plus,
+      ),
+      isCombo: data.isCombo,
+      slots,
+    })
+    if (!tierCheck.ok) {
+      return { ok: false, error: tierCheck.reason }
+    }
   }
 
   try {

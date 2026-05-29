@@ -66,6 +66,10 @@ describe('executeStartCheckout (Task 20)', () => {
       userId: 'u_vendor',
       businessName: 'Test Adventures',
       slug: 'test-adventures',
+      // Business-verified (ADR-0007 Tier 3, unrestricted) — the seeded slot
+      // holds capacity 10, above the Tier-2 per-slot cap, so the
+      // booking-create tier re-check requires the unrestricted tier.
+      kycTier: 'business',
       pan: 'ABCDE1234F',
     })
   })

@@ -268,4 +268,118 @@ describe('executeUpdateExperience', () => {
       expect(after.updatedAt.getTime()).toBeGreaterThanOrEqual(before.updatedAt.getTime())
     })
   })
+
+  // ── ADR-0007 Tier-2 cap enforcement on edits of live listings ─────
+  //
+  // Editing a draft is unrestricted (a phone-tier Vendor may draft).
+  // Editing a published / pending_review / paused listing must stay
+  // within the Vendor's KYC-tier caps so a Vendor cannot escalate a live
+  // listing past their tier via the edit form.
+  describe('tier-cap enforcement (ADR-0007)', () => {
+    async function setVendorTier(tier: 'phone' | 'identity' | 'business'): Promise<void> {
+      await db
+        .update(vendorProfiles)
+        .set({ kycTier: tier })
+        .where(eq(vendorProfiles.userId, 'u_vendor_edit'))
+    }
+
+    async function setStatus(
+      status: 'draft' | 'pending_review' | 'published' | 'paused',
+    ): Promise<void> {
+      await db
+        .update(experiences)
+        .set({ status })
+        .where(eq(experiences.id, experienceId))
+    }
+
+    it('allows an over-cap edit while the listing is still a draft', async () => {
+      await setVendorTier('identity')
+      await setStatus('draft')
+
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        validInput({
+          pricePerPerson_1_2: 9000,
+          pricePerPerson_3_5: 9000,
+          pricePerPerson_6_plus: 9000,
+        }),
+      )
+      expect(result).toEqual({ ok: true })
+    })
+
+    it('blocks an over-price edit of a published listing for an identity Vendor', async () => {
+      await setVendorTier('identity')
+      await setStatus('published')
+
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        validInput({
+          pricePerPerson_1_2: 9000,
+          pricePerPerson_3_5: 9000,
+          pricePerPerson_6_plus: 9000,
+        }),
+      )
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toMatch(/5000|per person/i)
+      }
+
+      // The over-cap price was NOT persisted.
+      const [exp] = await db
+        .select({ price: experiences.pricePerPerson_1_2 })
+        .from(experiences)
+        .where(eq(experiences.id, experienceId))
+      expect(exp?.price).toBe('1500.00')
+    })
+
+    it('blocks turning a published listing into a combo for an identity Vendor', async () => {
+      await setVendorTier('identity')
+      await setStatus('published')
+
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        validInput({ isCombo: true }),
+      )
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toMatch(/combo/i)
+      }
+    })
+
+    it('allows a within-cap edit of a published listing for an identity Vendor', async () => {
+      await setVendorTier('identity')
+      await setStatus('published')
+
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        validInput({
+          pricePerPerson_1_2: 5000,
+          pricePerPerson_3_5: 4500,
+          pricePerPerson_6_plus: 4000,
+          isCombo: false,
+        }),
+      )
+      expect(result).toEqual({ ok: true })
+    })
+
+    it('allows any edit of a published listing for a business Vendor', async () => {
+      await setVendorTier('business')
+      await setStatus('published')
+
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        validInput({
+          pricePerPerson_1_2: 99000,
+          pricePerPerson_3_5: 99000,
+          pricePerPerson_6_plus: 99000,
+        }),
+      )
+      expect(result).toEqual({ ok: true })
+    })
+  })
 })

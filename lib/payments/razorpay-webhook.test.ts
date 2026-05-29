@@ -121,6 +121,9 @@ describe('processRazorpayWebhook (ADR-0001)', () => {
       userId: 'u_v',
       businessName: 'Webhook Test Vendor',
       slug: 'webhook-test',
+      // Identity-verified (ADR-0007 Tier 2) so the seeded within-cap
+      // Experience can accept Bookings through createBooking's tier re-check.
+      kycTier: 'identity',
       pan: 'ABCDE1234F',
       commissionRate: '20.00',
       payoutMethod: 'upi',

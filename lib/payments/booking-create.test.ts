@@ -60,6 +60,10 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
       userId: 'u_v',
       businessName: 'Test Adventures',
       slug: 'test-adventures',
+      // Identity-verified (ADR-0007 Tier 2): the seeded Experience (single-day,
+      // Rs.1,500/person, capacity 8, non-combo) sits within the Tier-2 caps,
+      // so the booking-create tier re-check passes for the happy path.
+      kycTier: 'identity',
       pan: 'ABCDE1234F',
       commissionRate: '20.00',
       payoutMethod: 'upi',
@@ -309,6 +313,12 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
     })
 
     it('escrow-flavours partial_pay when gross > Rs.25,000 (ADR-0001)', async () => {
+      // A >Rs.25,000 ticket exceeds the Tier-2 per-person cap, so this is a
+      // Business-verified Vendor (ADR-0007 unrestricted listing).
+      await db
+        .update(vendorProfiles)
+        .set({ kycTier: 'business' })
+        .where(eq(vendorProfiles.userId, 'u_v'))
       // Push price up so 2 participants × X > 25000
       await db
         .update(experiences)
@@ -538,9 +548,11 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
     })
 
     it('starts deducting TDS once the vendor crosses ₹5L cumulative FY gross', async () => {
+      // Rs.150,000/person far exceeds the Tier-2 cap, so this is a
+      // Business-verified Vendor (an individual taxpayer can still be Tier 3).
       await db
         .update(vendorProfiles)
-        .set({ taxpayerType: 'individual' })
+        .set({ taxpayerType: 'individual', kycTier: 'business' })
         .where(eq(vendorProfiles.userId, 'u_v'))
       await db
         .update(experiences)
@@ -570,6 +582,101 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
       const r = await createBooking(db, defaultInput())
       const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
       expect(row?.tdsAmountSnapshot).toBe('3.00') // 0.1% of 3000, not exempt
+    })
+  })
+
+  // ── Tier-2 cap re-check at booking-create (ADR-0007) ──────────────
+  //
+  // The caps are double-checked at booking-create because the Vendor's
+  // KYC tier may have been downgraded AFTER the Experience was published.
+  // An over-cap Booking against a now-downgraded Vendor must be refused.
+  describe('Tier-2 cap re-check (ADR-0007)', () => {
+    it('rejects a booking when the Vendor has been downgraded to phone', async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ kycTier: 'phone' })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+
+      const err = await expectBookingCreateError(createBooking(db, defaultInput()))
+      expect(err.code).toBe('TIER_CAP_EXCEEDED')
+
+      // No booking row created — the transaction rolled back.
+      const rows = await db.select().from(bookings)
+      expect(rows).toHaveLength(0)
+      // Slot capacity untouched.
+      const [slot] = await db
+        .select()
+        .from(availabilitySlots)
+        .where(eq(availabilitySlots.id, slotId))
+      expect(slot?.capacityTaken).toBe(0)
+    })
+
+    it('rejects a booking when the booked slot now exceeds the 8-participant cap for an identity Vendor', async () => {
+      // Vendor stays identity, but the slot capacity is raised above the cap
+      // (e.g. an Experience published while business-verified, then downgraded).
+      await db
+        .update(availabilitySlots)
+        .set({ capacity: 20 })
+        .where(eq(availabilitySlots.id, slotId))
+
+      const err = await expectBookingCreateError(createBooking(db, defaultInput()))
+      expect(err.code).toBe('TIER_CAP_EXCEEDED')
+
+      const rows = await db.select().from(bookings)
+      expect(rows).toHaveLength(0)
+    })
+
+    it('rejects a booking when the Experience is now over the per-person price cap for an identity Vendor', async () => {
+      await db
+        .update(experiences)
+        .set({
+          pricePerPerson_1_2: '9000.00',
+          pricePerPerson_3_5: '9000.00',
+          pricePerPerson_6_plus: '9000.00',
+        })
+        .where(eq(experiences.id, experienceId))
+
+      const err = await expectBookingCreateError(createBooking(db, defaultInput()))
+      expect(err.code).toBe('TIER_CAP_EXCEEDED')
+
+      const rows = await db.select().from(bookings)
+      expect(rows).toHaveLength(0)
+    })
+
+    it('writes a TIER_CAP_EXCEEDED audit row on rejection', async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ kycTier: 'phone' })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+
+      await expectBookingCreateError(createBooking(db, defaultInput()))
+
+      // The rejection audit row is written outside the rolled-back booking
+      // transaction so it survives.
+      const rows = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.action, 'booking.tier_cap_rejected'))
+      expect(rows).toHaveLength(1)
+      expect(rows[0]?.entityType).toBe('experience')
+      expect(rows[0]?.entityId).toBe(experienceId)
+      const payload = rows[0]?.payload as Record<string, unknown>
+      expect(payload.code).toBe('PHONE_CANNOT_PUBLISH')
+      expect(payload.kycTier).toBe('phone')
+    })
+
+    it('allows a booking when the Vendor is business-verified regardless of caps', async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ kycTier: 'business' })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+      await db
+        .update(availabilitySlots)
+        .set({ capacity: 30 })
+        .where(eq(availabilitySlots.id, slotId))
+
+      const r = await createBooking(db, defaultInput())
+      expect(r.bookingId).toMatch(/^[0-9a-f-]{36}$/)
     })
   })
 })

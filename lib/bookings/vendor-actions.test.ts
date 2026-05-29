@@ -98,7 +98,12 @@ describe('vendor booking actions (ADR-0003)', () => {
    * Seed a booking in a given state. Returns booking ID and slot ID.
    */
   async function seedBooking(args: {
-    state: 'confirmed' | 'awaiting_completion' | 'completed' | 'cancelled_by_customer'
+    state:
+      | 'confirmed'
+      | 'awaiting_completion'
+      | 'completed'
+      | 'disputed'
+      | 'cancelled_by_customer'
     grossRupees?: number
   }): Promise<{ bookingId: string; slotId: string }> {
     const startAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
@@ -247,6 +252,96 @@ describe('vendor booking actions (ADR-0003)', () => {
       await expect(
         executeMarkComplete(db, crypto.randomUUID(), 'u_v'),
       ).rejects.toThrow(VendorActionError)
+    })
+  })
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Completion state machine (ADR-0003) — explicit transition assertions
+  // ═══════════════════════════════════════════════════════════════════
+  //
+  // confirmed → awaiting_completion → completed
+  //                                 \→ disputed  (BLOCKS completion)
+  //
+  // mark_complete only fires from awaiting_completion; the disputed branch
+  // must be resolved by support before completion can occur (ADR-0003: "An
+  // open Dispute BLOCKS completion until resolved.").
+
+  describe('completion state machine (ADR-0003)', () => {
+    it('asserts the confirmed → awaiting_completion → completed chain', async () => {
+      // 1. Booking starts confirmed; mark_complete is NOT yet allowed
+      //    (the experience hasn't reached end_at, so it is not awaiting_completion).
+      const { bookingId } = await seedBooking({ state: 'confirmed' })
+      const [s0] = await db
+        .select({ state: bookings.state })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+      expect(s0?.state).toBe('confirmed')
+      await expect(executeMarkComplete(db, bookingId, 'u_v')).rejects.toThrow(
+        /only awaiting_completion/i,
+      )
+
+      // 2. End-of-experience advances confirmed → awaiting_completion
+      //    (this is the at-end_at transition the M3 cron performs; here we
+      //    apply it directly to assert the next legal hop).
+      await db
+        .update(bookings)
+        .set({ state: 'awaiting_completion', updatedAt: sql`now()` })
+        .where(eq(bookings.id, bookingId))
+
+      // 3. Vendor mark_complete now succeeds: awaiting_completion → completed.
+      const result = await executeMarkComplete(db, bookingId, 'u_v')
+      expect(result.completedAt).toBeInstanceOf(Date)
+      const [s2] = await db
+        .select({ state: bookings.state, completedAt: bookings.completedAt })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+      expect(s2?.state).toBe('completed')
+      expect(s2?.completedAt).toBeInstanceOf(Date)
+    })
+
+    it('BLOCKS completion while a Dispute is open (disputed cannot be marked complete)', async () => {
+      const { bookingId } = await seedBooking({ state: 'disputed' })
+
+      await expect(executeMarkComplete(db, bookingId, 'u_v')).rejects.toThrow(
+        VendorActionError,
+      )
+      await expect(executeMarkComplete(db, bookingId, 'u_v')).rejects.toThrow(
+        /only awaiting_completion/i,
+      )
+
+      // State is unchanged — the Dispute still blocks completion.
+      const [row] = await db
+        .select({ state: bookings.state })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+      expect(row?.state).toBe('disputed')
+    })
+
+    it('records autoCompleted=false on a Vendor-initiated mark_complete audit row', async () => {
+      // The end_at+24h auto-completion path (M3 cron) stamps autoCompleted=true
+      // per ADR-0003; the Vendor-driven path here stamps false. This asserts
+      // the audit row carries the distinguishing flag the SLA tracker reads.
+      const { bookingId } = await seedBooking({ state: 'awaiting_completion' })
+      await executeMarkComplete(db, bookingId, 'u_v')
+
+      const [auditRow] = await db
+        .select()
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.action, 'booking.mark_complete'),
+            eq(auditLogs.entityId, bookingId),
+          ),
+        )
+      const payload = auditRow?.payload as Record<string, unknown>
+      expect(payload.autoCompleted).toBe(false)
+
+      // And the booking row was NOT auto-completed.
+      const [row] = await db
+        .select({ autoCompleted: bookings.autoCompleted })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+      expect(row?.autoCompleted).toBe(false)
     })
   })
 

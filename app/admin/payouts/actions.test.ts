@@ -482,4 +482,71 @@ describe('Admin payout processing actions', () => {
       }
     })
   })
+
+  // ── First-3 manual approval, auto thereafter (ADR-0007 / ADR-0016) ──
+  //
+  // "First 3 Payouts for an Identity-verified Vendor → manual admin
+  //  approval, auto thereafter." manualPayoutsRemaining starts at 3 and
+  //  decrements on each approval until it reaches 0; from then the gate
+  //  is open (the M3 batch auto-disburses). These tests assert the full
+  //  3-then-auto sequence and the audit trail on each hop.
+
+  describe('first-3 manual approval gate (ADR-0007/0016)', () => {
+    it('decrements 3 → 0 across the first three Payouts, then stays at 0 (auto thereafter)', async () => {
+      const adminId = await seedAdmin(db)
+      const vendorId = await seedVendorWithProfile(db, { manualPayoutsRemaining: 3 })
+
+      const expectedRemaining = [2, 1, 0]
+      for (const remainingAfter of expectedRemaining) {
+        const bookingId = await seedCompletedBooking(db, vendorId)
+        const result = await executeApprovePayout(db, adminId, { bookingId })
+        expect(result).toEqual({ ok: true })
+
+        const [vendor] = await db
+          .select({ manualPayoutsRemaining: vendorProfiles.manualPayoutsRemaining })
+          .from(vendorProfiles)
+          .where(eq(vendorProfiles.userId, vendorId))
+        expect(vendor?.manualPayoutsRemaining).toBe(remainingAfter)
+      }
+
+      // 4th Payout: gate is now open (remaining already 0) → no further decrement.
+      const fourth = await seedCompletedBooking(db, vendorId)
+      const result = await executeApprovePayout(db, adminId, { bookingId: fourth })
+      expect(result).toEqual({ ok: true })
+
+      const [vendor] = await db
+        .select({ manualPayoutsRemaining: vendorProfiles.manualPayoutsRemaining })
+        .from(vendorProfiles)
+        .where(eq(vendorProfiles.userId, vendorId))
+      expect(vendor?.manualPayoutsRemaining).toBe(0)
+
+      // The 4th approval's audit row shows the gate was already open.
+      const [log] = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.entityId, fourth))
+      expect(log?.payload).toMatchObject({
+        manualPayoutsRemainingBefore: 0,
+        manualPayoutsRemainingAfter: 0,
+      })
+    })
+
+    it('audit trail records the before/after manual count on the first manual approval', async () => {
+      const adminId = await seedAdmin(db)
+      const vendorId = await seedVendorWithProfile(db, { manualPayoutsRemaining: 3 })
+      const bookingId = await seedCompletedBooking(db, vendorId)
+
+      await executeApprovePayout(db, adminId, { bookingId })
+
+      const [log] = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.entityId, bookingId))
+      expect(log?.payload).toMatchObject({
+        manualPayoutsRemainingBefore: 3,
+        manualPayoutsRemainingAfter: 2,
+        newPayoutState: 'approved',
+      })
+    })
+  })
 })

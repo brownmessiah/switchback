@@ -1022,6 +1022,12 @@ test.describe('Admin audit log', () => {
     await expect(page.getByRole('columnheader', { name: 'Action' })).toBeVisible()
     await expect(page.getByRole('columnheader', { name: 'Actor' })).toBeVisible()
 
+    // Variant B (A3) read-only log: each row's action-type cell is a token-true
+    // AdminStatusBadge (color + icon), exposed via a stable testid. The seeded
+    // audit_logs guarantee at least one row, so at least one badge must render.
+    const actionBadges = page.locator('[data-testid="audit-action-badge"]')
+    await expect(actionBadges.first()).toBeVisible()
+
     await page.screenshot({
       path: 'tests/e2e/screenshots/admin-audit-log.png',
       fullPage: true,
@@ -3287,6 +3293,16 @@ test.describe('Admin support ticket lifecycle (#29)', () => {
     // ── Assert: the opening message was written ────────────────────────────
     expect(await countSupportMessagesForTicket(ticketId)).toBe(1)
     expect(await getLatestSupportMessageBody(ticketId)).toBe(OPENING_BODY)
+
+    // ── Assert (variant B / A3): the new ticket's status renders as a
+    // token-true AdminStatusBadge (colour + icon, never colour alone), exposed
+    // via a stable testid on the just-created row (status=open). The create
+    // form revalidates the list, so the row is present without a reload.
+    const newRow = page.locator(`tr[data-ticket-id="${ticketId}"]`)
+    await expect(newRow).toBeVisible({ timeout: 15_000 })
+    const statusBadge = newRow.locator('[data-testid="ticket-status-badge"]')
+    await expect(statusBadge).toBeVisible()
+    await expect(statusBadge).toContainText('Open')
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/admin-support-create.png',

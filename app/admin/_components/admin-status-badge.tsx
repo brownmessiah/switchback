@@ -60,6 +60,25 @@ const STATUS_MAP: Record<string, StatusSpec> = {
   // (destructive). Together with `pending` above these cover reviews.status.
   flagged: { variant: 'warning', icon: PauseCircleIcon },
   removed: { variant: 'destructive', icon: XCircleIcon },
+  // Support ticket statuses (ADR / CONTEXT.md "Support ticket"; ticketStatusEnum
+  // = open | in_progress | resolved | closed). Used by the support-tickets list
+  // (#99): an open ticket awaits operator action (warning + clock); in_progress
+  // is actively being worked (info + clock); resolved is affirmatively closed
+  // out (success + check); closed is terminal-neutral (outline + check).
+  open: { variant: 'warning', icon: ClockIcon },
+  in_progress: { variant: 'info', icon: ClockIcon },
+  resolved: { variant: 'success', icon: CheckCircle2Icon },
+  closed: { variant: 'outline', icon: CheckCircle2Icon },
+  // Audit-log severity buckets (DESIGN.md §4 A3). The audit_logs table has no
+  // severity column, so the read-only audit log (#100) infers it from the
+  // action string and surfaces it via this badge so the type chip pairs colour
+  // WITH an icon (never colour alone): a destructive action (delete/revoke/
+  // cancel) is critical (destructive + alert); a mutating action (approve/
+  // reject/edit/update) is a warning (warning + alert); everything else is an
+  // informational event (info + info icon).
+  severity_critical: { variant: 'destructive', icon: AlertTriangleIcon },
+  severity_warning: { variant: 'warning', icon: AlertTriangleIcon },
+  severity_info: { variant: 'info', icon: InfoIcon },
   // Negative / failed
   rejected: { variant: 'destructive', icon: XCircleIcon },
   failed: { variant: 'destructive', icon: AlertTriangleIcon },

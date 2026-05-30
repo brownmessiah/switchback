@@ -182,7 +182,11 @@
       "perPerson": "/ ব্যক্তি",
       "partialPay": "এতিয়া ২৫% দিয়ক, বাকী অভিজ্ঞতাৰ ২৪ ঘণ্টা আগত।",
       "bookNow": "এতিয়া বুক কৰক",
-      "freeCancellation": "বিনামূলীয়া বাতিল · ২৪ ঘণ্টা ৰিফাণ্ড SLA"
+      "freeCancellation": "বিনামূলীয়া বাতিল · ২৪ ঘণ্টা ৰিফাণ্ড SLA",
+      "priceTable": "প্ৰতি-অংশগ্ৰহণকাৰী মূল্য তালিকা",
+      "breakdown": "লাইভ মূল্য বিৱৰণ",
+      "advanceDue": "এতিয়া দিবলগীয়া Advance (25%)",
+      "balanceDue": "T-24h ত বাকী ৰাশি"
     },
     "closure": {
       "heading": "বৰ্তমানে বন্ধ",
@@ -208,6 +212,22 @@
       "business": "ব্যৱসায় প্ৰমাণিত",
       "identity": "পৰিচয় প্ৰমাণিত",
       "phone": "ফোন প্ৰমাণিত"
+    },
+    "rating": {
+      "reviews": "{count, plural, one {পৰ্যালোচনা} other {পৰ্যালোচনাসমূহ}}"
+    },
+    "nav": {
+      "label": "অংশ নেভিগেশ্যন",
+      "overview": "চমু বিৱৰণ",
+      "permits": "অনুমতিপত্ৰ",
+      "cancellation": "বাতিলকৰণ",
+      "reviews": "পৰ্যালোচনাসমূহ",
+      "faq": "সঘনাই সোধা প্ৰশ্ন"
+    },
+    "assurance": {
+      "freeCancellation": "অভিজ্ঞতাৰ 24 ঘণ্টা আগলৈকে বিনামূলীয়া বাতিল",
+      "verifiedVendor": "পৰিচয়-সত্যাপিত Vendor",
+      "exactRefund": "নিশ্চিত কৰাৰ আগতে সঠিক ৰিফাণ্ড দেখুওৱা হয়"
     }
   },
   "SearchPage": {

@@ -182,7 +182,11 @@
       "perPerson": "/ person",
       "partialPay": "Pay 25% now, rest 24h before the experience.",
       "bookNow": "Book now",
-      "freeCancellation": "Free cancellation · 24h refund SLA"
+      "freeCancellation": "Free cancellation · 24h refund SLA",
+      "priceTable": "Per-participant price table",
+      "breakdown": "Live price breakdown",
+      "advanceDue": "Advance due now (25%)",
+      "balanceDue": "Balance at T-24h"
     },
     "closure": {
       "heading": "Currently closed",
@@ -208,6 +212,22 @@
       "business": "Business verified",
       "identity": "Identity verified",
       "phone": "Phone verified"
+    },
+    "rating": {
+      "reviews": "{count, plural, one {review} other {reviews}}"
+    },
+    "nav": {
+      "label": "Section navigation",
+      "overview": "Overview",
+      "permits": "Permits",
+      "cancellation": "Cancellation",
+      "reviews": "Reviews",
+      "faq": "FAQ"
+    },
+    "assurance": {
+      "freeCancellation": "Free cancellation up to 24h before",
+      "verifiedVendor": "Identity-verified Vendor",
+      "exactRefund": "Exact refund shown before you confirm"
     }
   },
   "SearchPage": {

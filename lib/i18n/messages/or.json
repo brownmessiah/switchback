@@ -182,7 +182,11 @@
       "perPerson": "/ ବ୍ୟକ୍ତି",
       "partialPay": "ବର୍ତ୍ତମାନ ୨୫% ପ୍ରଦାନ କରନ୍ତୁ, ଅନୁଭୂତିର ୨୪ ଘଣ୍ଟା ପୂର୍ବରୁ ବାକି।",
       "bookNow": "ବର୍ତ୍ତମାନ ବୁକ୍ କରନ୍ତୁ",
-      "freeCancellation": "ମାଗଣା ବାତିଲ · ୨୪ ଘଣ୍ଟା ରିଫଣ୍ଡ SLA"
+      "freeCancellation": "ମାଗଣା ବାତିଲ · ୨୪ ଘଣ୍ଟା ରିଫଣ୍ଡ SLA",
+      "priceTable": "ପ୍ରତି-ଅଂଶଗ୍ରହଣକାରୀ ମୂଲ୍ୟ ତାଲିକା",
+      "breakdown": "ଲାଇଭ୍ ମୂଲ୍ୟ ବିବରଣୀ",
+      "advanceDue": "ବର୍ତ୍ତମାନ ଦେୟ Advance (25%)",
+      "balanceDue": "T-24h ରେ ଅବଶିଷ୍ଟ ରାଶି"
     },
     "closure": {
       "heading": "ବର୍ତ୍ତମାନ ବନ୍ଦ ଅଛି",
@@ -208,6 +212,22 @@
       "business": "ବ୍ୟବସାୟ ଯାଞ୍ଚ ହୋଇଛି",
       "identity": "ପରିଚୟ ଯାଞ୍ଚ ହୋଇଛି",
       "phone": "ଫୋନ ଯାଞ୍ଚ ହୋଇଛି"
+    },
+    "rating": {
+      "reviews": "{count, plural, one {ସମୀକ୍ଷା} other {ସମୀକ୍ଷାଗୁଡ଼ିକ}}"
+    },
+    "nav": {
+      "label": "ବିଭାଗ ନେଭିଗେସନ୍",
+      "overview": "ସମୀକ୍ଷା",
+      "permits": "ପରମିଟ୍",
+      "cancellation": "ବାତିଲ୍",
+      "reviews": "ସମୀକ୍ଷାଗୁଡ଼ିକ",
+      "faq": "ବାରମ୍ବାର ପଚରାଯାଉଥିବା ପ୍ରଶ୍ନ"
+    },
+    "assurance": {
+      "freeCancellation": "ଅନୁଭବର 24 ଘଣ୍ଟା ପୂର୍ବ ପର୍ଯ୍ୟନ୍ତ ମାଗଣା ବାତିଲ୍",
+      "verifiedVendor": "ପରିଚୟ-ଯାଞ୍ଚିତ Vendor",
+      "exactRefund": "ନିଶ୍ଚିତ କରିବା ପୂର୍ବରୁ ସଠିକ୍ ରିଫଣ୍ଡ ଦେଖାଯାଏ"
     }
   },
   "SearchPage": {

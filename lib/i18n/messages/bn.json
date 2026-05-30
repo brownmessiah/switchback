@@ -182,7 +182,11 @@
       "perPerson": "/ জন",
       "partialPay": "এখনই 25% পরিশোধ করুন, বাকি অভিজ্ঞতার 24 ঘণ্টা আগে।",
       "bookNow": "এখনই বুক করুন",
-      "freeCancellation": "বিনামূল্যে বাতিল · 24 ঘণ্টার রিফান্ড SLA"
+      "freeCancellation": "বিনামূল্যে বাতিল · 24 ঘণ্টার রিফান্ড SLA",
+      "priceTable": "প্রতি-অংশগ্রহণকারী মূল্য তালিকা",
+      "breakdown": "লাইভ মূল্য বিবরণ",
+      "advanceDue": "এখন প্রদেয় Advance (25%)",
+      "balanceDue": "T-24h-এ বাকি পরিমাণ"
     },
     "closure": {
       "heading": "বর্তমানে বন্ধ",
@@ -208,6 +212,22 @@
       "business": "ব্যবসা যাচাইকৃত",
       "identity": "পরিচয় যাচাইকৃত",
       "phone": "ফোন যাচাইকৃত"
+    },
+    "rating": {
+      "reviews": "{count, plural, one {পর্যালোচনা} other {পর্যালোচনা}}"
+    },
+    "nav": {
+      "label": "বিভাগ নেভিগেশন",
+      "overview": "সংক্ষিপ্ত বিবরণ",
+      "permits": "পারমিট",
+      "cancellation": "বাতিলকরণ",
+      "reviews": "পর্যালোচনা",
+      "faq": "সাধারণ প্রশ্নাবলী"
+    },
+    "assurance": {
+      "freeCancellation": "অভিজ্ঞতার 24 ঘণ্টা আগে পর্যন্ত বিনামূল্যে বাতিল",
+      "verifiedVendor": "পরিচয়-যাচাইকৃত Vendor",
+      "exactRefund": "নিশ্চিত করার আগে সঠিক রিফান্ড দেখানো হয়"
     }
   },
   "SearchPage": {

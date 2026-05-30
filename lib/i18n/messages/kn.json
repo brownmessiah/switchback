@@ -182,7 +182,11 @@
       "perPerson": "/ ವ್ಯಕ್ತಿ",
       "partialPay": "ಈಗ 25% ಪಾವತಿಸಿ, ಉಳಿದದ್ದು ಅನುಭವಕ್ಕೆ 24 ಗಂಟೆ ಮೊದಲು.",
       "bookNow": "ಈಗ ಬುಕ್ ಮಾಡಿ",
-      "freeCancellation": "ಉಚಿತ ರದ್ದತಿ · 24 ಗಂಟೆ ಮರುಪಾವತಿ SLA"
+      "freeCancellation": "ಉಚಿತ ರದ್ದತಿ · 24 ಗಂಟೆ ಮರುಪಾವತಿ SLA",
+      "priceTable": "ಪ್ರತಿ-ಭಾಗವಹಿಸುವವರ ಬೆಲೆ ಕೋಷ್ಟಕ",
+      "breakdown": "ನೇರ ಬೆಲೆ ವಿವರ",
+      "advanceDue": "ಈಗ ಪಾವತಿಸಬೇಕಾದ Advance (25%)",
+      "balanceDue": "T-24h ನಲ್ಲಿ ಉಳಿದ ಮೊತ್ತ"
     },
     "closure": {
       "heading": "ಪ್ರಸ್ತುತ ಮುಚ್ಚಲಾಗಿದೆ",
@@ -208,6 +212,22 @@
       "business": "ವ್ಯಾಪಾರ ಪರಿಶೀಲಿತ",
       "identity": "ಗುರುತು ಪರಿಶೀಲಿತ",
       "phone": "ಫೋನ್ ಪರಿಶೀಲಿತ"
+    },
+    "rating": {
+      "reviews": "{count, plural, one {ವಿಮರ್ಶೆ} other {ವಿಮರ್ಶೆಗಳು}}"
+    },
+    "nav": {
+      "label": "ವಿಭಾಗ ಸಂಚಾರ",
+      "overview": "ಅವಲೋಕನ",
+      "permits": "ಪರವಾನಗಿಗಳು",
+      "cancellation": "ರದ್ದತಿ",
+      "reviews": "ವಿಮರ್ಶೆಗಳು",
+      "faq": "ಪದೇಪದೇ ಕೇಳಲಾಗುವ ಪ್ರಶ್ನೆಗಳು"
+    },
+    "assurance": {
+      "freeCancellation": "ಅನುಭವಕ್ಕೆ 24 ಗಂಟೆಗಳ ಮೊದಲು ವರೆಗೆ ಉಚಿತ ರದ್ದತಿ",
+      "verifiedVendor": "ಗುರುತು-ಪರಿಶೀಲಿತ Vendor",
+      "exactRefund": "ಖಚಿತಪಡಿಸುವ ಮೊದಲು ನಿಖರ ಮರುಪಾವತಿ ತೋರಿಸಲಾಗುತ್ತದೆ"
     }
   },
   "SearchPage": {

@@ -230,6 +230,10 @@
 
   /* Reading-measure cap + weight intents (DESIGN.md §2.2) */
   --measure: 68ch;
+  /* Sticky-header offset — anchor-nav scroll targets (`scroll-mt`) and sticky
+     rail/nav `top`. Matches the app header height so jumped-to sections aren't
+     hidden behind it. (DESIGN.md §2.3) */
+  --header-offset: 4rem;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
@@ -385,6 +389,17 @@
    ToC-structured Cancellation & Refund page in the 45–75ch readable band. ── */
 @utility measure {
   max-width: var(--measure);
+}
+
+/* ── Hide scrollbar chrome on horizontally-scrollable strips (e.g. the PDP
+   sticky in-page anchor nav on narrow viewports) while keeping the region
+   keyboard- and touch-scrollable. Layout ergonomics only — no design tokens. ── */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* ── Global reduced-motion contract (DESIGN.md §2.6 / §5, WCAG 2.3.3) —

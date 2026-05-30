@@ -182,7 +182,11 @@
       "perPerson": "/ فی شخص",
       "partialPay": "ابھی 25% ادا کریں، بقایا تجربے سے 24 گھنٹے پہلے۔",
       "bookNow": "ابھی بُک کریں",
-      "freeCancellation": "مفت منسوخی · 24 گھنٹے ریفنڈ SLA"
+      "freeCancellation": "مفت منسوخی · 24 گھنٹے ریفنڈ SLA",
+      "priceTable": "فی شریک قیمت جدول",
+      "breakdown": "لائیو قیمت کی تفصیل",
+      "advanceDue": "ابھی واجب الادا Advance (25%)",
+      "balanceDue": "T-24h پر بقیہ رقم"
     },
     "closure": {
       "heading": "فی الحال بند ہے",
@@ -208,6 +212,22 @@
       "business": "کاروبار تصدیق شدہ",
       "identity": "شناخت تصدیق شدہ",
       "phone": "فون تصدیق شدہ"
+    },
+    "rating": {
+      "reviews": "{count, plural, one {جائزہ} other {جائزے}}"
+    },
+    "nav": {
+      "label": "سیکشن نیویگیشن",
+      "overview": "جائزہ",
+      "permits": "اجازت نامے",
+      "cancellation": "منسوخی",
+      "reviews": "جائزے",
+      "faq": "اکثر پوچھے گئے سوالات"
+    },
+    "assurance": {
+      "freeCancellation": "تجربے سے 24 گھنٹے پہلے تک مفت منسوخی",
+      "verifiedVendor": "شناخت-تصدیق شدہ Vendor",
+      "exactRefund": "تصدیق سے پہلے درست رقم کی واپسی دکھائی جاتی ہے"
     }
   },
   "SearchPage": {

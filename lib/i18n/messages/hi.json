@@ -182,7 +182,11 @@
       "perPerson": "/ व्यक्ति",
       "partialPay": "अभी 25% भुगतान करें, शेष अनुभव से 24 घंटे पहले।",
       "bookNow": "अभी बुक करें",
-      "freeCancellation": "मुफ़्त रद्दीकरण · 24 घंटे रिफ़ंड SLA"
+      "freeCancellation": "मुफ़्त रद्दीकरण · 24 घंटे रिफ़ंड SLA",
+      "priceTable": "प्रति-प्रतिभागी मूल्य तालिका",
+      "breakdown": "लाइव मूल्य विवरण",
+      "advanceDue": "अभी देय Advance (25%)",
+      "balanceDue": "शेष राशि T-24h पर"
     },
     "closure": {
       "heading": "अभी बंद है",
@@ -208,6 +212,22 @@
       "business": "व्यवसाय सत्यापित",
       "identity": "पहचान सत्यापित",
       "phone": "फ़ोन सत्यापित"
+    },
+    "rating": {
+      "reviews": "{count, plural, one {समीक्षा} other {समीक्षाएँ}}"
+    },
+    "nav": {
+      "label": "अनुभाग नेविगेशन",
+      "overview": "अवलोकन",
+      "permits": "परमिट",
+      "cancellation": "रद्दीकरण",
+      "reviews": "समीक्षाएँ",
+      "faq": "सामान्य प्रश्न"
+    },
+    "assurance": {
+      "freeCancellation": "अनुभव से 24 घंटे पहले तक मुफ़्त रद्दीकरण",
+      "verifiedVendor": "पहचान-सत्यापित Vendor",
+      "exactRefund": "पुष्टि से पहले सटीक रिफंड दिखाया जाता है"
     }
   },
   "SearchPage": {

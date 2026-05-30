@@ -182,7 +182,11 @@
       "perPerson": "/ ਵਿਅਕਤੀ",
       "partialPay": "ਹੁਣੇ 25% ਭੁਗਤਾਨ ਕਰੋ, ਬਾਕੀ ਅਨੁਭਵ ਤੋਂ 24 ਘੰਟੇ ਪਹਿਲਾਂ।",
       "bookNow": "ਹੁਣੇ ਬੁੱਕ ਕਰੋ",
-      "freeCancellation": "ਮੁਫ਼ਤ ਰੱਦ · 24 ਘੰਟੇ ਰਿਫੰਡ SLA"
+      "freeCancellation": "ਮੁਫ਼ਤ ਰੱਦ · 24 ਘੰਟੇ ਰਿਫੰਡ SLA",
+      "priceTable": "ਪ੍ਰਤੀ-ਭਾਗੀਦਾਰ ਕੀਮਤ ਸਾਰਣੀ",
+      "breakdown": "ਲਾਈਵ ਕੀਮਤ ਵੇਰਵਾ",
+      "advanceDue": "ਹੁਣ ਦੇਣਯੋਗ Advance (25%)",
+      "balanceDue": "T-24h 'ਤੇ ਬਾਕੀ ਰਕਮ"
     },
     "closure": {
       "heading": "ਇਸ ਵੇਲੇ ਬੰਦ ਹੈ",
@@ -208,6 +212,22 @@
       "business": "ਕਾਰੋਬਾਰ ਪ੍ਰਮਾਣਿਤ",
       "identity": "ਪਛਾਣ ਪ੍ਰਮਾਣਿਤ",
       "phone": "ਫ਼ੋਨ ਪ੍ਰਮਾਣਿਤ"
+    },
+    "rating": {
+      "reviews": "{count, plural, one {ਸਮੀਖਿਆ} other {ਸਮੀਖਿਆਵਾਂ}}"
+    },
+    "nav": {
+      "label": "ਭਾਗ ਨੈਵੀਗੇਸ਼ਨ",
+      "overview": "ਸੰਖੇਪ ਜਾਣਕਾਰੀ",
+      "permits": "ਪਰਮਿਟ",
+      "cancellation": "ਰੱਦ ਕਰਨਾ",
+      "reviews": "ਸਮੀਖਿਆਵਾਂ",
+      "faq": "ਅਕਸਰ ਪੁੱਛੇ ਜਾਣ ਵਾਲੇ ਸਵਾਲ"
+    },
+    "assurance": {
+      "freeCancellation": "ਅਨੁਭਵ ਤੋਂ 24 ਘੰਟੇ ਪਹਿਲਾਂ ਤੱਕ ਮੁਫ਼ਤ ਰੱਦ",
+      "verifiedVendor": "ਪਛਾਣ-ਪੁਸ਼ਟੀ ਕੀਤਾ Vendor",
+      "exactRefund": "ਪੁਸ਼ਟੀ ਤੋਂ ਪਹਿਲਾਂ ਸਹੀ ਰਿਫੰਡ ਦਿਖਾਇਆ ਜਾਂਦਾ ਹੈ"
     }
   },
   "SearchPage": {

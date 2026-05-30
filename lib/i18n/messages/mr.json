@@ -182,7 +182,11 @@
       "perPerson": "/ व्यक्ती",
       "partialPay": "आता 25% भरा, उर्वरित अनुभवाच्या 24 तास आधी.",
       "bookNow": "आता बुक करा",
-      "freeCancellation": "मोफत रद्दीकरण · 24 तास परतावा SLA"
+      "freeCancellation": "मोफत रद्दीकरण · 24 तास परतावा SLA",
+      "priceTable": "प्रति-सहभागी किंमत सारणी",
+      "breakdown": "थेट किंमत तपशील",
+      "advanceDue": "आता देय Advance (25%)",
+      "balanceDue": "T-24h ला उर्वरित रक्कम"
     },
     "closure": {
       "heading": "सध्या बंद आहे",
@@ -208,6 +212,22 @@
       "business": "व्यवसाय सत्यापित",
       "identity": "ओळख सत्यापित",
       "phone": "फोन सत्यापित"
+    },
+    "rating": {
+      "reviews": "{count, plural, one {पुनरावलोकन} other {पुनरावलोकने}}"
+    },
+    "nav": {
+      "label": "विभाग नेव्हिगेशन",
+      "overview": "विहंगावलोकन",
+      "permits": "परवाने",
+      "cancellation": "रद्द करणे",
+      "reviews": "पुनरावलोकने",
+      "faq": "नेहमी विचारले जाणारे प्रश्न"
+    },
+    "assurance": {
+      "freeCancellation": "अनुभवाच्या 24 तास आधीपर्यंत मोफत रद्द",
+      "verifiedVendor": "ओळख-पडताळणी केलेला Vendor",
+      "exactRefund": "पुष्टी करण्यापूर्वी अचूक परतावा दर्शविला जातो"
     }
   },
   "SearchPage": {

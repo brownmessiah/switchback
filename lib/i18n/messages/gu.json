@@ -182,7 +182,11 @@
       "perPerson": "/ વ્યક્તિ",
       "partialPay": "25% અત્યારે ચૂકવો, બાકીનું અનુભવના 24 કલાક પહેલાં.",
       "bookNow": "અત્યારે બુક કરો",
-      "freeCancellation": "મફત કેન્સલેશન · 24-કલાક રિફંડ SLA"
+      "freeCancellation": "મફત કેન્સલેશન · 24-કલાક રિફંડ SLA",
+      "priceTable": "પ્રતિ-સહભાગી કિંમત કોષ્ટક",
+      "breakdown": "જીવંત કિંમત વિગત",
+      "advanceDue": "હમણાં ચૂકવવાપાત્ર Advance (25%)",
+      "balanceDue": "T-24h પર બાકી રકમ"
     },
     "closure": {
       "heading": "હાલમાં બંધ છે",
@@ -208,6 +212,22 @@
       "business": "બિઝનેસ ચકાસાયેલ",
       "identity": "ઓળખ ચકાસાયેલ",
       "phone": "ફોન ચકાસાયેલ"
+    },
+    "rating": {
+      "reviews": "{count, plural, one {સમીક્ષા} other {સમીક્ષાઓ}}"
+    },
+    "nav": {
+      "label": "વિભાગ નેવિગેશન",
+      "overview": "ઝાંખી",
+      "permits": "પરમિટ",
+      "cancellation": "રદ કરવું",
+      "reviews": "સમીક્ષાઓ",
+      "faq": "વારંવાર પૂછાતા પ્રશ્નો"
+    },
+    "assurance": {
+      "freeCancellation": "અનુભવના 24 કલાક પહેલાં સુધી મફત રદ",
+      "verifiedVendor": "ઓળખ-ચકાસાયેલ Vendor",
+      "exactRefund": "પુષ્ટિ કરતા પહેલાં ચોક્કસ રિફંડ બતાવાય છે"
     }
   },
   "SearchPage": {

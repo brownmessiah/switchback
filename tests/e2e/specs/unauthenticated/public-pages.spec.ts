@@ -254,6 +254,50 @@ test.describe('Experience detail', () => {
       fullPage: true,
     })
   })
+
+  // Direction B "Conversion-dense sticky-rail" (#65): the PDP carries a
+  // Viator-grade in-page anchor nav that jumps to the left-column sections,
+  // each of which exposes a matching id. Behaviour-level contract — assert the
+  // nav links resolve to real in-page targets, not coupled to copy.
+  test('anchor nav jumps to in-page section targets (overview/reviews)', async ({
+    page,
+  }) => {
+    await page.goto('/experience/rishikesh-rafting-grade-iii')
+
+    // The anchor nav is a labelled in-page jump nav distinct from the
+    // breadcrumb (which is aria-label="Breadcrumb").
+    const anchorNav = page.locator('nav[aria-label="Section navigation"]')
+    await expect(anchorNav).toBeVisible()
+
+    // Every nav link is a same-page hash link whose target id exists in the
+    // document (so the jump actually lands somewhere). Overview + Reviews are
+    // the two anchors guaranteed for every Experience.
+    for (const id of ['overview', 'reviews']) {
+      const link = anchorNav.locator(`a[href="#${id}"]`)
+      await expect(link).toBeVisible()
+      await expect(page.locator(`#${id}`)).toHaveCount(1)
+    }
+  })
+
+  // Direction B: the Booking rail keeps the Partial-pay Advance/balance split
+  // permanently in view before commit. The seeded rafting Experience allows
+  // partial pay, so both the 25% Advance line and the T-24h balance line must
+  // render in the rail alongside the working Book-now link.
+  test('booking rail shows the Partial-pay Advance/balance split', async ({
+    page,
+  }) => {
+    await page.goto('/experience/rishikesh-rafting-grade-iii')
+
+    // 1-2 bracket price is ₹1,500 → Advance (25%) = ₹375, balance = ₹1,125.
+    await expect(page.getByText('₹375').first()).toBeVisible()
+    await expect(page.getByText('₹1,125').first()).toBeVisible()
+
+    // Book-now remains a working link into checkout (revenue spine depends on
+    // this exact text + href).
+    const bookNow = page.locator('a:has-text("Book now")')
+    await expect(bookNow).toBeVisible()
+    await expect(bookNow).toHaveAttribute('href', /\/checkout\?experienceId=/)
+  })
 })
 
 // ---------------------------------------------------------------------------

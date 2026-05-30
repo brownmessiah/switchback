@@ -1,7 +1,7 @@
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 
-import { Badge } from '@/components/ui/badge'
+import { AdminStatusBadge } from '@/app/admin/_components/admin-status-badge'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Table,
@@ -22,16 +22,15 @@ import {
 import { ReviewActionsCell } from './review-actions-cell'
 import { ReviewFilters } from './review-filters'
 
-// ── Variant maps ───────────────────────────────────────────────────
-
-const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
-  published: 'default',
-  pending: 'secondary',
-  flagged: 'destructive',
-  removed: 'outline',
-}
-
 // ── Helpers ─────────────────────────────────────────────────────────
+
+/** Human label for the moderation status cell (visible / withheld). */
+const STATUS_LABELS: Record<string, string> = {
+  pending: 'Pending',
+  published: 'Visible',
+  flagged: 'Hidden (flagged)',
+  removed: 'Removed',
+}
 
 function formatDate(date: Date | string | null): string {
   if (!date) return '—'
@@ -68,14 +67,18 @@ export default async function ReviewsPage({ searchParams }: ReviewsPageProps) {
   }
 
   const reviews = await loadReviewsList(db, filters)
+  const isFiltered = Object.values(filters).some((v) => v !== undefined)
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Review Moderation</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {reviews.length} review{reviews.length === 1 ? '' : 's'}
-          {Object.values(filters).some((v) => v !== undefined) ? ' (filtered)' : ''}
+        <h1 className="font-heading text-h1 font-semibold tracking-tight">
+          Review Moderation
+        </h1>
+        <p className="mt-1 text-xs text-muted-foreground">
+          <span className="tabular-nums">{reviews.length}</span> review
+          {reviews.length === 1 ? '' : 's'}
+          {isFiltered ? ' (filtered)' : ''}
         </p>
       </div>
 
@@ -83,75 +86,85 @@ export default async function ReviewsPage({ searchParams }: ReviewsPageProps) {
 
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Rating</TableHead>
-                <TableHead>Review</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Experience</TableHead>
-                <TableHead>Vendor</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Vendor Response</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {reviews.length === 0 ? (
+          <div className="overflow-x-auto">
+            <Table>
+              <caption className="sr-only">
+                Customer reviews with rating, status and moderation actions
+              </caption>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
-                    No reviews found.
-                  </TableCell>
+                  <TableHead scope="col">Rating</TableHead>
+                  <TableHead scope="col">Review</TableHead>
+                  <TableHead scope="col">Customer</TableHead>
+                  <TableHead scope="col">Experience</TableHead>
+                  <TableHead scope="col">Vendor</TableHead>
+                  <TableHead scope="col">Status</TableHead>
+                  <TableHead scope="col">Date</TableHead>
+                  <TableHead scope="col" className="text-right">
+                    Actions
+                  </TableHead>
                 </TableRow>
-              ) : (
-                reviews.map((r) => (
-                  <TableRow key={r.id} data-review-id={r.id}>
-                    <TableCell className="text-sm font-medium text-amber-500">
-                      {renderStars(r.rating)}
-                    </TableCell>
-                    <TableCell className="text-sm max-w-[200px]">
-                      <div className="truncate font-medium">{r.title ?? '—'}</div>
-                      {r.body && (
-                        <div className="truncate text-muted-foreground text-xs mt-0.5">
-                          {r.body}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {r.customerName ?? r.customerEmail ?? '—'}
-                    </TableCell>
-                    <TableCell className="text-sm max-w-[150px] truncate">
-                      {r.experienceTitle}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {r.vendorBusinessName}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={STATUS_VARIANTS[r.status] ?? 'outline'}
-                        className="capitalize text-xs"
-                      >
-                        {r.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm max-w-[150px] truncate text-muted-foreground">
-                      {r.vendorResponse ?? '—'}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(r.createdAt)}
-                    </TableCell>
-                    <TableCell>
-                      <ReviewActionsCell
-                        reviewId={r.id}
-                        status={r.status}
-                      />
+              </TableHeader>
+              <TableBody>
+                {reviews.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={8}
+                      className="py-8 text-center text-muted-foreground"
+                    >
+                      {isFiltered
+                        ? 'No reviews match these filters.'
+                        : 'No reviews found.'}
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  reviews.map((r) => (
+                    <TableRow
+                      key={r.id}
+                      data-review-id={r.id}
+                      className="hover:bg-muted/50"
+                    >
+                      <TableCell
+                        className="text-sm font-medium tabular-nums text-warning"
+                        aria-label={`${r.rating} out of 5`}
+                      >
+                        {renderStars(r.rating)}
+                      </TableCell>
+                      <TableCell className="max-w-[220px] text-sm">
+                        <div className="truncate font-medium">{r.title ?? '—'}</div>
+                        {r.body && (
+                          <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                            {r.body}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {r.customerName ?? r.customerEmail ?? '—'}
+                      </TableCell>
+                      <TableCell className="max-w-[150px] truncate text-sm">
+                        {r.experienceTitle}
+                      </TableCell>
+                      <TableCell className="text-sm">{r.vendorBusinessName}</TableCell>
+                      <TableCell>
+                        <span data-testid="review-status-badge">
+                          <AdminStatusBadge
+                            status={r.status}
+                            label={STATUS_LABELS[r.status] ?? r.status}
+                          />
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground tabular-nums">
+                        {formatDate(r.createdAt)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <ReviewActionsCell reviewId={r.id} status={r.status} />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

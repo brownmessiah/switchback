@@ -1,5 +1,6 @@
 'use client'
 
+import { CheckCircle2Icon } from 'lucide-react'
 import { useRef, useState, useTransition } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -46,8 +47,8 @@ export function InviteSubAdminForm() {
 
   return (
     <form ref={formRef} action={handleSubmit} className="space-y-4">
-      <div className="space-y-1.5">
-        <Label htmlFor="invite-email">Email Address</Label>
+      <div className="space-y-2">
+        <Label htmlFor="invite-email">Email address</Label>
         <Input
           id="invite-email"
           name="email"
@@ -56,17 +57,20 @@ export function InviteSubAdminForm() {
           required
         />
         <p className="text-xs text-muted-foreground">
-          If the user exists, they will be granted admin access immediately (demo mode).
+          If the user exists, they are granted admin access immediately (demo
+          mode).
         </p>
       </div>
 
       <div className="space-y-2">
-        <Label className="text-sm font-medium">Permissions (select at least one)</Label>
+        <Label className="text-sm font-medium">
+          Permission subset (select at least one)
+        </Label>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {ADMIN_PERMISSIONS.map((perm) => (
             <label
               key={perm}
-              className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted/50 cursor-pointer"
+              className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-control)] border px-3 py-2 text-sm hover:bg-muted/50"
             >
               <input
                 type="checkbox"
@@ -81,18 +85,25 @@ export function InviteSubAdminForm() {
       </div>
 
       {result && !result.ok && (
-        <p className="text-sm text-destructive" role="alert">
+        <p
+          className="rounded-[var(--radius-control)] bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          role="alert"
+        >
           {result.error}
         </p>
       )}
       {result?.ok && (
-        <p className="text-sm text-green-600" role="status">
+        <p
+          className="flex items-center gap-1.5 rounded-[var(--radius-control)] bg-success-subtle px-3 py-2 text-sm text-success"
+          role="status"
+        >
+          <CheckCircle2Icon className="size-4" aria-hidden />
           Sub-admin access granted.
         </p>
       )}
 
       <Button type="submit" disabled={isPending}>
-        {isPending ? 'Creating...' : 'Grant Admin Access'}
+        {isPending ? 'Creating…' : 'Grant Admin Access'}
       </Button>
     </form>
   )

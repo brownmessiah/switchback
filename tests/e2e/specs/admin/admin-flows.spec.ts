@@ -952,6 +952,57 @@ test.describe('Admin sub-admins page', () => {
 })
 
 // ---------------------------------------------------------------------------
+// 10b. Variant-B redesign assertions (#97 / #98)
+//
+// The sub-admins and reviews surfaces were rebuilt to DESIGN.md variant B (A3
+// data table + AdminStatusBadge status cells + A4 confirm Dialogs gating the
+// consequential actions). These assert the NEW redesign behavior with stable
+// data-testids, distinct from the #28/#27 permission/audit/state coverage:
+//   - both A3 tables render the shared AdminStatusBadge (status w/ paired icon)
+//   - the sub-admin Revoke action is gated behind an A4 confirm Dialog that
+//     RESTATES the access change before commit (cancel = non-default focus)
+// ---------------------------------------------------------------------------
+test.describe('Admin variant-B redesign (#97 / #98)', () => {
+  test('sub-admins A3 table renders status badges + revoke confirm restates the change', async ({
+    page,
+  }) => {
+    await page.goto('/admin/sub-admins')
+    await expect(page.locator('h1')).toContainText('Sub-Admin Management')
+
+    // A3 status cell: every admin row carries a status badge (icon + text).
+    const statusBadges = page.locator('[data-testid="subadmin-status-badge"]')
+    await expect(statusBadges.first()).toBeVisible()
+
+    // A non-self sub-admin row exposes a Revoke trigger → opens an A4 confirm
+    // Dialog that restates the access being revoked before any mutation.
+    const revokeTrigger = page
+      .locator('[data-testid="subadmin-revoke-trigger"]')
+      .first()
+    await expect(revokeTrigger).toBeVisible()
+    await revokeTrigger.click()
+
+    const confirm = page.locator('[data-testid="revoke-subadmin-confirm"]')
+    await expect(confirm).toBeVisible()
+    // Restates the action (so a misclick can never silently revoke access).
+    await expect(confirm).toContainText(/revoke/i)
+    await expect(confirm.getByRole('button', { name: 'Revoke Access' })).toBeVisible()
+
+    // Cancel without mutating (this assertion must not revoke a seeded admin).
+    await confirm.getByRole('button', { name: 'Cancel' }).click()
+    await expect(confirm).toBeHidden()
+  })
+
+  test('reviews A3 table renders AdminStatusBadge status cells', async ({ page }) => {
+    await page.goto('/admin/reviews')
+    await expect(page.locator('h1')).toContainText('Review Moderation')
+
+    // A3 status cell: at least one review row carries a status badge.
+    const statusBadges = page.locator('[data-testid="review-status-badge"]')
+    await expect(statusBadges.first()).toBeVisible()
+  })
+})
+
+// ---------------------------------------------------------------------------
 // 11. Audit log: loads with log entries
 // ---------------------------------------------------------------------------
 test.describe('Admin audit log', () => {
@@ -2492,7 +2543,12 @@ test.describe('Admin review moderation (#27)', () => {
       await expect(page.locator('h1')).toContainText('Review Moderation')
       const row = page.locator(`tr[data-review-id="${reviewId}"]`)
       await expect(row).toBeVisible()
+      // Hide (flag) is a consequential moderation action now gated behind an
+      // A4 confirm Dialog that restates the moderation before commit (#98).
       await row.getByRole('button', { name: 'Flag' }).click()
+      const flagConfirm = page.locator('[data-testid="review-flag-confirm"]')
+      await expect(flagConfirm).toBeVisible()
+      await flagConfirm.getByRole('button', { name: 'Hide from catalog' }).click()
 
       await expect
         .poll(async () => getReviewStatus(reviewId), { timeout: 15_000 })
@@ -2515,7 +2571,12 @@ test.describe('Admin review moderation (#27)', () => {
       await page.goto('/admin/reviews')
       const row2 = page.locator(`tr[data-review-id="${reviewId}"]`)
       await expect(row2).toBeVisible()
+      // Unhide (publish) restores the Review to the public catalog — gated
+      // behind the same A4 confirm Dialog (#98).
       await row2.getByRole('button', { name: 'Publish' }).click()
+      const publishConfirm = page.locator('[data-testid="review-publish-confirm"]')
+      await expect(publishConfirm).toBeVisible()
+      await publishConfirm.getByRole('button', { name: 'Publish review' }).click()
 
       await expect
         .poll(async () => getReviewStatus(reviewId), { timeout: 15_000 })
@@ -2542,7 +2603,11 @@ test.describe('Admin review moderation (#27)', () => {
       const row3 = page.locator(`tr[data-review-id="${reviewId}"]`)
       await expect(row3).toBeVisible()
       // Remove is available from published directly (REMOVE_FROM includes it).
+      // Hide-permanently (remove) is gated behind the A4 confirm Dialog (#98).
       await row3.getByRole('button', { name: 'Remove' }).click()
+      const removeConfirm = page.locator('[data-testid="review-remove-confirm"]')
+      await expect(removeConfirm).toBeVisible()
+      await removeConfirm.getByRole('button', { name: 'Remove review' }).click()
 
       await expect
         .poll(async () => getReviewStatus(reviewId), { timeout: 15_000 })
@@ -2943,9 +3008,12 @@ test.describe('Admin sub-admin CRUD + audit (#28)', () => {
     const row = page.locator('tr', { hasText: INVITEE_EMAIL })
     await expect(row).toBeVisible()
 
-    // Revoke uses a native confirm() — accept it.
-    page.once('dialog', (d) => d.accept())
+    // Revoke is gated behind an A4 confirm Dialog that restates the access
+    // change before commit (#97) — click the trigger, then confirm.
     await row.getByRole('button', { name: 'Revoke' }).click()
+    const revokeConfirm = page.locator('[data-testid="revoke-subadmin-confirm"]')
+    await expect(revokeConfirm).toBeVisible()
+    await revokeConfirm.getByRole('button', { name: 'Revoke Access' }).click()
 
     // ── Assert: the admin_profiles row is gone (access removed) ───────────
     await expect

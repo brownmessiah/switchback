@@ -127,4 +127,22 @@ describe('AdminStatusBadge (status + icon, never color alone)', () => {
     expect(badge!.className).toContain('text-destructive')
     expect(badge!.querySelector('svg')).not.toBeNull()
   })
+
+  // ── Review moderation statuses (DESIGN.md §4 A3) — reused by the reviews
+  // (#98) A3 surface. flagged = withheld from the public catalog (warning);
+  // removed = hidden for good (destructive); each color + icon, never color
+  // alone.
+  it('maps a flagged review to the warning token + an icon', () => {
+    render(<AdminStatusBadge status="flagged" label="Flagged" />)
+    const badge = screen.getByText('Flagged').closest('[data-slot="badge"]')
+    expect(badge!.className).toContain('text-warning')
+    expect(badge!.querySelector('svg')).not.toBeNull()
+  })
+
+  it('maps a removed review to the destructive token + an icon', () => {
+    render(<AdminStatusBadge status="removed" label="Removed" />)
+    const badge = screen.getByText('Removed').closest('[data-slot="badge"]')
+    expect(badge!.className).toContain('text-destructive')
+    expect(badge!.querySelector('svg')).not.toBeNull()
+  })
 })

@@ -54,6 +54,12 @@ const STATUS_MAP: Record<string, StatusSpec> = {
   published: { variant: 'success', icon: CheckCircle2Icon },
   paused: { variant: 'warning', icon: PauseCircleIcon },
   archived: { variant: 'destructive', icon: XCircleIcon },
+  // Review moderation statuses (DESIGN.md §4 A3). Used by the reviews list
+  // (#98): a published Review is visible (success); flagged is withheld from
+  // the public catalog pending re-review (warning); removed is hidden for good
+  // (destructive). Together with `pending` above these cover reviews.status.
+  flagged: { variant: 'warning', icon: PauseCircleIcon },
+  removed: { variant: 'destructive', icon: XCircleIcon },
   // Negative / failed
   rejected: { variant: 'destructive', icon: XCircleIcon },
   failed: { variant: 'destructive', icon: AlertTriangleIcon },

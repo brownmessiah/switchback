@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 
+import { AdminStatusBadge } from '@/app/admin/_components/admin-status-badge'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -24,7 +25,7 @@ import { SubAdminActionsCell } from './sub-admin-actions-cell'
 // ── Helpers ────────────────────────────────────────────────────────
 
 function formatDate(d: Date | null): string {
-  if (!d) return '--'
+  if (!d) return '—'
   return new Date(d).toLocaleDateString('en-IN', {
     day: 'numeric',
     month: 'short',
@@ -34,6 +35,10 @@ function formatDate(d: Date | null): string {
 
 function isFullAdmin(permissions: string[]): boolean {
   return ADMIN_PERMISSIONS.every((p) => permissions.includes(p))
+}
+
+function permissionLabel(p: string): string {
+  return p.replace(/_/g, ' ')
 }
 
 // ── Page ───────────────────────────────────────────────────────────
@@ -63,8 +68,10 @@ export default async function SubAdminsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Sub-Admin Management</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="font-heading text-h1 font-semibold tracking-tight">
+          Sub-Admin Management
+        </h1>
+        <p className="mt-1 text-xs text-muted-foreground">
           {admins.length} admin{admins.length === 1 ? '' : 's'} &middot;{' '}
           {fullAdmins.length} full admin{fullAdmins.length === 1 ? '' : 's'} &middot;{' '}
           {subAdmins.length} sub-admin{subAdmins.length === 1 ? '' : 's'}
@@ -73,7 +80,7 @@ export default async function SubAdminsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Invite Sub-Admin</CardTitle>
+          <CardTitle className="font-heading text-h3">Invite Sub-Admin</CardTitle>
         </CardHeader>
         <CardContent>
           <InviteSubAdminForm />
@@ -82,93 +89,105 @@ export default async function SubAdminsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Current Admins</CardTitle>
+          <CardTitle className="font-heading text-h3">Current Admins</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Permissions</TableHead>
-                <TableHead>Since</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {admins.length === 0 && (
+          <div className="overflow-x-auto">
+            <Table>
+              <caption className="sr-only">
+                Admins and sub-admins with their permission subset and status
+              </caption>
+              <TableHeader>
                 <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="py-8 text-center text-muted-foreground"
-                  >
-                    No admins found.
-                  </TableCell>
+                  <TableHead scope="col">User</TableHead>
+                  <TableHead scope="col">Status</TableHead>
+                  <TableHead scope="col">Permission subset</TableHead>
+                  <TableHead scope="col">Since</TableHead>
+                  <TableHead scope="col" className="text-right">
+                    Actions
+                  </TableHead>
                 </TableRow>
-              )}
-              {admins.map((admin) => {
-                const isFull = isFullAdmin(admin.permissions)
-                const isSelf = admin.userId === session.user.id
-
-                return (
-                  <TableRow key={admin.userId}>
-                    <TableCell>
-                      <div>
-                        <p className="text-sm font-medium">
-                          {admin.name ?? admin.email ?? admin.userId}
-                        </p>
-                        {admin.email && admin.name && (
-                          <p className="text-xs text-muted-foreground">{admin.email}</p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={isFull ? 'default' : 'secondary'} className="text-xs">
-                        {isFull ? 'Full Admin' : 'Sub-Admin'}
-                      </Badge>
-                      {isSelf && (
-                        <Badge variant="outline" className="ml-1 text-xs">
-                          You
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="max-w-[300px]">
-                      {isFull ? (
-                        <span className="text-sm text-muted-foreground">All 16 permissions</span>
-                      ) : (
-                        <div className="flex flex-wrap gap-1">
-                          {admin.permissions.map((p) => (
-                            <Badge
-                              key={p}
-                              variant="outline"
-                              className="text-xs"
-                            >
-                              {p.replace(/_/g, ' ')}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(admin.createdAt)}
-                    </TableCell>
-                    <TableCell>
-                      {isSelf ? (
-                        <span className="text-xs text-muted-foreground">--</span>
-                      ) : (
-                        <SubAdminActionsCell
-                          userId={admin.userId}
-                          email={admin.email}
-                          name={admin.name}
-                          permissions={admin.permissions}
-                        />
-                      )}
+              </TableHeader>
+              <TableBody>
+                {admins.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="py-8 text-center text-muted-foreground"
+                    >
+                      No admins found.
                     </TableCell>
                   </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
+                )}
+                {admins.map((admin) => {
+                  const isFull = isFullAdmin(admin.permissions)
+                  const isSelf = admin.userId === session.user.id
+
+                  return (
+                    <TableRow key={admin.userId} className="hover:bg-muted/50">
+                      <TableCell>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {admin.name ?? admin.email ?? admin.userId}
+                          </p>
+                          {admin.email && admin.name && (
+                            <p className="text-xs text-muted-foreground">
+                              {admin.email}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap items-center gap-1">
+                          <span data-testid="subadmin-status-badge">
+                            <AdminStatusBadge
+                              status={isFull ? 'active' : 'restricted'}
+                              label={isFull ? 'Full Admin' : 'Sub-Admin'}
+                            />
+                          </span>
+                          {isSelf && (
+                            <Badge variant="outline" className="text-2xs">
+                              You
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-[320px]">
+                        {isFull ? (
+                          <span className="text-sm text-muted-foreground">
+                            All {ADMIN_PERMISSIONS.length} permissions
+                          </span>
+                        ) : (
+                          <div className="flex flex-wrap gap-1">
+                            {admin.permissions.map((p) => (
+                              <Badge key={p} variant="outline" className="text-2xs">
+                                {permissionLabel(p)}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground tabular-nums">
+                        {formatDate(admin.createdAt)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {isSelf ? (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        ) : (
+                          <SubAdminActionsCell
+                            userId={admin.userId}
+                            email={admin.email}
+                            name={admin.name}
+                            permissions={admin.permissions}
+                          />
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

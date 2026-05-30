@@ -540,39 +540,50 @@ test.describe('Tier-cap matrix — publish path (Identity tier, ADR-0007, #21)',
     const target = await getPublishedExperienceForVendor(IDENTITY_VENDOR_ID, PRICE_SLUG)
     expect(target, `seed ${PRICE_SLUG} must exist`).not.toBeNull()
     const experienceId = target!.id
-    const originalPrice = target!.pricePerPerson_1_2
+    // Capture ALL THREE seed brackets so the finally restores every field the
+    // test mutates (not just 1-2) — keeps the shared seed Experience
+    // deterministic for parallel/repeat runs even if an assertion throws.
+    const seedRow = (await getExperienceById(experienceId))!
+    const orig12 = seedRow.pricePerPerson_1_2
+    const orig35 = seedRow.pricePerPerson_3_5
+    const orig6 = seedRow.pricePerPerson_6_plus
 
-    await page.goto(`/vendor/listings/${experienceId}/edit`)
-    await expect(page.locator('h1')).toContainText('Edit experience')
+    try {
+      await page.goto(`/vendor/listings/${experienceId}/edit`)
+      await expect(page.locator('h1')).toContainText('Edit experience')
 
-    // ── 5001 → BLOCKED. The per-person cap is on the HIGHEST bracket, so
-    //    pushing the 1-2 bracket one rupee over the cap must trip PRICE_OVER_CAP.
-    await page.locator('#price12').fill('5001')
-    await page.locator('#price35').fill('4000')
-    await page.locator('#price6').fill('4000')
-    await page.locator('button[type="submit"]').click()
+      // ── 5001 → BLOCKED. The per-person cap is on the HIGHEST bracket, so
+      //    pushing the 1-2 bracket one rupee over the cap must trip PRICE_OVER_CAP.
+      await page.locator('#price12').fill('5001')
+      await page.locator('#price35').fill('4000')
+      await page.locator('#price6').fill('4000')
+      await page.locator('button[type="submit"]').click()
 
-    await expect(page.getByText(/up to Rs\.?\s*5000 per person/i)).toBeVisible({
-      timeout: 15_000,
-    })
-    await expect(page.getByText('Experience updated.')).toHaveCount(0)
+      await expect(page.getByText(/up to Rs\.?\s*5000 per person/i)).toBeVisible({
+        timeout: 15_000,
+      })
+      await expect(page.getByText('Experience updated.')).toHaveCount(0)
 
-    // The over-cap price was NOT persisted (still the seed value).
-    expect((await getExperienceById(experienceId))!.pricePerPerson_1_2).toBe(originalPrice)
+      // The over-cap price was NOT persisted (still the seed value).
+      expect((await getExperienceById(experienceId))!.pricePerPerson_1_2).toBe(orig12)
 
-    // ── 5000 → ALLOWED (exact boundary is inclusive). Persists.
-    await page.locator('#price12').fill('5000')
-    await page.locator('#price35').fill('4000')
-    await page.locator('#price6').fill('4000')
-    await page.locator('button[type="submit"]').click()
+      // ── 5000 → ALLOWED (exact boundary is inclusive). Persists.
+      await page.locator('#price12').fill('5000')
+      await page.locator('#price35').fill('4000')
+      await page.locator('#price6').fill('4000')
+      await page.locator('button[type="submit"]').click()
 
-    await expect(page.getByText('Experience updated.')).toBeVisible({ timeout: 15_000 })
-    expect((await getExperienceById(experienceId))!.pricePerPerson_1_2).toBe(5000)
-
-    // Restore the seed price so parallel/repeat runs stay deterministic.
-    await page.locator('#price12').fill(String(originalPrice))
-    await page.locator('button[type="submit"]').click()
-    await expect(page.getByText('Experience updated.')).toBeVisible({ timeout: 15_000 })
+      await expect(page.getByText('Experience updated.')).toBeVisible({ timeout: 15_000 })
+      expect((await getExperienceById(experienceId))!.pricePerPerson_1_2).toBe(5000)
+    } finally {
+      // Restore ALL THREE seed brackets so parallel/repeat runs stay deterministic.
+      await page.goto(`/vendor/listings/${experienceId}/edit`)
+      await page.locator('#price12').fill(String(Number(orig12)))
+      await page.locator('#price35').fill(String(Number(orig35)))
+      await page.locator('#price6').fill(String(Number(orig6)))
+      await page.locator('button[type="submit"]').click()
+      await expect(page.getByText('Experience updated.')).toBeVisible({ timeout: 15_000 })
+    }
   })
 
   test('COMBO: marking the Experience is_combo is BLOCKED for an Identity Vendor', async ({

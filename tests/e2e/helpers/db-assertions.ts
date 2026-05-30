@@ -358,6 +358,9 @@ export interface ExperienceRow {
   title: string
   status: string
   pricePerPerson_1_2: number
+  /** Populated by getExperienceById (used for full-bracket restore). */
+  pricePerPerson_3_5?: number
+  pricePerPerson_6_plus?: number
   vendorUserId: string
 }
 
@@ -409,10 +412,14 @@ export async function getExperienceById(
         title: string
         status: string
         price_per_person_1_2: string
+        price_per_person_3_5: string
+        price_per_person_6_plus: string
         vendor_user_id: string
       }[]
     >`
-      SELECT id, slug, title, status, price_per_person_1_2, vendor_user_id
+      SELECT id, slug, title, status,
+             price_per_person_1_2, price_per_person_3_5, price_per_person_6_plus,
+             vendor_user_id
       FROM experiences
       WHERE id = ${experienceId}
       LIMIT 1
@@ -425,6 +432,8 @@ export async function getExperienceById(
       title: row.title,
       status: row.status,
       pricePerPerson_1_2: Math.floor(Number(row.price_per_person_1_2)),
+      pricePerPerson_3_5: Math.floor(Number(row.price_per_person_3_5)),
+      pricePerPerson_6_plus: Math.floor(Number(row.price_per_person_6_plus)),
       vendorUserId: row.vendor_user_id,
     }
   })

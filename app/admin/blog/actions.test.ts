@@ -182,6 +182,54 @@ describe('Admin blog post actions', () => {
 
       expect(result.ok).toBe(false)
     })
+
+    it('accepts a root-relative /uploads cover image URL (storage-mock path)', async () => {
+      // The LocalFileAdapter (and the storage mock) returns root-relative URLs
+      // like `/uploads/blog/<id>/<file>.png`. The cover-image upload path is
+      // broken if create rejects these — assert it persists the relative URL.
+      const adminId = await seedAdmin(db)
+
+      const result = await executeCreateBlogPost(db, adminId, {
+        title: 'Relative Cover URL',
+        content: 'content',
+        category: 'guides',
+        coverImageUrl: '/uploads/blog/new/123-abc.png',
+      })
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      const [row] = await db
+        .select({ coverImageUrl: blogPosts.coverImageUrl })
+        .from(blogPosts)
+        .where(eq(blogPosts.id, result.id!))
+      expect(row?.coverImageUrl).toBe('/uploads/blog/new/123-abc.png')
+    })
+
+    it('accepts an absolute https cover image URL (CDN path)', async () => {
+      const adminId = await seedAdmin(db)
+
+      const result = await executeCreateBlogPost(db, adminId, {
+        title: 'Absolute Cover URL',
+        content: 'content',
+        category: 'guides',
+        coverImageUrl: 'https://cdn.example.com/blog/cover.png',
+      })
+
+      expect(result.ok).toBe(true)
+    })
+
+    it('rejects a non-URL, non-relative cover image string', async () => {
+      const adminId = await seedAdmin(db)
+
+      const result = await executeCreateBlogPost(db, adminId, {
+        title: 'Bad Cover URL',
+        content: 'content',
+        category: 'guides',
+        coverImageUrl: 'not a url at all',
+      })
+
+      expect(result.ok).toBe(false)
+    })
   })
 
   // ── Update ────────────────────────────────────────────────────────

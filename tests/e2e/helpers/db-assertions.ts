@@ -2196,3 +2196,367 @@ export async function clearWalletForUser(userId: string): Promise<void> {
     await sql`DELETE FROM wallet_balances WHERE user_id = ${userId}`
   })
 }
+
+// ---------------------------------------------------------------------------
+// Admin content management assertions (Issue #27)
+//
+// Review moderation (flag / remove / publish), Blog CRUD (+ cover image), and
+// site-builder save/load. The review-moderation test drives a DEDICATED
+// published Review on a dedicated Experience (no other spec asserts it) so the
+// one-way flag→remove→publish transitions never disturb the seeded reviews the
+// public Experience page renders for other specs.
+// ---------------------------------------------------------------------------
+
+/** Read a Review's current status by id, or null if it does not exist. */
+export async function getReviewStatus(reviewId: string): Promise<string | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ status: string }[]>`
+      SELECT status FROM reviews WHERE id = ${reviewId} LIMIT 1
+    `
+    return rows[0]?.status ?? null
+  })
+}
+
+/**
+ * Resolve the DEDICATED #27 review-moderation Review id + its Experience slug.
+ * The Review sits on a dedicated Experience owned by the identity Vendor that
+ * no other spec books or asserts. Returns null if the fixture is missing.
+ */
+export async function getModerationReviewFixture(): Promise<
+  { reviewId: string; experienceId: string; experienceSlug: string } | null
+> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { id: string; experience_id: string; slug: string }[]
+    >`
+      SELECT r.id, r.experience_id, e.slug
+      FROM reviews r
+      JOIN experiences e ON e.id = r.experience_id
+      WHERE e.slug = 'review-moderation-fixture-rishikesh'
+      ORDER BY r.created_at ASC
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return {
+      reviewId: rows[0].id,
+      experienceId: rows[0].experience_id,
+      experienceSlug: rows[0].slug,
+    }
+  })
+}
+
+/** Count published Reviews on an Experience (the public-catalog surface). */
+export async function countPublishedReviewsForExperience(
+  experienceId: string,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT COUNT(*) AS n
+      FROM reviews
+      WHERE experience_id = ${experienceId}
+        AND status = 'published'
+    `
+    return Number(rows[0]?.n ?? 0)
+  })
+}
+
+/** Set a Review's status directly (test restore). */
+export async function setReviewStatus(
+  reviewId: string,
+  status: 'pending' | 'published' | 'flagged' | 'removed',
+): Promise<void> {
+  await withSql(async (sql) => {
+    await sql`UPDATE reviews SET status = ${status} WHERE id = ${reviewId}`
+  })
+}
+
+/** Count audit_logs rows for an admin review-moderation action on a Review. */
+export async function countReviewAuditRows(
+  action: string,
+  reviewId: string,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT COUNT(*) AS n
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_type = 'review'
+        AND entity_id = ${reviewId}
+    `
+    return Number(rows[0]?.n ?? 0)
+  })
+}
+
+/** Fetch the most-recent review-moderation audit payload + actor for a Review. */
+export async function getLatestReviewAudit(
+  action: string,
+  reviewId: string,
+): Promise<{ actorUserId: string | null; payload: Record<string, unknown> } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { actor_user_id: string | null; payload: Record<string, unknown> }[]
+    >`
+      SELECT actor_user_id, payload
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_type = 'review'
+        AND entity_id = ${reviewId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return { actorUserId: rows[0].actor_user_id, payload: rows[0].payload }
+  })
+}
+
+// ── Blog CRUD assertions (#27) ──────────────────────────────────────
+
+export interface BlogPostRow {
+  id: string
+  title: string
+  slug: string
+  content: string
+  excerpt: string | null
+  category: string
+  coverImageUrl: string | null
+  status: string
+  publishedAt: Date | null
+}
+
+/** Fetch a blog post by its (unique) title, or null. */
+export async function getBlogPostByTitle(
+  title: string,
+): Promise<BlogPostRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        id: string
+        title: string
+        slug: string
+        content: string
+        excerpt: string | null
+        category: string
+        cover_image_url: string | null
+        status: string
+        published_at: Date | null
+      }[]
+    >`
+      SELECT id, title, slug, content, excerpt, category, cover_image_url,
+             status, published_at
+      FROM blog_posts
+      WHERE title = ${title}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return {
+      id: rows[0].id,
+      title: rows[0].title,
+      slug: rows[0].slug,
+      content: rows[0].content,
+      excerpt: rows[0].excerpt,
+      category: rows[0].category,
+      coverImageUrl: rows[0].cover_image_url,
+      status: rows[0].status,
+      publishedAt: rows[0].published_at ? new Date(rows[0].published_at) : null,
+    }
+  })
+}
+
+/** Fetch a blog post by id, or null. */
+export async function getBlogPostById(id: string): Promise<BlogPostRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        id: string
+        title: string
+        slug: string
+        content: string
+        excerpt: string | null
+        category: string
+        cover_image_url: string | null
+        status: string
+        published_at: Date | null
+      }[]
+    >`
+      SELECT id, title, slug, content, excerpt, category, cover_image_url,
+             status, published_at
+      FROM blog_posts
+      WHERE id = ${id}
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return {
+      id: rows[0].id,
+      title: rows[0].title,
+      slug: rows[0].slug,
+      content: rows[0].content,
+      excerpt: rows[0].excerpt,
+      category: rows[0].category,
+      coverImageUrl: rows[0].cover_image_url,
+      status: rows[0].status,
+      publishedAt: rows[0].published_at ? new Date(rows[0].published_at) : null,
+    }
+  })
+}
+
+/** Delete a blog post by id — test cleanup/restore. */
+export async function deleteBlogPostById(id: string): Promise<void> {
+  await withSql(async (sql) => {
+    await sql`DELETE FROM blog_posts WHERE id = ${id}`
+  })
+}
+
+/** Count audit_logs rows for an admin blog action on a blog_post id. */
+export async function countBlogAuditRows(
+  action: string,
+  blogPostId: string,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT COUNT(*) AS n
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_type = 'blog_post'
+        AND entity_id = ${blogPostId}
+    `
+    return Number(rows[0]?.n ?? 0)
+  })
+}
+
+/** Fetch the media_assets row(s) for a cover-image storage key. */
+export async function getMediaAssetByStorageKey(
+  storageKey: string,
+): Promise<
+  { id: string; url: string; storageKey: string; entityType: string } | null
+> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { id: string; url: string; storage_key: string; entity_type: string }[]
+    >`
+      SELECT id, url, storage_key, entity_type
+      FROM media_assets
+      WHERE storage_key = ${storageKey}
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return {
+      id: rows[0].id,
+      url: rows[0].url,
+      storageKey: rows[0].storage_key,
+      entityType: rows[0].entity_type,
+    }
+  })
+}
+
+/** Count blog-entity media_assets rows whose URL matches a cover image URL. */
+export async function getMediaAssetByUrl(
+  url: string,
+): Promise<{ id: string; storageKey: string; entityType: string } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { id: string; storage_key: string; entity_type: string }[]
+    >`
+      SELECT id, storage_key, entity_type
+      FROM media_assets
+      WHERE url = ${url}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return {
+      id: rows[0].id,
+      storageKey: rows[0].storage_key,
+      entityType: rows[0].entity_type,
+    }
+  })
+}
+
+// ── Site-builder save/load assertions (#27) ─────────────────────────
+
+export interface SiteContentRowAssertion {
+  id: string
+  section: string
+  key: string
+  value: Record<string, unknown>
+  locale: string
+  version: number
+  updatedByAdminId: string | null
+}
+
+/** Fetch a site_content row for (section, key, locale), or null. */
+export async function getSiteContentRow(
+  section: string,
+  key: string,
+  locale = 'en',
+): Promise<SiteContentRowAssertion | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        id: string
+        section: string
+        key: string
+        value: Record<string, unknown>
+        locale: string
+        version: number
+        updated_by_admin_id: string | null
+      }[]
+    >`
+      SELECT id, section, key, value, locale, version, updated_by_admin_id
+      FROM site_content
+      WHERE section = ${section} AND key = ${key} AND locale = ${locale}
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return {
+      id: rows[0].id,
+      section: rows[0].section,
+      key: rows[0].key,
+      value: rows[0].value,
+      locale: rows[0].locale,
+      version: rows[0].version,
+      updatedByAdminId: rows[0].updated_by_admin_id,
+    }
+  })
+}
+
+/** Count audit_logs rows for a site_content action on a (section/key/locale) id. */
+export async function countSiteContentAuditRows(
+  action: string,
+  entityId: string,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT COUNT(*) AS n
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_type = 'site_content'
+        AND entity_id = ${entityId}
+    `
+    return Number(rows[0]?.n ?? 0)
+  })
+}
+
+/** Fetch the most-recent site_content audit payload + actor for an entity id. */
+export async function getLatestSiteContentAudit(
+  entityId: string,
+): Promise<{ action: string; actorUserId: string | null; payload: Record<string, unknown> } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { action: string; actor_user_id: string | null; payload: Record<string, unknown> }[]
+    >`
+      SELECT action, actor_user_id, payload
+      FROM audit_logs
+      WHERE entity_type = 'site_content'
+        AND entity_id = ${entityId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return {
+      action: rows[0].action,
+      actorUserId: rows[0].actor_user_id,
+      payload: rows[0].payload,
+    }
+  })
+}

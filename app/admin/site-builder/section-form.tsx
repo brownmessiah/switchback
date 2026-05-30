@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import type { SiteSection } from '@/db/schema/site-content'
 
-import { saveSection, type SaveSectionInput, type SiteBuilderResult } from './actions'
+import { saveSection } from './actions'
+import type { SaveSectionInput, SiteBuilderResult } from './schema'
 
 // ── Field definitions per section ──────────────────────────────────
 

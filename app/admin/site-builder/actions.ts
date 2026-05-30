@@ -3,91 +3,27 @@
 import { and, eq, sql } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
-import { z } from 'zod'
 
 import { db as prodDb } from '@/db/client'
-import { siteContent, SITE_SECTIONS, type SiteSection } from '@/db/schema/site-content'
+import { siteContent, type SiteSection } from '@/db/schema/site-content'
 import { auth } from '@/lib/auth'
 import { writeAuditLog } from '@/lib/audit/write'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
-// ── Result types ────────────────────────────────────────────────────
+import {
+  SECTION_VALUE_SCHEMAS,
+  saveSectionSchema,
+  type SaveSectionInput,
+  type SiteBuilderResult,
+  type SiteContentRow,
+} from './schema'
 
-export type SiteBuilderResult =
-  | { ok: true; version?: number }
-  | { ok: false; error: string }
-
-// ── Section-specific value schemas ─────────────────────────────────
-
-const heroValueSchema = z.object({
-  title: z.string().min(1, 'Hero title is required.'),
-  subtitle: z.string().optional(),
-  ctaText: z.string().optional(),
-  ctaLink: z.string().optional(),
-  backgroundImageUrl: z.string().url().nullable().optional(),
-})
-
-const announcementBarValueSchema = z.object({
-  text: z.string().optional(),
-  linkText: z.string().optional(),
-  linkUrl: z.string().optional(),
-  enabled: z.boolean().optional(),
-  backgroundColor: z.string().optional(),
-})
-
-const homepageValueSchema = z.object({
-  featuredSectionTitle: z.string().optional(),
-  featuredExperienceIds: z.array(z.string()).optional(),
-  showCategories: z.boolean().optional(),
-  showTestimonials: z.boolean().optional(),
-})
-
-const brandingValueSchema = z.object({
-  logoUrl: z.string().url().nullable().optional(),
-  faviconUrl: z.string().url().nullable().optional(),
-  primaryColor: z.string().optional(),
-  siteName: z.string().optional(),
-})
-
-const seoValueSchema = z.object({
-  defaultTitle: z.string().optional(),
-  titleTemplate: z.string().optional(),
-  defaultDescription: z.string().optional(),
-  ogImageUrl: z.string().url().nullable().optional(),
-  robots: z.string().optional(),
-})
-
-const footerValueSchema = z.object({
-  companyName: z.string().optional(),
-  copyrightText: z.string().optional(),
-  links: z
-    .array(z.object({ label: z.string(), url: z.string() }))
-    .optional(),
-  socialLinks: z
-    .array(z.object({ platform: z.string(), url: z.string() }))
-    .optional(),
-})
-
-/** Map section name to its Zod value schema. */
-export const SECTION_VALUE_SCHEMAS: Record<SiteSection, z.ZodTypeAny> = {
-  hero: heroValueSchema,
-  announcement_bar: announcementBarValueSchema,
-  homepage: homepageValueSchema,
-  branding: brandingValueSchema,
-  seo: seoValueSchema,
-  footer: footerValueSchema,
-}
-
-// ── Input schema ────────────────────────────────────────────────────
-
-const saveSectionSchema = z.object({
-  section: z.enum(SITE_SECTIONS, { message: 'Invalid section.' }),
-  key: z.string().min(1, 'Key is required.'),
-  value: z.record(z.string(), z.unknown()),
-  locale: z.string().default('en'),
-})
-
-export type SaveSectionInput = z.input<typeof saveSectionSchema>
+// NOTE: this `'use server'` module deliberately exports ONLY async Server
+// Functions. We do NOT re-export the value types from here — Next's
+// server-actions loader rewrites even `export type { … }` re-exports into a
+// runtime `export { … }`, which throws `ReferenceError: <Type> is not defined`
+// at module-eval and 500s every action. Consumers import these types straight
+// from `./schema` instead.
 
 // ── Core testable: save section ────────────────────────────────────
 
@@ -165,17 +101,6 @@ export async function executeSaveSection(
 }
 
 // ── Core testable: load section ────────────────────────────────────
-
-export interface SiteContentRow {
-  readonly id: string
-  readonly section: string
-  readonly key: string
-  readonly value: unknown
-  readonly locale: string
-  readonly version: number
-  readonly updatedByAdminId: string | null
-  readonly updatedAt: Date
-}
 
 /**
  * Load all content rows for a given section and locale.

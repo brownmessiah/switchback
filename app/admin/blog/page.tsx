@@ -157,7 +157,7 @@ function PostTable({
               </TableRow>
             )}
             {posts.map((p) => (
-              <TableRow key={p.id}>
+              <TableRow key={p.id} data-blog-post-id={p.id}>
                 <TableCell className="text-sm font-medium max-w-[200px] truncate">
                   {p.title}
                 </TableCell>

@@ -1284,6 +1284,127 @@ async function seed(): Promise<void> {
   }
 
   // ===================================================================
+  // #27 ADMIN REVIEW MODERATION — a dedicated published Review fixture
+  // ===================================================================
+  // The admin review-moderation E2E (#27) drives flag → remove → publish on a
+  // single Review and asserts the public-catalog effect (a `removed` Review
+  // leaves the public Experience page; a `published` one is shown). To keep
+  // those one-way transitions from disturbing the demo published Reviews that
+  // other specs render, seed a DEDICATED published Review on a DEDICATED
+  // Experience (owned by the identity Vendor) at a fixed PAST slot disjoint
+  // from every other fixture's slot hours. No other spec books or asserts this
+  // Experience, so the moderation chain is fully isolated.
+  const REVIEW_MOD_SLUG = 'review-moderation-fixture-rishikesh'
+  const [reviewModExp] = await db
+    .insert(experiences)
+    .values({
+      vendorUserId: 'u_seed_v_identity',
+      slug: REVIEW_MOD_SLUG,
+      title: 'Review Moderation Fixture — Rishikesh (admin #27)',
+      shortDescription:
+        'Dedicated fixture Experience for the admin review-moderation E2E (#27).',
+      longDescription:
+        'A dedicated published Experience whose single published Review the admin review-moderation E2E flags / removes / publishes. Isolated from every other spec.',
+      cancellationPreset: 'flexible' as const,
+      paymentModesAllowed: ['full_upfront'] as (
+        | 'full_upfront'
+        | 'partial_pay'
+        | 'reserve_now_pay_later'
+      )[],
+      pricePerPerson_1_2: '2500.00',
+      pricePerPerson_3_5: '2500.00',
+      pricePerPerson_6_plus: '2500.00',
+      regionSlug: 'rishikesh',
+      activitySlug: 'rafting',
+      status: 'published' as const,
+    })
+    .onConflictDoNothing()
+    .returning({ id: experiences.id })
+
+  const reviewModExpId =
+    reviewModExp?.id ??
+    (
+      await db
+        .select({ id: experiences.id })
+        .from(experiences)
+        .where(eq(experiences.slug, REVIEW_MOD_SLUG))
+    )[0]?.id
+
+  if (reviewModExpId) {
+    const reviewModSlotAt = new Date('2026-01-09T05:00:00.000Z')
+    const reviewModSlotEndAt = new Date(
+      reviewModSlotAt.getTime() + 4 * 60 * 60 * 1000,
+    )
+
+    const [reviewModSlot] = await db
+      .insert(availabilitySlots)
+      .values({
+        experienceId: reviewModExpId,
+        startAt: reviewModSlotAt,
+        endAt: reviewModSlotEndAt,
+        capacity: 8,
+        capacityTaken: 2,
+      })
+      .onConflictDoNothing()
+      .returning({ id: availabilitySlots.id })
+
+    const reviewModSlotId =
+      reviewModSlot?.id ??
+      (
+        await db
+          .select({ id: availabilitySlots.id })
+          .from(availabilitySlots)
+          .where(eq(availabilitySlots.startAt, reviewModSlotAt))
+      ).find(() => true)?.id
+
+    if (reviewModSlotId) {
+      const [reviewModBooking] = await db
+        .insert(bookings)
+        .values({
+          customerUserId: 'u_seed_customer',
+          experienceId: reviewModExpId,
+          slotId: reviewModSlotId,
+          participantCount: 2,
+          state: 'completed',
+          paymentMode: 'full_upfront',
+          grossTotalSnapshot: '5000.00',
+          pricePerParticipantSnapshot: '2500.00',
+          pricingBasisSnapshot: 'base_price',
+          commissionRateSnapshot: '20.00',
+          commissionBasisSnapshot: 'platform_default',
+          gstRateOnCommissionSnapshot: '18.00',
+          tdsAmountSnapshot: '5.00',
+          cancellationPresetSnapshot: 'flexible',
+          vendorIsResidentSnapshot: true,
+          confirmedAt: new Date(
+            reviewModSlotAt.getTime() - 5 * 24 * 60 * 60 * 1000,
+          ),
+          completedAt: reviewModSlotEndAt,
+        })
+        .onConflictDoNothing()
+        .returning({ id: bookings.id })
+
+      // Only insert the Review when the Booking was freshly created (the unique
+      // booking_id on reviews makes a duplicate a no-op anyway).
+      if (reviewModBooking) {
+        await db
+          .insert(reviews)
+          .values({
+            bookingId: reviewModBooking.id,
+            customerUserId: 'u_seed_customer',
+            experienceId: reviewModExpId,
+            vendorUserId: 'u_seed_v_identity',
+            rating: 5,
+            title: 'Moderation fixture review (#27)',
+            body: 'A dedicated published Review the admin moderation E2E flags, removes, then re-publishes. Should appear on the public Experience page while published.',
+            status: 'published',
+          })
+          .onConflictDoNothing()
+      }
+    }
+  }
+
+  // ===================================================================
   // #24 ADMIN PAYOUT QUEUE — pending Payout fixtures for the first-3 gate
   // ===================================================================
   // The admin payout queue (executeApprovePayout / Hold / Reject) acts on

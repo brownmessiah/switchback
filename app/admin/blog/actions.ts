@@ -58,12 +58,26 @@ export async function generateUniqueSlug(
 
 // ── Validation schemas ─────────────────────────────────────────────
 
+/**
+ * A cover-image URL may be either an absolute URL (e.g. a CDN/S3 URL in
+ * production) OR a root-relative path the storage mock returns
+ * (`/uploads/blog/...`). The default `z.string().url()` rejects relative
+ * paths, which broke the cover-image upload path entirely with the local
+ * storage adapter — so accept both forms here.
+ */
+const coverImageUrlSchema = z
+  .string()
+  .refine(
+    (v) => v.startsWith('/') || /^https?:\/\//.test(v),
+    'Cover image must be an absolute URL or an app-relative /uploads path.',
+  )
+
 const createSchema = z.object({
   title: z.string().trim().min(1, 'Title is required.').max(300),
   content: z.string().default(''),
   excerpt: z.string().max(500).nullable().optional(),
   category: z.enum(BLOG_CATEGORIES, { message: 'Invalid category.' }),
-  coverImageUrl: z.string().url().nullable().optional(),
+  coverImageUrl: coverImageUrlSchema.nullable().optional(),
   status: z.enum(BLOG_STATUSES).default('draft'),
 })
 
@@ -75,7 +89,7 @@ const updateSchema = z.object({
   content: z.string().optional(),
   excerpt: z.string().max(500).nullable().optional(),
   category: z.enum(BLOG_CATEGORIES, { message: 'Invalid category.' }).optional(),
-  coverImageUrl: z.string().url().nullable().optional(),
+  coverImageUrl: coverImageUrlSchema.nullable().optional(),
   status: z.enum(BLOG_STATUSES).optional(),
 })
 

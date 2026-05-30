@@ -106,7 +106,7 @@ export default async function ReviewsPage({ searchParams }: ReviewsPageProps) {
                 </TableRow>
               ) : (
                 reviews.map((r) => (
-                  <TableRow key={r.id}>
+                  <TableRow key={r.id} data-review-id={r.id}>
                     <TableCell className="text-sm font-medium text-amber-500">
                       {renderStars(r.rating)}
                     </TableCell>

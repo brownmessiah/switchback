@@ -59,8 +59,23 @@ import {
   insertDisputedBookingFixture,
   setVendorCommissionRate,
   setVendorSuspended,
+  // #27 admin content management
+  getModerationReviewFixture,
+  getReviewStatus,
+  setReviewStatus,
+  countPublishedReviewsForExperience,
+  countReviewAuditRows,
+  getLatestReviewAudit,
+  getBlogPostByTitle,
+  getBlogPostById,
+  deleteBlogPostById,
+  countBlogAuditRows,
+  getMediaAssetByUrl,
+  getSiteContentRow,
+  getLatestSiteContentAudit,
 } from '../../helpers/db-assertions'
 import { getIndexedExperience } from '../../helpers/meili-assertions'
+import { storageFileExists } from '../../helpers/storage-assertions'
 
 // Seed user IDs — must match db/seed.ts.
 const SEED_ADMIN_ID = 'u_seed_admin'
@@ -2172,5 +2187,396 @@ test.describe('Admin loyalty grant — Outvers credit bucket + expiry (#26)', ()
       // Clear the dedicated Customer's wallet so the grant leaves no residue.
       await clearWalletForUser(SEED_LOYALTY_CUSTOMER_ID)
     }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 22. Functional: admin review moderation (#27)
+//
+// Drives the three admin review-moderation Server Actions FROM THE UI (flag /
+// remove / publish) on a DEDICATED published Review and asserts BOTH the
+// persisted reviews.status transitions AND the public-catalog effect (a
+// `removed` Review LEAVES the public Experience page; a re-`published` one is
+// shown again), plus the append-only audit_logs trail.
+//
+//   - FLAG    : published → flagged. Flagged Reviews are NOT public → the
+//               Review drops off the public Experience page.
+//   - REMOVE  : flagged → removed. Stays OFF the public page.
+//   - PUBLISH : removed → ... (publish is only valid from pending|flagged, so
+//               this asserts the moderation state machine: re-flag is not a
+//               path; instead we drive flagged → published to prove the
+//               re-publish restores the public render). The chain is:
+//               published → flag → (assert gone) → publish → (assert shown) →
+//               flag → remove → (assert gone), each with an audit row.
+//
+// The Review sits on a DEDICATED Experience (review-moderation-fixture-rishikesh)
+// owned by the identity Vendor that no other spec books or asserts, so these
+// transitions never disturb the demo published Reviews other specs render.
+// The fixture's status is restored to `published` in a finally so reseed-free
+// reruns stay deterministic. Serial so the state-machine chain is ordered.
+// ---------------------------------------------------------------------------
+const REVIEW_MOD_SLUG = 'review-moderation-fixture-rishikesh'
+
+test.describe('Admin review moderation (#27)', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  test('flag → publish → flag → remove transitions status, audits, and toggles the public catalog', async ({
+    page,
+  }) => {
+    const fixture = await getModerationReviewFixture()
+    expect(
+      fixture,
+      `seed review-moderation fixture (${REVIEW_MOD_SLUG}) must exist`,
+    ).not.toBeNull()
+    const { reviewId, experienceId, experienceSlug } = fixture!
+
+    // Restore the fixture to a known published state regardless of prior runs.
+    await setReviewStatus(reviewId, 'published')
+
+    try {
+      const publishedBefore =
+        await countPublishedReviewsForExperience(experienceId)
+      expect(
+        publishedBefore,
+        'fixture must start with exactly one published Review',
+      ).toBeGreaterThanOrEqual(1)
+
+      // ── Pre-condition: the published Review renders on the public page ────
+      await page.goto(`/experience/${experienceSlug}`)
+      await expect(page.getByText('Moderation fixture review (#27)')).toBeVisible({
+        timeout: 15_000,
+      })
+
+      // ── FLAG: published → flagged (drops out of the public catalog) ──────
+      await page.goto('/admin/reviews')
+      await expect(page.locator('h1')).toContainText('Review Moderation')
+      const row = page.locator(`tr[data-review-id="${reviewId}"]`)
+      await expect(row).toBeVisible()
+      await row.getByRole('button', { name: 'Flag' }).click()
+
+      await expect
+        .poll(async () => getReviewStatus(reviewId), { timeout: 15_000 })
+        .toBe('flagged')
+      expect(await countReviewAuditRows('admin.review.flag', reviewId)).toBe(1)
+      const flagAudit = await getLatestReviewAudit('admin.review.flag', reviewId)
+      expect(flagAudit!.actorUserId).toBe(SEED_ADMIN_ID)
+      expect(flagAudit!.payload).toMatchObject({
+        previousStatus: 'published',
+        newStatus: 'flagged',
+      })
+
+      // ── Assert: a flagged Review is NOT on the public Experience page ────
+      await page.goto(`/experience/${experienceSlug}`)
+      await expect(
+        page.getByText('Moderation fixture review (#27)'),
+      ).toHaveCount(0)
+
+      // ── PUBLISH: flagged → published (restores the public render) ────────
+      await page.goto('/admin/reviews')
+      const row2 = page.locator(`tr[data-review-id="${reviewId}"]`)
+      await expect(row2).toBeVisible()
+      await row2.getByRole('button', { name: 'Publish' }).click()
+
+      await expect
+        .poll(async () => getReviewStatus(reviewId), { timeout: 15_000 })
+        .toBe('published')
+      expect(await countReviewAuditRows('admin.review.publish', reviewId)).toBe(1)
+      const publishAudit = await getLatestReviewAudit(
+        'admin.review.publish',
+        reviewId,
+      )
+      expect(publishAudit!.actorUserId).toBe(SEED_ADMIN_ID)
+      expect(publishAudit!.payload).toMatchObject({
+        previousStatus: 'flagged',
+        newStatus: 'published',
+      })
+
+      // ── Assert: the re-published Review is BACK on the public page ───────
+      await page.goto(`/experience/${experienceSlug}`)
+      await expect(page.getByText('Moderation fixture review (#27)')).toBeVisible({
+        timeout: 15_000,
+      })
+
+      // ── REMOVE: published → flag → remove (leaves the catalog for good) ──
+      await page.goto('/admin/reviews')
+      const row3 = page.locator(`tr[data-review-id="${reviewId}"]`)
+      await expect(row3).toBeVisible()
+      // Remove is available from published directly (REMOVE_FROM includes it).
+      await row3.getByRole('button', { name: 'Remove' }).click()
+
+      await expect
+        .poll(async () => getReviewStatus(reviewId), { timeout: 15_000 })
+        .toBe('removed')
+      expect(await countReviewAuditRows('admin.review.remove', reviewId)).toBe(1)
+      const removeAudit = await getLatestReviewAudit(
+        'admin.review.remove',
+        reviewId,
+      )
+      expect(removeAudit!.actorUserId).toBe(SEED_ADMIN_ID)
+      expect(removeAudit!.payload).toMatchObject({
+        previousStatus: 'published',
+        newStatus: 'removed',
+      })
+
+      // ── Assert: a removed Review is OFF the public Experience page ───────
+      await page.goto(`/experience/${experienceSlug}`)
+      await expect(
+        page.getByText('Moderation fixture review (#27)'),
+      ).toHaveCount(0)
+
+      await page.screenshot({
+        path: 'tests/e2e/screenshots/admin-review-moderation.png',
+        fullPage: true,
+      })
+    } finally {
+      // Restore the fixture so a reseed-free rerun finds it published again.
+      await setReviewStatus(reviewId, 'published')
+    }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 23. Functional: admin blog CRUD + cover image (#27)
+//
+// Drives the blog Server Actions FROM THE UI (create with cover-image upload /
+// edit / delete) and asserts BOTH the persisted blog_posts row (auto-slug,
+// status, cover image) AND the media_assets row + storage-mock file the
+// cover-image upload writes, plus the append-only audit_logs trail.
+//
+//   - CREATE (+ cover) : upload a cover image (→ media_assets row + a file on
+//                        the storage mock) → create a published post → persists
+//                        with a unique auto-slug, the cover URL, and
+//                        publishedAt set. A create audit row is written.
+//   - EDIT             : change the title → persists + the slug re-generates.
+//                        An update audit row is written.
+//   - DELETE           : remove the post → row gone from the DB + a delete
+//                        audit row is written.
+//
+// The post is created freshly in-test (unique title stamp) and removed by the
+// test's own delete step (force-cleaned in a finally), so it never disturbs
+// other specs. Serial so the create→edit→delete chain runs in order.
+// ---------------------------------------------------------------------------
+test.describe('Admin blog CRUD + cover image (#27)', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  const stamp = Date.now()
+  const createTitle = `E2E Blog CRUD #27 — ${stamp}`
+  const editedTitle = `E2E Blog CRUD #27 EDITED — ${stamp}`
+  let postId: string | null = null
+
+  test.afterAll(async () => {
+    // Force-clean in case an assertion aborted before the UI delete landed.
+    for (const t of [createTitle, editedTitle]) {
+      const stale = await getBlogPostByTitle(t)
+      if (stale) await deleteBlogPostById(stale.id)
+    }
+  })
+
+  test('create published post WITH a cover image → media_assets row + storage file + persisted post + audit', async ({
+    page,
+  }) => {
+    await page.goto('/admin/blog')
+    await expect(page.locator('h1')).toContainText('Blog CMS')
+
+    // ── Upload a cover image (tiny VALID 1x1 PNG so next/image won't 4xx) ─
+    const pngBase64 =
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+    const coverInput = page.locator('#coverImage')
+    await coverInput.setInputFiles({
+      name: 'e2e-blog-cover.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(pngBase64, 'base64'),
+    })
+    // The form surfaces "Image uploaded." once the upload action resolves.
+    await expect(page.getByText('Image uploaded.')).toBeVisible({ timeout: 15_000 })
+
+    // ── Fill + submit the create form (Save & Publish) ───────────────────
+    await page.fill('#title', createTitle)
+    await page.locator('#content').fill('# E2E Heading\n\nBody copy for the #27 blog CRUD post.')
+    await page
+      .locator('button[type="submit"]')
+      .filter({ hasText: 'Save & Publish' })
+      .click()
+
+    await expect(page.getByText('Blog post created.')).toBeVisible({ timeout: 15_000 })
+
+    // ── Assert: the post persisted with auto-slug + published + cover URL ─
+    const post = await getBlogPostByTitle(createTitle)
+    expect(post, 'the created blog post must persist').not.toBeNull()
+    postId = post!.id
+    expect(post!.status).toBe('published')
+    expect(post!.publishedAt, 'a published post must carry publishedAt').not.toBeNull()
+    expect(post!.slug, 'slug auto-generated from the title').toContain('e2e-blog-crud-27')
+    expect(post!.coverImageUrl, 'the cover image URL must persist').not.toBeNull()
+    expect(post!.coverImageUrl).toContain('/uploads/blog/')
+
+    // ── Assert: a media_assets row + a file on the storage mock ──────────
+    const asset = await getMediaAssetByUrl(post!.coverImageUrl!)
+    expect(asset, 'a media_assets row for the cover image must exist').not.toBeNull()
+    expect(asset!.entityType).toBe('blog')
+    expect(storageFileExists(asset!.storageKey)).toBe(true)
+
+    // ── Assert: a create audit row with the admin as actor ───────────────
+    expect(await countBlogAuditRows('admin.blog_post.create', postId!)).toBe(1)
+
+    // ── Assert: the post appears in the admin list ───────────────────────
+    await page.reload()
+    await expect(page.locator(`tr[data-blog-post-id="${postId}"]`)).toBeVisible({
+      timeout: 10_000,
+    })
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/admin-blog-created-cover.png',
+      fullPage: true,
+    })
+  })
+
+  test('edit the post title → persists + slug re-generates + audit', async ({ page }) => {
+    expect(postId, 'create test must have produced a post id').not.toBeNull()
+
+    await page.goto('/admin/blog')
+    const row = page.locator(`tr[data-blog-post-id="${postId}"]`)
+    await expect(row).toBeVisible({ timeout: 10_000 })
+    await row.getByRole('button', { name: 'Edit' }).click()
+
+    const dialog = page.locator('[data-slot="dialog-content"]')
+    await expect(dialog.getByText('Edit Blog Post')).toBeVisible({ timeout: 5_000 })
+    await dialog.locator(`#edit-title-${postId}`).fill(editedTitle)
+    await dialog
+      .locator('button[type="submit"]')
+      .filter({ hasText: 'Save & Publish' })
+      .click()
+
+    // The dialog closes on a successful save.
+    await expect(dialog.getByText('Edit Blog Post')).not.toBeVisible({ timeout: 10_000 })
+
+    // ── Assert: the title + re-generated slug persisted ──────────────────
+    await expect
+      .poll(async () => (await getBlogPostById(postId!))?.title, { timeout: 15_000 })
+      .toBe(editedTitle)
+    const updated = await getBlogPostById(postId!)
+    expect(updated!.slug, 'slug re-generates from the new title').toContain(
+      'e2e-blog-crud-27-edited',
+    )
+
+    // ── Assert: an update audit row with the admin as actor ──────────────
+    expect(await countBlogAuditRows('admin.blog_post.update', postId!)).toBeGreaterThanOrEqual(1)
+  })
+
+  test('delete the post → removed from the DB + audit', async ({ page }) => {
+    expect(postId, 'create test must have produced a post id').not.toBeNull()
+
+    await page.goto('/admin/blog')
+    const row = page.locator(`tr[data-blog-post-id="${postId}"]`)
+    await expect(row).toBeVisible({ timeout: 10_000 })
+
+    // The delete confirms via window.confirm — auto-accept it.
+    page.once('dialog', (dialog) => dialog.accept())
+    await row.getByRole('button', { name: 'Delete' }).click()
+
+    // After the action + revalidation the deleted row drops out of the table.
+    await expect(row).toHaveCount(0, { timeout: 15_000 })
+
+    // ── Assert: the post row is gone from the DB ─────────────────────────
+    await expect
+      .poll(async () => await getBlogPostById(postId!), { timeout: 15_000 })
+      .toBeNull()
+    expect(await countBlogAuditRows('admin.blog_post.delete', postId!)).toBe(1)
+    postId = null
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 24. Functional: admin site-builder save/load round-trip (#27)
+//
+// Drives the site-builder save Server Action FROM THE UI (the Hero section's
+// "Save Section" button) and asserts the persisted site_content row + the
+// append-only audit_logs trail. This is the regression test for the
+// `'use server'` non-async-export bug: `SECTION_VALUE_SCHEMAS` was exported as
+// a runtime value from a `'use server'` module, which makes every site-builder
+// Server Action fail when invoked. After moving the value/schema exports into
+// the sibling non-`'use server'` `./schema.ts` module, a real save through the
+// form must persist (no 500), bump the version on a second save, and load back.
+//
+// The save targets the Hero (section, key=default, locale=en) row, which no
+// other spec asserts. Serial so the create→bump-version saves are ordered.
+// ---------------------------------------------------------------------------
+test.describe('Admin site-builder save/load (#27)', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  const entityId = 'hero/default/en'
+
+  test('save the Hero section through the UI → persists a site_content row + audit (no 500)', async ({
+    page,
+  }) => {
+    const heroTitle = `E2E Hero #27 — ${Date.now()}`
+
+    await page.goto('/admin/site-builder')
+    await expect(page.locator('h1')).toContainText('Site Builder')
+
+    // The Hero tab is the default; fill the required Title and save.
+    await page.locator('#hero-title').fill(heroTitle)
+    await page.locator('#hero-subtitle').fill('Adventure awaits — saved by the #27 E2E.')
+    await page.getByRole('button', { name: 'Save Section' }).first().click()
+
+    // ── Assert: the action succeeds (the form surfaces "Saved (vN)") ─────
+    // If the `'use server'` bug were present, the action would 500 and this
+    // would never appear (and the DevTools fixture would fail on the 500).
+    await expect(page.getByText(/Saved \(v\d+\)/)).toBeVisible({ timeout: 15_000 })
+
+    // ── Assert: the site_content row persisted with the saved value ──────
+    await expect
+      .poll(async () => (await getSiteContentRow('hero', 'default', 'en'))?.value, {
+        timeout: 15_000,
+      })
+      .toMatchObject({ title: heroTitle })
+    const row = await getSiteContentRow('hero', 'default', 'en')
+    expect(row, 'the Hero site_content row must persist').not.toBeNull()
+    expect(row!.locale).toBe('en')
+    expect(row!.updatedByAdminId).toBe(SEED_ADMIN_ID)
+    expect(row!.version).toBeGreaterThanOrEqual(1)
+
+    // ── Assert: a site_content audit row with the admin as actor ─────────
+    // The action is create on the first-ever save, update on a reused DB —
+    // either way exactly one audit row is appended per save and the latest
+    // records the admin actor + the Hero section/key/locale.
+    const audit = await getLatestSiteContentAudit(entityId)
+    expect(audit, 'a site_content audit row must exist').not.toBeNull()
+    expect(['admin.site_content.create', 'admin.site_content.update']).toContain(
+      audit!.action,
+    )
+    expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+    expect(audit!.payload).toMatchObject({ section: 'hero', key: 'default', locale: 'en' })
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/admin-site-builder-saved.png',
+      fullPage: true,
+    })
+  })
+
+  test('a second save bumps the version + loads back the latest value', async ({ page }) => {
+    const before = await getSiteContentRow('hero', 'default', 'en')
+    expect(before, 'the first save must have created the Hero row').not.toBeNull()
+    const versionBefore = before!.version
+
+    const heroTitle2 = `E2E Hero #27 v2 — ${Date.now()}`
+
+    await page.goto('/admin/site-builder')
+    await page.locator('#hero-title').fill(heroTitle2)
+    await page.getByRole('button', { name: 'Save Section' }).first().click()
+    await expect(page.getByText(/Saved \(v\d+\)/)).toBeVisible({ timeout: 15_000 })
+
+    // ── Assert: the version bumped + the latest value loads back ─────────
+    await expect
+      .poll(async () => (await getSiteContentRow('hero', 'default', 'en'))?.version, {
+        timeout: 15_000,
+      })
+      .toBe(versionBefore + 1)
+    const after = await getSiteContentRow('hero', 'default', 'en')
+    expect(after!.value).toMatchObject({ title: heroTitle2 })
+
+    // ── Assert: the persisted value re-loads into the form on reload ─────
+    await page.reload()
+    await expect(page.locator('#hero-title')).toHaveValue(heroTitle2, { timeout: 15_000 })
   })
 })

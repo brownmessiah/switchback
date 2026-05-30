@@ -130,6 +130,36 @@ export async function getOpenSlotForExperienceSlug(
   })
 }
 
+/**
+ * Resolve the earliest FUTURE open availability slot for an experience slug
+ * that still has room for `seats` participants. Unlike
+ * `getOpenSlotForExperienceSlug` (which returns the earliest open slot of any
+ * date, possibly a seeded past slot), this guarantees a genuinely-upcoming,
+ * ≥48h-out slot — so the cross-surface checkout books a real future Booking
+ * and the partial-pay / Advance worked example stays deterministic.
+ */
+export async function getOpenFutureSlotForExperienceSlug(
+  slug: string,
+  seats: number,
+): Promise<{ slotId: string; experienceId: string } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ slot_id: string; experience_id: string }[]>`
+      SELECT s.id AS slot_id, s.experience_id AS experience_id
+      FROM availability_slots s
+      JOIN experiences e ON e.id = s.experience_id
+      WHERE e.slug = ${slug}
+        AND s.status = 'open'
+        AND s.start_at > now() + interval '48 hours'
+        AND s.capacity - s.capacity_taken >= ${seats}
+      ORDER BY s.start_at ASC
+      LIMIT 1
+    `
+    const row = rows[0]
+    if (!row) return null
+    return { slotId: row.slot_id, experienceId: row.experience_id }
+  })
+}
+
 /** Count `booking.create` audit rows for a booking id. */
 export async function countBookingCreateAuditRows(
   bookingId: string,

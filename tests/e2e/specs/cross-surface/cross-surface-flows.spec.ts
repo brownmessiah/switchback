@@ -19,15 +19,19 @@ import { test, expect } from '../../fixtures/devtools'
 import path from 'node:path'
 
 import {
+  getBooking,
   getExperienceByTitle,
   getExperienceIdBySlug,
   getExperienceStatus,
+  getOpenFutureSlotForExperienceSlug,
+  getSlotCapacity,
   setExperienceStatus,
 } from '../../helpers/db-assertions'
 import {
   getIndexedExperience,
   removeIndexedExperience,
 } from '../../helpers/meili-assertions'
+import { mockRazorpayCheckout } from '../../helpers/razorpay-mock'
 
 // The vendor-storage session maps to the seed business-tier Vendor
 // (u_seed_v_business). Business tier is UNRESTRICTED (ADR-0007), so an
@@ -392,54 +396,83 @@ test.describe('Cross-surface: vendor creates -> admin approves -> collection sho
 })
 
 // ---------------------------------------------------------------------------
-// 3. Customer books -> vendor sees -> admin sees @cross-surface
+// 3. Customer BOOKS -> Vendor SEES -> Admin SEES  (#32)
 //
-// Flow: Customer browses -> experience detail -> checkout -> mock Razorpay
-//       payment -> confirmation page -> Vendor navigates to bookings,
-//       verifies new booking appears -> Admin navigates to bookings,
-//       verifies same booking appears.
+// The ONE-booking-across-three-surfaces proof. A Customer drives a REAL mock
+// checkout of a u_seed_v_business Experience (the same revenue spine #13
+// hardened: PDP "Book now" URL → /checkout → Pay → confirmation → Booking
+// row). The SAME Booking id then has to appear — with consistent state +
+// gross + parties — on:
+//   • the Vendor's /vendor/bookings list (u_seed_v_business owns the booked
+//     Experience, so the booking falls inside this vendor's surface), and
+//   • the Admin's /admin/bookings list (the admin sees ALL bookings).
+//
+// Unlike the prior version (which only inspected a pre-seeded booking and
+// asserted the tables merely rendered), this books a fresh Booking and pins
+// every surface to its EXACT id + gross — the real cross-surface claim.
+//
+// The booked Experience is owned by u_seed_v_business — the SAME vendor as the
+// `vendor-storage` session — which is the load-bearing requirement: the vendor
+// can only SEE a Booking on an Experience it owns (vendor/bookings filters by
+// experiences.vendor_user_id). The Customer (customer-storage) and Vendor
+// (vendor-storage) drive their own contexts; the Admin surface runs on the
+// gated default `page` (admin session) so DevTools + axe gates cover it.
+//
+// Experience: bir-billing-paragliding-full-day (u_seed_v_business, ₹3,000/pp).
+//   2 participants, ≥48h-out future slot, gross ₹6,000 (≤ ₹25,000) →
+//   partial_pay with a 25% Advance of ₹1,500 captured now.
 // ---------------------------------------------------------------------------
 test.describe('Cross-surface: customer books -> vendor sees -> admin sees @cross-surface', () => {
-  test('booking made by customer appears in vendor and admin dashboards', async ({
+  // The Experience the Customer books — OWNED BY u_seed_v_business so it lands
+  // on the vendor session's bookings surface.
+  const BOOK_SLUG = 'bir-billing-paragliding-full-day'
+  const PRICE_PER_PERSON = 3000 // pricePerPerson_1_2 (db/seed.ts)
+  const PARTICIPANTS = 2
+  const EXPECTED_GROSS = PRICE_PER_PERSON * PARTICIPANTS // 6000
+  const EXPECTED_ADVANCE = Math.floor(EXPECTED_GROSS * 0.25) // 1500
+
+  test('a fresh customer Booking appears — same id/state/gross — on the vendor AND admin surfaces', async ({
     browser,
+    page,
   }) => {
-    // ── Customer context: use an existing seeded booking ────────────
-    // The seed creates confirmed bookings for u_seed_customer.
-    // We navigate to the customer dashboard and find one.
+    // ── Resolve a real FUTURE open slot on the business-vendor Experience ──
+    const slot = await getOpenFutureSlotForExperienceSlug(BOOK_SLUG, PARTICIPANTS)
+    expect(
+      slot,
+      `a future open slot for ${BOOK_SLUG} (u_seed_v_business) must exist`,
+    ).toBeTruthy()
+    const capacityTakenBefore = (await getSlotCapacity(slot!.slotId))!
+      .capacityTaken
+
+    // ── CUSTOMER (own context): drive the real mock checkout ──────────────
     const customerContext = await browser.newContext({
       storageState: path.join(AUTH_DIR, 'customer-storage.json'),
     })
     const customerPage = await customerContext.newPage()
+    await mockRazorpayCheckout(customerPage)
 
-    await customerPage.goto('/dashboard')
-    await expect(customerPage.locator('h1')).toContainText('My bookings')
+    // The exact URL the PDP "Book now" link emits (experience/[slug]/page.tsx).
+    await customerPage.goto(
+      `/checkout?experienceId=${slot!.experienceId}&slotId=${slot!.slotId}&participants=${PARTICIPANTS}`,
+    )
+    await expect(customerPage.locator('h1')).toContainText('Checkout')
 
-    // Find a confirmed booking link
-    const bookingLink = customerPage
-      .locator('a[href*="/bookings/"]')
-      .filter({ hasText: /confirmed/i })
-      .first()
-    const hasConfirmed = (await bookingLink.count()) > 0
-    const targetLink = hasConfirmed
-      ? bookingLink
-      : customerPage.locator('a[href*="/bookings/"]').first()
+    // The UI surfaces the worked example: ₹6,000 gross, ₹1,500 Advance due now.
+    await expect(customerPage.getByText('Order summary')).toBeVisible()
+    const payButton = customerPage.locator('button:has-text("Pay")')
+    await expect(payButton).toContainText(
+      `₹${EXPECTED_ADVANCE.toLocaleString('en-IN')}`,
+    )
 
-    expect(await targetLink.count()).toBeGreaterThanOrEqual(1)
-
-    await targetLink.click()
+    await payButton.click()
     await customerPage.waitForURL(/\/bookings\/[^/]+\/confirmation/, {
       timeout: 15_000,
     })
-
-    // Verify confirmation page
     await expect(customerPage.locator('h1')).toContainText('Booking confirmed')
-    await expect(customerPage.getByText('Booking summary')).toBeVisible()
 
-    // Extract the booking ID from the URL for cross-surface verification
-    const confirmationUrl = customerPage.url()
-    const bookingIdMatch = confirmationUrl.match(
-      /\/bookings\/([^/]+)\/confirmation/,
-    )
+    const bookingIdMatch = customerPage
+      .url()
+      .match(/\/bookings\/([^/]+)\/confirmation/)
     expect(bookingIdMatch).toBeTruthy()
     const bookingId = bookingIdMatch![1]
 
@@ -449,7 +482,26 @@ test.describe('Cross-surface: customer books -> vendor sees -> admin sees @cross
     })
     await customerContext.close()
 
-    // ── Vendor context: verify the booking appears ───────────────────
+    // ── Source of truth: the Booking the customer just created ────────────
+    const booking = await getBooking(bookingId)
+    expect(booking, 'the customer Booking row must exist').toBeTruthy()
+    expect(booking!.customerUserId).toBe('u_seed_customer')
+    expect(booking!.experienceId).toBe(slot!.experienceId)
+    expect(booking!.slotId).toBe(slot!.slotId)
+    expect(booking!.participantCount).toBe(PARTICIPANTS)
+    expect(booking!.state).toBe('confirmed')
+    expect(booking!.paymentMode).toBe('partial_pay')
+    const grossRupees = Math.floor(Number(booking!.grossTotalSnapshot))
+    expect(grossRupees).toBe(EXPECTED_GROSS)
+
+    // Capacity decremented atomically by the booking-create transaction.
+    expect((await getSlotCapacity(slot!.slotId))!.capacityTaken).toBe(
+      capacityTakenBefore + PARTICIPANTS,
+    )
+
+    const grossLabel = `₹${grossRupees.toLocaleString('en-IN')}` // "₹6,000"
+
+    // ── VENDOR (own context): the SAME Booking appears on its surface ─────
     const vendorContext = await browser.newContext({
       storageState: path.join(AUTH_DIR, 'vendor-storage.json'),
     })
@@ -458,33 +510,30 @@ test.describe('Cross-surface: customer books -> vendor sees -> admin sees @cross
     await vendorPage.goto('/vendor/bookings')
     await expect(vendorPage.locator('h1')).toContainText('Bookings')
 
-    // The booking count should reflect the new booking
-    await expect(vendorPage.getByText(/\d+ booking/)).toBeVisible()
+    // Pin to the EXACT Booking by its id (data-booking-id), not a count or a
+    // table-renders smoke check. This is the cross-surface claim: the booking
+    // the customer made is visible to the vendor that owns the Experience.
+    const vendorRow = vendorPage.locator(`tr[data-booking-id="${bookingId}"]`)
+    await expect(
+      vendorRow,
+      'the customer Booking must appear in the owning vendor’s bookings list',
+    ).toBeVisible({ timeout: 10_000 })
+    // Consistent state + gross + experience on the vendor surface.
+    expect(await vendorRow.getAttribute('data-booking-state')).toBe(
+      booking!.state,
+    )
+    await expect(vendorRow).toContainText(grossLabel)
+    await expect(vendorRow).toContainText('Bir-Billing Paragliding')
 
-    // Verify the experience title appears in the bookings table
-    // The seed vendor (u_seed_v_business) does NOT own the rishikesh
-    // experiences (they belong to u_seed_v_identity), so the newly created
-    // booking may not be in this vendor's list. Check the seed vendor's
-    // bookings page instead -- or verify the table renders and has data.
-    //
-    // The seed customer's bookings are linked to various seed experiences.
-    // Since the customer booked a rishikesh rafting experience owned by
-    // u_seed_v_identity, we switch to a more robust check: verify the
-    // vendor bookings page loads and shows booking data structure.
-
-    // Check if the vendor has any bookings (including seed bookings)
-    const bookingTable = vendorPage.locator('table')
-    const hasTable = (await bookingTable.count()) > 0
-
-    if (hasTable) {
-      // Verify table headers
-      await expect(
-        vendorPage.getByRole('columnheader', { name: 'Customer' }),
-      ).toBeVisible()
-      await expect(
-        vendorPage.getByRole('columnheader', { name: 'Experience' }),
-      ).toBeVisible()
-    }
+    // Drill into the vendor Booking detail — same id resolves (the page 404s
+    // for any booking the vendor does not own, so a 200 proves ownership).
+    const vendorDetailResponse = await vendorPage.goto(
+      `/vendor/bookings/${bookingId}`,
+    )
+    expect(vendorDetailResponse?.status()).toBe(200)
+    await expect(vendorPage.locator('h1')).toContainText('Booking Detail')
+    await expect(vendorPage.getByText('Gross Total')).toBeVisible()
+    await expect(vendorPage.getByText(grossLabel).first()).toBeVisible()
 
     await vendorPage.screenshot({
       path: 'tests/e2e/screenshots/cross-surface-vendor-bookings.png',
@@ -492,50 +541,37 @@ test.describe('Cross-surface: customer books -> vendor sees -> admin sees @cross
     })
     await vendorContext.close()
 
-    // ── Admin context: verify the booking appears ────────────────────
-    const adminContext = await browser.newContext({
-      storageState: path.join(AUTH_DIR, 'admin-storage.json'),
-    })
-    const adminPage = await adminContext.newPage()
+    // ── ADMIN (gated default `page`): the SAME Booking appears here too ────
+    // Runs on the default cross-surface `page` (admin session) so the DevTools
+    // (console/network) + axe gates cover the admin booking surfaces.
+    await page.goto('/admin/bookings')
+    await expect(page.locator('h1')).toContainText('All Bookings')
 
-    await adminPage.goto('/admin/bookings')
-    await expect(adminPage.locator('h1')).toContainText('All Bookings')
-
-    // The admin sees ALL bookings across all vendors
-    await expect(adminPage.getByText(/\d+ booking/)).toBeVisible()
-
-    // Verify the booking table has the standard structure
+    const adminRow = page.locator(`tr[data-booking-id="${bookingId}"]`)
     await expect(
-      adminPage.getByRole('columnheader', { name: 'Booking ID' }),
-    ).toBeVisible()
-    await expect(
-      adminPage.getByRole('columnheader', { name: 'Amount' }),
-    ).toBeVisible()
+      adminRow,
+      'the customer Booking must appear in the admin all-bookings list',
+    ).toBeVisible({ timeout: 10_000 })
+    // Consistent state + gross + parties across the admin surface.
+    expect(await adminRow.getAttribute('data-booking-state')).toBe(
+      booking!.state,
+    )
+    await expect(adminRow).toContainText(grossLabel)
+    await expect(adminRow).toContainText('Bir-Billing Paragliding')
 
-    // Look for the booking by its truncated ID (first 8 chars)
-    const truncatedId = bookingId.slice(0, 8)
-    const adminBookingLink = adminPage.locator(`text=${truncatedId}`)
-    await expect(adminBookingLink).toBeVisible({ timeout: 10_000 })
+    // Drill into the admin Booking detail and assert the FULL id + gross,
+    // closing the loop that all three surfaces describe the ONE Booking.
+    await adminRow.getByRole('link').first().click()
+    await page.waitForURL(/\/admin\/bookings\/[^/]+/)
+    await expect(page.locator('h1')).toContainText('Booking Detail')
+    await expect(page.getByText(bookingId, { exact: true })).toBeVisible()
+    await expect(page.getByText('Commission Snapshot')).toBeVisible()
+    await expect(page.getByText('Gross Total')).toBeVisible()
+    await expect(page.getByText(grossLabel).first()).toBeVisible()
 
-    // Verify the booking's experience title is visible in the same row
-    const bookingRow = adminPage.locator('tr').filter({
-      hasText: truncatedId,
-    })
-    await expect(bookingRow).toBeVisible()
-
-    // Click through to the booking detail page
-    await adminBookingLink.click()
-    await adminPage.waitForURL(/\/admin\/bookings\/[^/]+/)
-    await expect(adminPage.locator('h1')).toContainText('Booking Detail')
-
-    // Verify the booking detail shows the commission snapshot
-    await expect(adminPage.getByText('Commission Snapshot')).toBeVisible()
-    await expect(adminPage.getByText('Gross Total')).toBeVisible()
-
-    await adminPage.screenshot({
+    await page.screenshot({
       path: 'tests/e2e/screenshots/cross-surface-admin-booking.png',
       fullPage: true,
     })
-    await adminContext.close()
   })
 })

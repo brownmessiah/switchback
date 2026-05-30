@@ -88,7 +88,11 @@ export default async function VendorBookingsPage() {
               </TableHeader>
               <TableBody>
                 {rows.map((row) => (
-                  <TableRow key={row.bookingId}>
+                  <TableRow
+                    key={row.bookingId}
+                    data-booking-id={row.bookingId}
+                    data-booking-state={row.state}
+                  >
                     <TableCell className="font-medium">
                       {row.customerName ?? 'Customer'}
                     </TableCell>

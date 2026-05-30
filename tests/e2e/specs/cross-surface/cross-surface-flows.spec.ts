@@ -19,13 +19,21 @@ import { test, expect } from '../../fixtures/devtools'
 import path from 'node:path'
 
 import {
+  getExperienceByTitle,
   getExperienceIdBySlug,
   getExperienceStatus,
+  setExperienceStatus,
 } from '../../helpers/db-assertions'
 import {
   getIndexedExperience,
   removeIndexedExperience,
 } from '../../helpers/meili-assertions'
+
+// The vendor-storage session maps to the seed business-tier Vendor
+// (u_seed_v_business). Business tier is UNRESTRICTED (ADR-0007), so an
+// admin-approve of any priced, slot-less Experience it creates publishes
+// cleanly with no tier-cap rejection — keeping this journey deterministic.
+const VENDOR_USER_ID = 'u_seed_v_business'
 
 const AUTH_DIR = path.join(__dirname, '../../.auth')
 
@@ -193,20 +201,46 @@ test.describe('Cross-surface: admin approve -> customer search finds -> remove -
 })
 
 // ---------------------------------------------------------------------------
-// 2. Vendor creates -> admin approves -> collection shows @cross-surface
+// 2. Vendor creates -> admin approves -> ACTIVITY-CITY COLLECTION shows it
+//    (#31 — the full vendor + admin + marketing cross-surface journey)
 //
-// Flow: Vendor creates new experience listing with unique title ->
-//       Admin finds the new listing in moderation ->
-//       Unauthenticated user navigates to the collection page and verifies
-//       that published experience cards appear.
+// This is the cross-surface proof of ADR-0013: a Vendor creates an Experience,
+// an Admin publishes it, and it then appears on its OWN activity-city
+// collection page (/[locale]/adventure/{activity}-in-{city}) AND is indexed
+// for search. The collection page reads PUBLISHED rows from the DB
+// (loadActivityCityCollection), so a draft/pending Experience must be ABSENT
+// and only show up AFTER admin-approve flips it to published.
+//
+//   Vendor (UI) create   ──►  draft, owned by the Vendor, absent from collection
+//   [bridge]  draft → pending_review  (no draft→submit UI transition exists yet)
+//   Admin (UI) approve   ──►  published in DB + indexed in Meilisearch
+//   Marketing render     ──►  /adventure/kayaking-in-goa shows the new card
+//
+// The created Experience uses registry-valid Kayaking + Goa, so its collection
+// page resolves to /adventure/kayaking-in-goa. The title carries a UNIQUE
+// beacon token so the collection-page selector matches ONLY this Experience —
+// never any seed row. The Vendor session is the business-tier Vendor, so the
+// admin-approve never trips an ADR-0007 tier cap.
+//
+// Each surface that the gated `page` fixture would cover (admin moderation,
+// public collection) is driven with the default `page` (admin session) for the
+// admin step and a fresh context for the public step. Cross-surface DevTools +
+// axe gates apply to the default `page` navigations.
 // ---------------------------------------------------------------------------
-test.describe('Cross-surface: vendor creates -> admin sees -> collection shows @cross-surface', () => {
-  const uniqueTitle = `E2E Cross-Surface Kayaking ${Date.now()}`
+test.describe('Cross-surface: vendor creates -> admin approves -> collection shows @cross-surface', () => {
+  // Registry-valid activity + region → collection page /adventure/kayaking-in-goa.
+  const ACTIVITY_LABEL = 'Kayaking'
+  const REGION_LABEL = 'Goa'
+  const COLLECTION_PATH = '/adventure/kayaking-in-goa'
+  // Unique beacon token so the collection selector resolves to ONLY this row.
+  const beacon = `Beacon${Date.now()}${Math.floor(Math.random() * 1e4)}`
+  const uniqueTitle = `Outvers Xsurface Collection ${beacon} (Goa Kayaking)`
 
-  test('experience created by vendor appears in admin moderation and collection shows published data', async ({
+  test('vendor-created experience is absent from its collection, then appears after admin approve + is indexed', async ({
     browser,
+    page,
   }) => {
-    // ── Vendor context: create a new experience listing ─────────────
+    // ── VENDOR (UI): create a new Experience listing ─────────────────
     const vendorContext = await browser.newContext({
       storageState: path.join(AUTH_DIR, 'vendor-storage.json'),
     })
@@ -215,7 +249,6 @@ test.describe('Cross-surface: vendor creates -> admin sees -> collection shows @
     await vendorPage.goto('/vendor/listings/new')
     await expect(vendorPage.locator('h1')).toContainText('Create listing')
 
-    // Fill the create listing form
     await vendorPage.fill('#title', uniqueTitle)
     await vendorPage.fill(
       '#description',
@@ -229,7 +262,7 @@ test.describe('Cross-surface: vendor creates -> admin sees -> collection shows @
     await activityTrigger.click()
     await vendorPage
       .locator('[data-slot="select-item"]')
-      .filter({ hasText: 'Kayaking' })
+      .filter({ hasText: ACTIVITY_LABEL })
       .click()
 
     // Select region: Goa
@@ -239,19 +272,13 @@ test.describe('Cross-surface: vendor creates -> admin sees -> collection shows @
     await regionTrigger.click()
     await vendorPage
       .locator('[data-slot="select-item"]')
-      .filter({ hasText: 'Goa' })
+      .filter({ hasText: REGION_LABEL })
       .click()
 
-    // Fill pricing
     await vendorPage.fill('#price12', '3500')
 
-    // Submit the form
     await vendorPage.locator('button[type="submit"]').click()
-
-    // Wait for redirect to listings page
     await vendorPage.waitForURL(/\/vendor\/listings$/, { timeout: 15_000 })
-
-    // Verify the new listing appears
     await expect(vendorPage.getByText(uniqueTitle)).toBeVisible({
       timeout: 10_000,
     })
@@ -262,60 +289,99 @@ test.describe('Cross-surface: vendor creates -> admin sees -> collection shows @
     })
     await vendorContext.close()
 
-    // ── Admin context: find the new listing in moderation ────────────
-    const adminContext = await browser.newContext({
-      storageState: path.join(AUTH_DIR, 'admin-storage.json'),
-    })
-    const adminPage = await adminContext.newPage()
-
-    // Navigate to all experiences (no status filter) to find the new one
-    await adminPage.goto('/admin/experiences')
-    await expect(adminPage.locator('h1')).toContainText(
-      'Experience Moderation',
+    // ── VENDOR CREATE persisted a draft owned by the Vendor ──────────
+    const created = await getExperienceByTitle(VENDOR_USER_ID, uniqueTitle)
+    expect(
+      created,
+      'vendor-created Experience must persist owned by the Vendor',
+    ).not.toBeNull()
+    expect(created!.status, 'a vendor-created Experience starts as draft').toBe(
+      'draft',
     )
+    const experienceId = created!.id
+    const experienceSlug = created!.slug
 
-    // Verify the newly created experience appears in the moderation table
-    // It should be in "draft" status (vendor-created experiences start as draft)
-    await expect(adminPage.getByText(uniqueTitle)).toBeVisible({
-      timeout: 10_000,
-    })
+    // Defensive: never let prior-run index residue mask the "absent" precondition
+    // (the slug is unique-per-run via createExperienceAction's Date.now() suffix,
+    // so this is belt-and-suspenders only).
+    await removeIndexedExperience(experienceId)
 
-    // Verify the draft status badge is visible for this experience
-    const newExpRow = adminPage.locator('tr').filter({ hasText: uniqueTitle })
-    await expect(newExpRow).toBeVisible()
-    await expect(newExpRow.getByText('draft')).toBeVisible()
+    // ── MARKETING precondition: draft is ABSENT from the collection ──
+    //    The collection page reads only PUBLISHED rows from the DB.
+    const collectionUrl = (): string =>
+      `${COLLECTION_PATH}?_cb=${Date.now()}-${Math.random().toString(36).slice(2)}`
+    const beaconCard = (p: typeof page) =>
+      p.locator(`a[href*="/experience/${experienceSlug}"]`)
 
-    await adminPage.screenshot({
-      path: 'tests/e2e/screenshots/cross-surface-admin-sees-listing.png',
+    await page.goto(collectionUrl(), { waitUntil: 'networkidle' })
+    await expect(page.locator('h1')).toContainText(
+      `${ACTIVITY_LABEL} in ${REGION_LABEL}`,
+    )
+    await expect(
+      beaconCard(page),
+      'a draft Experience must be absent from its activity-city collection',
+    ).toHaveCount(0)
+
+    // ── BRIDGE: draft → pending_review ───────────────────────────────
+    //    There is no draft→pending_review submit transition in the UI yet
+    //    (#10/#17), and the admin Approve button only renders for
+    //    pending_review. Stage the canonical pending_review state directly so
+    //    the admin-approve surface can act on it.
+    await setExperienceStatus(experienceId, 'pending_review')
+
+    // ── ADMIN (UI): approve the pending Experience → published ───────
+    //    The default cross-surface `page` carries the admin session.
+    await page.goto('/admin/experiences?status=pending_review')
+    await expect(page.locator('h1')).toContainText('Experience Moderation')
+    const pendingRow = page.locator('tr').filter({ hasText: uniqueTitle })
+    await expect(pendingRow).toBeVisible()
+    await expect(pendingRow.getByText('pending review')).toBeVisible()
+    await pendingRow.locator('button').filter({ hasText: 'Approve' }).click()
+    // The now-published row drops OUT of the pending_review-filtered list.
+    await expect(pendingRow).toHaveCount(0, { timeout: 15_000 })
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/cross-surface-admin-approved.png',
       fullPage: true,
     })
-    await adminContext.close()
 
-    // ── Unauthenticated context: verify collection page shows published
-    //    experiences (seed data). The newly created experience is draft so
-    //    it won't appear, but we verify the collection page renders the
-    //    existing published kayaking experience in rishikesh. ────────────
+    // ── Cross-surface side effects: published in DB AND indexed (search) ──
+    await expect
+      .poll(async () => getExperienceStatus(experienceId), { timeout: 15_000 })
+      .toBe('published')
+    expect(
+      await getIndexedExperience(experienceId),
+      'approved experience must be indexed in Meilisearch (searchable)',
+    ).not.toBeNull()
+
+    // ── MARKETING (the cross-surface claim): the newly-published Experience
+    //    now APPEARS on ITS OWN activity-city collection page. The page sets
+    //    revalidate=60, so a unique cache-busting param per request forces a
+    //    fresh render; poll until the beacon card appears.
     const publicContext = await browser.newContext()
     const publicPage = await publicContext.newPage()
+    await expect
+      .poll(
+        async () => {
+          await publicPage.goto(collectionUrl(), { waitUntil: 'networkidle' })
+          return beaconCard(publicPage).count()
+        },
+        {
+          timeout: 20_000,
+          message:
+            'approved experience must appear on its activity-city collection page',
+        },
+      )
+      .toBeGreaterThanOrEqual(1)
 
-    // Navigate to a known collection page with published seed data
-    await publicPage.goto('/adventure/kayaking-in-rishikesh')
-    await expect(publicPage.locator('h1')).toBeVisible()
-
-    // Verify the page heading contains the activity-city combination
+    // Heading is the right activity-city, and the rendered card shows the
+    // Experience's title + price (₹3,500/person).
     await expect(publicPage.locator('h1')).toContainText(
-      'Kayaking in Rishikesh',
+      `${ACTIVITY_LABEL} in ${REGION_LABEL}`,
     )
-
-    // Verify at least one experience card is displayed (from seed data)
-    const cards = publicPage.locator('a[href*="/experience/"]')
-    const visibleCards = await cards.count()
-    expect(visibleCards).toBeGreaterThanOrEqual(1)
-
-    // Verify the card has a title and price
-    const firstCard = cards.first()
-    await expect(firstCard.locator('h3')).toBeVisible()
-    await expect(firstCard.getByText('/ person')).toBeVisible()
+    const foundCard = beaconCard(publicPage).first()
+    await expect(foundCard.locator('h3')).toContainText(beacon)
+    await expect(foundCard.getByText('/ person')).toBeVisible()
 
     await publicPage.screenshot({
       path: 'tests/e2e/screenshots/cross-surface-collection-shows.png',

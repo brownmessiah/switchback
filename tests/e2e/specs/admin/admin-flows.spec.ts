@@ -180,6 +180,35 @@ test.describe('Admin dashboard', () => {
       fullPage: true,
     })
   })
+
+  // #86 — variant A "Money Command Center": the 5 money KPI cards are the hero,
+  // each a live link into its money queue, each rupee figure tabular.
+  test('money KPI cards render rupee figures and link into their queues', async ({
+    page,
+  }) => {
+    await page.goto('/admin/dashboard')
+
+    const cards: ReadonlyArray<{ testId: string; href: string }> = [
+      { testId: 'kpi-pending-payouts', href: '/admin/payouts' },
+      { testId: 'kpi-refund-liability', href: '/admin/refunds' },
+      { testId: 'kpi-commission', href: '/admin/commission' },
+      { testId: 'kpi-gst-tds-due', href: '/admin/payouts' },
+      { testId: 'kpi-net-revenue', href: '/admin/commission' },
+    ]
+
+    for (const { testId, href } of cards) {
+      const card = page.getByTestId(testId)
+      await expect(card).toBeVisible()
+      // Live link into the queue the figure is computed from.
+      await expect(card).toHaveAttribute('href', href)
+      // Renders a ₹ figure.
+      const amount = page.getByTestId(`${testId}-amount`)
+      await expect(amount).toContainText('₹')
+    }
+
+    // The SLA-ranked "Needs action now" rail is present.
+    await expect(page.getByText('Needs action now')).toBeVisible()
+  })
 })
 
 // ---------------------------------------------------------------------------

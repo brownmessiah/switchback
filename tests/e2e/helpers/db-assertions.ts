@@ -978,3 +978,121 @@ export async function getVendorProfileSettings(
     }
   })
 }
+
+// ---------------------------------------------------------------------------
+// KYC tier-cap matrix (ADR-0007 / EPIC-K) E2E helpers (#21)
+//
+// These drive the full Tier-2 cap matrix FROM THE UI:
+//  - publish path: insert an over-cap (capacity-9 / multi-day) slot so the
+//    edit-publish guard (executeUpdateExperience) reads it and rejects.
+//  - booking-create downgrade: flip a Vendor's tier to identity so the
+//    booking-create re-check fires on a previously-published Experience,
+//    then restore it.
+// All writes are reverted by the test (delete the inserted slot; restore the
+// original tier) so seed determinism for parallel specs is preserved.
+// ---------------------------------------------------------------------------
+
+/** Read a Vendor's current KYC tier (to restore it after a downgrade test). */
+export async function getVendorKycTier(
+  vendorUserId: string,
+): Promise<string | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ kyc_tier: string }[]>`
+      SELECT kyc_tier FROM vendor_profiles WHERE user_id = ${vendorUserId} LIMIT 1
+    `
+    return rows[0]?.kyc_tier ?? null
+  })
+}
+
+/**
+ * Set a Vendor's KYC tier. Used to simulate the ADR-0007 downgrade so the
+ * booking-create re-check can be exercised against a previously-published
+ * Experience. The caller MUST restore the original tier (try/finally).
+ */
+export async function setVendorKycTier(
+  vendorUserId: string,
+  kycTier: 'phone' | 'identity' | 'business',
+): Promise<void> {
+  await withSql(async (sql) => {
+    await sql`
+      UPDATE vendor_profiles SET kyc_tier = ${kycTier}, updated_at = NOW()
+      WHERE user_id = ${vendorUserId}
+    `
+  })
+}
+
+/** Read an Experience's is_combo flag (to assert it was NOT flipped). */
+export async function getExperienceIsCombo(
+  experienceId: string,
+): Promise<boolean | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ is_combo: boolean }[]>`
+      SELECT is_combo FROM experiences WHERE id = ${experienceId} LIMIT 1
+    `
+    return rows[0]?.is_combo ?? null
+  })
+}
+
+/**
+ * Insert a one-off availability_slot for a tier-cap test and return its id.
+ * `startAt`/`endAt` are ISO strings; `capacity` lets a test stage an over-cap
+ * (capacity-9) or multi-day slot that the edit-publish guard then reads.
+ */
+export async function insertAvailabilitySlot(input: {
+  experienceId: string
+  startAt: string
+  endAt: string
+  capacity: number
+}): Promise<string> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ id: string }[]>`
+      INSERT INTO availability_slots (experience_id, start_at, end_at, capacity)
+      VALUES (
+        ${input.experienceId},
+        ${input.startAt}::timestamptz,
+        ${input.endAt}::timestamptz,
+        ${input.capacity}
+      )
+      RETURNING id
+    `
+    return rows[0].id
+  })
+}
+
+/** Delete a test-inserted availability_slot by id (cleanup). */
+export async function deleteAvailabilitySlot(slotId: string): Promise<void> {
+  await withSql(async (sql) => {
+    await sql`DELETE FROM availability_slots WHERE id = ${slotId}`
+  })
+}
+
+/** Count bookings for a (slot, customer) pair — 0 proves a rejection persisted nothing. */
+export async function countBookingsForSlotAndCustomer(
+  slotId: string,
+  customerUserId: string,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT COUNT(*) AS n
+      FROM bookings
+      WHERE slot_id = ${slotId} AND customer_user_id = ${customerUserId}
+    `
+    return Number(rows[0]?.n ?? 0)
+  })
+}
+
+/** Count booking.tier_cap_rejected audit rows for an Experience (ADR-0007 rejection trail). */
+export async function countBookingTierCapRejectedAuditRows(
+  experienceId: string,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT COUNT(*) AS n
+      FROM audit_logs
+      WHERE action = 'booking.tier_cap_rejected'
+        AND entity_type = 'experience'
+        AND entity_id = ${experienceId}
+    `
+    return Number(rows[0]?.n ?? 0)
+  })
+}

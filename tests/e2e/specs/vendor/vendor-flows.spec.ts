@@ -41,6 +41,13 @@ import {
   getVendorEarningBookings,
   getVendorConversationBySubject,
   getVendorProfileSettings,
+  getExperienceIsCombo,
+  getVendorKycTier,
+  setVendorKycTier,
+  insertAvailabilitySlot,
+  deleteAvailabilitySlot,
+  countBookingsForSlotAndCustomer,
+  countBookingTierCapRejectedAuditRows,
 } from '../../helpers/db-assertions'
 import { getIndexedExperience } from '../../helpers/meili-assertions'
 import { storageFileExists } from '../../helpers/storage-assertions'
@@ -486,6 +493,285 @@ test.describe('Over-cap publish rejection (Identity tier, ADR-0007)', () => {
 
     const after = await getExperienceById(experienceId)
     expect(after!.pricePerPerson_1_2).toBe(newPrice)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 4d. KYC tier-cap FULL MATRIX (Identity tier, ADR-0007 / EPIC-K, #21).
+//     #17 added a touch of over-cap PRICE publish coverage above; this block
+//     runs the complete boundary matrix FROM THE UI:
+//       PRICE     5001 blocked / 5000 allowed (exact boundary)
+//       CAPACITY  9 blocked / 8 allowed (per-slot)
+//       COMBO     is_combo blocked
+//       MULTI-DAY a cross-calendar-day slot blocked
+//     plus the booking-create re-check on a tier DOWNGRADE (covered in 4e).
+//
+//     The publish path exercised is the vendor edit action
+//     (executeUpdateExperience), which runs the guard on a LIVE listing
+//     against the PROPOSED price/combo + the Experience's materialised slots.
+//     For the per-slot caps (capacity / multi-day) the test stages a single
+//     over-cap slot, drives the edit, then deletes it — seed slots untouched.
+// ---------------------------------------------------------------------------
+test.describe('Tier-cap matrix — publish path (Identity tier, ADR-0007, #21)', () => {
+  test.use({ storageState: IDENTITY_VENDOR_STORAGE })
+  // Serial: the per-slot cases STAGE over-cap (capacity-9 / multi-day) slots on
+  // identity listings and drive the edit-publish guard, which reads ALL of an
+  // Experience's slots. Under parallel, a multi-day slot staged by one test
+  // would leak into another's guard run (single-day is checked before
+  // capacity), so the guard would return the wrong violation. Serial + a
+  // DISTINCT Experience per slot-staging case keeps each guard run clean.
+  test.describe.configure({ mode: 'serial' })
+
+  // Identity listings that are within cap in the seed. PRICE/COMBO edit one
+  // Experience (no slot staging); CAPACITY and MULTI-DAY each stage a slot on
+  // their OWN Experience so the staged slots never cross-contaminate.
+  const PRICE_SLUG = 'manali-solang-paragliding-tandem' // 3500/pp, single-day
+  const COMBO_SLUG = 'manali-solang-paragliding-tandem'
+  const CAPACITY_SLUG = 'rishikesh-kayaking-introduction' // 1800/pp
+  const MULTI_DAY_SLUG = 'rishikesh-rafting-grade-iii' // 1500/pp
+
+  // A far-future, distinct UTC hour avoids the unique (experience_id, start_at)
+  // collision with the seed's T+7d 04:00 slot and the T-7d outside-policy slot.
+  const STAGE_DAY = '2027-03-10'
+
+  test('PRICE: editing to Rs.5,001/pp is BLOCKED; Rs.5,000/pp is ALLOWED', async ({
+    page,
+  }) => {
+    const target = await getPublishedExperienceForVendor(IDENTITY_VENDOR_ID, PRICE_SLUG)
+    expect(target, `seed ${PRICE_SLUG} must exist`).not.toBeNull()
+    const experienceId = target!.id
+    const originalPrice = target!.pricePerPerson_1_2
+
+    await page.goto(`/vendor/listings/${experienceId}/edit`)
+    await expect(page.locator('h1')).toContainText('Edit experience')
+
+    // ── 5001 → BLOCKED. The per-person cap is on the HIGHEST bracket, so
+    //    pushing the 1-2 bracket one rupee over the cap must trip PRICE_OVER_CAP.
+    await page.locator('#price12').fill('5001')
+    await page.locator('#price35').fill('4000')
+    await page.locator('#price6').fill('4000')
+    await page.locator('button[type="submit"]').click()
+
+    await expect(page.getByText(/up to Rs\.?\s*5000 per person/i)).toBeVisible({
+      timeout: 15_000,
+    })
+    await expect(page.getByText('Experience updated.')).toHaveCount(0)
+
+    // The over-cap price was NOT persisted (still the seed value).
+    expect((await getExperienceById(experienceId))!.pricePerPerson_1_2).toBe(originalPrice)
+
+    // ── 5000 → ALLOWED (exact boundary is inclusive). Persists.
+    await page.locator('#price12').fill('5000')
+    await page.locator('#price35').fill('4000')
+    await page.locator('#price6').fill('4000')
+    await page.locator('button[type="submit"]').click()
+
+    await expect(page.getByText('Experience updated.')).toBeVisible({ timeout: 15_000 })
+    expect((await getExperienceById(experienceId))!.pricePerPerson_1_2).toBe(5000)
+
+    // Restore the seed price so parallel/repeat runs stay deterministic.
+    await page.locator('#price12').fill(String(originalPrice))
+    await page.locator('button[type="submit"]').click()
+    await expect(page.getByText('Experience updated.')).toBeVisible({ timeout: 15_000 })
+  })
+
+  test('COMBO: marking the Experience is_combo is BLOCKED for an Identity Vendor', async ({
+    page,
+  }) => {
+    const target = await getPublishedExperienceForVendor(IDENTITY_VENDOR_ID, COMBO_SLUG)
+    expect(target).not.toBeNull()
+    const experienceId = target!.id
+    expect(await getExperienceIsCombo(experienceId)).toBe(false)
+
+    await page.goto(`/vendor/listings/${experienceId}/edit`)
+    await expect(page.locator('h1')).toContainText('Edit experience')
+
+    // Tick the "Combo experience" checkbox and save — the guard must reject.
+    await page
+      .getByRole('checkbox', { name: /Combo experience/i })
+      .check()
+    await page.locator('button[type="submit"]').click()
+
+    await expect(page.getByText(/cannot publish Combo Experiences/i)).toBeVisible({
+      timeout: 15_000,
+    })
+    await expect(page.getByText('Experience updated.')).toHaveCount(0)
+
+    // is_combo was NOT flipped in the DB.
+    expect(await getExperienceIsCombo(experienceId)).toBe(false)
+  })
+
+  test('CAPACITY: a 9-participant slot is BLOCKED; 8 is ALLOWED (per-slot cap)', async ({
+    page,
+  }) => {
+    const target = await getPublishedExperienceForVendor(IDENTITY_VENDOR_ID, CAPACITY_SLUG)
+    expect(target).not.toBeNull()
+    const experienceId = target!.id
+
+    // Stage a SINGLE-DAY, capacity-9 slot — the only over-cap fact is capacity.
+    const overCapSlotId = await insertAvailabilitySlot({
+      experienceId,
+      startAt: `${STAGE_DAY}T05:00:00.000Z`,
+      endAt: `${STAGE_DAY}T08:00:00.000Z`,
+      capacity: 9,
+    })
+
+    try {
+      await page.goto(`/vendor/listings/${experienceId}/edit`)
+      await expect(page.locator('h1')).toContainText('Edit experience')
+
+      // A no-op-price save still runs the guard, which reads ALL slots → the
+      // capacity-9 slot trips CAPACITY_OVER_CAP.
+      await page.locator('button[type="submit"]').click()
+      await expect(page.getByText(/up to 8 participants per slot/i)).toBeVisible({
+        timeout: 15_000,
+      })
+      await expect(page.getByText('Experience updated.')).toHaveCount(0)
+    } finally {
+      await deleteAvailabilitySlot(overCapSlotId)
+    }
+
+    // ── 8 → ALLOWED. Replace with a capacity-8 single-day slot; the guard
+    //    now sees only within-cap slots and the edit persists.
+    const okSlotId = await insertAvailabilitySlot({
+      experienceId,
+      startAt: `${STAGE_DAY}T05:00:00.000Z`,
+      endAt: `${STAGE_DAY}T08:00:00.000Z`,
+      capacity: 8,
+    })
+    try {
+      await page.goto(`/vendor/listings/${experienceId}/edit`)
+      await expect(page.locator('h1')).toContainText('Edit experience')
+      await page.locator('button[type="submit"]').click()
+      await expect(page.getByText('Experience updated.')).toBeVisible({ timeout: 15_000 })
+    } finally {
+      await deleteAvailabilitySlot(okSlotId)
+    }
+  })
+
+  test('MULTI-DAY: a cross-calendar-day slot is BLOCKED for an Identity Vendor', async ({
+    page,
+  }) => {
+    const target = await getPublishedExperienceForVendor(IDENTITY_VENDOR_ID, MULTI_DAY_SLUG)
+    expect(target).not.toBeNull()
+    const experienceId = target!.id
+
+    // Stage a slot that starts on STAGE_DAY and ends the NEXT calendar day
+    // (UTC) — within cap on price + capacity, so MULTI_DAY is the only fact.
+    const multiDaySlotId = await insertAvailabilitySlot({
+      experienceId,
+      startAt: `${STAGE_DAY}T20:00:00.000Z`,
+      endAt: `2027-03-11T06:00:00.000Z`,
+      capacity: 8,
+    })
+
+    try {
+      await page.goto(`/vendor/listings/${experienceId}/edit`)
+      await expect(page.locator('h1')).toContainText('Edit experience')
+
+      await page.locator('button[type="submit"]').click()
+      await expect(page.getByText(/only publish single-day Experiences/i)).toBeVisible({
+        timeout: 15_000,
+      })
+      await expect(page.getByText('Experience updated.')).toHaveCount(0)
+    } finally {
+      await deleteAvailabilitySlot(multiDaySlotId)
+    }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 4e. Booking-create tier-cap RE-CHECK on a tier DOWNGRADE (ADR-0007, #21).
+//     AC: "Booking-create rejects an over-cap Booking even if the Experience
+//     pre-dates a tier downgrade." Driven FROM THE UI checkout as the CUSTOMER
+//     (the actor at booking time): a Business-tier Vendor's over-cap-priced
+//     Experience is published, the Vendor is downgraded to Identity, then the
+//     Customer attempts to book — booking-create's re-check refuses it.
+//     The Vendor tier is restored in a finally so other specs see the seed.
+// ---------------------------------------------------------------------------
+const CUSTOMER_STORAGE = path.resolve(__dirname, '../../.auth/customer-storage.json')
+const SEED_CUSTOMER_ID = 'u_seed_customer'
+
+test.describe('Tier-cap matrix — booking-create on downgrade (ADR-0007, #21)', () => {
+  test.use({ storageState: CUSTOMER_STORAGE })
+  // Serial: flips the shared business Vendor's tier within a try/finally. A
+  // single serial test keeps the downgrade window scoped and restored.
+  test.describe.configure({ mode: 'serial' })
+
+  // The business Vendor's certified fun-dive is published at Rs.5,500/pp —
+  // over the Identity Rs.5,000/pp cap. Published while Business (unrestricted),
+  // so it models an Experience that PRE-DATES the downgrade.
+  const OVER_CAP_PRICE_SLUG = 'goa-scuba-diving-fun-dive-cert'
+
+  test('booking an over-cap slot after a downgrade is REJECTED (no Booking created)', async ({
+    page,
+  }) => {
+    const target = await getPublishedExperienceForVendor(
+      SEED_BUSINESS_VENDOR_ID,
+      OVER_CAP_PRICE_SLUG,
+    )
+    expect(target, `seed ${OVER_CAP_PRICE_SLUG} must exist`).not.toBeNull()
+    const experienceId = target!.id
+    // Sanity: this Experience's headline price is genuinely over the cap.
+    expect(target!.pricePerPerson_1_2).toBeGreaterThan(5000)
+
+    // A dedicated open slot so the assertion never collides with seeded
+    // bookings on this Experience's other slots.
+    const slotId = await insertAvailabilitySlot({
+      experienceId,
+      startAt: `2027-04-12T05:00:00.000Z`,
+      endAt: `2027-04-12T08:00:00.000Z`,
+      capacity: 8,
+    })
+
+    const originalTier = await getVendorKycTier(SEED_BUSINESS_VENDOR_ID)
+    expect(originalTier).toBe('business')
+    const rejectedBefore = await countBookingTierCapRejectedAuditRows(experienceId)
+
+    try {
+      // ── Downgrade the Vendor Business → Identity (ADR-0007). The Experience
+      //    was already published; only the booking-create re-check stands now.
+      await setVendorKycTier(SEED_BUSINESS_VENDOR_ID, 'identity')
+
+      // Drive the real UI checkout for this slot as the Customer.
+      await page.goto(`/checkout?experienceId=${experienceId}&slotId=${slotId}&participants=2`)
+      await expect(page.locator('h1')).toContainText('Checkout')
+
+      const payButton = page.locator('button:has-text("Pay")')
+      await expect(payButton).toBeVisible()
+      await payButton.click()
+
+      // The checkout action surfaces the ADR-0007 reason inline (the per-person
+      // cap message), and must NOT navigate to a confirmation page.
+      await expect(page.getByText(/up to Rs\.?\s*5000 per person/i)).toBeVisible({
+        timeout: 15_000,
+      })
+      await expect(page).not.toHaveURL(/\/bookings\/[^/]+\/confirmation/)
+
+      // ── No Booking was created for this (slot, customer) — the txn rolled back.
+      expect(
+        await countBookingsForSlotAndCustomer(slotId, SEED_CUSTOMER_ID),
+      ).toBe(0)
+
+      // ── A booking.tier_cap_rejected audit row was written (survives rollback).
+      expect(await countBookingTierCapRejectedAuditRows(experienceId)).toBe(
+        rejectedBefore + 1,
+      )
+
+      await page.screenshot({
+        path: 'tests/e2e/screenshots/vendor-booking-tiercap-downgrade.png',
+        fullPage: true,
+      })
+    } finally {
+      // Restore the seed tier + remove the staged slot for deterministic reruns.
+      if (originalTier) {
+        await setVendorKycTier(
+          SEED_BUSINESS_VENDOR_ID,
+          originalTier as 'phone' | 'identity' | 'business',
+        )
+      }
+      await deleteAvailabilitySlot(slotId)
+    }
   })
 })
 

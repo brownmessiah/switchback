@@ -1187,7 +1187,14 @@ test.describe('Admin vendor KYC + commission + suspend (#22)', () => {
     await expect(page.getByText('KYC Tier Management')).toBeVisible()
 
     await page.locator('#reject-reason').fill(REJECT_REASON)
+    // #101: Reject is destructive (denies promotion + records reason), so it no
+    // longer fires inline — "Reject Promotion" opens a confirm Dialog restating
+    // the consequence; the action fires only from the explicit confirm inside.
     await page.getByRole('button', { name: 'Reject Promotion' }).click()
+    const rejectConfirm = page.getByTestId('reject-kyc-confirm')
+    await expect(rejectConfirm).toBeVisible()
+    await expect(rejectConfirm).toContainText(REJECT_REASON)
+    await rejectConfirm.getByRole('button', { name: 'Confirm Rejection' }).click()
 
     await expect(page.getByText('Rejection recorded.')).toBeVisible({
       timeout: 15_000,
@@ -1238,7 +1245,16 @@ test.describe('Admin vendor KYC + commission + suspend (#22)', () => {
       await page.getByRole('button', { name: 'Edit' }).click()
 
       await page.locator('#commissionRate').fill(NEW_RATE)
+      // #101: a commission change moves money on future Bookings, so Save now
+      // opens an A4 confirm restating the new rate; the update fires only from
+      // the explicit "Update Rate" confirm inside the dialog.
       await page.getByRole('button', { name: 'Save', exact: true }).click()
+      const commissionConfirm = page.getByTestId('commission-rate-confirm')
+      await expect(commissionConfirm).toBeVisible()
+      await expect(
+        commissionConfirm.getByTestId('commission-rate-confirm-figure'),
+      ).toContainText(NEW_RATE)
+      await commissionConfirm.getByRole('button', { name: 'Update Rate' }).click()
 
       await expect(page.getByText('Rate updated successfully.')).toBeVisible({
         timeout: 15_000,
@@ -1298,8 +1314,15 @@ test.describe('Admin vendor KYC + commission + suspend (#22)', () => {
       await expect(page.getByText('Account Status')).toBeVisible()
 
       // ── Suspend ────────────────────────────────────────────────────────
+      // #101: suspending is destructive (a suspended Vendor can't take Bookings),
+      // so it no longer fires inline — "Suspend Vendor" opens a confirm Dialog
+      // restating the consequence; the action fires only from the explicit
+      // "Confirm Suspend" inside. A misclick can no longer suspend a Vendor.
       await page.locator('#suspend-notes').fill('E2E: repeated policy violations.')
       await page.getByRole('button', { name: 'Suspend Vendor' }).click()
+      const suspendConfirm = page.getByTestId('suspend-vendor-confirm')
+      await expect(suspendConfirm).toBeVisible()
+      await suspendConfirm.getByRole('button', { name: 'Confirm Suspend' }).click()
       await expect(page.getByText('Vendor suspended.')).toBeVisible({ timeout: 15_000 })
 
       const suspended = await getAdminVendorState(SEED_PHONE_VENDOR_ID)

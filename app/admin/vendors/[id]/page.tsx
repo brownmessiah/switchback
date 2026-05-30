@@ -1,9 +1,8 @@
-import { count, eq, sql } from 'drizzle-orm'
+import { and, count, desc, eq, sql } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { Badge } from '@/components/ui/badge'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -13,18 +12,27 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { db } from '@/db/client'
+import { auditLogs } from '@/db/schema/audit-logs'
 import { bookings, experiences, users, vendorProfiles } from '@/db/schema'
 import { auth } from '@/lib/auth'
 import { requirePermission } from '@/lib/auth/permissions'
 
+import { AdminStatusBadge } from '../../_components/admin-status-badge'
 import { CommissionRateForm } from './commission-rate-form'
 import { KycApprovalForm } from './kyc-approval-form'
+import { KycTierLadder } from './kyc-tier-ladder'
 import { SuspendToggleForm } from './suspend-toggle-form'
+import { VendorEvidenceCard } from './vendor-evidence-card'
 
 interface AdminVendorDetailPageProps {
   params: Promise<{ id: string }>
+}
+
+const TIER_LABEL: Record<string, string> = {
+  phone: 'Phone tier',
+  identity: 'Identity verified Vendor',
+  business: 'Business verified Vendor',
 }
 
 export default async function AdminVendorDetailPage({
@@ -68,55 +76,69 @@ export default async function AdminVendorDetailPage({
 
   if (!vendorRow) notFound()
 
-  // Fetch summary counts in parallel
-  const [listingCountResult, bookingCountResult, totalRevenueResult] = await Promise.all([
-    db
-      .select({ value: count() })
-      .from(experiences)
-      .where(eq(experiences.vendorUserId, vendorUserId)),
-    db
-      .select({ value: count() })
-      .from(bookings)
-      .where(
-        eq(
-          bookings.experienceId,
-          sql`ANY(SELECT id FROM experiences WHERE vendor_user_id = ${vendorUserId})`,
-        ),
-      )
-      .catch(() => [{ value: 0 }]),
-    db
-      .select({
-        value: sql<string>`COALESCE(SUM(${bookings.grossTotalSnapshot}::numeric), 0)`.as('total'),
-      })
-      .from(bookings)
-      .where(
-        eq(
-          bookings.experienceId,
-          sql`ANY(SELECT id FROM experiences WHERE vendor_user_id = ${vendorUserId})`,
-        ),
-      )
-      .catch(() => [{ value: '0' }]),
-  ])
+  // Fetch summary counts + the vendor's audit trail in parallel
+  const [listingCountResult, bookingCountResult, totalRevenueResult, auditRows] =
+    await Promise.all([
+      db
+        .select({ value: count() })
+        .from(experiences)
+        .where(eq(experiences.vendorUserId, vendorUserId)),
+      db
+        .select({ value: count() })
+        .from(bookings)
+        .where(
+          eq(
+            bookings.experienceId,
+            sql`ANY(SELECT id FROM experiences WHERE vendor_user_id = ${vendorUserId})`,
+          ),
+        )
+        .catch(() => [{ value: 0 }]),
+      db
+        .select({
+          value: sql<string>`COALESCE(SUM(${bookings.grossTotalSnapshot}::numeric), 0)`.as('total'),
+        })
+        .from(bookings)
+        .where(
+          eq(
+            bookings.experienceId,
+            sql`ANY(SELECT id FROM experiences WHERE vendor_user_id = ${vendorUserId})`,
+          ),
+        )
+        .catch(() => [{ value: '0' }]),
+      // Read-only audit trail for THIS vendor (fold C). entity_type/entity_id
+      // are exactly what the admin Server Actions write (vendor_profile / userId).
+      db
+        .select({
+          id: auditLogs.id,
+          action: auditLogs.action,
+          payload: auditLogs.payload,
+          createdAt: auditLogs.createdAt,
+          actorEmail: users.email,
+          actorName: users.name,
+          actorUserId: auditLogs.actorUserId,
+        })
+        .from(auditLogs)
+        .leftJoin(users, eq(auditLogs.actorUserId, users.id))
+        .where(
+          and(
+            eq(auditLogs.entityType, 'vendor_profile'),
+            eq(auditLogs.entityId, vendorUserId),
+          ),
+        )
+        .orderBy(desc(auditLogs.createdAt))
+        .limit(20)
+        .catch(() => []),
+    ])
 
   const listingCount = listingCountResult[0]?.value ?? 0
   const bookingCount = bookingCountResult[0]?.value ?? 0
   const totalRevenue = totalRevenueResult[0]?.value ?? '0'
 
-  const KYC_DOCS: { label: string; value: string | null | undefined; type?: 'date' }[] = [
-    { label: 'PAN', value: vendorRow.pan },
-    { label: 'GSTIN', value: vendorRow.gstin },
-    { label: 'Udyam ID', value: vendorRow.udyamId },
-    {
-      label: 'Aadhaar Verified',
-      value: vendorRow.aadhaarVerifiedAt?.toLocaleDateString('en-IN') ?? null,
-    },
-    {
-      label: 'Video Call Verified',
-      value: vendorRow.videoCallVerifiedAt?.toLocaleDateString('en-IN') ?? null,
-    },
-  ]
-
   const payoutDest = vendorRow.payoutDestination as Record<string, string> | null
+  const payoutConfigured = Boolean(vendorRow.payoutMethod)
+  // A payout-eligible tier (identity/business) with no payout configured is a
+  // trust-factor flag the reviewer needs (ADR-0007: those tiers receive Payouts).
+  const payoutFlag = vendorRow.kycTier !== 'phone' && !payoutConfigured
 
   return (
     <div className="space-y-6">
@@ -124,9 +146,7 @@ export default async function AdminVendorDetailPage({
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink render={<Link href="/admin/vendors" />}>
-              Vendors
-            </BreadcrumbLink>
+            <BreadcrumbLink render={<Link href="/admin/vendors" />}>Vendors</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -136,130 +156,218 @@ export default async function AdminVendorDetailPage({
       </Breadcrumb>
 
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="font-heading text-2xl font-semibold tracking-tight">
             {vendorRow.businessName}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {vendorRow.userEmail ?? vendorRow.userName ?? vendorRow.userPhone ?? '—'}
-            {' · '}
-            Slug: <code className="rounded bg-muted px-1 text-xs">{vendorRow.slug}</code>
+            {vendorRow.userEmail ?? vendorRow.userName ?? vendorRow.userPhone ?? 'No contact'}
+            {' · '}Slug:{' '}
+            <code className="rounded bg-muted px-1 text-xs">{vendorRow.slug}</code>
           </p>
         </div>
         <div className="flex items-center gap-2">
           {vendorRow.suspended && (
-            <Badge variant="destructive">Suspended</Badge>
+            <AdminStatusBadge status="rejected" label="Suspended" />
           )}
-          <Badge variant={vendorRow.kycTier === 'business' ? 'default' : 'secondary'} className="capitalize">
-            {vendorRow.kycTier}
-          </Badge>
+          <AdminStatusBadge
+            status={vendorRow.kycTier}
+            label={TIER_LABEL[vendorRow.kycTier] ?? vendorRow.kycTier}
+          />
         </div>
       </div>
 
-      <Separator />
-
-      {/* Stats row */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm font-medium text-muted-foreground">Listings</p>
-            <p className="text-2xl font-semibold">{listingCount}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm font-medium text-muted-foreground">Bookings</p>
-            <p className="text-2xl font-semibold">{bookingCount}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-            <p className="text-2xl font-semibold">
-              Rs.{Number(totalRevenue).toLocaleString('en-IN', { minimumFractionDigits: 0 })}
+      {/* Two-pane review console: evidence (left) + decision rail (right) */}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        {/* ── LEFT: evidence pane ─────────────────────────────────────── */}
+        <div className="space-y-6">
+          <section className="space-y-3" aria-label="KYC evidence">
+            <h2 className="font-heading text-base font-semibold">KYC Documents</h2>
+            <p className="text-sm text-muted-foreground">
+              Review the evidence the Vendor submitted before promoting their tier.
             </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm font-medium text-muted-foreground">SLA Score</p>
-            <p className="text-2xl font-semibold">
-              {Math.floor(Number(vendorRow.responseTimeSlaScore))}%
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <VendorEvidenceCard
+                testId="evidence-pan"
+                label="PAN"
+                kind="value"
+                value={vendorRow.pan}
+              />
+              <VendorEvidenceCard
+                testId="evidence-gstin"
+                label="GSTIN"
+                kind="value"
+                value={vendorRow.gstin}
+              />
+              <VendorEvidenceCard
+                testId="evidence-udyam"
+                label="Udyam ID"
+                kind="value"
+                value={vendorRow.udyamId}
+              />
+              <VendorEvidenceCard
+                testId="evidence-aadhaar"
+                label="Aadhaar"
+                kind="timestamp"
+                verifiedAt={vendorRow.aadhaarVerifiedAt}
+              />
+              <VendorEvidenceCard
+                testId="evidence-videocall"
+                label="Video call"
+                kind="timestamp"
+                verifiedAt={vendorRow.videoCallVerifiedAt}
+              />
+            </div>
+          </section>
 
-      {/* Detail grid */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Business Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Business Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <DetailRow label="Business Name" value={vendorRow.businessName} />
-            <DetailRow label="Contact" value={vendorRow.userEmail ?? vendorRow.userPhone ?? '—'} />
-            <DetailRow label="Name" value={vendorRow.userName ?? '—'} />
-            <DetailRow label="About" value={vendorRow.about ?? '—'} />
-            <DetailRow label="Joined" value={vendorRow.createdAt.toLocaleDateString('en-IN')} />
-          </CardContent>
-        </Card>
+          {/* Business Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Business Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <DetailRow label="Business Name" value={vendorRow.businessName} />
+              <DetailRow
+                label="Contact"
+                value={vendorRow.userEmail ?? vendorRow.userPhone ?? 'No contact'}
+              />
+              <DetailRow label="Name" value={vendorRow.userName ?? 'Not provided'} />
+              <DetailRow label="About" value={vendorRow.about ?? 'Not provided'} />
+              <DetailRow
+                label="Joined"
+                value={vendorRow.createdAt.toLocaleDateString('en-IN')}
+              />
+            </CardContent>
+          </Card>
 
-        {/* KYC Documents */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">KYC Documents</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {KYC_DOCS.map((doc) => (
-              <DetailRow key={doc.label} label={doc.label} value={doc.value ?? '—'} />
-            ))}
-          </CardContent>
-        </Card>
+          {/* Payout Configuration */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Payout Configuration</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <DetailRow label="Method" value={vendorRow.payoutMethod ?? 'Not configured'} />
+              {vendorRow.payoutMethod === 'upi' && payoutDest?.vpa && (
+                <DetailRow label="UPI VPA" value={payoutDest.vpa} />
+              )}
+              {vendorRow.payoutMethod === 'bank_account' && payoutDest && (
+                <>
+                  <DetailRow label="Account Holder" value={payoutDest.accountHolderName ?? 'Not provided'} />
+                  <DetailRow label="Account Number" value={payoutDest.accountNumber ?? 'Not provided'} />
+                  <DetailRow label="IFSC" value={payoutDest.ifsc ?? 'Not provided'} />
+                </>
+              )}
+              <DetailRow
+                label="Manual Payouts Remaining"
+                value={String(vendorRow.manualPayoutsRemaining)}
+              />
+            </CardContent>
+          </Card>
 
-        {/* Commission Rate — inline edit */}
-        <CommissionRateForm
-          vendorUserId={vendorRow.userId}
-          currentRate={vendorRow.commissionRate}
-        />
+          {/* Audit trail (fold C) — read-only history of privileged actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Audit trail</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {auditRows.length === 0 ? (
+                <p className="px-6 py-8 text-center text-sm text-muted-foreground">
+                  No recorded actions for this Vendor yet.
+                </p>
+              ) : (
+                <ul data-testid="vendor-audit-trail" className="divide-y">
+                  {auditRows.map((row) => (
+                    <li key={row.id} className="flex items-start justify-between gap-4 px-6 py-3">
+                      <div className="min-w-0">
+                        <p className="font-mono text-sm">{row.action}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {row.actorEmail ?? row.actorName ?? (row.actorUserId ? `ID: ${row.actorUserId}` : 'System')}
+                        </p>
+                      </div>
+                      <p className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                        {new Date(row.createdAt).toLocaleString('en-IN', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-        {/* KYC Tier Management */}
-        <KycApprovalForm
-          vendorUserId={vendorRow.userId}
-          currentTier={vendorRow.kycTier}
-        />
+        {/* ── RIGHT: sticky decision rail ─────────────────────────────── */}
+        <aside className="lg:sticky lg:top-6 lg:self-start">
+          <div className="space-y-6 rounded-[var(--radius-card)] border bg-surface-3 p-5 shadow-[var(--shadow-lg)]">
+            {/* Trust-factor strip */}
+            <section className="space-y-2" aria-label="Trust factors">
+              <h2 className="font-heading text-sm font-semibold">Trust factors</h2>
+              <div className="flex flex-wrap gap-2">
+                <AdminStatusBadge
+                  status={vendorRow.kycTier}
+                  label={TIER_LABEL[vendorRow.kycTier] ?? vendorRow.kycTier}
+                />
+                {payoutConfigured ? (
+                  <AdminStatusBadge status="approved" label="Payout configured" />
+                ) : (
+                  <AdminStatusBadge
+                    status={payoutFlag ? 'rejected' : 'phone'}
+                    label="Payout not configured"
+                  />
+                )}
+                <AdminStatusBadge
+                  status={vendorRow.suspended ? 'rejected' : 'approved'}
+                  label={vendorRow.suspended ? 'Suspended' : 'Active'}
+                />
+              </div>
+              <dl className="grid grid-cols-2 gap-2 pt-1 text-xs">
+                <Stat label="Listings" value={String(listingCount)} />
+                <Stat label="Bookings" value={String(bookingCount)} />
+                <Stat
+                  label="Total revenue"
+                  value={`₹${Number(totalRevenue).toLocaleString('en-IN', { minimumFractionDigits: 0 })}`}
+                />
+                <Stat
+                  label="SLA score"
+                  value={`${Math.floor(Number(vendorRow.responseTimeSlaScore))}%`}
+                />
+              </dl>
+            </section>
 
-        {/* Payout Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Payout Configuration</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <DetailRow label="Method" value={vendorRow.payoutMethod ?? 'Not configured'} />
-            {vendorRow.payoutMethod === 'upi' && payoutDest?.vpa && (
-              <DetailRow label="UPI VPA" value={payoutDest.vpa} />
-            )}
-            {vendorRow.payoutMethod === 'bank_account' && payoutDest && (
-              <>
-                <DetailRow label="Account Holder" value={payoutDest.accountHolderName ?? '—'} />
-                <DetailRow label="Account Number" value={payoutDest.accountNumber ?? '—'} />
-                <DetailRow label="IFSC" value={payoutDest.ifsc ?? '—'} />
-              </>
-            )}
-            <DetailRow
-              label="Manual Payouts Remaining"
-              value={String(vendorRow.manualPayoutsRemaining)}
-            />
-          </CardContent>
-        </Card>
+            {/* Tier ladder (ADR-0007) */}
+            <section className="space-y-2" aria-label="KYC tier ladder">
+              <h2 className="font-heading text-sm font-semibold">KYC Tier Management</h2>
+              <KycTierLadder currentTier={vendorRow.kycTier} />
+            </section>
 
-        {/* Suspend / Reactivate */}
-        <SuspendToggleForm
-          vendorUserId={vendorRow.userId}
-          suspended={vendorRow.suspended}
-        />
+            {/* KYC decision: approve (inline) / reject (gated) */}
+            <KycApprovalForm vendorUserId={vendorRow.userId} currentTier={vendorRow.kycTier} />
+
+            {/* Commission rate — A4 confirm-gated */}
+            <section className="space-y-2 border-t pt-4" aria-label="Commission rate">
+              <h2 className="font-heading text-sm font-semibold">Commission Rate</h2>
+              <CommissionRateForm
+                vendorUserId={vendorRow.userId}
+                currentRate={vendorRow.commissionRate}
+              />
+            </section>
+
+            {/* Account status — suspend (gated) / reactivate (inline) */}
+            <section className="space-y-2 border-t pt-4" aria-label="Account status">
+              <h2 className="font-heading text-sm font-semibold">Account Status</h2>
+              <SuspendToggleForm
+                vendorUserId={vendorRow.userId}
+                suspended={vendorRow.suspended}
+              />
+            </section>
+          </div>
+        </aside>
       </div>
     </div>
   )
@@ -271,7 +379,16 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
       <span className="text-sm font-medium text-muted-foreground">{label}</span>
-      <span className="text-sm text-right">{value}</span>
+      <span className="text-right text-sm">{value}</span>
+    </div>
+  )
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="font-semibold tabular-nums">{value}</dd>
     </div>
   )
 }

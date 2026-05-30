@@ -328,6 +328,21 @@ test.describe('Payment and confirmation', () => {
     // Cancellation policy section on confirmation
     await expect(page.getByText('Cancellation policy')).toBeVisible()
 
+    // ── Variant B "money-honest" redesign (#71) ─────────────────────────
+    // Payment-honesty timeline restates the schedule (Advance/balance for
+    // partial pay, "Paid in full" for full upfront). Present on every booking.
+    await expect(page.getByTestId('payment-timeline')).toBeVisible()
+
+    // The Booking ID is now FULL + copyable (was `slice(0,8)…` truncation).
+    // The copy control carries the complete id as a stable testid; the full id
+    // (longer than the old 8-char prefix) is visible, not an ellipsis stub.
+    const copyControl = page.getByTestId('copy-booking-id')
+    await expect(copyControl).toBeVisible()
+    const fullId = await copyControl.getAttribute('data-booking-id')
+    expect(fullId, 'copy control must expose the full booking id').toBeTruthy()
+    expect(fullId!.length).toBeGreaterThan(8)
+    await expect(page.getByText(fullId!)).toBeVisible()
+
     // Action buttons — Cancel booking and Browse more
     await expect(
       page.locator('a:has-text("Cancel booking")'),

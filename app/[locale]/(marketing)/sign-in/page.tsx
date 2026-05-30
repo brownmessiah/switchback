@@ -23,7 +23,7 @@ export default async function SignInPage({ params }: PageProps) {
   setRequestLocale(locale)
 
   return (
-    <main className="flex min-h-[80vh] items-center justify-center px-4">
+    <main className="flex min-h-[80vh] items-center justify-center px-4 py-8">
       <SignInForm />
     </main>
   )

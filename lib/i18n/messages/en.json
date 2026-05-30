@@ -314,7 +314,18 @@
       "signInLink": "Sign in",
       "networkError": "Network error. Please try again.",
       "signInError": "Sign in failed. Check your credentials.",
-      "signUpError": "Sign up failed. Try a different email."
+      "signUpError": "Sign up failed. Try a different email.",
+      "continue": "Continue with email",
+      "step1Hint": "Enter your email to sign in or create an account.",
+      "editEmail": "Use a different email",
+      "vendorPrompt": "Are you a Vendor?",
+      "vendorCta": "Start onboarding"
+    },
+    "trustPanel": {
+      "heading": "Booked by 40,000+ travellers.",
+      "chipVerified": "Identity & Business verified Vendors",
+      "chipRefund": "Exact refund shown before you confirm",
+      "chipPartialPay": "Partial pay — pay 25% now"
     }
   },
   "VendorPage": {

@@ -564,7 +564,9 @@ test.describe('Hindi locale', () => {
 // 7. Sign-in page
 // ---------------------------------------------------------------------------
 test.describe('Sign-in page', () => {
-  test('/sign-in renders without crashing', async ({ page }) => {
+  test('/sign-in renders the email-first two-step Trust Wall form', async ({
+    page,
+  }) => {
     const response = await page.goto('/sign-in')
     expect(response?.status()).toBe(200)
     await expect(page).toHaveTitle(/Sign in/)
@@ -572,15 +574,34 @@ test.describe('Sign-in page', () => {
     // Page contains a main element
     await expect(page.locator('main')).toBeVisible()
 
-    // Sign-in form renders cleanly: a <form>, email + password inputs,
-    // and a submit button. (DevTools fixture also gates console + axe.)
+    // STEP 1 — email-first (Direction A "Trust Wall"): the form renders with
+    // the email field + a "Continue" control, and the password is NOT yet
+    // present in the DOM (progressive disclosure is client-side only — there
+    // is no server "does this email exist" check). (DevTools fixture also
+    // gates console + axe over the split-screen layout.)
     await expect(page.locator('form')).toBeVisible()
     await expect(page.locator('input#email[type="email"]')).toBeVisible()
-    await expect(page.locator('input#password[type="password"]')).toBeVisible()
-    await expect(page.locator('button[type="submit"]')).toBeVisible()
+    await expect(page.getByTestId('continue-step1')).toBeVisible()
+    await expect(page.locator('input#password')).toHaveCount(0)
+    await expect(page.locator('button[type="submit"]')).toHaveCount(0)
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/sign-in.png',
+      fullPage: true,
+    })
+
+    // STEP 2 — fill the email and continue: the password field (same stable
+    // id) and the final submit button become visible. The email field stays
+    // present (its value carries into the real authClient.signIn.email call).
+    await page.locator('input#email').fill('traveller@example.com')
+    await page.getByTestId('continue-step1').click()
+
+    await expect(page.locator('input#password[type="password"]')).toBeVisible()
+    await expect(page.locator('button[type="submit"]')).toBeVisible()
+    await expect(page.locator('input#email[type="email"]')).toBeVisible()
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/sign-in-step2.png',
       fullPage: true,
     })
   })

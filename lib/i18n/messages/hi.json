@@ -291,11 +291,33 @@
       "description": "Outvers पर {name} से साहसिक अनुभव बुक करें। KYC-सत्यापित, पारदर्शी मूल्य, 24 घंटे का रिफ़ंड SLA।",
       "notFound": "विक्रेता नहीं मिला · Outvers"
     },
+    "eyebrow": "सत्यापित विक्रेता स्टोरफ़्रंट",
     "stats": {
       "experiences": "अनुभव",
       "verification": "सत्यापन",
       "responseRate": "प्रतिक्रिया दर",
-      "responseScore": "प्रतिक्रिया स्कोर: {score}%"
+      "responseScore": "प्रतिक्रिया स्कोर: {score}%",
+      "experiencesLabel": "प्रकाशित",
+      "regionsLabel": "कवर किए गए क्षेत्र"
+    },
+    "message": {
+      "action": "विक्रेता को संदेश भेजें",
+      "comingSoon": "जल्द आ रहा है"
+    },
+    "trust": {
+      "provenanceHeading": "हमने क्या सत्यापित किया",
+      "stateVerified": "सत्यापित",
+      "statePending": "अभी सत्यापित नहीं",
+      "identity": {
+        "label": "पहचान",
+        "checkedDescription": "आधार eKYC और PAN की पुष्टि हुई",
+        "pendingDescription": "आधार और PAN की पुष्टि अभी बाकी है"
+      },
+      "business": {
+        "label": "व्यवसाय",
+        "checkedDescription": "वीडियो-कॉल समीक्षा, GSTIN या उद्यम, और गाइड प्रमाणपत्र की पुष्टि हुई",
+        "pendingDescription": "वीडियो-कॉल समीक्षा और व्यवसाय दस्तावेज़ों की पुष्टि अभी बाकी है"
+      }
     },
     "experiencesList": {
       "heading": "{name} द्वारा अनुभव",

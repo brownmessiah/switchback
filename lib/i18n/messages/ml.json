@@ -291,11 +291,33 @@
       "description": "Outvers-ൽ {name} ൽ നിന്ന് സാഹസിക അനുഭവങ്ങൾ ബുക്ക് ചെയ്യൂ. KYC-സ്ഥിരീകരിച്ചത്, സുതാര്യമായ വിലനിർണ്ണയം, 24 മണിക്കൂർ റീഫണ്ട് SLA.",
       "notFound": "വെണ്ടർ കണ്ടെത്തിയില്ല · Outvers"
     },
+    "eyebrow": "സ്ഥിരീകരിച്ച വെണ്ടർ സ്റ്റോർഫ്രണ്ട്",
     "stats": {
       "experiences": "അനുഭവങ്ങൾ",
       "verification": "സ്ഥിരീകരണം",
       "responseRate": "പ്രതികരണ നിരക്ക്",
-      "responseScore": "പ്രതികരണ സ്കോർ: {score}%"
+      "responseScore": "പ്രതികരണ സ്കോർ: {score}%",
+      "experiencesLabel": "പ്രസിദ്ധീകരിച്ചത്",
+      "regionsLabel": "ഉൾപ്പെടുത്തിയ പ്രദേശങ്ങൾ"
+    },
+    "message": {
+      "action": "വെണ്ടർക്ക് സന്ദേശം അയയ്ക്കുക",
+      "comingSoon": "ഉടൻ വരുന്നു"
+    },
+    "trust": {
+      "provenanceHeading": "ഞങ്ങൾ എന്താണ് സ്ഥിരീകരിച്ചത്",
+      "stateVerified": "സ്ഥിരീകരിച്ചു",
+      "statePending": "ഇതുവരെ സ്ഥിരീകരിച്ചിട്ടില്ല",
+      "identity": {
+        "label": "ഐഡന്റിറ്റി",
+        "checkedDescription": "ആധാർ eKYC, PAN എന്നിവ സ്ഥിരീകരിച്ചു",
+        "pendingDescription": "ആധാർ, PAN എന്നിവ ഇതുവരെ സ്ഥിരീകരിച്ചിട്ടില്ല"
+      },
+      "business": {
+        "label": "ബിസിനസ്",
+        "checkedDescription": "വീഡിയോ-കോൾ അവലോകനം, GSTIN അല്ലെങ്കിൽ ഉദ്യം, ഗൈഡ് സർട്ടിഫിക്കറ്റുകൾ എന്നിവ സ്ഥിരീകരിച്ചു",
+        "pendingDescription": "വീഡിയോ-കോൾ അവലോകനവും ബിസിനസ് രേഖകളും ഇതുവരെ സ്ഥിരീകരിച്ചിട്ടില്ല"
+      }
     },
     "experiencesList": {
       "heading": "{name} ന്റെ അനുഭവങ്ങൾ",

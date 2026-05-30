@@ -291,11 +291,33 @@
       "description": "Outvers-এ {name} র কাছ থেকে অ্যাডভেঞ্চার অভিজ্ঞতা বুক করুন। KYC-যাচাইকৃত, স্বচ্ছ মূল্য, 24 ঘণ্টার রিফান্ড SLA।",
       "notFound": "বিক্রেতা পাওয়া যায়নি · Outvers"
     },
+    "eyebrow": "যাচাইকৃত বিক্রেতা স্টোরফ্রন্ট",
     "stats": {
       "experiences": "অভিজ্ঞতা",
       "verification": "যাচাইকরণ",
       "responseRate": "প্রতিক্রিয়ার হার",
-      "responseScore": "প্রতিক্রিয়া স্কোর: {score}%"
+      "responseScore": "প্রতিক্রিয়া স্কোর: {score}%",
+      "experiencesLabel": "প্রকাশিত",
+      "regionsLabel": "অন্তর্ভুক্ত অঞ্চল"
+    },
+    "message": {
+      "action": "বিক্রেতাকে বার্তা পাঠান",
+      "comingSoon": "শীঘ্রই আসছে"
+    },
+    "trust": {
+      "provenanceHeading": "আমরা যা যাচাই করেছি",
+      "stateVerified": "যাচাইকৃত",
+      "statePending": "এখনো যাচাই হয়নি",
+      "identity": {
+        "label": "পরিচয়",
+        "checkedDescription": "আধার eKYC এবং PAN নিশ্চিত করা হয়েছে",
+        "pendingDescription": "আধার এবং PAN এখনো নিশ্চিত করা হয়নি"
+      },
+      "business": {
+        "label": "ব্যবসা",
+        "checkedDescription": "ভিডিও-কল পর্যালোচনা, GSTIN বা উদ্যম, এবং গাইড সার্টিফিকেট নিশ্চিত করা হয়েছে",
+        "pendingDescription": "ভিডিও-কল পর্যালোচনা এবং ব্যবসায়িক নথি এখনো নিশ্চিত করা হয়নি"
+      }
     },
     "experiencesList": {
       "heading": "{name} র অভিজ্ঞতা",

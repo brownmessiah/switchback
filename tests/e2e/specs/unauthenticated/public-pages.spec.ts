@@ -327,6 +327,43 @@ test.describe('Vendor profile', () => {
     })
   })
 
+  // Direction B "Storefront Catalog" (#66): the trust rail surfaces the real
+  // ADR-0007 verification provenance — what Identity / Business verification
+  // actually checked — rendered with the semantic Badge variants paired with a
+  // lucide icon (status never by colour alone). The seeded Vendor is
+  // identity-tier, so its Identity check is verified and its Business check is
+  // pending; both rows must be present.
+  test('surfaces verification-provenance trust rail (ADR-0007)', async ({
+    page,
+  }) => {
+    await page.goto('/vendor/himalayan-hikes-co')
+
+    const rail = page.getByTestId('verification-provenance')
+    await expect(rail).toBeVisible()
+
+    // Identity verification line is present and marked verified.
+    await expect(page.getByTestId('provenance-identity')).toBeVisible()
+    // Business verification line is present (pending for an identity-tier Vendor).
+    await expect(page.getByTestId('provenance-business')).toBeVisible()
+  })
+
+  // Direction B mentions a "Message Vendor" action, but cold customer→Vendor
+  // messaging has NO production backend (see defects-log) — it is rendered
+  // HONESTLY as a disabled "coming soon" affordance, never a dead link.
+  test('renders "Message Vendor" as a disabled coming-soon affordance', async ({
+    page,
+  }) => {
+    await page.goto('/vendor/himalayan-hikes-co')
+
+    const messageBtn = page.getByTestId('message-vendor')
+    await expect(messageBtn).toBeVisible()
+    // It is a real disabled <button>, not a link — no navigation possible.
+    await expect(messageBtn).toBeDisabled()
+    await expect(messageBtn).toHaveAttribute('aria-disabled', 'true')
+    // An accessible "coming soon" caption explains why it is disabled.
+    await expect(page.getByTestId('message-vendor-note')).toBeVisible()
+  })
+
   test('404 for invalid vendor slug', async ({ page }) => {
     const response = await page.goto('/vendor/not-a-real-vendor-xyz')
     expect(response?.status()).toBe(404)

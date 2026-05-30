@@ -291,11 +291,33 @@
       "description": "Outvers 'ਤੇ {name} ਤੋਂ ਐਡਵੈਂਚਰ ਅਨੁਭਵ ਬੁੱਕ ਕਰੋ। KYC-ਪ੍ਰਮਾਣਿਤ, ਪਾਰਦਰਸ਼ੀ ਕੀਮਤ, 24 ਘੰਟੇ ਦਾ ਰਿਫੰਡ SLA।",
       "notFound": "ਵਿਕਰੇਤਾ ਨਹੀਂ ਮਿਲਿਆ · Outvers"
     },
+    "eyebrow": "ਪ੍ਰਮਾਣਿਤ ਵਿਕਰੇਤਾ ਸਟੋਰਫਰੰਟ",
     "stats": {
       "experiences": "ਅਨੁਭਵ",
       "verification": "ਪ੍ਰਮਾਣੀਕਰਨ",
       "responseRate": "ਜਵਾਬ ਦਰ",
-      "responseScore": "ਜਵਾਬ ਸਕੋਰ: {score}%"
+      "responseScore": "ਜਵਾਬ ਸਕੋਰ: {score}%",
+      "experiencesLabel": "ਪ੍ਰਕਾਸ਼ਿਤ",
+      "regionsLabel": "ਕਵਰ ਕੀਤੇ ਖੇਤਰ"
+    },
+    "message": {
+      "action": "ਵਿਕਰੇਤਾ ਨੂੰ ਸੁਨੇਹਾ ਭੇਜੋ",
+      "comingSoon": "ਜਲਦੀ ਆ ਰਿਹਾ ਹੈ"
+    },
+    "trust": {
+      "provenanceHeading": "ਅਸੀਂ ਕੀ ਪ੍ਰਮਾਣਿਤ ਕੀਤਾ",
+      "stateVerified": "ਪ੍ਰਮਾਣਿਤ",
+      "statePending": "ਅਜੇ ਪ੍ਰਮਾਣਿਤ ਨਹੀਂ",
+      "identity": {
+        "label": "ਪਛਾਣ",
+        "checkedDescription": "ਆਧਾਰ eKYC ਅਤੇ PAN ਦੀ ਪੁਸ਼ਟੀ ਹੋਈ",
+        "pendingDescription": "ਆਧਾਰ ਅਤੇ PAN ਦੀ ਪੁਸ਼ਟੀ ਅਜੇ ਬਾਕੀ ਹੈ"
+      },
+      "business": {
+        "label": "ਕਾਰੋਬਾਰ",
+        "checkedDescription": "ਵੀਡੀਓ-ਕਾਲ ਸਮੀਖਿਆ, GSTIN ਜਾਂ ਉੱਦਮ, ਅਤੇ ਗਾਈਡ ਸਰਟੀਫਿਕੇਟਾਂ ਦੀ ਪੁਸ਼ਟੀ ਹੋਈ",
+        "pendingDescription": "ਵੀਡੀਓ-ਕਾਲ ਸਮੀਖਿਆ ਅਤੇ ਕਾਰੋਬਾਰੀ ਦਸਤਾਵੇਜ਼ਾਂ ਦੀ ਪੁਸ਼ਟੀ ਅਜੇ ਬਾਕੀ ਹੈ"
+      }
     },
     "experiencesList": {
       "heading": "{name} ਦੇ ਅਨੁਭਵ",

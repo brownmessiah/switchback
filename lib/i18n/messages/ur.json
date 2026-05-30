@@ -291,11 +291,33 @@
       "description": "Outvers پر {name} سے ایڈونچر تجربات بُک کریں۔ KYC-تصدیق شدہ، شفاف قیمتیں، 24 گھنٹے کا ریفنڈ SLA۔",
       "notFound": "وینڈر نہیں ملا · Outvers"
     },
+    "eyebrow": "تصدیق شدہ وینڈر اسٹور فرنٹ",
     "stats": {
       "experiences": "تجربات",
       "verification": "تصدیق",
       "responseRate": "جوابی شرح",
-      "responseScore": "جوابی سکور: {score}%"
+      "responseScore": "جوابی سکور: {score}%",
+      "experiencesLabel": "شائع شدہ",
+      "regionsLabel": "احاطہ شدہ علاقے"
+    },
+    "message": {
+      "action": "وینڈر کو پیغام بھیجیں",
+      "comingSoon": "جلد آ رہا ہے"
+    },
+    "trust": {
+      "provenanceHeading": "ہم نے کیا تصدیق کیا",
+      "stateVerified": "تصدیق شدہ",
+      "statePending": "ابھی تصدیق نہیں ہوئی",
+      "identity": {
+        "label": "شناخت",
+        "checkedDescription": "آدھار eKYC اور PAN کی تصدیق ہو گئی",
+        "pendingDescription": "آدھار اور PAN کی تصدیق ابھی باقی ہے"
+      },
+      "business": {
+        "label": "کاروبار",
+        "checkedDescription": "ویڈیو کال جائزہ، GSTIN یا اُدیم، اور گائیڈ سرٹیفکیٹس کی تصدیق ہو گئی",
+        "pendingDescription": "ویڈیو کال جائزہ اور کاروباری دستاویزات کی تصدیق ابھی باقی ہے"
+      }
     },
     "experiencesList": {
       "heading": "{name} کے تجربات",

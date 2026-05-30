@@ -291,11 +291,33 @@
       "description": "Outversত {name}ৰ পৰা দুঃসাহসিক অভিজ্ঞতা বুক কৰক। KYC-প্ৰমাণিত, স্বচ্ছ মূল্য, ২৪ ঘণ্টা ৰিফাণ্ড SLA।",
       "notFound": "বিক্ৰেতা পোৱা নগ'ল · Outvers"
     },
+    "eyebrow": "প্ৰমাণিত বিক্ৰেতা ষ্টোৰফ্ৰণ্ট",
     "stats": {
       "experiences": "অভিজ্ঞতা",
       "verification": "প্ৰমাণীকৰণ",
       "responseRate": "প্ৰতিক্ৰিয়া হাৰ",
-      "responseScore": "প্ৰতিক্ৰিয়া স্ক'ৰ: {score}%"
+      "responseScore": "প্ৰতিক্ৰিয়া স্ক'ৰ: {score}%",
+      "experiencesLabel": "প্ৰকাশিত",
+      "regionsLabel": "সামৰি লোৱা অঞ্চল"
+    },
+    "message": {
+      "action": "বিক্ৰেতালৈ বাৰ্তা পঠিয়াওক",
+      "comingSoon": "সোনকালে আহিছে"
+    },
+    "trust": {
+      "provenanceHeading": "আমি কি প্ৰমাণিত কৰিলোঁ",
+      "stateVerified": "প্ৰমাণিত",
+      "statePending": "এতিয়ালৈকে প্ৰমাণিত নহয়",
+      "identity": {
+        "label": "পৰিচয়",
+        "checkedDescription": "আধাৰ eKYC আৰু PAN নিশ্চিত কৰা হ'ল",
+        "pendingDescription": "আধাৰ আৰু PAN এতিয়ালৈকে নিশ্চিত কৰা হোৱা নাই"
+      },
+      "business": {
+        "label": "ব্যৱসায়",
+        "checkedDescription": "ভিডিঅ'-কল পৰ্যালোচনা, GSTIN বা উদ্যম, আৰু গাইড প্ৰমাণপত্ৰ নিশ্চিত কৰা হ'ল",
+        "pendingDescription": "ভিডিঅ'-কল পৰ্যালোচনা আৰু ব্যৱসায়িক নথি এতিয়ালৈকে নিশ্চিত কৰা হোৱা নাই"
+      }
     },
     "experiencesList": {
       "heading": "{name}ৰ অভিজ্ঞতা",

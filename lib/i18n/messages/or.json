@@ -291,11 +291,33 @@
       "description": "Outversରେ {name}ଙ୍କଠାରୁ ଆଡଭେଞ୍ଚର ଅନୁଭୂତି ବୁକ୍ କରନ୍ତୁ। KYC-ଯାଞ୍ଚ, ସ୍ୱଚ୍ଛ ମୂଲ୍ୟ, ୨୪ ଘଣ୍ଟା ରିଫଣ୍ଡ SLA।",
       "notFound": "ଭେଣ୍ଡର ମିଳିଲେ ନାହିଁ · Outvers"
     },
+    "eyebrow": "ଯାଞ୍ଚିତ ଭେଣ୍ଡର ଷ୍ଟୋରଫ୍ରଣ୍ଟ",
     "stats": {
       "experiences": "ଅନୁଭୂତି",
       "verification": "ଯାଞ୍ଚ",
       "responseRate": "ପ୍ରତିକ୍ରିୟା ହାର",
-      "responseScore": "ପ୍ରତିକ୍ରିୟା ସ୍କୋର: {score}%"
+      "responseScore": "ପ୍ରତିକ୍ରିୟା ସ୍କୋର: {score}%",
+      "experiencesLabel": "ପ୍ରକାଶିତ",
+      "regionsLabel": "ଅନ୍ତର୍ଭୁକ୍ତ ଅଞ୍ଚଳ"
+    },
+    "message": {
+      "action": "ଭେଣ୍ଡରଙ୍କୁ ବାର୍ତ୍ତା ପଠାନ୍ତୁ",
+      "comingSoon": "ଶୀଘ୍ର ଆସୁଛି"
+    },
+    "trust": {
+      "provenanceHeading": "ଆମେ କଣ ଯାଞ୍ଚ କଲୁ",
+      "stateVerified": "ଯାଞ୍ଚ ହୋଇଛି",
+      "statePending": "ଏପର୍ଯ୍ୟନ୍ତ ଯାଞ୍ଚ ହୋଇନାହିଁ",
+      "identity": {
+        "label": "ପରିଚୟ",
+        "checkedDescription": "ଆଧାର eKYC ଏବଂ PAN ନିଶ୍ଚିତ ହୋଇଛି",
+        "pendingDescription": "ଆଧାର ଏବଂ PAN ଏପର୍ଯ୍ୟନ୍ତ ନିଶ୍ଚିତ ହୋଇନାହିଁ"
+      },
+      "business": {
+        "label": "ବ୍ୟବସାୟ",
+        "checkedDescription": "ଭିଡିଓ-କଲ ସମୀକ୍ଷା, GSTIN କିମ୍ବା ଉଦ୍ୟମ, ଏବଂ ଗାଇଡ ପ୍ରମାଣପତ୍ର ନିଶ୍ଚିତ ହୋଇଛି",
+        "pendingDescription": "ଭିଡିଓ-କଲ ସମୀକ୍ଷା ଏବଂ ବ୍ୟବସାୟ ଦଲିଲ ଏପର୍ଯ୍ୟନ୍ତ ନିଶ୍ଚିତ ହୋଇନାହିଁ"
+      }
     },
     "experiencesList": {
       "heading": "{name}ଙ୍କ ଅନୁଭୂତି",

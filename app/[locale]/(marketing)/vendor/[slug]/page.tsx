@@ -1,12 +1,19 @@
 import { eq } from 'drizzle-orm'
+import {
+  BadgeCheck,
+  Building2,
+  CircleCheck,
+  Clock,
+  MapPin,
+  MessageSquare,
+  ShieldCheck,
+} from 'lucide-react'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 import { ExperienceCard } from '@/components/experience-card'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { db } from '@/db/client'
 import { experiences, vendorProfiles } from '@/db/schema'
 import { generateAlternates } from '@/lib/seo/hreflang'
@@ -15,13 +22,38 @@ interface PageProps {
   params: Promise<{ locale: string; slug: string }>
 }
 
-/** Pre-resolved KYC badge variant map — no dynamic translation keys. */
-const KYC_BADGE_VARIANTS: Record<string, 'default' | 'secondary' | 'outline'> = {
-  business: 'default',
-  identity: 'secondary',
-  phone: 'outline',
+/**
+ * Verification-tier label keys (no dynamic translation keys). The eyebrow/badge
+ * over the storefront banner uses the same KYC label vocabulary as the rest of
+ * the app (ADR-0007).
+ */
+const KYC_LABEL_KEYS: Record<string, string> = {
+  business: 'kyc.business',
+  identity: 'kyc.identity',
+  phone: 'kyc.phone',
 }
 
+/**
+ * Tier ordinal, used to decide which verification checks are *verified* vs
+ * *pending* on the provenance rail. The tier ladder is cumulative
+ * (business ⊇ identity ⊇ phone) per ADR-0007.
+ */
+const TIER_ORDER: Record<string, number> = { phone: 0, identity: 1, business: 2 }
+
+/**
+ * #41 Vendor profile — Direction B "Storefront Catalog" (DESIGN.md §4 B8).
+ *
+ * A branded Vendor storefront: a warm banner with the business name as H1 +
+ * a verified-Vendor badge (`--success` + icon), a sticky trust rail surfacing
+ * the real ADR-0007 verification provenance (what Identity / Business
+ * verification actually checked, on the semantic Badge variants paired with a
+ * lucide icon — status never by colour alone, §1.3/§5), and a dense A1
+ * Experience grid (reusing components/experience-card.tsx unchanged).
+ *
+ * "Message Vendor" is rendered HONESTLY as a disabled coming-soon affordance —
+ * cold customer→Vendor messaging has no production backend, so building it is
+ * out of scope (see .scratch/mvp-validation-redesign/defects-log.md).
+ */
 export default async function VendorProfilePage({ params }: PageProps) {
   const { locale, slug } = await params
   setRequestLocale(locale)
@@ -49,92 +81,221 @@ export default async function VendorProfilePage({ params }: PageProps) {
     .from(experiences)
     .where(eq(experiences.vendorUserId, vendor.userId))
 
-  /** Pre-resolved KYC label map — no dynamic keys. */
-  const kycLabels: Record<string, string> = {
-    business: t('kyc.business'),
-    identity: t('kyc.identity'),
-    phone: t('kyc.phone'),
-  }
+  // Pre-resolved KYC label (no dynamic keys), used for the banner badge.
+  const kycLabel = t(KYC_LABEL_KEYS[vendor.kycTier] ?? KYC_LABEL_KEYS.phone)
 
-  const kycBadgeVariant = KYC_BADGE_VARIANTS[vendor.kycTier] ?? KYC_BADGE_VARIANTS.phone
-  const kycLabel = kycLabels[vendor.kycTier] ?? kycLabels.phone
-  const slaScore = Math.floor(Number(vendor.responseTimeSlaScore))
+  // Verification provenance derived from the real KYC tier (ADR-0007). The
+  // ladder is cumulative — an identity-tier Vendor has passed the Identity
+  // check; the Business check is still pending until it reaches Tier 3.
+  const tierRank = TIER_ORDER[vendor.kycTier] ?? 0
+  const identityVerified = tierRank >= TIER_ORDER.identity
+  const businessVerified = tierRank >= TIER_ORDER.business
+
+  // Meaningful, token-true trust facts (replaces the vanity stats):
+  // # Experiences and region coverage (distinct regionSlugs).
+  const experienceCount = vendorExperiences.length
+  const regionCount = new Set(vendorExperiences.map((e) => e.regionSlug)).size
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-12">
-      {/* Vendor header */}
-      <div className="mb-8">
-        <div className="flex items-start gap-6">
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-muted text-2xl font-semibold text-muted-foreground">
-            {vendor.businessName.charAt(0).toUpperCase()}
-          </div>
-          <div className="min-w-0 flex-1">
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              {vendor.businessName}
-            </h1>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <Badge variant={kycBadgeVariant}>{kycLabel}</Badge>
-              <span className="text-sm text-muted-foreground">
-                {t('stats.responseScore', { score: slaScore })}
-              </span>
+    <main className="bg-surface-0">
+      {/* ── Branded banner / hero ──────────────────────────────────────
+          A warm coral-grey gradient band (token surface ramp, hue 30) with
+          the business name as H1 + a verified-Vendor badge. */}
+      <div className="relative">
+        <div
+          aria-hidden="true"
+          className="h-32 w-full bg-gradient-to-br from-surface-3 via-surface-2 to-primary/10 sm:h-40"
+        />
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="-mt-10 flex flex-col gap-4 pb-6 sm:-mt-12 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex items-end gap-4">
+              {/* Storefront mark — initial monogram on a raised surface. */}
+              <div className="flex size-20 shrink-0 items-center justify-center rounded-[var(--radius-card)] border border-border bg-surface-1 font-heading text-h2 font-bold text-primary-strong shadow-[var(--shadow-sm)] sm:size-24">
+                {vendor.businessName.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0 pb-1">
+                <p className="text-2xs uppercase tracking-[var(--tracking-eyebrow)] text-muted-foreground">
+                  {t('eyebrow')}
+                </p>
+                <h1 className="font-heading text-h2 font-bold tracking-tight text-balance sm:text-h1">
+                  {vendor.businessName}
+                </h1>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <Badge variant="success">
+                    <ShieldCheck aria-hidden="true" />
+                    {kycLabel}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            {/* "Message Vendor" — HONEST coming-soon affordance. Cold
+                customer→Vendor messaging has no production backend, so this is
+                a disabled <button> (not a dead link) with an accessible
+                caption explaining it is not yet available. */}
+            <div className="flex flex-col items-start gap-1 sm:items-end">
+              <button
+                type="button"
+                disabled
+                aria-disabled="true"
+                data-testid="message-vendor"
+                aria-describedby="message-vendor-note"
+                className="inline-flex h-9 cursor-not-allowed items-center justify-center gap-1.5 rounded-[var(--radius-control)] border border-border bg-muted px-4 text-sm font-medium text-muted-foreground opacity-60"
+              >
+                <MessageSquare aria-hidden="true" className="size-4 shrink-0" />
+                {t('message.action')}
+              </button>
+              <p
+                id="message-vendor-note"
+                data-testid="message-vendor-note"
+                className="text-2xs uppercase tracking-[var(--tracking-eyebrow)] text-muted-foreground"
+              >
+                {t('message.comingSoon')}
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="mb-8 grid grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-4 text-center">
-            <p className="text-2xl font-semibold">{vendorExperiences.length}</p>
-            <p className="text-xs text-muted-foreground">{t('stats.experiences')}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 text-center">
-            <p className="text-2xl font-semibold capitalize">{vendor.kycTier}</p>
-            <p className="text-xs text-muted-foreground">{t('stats.verification')}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 text-center">
-            <p className="text-2xl font-semibold">{slaScore}%</p>
-            <p className="text-xs text-muted-foreground">{t('stats.responseRate')}</p>
-          </CardContent>
-        </Card>
+      {/* ── Body: sticky trust rail + dense Experience grid ─────────────── */}
+      <div className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:pb-16">
+        <div className="grid gap-8 lg:grid-cols-[18rem_1fr]">
+          {/* Sticky trust rail — verification provenance + trust facts. */}
+          <aside
+            data-testid="verification-provenance"
+            aria-labelledby="trust-rail-heading"
+            className="space-y-4 lg:sticky lg:top-[calc(var(--header-offset,4rem)+1rem)] lg:self-start"
+          >
+            <div className="rounded-[var(--radius-card)] border border-border bg-surface-1 p-[var(--space-card-pad)] shadow-[var(--shadow-sm)]">
+              <h2
+                id="trust-rail-heading"
+                className="text-2xs uppercase tracking-[var(--tracking-eyebrow)] text-muted-foreground"
+              >
+                {t('trust.provenanceHeading')}
+              </h2>
+
+              {/* Each provenance row = the semantic Badge variant (success when
+                  the check passed, warning when still pending) PAIRED WITH a
+                  lucide icon — status is never conveyed by colour alone. */}
+              <ul className="mt-3 space-y-3">
+                <li data-testid="provenance-identity" className="flex gap-3">
+                  <BadgeCheck
+                    aria-hidden="true"
+                    className="mt-0.5 size-5 shrink-0 text-muted-foreground"
+                  />
+                  <div className="min-w-0 space-y-1">
+                    <p className="text-sm font-medium">{t('trust.identity.label')}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {identityVerified
+                        ? t('trust.identity.checkedDescription')
+                        : t('trust.identity.pendingDescription')}
+                    </p>
+                    {identityVerified ? (
+                      <Badge variant="success">
+                        <CircleCheck aria-hidden="true" />
+                        {t('trust.stateVerified')}
+                      </Badge>
+                    ) : (
+                      <Badge variant="warning">
+                        <Clock aria-hidden="true" />
+                        {t('trust.statePending')}
+                      </Badge>
+                    )}
+                  </div>
+                </li>
+
+                <li data-testid="provenance-business" className="flex gap-3">
+                  <Building2
+                    aria-hidden="true"
+                    className="mt-0.5 size-5 shrink-0 text-muted-foreground"
+                  />
+                  <div className="min-w-0 space-y-1">
+                    <p className="text-sm font-medium">{t('trust.business.label')}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {businessVerified
+                        ? t('trust.business.checkedDescription')
+                        : t('trust.business.pendingDescription')}
+                    </p>
+                    {businessVerified ? (
+                      <Badge variant="success">
+                        <CircleCheck aria-hidden="true" />
+                        {t('trust.stateVerified')}
+                      </Badge>
+                    ) : (
+                      <Badge variant="warning">
+                        <Clock aria-hidden="true" />
+                        {t('trust.statePending')}
+                      </Badge>
+                    )}
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            {/* Trust facts — meaningful, token-true (verification tier,
+                # Experiences, region coverage); counts in .tabular-nums. */}
+            <dl className="grid grid-cols-2 gap-3">
+              <div className="col-span-2 rounded-[var(--radius-card)] border border-border bg-surface-1 p-[var(--space-card-pad)] shadow-[var(--shadow-sm)]">
+                <dt className="text-2xs uppercase tracking-[var(--tracking-eyebrow)] text-muted-foreground">
+                  {t('stats.verification')}
+                </dt>
+                <dd className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-success">
+                  <ShieldCheck aria-hidden="true" className="size-4 shrink-0" />
+                  {kycLabel}
+                </dd>
+              </div>
+              <div className="rounded-[var(--radius-card)] border border-border bg-surface-1 p-[var(--space-card-pad)] shadow-[var(--shadow-sm)]">
+                <dd className="font-heading text-h3 font-bold tabular-nums">
+                  {experienceCount}
+                </dd>
+                <dt className="text-xs text-muted-foreground">
+                  {t('stats.experiencesLabel')}
+                </dt>
+              </div>
+              <div className="rounded-[var(--radius-card)] border border-border bg-surface-1 p-[var(--space-card-pad)] shadow-[var(--shadow-sm)]">
+                <dd className="flex items-center gap-1 font-heading text-h3 font-bold tabular-nums">
+                  <MapPin
+                    aria-hidden="true"
+                    className="size-4 shrink-0 text-muted-foreground"
+                  />
+                  {regionCount}
+                </dd>
+                <dt className="text-xs text-muted-foreground">{t('stats.regionsLabel')}</dt>
+              </div>
+            </dl>
+          </aside>
+
+          {/* Dense Experience grid — A1 cards, ExperienceCard reused as-is. */}
+          <section className="min-w-0">
+            <h2 className="mb-4 font-heading text-h3 font-semibold tracking-tight">
+              {t('experiencesList.heading', { name: vendor.businessName })}
+            </h2>
+            {experienceCount === 0 ? (
+              <div className="rounded-[var(--radius-card)] border border-dashed border-border py-12 text-center">
+                <p className="text-muted-foreground">{t('experiencesList.empty')}</p>
+              </div>
+            ) : (
+              <div className="grid gap-[var(--space-grid-gap)] sm:grid-cols-2">
+                {vendorExperiences.map((exp) => (
+                  <ExperienceCard
+                    key={exp.id}
+                    experience={{
+                      id: exp.id,
+                      slug: exp.slug,
+                      title: exp.title,
+                      shortDescription: exp.shortDescription,
+                      pricePerParticipantRupees: Math.floor(Number(exp.pricePerPerson_1_2)),
+                      regionSlug: exp.regionSlug,
+                      activitySlug: exp.activitySlug,
+                      vendorName: vendor.businessName,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
       </div>
-
-      <Separator className="mb-8" />
-
-      {/* Experiences */}
-      <section>
-        <h2 className="mb-4 text-xl font-semibold">
-          {t('experiencesList.heading', { name: vendor.businessName })}
-        </h2>
-        {vendorExperiences.length === 0 ? (
-          <div className="rounded-xl border border-dashed py-12 text-center">
-            <p className="text-muted-foreground">{t('experiencesList.empty')}</p>
-          </div>
-        ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {vendorExperiences.map((exp) => (
-              <ExperienceCard
-                key={exp.id}
-                experience={{
-                  id: exp.id,
-                  slug: exp.slug,
-                  title: exp.title,
-                  shortDescription: exp.shortDescription,
-                  pricePerParticipantRupees: Math.floor(Number(exp.pricePerPerson_1_2)),
-                  regionSlug: exp.regionSlug,
-                  activitySlug: exp.activitySlug,
-                  vendorName: vendor.businessName,
-                }}
-              />
-            ))}
-          </div>
-        )}
-      </section>
     </main>
   )
 }

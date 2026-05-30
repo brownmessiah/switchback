@@ -291,11 +291,33 @@
       "description": "Outvers இல் {name} இடமிருந்து சாகச அனுபவங்களை புக் செய்யுங்கள். KYC சரிபார்க்கப்பட்டது, வெளிப்படையான விலை, 24 மணி நேர பணத்திருப்பி SLA.",
       "notFound": "விற்பனையாளர் கிடைக்கவில்லை · Outvers"
     },
+    "eyebrow": "சரிபார்க்கப்பட்ட விற்பனையாளர் ஸ்டோர்ஃபிரண்ட்",
     "stats": {
       "experiences": "அனுபவங்கள்",
       "verification": "சரிபார்ப்பு",
       "responseRate": "பதில் விகிதம்",
-      "responseScore": "பதில் மதிப்பெண்: {score}%"
+      "responseScore": "பதில் மதிப்பெண்: {score}%",
+      "experiencesLabel": "வெளியிடப்பட்டது",
+      "regionsLabel": "உள்ளடக்கிய பகுதிகள்"
+    },
+    "message": {
+      "action": "விற்பனையாளருக்கு செய்தி அனுப்பு",
+      "comingSoon": "விரைவில் வருகிறது"
+    },
+    "trust": {
+      "provenanceHeading": "நாங்கள் சரிபார்த்தவை",
+      "stateVerified": "சரிபார்க்கப்பட்டது",
+      "statePending": "இன்னும் சரிபார்க்கப்படவில்லை",
+      "identity": {
+        "label": "அடையாளம்",
+        "checkedDescription": "ஆதார் eKYC மற்றும் PAN உறுதிப்படுத்தப்பட்டது",
+        "pendingDescription": "ஆதார் மற்றும் PAN இன்னும் உறுதிப்படுத்தப்படவில்லை"
+      },
+      "business": {
+        "label": "வணிகம்",
+        "checkedDescription": "வீடியோ-கால் மதிப்பாய்வு, GSTIN அல்லது உத்யம், மற்றும் வழிகாட்டி சான்றிதழ்கள் உறுதிப்படுத்தப்பட்டன",
+        "pendingDescription": "வீடியோ-கால் மதிப்பாய்வு மற்றும் வணிக ஆவணங்கள் இன்னும் உறுதிப்படுத்தப்படவில்லை"
+      }
     },
     "experiencesList": {
       "heading": "{name} இன் அனுபவங்கள்",

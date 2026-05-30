@@ -291,11 +291,33 @@
       "description": "Book adventure experiences from {name} on Outvers. KYC-verified, transparent pricing, 24-hour refund SLA.",
       "notFound": "Vendor not found · Outvers"
     },
+    "eyebrow": "Verified Vendor storefront",
     "stats": {
       "experiences": "Experiences",
+      "experiencesLabel": "Published",
+      "regionsLabel": "Regions covered",
       "verification": "Verification",
       "responseRate": "Response rate",
       "responseScore": "Response score: {score}%"
+    },
+    "message": {
+      "action": "Message Vendor",
+      "comingSoon": "Coming soon"
+    },
+    "trust": {
+      "provenanceHeading": "What we verified",
+      "stateVerified": "Verified",
+      "statePending": "Not yet verified",
+      "identity": {
+        "label": "Identity",
+        "checkedDescription": "Aadhaar eKYC and PAN confirmed",
+        "pendingDescription": "Aadhaar and PAN not yet confirmed"
+      },
+      "business": {
+        "label": "Business",
+        "checkedDescription": "Video-call review, GSTIN or Udyam, and guide certificates confirmed",
+        "pendingDescription": "Video-call review and business documents not yet confirmed"
+      }
     },
     "experiencesList": {
       "heading": "Experiences by {name}",

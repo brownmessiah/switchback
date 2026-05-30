@@ -291,11 +291,33 @@
       "description": "Outvers లో {name} నుండి అడ్వెంచర్ అనుభవాలను బుక్ చేయండి. KYC-ధృవీకరించబడింది, పారదర్శక ధరలు, 24 గంటల రీఫండ్ SLA.",
       "notFound": "విక్రేత కనుగొనబడలేదు · Outvers"
     },
+    "eyebrow": "ధృవీకరించబడిన విక్రేత స్టోర్‌ఫ్రంట్",
     "stats": {
       "experiences": "అనుభవాలు",
       "verification": "ధృవీకరణ",
       "responseRate": "స్పందన రేటు",
-      "responseScore": "స్పందన స్కోర్: {score}%"
+      "responseScore": "స్పందన స్కోర్: {score}%",
+      "experiencesLabel": "ప్రచురించబడింది",
+      "regionsLabel": "కవర్ చేసిన ప్రాంతాలు"
+    },
+    "message": {
+      "action": "విక్రేతకు సందేశం పంపండి",
+      "comingSoon": "త్వరలో వస్తోంది"
+    },
+    "trust": {
+      "provenanceHeading": "మేము ఏమి ధృవీకరించాము",
+      "stateVerified": "ధృవీకరించబడింది",
+      "statePending": "ఇంకా ధృవీకరించబడలేదు",
+      "identity": {
+        "label": "గుర్తింపు",
+        "checkedDescription": "ఆధార్ eKYC మరియు PAN నిర్ధారించబడ్డాయి",
+        "pendingDescription": "ఆధార్ మరియు PAN ఇంకా నిర్ధారించబడలేదు"
+      },
+      "business": {
+        "label": "వ్యాపారం",
+        "checkedDescription": "వీడియో-కాల్ సమీక్ష, GSTIN లేదా ఉద్యం, మరియు గైడ్ సర్టిఫికెట్లు నిర్ధారించబడ్డాయి",
+        "pendingDescription": "వీడియో-కాల్ సమీక్ష మరియు వ్యాపార పత్రాలు ఇంకా నిర్ధారించబడలేదు"
+      }
     },
     "experiencesList": {
       "heading": "{name} అనుభవాలు",

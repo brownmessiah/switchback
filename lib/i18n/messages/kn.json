@@ -291,11 +291,33 @@
       "description": "Outvers ನಲ್ಲಿ {name} ಅವರಿಂದ ಸಾಹಸ ಅನುಭವಗಳನ್ನು ಬುಕ್ ಮಾಡಿ. KYC-ಪರಿಶೀಲಿತ, ಪಾರದರ್ಶಕ ಬೆಲೆ, 24 ಗಂಟೆ ಮರುಪಾವತಿ SLA.",
       "notFound": "ಮಾರಾಟಗಾರ ಕಂಡುಬಂದಿಲ್ಲ · Outvers"
     },
+    "eyebrow": "ಪರಿಶೀಲಿತ ಮಾರಾಟಗಾರ ಸ್ಟೋರ್‌ಫ್ರಂಟ್",
     "stats": {
       "experiences": "ಅನುಭವಗಳು",
       "verification": "ಪರಿಶೀಲನೆ",
       "responseRate": "ಪ್ರತಿಕ್ರಿಯೆ ದರ",
-      "responseScore": "ಪ್ರತಿಕ್ರಿಯೆ ಅಂಕ: {score}%"
+      "responseScore": "ಪ್ರತಿಕ್ರಿಯೆ ಅಂಕ: {score}%",
+      "experiencesLabel": "ಪ್ರಕಟಿತ",
+      "regionsLabel": "ಒಳಗೊಂಡ ಪ್ರದೇಶಗಳು"
+    },
+    "message": {
+      "action": "ಮಾರಾಟಗಾರರಿಗೆ ಸಂದೇಶ ಕಳುಹಿಸಿ",
+      "comingSoon": "ಶೀಘ್ರದಲ್ಲೇ ಬರಲಿದೆ"
+    },
+    "trust": {
+      "provenanceHeading": "ನಾವು ಏನನ್ನು ಪರಿಶೀಲಿಸಿದ್ದೇವೆ",
+      "stateVerified": "ಪರಿಶೀಲಿತ",
+      "statePending": "ಇನ್ನೂ ಪರಿಶೀಲಿಸಿಲ್ಲ",
+      "identity": {
+        "label": "ಗುರುತು",
+        "checkedDescription": "ಆಧಾರ್ eKYC ಮತ್ತು PAN ದೃಢೀಕರಿಸಲಾಗಿದೆ",
+        "pendingDescription": "ಆಧಾರ್ ಮತ್ತು PAN ಇನ್ನೂ ದೃಢೀಕರಿಸಿಲ್ಲ"
+      },
+      "business": {
+        "label": "ವ್ಯಾಪಾರ",
+        "checkedDescription": "ವೀಡಿಯೊ-ಕಾಲ್ ಪರಿಶೀಲನೆ, GSTIN ಅಥವಾ ಉದ್ಯಮ, ಮತ್ತು ಮಾರ್ಗದರ್ಶಿ ಪ್ರಮಾಣಪತ್ರಗಳು ದೃಢೀಕರಿಸಲಾಗಿದೆ",
+        "pendingDescription": "ವೀಡಿಯೊ-ಕಾಲ್ ಪರಿಶೀಲನೆ ಮತ್ತು ವ್ಯಾಪಾರ ದಾಖಲೆಗಳು ಇನ್ನೂ ದೃಢೀಕರಿಸಿಲ್ಲ"
+      }
     },
     "experiencesList": {
       "heading": "{name} ಅವರ ಅನುಭವಗಳು",

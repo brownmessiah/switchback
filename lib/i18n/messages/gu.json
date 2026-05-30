@@ -291,11 +291,33 @@
       "description": "Outvers પર {name} પાસેથી સાહસિક અનુભવો બુક કરો. KYC-ચકાસાયેલ, પારદર્શક ભાવ, 24-કલાક રિફંડ SLA.",
       "notFound": "વેન્ડર મળ્યા નથી · Outvers"
     },
+    "eyebrow": "ચકાસાયેલ વેન્ડર સ્ટોરફ્રન્ટ",
     "stats": {
       "experiences": "અનુભવો",
       "verification": "ચકાસણી",
       "responseRate": "પ્રતિસાદ દર",
-      "responseScore": "પ્રતિસાદ સ્કોર: {score}%"
+      "responseScore": "પ્રતિસાદ સ્કોર: {score}%",
+      "experiencesLabel": "પ્રકાશિત",
+      "regionsLabel": "આવરી લેવાયેલા પ્રદેશો"
+    },
+    "message": {
+      "action": "વેન્ડરને સંદેશ મોકલો",
+      "comingSoon": "ટૂંક સમયમાં આવી રહ્યું છે"
+    },
+    "trust": {
+      "provenanceHeading": "અમે શું ચકાસ્યું",
+      "stateVerified": "ચકાસાયેલ",
+      "statePending": "હજુ ચકાસાયેલ નથી",
+      "identity": {
+        "label": "ઓળખ",
+        "checkedDescription": "આધાર eKYC અને PAN ની પુષ્ટિ થઈ",
+        "pendingDescription": "આધાર અને PAN ની પુષ્ટિ હજુ બાકી છે"
+      },
+      "business": {
+        "label": "બિઝનેસ",
+        "checkedDescription": "વિડિયો-કૉલ સમીક્ષા, GSTIN અથવા ઉદ્યમ, અને ગાઇડ પ્રમાણપત્રોની પુષ્ટિ થઈ",
+        "pendingDescription": "વિડિયો-કૉલ સમીક્ષા અને બિઝનેસ દસ્તાવેજોની પુષ્ટિ હજુ બાકી છે"
+      }
     },
     "experiencesList": {
       "heading": "{name} દ્વારા અનુભવો",

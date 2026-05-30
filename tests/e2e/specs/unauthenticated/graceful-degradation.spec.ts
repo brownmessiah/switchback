@@ -173,9 +173,17 @@ test.describe('Public links are not dead', () => {
     const hrefs = await collectInternalHrefs(page)
 
     // De-duplicate and keep only root-relative paths we can resolve.
+    //
+    // EXCLUDE the `mod-pending-*` Experience links: these are E2E moderation
+    // FIXTURES (db/seed.ts) whose publish/pause/archive lifecycle is owned by
+    // the parallel admin moderation suite (#23). When the admin archive/pause
+    // test runs concurrently it legitimately de-publishes the fixture → its
+    // (transient) home-page link 404s mid-crawl. That is a cross-spec fixture
+    // race, NOT a dead REAL product link, so skip these fixture slugs here.
+    // (Real product routes are still fully asserted.)
     const unique = Array.from(
       new Set(hrefs.filter((h) => h.startsWith('/'))),
-    )
+    ).filter((h) => !/\/experience\/mod-pending-/.test(h))
     expect(unique.length).toBeGreaterThan(0)
 
     for (const href of unique) {

@@ -121,13 +121,16 @@ functional roles, each with a saturated **base**, a **foreground** (text on the 
 **subtle tint** (chip/banner fills) — mirroring the existing `--primary` / `--primary-foreground`
 contract so CVA variant additions are mechanical.
 
+Light bases were darkened in the #110 a11y pass so the role color used **as text** on its `-subtle`
+tint (badge/chip/alert ink) clears WCAG AA ≥4.5:1 — see §5.1. Dark bases are unchanged.
+
 | Role | Token (base) | Light base | Dark base | Maps to (domain / competitor) |
 |---|---|---|---|---|
-| **success / affirmative** | `--success` | `oklch(0.58 0.13 155)` | `oklch(0.72 0.15 155)` | Free cancellation, instant confirmation, Booking `confirmed`, **Identity/Business verified Vendor** dot |
-| **warning / caution** | `--warning` | `oklch(0.70 0.15 75)` | `oklch(0.80 0.15 80)` | Urgency ("Likely to sell out"), `awaiting_completion`, balance-due-soon, region-closed |
-| **info / neutral-accent** | `--info` | `oklch(0.58 0.14 250)` | `oklch(0.72 0.13 250)` | Partial-pay schedule notice, ranking-disclosure ("How we rank") callout |
-| **credit / wallet** | `--credit` | `oklch(0.60 0.14 300)` | `oklch(0.74 0.13 300)` | **Outvers credit** bucket, voucher refunds (distinct from cash) |
-| **danger** *(kept)* | `--destructive` | `oklch(0.577 0.245 27.3)` | `oklch(0.704 0.191 22.2)` | Cancellation fee, declined verification, errors |
+| **success / affirmative** | `--success` | `oklch(0.52 0.13 155)` | `oklch(0.72 0.15 155)` | Free cancellation, instant confirmation, Booking `confirmed`, **Identity/Business verified Vendor** dot |
+| **warning / caution** | `--warning` | `oklch(0.535 0.15 75)` | `oklch(0.80 0.15 80)` | Urgency ("Likely to sell out"), `awaiting_completion`, balance-due-soon, region-closed |
+| **info / neutral-accent** | `--info` | `oklch(0.53 0.14 250)` | `oklch(0.72 0.13 250)` | Partial-pay schedule notice, ranking-disclosure ("How we rank") callout |
+| **credit / wallet** | `--credit` | `oklch(0.545 0.14 300)` | `oklch(0.74 0.13 300)` | **Outvers credit** bucket, voucher refunds (distinct from cash) |
+| **danger** *(kept hue/chroma; L darkened 0.577→0.54 for AA-on-subtle)* | `--destructive` | `oklch(0.54 0.245 27.3)` | `oklch(0.704 0.191 22.2)` | Cancellation fee, declined verification, errors |
 
 Each role also defines `--<role>-foreground` (`oklch(1 0 0)` light; near-black dark) and a subtle
 tint `--<role>-subtle` (e.g. `--success-subtle: oklch(0.96 0.03 155)` light / `oklch(0.22 0.04 155)`
@@ -612,6 +615,53 @@ expose.
 - **Multi-script:** the warm-hue contrast headroom and generous body line-height (1.6) protect
   Devanagari/Tamil/Bengali legibility without per-page re-tuning (ADR-0012).
 - **Errors leak no sensitive detail** to the UI; server logs hold the detail.
+
+### 5.1 Audit results (#110 — accessibility hardening pass)
+
+Audited on the completed redesign (all 45 page redesigns, #63–107) against **WCAG 2.2 AA**.
+Methodology: automated axe-core (`wcag2a + wcag2aa`) on every E2E-visited page, manual keyboard /
+focus-order verification on the key flows, and per-token contrast computation (OKLCH→sRGB→WCAG).
+
+- **axe-clean across in-scope pages.** Every redesigned surface is visited by an E2E spec, and
+  `tests/e2e/fixtures/devtools.ts` runs an axe gate (`wcag2a + wcag2aa`) after **every** test — so
+  the in-scope pages are axe-clean at AA. The one page never previously rendered through the browser
+  (`/admin/reports` — only its CSV endpoint was fetched) now has a dedicated render + axe-gated
+  smoke test. **Zero axe violations**; no documented exceptions needed at the axe layer.
+- **Keyboard nav + focus order verified on the key flows** (the layer axe cannot see):
+  - **Checkout guided-stepper (#70):** "Continue to payment" is keyboard-activatable; focus moves
+    into step 2; the payment-mode **RadioGroup is arrow-key operable** (WAI-ARIA roving tabindex —
+    checked = `tabindex 0`, others `-1`; ArrowDown/Up moves selection + updates the Pay figure);
+    Pay + Back are keyboard-reachable. Covered by a focused E2E test.
+  - **Money-action confirm Dialogs** (the shared `ConfirmMoneyDialog` behind admin refunds / payouts
+    / commission / loyalty-grant, plus the KYC-reject / suspend / blog-delete confirms, all on the
+    one Base UI Dialog primitive): **focus is trapped** (Tab wraps inside, never escaping to the
+    page body), **Escape cancels**, **focus returns to the trigger**, the confirm control is
+    reachable, and **default focus is the non-destructive control (Cancel), never the money-moving
+    action**. Covered by a focused E2E test. The cancel-with-refund flow uses an inline
+    keyboard-operable button + link (not a modal) and is covered by the existing cancel E2E.
+  - Vendor onboarding wizard (#73), vendor listing-form stepper (#76/#77), the search filter Sheet
+    (#67 — same Base UI Dialog primitive, so the verified trap/restore/Escape contract applies),
+    the messages split-view (#83/#84), and the admin evidence-cockpit (#101) are standard
+    keyboard-operable buttons/links/forms over the verified primitives + the per-page axe gate.
+- **Contrast verified against these tokens (computed ratios, both themes).** Body `--foreground` on
+  surfaces clears AAA (≈18–20:1 light, ≈17:1 dark). `--muted-foreground` ≈6.5–7.2:1 light /
+  ≈7.3–8:1 dark. `text-primary-strong` (coral as text) ≈6.2–6.5:1 light / ≈8.5:1 dark. White on
+  coral / destructive fills ≥4.7:1.
+  **Fix applied (tokens-only):** the light-theme semantic-status bases (`--success/-warning/-info/`
+  `-credit/-destructive`) were **darkened** so the role color used **as text** (badge / chip / alert
+  ink — `text-{role}` on `bg-{role}-subtle`) clears **AA ≥4.5:1** (was 2.4–4.1:1, a real WCAG 1.4.3
+  miss automated axe could not compute over the tinted fills). New light bases: success `L 0.58→0.52`
+  (4.65:1), warning `0.70→0.535` (4.67:1), info `0.58→0.53` (4.69:1), credit `0.60→0.545` (4.63:1),
+  destructive `0.577→0.54` (4.61:1 on its subtle; white-on-fill improved to 5.3:1). The `-subtle`
+  tints are unchanged; dark-theme bases are unchanged (already ≈6–8.7:1 on their dark subtle).
+- **Accepted exception (WCAG 1.4.11 non-text):** the 1px `--border` is intentionally low-contrast
+  (≈1.27:1 vs surface) and **exempt** — it is decorative / redundant, never the *sole* identifier of
+  a component or boundary (cards carry elevation + fill, inputs carry a `Label` + the high-contrast
+  focus ring at `--primary-strong` ≥6:1). The load-bearing non-text cues — status dots (≥5:1) and
+  the focus ring (≥6.5:1) — clear the 3:1 floor.
+
+Re-verification: `pnpm typecheck` (0), `pnpm test` (1544 passed | 1 todo), and the full Playwright
+suite (179 passed, incl. the new keyboard/focus + reports-axe assertions and the per-page axe gate).
 
 ---
 

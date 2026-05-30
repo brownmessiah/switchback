@@ -169,19 +169,24 @@
   --accent-foreground: oklch(1 0 0);
 
   /* ── Semantic status family (DESIGN.md §2.1) — base + foreground + subtle ── */
-  --destructive: oklch(0.577 0.245 27.325);
+  /* #110 a11y: light-theme status bases darkened so the role color used AS TEXT
+     (badge/chip/alert ink — `text-{role}` on `bg-{role}-subtle`) clears WCAG AA
+     4.5:1. The subtle tints are unchanged; white-on-fill (`*-foreground` on
+     `bg-{role}`) only improves. Dark-theme bases are untouched (already ≥6:1 on
+     their dark subtle). See DESIGN.md §5 audit note + .scratch contrast-check. */
+  --destructive: oklch(0.54 0.245 27.325);
   --destructive-foreground: oklch(1 0 0);
   --destructive-subtle: oklch(0.96 0.03 27);
-  --success: oklch(0.58 0.13 155);
+  --success: oklch(0.52 0.13 155);
   --success-foreground: oklch(1 0 0);
   --success-subtle: oklch(0.96 0.03 155);
-  --warning: oklch(0.7 0.15 75);
+  --warning: oklch(0.535 0.15 75);
   --warning-foreground: oklch(1 0 0);
   --warning-subtle: oklch(0.96 0.04 80);
-  --info: oklch(0.58 0.14 250);
+  --info: oklch(0.53 0.14 250);
   --info-foreground: oklch(1 0 0);
   --info-subtle: oklch(0.96 0.03 250);
-  --credit: oklch(0.6 0.14 300);
+  --credit: oklch(0.545 0.14 300);
   --credit-foreground: oklch(1 0 0);
   --credit-subtle: oklch(0.96 0.03 300);
 

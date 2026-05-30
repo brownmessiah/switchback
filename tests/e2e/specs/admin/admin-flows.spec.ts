@@ -3609,6 +3609,129 @@ test.describe('Admin dashboard stats reflect seeded data (#29)', () => {
   })
 })
 
+// ---------------------------------------------------------------------------
+// #110 a11y: /admin/reports render + axe gate (coverage gap fill)
+//
+// Every other in-scope admin page is reached via page.goto in some spec, so it
+// passes through the per-test axe gate in fixtures/devtools.ts. /admin/reports
+// was only ever exercised as a CSV `page.request.get` (no browser render), so
+// it never hit the axe gate. This renders the page so the gate covers it.
+// ---------------------------------------------------------------------------
+test.describe('Admin reports — render + axe coverage (#110)', () => {
+  test('renders the reports summary + export UI (axe-gated)', async ({ page }) => {
+    const response = await page.goto('/admin/reports')
+    expect(response?.status()).toBe(200)
+
+    await expect(page.locator('h1')).toContainText('Reports')
+    // The export controls must be present as real buttons (keyboard-reachable).
+    await expect(
+      page.getByRole('button', { name: /Export users/ }),
+    ).toBeVisible()
+    // The afterEach axe gate (wcag2a + wcag2aa) now covers this page.
+  })
+})
+
+// ---------------------------------------------------------------------------
+// #110 a11y: money confirm Dialog keyboard/focus contract (DESIGN.md §5)
+//
+// The shared A4 ConfirmMoneyDialog (app/admin/_components/confirm-money-dialog)
+// gates EVERY money-moving admin action. The AA+ contract requires overlays to:
+//   - trap focus while open (Tab cycles inside, never escapes to the page),
+//   - restore focus to the trigger when closed,
+//   - default-focus the non-destructive (Cancel) control, NOT the action,
+//   - close on Escape (a keyboard-only cancel path).
+// Verified against the loyalty-grant ConfirmMoneyDialog — a DETERMINISTIC,
+// contention-free path (the grant only fires from the explicit Confirm inside
+// the Dialog, so opening + Escape/Cancel grants nothing). The Customer's Outvers
+// credit balance is asserted UNCHANGED, proving the focus walk moved no money.
+// ---------------------------------------------------------------------------
+test.describe('Admin money confirm Dialog — keyboard/focus contract (#110)', () => {
+  test('focus traps, restores to trigger, Escape cancels, default focus is NOT the action', async ({
+    page,
+  }) => {
+    const balanceBefore = await getWalletBalanceRupees(
+      SEED_LOYALTY_CUSTOMER_ID,
+      'outvers_credit',
+    )
+
+    await page.goto('/admin/loyalty')
+    await expect(page.locator('h1')).toContainText('Loyalty & Credits')
+
+    // Fill the Manual Credit Grant form (does NOT grant — the grant is gated
+    // behind the shared A4 ConfirmMoneyDialog). The page-level "Grant Credit"
+    // button is the Dialog trigger.
+    await page.locator('#userId').fill(SEED_LOYALTY_CUSTOMER_ID)
+    await page.locator('#amountRupees').fill('500')
+    await page.selectOption('#balanceType', 'outvers_credit')
+    await page.locator('#reason').fill(`#110 a11y focus probe ${Date.now()}`)
+
+    const trigger = page
+      .locator('form')
+      .getByRole('button', { name: 'Grant Credit' })
+    await expect(trigger).toBeVisible()
+
+    // ── Open the confirm Dialog via the keyboard (Enter on the focused trigger).
+    await trigger.focus()
+    await expect(trigger).toBeFocused()
+    await page.keyboard.press('Enter')
+
+    const dialog = page.getByTestId('grant-credit-confirm')
+    await expect(dialog).toBeVisible()
+
+    // The money-moving Confirm control (inside the Dialog) is reachable.
+    const confirmBtn = dialog.getByRole('button', { name: 'Grant Credit' })
+    const cancelBtn = dialog.getByRole('button', { name: 'Cancel' })
+    await expect(confirmBtn).toBeVisible()
+
+    // ── Default focus must NOT land on the money-moving action (a misclick /
+    //    stray Enter must never move money). It lands inside the Dialog.
+    await expect(confirmBtn).not.toBeFocused()
+    const focusInDialog = await dialog.evaluate((el) =>
+      el.contains(document.activeElement),
+    )
+    expect(focusInDialog, 'focus must move inside the Dialog on open').toBe(true)
+
+    // ── The safe (Cancel) control is reachable + keyboard-focusable — a
+    //    keyboard user always has a non-destructive way out of the Dialog.
+    await expect(cancelBtn).toBeVisible()
+    await cancelBtn.focus()
+    await expect(cancelBtn).toBeFocused()
+
+    // ── Focus trap: tabbing through the Dialog never escapes to the page body.
+    //    Base UI loops focus via the floating-ui focus guards, whose redirect to
+    //    the first tabbable element is enqueued on an animation frame; so after
+    //    each Tab we let focus settle and assert it CONVERGES back inside the
+    //    Dialog (never lands on a page-body control). Cycling more stops than the
+    //    Dialog has proves the trap wraps rather than leaking to the page.
+    const focusInDialogNow = () =>
+      dialog.evaluate((el) => el.contains(document.activeElement))
+    for (let i = 0; i < 6; i++) {
+      await page.keyboard.press('Tab')
+      await expect
+        .poll(focusInDialogNow, {
+          message: `focus escaped the Dialog after ${i + 1} Tab(s)`,
+          timeout: 2_000,
+        })
+        .toBe(true)
+    }
+
+    // ── Escape cancels (keyboard-only cancel path) and moves no money.
+    await page.keyboard.press('Escape')
+    await expect(dialog).toHaveCount(0)
+
+    // ── Focus returns to the trigger that opened the Dialog (focus restore).
+    await expect(trigger).toBeFocused()
+
+    // ── The Customer's Outvers credit balance is UNCHANGED — the full focus
+    //    walk (open → Cancel-reachable → trap → Escape) granted nothing.
+    const balanceAfter = await getWalletBalanceRupees(
+      SEED_LOYALTY_CUSTOMER_ID,
+      'outvers_credit',
+    )
+    expect(balanceAfter).toBe(balanceBefore)
+  })
+})
+
 /** Parse the integer rendered inside a stat tile (strips ₹, commas, spaces). */
 async function parseTileNumber(
   locator: import('@playwright/test').Locator,

@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
-import { DM_Sans, Noto_Sans_Devanagari } from "next/font/google";
+import {
+  Bricolage_Grotesque,
+  DM_Sans,
+  Noto_Sans_Devanagari,
+} from "next/font/google";
 import { getLocale, getMessages } from "next-intl/server";
 
 import { SiteFooter } from "@/components/site-footer";
@@ -11,6 +15,19 @@ import "./globals.css";
 const dmSans = DM_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
+});
+
+/**
+ * Bricolage Grotesque — the display heading face (DESIGN.md §2.2). Bound to
+ * --font-heading, it gives long PDPs and policy pages a distinct heading tier
+ * the as-is `--font-heading = --font-sans` aliasing lacked. It is a Latin-only
+ * enhancement: for Indic locales (hi, and future ta/mr/bn) globals.css
+ * re-resolves --font-heading to the Devanagari → DM Sans stack (ADR-0012).
+ */
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-heading",
+  weight: ["600", "700"],
 });
 
 /**
@@ -43,6 +60,7 @@ export default async function RootLayout({
 
   const fontClasses = [
     dmSans.variable,
+    bricolage.variable,
     isHindi ? notoDevanagari.variable : "",
     "h-full antialiased",
   ]

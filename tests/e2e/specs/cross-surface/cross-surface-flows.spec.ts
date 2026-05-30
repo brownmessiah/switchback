@@ -459,6 +459,11 @@ test.describe('Cross-surface: customer books -> vendor sees -> admin sees @cross
 
     // The UI surfaces the worked example: ₹6,000 gross, ₹1,500 Advance due now.
     await expect(customerPage.getByText('Order summary')).toBeVisible()
+
+    // #70 guided-stepper: advance from "Your details" to the Payment step where
+    // the Pay button (labelled with the Advance amount) lives.
+    await customerPage.getByRole('button', { name: /continue to payment/i }).click()
+
     const payButton = customerPage.locator('button:has-text("Pay")')
     await expect(payButton).toContainText(
       `₹${EXPECTED_ADVANCE.toLocaleString('en-IN')}`,

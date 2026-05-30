@@ -879,6 +879,10 @@ test.describe('Tier-cap matrix — booking-create on downgrade (ADR-0007, #21)',
       await page.goto(`/checkout?experienceId=${experienceId}&slotId=${slotId}&participants=2`)
       await expect(page.locator('h1')).toContainText('Checkout')
 
+      // #70 guided-stepper: "Your details" loads first; advance to the Payment
+      // step where the Pay button lives (the over-cap rejection surfaces there).
+      await page.getByRole('button', { name: /continue to payment/i }).click()
+
       const payButton = page.locator('button:has-text("Pay")')
       await expect(payButton).toBeVisible()
       await payButton.click()

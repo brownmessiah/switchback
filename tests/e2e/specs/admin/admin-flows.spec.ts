@@ -81,6 +81,16 @@ import {
   getLatestSubAdminAudit,
   setVendorKycTierByUserId,
   insertAuditLogRow,
+  // #29 admin support tickets + bookings + dashboard
+  getSupportTicketBySubject,
+  getSupportTicketById,
+  countSupportMessagesForTicket,
+  getLatestSupportMessageBody,
+  getLatestSupportTicketAudit,
+  deleteSupportTicketById,
+  getDashboardCounts,
+  getBookingsByDistinctState,
+  getBookingDetailFixture,
 } from '../../helpers/db-assertions'
 import { getIndexedExperience } from '../../helpers/meili-assertions'
 import { storageFileExists } from '../../helpers/storage-assertions'
@@ -2912,3 +2922,300 @@ test.describe('Admin CSV report export produces a valid CSV (#28)', () => {
     expect(res.status()).toBe(400)
   })
 })
+
+// ---------------------------------------------------------------------------
+// 19. Functional: admin Support Ticket lifecycle (#29)
+//
+// Drives the full Support Ticket lifecycle FROM THE UI and asserts every step
+// persists to the DB. A Support Ticket is a GENERAL question (CONTEXT.md),
+// distinct from a Dispute (a post-trip service complaint). The lifecycle is:
+//
+//   - CREATE : the list-page create form → a support_tickets row (status=open,
+//              priority/category as chosen) PLUS the opening support_messages row.
+//   - ASSIGN : "Assign to Me" on the detail page → assigned_to_admin_id set to
+//              the acting Admin (an Admin, satisfying "assign to an admin") AND
+//              an admin.support_ticket.assign audit row.
+//   - STATUS : forward-only transitions open → in_progress → resolved persist,
+//              each writing an admin.support_ticket.status_change audit row.
+//   - MESSAGE: the reply form appends a support_messages row (the thread grows).
+//
+// The ticket is created with a unique nonce subject so it is uniquely
+// resolvable, and is deleted in a finally so the shared E2E DB stays
+// deterministic for the dashboard open-tickets count assertion (#29 dashboard).
+// Serial because each step builds on the prior persisted state.
+// ---------------------------------------------------------------------------
+test.describe('Admin support ticket lifecycle (#29)', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  const NONCE = Date.now()
+  const SUBJECT = `E2E support ticket ${NONCE}`
+  const OPENING_BODY = 'A general question about how Trip Groups split payment.'
+  const REPLY_BODY = `E2E admin reply ${NONCE}`
+
+  let ticketId: string | null = null
+
+  test.afterAll(async () => {
+    if (ticketId) await deleteSupportTicketById(ticketId)
+  })
+
+  test('create: list-page form → support_tickets + opening message persist', async ({
+    page,
+  }) => {
+    await page.goto('/admin/support')
+    await expect(page.locator('h1')).toContainText('Support Tickets')
+
+    const form = page.getByTestId('ticket-create-form')
+    await expect(form).toBeVisible()
+    await form.locator('#subject').fill(SUBJECT)
+
+    // Priority → high (shadcn Select scoped to the create form).
+    await form.locator('#priority').click()
+    await page.locator('[data-slot="select-item"]').filter({ hasText: 'high' }).click()
+
+    // Category → payment.
+    await form.locator('#category').click()
+    await page.locator('[data-slot="select-item"]').filter({ hasText: 'payment' }).click()
+
+    await form.locator('#body').fill(OPENING_BODY)
+    await form.getByRole('button', { name: 'Create Ticket' }).click()
+
+    await expect(page.getByText('Ticket created.')).toBeVisible({ timeout: 15_000 })
+
+    // ── Assert: the ticket persisted with the chosen fields ────────────────
+    const ticket = await getSupportTicketBySubject(SUBJECT)
+    expect(ticket, 'created ticket must persist').not.toBeNull()
+    ticketId = ticket!.id
+    expect(ticket!.status).toBe('open')
+    expect(ticket!.priority).toBe('high')
+    expect(ticket!.category).toBe('payment')
+    expect(ticket!.createdByUserId).toBe(SEED_ADMIN_ID)
+    expect(ticket!.assignedToAdminId).toBeNull()
+
+    // ── Assert: the opening message was written ────────────────────────────
+    expect(await countSupportMessagesForTicket(ticketId)).toBe(1)
+    expect(await getLatestSupportMessageBody(ticketId)).toBe(OPENING_BODY)
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/admin-support-create.png',
+      fullPage: true,
+    })
+  })
+
+  test('assign: "Assign to Me" → assigned_to_admin_id set + audit row', async ({
+    page,
+  }) => {
+    expect(ticketId, 'create step must have run first').not.toBeNull()
+
+    await page.goto(`/admin/support/${ticketId}`)
+    await expect(page.locator('h1')).toContainText(SUBJECT)
+
+    // Initially unassigned.
+    await expect(page.getByTestId('ticket-assignee')).toContainText('Unassigned')
+
+    await page.getByRole('button', { name: 'Assign to Me' }).click()
+
+    // After revalidation the assignee cell shows the admin id (no longer the
+    // Unassigned placeholder), and the Assign-to-Me button is gone.
+    await expect(page.getByTestId('ticket-assignee')).toContainText(SEED_ADMIN_ID, {
+      timeout: 15_000,
+    })
+
+    // ── Assert: assignee persisted ─────────────────────────────────────────
+    const after = await getSupportTicketById(ticketId!)
+    expect(after!.assignedToAdminId).toBe(SEED_ADMIN_ID)
+
+    // ── Assert: assign audit row with actor + transition ───────────────────
+    const audit = await getLatestSupportTicketAudit(
+      'admin.support_ticket.assign',
+      ticketId!,
+    )
+    expect(audit, 'an assign audit row must be written').not.toBeNull()
+    expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+    expect(audit!.payload).toMatchObject({ newAssignee: SEED_ADMIN_ID })
+  })
+
+  test('status: open → in_progress → resolved persist (forward-only) + audit rows', async ({
+    page,
+  }) => {
+    expect(ticketId, 'create step must have run first').not.toBeNull()
+
+    // ── open → in_progress ─────────────────────────────────────────────────
+    await page.goto(`/admin/support/${ticketId}`)
+    await page.getByRole('button', { name: 'Start Working' }).click()
+    await expect
+      .poll(async () => (await getSupportTicketById(ticketId!))?.status, {
+        timeout: 15_000,
+      })
+      .toBe('in_progress')
+
+    // ── in_progress → resolved ─────────────────────────────────────────────
+    await page.goto(`/admin/support/${ticketId}`)
+    await page.getByRole('button', { name: 'Mark Resolved' }).click()
+    await expect
+      .poll(async () => (await getSupportTicketById(ticketId!))?.status, {
+        timeout: 15_000,
+      })
+      .toBe('resolved')
+
+    // ── Assert: a status_change audit row exists for the resolved transition
+    const audit = await getLatestSupportTicketAudit(
+      'admin.support_ticket.status_change',
+      ticketId!,
+    )
+    expect(audit, 'a status_change audit row must be written').not.toBeNull()
+    expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+    expect(audit!.payload).toMatchObject({ newStatus: 'resolved' })
+  })
+
+  test('message: reply form appends a support_messages row (thread grows)', async ({
+    page,
+  }) => {
+    expect(ticketId, 'create step must have run first').not.toBeNull()
+
+    const before = await countSupportMessagesForTicket(ticketId!)
+
+    await page.goto(`/admin/support/${ticketId}`)
+    const reply = page.getByPlaceholder('Type a reply...')
+    await expect(reply).toBeVisible()
+    await reply.fill(REPLY_BODY)
+    await page.getByRole('button', { name: 'Send Reply' }).click()
+
+    // ── Assert: the thread grew by exactly one message with the reply body ──
+    await expect
+      .poll(async () => countSupportMessagesForTicket(ticketId!), { timeout: 15_000 })
+      .toBe(before + 1)
+    expect(await getLatestSupportMessageBody(ticketId!)).toBe(REPLY_BODY)
+
+    // The new message is rendered in the thread.
+    await expect(page.getByText(REPLY_BODY)).toBeVisible()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 20. Functional: admin Bookings list + detail render correct data (#29)
+//
+// Asserts the admin Bookings surface shows REAL seeded data, not stubs:
+//   - LIST   : every distinct-state seeded Booking renders a row whose
+//              data-booking-state attribute matches the persisted state.
+//   - DETAIL : the first listed Booking's detail page shows the full record —
+//              the commission breakdown (gross + estimated vendor payout
+//              computed exactly as the DB), the parties (Customer + Vendor +
+//              Experience), and the Payment Timeline section.
+// Read-only: navigates + asserts, never mutates, so it is race-safe alongside
+// every other admin spec.
+// ---------------------------------------------------------------------------
+test.describe('Admin bookings list + detail render correct data (#29)', () => {
+  test('list: each distinct-state seeded booking renders with the right state', async ({
+    page,
+  }) => {
+    const byState = await getBookingsByDistinctState()
+    expect(byState.length, 'seed must provide bookings across states').toBeGreaterThanOrEqual(2)
+
+    await page.goto('/admin/bookings')
+    await expect(page.locator('h1')).toContainText('All Bookings')
+
+    // Each representative booking renders a row carrying its true state.
+    for (const b of byState) {
+      const row = page.locator(`tr[data-booking-id="${b.id}"]`)
+      await expect(row, `booking ${b.id} (${b.state}) must render`).toHaveCount(1)
+      await expect(row).toHaveAttribute('data-booking-state', b.state)
+    }
+  })
+
+  test('detail: first booking shows commission breakdown + parties + payment timeline', async ({
+    page,
+  }) => {
+    await page.goto('/admin/bookings')
+    const firstLink = page.locator('a[href*="/admin/bookings/"]').first()
+    await expect(firstLink).toBeVisible()
+    const href = await firstLink.getAttribute('href')
+    const bookingId = href!.split('/admin/bookings/')[1]!
+
+    const fixture = await getBookingDetailFixture(bookingId)
+    expect(fixture, 'the listed booking must exist in the DB').not.toBeNull()
+
+    await firstLink.click()
+    await page.waitForURL(/\/admin\/bookings\/[^/]+/)
+    await expect(page.locator('h1')).toContainText('Booking Detail')
+
+    // ── Parties: Customer + Vendor + Experience all render the real data ────
+    await expect(page.getByText('Booking Overview')).toBeVisible()
+    await expect(page.getByText(fixture!.experienceTitle)).toBeVisible()
+    await expect(page.getByText(fixture!.vendorBusinessName).first()).toBeVisible()
+    if (fixture!.customerName) {
+      await expect(page.getByText(fixture!.customerName)).toBeVisible()
+    }
+
+    // ── Commission breakdown: gross + estimated vendor payout match the DB ──
+    await expect(page.getByText('Commission Snapshot')).toBeVisible()
+    const grossText = `₹${fixture!.grossRupees.toLocaleString('en-IN')}`
+    await expect(page.getByText(grossText).first()).toBeVisible()
+    await expect(page.getByTestId('vendor-payout')).toHaveText(
+      `₹${fixture!.vendorPayoutRupees.toLocaleString('en-IN')}`,
+    )
+
+    // ── Payment timeline section is present (full record) ──────────────────
+    await expect(page.getByText('Payment Timeline')).toBeVisible()
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/admin-booking-detail-29.png',
+      fullPage: true,
+    })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 21. Functional: admin Dashboard stats reflect seeded data (#29)
+//
+// Asserts the dashboard KPI tiles render the REAL aggregate numbers, computed
+// independently from the DB. Booking count + total revenue are asserted >= the
+// DB value taken just before navigation (the shared E2E DB only grows within a
+// run, so a strict equality could race a parallel booking insert); the disputed
+// pending count is asserted exactly (the seed stages exactly one disputed
+// Booking and no admin spec leaves a disputed Booking behind).
+// ---------------------------------------------------------------------------
+test.describe('Admin dashboard stats reflect seeded data (#29)', () => {
+  test('KPI tiles + pending counts match independently-computed DB figures', async ({
+    page,
+  }) => {
+    const counts = await getDashboardCounts()
+    // Sanity: the seed produced a non-trivial dataset.
+    expect(counts.bookingCount).toBeGreaterThan(0)
+    expect(counts.totalRevenue).toBeGreaterThan(0)
+
+    await page.goto('/admin/dashboard')
+    await expect(page.locator('h1')).toContainText('Admin overview')
+
+    // ── Stat tiles: parse the rendered number and compare to the DB ─────────
+    const renderedBookings = await parseTileNumber(page.getByTestId('stat-bookings'))
+    expect(renderedBookings).toBeGreaterThanOrEqual(counts.bookingCount)
+
+    const renderedRevenue = await parseTileNumber(page.getByTestId('stat-revenue'))
+    expect(renderedRevenue).toBeGreaterThanOrEqual(counts.totalRevenue)
+
+    // Users / vendors / experiences are stable within a run → assert exactly.
+    expect(await parseTileNumber(page.getByTestId('stat-users'))).toBe(counts.userCount)
+    expect(await parseTileNumber(page.getByTestId('stat-vendors'))).toBe(counts.vendorCount)
+    expect(await parseTileNumber(page.getByTestId('stat-experiences'))).toBe(
+      counts.experienceCount,
+    )
+
+    // ── Pending: disputed-bookings badge equals the DB disputed count ───────
+    expect(await parseTileNumber(page.getByTestId('pending-disputed'))).toBe(
+      counts.disputedBookings,
+    )
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/admin-dashboard-stats-29.png',
+      fullPage: true,
+    })
+  })
+})
+
+/** Parse the integer rendered inside a stat tile (strips ₹, commas, spaces). */
+async function parseTileNumber(
+  locator: import('@playwright/test').Locator,
+): Promise<number> {
+  const text = (await locator.innerText()).replace(/[^0-9]/g, '')
+  return Number(text)
+}

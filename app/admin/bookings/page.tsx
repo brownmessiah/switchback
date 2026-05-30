@@ -120,7 +120,11 @@ export default async function AdminBookingsPage({ searchParams }: AdminBookingsP
                 </TableRow>
               ) : (
                 rows.map((row) => (
-                  <TableRow key={row.id}>
+                  <TableRow
+                    key={row.id}
+                    data-booking-id={row.id}
+                    data-booking-state={row.state}
+                  >
                     <TableCell className="font-mono text-xs">
                       <Link
                         href={`/admin/bookings/${row.id}`}

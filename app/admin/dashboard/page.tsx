@@ -26,7 +26,9 @@ export default async function AdminDashboardPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{stats.userCount.toLocaleString('en-IN')}</p>
+            <p className="text-3xl font-semibold" data-testid="stat-users">
+              {stats.userCount.toLocaleString('en-IN')}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -34,7 +36,9 @@ export default async function AdminDashboardPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Vendors</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{stats.vendorCount.toLocaleString('en-IN')}</p>
+            <p className="text-3xl font-semibold" data-testid="stat-vendors">
+              {stats.vendorCount.toLocaleString('en-IN')}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -42,7 +46,9 @@ export default async function AdminDashboardPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Experiences</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{stats.experienceCount.toLocaleString('en-IN')}</p>
+            <p className="text-3xl font-semibold" data-testid="stat-experiences">
+              {stats.experienceCount.toLocaleString('en-IN')}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -50,7 +56,9 @@ export default async function AdminDashboardPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Bookings</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{stats.bookingCount.toLocaleString('en-IN')}</p>
+            <p className="text-3xl font-semibold" data-testid="stat-bookings">
+              {stats.bookingCount.toLocaleString('en-IN')}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -58,7 +66,9 @@ export default async function AdminDashboardPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Total revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">₹{stats.totalRevenue.toLocaleString('en-IN')}</p>
+            <p className="text-3xl font-semibold" data-testid="stat-revenue">
+              ₹{stats.totalRevenue.toLocaleString('en-IN')}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -79,7 +89,7 @@ export default async function AdminDashboardPage() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <PendingItem label="KYC verifications" count={pending.pendingKyc} href="/admin/vendors" />
             <PendingItem label="Experience reviews" count={pending.pendingExperiences} href="/admin/experiences" />
-            <PendingItem label="Disputed bookings" count={pending.disputedBookings} href="/admin/disputes" />
+            <PendingItem label="Disputed bookings" count={pending.disputedBookings} href="/admin/disputes" testId="pending-disputed" />
             <PendingItem label="Pending refunds" count={pending.pendingRefunds} href="/admin/refunds" />
             <PendingItem label="Open support tickets" count={pending.openTickets} href="/admin/support" />
             <PendingItem label="Pending payouts" count={pending.pendingPayouts} href="/admin/payouts" />
@@ -132,10 +142,12 @@ function PendingItem({
   label,
   count,
   href,
+  testId,
 }: {
   readonly label: string
   readonly count: number
   readonly href: string
+  readonly testId?: string
 }) {
   return (
     <a
@@ -143,7 +155,11 @@ function PendingItem({
       className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
     >
       <span className="text-sm font-medium">{label}</span>
-      <Badge variant={count > 0 ? 'destructive' : 'secondary'} className="text-xs">
+      <Badge
+        variant={count > 0 ? 'destructive' : 'secondary'}
+        className="text-xs"
+        data-testid={testId}
+      >
         {count}
       </Badge>
     </a>

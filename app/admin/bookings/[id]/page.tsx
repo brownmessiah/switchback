@@ -190,7 +190,10 @@ export default async function AdminBookingDetailPage({
             <Separator />
             <div className="flex justify-between font-medium">
               <span>Estimated Vendor Payout</span>
-              <span className="text-green-600 dark:text-green-400">
+              <span
+                className="text-green-600 dark:text-green-400"
+                data-testid="vendor-payout"
+              >
                 {formatCurrency(vendorPayout)}
               </span>
             </div>

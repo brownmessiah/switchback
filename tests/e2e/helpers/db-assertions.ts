@@ -2678,3 +2678,310 @@ export async function insertAuditLogRow(input: {
     `
   })
 }
+
+// ---------------------------------------------------------------------------
+// #29 admin support tickets + bookings + dashboard
+// ---------------------------------------------------------------------------
+
+export interface SupportTicketRow {
+  id: string
+  subject: string
+  status: string
+  priority: string
+  category: string
+  createdByUserId: string
+  assignedToAdminId: string | null
+}
+
+/**
+ * Resolve the most-recently-created support ticket whose subject matches
+ * exactly. The #29 create-flow E2E stamps the subject with a unique nonce so
+ * this returns exactly the ticket the test just created, never a collision.
+ */
+export async function getSupportTicketBySubject(
+  subject: string,
+): Promise<SupportTicketRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        id: string
+        subject: string
+        status: string
+        priority: string
+        category: string
+        created_by_user_id: string
+        assigned_to_admin_id: string | null
+      }[]
+    >`
+      SELECT id, subject, status, priority, category,
+             created_by_user_id, assigned_to_admin_id
+      FROM support_tickets
+      WHERE subject = ${subject}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    const r = rows[0]
+    if (!r) return null
+    return {
+      id: r.id,
+      subject: r.subject,
+      status: r.status,
+      priority: r.priority,
+      category: r.category,
+      createdByUserId: r.created_by_user_id,
+      assignedToAdminId: r.assigned_to_admin_id,
+    }
+  })
+}
+
+/** Fetch a support ticket row by id, or null. */
+export async function getSupportTicketById(
+  ticketId: string,
+): Promise<SupportTicketRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        id: string
+        subject: string
+        status: string
+        priority: string
+        category: string
+        created_by_user_id: string
+        assigned_to_admin_id: string | null
+      }[]
+    >`
+      SELECT id, subject, status, priority, category,
+             created_by_user_id, assigned_to_admin_id
+      FROM support_tickets
+      WHERE id = ${ticketId}
+      LIMIT 1
+    `
+    const r = rows[0]
+    if (!r) return null
+    return {
+      id: r.id,
+      subject: r.subject,
+      status: r.status,
+      priority: r.priority,
+      category: r.category,
+      createdByUserId: r.created_by_user_id,
+      assignedToAdminId: r.assigned_to_admin_id,
+    }
+  })
+}
+
+/** Count support_messages rows for a ticket id (ordered insert assertion). */
+export async function countSupportMessagesForTicket(
+  ticketId: string,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT count(*)::text AS n FROM support_messages WHERE ticket_id = ${ticketId}
+    `
+    return Number(rows[0]?.n ?? 0)
+  })
+}
+
+/** Fetch the body of the most-recent support_messages row for a ticket, or null. */
+export async function getLatestSupportMessageBody(
+  ticketId: string,
+): Promise<string | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ body: string }[]>`
+      SELECT body FROM support_messages
+      WHERE ticket_id = ${ticketId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    return rows[0]?.body ?? null
+  })
+}
+
+/** Fetch the most-recent support-ticket audit row (by action + ticket id). */
+export async function getLatestSupportTicketAudit(
+  action: string,
+  ticketId: string,
+): Promise<{ actorUserId: string | null; payload: Record<string, unknown> } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { actor_user_id: string | null; payload: Record<string, unknown> }[]
+    >`
+      SELECT actor_user_id, payload
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_type = 'support_ticket'
+        AND entity_id = ${ticketId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return { actorUserId: rows[0].actor_user_id, payload: rows[0].payload }
+  })
+}
+
+/** Delete a support ticket + its messages by id (test cleanup). */
+export async function deleteSupportTicketById(ticketId: string): Promise<void> {
+  await withSql(async (sql) => {
+    // support_messages cascades on ticket delete, but delete explicitly so the
+    // helper is robust regardless of FK config.
+    await sql`DELETE FROM support_messages WHERE ticket_id = ${ticketId}`
+    await sql`DELETE FROM support_tickets WHERE id = ${ticketId}`
+  })
+}
+
+export interface DashboardCounts {
+  userCount: number
+  vendorCount: number
+  experienceCount: number
+  bookingCount: number
+  totalRevenue: number
+  disputedBookings: number
+  openTickets: number
+}
+
+/**
+ * Compute the dashboard stat figures directly from the DB, mirroring exactly
+ * what `loadAdminDashboard` aggregates. The #29 dashboard E2E compares these
+ * to the rendered tiles (race-safe: bookingCount/totalRevenue asserted >= the
+ * DB value taken before navigation, since the shared E2E DB only grows within
+ * a run).
+ */
+export async function getDashboardCounts(): Promise<DashboardCounts> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        user_count: string
+        vendor_count: string
+        experience_count: string
+        booking_count: string
+        total_revenue: string | null
+        disputed_bookings: string
+        open_tickets: string
+      }[]
+    >`
+      SELECT
+        (SELECT count(*) FROM users)::text AS user_count,
+        (SELECT count(*) FROM vendor_profiles)::text AS vendor_count,
+        (SELECT count(*) FROM experiences)::text AS experience_count,
+        (SELECT count(*) FROM bookings)::text AS booking_count,
+        (SELECT sum(gross_total_snapshot::numeric) FROM bookings)::text AS total_revenue,
+        (SELECT count(*) FROM bookings WHERE state = 'disputed')::text AS disputed_bookings,
+        (SELECT count(*) FROM support_tickets WHERE status = 'open')::text AS open_tickets
+    `
+    const r = rows[0]!
+    return {
+      userCount: Number(r.user_count),
+      vendorCount: Number(r.vendor_count),
+      experienceCount: Number(r.experience_count),
+      bookingCount: Number(r.booking_count),
+      totalRevenue: Math.floor(Number(r.total_revenue ?? 0)),
+      disputedBookings: Number(r.disputed_bookings),
+      openTickets: Number(r.open_tickets),
+    }
+  })
+}
+
+export interface AdminBookingDetailFixture {
+  id: string
+  state: string
+  grossRupees: number
+  commissionRate: number
+  gstRateOnCommission: number
+  tdsRupees: number
+  vendorPayoutRupees: number
+  customerName: string | null
+  vendorBusinessName: string
+  experienceTitle: string
+}
+
+/**
+ * Fetch the full commission-breakdown + parties for one booking, computing the
+ * expected estimated vendor payout exactly as the booking-detail page does
+ * (floor of gross, commission, GST-on-commission, TDS). The #29 booking-detail
+ * E2E asserts the rendered figures match these DB-derived values.
+ */
+export async function getBookingDetailFixture(
+  bookingId: string,
+): Promise<AdminBookingDetailFixture | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        id: string
+        state: string
+        gross_total_snapshot: string
+        commission_rate_snapshot: string
+        gst_rate_on_commission_snapshot: string
+        tds_amount_snapshot: string
+        customer_name: string | null
+        business_name: string
+        title: string
+      }[]
+    >`
+      SELECT b.id, b.state,
+             b.gross_total_snapshot,
+             b.commission_rate_snapshot,
+             b.gst_rate_on_commission_snapshot,
+             b.tds_amount_snapshot,
+             u.name AS customer_name,
+             vp.business_name,
+             e.title
+      FROM bookings b
+      JOIN experiences e ON e.id = b.experience_id
+      JOIN users u ON u.id = b.customer_user_id
+      JOIN vendor_profiles vp ON vp.user_id = e.vendor_user_id
+      WHERE b.id = ${bookingId}
+      LIMIT 1
+    `
+    const r = rows[0]
+    if (!r) return null
+
+    const grossRupees = Math.floor(Number(r.gross_total_snapshot))
+    const commissionRate = Number(r.commission_rate_snapshot)
+    const gstRateOnCommission = Number(r.gst_rate_on_commission_snapshot)
+    const tdsRupees = Math.floor(Number(r.tds_amount_snapshot))
+    const commissionAmount = Math.floor(grossRupees * (commissionRate / 100))
+    const gstOnCommission = Math.floor(commissionAmount * (gstRateOnCommission / 100))
+    const vendorPayoutRupees = grossRupees - commissionAmount - gstOnCommission - tdsRupees
+
+    return {
+      id: r.id,
+      state: r.state,
+      grossRupees,
+      commissionRate,
+      gstRateOnCommission,
+      tdsRupees,
+      vendorPayoutRupees,
+      customerName: r.customer_name,
+      vendorBusinessName: r.business_name,
+      experienceTitle: r.title,
+    }
+  })
+}
+
+export interface AdminBookingListRow {
+  id: string
+  state: string
+  grossRupees: number
+}
+
+/**
+ * Fetch a few representative bookings (one per distinct state) so the #29
+ * bookings-list E2E can assert specific seeded bookings render with the right
+ * state. Returns the most-recently-confirmed booking for each state.
+ */
+export async function getBookingsByDistinctState(): Promise<AdminBookingListRow[]> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { id: string; state: string; gross_total_snapshot: string }[]
+    >`
+      SELECT DISTINCT ON (state) id, state, gross_total_snapshot
+      FROM bookings
+      ORDER BY state, confirmed_at DESC NULLS LAST, created_at DESC
+    `
+    return rows.map((r) => ({
+      id: r.id,
+      state: r.state,
+      grossRupees: Math.floor(Number(r.gross_total_snapshot)),
+    }))
+  })
+}

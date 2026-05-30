@@ -118,7 +118,7 @@ export default async function TicketDetailPage({ params }: TicketDetailPageProps
             </div>
             <div>
               <dt className="text-muted-foreground">Assigned to</dt>
-              <dd className="font-medium">
+              <dd className="font-medium" data-testid="ticket-assignee">
                 {ticket.assignedToAdminId ?? 'Unassigned'}
               </dd>
             </div>

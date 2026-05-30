@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -20,6 +20,7 @@ import {
   type TicketListFilters,
 } from '@/lib/admin/support-ticket-actions'
 
+import { TicketCreateForm } from './ticket-create-form'
 import { TicketFilters } from './ticket-filters'
 
 // ── Variant maps ───────────────────────────────────────────────────
@@ -79,6 +80,15 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
         </p>
       </div>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Create Ticket</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TicketCreateForm />
+        </CardContent>
+      </Card>
+
       <TicketFilters currentFilters={filters} />
 
       <Card>
@@ -104,7 +114,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                 </TableRow>
               ) : (
                 tickets.map((t) => (
-                  <TableRow key={t.id}>
+                  <TableRow key={t.id} data-ticket-id={t.id}>
                     <TableCell className="font-medium max-w-[250px] truncate">
                       <Link
                         href={`/admin/support/${t.id}`}

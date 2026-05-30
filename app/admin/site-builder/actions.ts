@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache'
 import { db as prodDb } from '@/db/client'
 import { siteContent, type SiteSection } from '@/db/schema/site-content'
 import { auth } from '@/lib/auth'
+import { hasAdminPermission } from '@/lib/auth/permissions'
 import { writeAuditLog } from '@/lib/audit/write'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
@@ -136,6 +137,9 @@ export async function saveSection(
 ): Promise<SiteBuilderResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'site_builder'))) {
+    return { ok: false, error: 'You do not have permission to edit site content.' }
+  }
 
   const result = await executeSaveSection(prodDb, session.user.id, input)
 

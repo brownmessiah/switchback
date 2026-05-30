@@ -12,7 +12,7 @@ import { subAdminInvites } from '@/db/schema/sub-admin-invites'
 import { users } from '@/db/schema/users'
 import { auth } from '@/lib/auth'
 import { writeAuditLog } from '@/lib/audit/write'
-import { ADMIN_PERMISSIONS, type AdminPermission } from '@/lib/auth/permissions'
+import { ADMIN_PERMISSIONS, hasAdminPermission, type AdminPermission } from '@/lib/auth/permissions'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
 // ── Result types ────────────────────────────────────────────────────
@@ -249,6 +249,9 @@ export async function inviteSubAdmin(
 ): Promise<SubAdminActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'sub_admins'))) {
+    return { ok: false, error: 'You do not have permission to manage sub-admins.' }
+  }
 
   const raw = Object.fromEntries(formData.entries())
   const permissionKeys = Object.keys(raw).filter((k) => k.startsWith('perm_'))
@@ -272,6 +275,9 @@ export async function editSubAdminPermissions(
 ): Promise<SubAdminActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'sub_admins'))) {
+    return { ok: false, error: 'You do not have permission to manage sub-admins.' }
+  }
 
   const raw = Object.fromEntries(formData.entries())
   const permissionKeys = Object.keys(raw).filter((k) => k.startsWith('perm_'))
@@ -295,6 +301,9 @@ export async function revokeSubAdmin(
 ): Promise<SubAdminActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'sub_admins'))) {
+    return { ok: false, error: 'You do not have permission to manage sub-admins.' }
+  }
 
   const result = await executeRevokeSubAdmin(prodDb, session.user.id, userId)
 

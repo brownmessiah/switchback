@@ -73,9 +73,18 @@ import {
   getMediaAssetByUrl,
   getSiteContentRow,
   getLatestSiteContentAudit,
+  // #28 admin governance (sub-admin CRUD + permission gate + audit)
+  getAdminPermissions,
+  adminProfileExists,
+  deleteAdminProfileByUserId,
+  countSubAdminAuditRows,
+  getLatestSubAdminAudit,
+  setVendorKycTierByUserId,
+  insertAuditLogRow,
 } from '../../helpers/db-assertions'
 import { getIndexedExperience } from '../../helpers/meili-assertions'
 import { storageFileExists } from '../../helpers/storage-assertions'
+import path from 'node:path'
 
 // Seed user IDs — must match db/seed.ts.
 const SEED_ADMIN_ID = 'u_seed_admin'
@@ -124,6 +133,14 @@ const SEED_DISPUTE_CUSTOMER_ID = 'u_seed_customer_biz'
 // admin test asserts a bir-billing closure, so the closure this test creates +
 // deletes via the UI never races another admin assertion.
 const DISPUTE_EXPERIENCE_SLUG = 'bir-billing-paragliding-full-day'
+
+// #28 admin governance fixtures — must match db/seed.ts.
+// A Sub-admin whose permissions are a STRICT SUBSET (vendors/audit/analytics;
+// NOT payouts/refunds/sub_admins/reports) per ADR-0006, plus a dedicated
+// phone-tier Vendor the Sub-admin can KYC-approve (permitted action).
+const SEED_SUBADMIN_ID = 'u_seed_subadmin'
+const SEED_SUBADMIN_VENDOR_ID = 'u_seed_subadmin_vendor'
+const SUBADMIN_STORAGE = path.resolve(__dirname, '../../.auth/subadmin-storage.json')
 
 // ---------------------------------------------------------------------------
 // 1. Dashboard: loads with stat cards
@@ -2578,5 +2595,320 @@ test.describe('Admin site-builder save/load (#27)', () => {
     // ── Assert: the persisted value re-loads into the form on reload ─────
     await page.reload()
     await expect(page.locator('#hero-title')).toHaveValue(heroTitle2, { timeout: 15_000 })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 28. Functional: admin governance — sub-admin CRUD + SERVER-SIDE permission
+//     gate + audit log + analytics/CSV (#28, ADR-0006, PRD US-52)
+//
+// A Sub-admin is an Admin whose `permissions` is a STRICT SUBSET of full-admin
+// powers — NOT a separate role. Every privileged Server Action must be
+// permission-gated SERVER-SIDE: invoking an action outside the Sub-admin's
+// subset is denied by the action itself (not merely hidden in the UI).
+//
+//   - INVITE/EDIT/REVOKE  (driven as the full Admin via the UI): an invite
+//     creates an admin_profiles row with the chosen subset; edit updates it;
+//     revoke removes the row entirely. Each writes one audit row.
+//   - PERMISSION GATE  (the security-critical case, driven AS the seeded
+//     Sub-admin in a dedicated browser context): approve a Payout — which the
+//     Sub-admin LACKS — and assert the action is DENIED and the payout_state
+//     did NOT change. Then a PERMITTED action (KYC-approve a Vendor, which the
+//     Sub-admin holds) SUCCEEDS. Also asserts the CSV route (reports gate)
+//     returns 403 for the Sub-admin who lacks `reports`.
+//   - AUDIT LOG: the audit view lists privileged actions.
+//   - ANALYTICS/CSV: analytics renders; the CSV export returns a valid CSV.
+// ---------------------------------------------------------------------------
+test.describe('Admin sub-admin CRUD + audit (#28)', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  // A dedicated, isolated seed User invited → edited → revoked across the three
+  // serial tests. No other project references it, so the CRUD flow never races
+  // a parallel spec and re-runs start from a known "not an admin" state.
+  const INVITEE_EMAIL = 'invite-target@seed.outvers.dev'
+  const INVITEE_USER_ID = 'u_seed_invite_target'
+
+  test.afterAll(async () => {
+    // Clean up so re-runs against a reused DB start from a known state.
+    await deleteAdminProfileByUserId(INVITEE_USER_ID)
+  })
+
+  test('invite: grants a Sub-admin with a restricted permission subset + audit row', async ({
+    page,
+  }) => {
+    // Pre-state: the invitee must NOT already be an Admin.
+    await deleteAdminProfileByUserId(INVITEE_USER_ID)
+    expect(await adminProfileExists(INVITEE_USER_ID)).toBe(false)
+
+    await page.goto('/admin/sub-admins')
+    await expect(page.locator('h1')).toContainText('Sub-Admin Management')
+
+    // Fill the invite form with a RESTRICTED subset: vendors + reviews only.
+    await page.locator('#invite-email').fill(INVITEE_EMAIL)
+    await page.locator('input[name="perm_vendors"]').check()
+    await page.locator('input[name="perm_reviews"]').check()
+    await page.getByRole('button', { name: 'Grant Admin Access' }).click()
+
+    await expect(page.getByText('Sub-admin access granted.')).toBeVisible({ timeout: 15_000 })
+
+    // ── Assert: admin_profiles row created with EXACTLY the chosen subset ──
+    await expect
+      .poll(async () => await getAdminPermissions(INVITEE_USER_ID), { timeout: 15_000 })
+      .toEqual(['vendors', 'reviews'])
+
+    // ── Assert: it is a strict subset (NOT a full admin) ──────────────────
+    const perms = await getAdminPermissions(INVITEE_USER_ID)
+    expect(perms).not.toContain('*')
+    expect(perms).not.toContain('payouts')
+
+    // ── Assert: a create audit row was written with the admin actor ───────
+    expect(await countSubAdminAuditRows('admin.sub_admin.create', INVITEE_USER_ID)).toBe(1)
+    const audit = await getLatestSubAdminAudit('admin.sub_admin.create', INVITEE_USER_ID)
+    expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+    expect(audit!.payload).toMatchObject({ permissions: ['vendors', 'reviews'] })
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/admin-subadmin-invited.png',
+      fullPage: true,
+    })
+  })
+
+  test('edit-permissions: updates the Sub-admin subset + audit row', async ({ page }) => {
+    // Precondition from the invite test.
+    expect(await getAdminPermissions(INVITEE_USER_ID)).toEqual(['vendors', 'reviews'])
+
+    await page.goto('/admin/sub-admins')
+    const row = page.locator('tr', { hasText: INVITEE_EMAIL })
+    await expect(row).toBeVisible()
+    await row.getByRole('button', { name: 'Edit' }).click()
+
+    const dialog = page.locator('[data-slot="dialog-content"]')
+    await expect(dialog.getByRole('heading', { name: 'Edit Permissions' })).toBeVisible()
+
+    // Drop `reviews`, add `audit` → new subset vendors + audit.
+    await dialog.locator('input[name="perm_reviews"]').uncheck()
+    await dialog.locator('input[name="perm_audit"]').check()
+    await dialog.getByRole('button', { name: 'Save Permissions' }).click()
+
+    // ── Assert: the subset updated to exactly vendors + audit ─────────────
+    await expect
+      .poll(async () => (await getAdminPermissions(INVITEE_USER_ID))?.slice().sort(), {
+        timeout: 15_000,
+      })
+      .toEqual(['audit', 'vendors'])
+
+    // ── Assert: an edit audit row records the before/after permissions ────
+    expect(
+      await countSubAdminAuditRows('admin.sub_admin.edit_permissions', INVITEE_USER_ID),
+    ).toBe(1)
+    const audit = await getLatestSubAdminAudit(
+      'admin.sub_admin.edit_permissions',
+      INVITEE_USER_ID,
+    )
+    expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+    expect(audit!.payload).toMatchObject({
+      previousPermissions: ['vendors', 'reviews'],
+      newPermissions: ['vendors', 'audit'],
+    })
+  })
+
+  test('revoke: removes admin access entirely + audit row', async ({ page }) => {
+    // Precondition: the invitee is still an Admin.
+    expect(await adminProfileExists(INVITEE_USER_ID)).toBe(true)
+
+    await page.goto('/admin/sub-admins')
+    const row = page.locator('tr', { hasText: INVITEE_EMAIL })
+    await expect(row).toBeVisible()
+
+    // Revoke uses a native confirm() — accept it.
+    page.once('dialog', (d) => d.accept())
+    await row.getByRole('button', { name: 'Revoke' }).click()
+
+    // ── Assert: the admin_profiles row is gone (access removed) ───────────
+    await expect
+      .poll(async () => await adminProfileExists(INVITEE_USER_ID), { timeout: 15_000 })
+      .toBe(false)
+
+    // ── Assert: a revoke audit row was written (poll for read-after-write) ─
+    await expect
+      .poll(async () => countSubAdminAuditRows('admin.sub_admin.revoke', INVITEE_USER_ID), {
+        timeout: 15_000,
+      })
+      .toBe(1)
+    const audit = await getLatestSubAdminAudit('admin.sub_admin.revoke', INVITEE_USER_ID)
+    expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 28b. SERVER-SIDE permission gate (security-critical, ADR-0006 / PRD US-52)
+//
+// Driven AS the seeded Sub-admin (vendors/audit/analytics; NOT payouts/refunds/
+// reports) in a DEDICATED browser context, so the DevTools fixture watching the
+// full-admin `page` is bypassed (the gate denial + 403 happen in the sub-admin
+// context, not on `page`).
+// ---------------------------------------------------------------------------
+test.describe('Admin permission gate — server-side enforcement (#28)', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  test('BLOCKED: a Sub-admin lacking `payouts` cannot approve a Payout (server-side)', async ({
+    browser,
+  }) => {
+    // A pending Payout from the dedicated payout-queue Vendor (#24 fixture).
+    const pending = await getPendingPayoutBookingsForVendor(SEED_PAYOUT_QUEUE_VENDOR_ID)
+    const target = pending.find((p) => p.payoutState === 'pending')
+    expect(target, 'seed must leave a pending Payout for the gate test').toBeTruthy()
+    const bookingId = target!.bookingId
+
+    const stateBefore = (await getBookingPayoutState(bookingId))?.payoutState
+    expect(stateBefore).toBe('pending')
+
+    // Open a context authenticated as the Sub-admin (strict subset, no payouts).
+    const subCtx = await browser.newContext({ storageState: SUBADMIN_STORAGE })
+    try {
+      const subPage = await subCtx.newPage()
+      // The payouts queue is viewable (no page-level read gate today), so the
+      // Approve button renders — the SERVER-SIDE action gate is what must deny.
+      await subPage.goto('/admin/payouts')
+      await expect(subPage.locator('h1')).toContainText('Payout queue')
+
+      const row = subPage.locator(`tr[data-booking-id="${bookingId}"]`)
+      await expect(row).toBeVisible()
+      await row.getByRole('button', { name: 'Approve', exact: true }).click()
+
+      // The action returns { ok: false } → the row never flips to "Approved".
+      // Give the action time to run, then assert the row is still actionable.
+      await expect(row.getByRole('button', { name: 'Approve', exact: true })).toBeVisible({
+        timeout: 10_000,
+      })
+      await expect(row.getByText('Approved', { exact: true })).toHaveCount(0)
+    } finally {
+      await subCtx.close()
+    }
+
+    // ── Assert (the load-bearing one): the side effect did NOT happen. The
+    //    payout_state is unchanged AND no approve audit row was written.
+    expect((await getBookingPayoutState(bookingId))?.payoutState).toBe('pending')
+    expect(await countPayoutAuditRows('admin.payout.approve', bookingId)).toBe(0)
+  })
+
+  test('BLOCKED: the CSV report route returns 403 for a Sub-admin lacking `reports`', async ({
+    browser,
+  }) => {
+    const subCtx = await browser.newContext({ storageState: SUBADMIN_STORAGE })
+    try {
+      const res = await subCtx.request.get('/admin/reports/csv?entity=users')
+      // Server-side route gate denies with 403 (not 200, not a redirect to login).
+      expect(res.status()).toBe(403)
+    } finally {
+      await subCtx.close()
+    }
+  })
+
+  test('PERMITTED: a Sub-admin holding `vendors` CAN KYC-approve a Vendor + audit row', async ({
+    browser,
+  }) => {
+    // Reset the dedicated fixture Vendor to phone tier so the approve promotes it.
+    await setVendorKycTierByUserId(SEED_SUBADMIN_VENDOR_ID, 'phone')
+    const before = await getAdminVendorState(SEED_SUBADMIN_VENDOR_ID)
+    expect(before!.kycTier).toBe('phone')
+
+    const subCtx = await browser.newContext({ storageState: SUBADMIN_STORAGE })
+    try {
+      const subPage = await subCtx.newPage()
+      await subPage.goto(`/admin/vendors/${SEED_SUBADMIN_VENDOR_ID}`)
+      await expect(subPage.getByText('KYC Tier Management')).toBeVisible()
+
+      // Approve KYC (the permitted action — Sub-admin holds `vendors`).
+      await subPage.locator('#approve-notes').fill(`E2E #28 sub-admin KYC approve ${Date.now()}`)
+      await subPage.getByRole('button', { name: /Approve → identity/ }).click()
+
+      // Inline success on a persisted promotion — proves the gate ALLOWED it.
+      await expect(subPage.getByText('KYC tier promoted successfully.')).toBeVisible({
+        timeout: 15_000,
+      })
+
+      // ── Assert: tier PROMOTED phone → identity (the action succeeded) ────
+      await expect
+        .poll(async () => (await getAdminVendorState(SEED_SUBADMIN_VENDOR_ID))?.kycTier, {
+          timeout: 15_000,
+        })
+        .toBe('identity')
+    } finally {
+      await subCtx.close()
+    }
+
+    // ── Assert: a KYC audit row records the SUB-ADMIN as the actor ────────
+    const audit = await getLatestAdminVendorAudit(
+      'admin.kyc.approve',
+      SEED_SUBADMIN_VENDOR_ID,
+    )
+    expect(audit, 'a KYC approve audit row must exist').not.toBeNull()
+    expect(audit!.actorUserId).toBe(SEED_SUBADMIN_ID)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 28c. Audit log lists privileged actions + analytics/CSV (#28)
+// ---------------------------------------------------------------------------
+test.describe('Admin audit log lists privileged actions (#28)', () => {
+  test('the audit view lists a staged privileged action', async ({ page }) => {
+    // The seed writes no audit rows and specs run in parallel, so stage a
+    // deterministic privileged-action row this test can assert the view lists.
+    const stamp = Date.now()
+    const action = `admin.test.audit_view_${stamp}`
+    const entityId = `audit-fixture-${stamp}`
+    await insertAuditLogRow({
+      actorUserId: SEED_ADMIN_ID,
+      action,
+      entityType: 'booking',
+      entityId,
+      payload: { note: 'E2E #28 audit-view fixture' },
+    })
+
+    // Filter the audit view to the staged action so the assertion is immune to
+    // pagination / interleaving with other parallel specs' audit rows.
+    const response = await page.goto(`/admin/audit?action=${encodeURIComponent(action)}`)
+    expect(response?.status()).toBe(200)
+    await expect(page.locator('h1')).toContainText('Audit Logs')
+
+    // The staged privileged action is listed (not the empty-state placeholder).
+    // Scope to the table body so we match the rendered audit row, not the
+    // filter <select>'s hidden <option> with the same text.
+    await expect(page.getByText('No audit logs found.')).toHaveCount(0)
+    const actionCell = page.locator('tbody').getByText(action, { exact: true })
+    await expect(actionCell.first()).toBeVisible()
+    const dataRows = page.locator('tbody tr')
+    expect(await dataRows.count()).toBeGreaterThan(0)
+  })
+})
+
+test.describe('Admin CSV report export produces a valid CSV (#28)', () => {
+  test('the users CSV export returns a well-formed CSV with header + rows', async ({ page }) => {
+    // Full admin holds `reports` → the route returns 200 + a CSV body.
+    const res = await page.request.get('/admin/reports/csv?entity=users')
+    expect(res.status()).toBe(200)
+    expect(res.headers()['content-type']).toContain('text/csv')
+
+    const body = await res.text()
+    const lines = body.trim().split('\n')
+    // Header row matches the route's declared users columns.
+    expect(lines[0].trim()).toBe('id,name,email,phoneNumber,emailVerified,createdAt')
+    // At least one data row (the seed has multiple users).
+    expect(lines.length).toBeGreaterThan(1)
+    // Each data row is non-empty and (since seed user fields contain no commas)
+    // splits into exactly the header column count — a well-formed CSV.
+    const headerCols = lines[0].split(',').length
+    for (const line of lines.slice(1)) {
+      expect(line.trim().length).toBeGreaterThan(0)
+      expect(line.split(',').length).toBe(headerCols)
+    }
+    // The seed admin's email appears in the export (real data, not a stub).
+    expect(body).toContain('admin@seed.outvers.dev')
+  })
+
+  test('the CSV route rejects an unknown entity with 400', async ({ page }) => {
+    const res = await page.request.get('/admin/reports/csv?entity=secrets')
+    expect(res.status()).toBe(400)
   })
 })

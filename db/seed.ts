@@ -285,6 +285,28 @@ async function seed(): Promise<void> {
     .insert(users)
     .values([
       { id: 'u_seed_admin', email: 'admin@seed.outvers.dev', name: 'Seed Admin' },
+      // #28 Sub-admin governance fixture — an Admin whose permissions are a
+      // STRICT SUBSET (ADR-0006). Holds vendors/audit/analytics but NOT
+      // payouts/refunds/sub_admins/reports. Drives the server-side permission
+      // gate E2E: a gated action outside this subset must be DENIED.
+      { id: 'u_seed_subadmin', email: 'subadmin@seed.outvers.dev', name: 'Seed Sub-Admin' },
+      // #28 Dedicated invite target for the sub-admin CRUD E2E (invite → edit
+      // → revoke). A plain User with NO vendor/admin profile and referenced by
+      // no other project, so the CRUD flow is fully isolated from parallel
+      // specs and re-runs start from a known "not an admin" state.
+      {
+        id: 'u_seed_invite_target',
+        email: 'invite-target@seed.outvers.dev',
+        name: 'Sub-Admin Invite Target',
+      },
+      // #28 Dedicated phone-tier Vendor the Sub-admin (who HOLDS the 'vendors'
+      // permission) can KYC-approve, proving a permitted action succeeds.
+      // Isolated from #22's u_seed_v_phone so neither test disturbs the other.
+      {
+        id: 'u_seed_subadmin_vendor',
+        email: 'subadmin-vendor@seed.outvers.dev',
+        name: 'Sub-Admin KYC Fixture Vendor',
+      },
       { id: 'u_seed_customer', email: 'customer@seed.outvers.dev', name: 'Seed Customer' },
       {
         id: BUSINESS_VENDOR_CUSTOMER.userId,
@@ -322,6 +344,21 @@ async function seed(): Promise<void> {
     .values({ userId: 'u_seed_admin', permissions: ['*'] })
     .onConflictDoNothing()
 
+  // ----- #28 SUB-ADMIN (strict-subset permissions per ADR-0006) -----
+  // Holds a LIMITED subset: can manage vendors + view audit/analytics, but
+  // CANNOT process payouts/refunds, manage sub-admins, or run reports. The
+  // governance E2E (#28) asserts a gated action OUTSIDE this subset (e.g.
+  // approve payout) is denied server-side, and a permitted action (vendor KYC
+  // approve) succeeds.
+  await db
+    .insert(adminProfiles)
+    .values({
+      userId: 'u_seed_subadmin',
+      permissions: ['vendors', 'audit', 'analytics'],
+      invitedByUserId: 'u_seed_admin',
+    })
+    .onConflictDoNothing()
+
   // ----- CUSTOMERS -----
   await db
     .insert(customerProfiles)
@@ -348,6 +385,21 @@ async function seed(): Promise<void> {
       })
       .onConflictDoNothing()
   }
+
+  // ----- #28 SUB-ADMIN KYC FIXTURE VENDOR — phone-tier, pending promotion ---
+  // Phone-tier so the Sub-admin's permitted KYC approve promotes it to
+  // identity. Isolated from #22's u_seed_v_phone (which the full-admin KYC
+  // suite promotes) so the two never collide.
+  await db
+    .insert(vendorProfiles)
+    .values({
+      userId: 'u_seed_subadmin_vendor',
+      businessName: 'Sub-Admin KYC Fixture Vendor',
+      slug: 'subadmin-kyc-fixture-vendor',
+      kycTier: 'phone',
+      pan: null,
+    })
+    .onConflictDoNothing()
 
   // ----- #24 PAYOUT-QUEUE VENDOR — dedicated Identity-verified Vendor -----
   // Identity-tier with manual_payouts_remaining = 3 (the schema default; set

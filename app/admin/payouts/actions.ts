@@ -10,6 +10,7 @@ import { bookings } from '@/db/schema/bookings'
 import { experiences } from '@/db/schema/experiences'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { auth } from '@/lib/auth'
+import { hasAdminPermission } from '@/lib/auth/permissions'
 import { writeAuditLog } from '@/lib/audit/write'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
@@ -289,6 +290,9 @@ export async function approvePayoutAction(
 ): Promise<PayoutActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'payouts'))) {
+    return { ok: false, error: 'You do not have permission to approve payouts.' }
+  }
 
   const result = await executeApprovePayout(prodDb, session.user.id, {
     bookingId,
@@ -304,6 +308,9 @@ export async function holdPayoutAction(
 ): Promise<PayoutActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'payouts'))) {
+    return { ok: false, error: 'You do not have permission to hold payouts.' }
+  }
 
   const result = await executeHoldPayout(prodDb, session.user.id, {
     bookingId,
@@ -320,6 +327,9 @@ export async function rejectPayoutAction(
 ): Promise<PayoutActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'payouts'))) {
+    return { ok: false, error: 'You do not have permission to reject payouts.' }
+  }
 
   const result = await executeRejectPayout(prodDb, session.user.id, {
     bookingId,

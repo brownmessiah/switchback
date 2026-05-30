@@ -9,6 +9,7 @@ import { db as prodDb } from '@/db/client'
 import { experiences } from '@/db/schema/experiences'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { auth } from '@/lib/auth'
+import { hasAdminPermission } from '@/lib/auth/permissions'
 import { writeAuditLog } from '@/lib/audit/write'
 import { assertExperienceWithinTier } from '@/lib/kyc/enforce-tier-caps'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
@@ -319,6 +320,9 @@ export async function approveExperienceAction(
 ): Promise<ExperienceModerationResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'experiences'))) {
+    return { ok: false, error: 'You do not have permission to moderate experiences.' }
+  }
 
   const result = await executeApproveExperience(prodDb, session.user.id, {
     experienceId,
@@ -334,6 +338,9 @@ export async function rejectExperienceAction(
 ): Promise<ExperienceModerationResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'experiences'))) {
+    return { ok: false, error: 'You do not have permission to moderate experiences.' }
+  }
 
   const result = await executeRejectExperience(prodDb, session.user.id, {
     experienceId,
@@ -349,6 +356,9 @@ export async function pauseExperienceAction(
 ): Promise<ExperienceModerationResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'experiences'))) {
+    return { ok: false, error: 'You do not have permission to moderate experiences.' }
+  }
 
   const result = await executePauseExperience(prodDb, session.user.id, {
     experienceId,
@@ -363,6 +373,9 @@ export async function archiveExperienceAction(
 ): Promise<ExperienceModerationResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'experiences'))) {
+    return { ok: false, error: 'You do not have permission to moderate experiences.' }
+  }
 
   const result = await executeArchiveExperience(prodDb, session.user.id, {
     experienceId,

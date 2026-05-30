@@ -10,6 +10,7 @@ import { bookings } from '@/db/schema/bookings'
 import { refundRequests } from '@/db/schema/refund-requests'
 import { users } from '@/db/schema/users'
 import { auth } from '@/lib/auth'
+import { hasAdminPermission } from '@/lib/auth/permissions'
 import { writeAuditLog } from '@/lib/audit/write'
 import { creditRefundBalance } from '@/lib/payments/wallet'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
@@ -269,6 +270,9 @@ export async function approveRefundAction(
 ): Promise<RefundActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'refunds'))) {
+    return { ok: false, error: 'You do not have permission to process refunds.' }
+  }
 
   const result = await executeApproveRefund(prodDb, session.user.id, {
     refundRequestId,
@@ -285,6 +289,9 @@ export async function rejectRefundAction(
 ): Promise<RefundActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'refunds'))) {
+    return { ok: false, error: 'You do not have permission to process refunds.' }
+  }
 
   const result = await executeRejectRefund(prodDb, session.user.id, {
     refundRequestId,

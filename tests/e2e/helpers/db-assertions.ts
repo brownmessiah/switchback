@@ -2560,3 +2560,121 @@ export async function getLatestSiteContentAudit(
     }
   })
 }
+
+// ---------------------------------------------------------------------------
+// #28 Admin governance assertions (sub-admin CRUD + permission gate + audit)
+// ---------------------------------------------------------------------------
+
+/**
+ * Read an admin's permissions array, or `null` if no admin_profiles row exists
+ * (i.e. the user is not an Admin — used to assert revoke removed access).
+ */
+export async function getAdminPermissions(
+  userId: string,
+): Promise<string[] | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ permissions: string[] }[]>`
+      SELECT permissions
+      FROM admin_profiles
+      WHERE user_id = ${userId}
+      LIMIT 1
+    `
+    return rows[0]?.permissions ?? null
+  })
+}
+
+/** True if the user currently holds an admin_profiles row (any permissions). */
+export async function adminProfileExists(userId: string): Promise<boolean> {
+  return (await getAdminPermissions(userId)) !== null
+}
+
+/** Delete an admin_profiles row + related sub_admin_invites by user id (test cleanup). */
+export async function deleteAdminProfileByUserId(userId: string): Promise<void> {
+  await withSql(async (sql) => {
+    const rows = await sql<{ email: string | null }[]>`
+      SELECT email FROM users WHERE id = ${userId} LIMIT 1
+    `
+    await sql`DELETE FROM admin_profiles WHERE user_id = ${userId}`
+    const email = rows[0]?.email
+    if (email) {
+      await sql`DELETE FROM sub_admin_invites WHERE email = ${email}`
+    }
+  })
+}
+
+/** Count audit_logs rows for a sub-admin governance action on a target entity. */
+export async function countSubAdminAuditRows(
+  action: string,
+  entityId: string,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT COUNT(*) AS n
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_id = ${entityId}
+    `
+    return Number(rows[0]?.n ?? 0)
+  })
+}
+
+/** Fetch the most-recent sub-admin governance audit (by action + entity id). */
+export async function getLatestSubAdminAudit(
+  action: string,
+  entityId: string,
+): Promise<{ actorUserId: string | null; payload: Record<string, unknown> } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { actor_user_id: string | null; payload: Record<string, unknown> }[]
+    >`
+      SELECT actor_user_id, payload
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_id = ${entityId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return { actorUserId: rows[0].actor_user_id, payload: rows[0].payload }
+  })
+}
+
+/** Restore a Vendor's KYC tier directly (test setup / restore for the gate fixture). */
+export async function setVendorKycTierByUserId(
+  vendorUserId: string,
+  kycTier: string,
+): Promise<void> {
+  await withSql(async (sql) => {
+    await sql`
+      UPDATE vendor_profiles SET kyc_tier = ${kycTier}, updated_at = NOW()
+      WHERE user_id = ${vendorUserId}
+    `
+  })
+}
+
+/**
+ * Insert a single audit_logs row directly (test fixture for the audit-view
+ * assertion). The seed writes no audit rows, so the audit-log E2E stages a
+ * deterministic privileged-action row it can then assert the view lists.
+ */
+export async function insertAuditLogRow(input: {
+  actorUserId: string
+  action: string
+  entityType: string
+  entityId: string
+  payload?: Record<string, unknown>
+}): Promise<void> {
+  await withSql(async (sql) => {
+    await sql`
+      INSERT INTO audit_logs (actor_user_id, action, entity_type, entity_id, payload, created_at)
+      VALUES (
+        ${input.actorUserId},
+        ${input.action},
+        ${input.entityType},
+        ${input.entityId},
+        ${JSON.stringify(input.payload ?? {})}::jsonb,
+        NOW()
+      )
+    `
+  })
+}

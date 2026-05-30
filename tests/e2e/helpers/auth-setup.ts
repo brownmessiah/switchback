@@ -34,12 +34,17 @@ type Role =
   | 'customer'
   | 'vendor'
   | 'admin'
+  | 'subadmin'
   | 'vendor-onboarding'
   | 'identity-vendor'
 
 /** Seed user IDs — must match db/seed.ts */
 const SEED_USERS: Record<Role, string> = {
   admin: 'u_seed_admin',
+  // #28 Sub-admin governance: an Admin with a STRICT permission subset
+  // (vendors/audit/analytics; NOT payouts/refunds/sub_admins/reports).
+  // Drives the server-side permission-gate E2E (ADR-0006).
+  subadmin: 'u_seed_subadmin',
   customer: 'u_seed_customer',
   vendor: 'u_seed_v_business',
   // A signed-up vendor with NO vendor_profile yet — drives the onboarding

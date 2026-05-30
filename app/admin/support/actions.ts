@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 
 import { db as prodDb } from '@/db/client'
 import { auth } from '@/lib/auth'
+import { hasAdminPermission } from '@/lib/auth/permissions'
 import {
   executeAddMessage,
   executeAssignTicket,
@@ -21,6 +22,9 @@ export async function createTicketAction(
 ): Promise<TicketActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'support'))) {
+    return { ok: false, error: 'You do not have permission to manage support tickets.' }
+  }
 
   const result = await executeCreateTicket(prodDb, {
     createdByUserId: session.user.id,
@@ -40,6 +44,9 @@ export async function changeTicketStatusAction(
 ): Promise<TicketActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'support'))) {
+    return { ok: false, error: 'You do not have permission to manage support tickets.' }
+  }
 
   const result = await executeChangeTicketStatus(
     prodDb,
@@ -61,6 +68,9 @@ export async function assignTicketAction(
 ): Promise<TicketActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'support'))) {
+    return { ok: false, error: 'You do not have permission to manage support tickets.' }
+  }
 
   const result = await executeAssignTicket(
     prodDb,
@@ -82,6 +92,9 @@ export async function addMessageAction(
 ): Promise<TicketActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'support'))) {
+    return { ok: false, error: 'You do not have permission to manage support tickets.' }
+  }
 
   const result = await executeAddMessage(
     prodDb,

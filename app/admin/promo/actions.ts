@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { db as prodDb } from '@/db/client'
 import { promoCodes } from '@/db/schema/promo-codes'
 import { auth } from '@/lib/auth'
+import { hasAdminPermission } from '@/lib/auth/permissions'
 import { writeAuditLog } from '@/lib/audit/write'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
@@ -88,6 +89,10 @@ export async function createPromoCode(
 
   const db = injectedDb ?? prodDb
 
+  if (!(await hasAdminPermission(db, session.user.id, 'commission'))) {
+    return { ok: false, error: 'You do not have permission to manage promo codes.' }
+  }
+
   try {
     await db.insert(promoCodes).values({
       code: parsed.data.code,
@@ -127,6 +132,9 @@ export async function togglePromoCode(
 ): Promise<PromoActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'commission'))) {
+    return { ok: false, error: 'You do not have permission to manage promo codes.' }
+  }
 
   await prodDb
     .update(promoCodes)
@@ -148,6 +156,9 @@ export async function togglePromoCode(
 export async function deletePromoCode(id: string): Promise<PromoActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'commission'))) {
+    return { ok: false, error: 'You do not have permission to manage promo codes.' }
+  }
 
   // Only allow deleting promos with 0 uses
   const [promo] = await prodDb

@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 
 import { db as prodDb } from '@/db/client'
 import { auth } from '@/lib/auth'
+import { hasAdminPermission } from '@/lib/auth/permissions'
 
 import {
   executeGrantCredit,
@@ -21,6 +22,9 @@ export async function adminGrantCredit(
 ): Promise<GrantCreditResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'commission'))) {
+    return { ok: false, error: 'You do not have permission to grant credits.' }
+  }
 
   const raw = Object.fromEntries(formData.entries())
   const parsed = manualGrantSchema.safeParse(raw)

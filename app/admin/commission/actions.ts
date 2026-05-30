@@ -10,6 +10,7 @@ import { bookings } from '@/db/schema/bookings'
 import { commissionTiers } from '@/db/schema/commission-tiers'
 import { experiences } from '@/db/schema/experiences'
 import { auth } from '@/lib/auth'
+import { hasAdminPermission } from '@/lib/auth/permissions'
 import { writeAuditLog } from '@/lib/audit/write'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
@@ -199,6 +200,9 @@ export async function createCommissionTier(
 ): Promise<CommissionTierActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'commission'))) {
+    return { ok: false, error: 'You do not have permission to manage commission tiers.' }
+  }
 
   const raw = Object.fromEntries(formData.entries())
 
@@ -232,6 +236,9 @@ export async function updateCommissionTier(
 ): Promise<CommissionTierActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'commission'))) {
+    return { ok: false, error: 'You do not have permission to manage commission tiers.' }
+  }
 
   const raw = Object.fromEntries(formData.entries())
 
@@ -257,6 +264,9 @@ export async function deleteCommissionTier(
 ): Promise<CommissionTierActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'commission'))) {
+    return { ok: false, error: 'You do not have permission to manage commission tiers.' }
+  }
 
   const result = await executeDeleteCommissionTier(prodDb, session.user.id, id)
 

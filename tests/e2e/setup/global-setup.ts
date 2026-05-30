@@ -28,3 +28,7 @@ setup('inject vendor session', async () => {
 setup('inject admin session', async () => {
   await injectSession('admin')
 })
+
+setup('inject subadmin session', async () => {
+  await injectSession('subadmin')
+})

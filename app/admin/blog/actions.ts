@@ -9,6 +9,7 @@ import { db as prodDb } from '@/db/client'
 import { blogPosts, BLOG_CATEGORIES, BLOG_STATUSES } from '@/db/schema/blog-posts'
 import { mediaAssets } from '@/db/schema/media-assets'
 import { auth } from '@/lib/auth'
+import { hasAdminPermission } from '@/lib/auth/permissions'
 import { writeAuditLog } from '@/lib/audit/write'
 import { LocalFileAdapter } from '@/lib/storage/local'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
@@ -243,6 +244,9 @@ export async function createBlogPost(
 ): Promise<BlogActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'blog'))) {
+    return { ok: false, error: 'You do not have permission to manage blog posts.' }
+  }
 
   const result = await executeCreateBlogPost(prodDb, session.user.id, input)
 
@@ -257,6 +261,9 @@ export async function updateBlogPost(
 ): Promise<BlogActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'blog'))) {
+    return { ok: false, error: 'You do not have permission to manage blog posts.' }
+  }
 
   const result = await executeUpdateBlogPost(prodDb, session.user.id, input)
 
@@ -271,6 +278,9 @@ export async function deleteBlogPost(
 ): Promise<BlogActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'blog'))) {
+    return { ok: false, error: 'You do not have permission to manage blog posts.' }
+  }
 
   const result = await executeDeleteBlogPost(prodDb, session.user.id, postId)
 
@@ -292,6 +302,9 @@ export async function uploadBlogCoverImage(
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) {
     return { ok: false, error: 'Not authenticated.' }
+  }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'blog'))) {
+    return { ok: false, error: 'You do not have permission to manage blog posts.' }
   }
 
   const file = formData.get('file') as File | null

@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { db as prodDb } from '@/db/client'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { auth } from '@/lib/auth'
+import { hasAdminPermission } from '@/lib/auth/permissions'
 import { writeAuditLog } from '@/lib/audit/write'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
@@ -244,6 +245,9 @@ export async function approveKycAction(
 ): Promise<AdminVendorActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'vendors'))) {
+    return { ok: false, error: 'You do not have permission to manage vendors.' }
+  }
 
   const vendorUserId = formData.get('vendorUserId') as string
   const notes = formData.get('notes') as string
@@ -262,6 +266,9 @@ export async function rejectKycAction(
 ): Promise<AdminVendorActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'vendors'))) {
+    return { ok: false, error: 'You do not have permission to manage vendors.' }
+  }
 
   const vendorUserId = formData.get('vendorUserId') as string
   const reason = formData.get('reason') as string
@@ -280,6 +287,9 @@ export async function updateCommissionRateAction(
 ): Promise<AdminVendorActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'vendors'))) {
+    return { ok: false, error: 'You do not have permission to manage vendors.' }
+  }
 
   const vendorUserId = formData.get('vendorUserId') as string
   const commissionRate = Number(formData.get('commissionRate'))
@@ -298,6 +308,9 @@ export async function toggleSuspendAction(
 ): Promise<AdminVendorActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'vendors'))) {
+    return { ok: false, error: 'You do not have permission to manage vendors.' }
+  }
 
   const vendorUserId = formData.get('vendorUserId') as string
   const notes = formData.get('notes') as string

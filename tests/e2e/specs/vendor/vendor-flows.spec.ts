@@ -2194,4 +2194,35 @@ test.describe('Vendor messages (#20)', () => {
       fullPage: true,
     })
   })
+
+  // ── Variant B (#83/#84): split-view shows BOTH panes on the [id] route ──
+  //     On a wide viewport the helpdesk layout keeps the conversation LIST
+  //     and the THREAD co-present on one screen. The single-pane as-is [id]
+  //     page renders no list pane at all, so this fails RED until the
+  //     two-pane split-view shell ships.
+  test('split-view shows both the list and the thread on the [id] route (wide viewport)', async ({
+    page,
+  }) => {
+    const convo = await getVendorConversationBySubject(
+      SEED_BUSINESS_VENDOR_ID,
+      SEED_CONVERSATION_SUBJECT,
+    )
+    expect(convo, 'seed must provide a business-vendor conversation').not.toBeNull()
+
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.goto(`/vendor/messages/${convo!.id}`)
+
+    // Both panes are present and visible at once (split-view, not single-pane).
+    const listPane = page.getByTestId('messages-list-pane')
+    const threadPane = page.getByTestId('messages-thread-pane')
+    await expect(listPane).toBeVisible()
+    await expect(threadPane).toBeVisible()
+
+    // The list pane carries the conversation it is showing, and the thread
+    // pane carries its real messages — co-present on the same screen.
+    await expect(listPane.getByText(SEED_CONVERSATION_SUBJECT)).toBeVisible()
+    await expect(
+      threadPane.getByText(/Late morning, around 10:30–12:00/i),
+    ).toBeVisible()
+  })
 })

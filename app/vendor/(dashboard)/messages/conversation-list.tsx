@@ -1,8 +1,7 @@
-'use client'
-
+import { Archive, CircleDot } from 'lucide-react'
 import Link from 'next/link'
 
-import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 
 interface ConversationRow {
   id: string
@@ -16,50 +15,70 @@ interface ConversationRow {
 
 interface ConversationListProps {
   readonly conversations: ConversationRow[]
-  readonly currentUserId: string
+  /** The conversation currently open in the right pane (the `[id]` route). */
+  readonly activeId?: string
 }
 
 function formatDate(date: Date): string {
   return new Date(date).toLocaleDateString('en-IN', {
     day: 'numeric',
     month: 'short',
-    year: 'numeric',
   })
 }
 
-export function ConversationList({ conversations }: ConversationListProps) {
+// Conversation status → DESIGN.md §1.3 status Badge (color + icon, never color
+// alone). Active threads are affirmative; archived ones are neutral/outline.
+const STATUS_BADGE: Record<
+  string,
+  { variant: 'success' | 'outline'; label: string }
+> = {
+  active: { variant: 'success', label: 'Active' },
+  archived: { variant: 'outline', label: 'Archived' },
+}
+
+/**
+ * Left-pane conversation list for the variant B split-view (#55 B). Each row
+ * is a `<Link>` to `/vendor/messages/[id]` so clicking navigates to the thread
+ * route (preserves the E2E click→thread flow). The open conversation is
+ * highlighted via `activeId`.
+ */
+export function ConversationList({
+  conversations,
+  activeId,
+}: ConversationListProps) {
   return (
-    <div className="space-y-2">
-      {conversations.map((conv) => (
-        <Link key={conv.id} href={`/vendor/messages/${conv.id}`}>
-          <Card className="transition hover:bg-muted/50">
-            <CardContent className="flex items-center justify-between py-4">
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">
-                  {conv.customerName ?? 'Customer'}
-                </p>
-                <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                  {conv.subject}
-                </p>
-              </div>
-              <div className="ml-4 shrink-0 text-right">
-                <p className="text-xs text-muted-foreground">
-                  {formatDate(conv.updatedAt)}
-                </p>
-                <span
-                  className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                    conv.status === 'active'
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                      : 'bg-muted text-muted-foreground'
-                  }`}
-                >
-                  {conv.status}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-      ))}
-    </div>
+    <nav aria-label="Conversation list" className="flex flex-col">
+      {conversations.map((conv) => {
+        const status = STATUS_BADGE[conv.status] ?? STATUS_BADGE.archived
+        const StatusIcon = conv.status === 'active' ? CircleDot : Archive
+        const isActive = conv.id === activeId
+        return (
+          <Link
+            key={conv.id}
+            href={`/vendor/messages/${conv.id}`}
+            aria-current={isActive ? 'true' : undefined}
+            className={`flex flex-col gap-1 border-b border-border px-4 py-3 transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none ${
+              isActive ? 'bg-muted' : ''
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <p className="truncate text-sm font-medium">
+                {conv.customerName ?? 'Customer'}
+              </p>
+              <span className="shrink-0 text-2xs text-muted-foreground tabular-nums">
+                {formatDate(conv.updatedAt)}
+              </span>
+            </div>
+            <p className="truncate text-xs text-muted-foreground">
+              {conv.subject}
+            </p>
+            <Badge variant={status.variant} className="mt-0.5 text-2xs">
+              <StatusIcon aria-hidden="true" />
+              {status.label}
+            </Badge>
+          </Link>
+        )
+      })}
+    </nav>
   )
 }

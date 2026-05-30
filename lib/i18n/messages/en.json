@@ -131,7 +131,10 @@
     "experiences": {
       "sectionLabel": "{activity} Experiences",
       "emptyTitle": "No {activity} experiences in {region} yet",
-      "emptySubtitle": "Check back soon — new listings added regularly."
+      "emptySubtitle": "Check back soon — new listings added regularly.",
+      "heading": "Top {activity} Experiences in {region}",
+      "count": "{count, plural, =0 {No Experiences yet} one {# Experience} other {# Experiences}}",
+      "rankingDisclosure": "How we rank: results are ordered by recency and Vendor verification — never by paid placement."
     },
     "faq": {
       "heading": "Frequently asked questions",
@@ -144,6 +147,15 @@
     },
     "itemList": {
       "name": "Top {activity} Experiences in {region}"
+    },
+    "heroTitle": "{activity} in {region} — Free Cancellation",
+    "heroEyebrow": "Curated adventures",
+    "refundLead": "Cancel free up to 24 hours before your slot for a full refund — every {activity} Experience in {region} below, booked on Outvers, is covered.",
+    "editorialIntro": "A hand-checked collection of {activity} in {region}, run only by KYC-verified Vendors. Transparent pricing, real-time slot availability, and refunds credited within 24 hours.",
+    "trust": {
+      "freeCancellation": "Free cancellation up to 24h",
+      "verifiedVendor": "Identity-verified Vendors",
+      "refundSla": "24-hour refund SLA"
     }
   },
   "ExperiencePage": {

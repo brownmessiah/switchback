@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { BadgeCheck, Info, ShieldCheck, XCircle } from 'lucide-react'
 
 import {
   Accordion,
@@ -11,6 +12,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
 import { ExperienceCard } from '@/components/experience-card'
 import { db } from '@/db/client'
 import { getActivityImage } from '@/lib/images'
@@ -44,9 +47,17 @@ export default async function ActivityCityCollectionPage({
   const canonicalUrl = `${baseUrl}${collectionPath}`
   const activityDisplay = data.activity.displayName.en
   const regionDisplay = data.region.displayName.en
+  // SEO/page title stays "{activity} in {region}" — JSON-LD, breadcrumb trail
+  // (and the existing E2E selectors) depend on it. The refund-forward headline
+  // (variant A) is rendered as the visible H1 separately.
   const pageTitle = `${activityDisplay} in ${regionDisplay}`
+  const heroTitle = t('heroTitle', {
+    activity: activityDisplay,
+    region: regionDisplay,
+  })
+  const experienceCount = data.experiences.length
 
-  const itemListJson = data.experiences.length
+  const itemListJson = experienceCount
     ? itemList({
         name: t('itemList.name', { activity: activityDisplay, region: regionDisplay }),
         items: data.experiences.map((exp) => ({
@@ -75,6 +86,30 @@ export default async function ActivityCityCollectionPage({
     },
   ]
   const faqJson = faqPage(faqItems)
+
+  // Trust band (variant A) — three refund-forward pillars on the semantic-status
+  // family, each paired with a lucide icon (status never by colour alone, §1.3 /
+  // §5). success = Free-cancellation + Identity-verified Vendor; info = refund SLA.
+  const trustPillars = [
+    {
+      key: 'freeCancellation',
+      Icon: XCircle,
+      label: t('trust.freeCancellation'),
+      variant: 'success' as const,
+    },
+    {
+      key: 'verifiedVendor',
+      Icon: ShieldCheck,
+      label: t('trust.verifiedVendor'),
+      variant: 'success' as const,
+    },
+    {
+      key: 'refundSla',
+      Icon: BadgeCheck,
+      label: t('trust.refundSla'),
+      variant: 'info' as const,
+    },
+  ]
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-12">
@@ -108,34 +143,84 @@ export default async function ActivityCityCollectionPage({
         </ol>
       </nav>
 
-      {/* Hero */}
-      <header className="mb-10">
-        <div className="relative mb-6 aspect-[3/1] overflow-hidden rounded-2xl">
-          <Image
-            src={getActivityImage(data.activity.slug)}
-            alt={pageTitle}
-            fill
-            className="object-cover"
-            priority
-            sizes="100vw"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 p-6">
-            <p className="text-lg font-semibold text-white">{pageTitle}</p>
+      {/* Editorial hero (variant A) — magazine-grade SEO landing where the refund
+          promise is the headline. Eyebrow → refund-forward H1 (display face) →
+          measure-capped editorial lead, beside a cinematic image. */}
+      <header className="mb-[var(--space-section)]">
+        <div className="grid items-center gap-8 lg:grid-cols-[1.1fr_1fr]">
+          <div>
+            <p className="mb-3 text-2xs font-semibold uppercase tracking-[var(--tracking-eyebrow)] text-primary-strong">
+              {t('heroEyebrow')}
+            </p>
+            <h1 className="font-heading text-h1 font-bold tracking-tight text-balance">
+              {heroTitle}
+            </h1>
+            {/* Refund promise as the lead — success framing + check icon. */}
+            <p className="measure mt-4 flex items-start gap-2 text-lg text-foreground">
+              <XCircle
+                className="mt-1 size-5 shrink-0 text-success"
+                aria-hidden="true"
+              />
+              <span>{t('refundLead', { activity: activityDisplay.toLowerCase(), region: regionDisplay })}</span>
+            </p>
+            <p className="measure mt-3 text-base text-muted-foreground">
+              {t('editorialIntro', { activity: activityDisplay.toLowerCase(), region: regionDisplay })}
+            </p>
+
+            {/* Trust band — three pillars on the semantic-status family. */}
+            <ul className="mt-6 flex flex-wrap items-center gap-2">
+              {trustPillars.map(({ key, Icon, label, variant }) => (
+                <li key={key}>
+                  <Badge variant={variant} className="h-7 px-3 py-1 text-xs">
+                    <Icon aria-hidden="true" />
+                    {label}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="relative aspect-[4/3] overflow-hidden rounded-[var(--radius-card)] shadow-[var(--shadow-md)] lg:aspect-[5/4]">
+            <Image
+              src={getActivityImage(data.activity.slug)}
+              alt={pageTitle}
+              fill
+              className="object-cover"
+              priority
+              sizes="(max-width: 1024px) 100vw, 45vw"
+            />
           </div>
         </div>
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          {pageTitle}
-        </h1>
-        <p className="mt-3 max-w-2xl text-muted-foreground">
-          {t('hero.description', { activity: activityDisplay.toLowerCase(), region: regionDisplay })}
-        </p>
       </header>
 
-      {/* Experiences grid */}
-      <section aria-label={t('experiences.sectionLabel', { activity: activityDisplay })} className="mb-12">
-        {data.experiences.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center">
+      {/* Experiences grid — one ranked, decision-complete A1-card grid. */}
+      <section
+        aria-label={t('experiences.sectionLabel', { activity: activityDisplay })}
+        className="mb-[var(--space-section)]"
+      >
+        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-heading text-h3 font-semibold tracking-tight">
+            {t('experiences.heading', { activity: activityDisplay, region: regionDisplay })}
+          </h2>
+          {experienceCount > 0 && (
+            <span className="text-sm tabular-nums text-muted-foreground">
+              {t('experiences.count', { count: experienceCount })}
+            </span>
+          )}
+        </div>
+
+        {/* Mandatory B1 ranking-transparency disclosure ("How we rank"), --info. */}
+        {experienceCount > 0 && (
+          <Alert variant="info" role="note" className="mb-5">
+            <Info aria-hidden="true" />
+            <AlertDescription>
+              {t('experiences.rankingDisclosure')}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {experienceCount === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-[var(--radius-card)] border border-dashed py-16 text-center">
             <p className="text-lg font-medium">
               {t('experiences.emptyTitle', { activity: activityDisplay.toLowerCase(), region: regionDisplay })}
             </p>
@@ -144,7 +229,7 @@ export default async function ActivityCityCollectionPage({
             </p>
           </div>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-[var(--space-grid-gap)] sm:grid-cols-2 lg:grid-cols-3">
             {data.experiences.map((exp) => (
               <ExperienceCard
                 key={exp.id}
@@ -165,7 +250,9 @@ export default async function ActivityCityCollectionPage({
 
       {/* FAQ */}
       <section>
-        <h2 className="mb-4 text-xl font-semibold">{t('faq.heading')}</h2>
+        <h2 className="mb-4 font-heading text-h3 font-semibold tracking-tight">
+          {t('faq.heading')}
+        </h2>
         <Accordion multiple className="w-full">
           {faqItems.map((item, i) => (
             <AccordionItem key={i} value={`faq-${i}`}>

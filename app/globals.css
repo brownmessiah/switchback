@@ -223,6 +223,10 @@
   --text-2xs: 0.6875rem;
   --text-2xs-line-height: 1.4;
   --text-2xs-tracking: 0.02em;
+  /* Editorial eyebrow/overline letter-spacing (DESIGN.md §2.2) — wider than the
+     default 2xs tracking for the uppercase magazine-style eyebrow on landing
+     pages. Consumed via the house `tracking-[var(--tracking-eyebrow)]` form. */
+  --tracking-eyebrow: 0.12em;
 
   /* Reading-measure cap + weight intents (DESIGN.md §2.2) */
   --measure: 68ch;

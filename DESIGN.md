@@ -182,6 +182,9 @@ Tokens under `@theme inline` (generate `text-*` utilities; size + line-height pa
 - **Weights (tokenized intent):** `--font-weight-normal: 400`, `--font-weight-medium: 500`,
   `--font-weight-semibold: 600`, `--font-weight-bold: 700`. Headings 600–700 (display face); body
   400; UI emphasis/labels 500.
+- **Eyebrow tracking:** `--tracking-eyebrow: 0.12em` — the uppercase magazine-style eyebrow/overline
+  on editorial landing pages wants wider tracking than the default `--text-2xs` `0.02em`. Apply as
+  `text-2xs uppercase tracking-[var(--tracking-eyebrow)]`; never an off-system literal.
 
 #### Tabular numerics (money-path requirement)
 

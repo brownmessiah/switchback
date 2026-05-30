@@ -3381,8 +3381,14 @@ test.describe('Admin support ticket lifecycle (#29)', () => {
       .toBe('in_progress')
 
     // ── in_progress → resolved ─────────────────────────────────────────────
+    // Variant A gates the consequential resolve behind a confirm Dialog that
+    // restates the effect before commit (#103); the inline trigger only OPENS
+    // the Dialog — the status changes from the scoped confirm control inside it.
     await page.goto(`/admin/support/${ticketId}`)
     await page.getByRole('button', { name: 'Mark Resolved' }).click()
+    const resolveDialog = page.locator('[data-slot="dialog-content"]')
+    await expect(resolveDialog.getByRole('heading', { name: 'Mark Resolved' })).toBeVisible()
+    await resolveDialog.getByTestId('confirm-status-change').click()
     await expect
       .poll(async () => (await getSupportTicketById(ticketId!))?.status, {
         timeout: 15_000,
@@ -3479,15 +3485,25 @@ test.describe('Admin bookings list + detail render correct data (#29)', () => {
     }
 
     // ── Commission breakdown: gross + estimated vendor payout match the DB ──
+    // Variant A reuses the shared CommissionSnapshot, so the breakdown shows
+    // the COMPLETE ADR-0016 waterfall (#102 fix): Gross → Commission → GST →
+    // TDS → TCS(§52) → Net. The TCS row must be present (it was silently
+    // omitted by the old inline math) and the Net is the TCS-inclusive figure.
     await expect(page.getByText('Commission Snapshot')).toBeVisible()
     const grossText = `₹${fixture!.grossRupees.toLocaleString('en-IN')}`
     await expect(page.getByText(grossText).first()).toBeVisible()
+    await expect(page.getByTestId('snapshot-tcs')).toHaveText(
+      `-₹${fixture!.tcsRupees.toLocaleString('en-IN')}`,
+    )
     await expect(page.getByTestId('vendor-payout')).toHaveText(
       `₹${fixture!.vendorPayoutRupees.toLocaleString('en-IN')}`,
     )
 
     // ── Payment timeline section is present (full record) ──────────────────
+    // Variant A reuses the canonical buildBookingTimeline rail (#79): the
+    // "Booking Created" node always renders, exposed via a stable testid.
     await expect(page.getByText('Payment Timeline')).toBeVisible()
+    await expect(page.getByTestId('timeline-node-created')).toBeVisible()
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/admin-booking-detail-29.png',

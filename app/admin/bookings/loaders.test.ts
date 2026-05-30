@@ -93,6 +93,7 @@ async function seedBooking(
     commissionBasisSnapshot: 'vendor_base_rate',
     cancellationPresetSnapshot: 'moderate',
     tdsAmountSnapshot: '5.00',
+    tcsAmountSnapshot: '25.00',
     gstRateOnCommissionSnapshot: '18.00',
     vendorIsResidentSnapshot: true,
   })
@@ -189,6 +190,9 @@ describe('Admin bookings loaders', () => {
       expect(result!.booking.commissionRateSnapshot).toBe('20.00')
       expect(result!.booking.cancellationPresetSnapshot).toBe('moderate')
       expect(result!.booking.tdsAmountSnapshot).toBe('5.00')
+      // #102: the detail loader must surface the TCS (§52) snapshot so the
+      // page can drive the COMPLETE ADR-0016 waterfall via computeVendorNetPayout.
+      expect(result!.booking.tcsAmountSnapshot).toBe('25.00')
       expect(result!.payments).toEqual([])
       expect(result!.refunds).toEqual([])
     })

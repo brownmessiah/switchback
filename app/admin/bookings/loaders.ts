@@ -95,6 +95,7 @@ export async function loadBookingDetail(db: DBOrTx, bookingId: string) {
       commissionBasisSnapshot: bookings.commissionBasisSnapshot,
       cancellationPresetSnapshot: bookings.cancellationPresetSnapshot,
       tdsAmountSnapshot: bookings.tdsAmountSnapshot,
+      tcsAmountSnapshot: bookings.tcsAmountSnapshot,
       gstRateOnCommissionSnapshot: bookings.gstRateOnCommissionSnapshot,
       vendorPanSnapshot: bookings.vendorPanSnapshot,
       vendorIsResidentSnapshot: bookings.vendorIsResidentSnapshot,

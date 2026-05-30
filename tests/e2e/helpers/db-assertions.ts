@@ -2962,6 +2962,7 @@ export interface AdminBookingDetailFixture {
   commissionRate: number
   gstRateOnCommission: number
   tdsRupees: number
+  tcsRupees: number
   vendorPayoutRupees: number
   customerName: string | null
   vendorBusinessName: string
@@ -2970,9 +2971,12 @@ export interface AdminBookingDetailFixture {
 
 /**
  * Fetch the full commission-breakdown + parties for one booking, computing the
- * expected estimated vendor payout exactly as the booking-detail page does
- * (floor of gross, commission, GST-on-commission, TDS). The #29 booking-detail
- * E2E asserts the rendered figures match these DB-derived values.
+ * expected Net Vendor Payout exactly as the admin booking-detail page now does
+ * via `computeVendorNetPayout` — the COMPLETE ADR-0016 waterfall:
+ *   Net = gross − Commission − GST(on commission) − TDS(§194-O) − TCS(§52)
+ * (#102 money-correctness fix: the old inline page math + this fixture both
+ * silently OMITTED TCS, overstating the net. The #29 booking-detail E2E now
+ * asserts the rendered figures match this TCS-inclusive value.)
  */
 export async function getBookingDetailFixture(
   bookingId: string,
@@ -2986,6 +2990,7 @@ export async function getBookingDetailFixture(
         commission_rate_snapshot: string
         gst_rate_on_commission_snapshot: string
         tds_amount_snapshot: string
+        tcs_amount_snapshot: string
         customer_name: string | null
         business_name: string
         title: string
@@ -2996,6 +3001,7 @@ export async function getBookingDetailFixture(
              b.commission_rate_snapshot,
              b.gst_rate_on_commission_snapshot,
              b.tds_amount_snapshot,
+             b.tcs_amount_snapshot,
              u.name AS customer_name,
              vp.business_name,
              e.title
@@ -3013,9 +3019,12 @@ export async function getBookingDetailFixture(
     const commissionRate = Number(r.commission_rate_snapshot)
     const gstRateOnCommission = Number(r.gst_rate_on_commission_snapshot)
     const tdsRupees = Math.floor(Number(r.tds_amount_snapshot))
+    const tcsRupees = Math.floor(Number(r.tcs_amount_snapshot))
     const commissionAmount = Math.floor(grossRupees * (commissionRate / 100))
     const gstOnCommission = Math.floor(commissionAmount * (gstRateOnCommission / 100))
-    const vendorPayoutRupees = grossRupees - commissionAmount - gstOnCommission - tdsRupees
+    // COMPLETE ADR-0016 waterfall — TCS (§52) included (the #102 fix).
+    const vendorPayoutRupees =
+      grossRupees - commissionAmount - gstOnCommission - tdsRupees - tcsRupees
 
     return {
       id: r.id,
@@ -3024,6 +3033,7 @@ export async function getBookingDetailFixture(
       commissionRate,
       gstRateOnCommission,
       tdsRupees,
+      tcsRupees,
       vendorPayoutRupees,
       customerName: r.customer_name,
       vendorBusinessName: r.business_name,

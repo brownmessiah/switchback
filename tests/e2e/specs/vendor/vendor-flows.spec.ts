@@ -1513,7 +1513,9 @@ test.describe('Vendor messages', () => {
 // 10. Settings page — smoke test
 // ---------------------------------------------------------------------------
 test.describe('Vendor settings', () => {
-  test('loads settings page with tabs', async ({ page }) => {
+  test('loads settings page as a single-scroll trust ledger with anchor nav (#56 B)', async ({
+    page,
+  }) => {
     const response = await page.goto('/vendor/settings')
     expect(response?.status()).toBe(200)
 
@@ -1521,13 +1523,36 @@ test.describe('Vendor settings', () => {
     await expect(h1).toBeVisible()
     await expect(h1).toContainText('Settings')
 
-    // Tabs are visible — Business details, Payout method, KYC documents
-    await expect(page.getByRole('tab', { name: 'Business details' })).toBeVisible()
-    await expect(page.getByRole('tab', { name: 'Payout method' })).toBeVisible()
-    await expect(page.getByRole('tab', { name: 'KYC documents' })).toBeVisible()
+    // #56 Direction B: tabs dropped for ONE single-scroll page with a sticky
+    // anchor-nav rail (Business details · Payout method · Verification). The
+    // wayfinding links live in a labelled nav landmark; each targets a section
+    // id rendered inline on the same page.
+    const nav = page.getByRole('navigation', { name: /settings sections/i })
+    await expect(nav).toBeVisible()
+    await expect(nav.getByRole('link', { name: 'Business details' })).toHaveAttribute(
+      'href',
+      '#business-details',
+    )
+    await expect(nav.getByRole('link', { name: 'Payout method' })).toHaveAttribute(
+      'href',
+      '#payout-method',
+    )
+    await expect(nav.getByRole('link', { name: 'Verification' })).toHaveAttribute(
+      'href',
+      '#verification',
+    )
 
-    // Default tab (business) content is visible
-    await expect(page.getByRole('tabpanel')).toBeVisible()
+    // All three sections are present in the single scroll — no tabs to click.
+    await expect(page.locator('#business-details')).toBeVisible()
+    await expect(page.locator('#payout-method')).toBeVisible()
+    await expect(page.locator('#verification')).toBeVisible()
+
+    // The default business-details content (the About field) is visible without
+    // any tab interaction.
+    await expect(page.locator('#about')).toBeVisible()
+
+    // No tabbed shell remains.
+    await expect(page.getByRole('tab')).toHaveCount(0)
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/vendor-settings.png',
@@ -2111,10 +2136,8 @@ test.describe('Vendor settings persistence (#20)', () => {
     await page.goto('/vendor/settings')
     await expect(page.locator('h1')).toContainText('Settings')
 
-    // Open the Payout method tab.
-    await page.getByRole('tab', { name: 'Payout method' }).click()
-
-    // Choose UPI and fill the VPA.
+    // #56 Direction B: single-scroll page — the Payout method form lives in the
+    // #payout-method section, no tab to click. Choose UPI and fill the VPA.
     await page.getByRole('radio', { name: 'UPI VPA' }).click()
     await page.locator('#vpa').fill(newVpa)
     await page.getByRole('button', { name: 'Update payout method' }).click()
@@ -2135,10 +2158,29 @@ test.describe('Vendor settings persistence (#20)', () => {
     expect(changedMsAgo).toBeLessThan(7 * 24 * 60 * 60 * 1000)
 
     // ── Assert: the persisted VPA + cooling-off notice survive a reload ──
+    // After reload the Vendor has a recent payoutDestinationChangedAt, so the
+    // LIVE cooling-off countdown (#56 B "live trackable object") renders: a
+    // status Alert with the days/hours remaining until the cooling-off ends,
+    // plus the date the new destination starts receiving funds.
     await page.reload()
-    await page.getByRole('tab', { name: 'Payout method' }).click()
     await expect(page.locator('#vpa')).toHaveValue(newVpa)
-    await expect(page.getByText(/cooling-off period/i)).toBeVisible()
+    const coolingOff = page.getByTestId('payout-cooling-off')
+    await expect(coolingOff).toBeVisible()
+    await expect(coolingOff).toContainText(/cooling-off period/i)
+    // Live remaining countdown — "days" / "hours" left (derived client-side
+    // from payoutDestinationChangedAt; hydration-safe via useEffect).
+    await expect(coolingOff).toContainText(/\d+\s*(day|hour|minute)/i)
+    // Money-state correctness (ADR-0016): a JUST-changed destination is in an
+    // ACTIVE cooling-off, so the Alert must be the WARNING "period active"
+    // state — it must NEVER render the success branch's copy (the inverse
+    // money-state, even as a pre-mount flash). The success branch is uniquely
+    // identified by "period ended" / "is active and receiving funds"; the
+    // active warning legitimately says "starts receiving funds on {date}", so
+    // we match only the success-only phrases.
+    await expect(coolingOff).toContainText(/cooling-off period active/i)
+    await expect(coolingOff).not.toContainText(
+      /period ended|active and receiving funds/i,
+    )
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/vendor-settings-payout.png',

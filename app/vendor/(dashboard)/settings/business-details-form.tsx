@@ -1,7 +1,9 @@
 'use client'
 
+import { CheckCircle2, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -57,7 +59,7 @@ export function BusinessDetailsForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Business details</CardTitle>
+        <CardTitle className="font-heading">Business details</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -113,20 +115,26 @@ export function BusinessDetailsForm({
           </div>
 
           {error && (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
-              <p className="text-sm text-destructive">{error}</p>
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>
+                <p>{error}</p>
+              </AlertDescription>
+            </Alert>
           )}
 
           {success && (
-            <div className="rounded-lg border border-green-500/30 bg-green-50 p-3 dark:bg-green-950/20">
-              <p className="text-sm text-green-700 dark:text-green-400">
-                Business details updated.
-              </p>
-            </div>
+            <Alert variant="success">
+              <CheckCircle2 aria-hidden="true" />
+              <AlertDescription>
+                <p>Business details updated.</p>
+              </AlertDescription>
+            </Alert>
           )}
 
           <Button type="submit" disabled={loading || !businessName || !slug}>
+            {loading && (
+              <Loader2 aria-hidden="true" className="animate-spin" />
+            )}
             {loading ? 'Saving...' : 'Save changes'}
           </Button>
         </form>

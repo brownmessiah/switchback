@@ -18,7 +18,12 @@ import type { DayDataPoint } from '@/lib/vendor/dashboard-loader'
 interface TrendChartProps {
   readonly title: string
   readonly data: readonly DayDataPoint[]
-  readonly color: string
+  /**
+   * DESIGN.md chart token to brand this series, e.g. `chart-1` (coral, tracks
+   * `--primary`) or `chart-2` (green). Resolved to `var(--<token>)` for the
+   * stroke/fill — NO off-system color literals (DESIGN.md §2).
+   */
+  readonly colorToken: 'chart-1' | 'chart-2' | 'chart-3' | 'chart-4' | 'chart-5'
   /** When 'currency', formats as ₹X,XXX. Otherwise shows raw number. */
   readonly formatAs?: 'currency'
   readonly type: 'area' | 'bar'
@@ -29,7 +34,13 @@ function formatDateLabel(dateStr: string): string {
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 }
 
-export function TrendChart({ title, data, color, formatAs, type }: TrendChartProps) {
+export function TrendChart({ title, data, colorToken, formatAs, type }: TrendChartProps) {
+  // Resolve the DESIGN.md token to a CSS custom property. The gradient id is
+  // derived from the token (a safe slug) — decoupled from the color value so
+  // a `var(--…)` reference never leaks into an SVG id.
+  const color = `var(--${colorToken})`
+  const gradientId = `trend-gradient-${colorToken}`
+
   const formatter = formatAs === 'currency'
     ? (v: number) => `₹${Math.floor(v).toLocaleString('en-IN')}`
     : (v: number) => String(v)
@@ -51,7 +62,7 @@ export function TrendChart({ title, data, color, formatAs, type }: TrendChartPro
             {type === 'area' ? (
               <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                 <defs>
-                  <linearGradient id={`gradient-${color}`} x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={color} stopOpacity={0.3} />
                     <stop offset="95%" stopColor={color} stopOpacity={0} />
                   </linearGradient>
@@ -91,7 +102,7 @@ export function TrendChart({ title, data, color, formatAs, type }: TrendChartPro
                   dataKey="value"
                   stroke={color}
                   strokeWidth={2}
-                  fill={`url(#gradient-${color})`}
+                  fill={`url(#${gradientId})`}
                 />
               </AreaChart>
             ) : (

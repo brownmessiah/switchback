@@ -15,8 +15,11 @@ import {
   formatDate,
   loadVendorDashboard,
   mapUpcomingBooking,
+  rankInsights,
   shapeDashboardStats,
   slaColor,
+  verifiedVendorBadgeLabel,
+  type Insight,
 } from './dashboard-loader'
 
 describe('loadVendorDashboard', () => {
@@ -343,6 +346,133 @@ describe('loadVendorDashboard', () => {
     expect(result.listingsCount).toBe(0)
     expect(result.totalBookings).toBe(0)
   })
+
+  // ── C "Insight-First Growth Hub" rail (issue #74) ─────────────────────────
+  // Every insight is computed from REAL aggregated vendor data — no ML, no
+  // fabricated signals. These integration tests pin the exact derivation.
+
+  it('top_performer insight is the experience with the most bookings', async () => {
+    // A SECOND experience with FEWER bookings than the seeded one, so the
+    // max-by-booking-count pick is unambiguous.
+    const [exp2] = await db
+      .insert(experiences)
+      .values({
+        vendorUserId: 'u_v',
+        slug: 'kayaking-rishikesh',
+        title: 'Kayaking in Rishikesh',
+        cancellationPreset: 'moderate',
+        paymentModesAllowed: ['full_upfront'],
+        pricePerPerson_1_2: '2000.00',
+        pricePerPerson_3_5: '1800.00',
+        pricePerPerson_6_plus: '1600.00',
+        regionSlug: 'rishikesh',
+        activitySlug: 'kayaking',
+        status: 'published',
+      })
+      .returning({ id: experiences.id })
+    const exp2Id = exp2!.id
+
+    const [exp2Slot] = await db
+      .insert(availabilitySlots)
+      .values({
+        experienceId: exp2Id,
+        startAt: new Date(Date.now() + 12 * 86_400_000),
+        endAt: new Date(Date.now() + 12 * 86_400_000 + 7_200_000),
+        capacity: 8,
+        capacityTaken: 1,
+      })
+      .returning({ id: availabilitySlots.id })
+
+    const baseBooking = {
+      customerUserId: 'u_c',
+      paymentMode: 'full_upfront' as const,
+      pricePerParticipantSnapshot: '5000.00',
+      pricingBasisSnapshot: 'per_person',
+      commissionRateSnapshot: '20.00',
+      commissionBasisSnapshot: 'vendor_base',
+      cancellationPresetSnapshot: 'moderate',
+      tdsAmountSnapshot: '10.00',
+      confirmedAt: new Date(),
+    }
+
+    // 3 bookings on the FIRST experience (Paragliding in Manali).
+    for (let i = 0; i < 3; i++) {
+      await db.insert(bookings).values({
+        ...baseBooking,
+        experienceId,
+        slotId: futureSlotId,
+        participantCount: 1,
+        state: 'confirmed',
+        grossTotalSnapshot: '5000.00',
+      })
+    }
+    // 1 booking on the SECOND experience.
+    await db.insert(bookings).values({
+      ...baseBooking,
+      experienceId: exp2Id,
+      slotId: exp2Slot!.id,
+      participantCount: 1,
+      state: 'confirmed',
+      grossTotalSnapshot: '2000.00',
+    })
+
+    const result = await loadVendorDashboard(db, 'u_v')
+
+    const top = result.insights.find((i) => i.type === 'top_performer')
+    expect(top).toBeDefined()
+    expect(top!.expTitle).toBe('Paragliding in Manali')
+    expect(top!.bookingCount).toBe(3)
+  })
+
+  it('likely_to_sell_out insight surfaces upcoming slots near capacity', async () => {
+    // A future slot at 7/8 capacity (1 spot left) — near sell-out.
+    const nearFull = new Date(Date.now() + 14 * 86_400_000)
+    const [nearFullSlot] = await db
+      .insert(availabilitySlots)
+      .values({
+        experienceId,
+        startAt: nearFull,
+        endAt: new Date(nearFull.getTime() + 7_200_000),
+        capacity: 8,
+        capacityTaken: 7,
+      })
+      .returning({ id: availabilitySlots.id })
+
+    const result = await loadVendorDashboard(db, 'u_v')
+
+    const sellOut = result.insights.find((i) => i.type === 'likely_to_sell_out')
+    expect(sellOut).toBeDefined()
+    expect(sellOut!.slotId).toBe(nearFullSlot!.id)
+    expect(sellOut!.spotsLeft).toBe(1)
+    expect(sellOut!.expTitle).toBe('Paragliding in Manali')
+  })
+
+  it('off_peak_gap insight surfaces upcoming zero-booked slots', async () => {
+    // futureSlotId (seeded in beforeEach) has capacityTaken=0 → an off-peak gap.
+    const result = await loadVendorDashboard(db, 'u_v')
+
+    const gap = result.insights.find((i) => i.type === 'off_peak_gap')
+    expect(gap).toBeDefined()
+    expect(gap!.slotId).toBe(futureSlotId)
+    expect(gap!.expTitle).toBe('Paragliding in Manali')
+  })
+
+  it('omits insights that cannot be computed (vendor with no bookings/slots)', async () => {
+    // A vendor with a profile but NO experiences, slots, or bookings: every
+    // insight is non-derivable, so the rail must be empty (no fabrication).
+    await db.insert(users).values({ id: 'u_empty', email: 'empty@test.com', name: 'Empty' })
+    await db.insert(vendorProfiles).values({
+      userId: 'u_empty',
+      businessName: 'Empty Co',
+      slug: 'empty-co',
+      kycTier: 'business',
+      responseTimeSlaScore: '100.00',
+      commissionRate: '20.00',
+    })
+
+    const result = await loadVendorDashboard(db, 'u_empty')
+    expect(result.insights).toHaveLength(0)
+  })
 })
 
 describe('shapeDashboardStats', () => {
@@ -461,5 +591,75 @@ describe('slaColor', () => {
     expect(slaColor(0)).toBe('red')
     expect(slaColor(50)).toBe('red')
     expect(slaColor(69.99)).toBe('red')
+  })
+})
+
+describe('rankInsights', () => {
+  const sellOut: Insight = {
+    id: 's1',
+    type: 'likely_to_sell_out',
+    title: 'Likely to sell out',
+    subtitle: '1 spot left',
+    expTitle: 'Scuba',
+    slotId: 'slot1',
+    spotsLeft: 1,
+    bookingCount: 0,
+  }
+  const topPerformer: Insight = {
+    id: 't1',
+    type: 'top_performer',
+    title: 'Top performer',
+    subtitle: '5 bookings',
+    expTitle: 'Paragliding',
+    slotId: null,
+    spotsLeft: 0,
+    bookingCount: 5,
+  }
+  const offPeak: Insight = {
+    id: 'g1',
+    type: 'off_peak_gap',
+    title: 'Off-peak gap',
+    subtitle: 'no bookings',
+    expTitle: 'Camping',
+    slotId: 'slot2',
+    spotsLeft: 8,
+    bookingCount: 0,
+  }
+
+  it('ranks likely_to_sell_out first, then top_performer, then off_peak_gap', () => {
+    // Pass in deliberately shuffled order; ranking must be deterministic.
+    const ranked = rankInsights([offPeak, topPerformer, sellOut])
+    expect(ranked.map((i) => i.type)).toEqual([
+      'likely_to_sell_out',
+      'top_performer',
+      'off_peak_gap',
+    ])
+  })
+
+  it('preserves only the insights it is given (no fabrication)', () => {
+    expect(rankInsights([])).toEqual([])
+    expect(rankInsights([topPerformer]).map((i) => i.type)).toEqual(['top_performer'])
+  })
+})
+
+describe('verifiedVendorBadgeLabel', () => {
+  // ADR-0007 defines DISTINCT trust badges per tier; rendering "Business
+  // verified" for an identity-tier Vendor OVERSTATES its verification level.
+  // The verbatim domain strings come from CONTEXT.md / DESIGN.md §line-18.
+  it('labels a business-tier Vendor "Business verified Vendor"', () => {
+    expect(verifiedVendorBadgeLabel('business')).toBe('Business verified Vendor')
+  })
+
+  it('labels an identity-tier Vendor "Identity verified Vendor" (NOT Business)', () => {
+    expect(verifiedVendorBadgeLabel('identity')).toBe('Identity verified Vendor')
+  })
+
+  it('returns null for phone tier (no verified badge)', () => {
+    expect(verifiedVendorBadgeLabel('phone')).toBeNull()
+  })
+
+  it('returns null for an unknown/missing tier (no verified badge)', () => {
+    expect(verifiedVendorBadgeLabel('')).toBeNull()
+    expect(verifiedVendorBadgeLabel('something_else')).toBeNull()
   })
 })

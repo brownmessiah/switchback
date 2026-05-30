@@ -1,3 +1,4 @@
+import { AlertTriangle, CheckCircle2, ShieldCheck, TriangleAlert } from 'lucide-react'
 import { headers } from 'next/headers'
 
 import { Badge } from '@/components/ui/badge'
@@ -12,15 +13,25 @@ import {
 } from '@/components/ui/table'
 import { db } from '@/db/client'
 import { auth } from '@/lib/auth'
-import { loadVendorDashboard, slaColor } from '@/lib/vendor/dashboard-loader'
+import {
+  loadVendorDashboard,
+  slaColor,
+  verifiedVendorBadgeLabel,
+} from '@/lib/vendor/dashboard-loader'
 
 import { ActionItems } from './action-items'
 import { TrendChart } from './dashboard-charts'
+import { InsightsRail } from './insights-rail'
 
-const SLA_COLOR_MAP = {
-  green: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  yellow: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-  red: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+/**
+ * SLA badge presentation. Semantic status tokens (DESIGN.md §2) paired with a
+ * lucide icon (DESIGN.md §1.3 / WCAG 1.4.1) so the status is never conveyed by
+ * color alone — replacing the prior off-system green/yellow/red literals.
+ */
+const SLA_BADGE = {
+  green: { variant: 'success' as const, Icon: CheckCircle2, label: 'Excellent' },
+  yellow: { variant: 'warning' as const, Icon: TriangleAlert, label: 'Needs improvement' },
+  red: { variant: 'destructive' as const, Icon: AlertTriangle, label: 'At risk' },
 } as const
 
 export default async function VendorDashboardPage() {
@@ -30,11 +41,26 @@ export default async function VendorDashboardPage() {
   const data = await loadVendorDashboard(db, userId)
 
   const slaColorKey = slaColor(data.slaScore)
+  const slaBadge = SLA_BADGE[slaColorKey]
+  const SlaIcon = slaBadge.Icon
+  // ADR-0007: distinct trust badges per tier (identity vs business) — never
+  // overstate the level. phone/unknown → null = no verified badge.
+  const verifiedVendorLabel = verifiedVendorBadgeLabel(data.kycTier)
 
   return (
-    <div className="space-y-8">
+    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      {/* Main column */}
+      <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          {verifiedVendorLabel ? (
+            <Badge variant="success" data-testid="verified-vendor-badge">
+              <ShieldCheck aria-hidden="true" />
+              {verifiedVendorLabel}
+            </Badge>
+          ) : null}
+        </div>
         <p className="mt-1 text-muted-foreground">
           Welcome back{data.businessName ? `, ${data.businessName}` : ''}.
         </p>
@@ -49,8 +75,8 @@ export default async function VendorDashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{data.todayBookings}</p>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="text-3xl font-semibold tabular-nums">{data.todayBookings}</p>
+            <p className="mt-1 text-xs text-muted-foreground tabular-nums">
               {data.totalBookings} total all time
             </p>
           </CardContent>
@@ -63,7 +89,7 @@ export default async function VendorDashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{data.pendingActionsCount}</p>
+            <p className="text-3xl font-semibold tabular-nums">{data.pendingActionsCount}</p>
             <p className="mt-1 text-xs text-muted-foreground">
               bookings needing response
             </p>
@@ -77,10 +103,10 @@ export default async function VendorDashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">
+            <p className="text-3xl font-semibold tabular-nums">
               ₹{data.monthRevenue.toLocaleString('en-IN')}
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 text-xs text-muted-foreground tabular-nums">
               ₹{data.totalRevenue.toLocaleString('en-IN')} total
             </p>
           </CardContent>
@@ -94,16 +120,13 @@ export default async function VendorDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-2">
-              <p className="text-3xl font-semibold">{data.slaScore.toFixed(1)}%</p>
-              <span
-                className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${SLA_COLOR_MAP[slaColorKey]}`}
-              >
-                {slaColorKey === 'green'
-                  ? 'Excellent'
-                  : slaColorKey === 'yellow'
-                    ? 'Needs improvement'
-                    : 'At risk'}
-              </span>
+              <p className="text-3xl font-semibold tabular-nums">
+                {data.slaScore.toFixed(1)}%
+              </p>
+              <Badge variant={slaBadge.variant}>
+                <SlaIcon aria-hidden="true" />
+                {slaBadge.label}
+              </Badge>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
               Response time performance
@@ -117,13 +140,13 @@ export default async function VendorDashboardPage() {
         <TrendChart
           title="Bookings (last 30 days)"
           data={data.bookingsTrend}
-          color="hsl(221, 83%, 53%)"
+          colorToken="chart-1"
           type="area"
         />
         <TrendChart
           title="Revenue (last 30 days)"
           data={data.revenueTrend}
-          color="hsl(142, 71%, 45%)"
+          colorToken="chart-2"
           type="bar"
           formatAs="currency"
         />
@@ -165,8 +188,8 @@ export default async function VendorDashboardPage() {
                           })
                         : '—'}
                     </TableCell>
-                    <TableCell>{b.participantCount}</TableCell>
-                    <TableCell>
+                    <TableCell className="tabular-nums">{b.participantCount}</TableCell>
+                    <TableCell className="tabular-nums">
                       ₹{b.gross.toLocaleString('en-IN')}
                     </TableCell>
                     <TableCell>
@@ -181,6 +204,10 @@ export default async function VendorDashboardPage() {
           )}
         </CardContent>
       </Card>
+      </div>
+
+      {/* Insights rail (C "Insight-First Growth Hub" — issue #74) */}
+      <InsightsRail insights={data.insights} />
     </div>
   )
 }

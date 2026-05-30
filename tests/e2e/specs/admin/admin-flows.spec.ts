@@ -2804,9 +2804,13 @@ test.describe('Admin blog CRUD + cover image (#27)', () => {
     const row = page.locator(`tr[data-blog-post-id="${postId}"]`)
     await expect(row).toBeVisible({ timeout: 10_000 })
 
-    // The delete confirms via window.confirm — auto-accept it.
-    page.once('dialog', (dialog) => dialog.accept())
+    // The destructive delete is now gated behind a token-true confirm Dialog
+    // (DESIGN.md §4 A4) — clicking the row's Delete opens it; the delete fires
+    // only from the explicit "Delete post" confirm inside the Dialog.
     await row.getByRole('button', { name: 'Delete' }).click()
+    const confirm = page.getByTestId('blog-delete-confirm')
+    await expect(confirm).toBeVisible({ timeout: 5_000 })
+    await confirm.getByRole('button', { name: 'Delete post' }).click()
 
     // After the action + revalidation the deleted row drops out of the table.
     await expect(row).toHaveCount(0, { timeout: 15_000 })

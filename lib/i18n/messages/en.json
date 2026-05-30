@@ -242,19 +242,51 @@
     "results": {
       "count": "{count} experience{count, plural, one {} other {s}} found",
       "empty": "No experiences found",
-      "emptyHint": "Try adjusting your filters or search for something else."
+      "emptyHint": "Try adjusting your filters or search for something else.",
+      "sectionLabel": "Search results"
     },
     "filters": {
+      "heading": "Filters",
+      "sheetDescription": "Refine experiences by activity, region, sort order, and price.",
       "activity": "Activity",
       "allActivities": "All activities",
+      "region": "Region",
+      "allRegions": "All regions",
       "sortBy": "Sort by",
       "relevance": "Relevance",
       "priceLowHigh": "Price: Low to High",
       "priceHighLow": "Price: High to Low",
       "newest": "Newest",
+      "priceRange": "Price range",
       "minPrice": "Min ₹",
       "maxPrice": "Max ₹",
-      "applyFilters": "Apply filters"
+      "anyPrice": "Any",
+      "applyFilters": "Apply filters",
+      "clear": "Clear filters"
+    },
+    "activities": {
+      "rafting": "Rafting",
+      "paragliding": "Paragliding",
+      "scubaDiving": "Scuba diving",
+      "trekking": "Trekking",
+      "bungeeJumping": "Bungee jumping",
+      "skiing": "Skiing",
+      "kayaking": "Kayaking",
+      "rockClimbing": "Rock climbing",
+      "safari": "Wildlife safari",
+      "camping": "Camping"
+    },
+    "regions": {
+      "rishikesh": "Rishikesh",
+      "manali": "Manali",
+      "birBilling": "Bir Billing",
+      "goa": "Goa",
+      "lehLadakh": "Leh-Ladakh",
+      "kasol": "Kasol",
+      "spiti": "Spiti Valley",
+      "andaman": "Andaman Islands",
+      "lonavala": "Lonavala",
+      "auli": "Auli"
     }
   },
   "SignInPage": {

@@ -2,17 +2,9 @@ import type { ReactElement } from 'react'
 
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { ExperienceCard } from '@/components/experience-card'
+import { FacetForm } from '@/components/search/facet-form'
+import { FiltersSheet } from '@/components/search/filters-sheet'
 import { generateAlternates } from '@/lib/seo/hreflang'
 import {
   isFilteredSearch,
@@ -46,19 +38,6 @@ function parseSearchParams(
   }
 }
 
-const ACTIVITIES = [
-  { value: 'rafting', label: 'Rafting' },
-  { value: 'paragliding', label: 'Paragliding' },
-  { value: 'trekking', label: 'Trekking' },
-  { value: 'scuba', label: 'Scuba diving' },
-  { value: 'camping', label: 'Camping' },
-  { value: 'bungee', label: 'Bungee jumping' },
-  { value: 'skiing', label: 'Skiing' },
-  { value: 'kayaking', label: 'Kayaking' },
-  { value: 'surfing', label: 'Surfing' },
-  { value: 'canyoning', label: 'Canyoning' },
-]
-
 export default async function SearchPage({
   params,
   searchParams,
@@ -73,96 +52,53 @@ export default async function SearchPage({
   const { hits } = await searchExperiences(parsed)
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-12">
-      <header className="mb-8">
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
+      <header className="mb-6 flex flex-col gap-2">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
           {parsed.q ? t('heading.withQuery', { query: parsed.q }) : t('heading.default')}
         </h1>
-        <p className="mt-2 text-muted-foreground">
+        <p className="text-sm text-muted-foreground tabular-nums">
           {t('results.count', { count: hits.length })}
         </p>
       </header>
 
-      <div className="grid gap-8 lg:grid-cols-4">
-        {/* Filter sidebar */}
-        <aside className="lg:col-span-1">
-          <form method="get" action="/search" className="space-y-5">
-            {parsed.q && <input type="hidden" name="q" value={parsed.q} />}
+      {/* Mobile-only Filters trigger → opens the Sheet with the same controls.
+          The desktop rail (below) is SSR and hidden on small screens. */}
+      <div className="mb-6 lg:hidden">
+        <FiltersSheet
+          triggerLabel={t('filters.heading')}
+          description={t('filters.sheetDescription')}
+        >
+          <FacetForm locale={locale} parsed={parsed} instanceId="sheet" />
+        </FiltersSheet>
+      </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="activity">{t('filters.activity')}</Label>
-              <Select name="activity" defaultValue={parsed.activity ?? ''}>
-                <SelectTrigger id="activity">
-                  <SelectValue placeholder={t('filters.allActivities')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('filters.allActivities')}</SelectItem>
-                  {ACTIVITIES.map((a) => (
-                    <SelectItem key={a.value} value={a.value}>
-                      {a.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="sort">{t('filters.sortBy')}</Label>
-              <Select name="sort" defaultValue={parsed.sort ?? 'relevance'}>
-                <SelectTrigger id="sort">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="relevance">{t('filters.relevance')}</SelectItem>
-                  <SelectItem value="price_asc">{t('filters.priceLowHigh')}</SelectItem>
-                  <SelectItem value="price_desc">{t('filters.priceHighLow')}</SelectItem>
-                  <SelectItem value="newest">{t('filters.newest')}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="minPrice">{t('filters.minPrice')}</Label>
-                <Input
-                  id="minPrice"
-                  type="number"
-                  name="minPrice"
-                  defaultValue={parsed.minPrice ?? ''}
-                  min={0}
-                  placeholder="0"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="maxPrice">{t('filters.maxPrice')}</Label>
-                <Input
-                  id="maxPrice"
-                  type="number"
-                  name="maxPrice"
-                  defaultValue={parsed.maxPrice ?? ''}
-                  min={0}
-                  placeholder="Any"
-                />
-              </div>
-            </div>
-
-            <Button type="submit" className="w-full">
-              {t('filters.applyFilters')}
-            </Button>
-          </form>
+      <div className="grid gap-8 lg:grid-cols-[18rem_minmax(0,1fr)]">
+        {/* Persistent sticky LEFT filter rail (desktop) — Direction A. */}
+        <aside
+          data-testid="search-filter-rail"
+          aria-label={t('filters.heading')}
+          className="hidden lg:block"
+        >
+          <div className="sticky top-[calc(var(--header-offset)+1.5rem)]">
+            <h2 className="mb-4 text-2xs font-medium uppercase tracking-[var(--tracking-eyebrow)] text-muted-foreground">
+              {t('filters.heading')}
+            </h2>
+            <FacetForm locale={locale} parsed={parsed} instanceId="rail" />
+          </div>
         </aside>
 
-        {/* Results grid */}
-        <section aria-label="Search results" className="lg:col-span-3">
+        {/* Dense A1-card results grid. */}
+        <section aria-label={t('results.sectionLabel')} className="min-w-0">
           {hits.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center">
+            <div className="flex flex-col items-center justify-center rounded-[var(--radius-card)] border border-dashed py-16 text-center">
               <p className="text-lg font-medium">{t('results.empty')}</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 {t('results.emptyHint')}
               </p>
             </div>
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-[var(--space-grid-gap)] sm:grid-cols-2 xl:grid-cols-3">
               {hits.map((hit) => (
                 <ExperienceCard
                   key={hit.id}

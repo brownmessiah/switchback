@@ -242,19 +242,51 @@
     "results": {
       "count": "{count} అనుభవ{count, plural, one {ం} other {ాలు}} కనుగొనబడ{count, plural, one {ింది} other {్డాయి}}",
       "empty": "అనుభవాలు కనుగొనబడలేదు",
-      "emptyHint": "మీ ఫిల్టర్‌లను సర్దుబాటు చేయండి లేదా వేరేదైనా శోధించండి."
+      "emptyHint": "మీ ఫిల్టర్‌లను సర్దుబాటు చేయండి లేదా వేరేదైనా శోధించండి.",
+      "sectionLabel": "శోధన ఫలితాలు"
     },
     "filters": {
+      "heading": "ఫిల్టర్‌లు",
+      "sheetDescription": "కార్యకలాపం, ప్రాంతం, క్రమం మరియు ధర ఆధారంగా అనుభవాలను సవరించండి.",
       "activity": "కార్యకలాపం",
       "allActivities": "అన్ని కార్యకలాపాలు",
+      "region": "ప్రాంతం",
+      "allRegions": "అన్ని ప్రాంతాలు",
       "sortBy": "క్రమపరచు",
       "relevance": "సంబంధం",
       "priceLowHigh": "ధర: తక్కువ నుండి ఎక్కువ",
       "priceHighLow": "ధర: ఎక్కువ నుండి తక్కువ",
       "newest": "కొత్తవి",
+      "priceRange": "ధర పరిధి",
       "minPrice": "కనీస ₹",
       "maxPrice": "గరిష్ట ₹",
-      "applyFilters": "ఫిల్టర్‌లు అన్వయించండి"
+      "anyPrice": "ఏదైనా",
+      "applyFilters": "ఫిల్టర్‌లు అన్వయించండి",
+      "clear": "ఫిల్టర్‌లను తొలగించు"
+    },
+    "activities": {
+      "rafting": "రాఫ్టింగ్",
+      "paragliding": "పారాగ్లైడింగ్",
+      "scubaDiving": "స్కూబా డైవింగ్",
+      "trekking": "ట్రెక్కింగ్",
+      "bungeeJumping": "బంజీ జంపింగ్",
+      "skiing": "స్కీయింగ్",
+      "kayaking": "కయాకింగ్",
+      "rockClimbing": "రాక్ క్లైంబింగ్",
+      "safari": "వన్యప్రాణి సఫారీ",
+      "camping": "క్యాంపింగ్"
+    },
+    "regions": {
+      "rishikesh": "రిషికేశ్",
+      "manali": "మనాలి",
+      "birBilling": "బీర్ బిల్లింగ్",
+      "goa": "గోవా",
+      "lehLadakh": "లేహ్-లడఖ్",
+      "kasol": "కసోల్",
+      "spiti": "స్పితి లోయ",
+      "andaman": "అండమాన్ దీవులు",
+      "lonavala": "లోనావాలా",
+      "auli": "ఔలి"
     }
   },
   "SignInPage": {

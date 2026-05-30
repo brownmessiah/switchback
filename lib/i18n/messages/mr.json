@@ -242,19 +242,51 @@
     "results": {
       "count": "{count} अनुभव सापडले",
       "empty": "कोणतेही अनुभव सापडले नाहीत",
-      "emptyHint": "तुमचे फिल्टर समायोजित करा किंवा काहीतरी वेगळे शोधा."
+      "emptyHint": "तुमचे फिल्टर समायोजित करा किंवा काहीतरी वेगळे शोधा.",
+      "sectionLabel": "शोध परिणाम"
     },
     "filters": {
+      "heading": "फिल्टर",
+      "sheetDescription": "क्रियाकलाप, प्रदेश, क्रम आणि किंमतीनुसार अनुभव परिष्कृत करा.",
       "activity": "कार्यक्रम",
       "allActivities": "सर्व कार्यक्रम",
+      "region": "प्रदेश",
+      "allRegions": "सर्व प्रदेश",
       "sortBy": "क्रमवारी",
       "relevance": "संबंधितता",
       "priceLowHigh": "किंमत: कमी ते जास्त",
       "priceHighLow": "किंमत: जास्त ते कमी",
       "newest": "नवीनतम",
+      "priceRange": "किंमत श्रेणी",
       "minPrice": "किमान ₹",
       "maxPrice": "कमाल ₹",
-      "applyFilters": "फिल्टर लागू करा"
+      "anyPrice": "कोणतीही",
+      "applyFilters": "फिल्टर लागू करा",
+      "clear": "फिल्टर साफ करा"
+    },
+    "activities": {
+      "rafting": "राफ्टिंग",
+      "paragliding": "पॅराग्लायडिंग",
+      "scubaDiving": "स्कूबा डायव्हिंग",
+      "trekking": "ट्रेकिंग",
+      "bungeeJumping": "बंजी जंपिंग",
+      "skiing": "स्कीइंग",
+      "kayaking": "कयाकिंग",
+      "rockClimbing": "रॉक क्लाइंबिंग",
+      "safari": "वन्यजीव सफारी",
+      "camping": "कॅम्पिंग"
+    },
+    "regions": {
+      "rishikesh": "ऋषिकेश",
+      "manali": "मनाली",
+      "birBilling": "बीर बिलिंग",
+      "goa": "गोवा",
+      "lehLadakh": "लेह-लडाख",
+      "kasol": "कसोल",
+      "spiti": "स्पीती खोरे",
+      "andaman": "अंदमान बेटे",
+      "lonavala": "लोणावळा",
+      "auli": "औली"
     }
   },
   "SignInPage": {

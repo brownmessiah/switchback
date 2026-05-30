@@ -242,19 +242,51 @@
     "results": {
       "count": "{count} ਅਨੁਭਵ ਮਿਲ{count, plural, one {ਿਆ} other {ੇ}}",
       "empty": "ਕੋਈ ਅਨੁਭਵ ਨਹੀਂ ਮਿਲੇ",
-      "emptyHint": "ਆਪਣੇ ਫ਼ਿਲਟਰ ਠੀਕ ਕਰੋ ਜਾਂ ਕੁਝ ਹੋਰ ਖੋਜੋ।"
+      "emptyHint": "ਆਪਣੇ ਫ਼ਿਲਟਰ ਠੀਕ ਕਰੋ ਜਾਂ ਕੁਝ ਹੋਰ ਖੋਜੋ।",
+      "sectionLabel": "ਖੋਜ ਨਤੀਜੇ"
     },
     "filters": {
+      "heading": "ਫਿਲਟਰ",
+      "sheetDescription": "ਗਤੀਵਿਧੀ, ਖੇਤਰ, ਕ੍ਰਮ ਅਤੇ ਕੀਮਤ ਅਨੁਸਾਰ ਅਨੁਭਵ ਸੁਧਾਰੋ।",
       "activity": "ਗਤੀਵਿਧੀ",
       "allActivities": "ਸਾਰੀਆਂ ਗਤੀਵਿਧੀਆਂ",
+      "region": "ਖੇਤਰ",
+      "allRegions": "ਸਾਰੇ ਖੇਤਰ",
       "sortBy": "ਕ੍ਰਮਬੱਧ",
       "relevance": "ਸੰਬੰਧਤਾ",
       "priceLowHigh": "ਕੀਮਤ: ਘੱਟ ਤੋਂ ਵੱਧ",
       "priceHighLow": "ਕੀਮਤ: ਵੱਧ ਤੋਂ ਘੱਟ",
       "newest": "ਨਵੀਆਂ",
+      "priceRange": "ਕੀਮਤ ਸੀਮਾ",
       "minPrice": "ਘੱਟੋ-ਘੱਟ ₹",
       "maxPrice": "ਵੱਧ ਤੋਂ ਵੱਧ ₹",
-      "applyFilters": "ਫ਼ਿਲਟਰ ਲਾਗੂ ਕਰੋ"
+      "anyPrice": "ਕੋਈ ਵੀ",
+      "applyFilters": "ਫ਼ਿਲਟਰ ਲਾਗੂ ਕਰੋ",
+      "clear": "ਫਿਲਟਰ ਸਾਫ਼ ਕਰੋ"
+    },
+    "activities": {
+      "rafting": "ਰਾਫਟਿੰਗ",
+      "paragliding": "ਪੈਰਾਗਲਾਈਡਿੰਗ",
+      "scubaDiving": "ਸਕੂਬਾ ਡਾਈਵਿੰਗ",
+      "trekking": "ਟ੍ਰੈਕਿੰਗ",
+      "bungeeJumping": "ਬੰਜੀ ਜੰਪਿੰਗ",
+      "skiing": "ਸਕੀਇੰਗ",
+      "kayaking": "ਕਯਾਕਿੰਗ",
+      "rockClimbing": "ਰੌਕ ਕਲਾਈਂਬਿੰਗ",
+      "safari": "ਜੰਗਲੀ ਜੀਵ ਸਫਾਰੀ",
+      "camping": "ਕੈਂਪਿੰਗ"
+    },
+    "regions": {
+      "rishikesh": "ਰਿਸ਼ੀਕੇਸ਼",
+      "manali": "ਮਨਾਲੀ",
+      "birBilling": "ਬੀੜ ਬਿਲਿੰਗ",
+      "goa": "ਗੋਆ",
+      "lehLadakh": "ਲੇਹ-ਲੱਦਾਖ",
+      "kasol": "ਕਸੋਲ",
+      "spiti": "ਸਪੀਤੀ ਘਾਟੀ",
+      "andaman": "ਅੰਡੇਮਾਨ ਟਾਪੂ",
+      "lonavala": "ਲੋਨਾਵਾਲਾ",
+      "auli": "ਔਲੀ"
     }
   },
   "SignInPage": {

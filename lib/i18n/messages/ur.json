@@ -242,19 +242,51 @@
     "results": {
       "count": "{count} تجرب{count, plural, one {ہ} other {ات}} مل{count, plural, one {ا} other {ے}}",
       "empty": "کوئی تجربات نہیں ملے",
-      "emptyHint": "اپنے فلٹرز میں تبدیلی کریں یا کچھ اور تلاش کریں۔"
+      "emptyHint": "اپنے فلٹرز میں تبدیلی کریں یا کچھ اور تلاش کریں۔",
+      "sectionLabel": "تلاش کے نتائج"
     },
     "filters": {
+      "heading": "فلٹرز",
+      "sheetDescription": "سرگرمی، علاقہ، ترتیب اور قیمت کے مطابق تجربات کو بہتر بنائیں۔",
       "activity": "سرگرمی",
       "allActivities": "تمام سرگرمیاں",
+      "region": "علاقہ",
+      "allRegions": "تمام علاقے",
       "sortBy": "ترتیب",
       "relevance": "مطابقت",
       "priceLowHigh": "قیمت: کم سے زیادہ",
       "priceHighLow": "قیمت: زیادہ سے کم",
       "newest": "نئے ترین",
+      "priceRange": "قیمت کی حد",
       "minPrice": "کم از کم ₹",
       "maxPrice": "زیادہ سے زیادہ ₹",
-      "applyFilters": "فلٹرز لاگو کریں"
+      "anyPrice": "کوئی بھی",
+      "applyFilters": "فلٹرز لاگو کریں",
+      "clear": "فلٹرز صاف کریں"
+    },
+    "activities": {
+      "rafting": "ریفٹنگ",
+      "paragliding": "پیراگلائیڈنگ",
+      "scubaDiving": "اسکوبا ڈائیونگ",
+      "trekking": "ٹریکنگ",
+      "bungeeJumping": "بنجی جمپنگ",
+      "skiing": "اسکیئنگ",
+      "kayaking": "کیاکنگ",
+      "rockClimbing": "راک کلائمبنگ",
+      "safari": "جنگلی حیات سفاری",
+      "camping": "کیمپنگ"
+    },
+    "regions": {
+      "rishikesh": "رشی کیش",
+      "manali": "منالی",
+      "birBilling": "بیر بلنگ",
+      "goa": "گوا",
+      "lehLadakh": "لیہ-لداخ",
+      "kasol": "کسول",
+      "spiti": "اسپیتی وادی",
+      "andaman": "انڈمان جزائر",
+      "lonavala": "لوناولا",
+      "auli": "اولی"
     }
   },
   "SignInPage": {

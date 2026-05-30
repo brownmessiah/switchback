@@ -242,19 +242,51 @@
     "results": {
       "count": "{count} अनुभव मिले",
       "empty": "कोई अनुभव नहीं मिला",
-      "emptyHint": "अपने फ़िल्टर समायोजित करें या कुछ और खोजें।"
+      "emptyHint": "अपने फ़िल्टर समायोजित करें या कुछ और खोजें।",
+      "sectionLabel": "खोज परिणाम"
     },
     "filters": {
+      "heading": "फ़िल्टर",
+      "sheetDescription": "गतिविधि, क्षेत्र, क्रम और मूल्य के अनुसार अनुभव परिष्कृत करें।",
       "activity": "गतिविधि",
       "allActivities": "सभी गतिविधियाँ",
+      "region": "क्षेत्र",
+      "allRegions": "सभी क्षेत्र",
       "sortBy": "क्रमित करें",
       "relevance": "प्रासंगिकता",
       "priceLowHigh": "मूल्य: कम से ज़्यादा",
       "priceHighLow": "मूल्य: ज़्यादा से कम",
       "newest": "नवीनतम",
+      "priceRange": "मूल्य सीमा",
       "minPrice": "न्यूनतम ₹",
       "maxPrice": "अधिकतम ₹",
-      "applyFilters": "फ़िल्टर लागू करें"
+      "anyPrice": "कोई भी",
+      "applyFilters": "फ़िल्टर लागू करें",
+      "clear": "फ़िल्टर हटाएँ"
+    },
+    "activities": {
+      "rafting": "राफ्टिंग",
+      "paragliding": "पैराग्लाइडिंग",
+      "scubaDiving": "स्कूबा डाइविंग",
+      "trekking": "ट्रेकिंग",
+      "bungeeJumping": "बंजी जंपिंग",
+      "skiing": "स्कीइंग",
+      "kayaking": "कयाकिंग",
+      "rockClimbing": "रॉक क्लाइम्बिंग",
+      "safari": "वन्यजीव सफारी",
+      "camping": "कैंपिंग"
+    },
+    "regions": {
+      "rishikesh": "ऋषिकेश",
+      "manali": "मनाली",
+      "birBilling": "बीर बिलिंग",
+      "goa": "गोवा",
+      "lehLadakh": "लेह-लद्दाख",
+      "kasol": "कसोल",
+      "spiti": "स्पीति घाटी",
+      "andaman": "अंडमान द्वीप",
+      "lonavala": "लोनावला",
+      "auli": "औली"
     }
   },
   "SignInPage": {

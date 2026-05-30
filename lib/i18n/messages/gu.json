@@ -242,19 +242,51 @@
     "results": {
       "count": "{count} અનુભવ{count, plural, one {} other {ો}} મળ્યા",
       "empty": "કોઈ અનુભવ મળ્યા નથી",
-      "emptyHint": "તમારા ફિલ્ટર્સ બદલો અથવા કંઈક બીજું શોધો."
+      "emptyHint": "તમારા ફિલ્ટર્સ બદલો અથવા કંઈક બીજું શોધો.",
+      "sectionLabel": "શોધ પરિણામો"
     },
     "filters": {
+      "heading": "ફિલ્ટર",
+      "sheetDescription": "પ્રવૃત્તિ, પ્રદેશ, ક્રમ અને કિંમત પ્રમાણે અનુભવોને શુદ્ધ કરો.",
       "activity": "પ્રવૃત્તિ",
       "allActivities": "બધી પ્રવૃત્તિઓ",
+      "region": "પ્રદેશ",
+      "allRegions": "બધા પ્રદેશ",
       "sortBy": "ક્રમ",
       "relevance": "સુસંગતતા",
       "priceLowHigh": "ભાવ: ઓછાથી વધુ",
       "priceHighLow": "ભાવ: વધુથી ઓછા",
       "newest": "નવીનતમ",
+      "priceRange": "કિંમત શ્રેણી",
       "minPrice": "ન્યૂનતમ ₹",
       "maxPrice": "મહત્તમ ₹",
-      "applyFilters": "ફિલ્ટર્સ લાગુ કરો"
+      "anyPrice": "કોઈપણ",
+      "applyFilters": "ફિલ્ટર્સ લાગુ કરો",
+      "clear": "ફિલ્ટર સાફ કરો"
+    },
+    "activities": {
+      "rafting": "રાફ્ટિંગ",
+      "paragliding": "પૅરાગ્લાઇડિંગ",
+      "scubaDiving": "સ્કૂબા ડાઇવિંગ",
+      "trekking": "ટ્રેકિંગ",
+      "bungeeJumping": "બંજી જમ્પિંગ",
+      "skiing": "સ્કીઇંગ",
+      "kayaking": "કયાકિંગ",
+      "rockClimbing": "રૉક ક્લાઇમ્બિંગ",
+      "safari": "વન્યજીવ સફારી",
+      "camping": "કૅમ્પિંગ"
+    },
+    "regions": {
+      "rishikesh": "ઋષિકેશ",
+      "manali": "મનાલી",
+      "birBilling": "બીર બિલિંગ",
+      "goa": "ગોવા",
+      "lehLadakh": "લેહ-લદ્દાખ",
+      "kasol": "કસોલ",
+      "spiti": "સ્પીતિ ખીણ",
+      "andaman": "આંદામાન ટાપુઓ",
+      "lonavala": "લોનાવાલા",
+      "auli": "ઔલી"
     }
   },
   "SignInPage": {

@@ -242,19 +242,51 @@
     "results": {
       "count": "{count, plural, one {# ଅନୁଭୂତି ମିଳିଲା} other {# ଅନୁଭୂତି ମିଳିଲା}}",
       "empty": "କୌଣସି ଅନୁଭୂତି ମିଳିଲା ନାହିଁ",
-      "emptyHint": "ଆପଣଙ୍କ ଫିଲ୍ଟର ବଦଳାନ୍ତୁ କିମ୍ବା ଅନ୍ୟ କିଛି ଖୋଜନ୍ତୁ।"
+      "emptyHint": "ଆପଣଙ୍କ ଫିଲ୍ଟର ବଦଳାନ୍ତୁ କିମ୍ବା ଅନ୍ୟ କିଛି ଖୋଜନ୍ତୁ।",
+      "sectionLabel": "ସନ୍ଧାନ ଫଳାଫଳ"
     },
     "filters": {
+      "heading": "ଫିଲ୍ଟର",
+      "sheetDescription": "କାର୍ଯ୍ୟକଳାପ, ଅଞ୍ଚଳ, କ୍ରମ ଓ ମୂଲ୍ୟ ଅନୁସାରେ ଅନୁଭବ ପରିଷ୍କାର କରନ୍ତୁ।",
       "activity": "କାର୍ଯ୍ୟକଳାପ",
       "allActivities": "ସମସ୍ତ କାର୍ଯ୍ୟକଳାପ",
+      "region": "ଅଞ୍ଚଳ",
+      "allRegions": "ସମସ୍ତ ଅଞ୍ଚଳ",
       "sortBy": "ସଜାନ୍ତୁ",
       "relevance": "ପ୍ରାସଙ୍ଗିକତା",
       "priceLowHigh": "ମୂଲ୍ୟ: କମରୁ ଅଧିକ",
       "priceHighLow": "ମୂଲ୍ୟ: ଅଧିକରୁ କମ",
       "newest": "ନୂଆ",
+      "priceRange": "ମୂଲ୍ୟ ପରିସର",
       "minPrice": "ସର୍ବନିମ୍ନ ₹",
       "maxPrice": "ସର୍ବାଧିକ ₹",
-      "applyFilters": "ଫିଲ୍ଟର ଲାଗୁ କରନ୍ତୁ"
+      "anyPrice": "ଯେକୌଣସି",
+      "applyFilters": "ଫିଲ୍ଟର ଲାଗୁ କରନ୍ତୁ",
+      "clear": "ଫିଲ୍ଟର ସଫା କରନ୍ତୁ"
+    },
+    "activities": {
+      "rafting": "ରାଫ୍ଟିଂ",
+      "paragliding": "ପାରାଗ୍ଲାଇଡିଂ",
+      "scubaDiving": "ସ୍କୁବା ଡାଇଭିଂ",
+      "trekking": "ଟ୍ରେକିଂ",
+      "bungeeJumping": "ବଞ୍ଜି ଜମ୍ପିଂ",
+      "skiing": "ସ୍କିଇଂ",
+      "kayaking": "କୟାକିଂ",
+      "rockClimbing": "ରକ କ୍ଲାଇମ୍ବିଂ",
+      "safari": "ବନ୍ୟଜନ୍ତୁ ସଫାରି",
+      "camping": "କ୍ୟାମ୍ପିଂ"
+    },
+    "regions": {
+      "rishikesh": "ଋଷିକେଶ",
+      "manali": "ମନାଲି",
+      "birBilling": "ବୀର ବିଲିଂ",
+      "goa": "ଗୋଆ",
+      "lehLadakh": "ଲେହ-ଲଦାଖ",
+      "kasol": "କାସୋଲ",
+      "spiti": "ସ୍ପିତି ଉପତ୍ୟକା",
+      "andaman": "ଆଣ୍ଡାମାନ ଦ୍ୱୀପପୁଞ୍ଜ",
+      "lonavala": "ଲୋନାଭାଲା",
+      "auli": "ଆଉଲି"
     }
   },
   "SignInPage": {

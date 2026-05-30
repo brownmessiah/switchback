@@ -242,19 +242,51 @@
     "results": {
       "count": "{count} ಅನುಭವ{count, plural, one {} other {ಗಳು}} ಕಂಡುಬಂದವು",
       "empty": "ಯಾವುದೇ ಅನುಭವಗಳು ಕಂಡುಬಂದಿಲ್ಲ",
-      "emptyHint": "ನಿಮ್ಮ ಫಿಲ್ಟರ್‌ಗಳನ್ನು ಹೊಂದಿಸಿ ಅಥವಾ ಬೇರೆ ಏನಾದರೂ ಹುಡುಕಿ."
+      "emptyHint": "ನಿಮ್ಮ ಫಿಲ್ಟರ್‌ಗಳನ್ನು ಹೊಂದಿಸಿ ಅಥವಾ ಬೇರೆ ಏನಾದರೂ ಹುಡುಕಿ.",
+      "sectionLabel": "ಹುಡುಕಾಟ ಫಲಿತಾಂಶಗಳು"
     },
     "filters": {
+      "heading": "ಫಿಲ್ಟರ್‌ಗಳು",
+      "sheetDescription": "ಚಟುವಟಿಕೆ, ಪ್ರದೇಶ, ಕ್ರಮ ಮತ್ತು ಬೆಲೆಯ ಆಧಾರದ ಮೇಲೆ ಅನುಭವಗಳನ್ನು ಪರಿಷ್ಕರಿಸಿ.",
       "activity": "ಚಟುವಟಿಕೆ",
       "allActivities": "ಎಲ್ಲಾ ಚಟುವಟಿಕೆಗಳು",
+      "region": "ಪ್ರದೇಶ",
+      "allRegions": "ಎಲ್ಲಾ ಪ್ರದೇಶಗಳು",
       "sortBy": "ವಿಂಗಡಿಸಿ",
       "relevance": "ಸಂಬಂಧಿತ",
       "priceLowHigh": "ಬೆಲೆ: ಕಡಿಮೆಯಿಂದ ಹೆಚ್ಚಿಗೆ",
       "priceHighLow": "ಬೆಲೆ: ಹೆಚ್ಚಿನಿಂದ ಕಡಿಮೆಗೆ",
       "newest": "ಹೊಸ",
+      "priceRange": "ಬೆಲೆ ಶ್ರೇಣಿ",
       "minPrice": "ಕನಿಷ್ಠ ₹",
       "maxPrice": "ಗರಿಷ್ಠ ₹",
-      "applyFilters": "ಫಿಲ್ಟರ್ ಅನ್ವಯಿಸಿ"
+      "anyPrice": "ಯಾವುದಾದರೂ",
+      "applyFilters": "ಫಿಲ್ಟರ್ ಅನ್ವಯಿಸಿ",
+      "clear": "ಫಿಲ್ಟರ್‌ಗಳನ್ನು ತೆರವುಗೊಳಿಸಿ"
+    },
+    "activities": {
+      "rafting": "ರಾಫ್ಟಿಂಗ್",
+      "paragliding": "ಪ್ಯಾರಾಗ್ಲೈಡಿಂಗ್",
+      "scubaDiving": "ಸ್ಕೂಬಾ ಡೈವಿಂಗ್",
+      "trekking": "ಟ್ರೆಕ್ಕಿಂಗ್",
+      "bungeeJumping": "ಬಂಜಿ ಜಂಪಿಂಗ್",
+      "skiing": "ಸ್ಕೀಯಿಂಗ್",
+      "kayaking": "ಕಯಾಕಿಂಗ್",
+      "rockClimbing": "ರಾಕ್ ಕ್ಲೈಂಬಿಂಗ್",
+      "safari": "ವನ್ಯಜೀವಿ ಸಫಾರಿ",
+      "camping": "ಕ್ಯಾಂಪಿಂಗ್"
+    },
+    "regions": {
+      "rishikesh": "ಋಷಿಕೇಶ",
+      "manali": "ಮನಾಲಿ",
+      "birBilling": "ಬೀರ್ ಬಿಲ್ಲಿಂಗ್",
+      "goa": "ಗೋವಾ",
+      "lehLadakh": "ಲೇಹ್-ಲಡಾಖ್",
+      "kasol": "ಕಸೋಲ್",
+      "spiti": "ಸ್ಪಿತಿ ಕಣಿವೆ",
+      "andaman": "ಅಂಡಮಾನ್ ದ್ವೀಪಗಳು",
+      "lonavala": "ಲೋನಾವಾಲಾ",
+      "auli": "ಔಲಿ"
     }
   },
   "SignInPage": {

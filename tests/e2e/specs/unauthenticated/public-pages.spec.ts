@@ -407,6 +407,33 @@ test.describe('Search bare', () => {
       fullPage: true,
     })
   })
+
+  // Direction A "Klook-parity rail": the desktop layout presents a persistent
+  // LEFT filter rail holding the real, backend-supported facets — activity,
+  // sort, price range, and a Region facet. Asserts the rail is present (SSR,
+  // no JS needed) and carries each facet control by stable testid.
+  test('persistent left filter rail exposes activity, sort, price, and region facets', async ({
+    page,
+  }) => {
+    await page.goto('/search')
+
+    const rail = page.getByTestId('search-filter-rail')
+    await expect(rail).toBeVisible()
+
+    // Every backend-supported facet is present in the rail.
+    await expect(rail.getByTestId('facet-activity')).toBeVisible()
+    await expect(rail.getByTestId('facet-region')).toBeVisible()
+    await expect(rail.getByTestId('facet-sort')).toBeVisible()
+    await expect(rail.getByTestId('facet-minPrice')).toBeVisible()
+    await expect(rail.getByTestId('facet-maxPrice')).toBeVisible()
+
+    // The rail submits via a native GET form whose action is the bare /search
+    // (so the searchParam-name contract and robots/canonical rules hold).
+    await expect(rail.locator('form[method="get"][action="/search"]')).toHaveCount(1)
+
+    // Mobile "Filters" trigger exists (opens the Sheet on small screens).
+    await expect(page.getByTestId('search-filters-trigger')).toHaveCount(1)
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -461,6 +488,44 @@ test.describe('Search filtered', () => {
     await expect(canonical).toHaveAttribute('href', /\/search$/)
     const canonicalHref = await canonical.getAttribute('href')
     expect(canonicalHref).not.toContain('?')
+  })
+
+  // The NEW Region facet must ACTUALLY filter (not a cosmetic control). The
+  // Meili index supports `regionSlug` filtering and the page already parses
+  // `region`; this exercises the end-to-end constraint. Stable signal: every
+  // result card on /search?region=goa links to a Goa Experience
+  // (/experience/goa-*), whereas the bare /search mixes regions.
+  test('region facet constrains results: ?region=goa yields only Goa experiences', async ({
+    page,
+  }) => {
+    // Bare search mixes regions — establish that non-Goa results exist.
+    await page.goto('/search')
+    const bareHrefs = await page
+      .locator('main a[href^="/experience/"]')
+      .evaluateAll((els) =>
+        els.map((e) => (e as HTMLAnchorElement).getAttribute('href') ?? ''),
+      )
+    expect(bareHrefs.length).toBeGreaterThan(0)
+    expect(bareHrefs.some((h) => !h.startsWith('/experience/goa-'))).toBe(true)
+
+    // Filtered by region=goa: every result is a Goa Experience.
+    await page.goto('/search?region=goa')
+    const goaHrefs = await page
+      .locator('main a[href^="/experience/"]')
+      .evaluateAll((els) =>
+        els.map((e) => (e as HTMLAnchorElement).getAttribute('href') ?? ''),
+      )
+    expect(goaHrefs.length).toBeGreaterThan(0)
+    for (const href of goaHrefs) {
+      expect(
+        href.startsWith('/experience/goa-'),
+        `region=goa returned a non-Goa result: ${href}`,
+      ).toBe(true)
+    }
+
+    // The region facet renders its selected value (Goa) so the user can see
+    // the active constraint.
+    await expect(page.getByTestId('facet-region')).toContainText(/goa/i)
   })
 })
 

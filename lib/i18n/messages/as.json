@@ -242,19 +242,51 @@
     "results": {
       "count": "{count, plural, one {# অভিজ্ঞতা পোৱা গ'ল} other {# অভিজ্ঞতা পোৱা গ'ল}}",
       "empty": "কোনো অভিজ্ঞতা পোৱা নগ'ল",
-      "emptyHint": "আপোনাৰ ফিল্টাৰ সলনি কৰক বা আন কিবা সন্ধান কৰক।"
+      "emptyHint": "আপোনাৰ ফিল্টাৰ সলনি কৰক বা আন কিবা সন্ধান কৰক।",
+      "sectionLabel": "সন্ধান ফলাফল"
     },
     "filters": {
+      "heading": "ফিল্টাৰ",
+      "sheetDescription": "কাৰ্যকলাপ, অঞ্চল, ক্ৰম আৰু মূল্য অনুসৰি অভিজ্ঞতা পৰিশোধন কৰক।",
       "activity": "কাৰ্যকলাপ",
       "allActivities": "সকলো কাৰ্যকলাপ",
+      "region": "অঞ্চল",
+      "allRegions": "সকলো অঞ্চল",
       "sortBy": "ক্ৰমবদ্ধ কৰক",
       "relevance": "প্ৰাসংগিকতা",
       "priceLowHigh": "মূল্য: কমৰ পৰা বেছিলৈ",
       "priceHighLow": "মূল্য: বেছিৰ পৰা কমলৈ",
       "newest": "নতুন",
+      "priceRange": "মূল্যৰ পৰিসৰ",
       "minPrice": "নূন্যতম ₹",
       "maxPrice": "সৰ্বাধিক ₹",
-      "applyFilters": "ফিল্টাৰ প্ৰয়োগ কৰক"
+      "anyPrice": "যিকোনো",
+      "applyFilters": "ফিল্টাৰ প্ৰয়োগ কৰক",
+      "clear": "ফিল্টাৰ আঁতৰাওক"
+    },
+    "activities": {
+      "rafting": "ৰাফ্টিং",
+      "paragliding": "পেৰাগ্লাইডিং",
+      "scubaDiving": "স্কুবা ডাইভিং",
+      "trekking": "ট্ৰেকিং",
+      "bungeeJumping": "বাঞ্জি জাম্পিং",
+      "skiing": "স্কীয়িং",
+      "kayaking": "কায়াকিং",
+      "rockClimbing": "ৰক ক্লাইম্বিং",
+      "safari": "বন্যপ্ৰাণী চাফাৰি",
+      "camping": "কেম্পিং"
+    },
+    "regions": {
+      "rishikesh": "ঋষিকেশ",
+      "manali": "মানালী",
+      "birBilling": "বীৰ বিলিং",
+      "goa": "গোৱা",
+      "lehLadakh": "লেহ-লাদাখ",
+      "kasol": "কাছোল",
+      "spiti": "স্পিতি উপত্যকা",
+      "andaman": "আন্দামান দ্বীপপুঞ্জ",
+      "lonavala": "লোনাৱালা",
+      "auli": "আউলি"
     }
   },
   "SignInPage": {

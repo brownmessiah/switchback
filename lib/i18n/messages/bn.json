@@ -242,19 +242,51 @@
     "results": {
       "count": "{count} টি অভিজ্ঞতা পাওয়া গেছে",
       "empty": "কোনো অভিজ্ঞতা পাওয়া যায়নি",
-      "emptyHint": "আপনার ফিল্টার সামঞ্জস্য করুন বা অন্য কিছু খুঁজুন।"
+      "emptyHint": "আপনার ফিল্টার সামঞ্জস্য করুন বা অন্য কিছু খুঁজুন।",
+      "sectionLabel": "অনুসন্ধানের ফলাফল"
     },
     "filters": {
+      "heading": "ফিল্টার",
+      "sheetDescription": "কার্যকলাপ, অঞ্চল, সাজানোর ক্রম ও মূল্য অনুসারে অভিজ্ঞতা পরিমার্জন করুন।",
       "activity": "কার্যকলাপ",
       "allActivities": "সব কার্যকলাপ",
+      "region": "অঞ্চল",
+      "allRegions": "সব অঞ্চল",
       "sortBy": "সাজান",
       "relevance": "প্রাসঙ্গিকতা",
       "priceLowHigh": "মূল্য: কম থেকে বেশি",
       "priceHighLow": "মূল্য: বেশি থেকে কম",
       "newest": "নতুন",
+      "priceRange": "মূল্যের পরিসর",
       "minPrice": "ন্যূনতম ₹",
       "maxPrice": "সর্বোচ্চ ₹",
-      "applyFilters": "ফিল্টার প্রয়োগ করুন"
+      "anyPrice": "যেকোনো",
+      "applyFilters": "ফিল্টার প্রয়োগ করুন",
+      "clear": "ফিল্টার মুছুন"
+    },
+    "activities": {
+      "rafting": "র‍্যাফটিং",
+      "paragliding": "প্যারাগ্লাইডিং",
+      "scubaDiving": "স্কুবা ডাইভিং",
+      "trekking": "ট্রেকিং",
+      "bungeeJumping": "বাঞ্জি জাম্পিং",
+      "skiing": "স্কিইং",
+      "kayaking": "কায়াকিং",
+      "rockClimbing": "রক ক্লাইম্বিং",
+      "safari": "বন্যপ্রাণী সাফারি",
+      "camping": "ক্যাম্পিং"
+    },
+    "regions": {
+      "rishikesh": "ঋষিকেশ",
+      "manali": "মানালি",
+      "birBilling": "বীর বিলিং",
+      "goa": "গোয়া",
+      "lehLadakh": "লেহ-লাদাখ",
+      "kasol": "কাসোল",
+      "spiti": "স্পিতি উপত্যকা",
+      "andaman": "আন্দামান দ্বীপপুঞ্জ",
+      "lonavala": "লোনাভালা",
+      "auli": "আউলি"
     }
   },
   "SignInPage": {

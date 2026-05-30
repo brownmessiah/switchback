@@ -2,7 +2,6 @@ import type { ReactElement } from 'react'
 
 import { and, asc, desc, eq, gte, lte, sql } from 'drizzle-orm'
 
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -26,6 +25,8 @@ import { db } from '@/db/client'
 import { experiences } from '@/db/schema/experiences'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 
+import { AdminStatusBadge } from '../_components/admin-status-badge'
+import { formatRupees } from '../_components/money'
 import { ExperienceActionsCell } from './experience-actions-cell'
 
 // ── Filter constants ────────────────────────────────────────────────
@@ -39,12 +40,14 @@ const STATUS_OPTIONS = [
   { value: 'archived', label: 'Archived' },
 ] as const
 
-const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
-  draft: 'outline',
-  pending_review: 'secondary',
-  published: 'default',
-  paused: 'secondary',
-  archived: 'destructive',
+// Human labels for the semantic AdminStatusBadge (color + icon supplied by the
+// shared STATUS_MAP — DESIGN.md §4 A3 / §5). Admin is English-only (no i18n).
+const STATUS_LABEL: Record<string, string> = {
+  draft: 'Draft',
+  pending_review: 'Pending review',
+  published: 'Published',
+  paused: 'Paused',
+  archived: 'Archived',
 }
 
 // ── Param parsing ───────────────────────────────────────────────────
@@ -292,16 +295,19 @@ export default async function AdminExperiencesPage({
       <Card>
         <CardContent className="p-0">
           <Table>
+            <caption className="sr-only">Experience moderation queue</caption>
             <TableHeader>
               <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Vendor</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Region</TableHead>
-                <TableHead>Price (1-2)</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead scope="col">Title</TableHead>
+                <TableHead scope="col">Vendor</TableHead>
+                <TableHead scope="col">Status</TableHead>
+                <TableHead scope="col">Category</TableHead>
+                <TableHead scope="col">Region</TableHead>
+                <TableHead scope="col" className="text-right">
+                  Price (1-2)
+                </TableHead>
+                <TableHead scope="col">Created</TableHead>
+                <TableHead scope="col">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -328,12 +334,10 @@ export default async function AdminExperiencesPage({
                     {exp.vendorBusinessName}
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={STATUS_VARIANTS[exp.status] ?? 'outline'}
-                      className="text-xs capitalize"
-                    >
-                      {exp.status.replaceAll('_', ' ')}
-                    </Badge>
+                    <AdminStatusBadge
+                      status={exp.status}
+                      label={STATUS_LABEL[exp.status] ?? exp.status.replaceAll('_', ' ')}
+                    />
                   </TableCell>
                   <TableCell className="text-sm capitalize">
                     {exp.activitySlug.replaceAll('_', ' ')}
@@ -341,8 +345,8 @@ export default async function AdminExperiencesPage({
                   <TableCell className="text-sm">
                     {exp.regionSlug.replaceAll('-', ' ')}
                   </TableCell>
-                  <TableCell className="text-sm">
-                    ₹{Number(exp.pricePerPerson_1_2).toLocaleString('en-IN')}
+                  <TableCell className="text-right text-sm font-medium tabular-nums">
+                    {formatRupees(exp.pricePerPerson_1_2)}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {new Date(exp.createdAt).toLocaleDateString('en-IN', {

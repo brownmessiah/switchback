@@ -71,4 +71,60 @@ describe('AdminStatusBadge (status + icon, never color alone)', () => {
       cleanup()
     }
   })
+
+  // ── Vendor KYC tiers (ADR-0007 / DESIGN.md §2.1) — Identity & Business are
+  // "verified Vendor" → success dot; phone is signup-only (cannot publish) →
+  // a neutral, un-verified token. Reused by the vendors-list (#87) A3 surface.
+  it('maps the identity KYC tier to the success token + an icon', () => {
+    render(<AdminStatusBadge status="identity" label="Identity verified" />)
+    const badge = screen.getByText('Identity verified').closest('[data-slot="badge"]')
+    expect(badge!.className).toContain('text-success')
+    expect(badge!.querySelector('svg')).not.toBeNull()
+  })
+
+  it('maps the business KYC tier to the success token + an icon', () => {
+    render(<AdminStatusBadge status="business" label="Business verified" />)
+    const badge = screen.getByText('Business verified').closest('[data-slot="badge"]')
+    expect(badge!.className).toContain('text-success')
+    expect(badge!.querySelector('svg')).not.toBeNull()
+  })
+
+  it('maps the phone KYC tier (signup-only, unverified) to a neutral token + an icon', () => {
+    render(<AdminStatusBadge status="phone" label="Phone verified" />)
+    const badge = screen.getByText('Phone verified').closest('[data-slot="badge"]')
+    // not a success/verified token — phone-tier cannot publish (ADR-0007)
+    expect(badge!.className).not.toContain('text-success')
+    expect(badge!.querySelector('svg')).not.toBeNull()
+  })
+
+  // ── Experience moderation statuses (ADR-0007 / ADR-0013 / DESIGN.md §4 A3) —
+  // each status is color + icon, never color alone. Reused by the
+  // experience-moderation (#88) A3 surface.
+  it('maps a pending_review experience to the warning token + an icon', () => {
+    render(<AdminStatusBadge status="pending_review" label="Pending review" />)
+    const badge = screen.getByText('Pending review').closest('[data-slot="badge"]')
+    expect(badge!.className).toContain('text-warning')
+    expect(badge!.querySelector('svg')).not.toBeNull()
+  })
+
+  it('maps a published experience to the success token + an icon', () => {
+    render(<AdminStatusBadge status="published" label="Published" />)
+    const badge = screen.getByText('Published').closest('[data-slot="badge"]')
+    expect(badge!.className).toContain('text-success')
+    expect(badge!.querySelector('svg')).not.toBeNull()
+  })
+
+  it('maps a paused experience to the warning token + an icon', () => {
+    render(<AdminStatusBadge status="paused" label="Paused" />)
+    const badge = screen.getByText('Paused').closest('[data-slot="badge"]')
+    expect(badge!.className).toContain('text-warning')
+    expect(badge!.querySelector('svg')).not.toBeNull()
+  })
+
+  it('maps an archived experience to the destructive token + an icon', () => {
+    render(<AdminStatusBadge status="archived" label="Archived" />)
+    const badge = screen.getByText('Archived').closest('[data-slot="badge"]')
+    expect(badge!.className).toContain('text-destructive')
+    expect(badge!.querySelector('svg')).not.toBeNull()
+  })
 })

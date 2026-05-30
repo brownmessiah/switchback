@@ -309,7 +309,13 @@ test.describe('Admin experience moderation (#23)', () => {
 
     const row = page.locator('tr').filter({ hasText: 'Approve me — Within-Cap Pending' })
     await expect(row).toBeVisible()
+    // Approve is consequential (publishes + indexes, ADR-0013) so it is gated
+    // behind a confirm Dialog (#88) — click through the confirm to fire it.
     await row.locator('button').filter({ hasText: 'Approve' }).click()
+    await page
+      .getByTestId('approve-confirm')
+      .getByRole('button', { name: 'Approve & publish' })
+      .click()
 
     // After the server action + revalidation the now-published row drops OUT
     // of the pending_review-filtered list.
@@ -356,7 +362,13 @@ test.describe('Admin experience moderation (#23)', () => {
 
     const row = page.locator('tr').filter({ hasText: 'Over-Cap Pending' })
     await expect(row).toBeVisible()
+    // Confirm through the approve Dialog (#88); the ADR-0007 tier-cap guard
+    // then rejects on the server and the inline cell surfaces the reason.
     await row.locator('button').filter({ hasText: 'Approve' }).click()
+    await page
+      .getByTestId('approve-confirm')
+      .getByRole('button', { name: 'Approve & publish' })
+      .click()
 
     // The inline cell surfaces the guard's rejection reason; the badge never
     // flips to published.
@@ -444,6 +456,10 @@ test.describe('Admin experience moderation (#23)', () => {
     const pendingRow = page.locator('tr').filter({ hasText: 'Pause me — Pending' })
     await expect(pendingRow).toBeVisible()
     await pendingRow.locator('button').filter({ hasText: 'Approve' }).click()
+    await page
+      .getByTestId('approve-confirm')
+      .getByRole('button', { name: 'Approve & publish' })
+      .click()
     // Drops out of the pending_review filter once published.
     await expect(pendingRow).toHaveCount(0, { timeout: 15_000 })
 
@@ -459,7 +475,13 @@ test.describe('Admin experience moderation (#23)', () => {
     await page.goto('/admin/experiences?status=published')
     const publishedRow = page.locator('tr').filter({ hasText: 'Pause me — Pending' })
     await expect(publishedRow).toBeVisible()
+    // Pause de-indexes from search (ADR-0013) so it is gated behind a confirm
+    // Dialog (#88) — click through the confirm to fire it.
     await publishedRow.locator('button').filter({ hasText: 'Pause' }).click()
+    await page
+      .getByTestId('pause-confirm')
+      .getByRole('button', { name: 'Pause' })
+      .click()
     // Drops out of the published filter once paused.
     await expect(publishedRow).toHaveCount(0, { timeout: 15_000 })
 
@@ -499,6 +521,10 @@ test.describe('Admin experience moderation (#23)', () => {
     const pendingRow = page.locator('tr').filter({ hasText: 'Archive me — Pending' })
     await expect(pendingRow).toBeVisible()
     await pendingRow.locator('button').filter({ hasText: 'Approve' }).click()
+    await page
+      .getByTestId('approve-confirm')
+      .getByRole('button', { name: 'Approve & publish' })
+      .click()
     // Drops out of the pending_review filter once published.
     await expect(pendingRow).toHaveCount(0, { timeout: 15_000 })
 
@@ -514,7 +540,13 @@ test.describe('Admin experience moderation (#23)', () => {
     await page.goto('/admin/experiences?status=published')
     const publishedRow = page.locator('tr').filter({ hasText: 'Archive me — Pending' })
     await expect(publishedRow).toBeVisible()
+    // Archive removes from catalog + de-indexes (ADR-0013) so it is gated
+    // behind a confirm Dialog (#88) — click through the confirm to fire it.
     await publishedRow.locator('button').filter({ hasText: 'Archive' }).click()
+    await page
+      .getByTestId('archive-confirm')
+      .getByRole('button', { name: 'Archive' })
+      .click()
     // Drops out of the published filter once archived.
     await expect(publishedRow).toHaveCount(0, { timeout: 15_000 })
 

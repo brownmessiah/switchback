@@ -42,6 +42,18 @@ const STATUS_MAP: Record<string, StatusSpec> = {
   held: { variant: 'warning', icon: PauseCircleIcon },
   // Refund-to-credit bucket
   credit: { variant: 'credit', icon: WalletIcon },
+  // Vendor KYC tiers (ADR-0007 / DESIGN.md §2.1). Identity & Business are
+  // "verified Vendor" → success dot; phone is signup-only (cannot publish)
+  // → a neutral, un-verified outline token. Used by the vendors-list (#87).
+  identity: { variant: 'success', icon: CheckCircle2Icon },
+  business: { variant: 'success', icon: CheckCircle2Icon },
+  phone: { variant: 'outline', icon: InfoIcon },
+  // Experience moderation statuses (ADR-0007 / ADR-0013 / DESIGN.md §4 A3).
+  // Used by the experience-moderation list (#88).
+  pending_review: { variant: 'warning', icon: ClockIcon },
+  published: { variant: 'success', icon: CheckCircle2Icon },
+  paused: { variant: 'warning', icon: PauseCircleIcon },
+  archived: { variant: 'destructive', icon: XCircleIcon },
   // Negative / failed
   rejected: { variant: 'destructive', icon: XCircleIcon },
   failed: { variant: 'destructive', icon: AlertTriangleIcon },

@@ -117,7 +117,10 @@
     "bookings": {
       "empty": "ابھی کوئی بکنگ نہیں",
       "emptyHint": "تجربات تلاش کریں اور اپنا پہلا ایڈونچر بُک کریں۔",
-      "explore": "تلاش کریں"
+      "explore": "تلاش کریں",
+      "upcoming": "آئندہ",
+      "balanceDue": "بقایا رقم ₹{amount}",
+      "cancelSeeRefund": "منسوخ کریں — ریفنڈ دیکھیں"
     }
   },
   "AdventurePage": {

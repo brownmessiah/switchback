@@ -117,7 +117,10 @@
     "bookings": {
       "empty": "હજુ કોઈ બુકિંગ નથી",
       "emptyHint": "અનુભવો શોધો અને તમારું પહેલું સાહસ બુક કરો.",
-      "explore": "એક્સપ્લોર"
+      "explore": "એક્સપ્લોર",
+      "upcoming": "આગામી",
+      "balanceDue": "બાકી રકમ ₹{amount}",
+      "cancelSeeRefund": "રદ કરો — રિફંડ જુઓ"
     }
   },
   "AdventurePage": {

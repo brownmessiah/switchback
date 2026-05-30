@@ -117,7 +117,10 @@
     "bookings": {
       "empty": "No bookings yet",
       "emptyHint": "Explore experiences and book your first adventure.",
-      "explore": "Explore"
+      "explore": "Explore",
+      "upcoming": "Upcoming",
+      "balanceDue": "Balance due ₹{amount}",
+      "cancelSeeRefund": "Cancel — see refund"
     }
   },
   "AdventurePage": {

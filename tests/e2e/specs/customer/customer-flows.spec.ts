@@ -194,6 +194,62 @@ test.describe('Customer dashboard', () => {
     // The Outvers credit card must NOT offer cashout (it is never cashable).
     await expect(creditCard.getByTestId('wallet-cashout-option')).toHaveCount(0)
   })
+
+  // -------------------------------------------------------------------------
+  // 1c. Direction B "Trip Timeline + Action Rail" redesign (#72): status pills
+  //     are SEMANTIC (not all-coral), and every cancellable Booking carries an
+  //     inline "Cancel — see refund" link routing to the live B7 refund quote.
+  // -------------------------------------------------------------------------
+  test('confirmed status pills are semantic (not coral fill) and pair with an icon', async ({
+    page,
+  }) => {
+    await page.goto('/dashboard')
+    const dashboard = page.getByTestId('customer-dashboard')
+    await expect(dashboard).toBeVisible()
+
+    // The seed customer owns >=1 `confirmed` Booking. Its status Badge must use
+    // the SEMANTIC success token (green tint + on-tint ink), NOT the coral
+    // primary fill the old STATE_VARIANTS mapped `confirmed → 'default'` to.
+    const confirmedBadge = dashboard
+      .getByTestId('booking-status')
+      .filter({ hasText: /^confirmed$/i })
+      .first()
+    await expect(confirmedBadge).toBeVisible()
+
+    // Coral fill is the `bg-primary` utility (Badge variant="default"). After
+    // the remap it must be gone; the success token class must be present.
+    const cls = (await confirmedBadge.getAttribute('class')) ?? ''
+    expect(cls, 'confirmed badge must not use the coral primary fill').not.toMatch(
+      /\bbg-primary\b/,
+    )
+    expect(cls, 'confirmed badge must use the semantic success token').toMatch(
+      /text-success/,
+    )
+
+    // Status is never conveyed by color alone — an icon (lucide <svg>) is paired
+    // inside the Badge (DESIGN.md §1.3 / WCAG 1.4.1).
+    await expect(confirmedBadge.locator('svg').first()).toBeVisible()
+  })
+
+  test('each cancellable Booking has an inline "Cancel — see refund" link to its cancel page', async ({
+    page,
+  }) => {
+    await page.goto('/dashboard')
+    const dashboard = page.getByTestId('customer-dashboard')
+    await expect(dashboard).toBeVisible()
+
+    // Direction B puts the live-refund-quote trust moment one click from each
+    // card: a cancellable (confirmed) Booking carries an inline "Cancel — see
+    // refund" link pointing at /bookings/{id}/cancel (the page that computes
+    // and shows the B7 refund quote). At least one such link must render.
+    const cancelLink = dashboard.getByTestId('dashboard-cancel-link').first()
+    await expect(cancelLink).toBeVisible()
+    await expect(cancelLink).toContainText(/cancel.*see refund/i)
+    const href = await cancelLink.getAttribute('href')
+    expect(href, 'inline cancel link must target the cancel route').toMatch(
+      /\/bookings\/[^/]+\/cancel$/,
+    )
+  })
 })
 
 // ---------------------------------------------------------------------------

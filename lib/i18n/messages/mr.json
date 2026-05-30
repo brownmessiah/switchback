@@ -117,7 +117,10 @@
     "bookings": {
       "empty": "अजून बुकिंग नाही",
       "emptyHint": "अनुभव शोधा आणि तुमचे पहिले साहस बुक करा.",
-      "explore": "शोधा"
+      "explore": "शोधा",
+      "upcoming": "आगामी",
+      "balanceDue": "शिल्लक ₹{amount} बाकी",
+      "cancelSeeRefund": "रद्द करा — परतावा पाहा"
     }
   },
   "AdventurePage": {

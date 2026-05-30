@@ -117,7 +117,10 @@
     "bookings": {
       "empty": "এতিয়ালৈকে কোনো বুকিং নাই",
       "emptyHint": "অভিজ্ঞতা অন্বেষণ কৰক আৰু আপোনাৰ প্ৰথম দুঃসাহসিক অভিযান বুক কৰক।",
-      "explore": "অন্বেষণ কৰক"
+      "explore": "অন্বেষণ কৰক",
+      "upcoming": "আগন্তুক",
+      "balanceDue": "বাকী ₹{amount}",
+      "cancelSeeRefund": "বাতিল কৰক — ৰিফাণ্ড চাওক"
     }
   },
   "AdventurePage": {

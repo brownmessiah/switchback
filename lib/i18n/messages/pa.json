@@ -117,7 +117,10 @@
     "bookings": {
       "empty": "ਅਜੇ ਕੋਈ ਬੁਕਿੰਗ ਨਹੀਂ",
       "emptyHint": "ਅਨੁਭਵ ਖੋਜੋ ਅਤੇ ਆਪਣਾ ਪਹਿਲਾ ਐਡਵੈਂਚਰ ਬੁੱਕ ਕਰੋ।",
-      "explore": "ਖੋਜੋ"
+      "explore": "ਖੋਜੋ",
+      "upcoming": "ਆਉਣ ਵਾਲੇ",
+      "balanceDue": "ਬਕਾਇਆ ₹{amount}",
+      "cancelSeeRefund": "ਰੱਦ ਕਰੋ — ਰਿਫੰਡ ਵੇਖੋ"
     }
   },
   "AdventurePage": {

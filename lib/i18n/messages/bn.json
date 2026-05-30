@@ -117,7 +117,10 @@
     "bookings": {
       "empty": "এখনো কোনো বুকিং নেই",
       "emptyHint": "অভিজ্ঞতা অন্বেষণ করুন এবং আপনার প্রথম অ্যাডভেঞ্চার বুক করুন।",
-      "explore": "অন্বেষণ"
+      "explore": "অন্বেষণ",
+      "upcoming": "আসন্ন",
+      "balanceDue": "বকেয়া ₹{amount}",
+      "cancelSeeRefund": "বাতিল করুন — রিফান্ড দেখুন"
     }
   },
   "AdventurePage": {

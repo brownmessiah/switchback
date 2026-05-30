@@ -117,7 +117,10 @@
     "bookings": {
       "empty": "अभी तक कोई बुकिंग नहीं",
       "emptyHint": "अनुभव खोजें और अपना पहला रोमांच बुक करें।",
-      "explore": "खोजें"
+      "explore": "खोजें",
+      "upcoming": "आगामी",
+      "balanceDue": "शेष राशि ₹{amount} बाकी",
+      "cancelSeeRefund": "रद्द करें — रिफंड देखें"
     }
   },
   "AdventurePage": {

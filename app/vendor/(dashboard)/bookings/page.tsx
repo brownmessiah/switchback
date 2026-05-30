@@ -1,4 +1,12 @@
 import { eq } from 'drizzle-orm'
+import {
+  Ban,
+  CheckCircle2,
+  Clock,
+  Info,
+  TriangleAlert,
+  type LucideIcon,
+} from 'lucide-react'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 
@@ -16,21 +24,34 @@ import {
 import { db } from '@/db/client'
 import { availabilitySlots, bookings, experiences, users } from '@/db/schema'
 import { auth } from '@/lib/auth'
+import { computeVendorNetPayout } from '@/lib/payments/payout-calculator'
+
+import { VendorTableTabs } from '../vendor-table-tabs'
 
 import { MarkCompleteButton } from './mark-complete-button'
 import { VendorCancelButton } from './vendor-cancel-button'
 
-const STATE_VARIANTS: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
-  confirmed: 'default',
-  awaiting_completion: 'secondary',
-  completed: 'default',
-  cancelled_by_customer: 'destructive',
-  cancelled_by_vendor: 'destructive',
-  disputed: 'destructive',
+/**
+ * Booking-state → semantic Badge variant + paired lucide icon (DESIGN.md §3
+ * A3 STATE_VARIANTS, §1.3/§5: status is NEVER conveyed by color alone — fixes
+ * the as-is color-only-text defect).
+ */
+const STATE_BADGE: Record<
+  string,
+  { variant: 'success' | 'warning' | 'info' | 'destructive' | 'outline'; Icon: LucideIcon }
+> = {
+  confirmed: { variant: 'success', Icon: CheckCircle2 },
+  awaiting_completion: { variant: 'warning', Icon: Clock },
+  completed: { variant: 'success', Icon: CheckCircle2 },
+  cancelled_by_customer: { variant: 'destructive', Icon: Ban },
+  cancelled_by_vendor: { variant: 'destructive', Icon: Ban },
+  disputed: { variant: 'destructive', Icon: TriangleAlert },
 }
 
 /** States in which the vendor can cancel. */
 const VENDOR_CANCELLABLE_STATES = new Set(['confirmed', 'awaiting_completion'])
+
+const inr = (n: number) => `₹${Math.floor(n).toLocaleString('en-IN')}`
 
 export default async function VendorBookingsPage() {
   const session = await auth.api.getSession({ headers: await headers() })
@@ -42,6 +63,10 @@ export default async function VendorBookingsPage() {
       state: bookings.state,
       participantCount: bookings.participantCount,
       gross: bookings.grossTotalSnapshot,
+      commissionRate: bookings.commissionRateSnapshot,
+      gstRate: bookings.gstRateOnCommissionSnapshot,
+      tdsAmount: bookings.tdsAmountSnapshot,
+      tcsAmount: bookings.tcsAmountSnapshot,
       paymentMode: bookings.paymentMode,
       customerName: users.name,
       expTitle: experiences.title,
@@ -64,6 +89,8 @@ export default async function VendorBookingsPage() {
         </p>
       </div>
 
+      <VendorTableTabs active="bookings" />
+
       <Card>
         <CardContent className="p-0">
           {rows.length === 0 ? (
@@ -72,6 +99,11 @@ export default async function VendorBookingsPage() {
               <p className="mt-1 text-sm text-muted-foreground">
                 Bookings will appear here once customers start booking your experiences.
               </p>
+              <Link href="/vendor/listings" className="mt-4">
+                <Button variant="outline" size="sm">
+                  Manage your listings
+                </Button>
+              </Link>
             </div>
           ) : (
             <Table>
@@ -80,61 +112,96 @@ export default async function VendorBookingsPage() {
                   <TableHead>Customer</TableHead>
                   <TableHead>Experience</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Guests</TableHead>
-                  <TableHead>Amount</TableHead>
+                  <TableHead className="text-right">Guests</TableHead>
+                  <TableHead className="text-right">Gross</TableHead>
+                  <TableHead className="text-right">Commission</TableHead>
+                  <TableHead className="text-right">Net</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((row) => (
-                  <TableRow
-                    key={row.bookingId}
-                    data-booking-id={row.bookingId}
-                    data-booking-state={row.state}
-                  >
-                    <TableCell className="font-medium">
-                      {row.customerName ?? 'Customer'}
-                    </TableCell>
-                    <TableCell className="text-sm">{row.expTitle}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {row.slotStart
-                        ? new Date(row.slotStart).toLocaleDateString('en-IN', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                          })
-                        : '—'}
-                    </TableCell>
-                    <TableCell>{row.participantCount}</TableCell>
-                    <TableCell>
-                      ₹{Math.floor(Number(row.gross ?? 0)).toLocaleString('en-IN')}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={STATE_VARIANTS[row.state] ?? 'outline'}
-                        className="capitalize text-xs"
+                {rows.map((row) => {
+                  // Per-Booking deduction trail via the EXISTING payout
+                  // calculator (ADR-0016) — re-derives Commission from the
+                  // snapshot rate; never re-implements the math.
+                  const breakdown = computeVendorNetPayout({
+                    grossRupees: Math.floor(Number(row.gross ?? 0)),
+                    commissionRatePercent: String(row.commissionRate ?? '20.00'),
+                    gstRateOnCommissionPercent: String(row.gstRate ?? '18.00'),
+                    tdsRupees: Math.floor(Number(row.tdsAmount ?? 0)),
+                    tcsRupees: Math.floor(Number(row.tcsAmount ?? 0)),
+                  })
+                  const badge = STATE_BADGE[row.state] ?? {
+                    variant: 'outline' as const,
+                    Icon: Info,
+                  }
+                  const StatusIcon = badge.Icon
+                  return (
+                    <TableRow
+                      key={row.bookingId}
+                      data-testid="booking-row"
+                      data-booking-id={row.bookingId}
+                      data-booking-state={row.state}
+                    >
+                      <TableCell className="font-medium">
+                        {row.customerName ?? 'Customer'}
+                      </TableCell>
+                      <TableCell className="text-sm">{row.expTitle}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {row.slotStart
+                          ? new Date(row.slotStart).toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })
+                          : '—'}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {row.participantCount}
+                      </TableCell>
+                      <TableCell
+                        data-testid="booking-gross"
+                        className="text-right tabular-nums"
                       >
-                        {row.state.replace(/_/g, ' ')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Link href={`/vendor/bookings/${row.bookingId}`}>
-                          <Button variant="outline" size="sm">
-                            View
-                          </Button>
-                        </Link>
-                        {row.state === 'awaiting_completion' && (
-                          <MarkCompleteButton bookingId={row.bookingId} />
-                        )}
-                        {VENDOR_CANCELLABLE_STATES.has(row.state) && (
-                          <VendorCancelButton bookingId={row.bookingId} />
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                        {inr(breakdown.grossRupees)}
+                      </TableCell>
+                      <TableCell
+                        data-testid="booking-commission"
+                        className="text-right tabular-nums text-muted-foreground"
+                      >
+                        -{inr(breakdown.commissionRupees)}
+                      </TableCell>
+                      <TableCell
+                        data-testid="booking-net"
+                        className="text-right font-medium tabular-nums"
+                      >
+                        {inr(breakdown.netPayoutRupees)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={badge.variant} className="capitalize text-xs">
+                          <StatusIcon aria-hidden="true" />
+                          {row.state.replace(/_/g, ' ')}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Link href={`/vendor/bookings/${row.bookingId}`}>
+                            <Button variant="outline" size="sm">
+                              View
+                            </Button>
+                          </Link>
+                          {row.state === 'awaiting_completion' && (
+                            <MarkCompleteButton bookingId={row.bookingId} />
+                          )}
+                          {VENDOR_CANCELLABLE_STATES.has(row.state) && (
+                            <VendorCancelButton bookingId={row.bookingId} />
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           )}

@@ -1336,6 +1336,34 @@ test.describe('Vendor bookings', () => {
     // Count subtitle is visible
     await expect(page.getByText(/\d+ booking/)).toBeVisible()
 
+    // ── #80 variant B (tri-tab shell): the shared Bookings · Payouts · Reviews
+    //    nav is present, with Bookings as the active tab on this route.
+    const tabs = page.getByTestId('vendor-table-tabs')
+    await expect(tabs).toBeVisible()
+    await expect(tabs.getByRole('link', { name: /Payouts/i })).toHaveAttribute(
+      'href',
+      '/vendor/payouts',
+    )
+    await expect(tabs.getByRole('link', { name: /Reviews/i })).toHaveAttribute(
+      'href',
+      '/vendor/reviews',
+    )
+    await expect(
+      tabs.getByRole('link', { name: /Bookings/i }),
+    ).toHaveAttribute('aria-current', 'page')
+
+    // ── #80: the A3 bookings table is widened to Gross · Commission · Net
+    //    (the as-is "no commission/net" defect). At least one booking row, and
+    //    each carries a Commission + Net cell with tabular figures.
+    const bookingRows = page.getByTestId('booking-row')
+    expect(await bookingRows.count()).toBeGreaterThanOrEqual(1)
+    const firstRow = bookingRows.first()
+    await expect(firstRow.getByTestId('booking-gross')).toContainText('₹')
+    await expect(firstRow.getByTestId('booking-commission')).toContainText('₹')
+    await expect(firstRow.getByTestId('booking-net')).toContainText('₹')
+    // Money cells use tabular figures (DESIGN.md money-path requirement).
+    await expect(firstRow.getByTestId('booking-net')).toHaveClass(/tabular-nums/)
+
     await page.screenshot({
       path: 'tests/e2e/screenshots/vendor-bookings.png',
       fullPage: true,
@@ -1368,6 +1396,42 @@ test.describe('Vendor payouts', () => {
     // How payouts work section
     await expect(page.getByText('How payouts work')).toBeVisible()
 
+    // ── #81 variant B (tri-tab shell): the shared nav is present with Payouts
+    //    active on this route.
+    const tabs = page.getByTestId('vendor-table-tabs')
+    await expect(tabs).toBeVisible()
+    await expect(
+      tabs.getByRole('link', { name: /Payouts/i }),
+    ).toHaveAttribute('aria-current', 'page')
+    await expect(tabs.getByRole('link', { name: /Bookings/i })).toHaveAttribute(
+      'href',
+      '/vendor/bookings',
+    )
+
+    // ── #81 Earnings Ledger: payout is the spine — the Vendor's earning
+    //    Bookings are grouped into payout cycles (T+7) as an accordion. At
+    //    least one cycle, and expanding it reveals the constituent Bookings'
+    //    Gross → Commission → GST → TDS → TCS → Net trail (the as-is "reconcile
+    //    nothing" defect).
+    const ledger = page.getByTestId('earnings-ledger')
+    await expect(ledger).toBeVisible()
+    const cycles = page.getByTestId('payout-cycle')
+    expect(await cycles.count()).toBeGreaterThanOrEqual(1)
+
+    const firstCycle = cycles.first()
+    // Expand the cycle's accordion trigger to reveal its Bookings.
+    await firstCycle.getByTestId('payout-cycle-trigger').click()
+    const cycleRows = firstCycle.getByTestId('payout-cycle-booking')
+    expect(await cycleRows.count()).toBeGreaterThanOrEqual(1)
+    // The full tax trail is shown per constituent Booking row.
+    const cycleRow = cycleRows.first()
+    await expect(cycleRow.getByTestId('cycle-gross')).toContainText('₹')
+    await expect(cycleRow.getByTestId('cycle-commission')).toContainText('₹')
+    await expect(cycleRow.getByTestId('cycle-gst')).toContainText('₹')
+    await expect(cycleRow.getByTestId('cycle-tds')).toContainText('₹')
+    await expect(cycleRow.getByTestId('cycle-tcs')).toContainText('₹')
+    await expect(cycleRow.getByTestId('cycle-net')).toContainText('₹')
+
     await page.screenshot({
       path: 'tests/e2e/screenshots/vendor-payouts.png',
       fullPage: true,
@@ -1387,10 +1451,29 @@ test.describe('Vendor reviews', () => {
     await expect(h1).toBeVisible()
     await expect(h1).toContainText('Reviews')
 
+    // ── #82 variant B (tri-tab shell): the shared nav is present with Reviews
+    //    active on this route.
+    const tabs = page.getByTestId('vendor-table-tabs')
+    await expect(tabs).toBeVisible()
+    await expect(
+      tabs.getByRole('link', { name: /Reviews/i }),
+    ).toHaveAttribute('aria-current', 'page')
+    await expect(tabs.getByRole('link', { name: /Payouts/i })).toHaveAttribute(
+      'href',
+      '/vendor/payouts',
+    )
+
     // Either the empty state or the review list is visible
     const hasReviews = await page.getByText(/\d+ review/).isVisible().catch(() => false)
     if (!hasReviews) {
+      // ── #82: the empty bucket is a GOOD launchpad, not a dead end (it keeps
+      //    the "No reviews yet" copy the smoke test asserts).
       await expect(page.getByText('No reviews yet')).toBeVisible()
+    } else {
+      // ── #82: reviews render as an A3 table, one addressable row per Review.
+      const reviewRows = page.getByTestId('review-row')
+      expect(await reviewRows.count()).toBeGreaterThanOrEqual(1)
+      await expect(reviewRows.first().getByTestId('review-rating')).toBeVisible()
     }
 
     await page.screenshot({

@@ -1,12 +1,33 @@
 import { and, eq, inArray } from 'drizzle-orm'
+import { CheckCircle2, Clock } from 'lucide-react'
 import { headers } from 'next/headers'
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { db } from '@/db/client'
-import { bookings, experiences, vendorProfiles } from '@/db/schema'
+import { availabilitySlots, bookings, experiences, vendorProfiles } from '@/db/schema'
 import { auth } from '@/lib/auth'
 import { computeVendorNetPayout } from '@/lib/payments/payout-calculator'
+import { groupBookingsIntoPayoutCycles } from '@/lib/payments/payout-cycles'
+
+import { VendorTableTabs } from '../vendor-table-tabs'
+
+const inr = (n: number) => `₹${Math.floor(n).toLocaleString('en-IN')}`
 
 export default async function VendorPayoutsPage() {
   const session = await auth.api.getSession({ headers: await headers() })
@@ -27,11 +48,16 @@ export default async function VendorPayoutsPage() {
       tcsAmount: bookings.tcsAmountSnapshot,
       gstRate: bookings.gstRateOnCommissionSnapshot,
       state: bookings.state,
+      payoutState: bookings.payoutState,
       expTitle: experiences.title,
+      requiredPermits: experiences.requiredPermits,
       completedAt: bookings.completedAt,
+      slotStart: availabilitySlots.startAt,
+      slotEnd: availabilitySlots.endAt,
     })
     .from(bookings)
     .innerJoin(experiences, eq(bookings.experienceId, experiences.id))
+    .leftJoin(availabilitySlots, eq(bookings.slotId, availabilitySlots.id))
     .where(
       and(
         eq(experiences.vendorUserId, userId),
@@ -73,14 +99,47 @@ export default async function VendorPayoutsPage() {
   const totalTcs = totals.tcs
   const netPayout = totals.net
 
+  // The Earnings Ledger spine: group the Vendor's earning Bookings into payout
+  // cycles derived from REAL data — completion timestamp + the ADR-0016 window
+  // (T+7 default, T+30 for permit-required / multi-day). Each cycle expands to
+  // its constituent Bookings with the full deduction trail. NO fabrication: a
+  // Booking with no completion (awaiting_completion) has no release date and is
+  // not yet a cycle member.
+  const cycles = groupBookingsIntoPayoutCycles(
+    completedBookings.map((b) => {
+      const slotStart = b.slotStart ? new Date(b.slotStart) : null
+      const slotEnd = b.slotEnd ? new Date(b.slotEnd) : null
+      const multiDay =
+        slotStart != null &&
+        slotEnd != null &&
+        slotStart.toISOString().slice(0, 10) !== slotEnd.toISOString().slice(0, 10)
+      return {
+        bookingId: b.bookingId,
+        experienceTitle: b.expTitle,
+        customerName: null,
+        completedAt: b.completedAt ? new Date(b.completedAt) : null,
+        payoutState: b.payoutState,
+        grossRupees: Math.floor(Number(b.gross ?? 0)),
+        commissionRatePercent: String(b.commissionRate ?? '20.00'),
+        gstRateOnCommissionPercent: String(b.gstRate ?? '18.00'),
+        tdsRupees: Math.floor(Number(b.tdsAmount ?? 0)),
+        tcsRupees: Math.floor(Number(b.tcsAmount ?? 0)),
+        permitRequired: (b.requiredPermits ?? []).length > 0,
+        multiDay,
+      }
+    }),
+  )
+
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Payouts</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Earnings summary and payout breakdown.
+          Earnings ledger — reconcile each payout cycle to its bookings.
         </p>
       </div>
+
+      <VendorTableTabs active="payouts" />
 
       {/* Headline cards — gross in, net out */}
       <div className="grid gap-4 sm:grid-cols-2">
@@ -91,8 +150,8 @@ export default async function VendorPayoutsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold">
-              ₹{totalGross.toLocaleString('en-IN')}
+            <p className="text-2xl font-semibold tabular-nums">
+              {inr(totalGross)}
             </p>
           </CardContent>
         </Card>
@@ -104,15 +163,165 @@ export default async function VendorPayoutsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold text-primary">
-              ₹{netPayout.toLocaleString('en-IN')}
+            <p className="text-2xl font-semibold text-primary tabular-nums">
+              {inr(netPayout)}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Payout breakdown — the full ADR-0016 deduction waterfall.
-          gross − Commission − GST(18% on commission) − TDS(0.1%) − TCS(0.5%) = net */}
+      {/* Earnings Ledger — payout is the spine. Each cycle (T+7 from completion,
+          T+30 for permit-required / multi-day per ADR-0016) is an accordion;
+          expanding it reveals its constituent Bookings with the full
+          Gross → Commission → GST → TDS → TCS → Net trail per row. */}
+      <Card data-testid="earnings-ledger">
+        <CardHeader>
+          <CardTitle className="text-lg">Earnings ledger</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {cycles.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              No payout cycles yet. A cycle opens once a booking is completed —
+              payouts release T+7 days after completion.
+            </p>
+          ) : (
+            <Accordion multiple className="w-full">
+              {cycles.map((cycle) => {
+                const key = cycle.releaseDate.toISOString().slice(0, 10)
+                const releaseLabel = cycle.releaseDate.toLocaleDateString('en-IN', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })
+                const StatusIcon = cycle.status === 'paid' ? CheckCircle2 : Clock
+                return (
+                  <AccordionItem
+                    key={key}
+                    value={key}
+                    data-testid="payout-cycle"
+                    className="border-b last:border-b-0"
+                  >
+                    <AccordionTrigger
+                      data-testid="payout-cycle-trigger"
+                      className="items-center"
+                    >
+                      <span className="flex flex-1 flex-wrap items-center gap-3">
+                        <span className="font-medium">Payout · {releaseLabel}</span>
+                        <Badge
+                          variant={cycle.status === 'paid' ? 'success' : 'warning'}
+                          className="text-xs capitalize"
+                        >
+                          <StatusIcon aria-hidden="true" />
+                          {cycle.status}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {cycle.bookings.length} booking
+                          {cycle.bookings.length === 1 ? '' : 's'}
+                        </span>
+                        <span className="ml-auto pr-3 font-medium tabular-nums">
+                          {inr(cycle.totals.netPayoutRupees)}
+                        </span>
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Experience</TableHead>
+                              <TableHead className="text-right">Gross</TableHead>
+                              <TableHead className="text-right">Commission</TableHead>
+                              <TableHead className="text-right">GST (18%)</TableHead>
+                              <TableHead className="text-right">TDS</TableHead>
+                              <TableHead className="text-right">TCS</TableHead>
+                              <TableHead className="text-right">Net</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {cycle.bookings.map((row) => (
+                              <TableRow
+                                key={row.bookingId}
+                                data-testid="payout-cycle-booking"
+                                data-booking-id={row.bookingId}
+                              >
+                                <TableCell className="text-sm">
+                                  {row.experienceTitle}
+                                </TableCell>
+                                <TableCell
+                                  data-testid="cycle-gross"
+                                  className="text-right tabular-nums"
+                                >
+                                  {inr(row.grossRupees)}
+                                </TableCell>
+                                <TableCell
+                                  data-testid="cycle-commission"
+                                  className="text-right tabular-nums text-muted-foreground"
+                                >
+                                  -{inr(row.commissionRupees)}
+                                </TableCell>
+                                <TableCell
+                                  data-testid="cycle-gst"
+                                  className="text-right tabular-nums text-muted-foreground"
+                                >
+                                  -{inr(row.gstOnCommissionRupees)}
+                                </TableCell>
+                                <TableCell
+                                  data-testid="cycle-tds"
+                                  className="text-right tabular-nums text-muted-foreground"
+                                >
+                                  -{inr(row.tdsRupees)}
+                                </TableCell>
+                                <TableCell
+                                  data-testid="cycle-tcs"
+                                  className="text-right tabular-nums text-muted-foreground"
+                                >
+                                  -{inr(row.tcsRupees)}
+                                </TableCell>
+                                <TableCell
+                                  data-testid="cycle-net"
+                                  className="text-right font-medium tabular-nums"
+                                >
+                                  {inr(row.netPayoutRupees)}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                          <TableFooter>
+                            <TableRow>
+                              <TableCell className="font-medium">Total</TableCell>
+                              <TableCell className="text-right tabular-nums">
+                                {inr(cycle.totals.grossRupees)}
+                              </TableCell>
+                              <TableCell className="text-right tabular-nums">
+                                -{inr(cycle.totals.commissionRupees)}
+                              </TableCell>
+                              <TableCell className="text-right tabular-nums">
+                                -{inr(cycle.totals.gstOnCommissionRupees)}
+                              </TableCell>
+                              <TableCell className="text-right tabular-nums">
+                                -{inr(cycle.totals.tdsRupees)}
+                              </TableCell>
+                              <TableCell className="text-right tabular-nums">
+                                -{inr(cycle.totals.tcsRupees)}
+                              </TableCell>
+                              <TableCell className="text-right font-semibold tabular-nums">
+                                {inr(cycle.totals.netPayoutRupees)}
+                              </TableCell>
+                            </TableRow>
+                          </TableFooter>
+                        </Table>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                )
+              })}
+            </Accordion>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Payout breakdown — the full ADR-0016 deduction waterfall across ALL
+          earning Bookings. gross − Commission − GST(18%) − TDS(0.1%) − TCS(0.5%) = net */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Payout breakdown</CardTitle>
@@ -121,39 +330,27 @@ export default async function VendorPayoutsPage() {
           <dl className="divide-y divide-border text-sm">
             <div className="flex items-center justify-between py-2">
               <dt>Gross earnings</dt>
-              <dd className="font-medium tabular-nums">
-                ₹{totalGross.toLocaleString('en-IN')}
-              </dd>
+              <dd className="font-medium tabular-nums">{inr(totalGross)}</dd>
             </div>
             <div className="flex items-center justify-between py-2 text-muted-foreground">
               <dt>Commission</dt>
-              <dd className="tabular-nums">
-                -₹{totalCommission.toLocaleString('en-IN')}
-              </dd>
+              <dd className="tabular-nums">-{inr(totalCommission)}</dd>
             </div>
             <div className="flex items-center justify-between py-2 text-muted-foreground">
               <dt>GST on commission (18%)</dt>
-              <dd className="tabular-nums">
-                -₹{totalGstOnCommission.toLocaleString('en-IN')}
-              </dd>
+              <dd className="tabular-nums">-{inr(totalGstOnCommission)}</dd>
             </div>
             <div className="flex items-center justify-between py-2 text-muted-foreground">
               <dt>TDS (0.1%, Sec 194-O)</dt>
-              <dd className="tabular-nums">
-                -₹{totalTds.toLocaleString('en-IN')}
-              </dd>
+              <dd className="tabular-nums">-{inr(totalTds)}</dd>
             </div>
             <div className="flex items-center justify-between py-2 text-muted-foreground">
               <dt>GST TCS (0.5%, Sec 52)</dt>
-              <dd className="tabular-nums">
-                -₹{totalTcs.toLocaleString('en-IN')}
-              </dd>
+              <dd className="tabular-nums">-{inr(totalTcs)}</dd>
             </div>
             <div className="flex items-center justify-between py-2 text-base font-semibold">
               <dt>Net payout</dt>
-              <dd className="text-primary tabular-nums">
-                ₹{netPayout.toLocaleString('en-IN')}
-              </dd>
+              <dd className="text-primary tabular-nums">{inr(netPayout)}</dd>
             </div>
           </dl>
         </CardContent>

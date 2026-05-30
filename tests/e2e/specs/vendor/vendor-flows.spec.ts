@@ -116,12 +116,24 @@ test.describe('Vendor onboarding flow (no profile yet)', () => {
     // no vendor profile yet.
     await expect(page.locator('h1')).toContainText('Become a vendor')
 
+    // ── #73 variant A: the persistent trust banner (B5 + commission
+    //    transparency) is visible on step 1 — "0% upfront fee" plus the
+    //    commission-before-you-finish framing. Asserted via a stable
+    //    data-testid so the copy can evolve without breaking the gate.
+    const trustBanner = page.getByTestId('onboarding-trust-banner')
+    await expect(trustBanner).toBeVisible()
+    await expect(trustBanner).toContainText(/0%\s*upfront/i)
+    await expect(trustBanner).toContainText(/commission/i)
+
     // ── Step 1: business details ──────────────────────────────────────
     await page.fill('#businessName', businessName)
     // Slug auto-derives from the business name; confirm it.
     await expect(page.locator('#slug')).toHaveValue(expectedSlug)
 
     await page.locator('button', { hasText: 'Continue' }).click()
+
+    // The trust banner persists across steps (it rides the whole wizard).
+    await expect(page.getByTestId('onboarding-trust-banner')).toBeVisible()
 
     // ── Step 2: verification (mocked manual-approve path, no live Aadhaar) ─
     // PAN is optional here; we intentionally leave it blank to assert the

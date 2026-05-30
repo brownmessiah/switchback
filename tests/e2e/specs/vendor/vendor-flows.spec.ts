@@ -1238,6 +1238,56 @@ test.describe('Availability management', () => {
       await deleteRegionClosure(closureId)
     }
   })
+
+  // ── #78 — variant A "calendar-first cockpit": the Calendar | Manifest
+  //    toggle (B6) is present and switches views, and the calendar renders an
+  //    in-grid semantic status badge for materialised slots. New behaviour
+  //    over the #18 functional pass — does not restate pattern/slot coverage.
+  test('exposes the Calendar | Manifest toggle and an in-grid status badge', async ({
+    page,
+  }) => {
+    const experienceId = await resolveAvailExperienceId(AVAIL_SLUG_PATTERN_CRUD)
+    await clearAvailabilityForExperience(experienceId)
+
+    await page.goto(`/vendor/listings/${experienceId}/availability`)
+    await expect(page.locator('.animate-spin')).toHaveCount(0, { timeout: 15_000 })
+
+    // The B6 calendar ⇄ manifest toggle exists with both view tabs.
+    const toggle = page.getByTestId('availability-view-toggle')
+    await expect(toggle).toBeVisible()
+    await expect(page.getByTestId('view-tab-calendar')).toBeVisible()
+    await expect(page.getByTestId('view-tab-manifest')).toBeVisible()
+
+    // Seed + materialise a Wednesday pattern so July 2026 has open slots.
+    // (The weekly-pattern rule editor is open by default, demoted below the
+    //  calendar; the manage-rules toggle collapses/expands it.)
+    await page.locator('button').filter({ hasText: 'Add Pattern' }).click()
+    await page.locator('#dayOfWeek').click()
+    await page.locator('[data-slot="select-item"]').filter({ hasText: 'Wednesday' }).click()
+    await page.fill('#startTime', '06:00')
+    await page.fill('#endTime', '09:00')
+    await page.fill('#capacity', '10')
+    await page.locator('button').filter({ hasText: 'Save Pattern' }).click()
+    await expect(page.getByText('Pattern created.')).toBeVisible({ timeout: 10_000 })
+    await page.locator('button').filter({ hasText: 'Generate Slots' }).click()
+    await expect(page.getByText(/Slots generated:/)).toBeVisible({ timeout: 15_000 })
+
+    // In-grid status badge — the materialised, unbooked Wednesday reads "Open"
+    // with a remaining-spots count in its day cell (semantic status, not bare
+    // text). Navigate to July 2026 where the slot lives.
+    await gotoCalendarMonth(page, 'July', 2026)
+    const blockCell = page.getByTestId(`calendar-day-${BLOCK_DATE}`)
+    await blockCell.scrollIntoViewIfNeeded()
+    await expect(blockCell.getByText(/spots/i)).toBeVisible({ timeout: 10_000 })
+
+    // Switch to the Manifest / Roster view — the toggle changes the surface.
+    await page.getByTestId('view-tab-manifest').click()
+    await expect(page.getByTestId('manifest-view')).toBeVisible({ timeout: 10_000 })
+
+    // And back to Calendar.
+    await page.getByTestId('view-tab-calendar').click()
+    await expect(page.getByText(/Month view/i)).toBeVisible({ timeout: 10_000 })
+  })
 })
 
 /** Navigate the availability calendar to a specific month + year. */

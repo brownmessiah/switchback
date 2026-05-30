@@ -1698,6 +1698,51 @@ test.describe('Vendor booking management (#19)', () => {
     ).toBeVisible()
     await expect(page.getByText('Estimated Vendor Payout')).toBeVisible()
 
+    // ── #79 direction A — canonical Money-State Timeline rail ─────────────
+    // The Lifecycle + Payments are collapsed into ONE chronological vertical
+    // rail. For this completed partial-pay Booking the rail must carry the
+    // Created → Confirmed → Advance captured → balance auto-captured at T-24h
+    // → Completed nodes, each on a stable data-testid, driven by REAL data.
+    const rail = page.getByTestId('booking-timeline')
+    await expect(rail).toBeVisible()
+    await expect(rail.getByTestId('timeline-node-created')).toBeVisible()
+    await expect(rail.getByTestId('timeline-node-confirmed')).toBeVisible()
+    // The Partial-pay Advance + T-24h balance both render as money nodes
+    // (fixes the dead empty state the as-is page showed).
+    const advanceNode = rail.getByTestId('timeline-node-payment-advance')
+    const balanceNode = rail.getByTestId('timeline-node-payment-balance')
+    await expect(advanceNode).toBeVisible()
+    await expect(balanceNode).toBeVisible()
+    await expect(
+      advanceNode.getByText(`₹${payments[0].amountRupees.toLocaleString('en-IN')}`),
+    ).toBeVisible()
+    await expect(
+      balanceNode.getByText(`₹${payments[1].amountRupees.toLocaleString('en-IN')}`),
+    ).toBeVisible()
+    await expect(rail.getByTestId('timeline-node-completed')).toBeVisible()
+
+    // The Advance node sits above the balance node in the DOM (chronology).
+    const advanceBox = await advanceNode.boundingBox()
+    const balanceBox = await balanceNode.boundingBox()
+    expect(advanceBox).not.toBeNull()
+    expect(balanceBox).not.toBeNull()
+    expect(advanceBox!.y).toBeLessThan(balanceBox!.y)
+
+    // ── #79 direction A — payout-hero sticky rail ────────────────────────
+    // Estimated Vendor Payout is the visual HERO, showing the full
+    // Gross → Commission → GST → TDS → TCS → Net Payout waterfall the payout
+    // calculator returns. The Net Payout figure renders prominently as the
+    // hero, in tabular numerics.
+    const hero = page.getByTestId('net-payout-hero')
+    await expect(hero).toBeVisible()
+    // Net Payout = gross − commission − GST(18% on commission) − TDS − TCS,
+    // matching computeVendorNetPayout over the snapshot columns (db/seed.ts
+    // sets TDS = floor(0.1% of gross); TCS defaults to 0 for these seeds).
+    const gstOnCommission = Math.floor(commissionRupees * 0.18)
+    const tdsRupees = Math.floor(grossRupees * 0.001)
+    const netPayout = grossRupees - commissionRupees - gstOnCommission - tdsRupees
+    await expect(hero.getByText(`₹${netPayout.toLocaleString('en-IN')}`)).toBeVisible()
+
     await page.screenshot({
       path: 'tests/e2e/screenshots/vendor-booking-detail.png',
       fullPage: true,

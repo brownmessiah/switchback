@@ -146,6 +146,36 @@ const PAYOUT_QUEUE_VENDOR = {
   slug: 'apex-payout-vendor',
 } as const
 
+/**
+ * A DEDICATED Customer who receives the manual Outvers-credit / Refund-balance
+ * grants the admin loyalty-grant E2E (#26) issues. Kept DISTINCT from
+ * `u_seed_customer` (whose two-bucket wallet is asserted exactly by #13–#15)
+ * so granting credit to THIS customer never disturbs any other spec's wallet
+ * determinism. Starts with NO wallet rows.
+ */
+const LOYALTY_GRANT_CUSTOMER = {
+  userId: 'u_seed_customer_loyalty',
+  email: 'customer-loyalty@seed.outvers.dev',
+  name: 'Seed Customer (Admin Loyalty Grant)',
+} as const
+
+/**
+ * Commission-tier scope-count fixture (#26, ADR-0008). A DEDICATED Experience
+ * owned by the business Vendor, on the `bir-billing` region / `paragliding`
+ * category, plus a FIXED set of confirmed Bookings whose created_at is pinned
+ * to an explicit September-2026 window. The admin commission-tier E2E creates
+ * a Festival tier scoped to THIS Experience over THIS window and asserts
+ * getAffectedBookingCount returns exactly COMMISSION_SCOPE_IN_WINDOW (the #34
+ * scope-filter fix). One control Booking sits OUTSIDE the window so an
+ * over-counting regression is caught. Isolated from every booking dashboard
+ * (a never-listed fixture slug) so the fixed-count assertion stays stable.
+ */
+const COMMISSION_SCOPE_SLUG = 'commission-scope-fixture-bir-billing'
+const COMMISSION_SCOPE_WINDOW_START = new Date('2026-09-01T00:00:00.000Z')
+const COMMISSION_SCOPE_WINDOW_END = new Date('2026-09-30T23:59:59.000Z')
+// Three Bookings created INSIDE the window + one control created BEFORE it.
+const COMMISSION_SCOPE_IN_WINDOW = 3
+
 const EXPERIENCES: SeededExperience[] = [
   // identity-tier vendor — Rishikesh + Manali Experiences
   {
@@ -271,6 +301,11 @@ async function seed(): Promise<void> {
         email: PAYOUT_QUEUE_VENDOR.email,
         name: PAYOUT_QUEUE_VENDOR.businessName,
       },
+      {
+        id: LOYALTY_GRANT_CUSTOMER.userId,
+        email: LOYALTY_GRANT_CUSTOMER.email,
+        name: LOYALTY_GRANT_CUSTOMER.name,
+      },
       ...VENDORS.map((v) => ({ id: v.userId, email: v.email, name: v.businessName })),
       // Signed-up vendor with no profile yet (drives onboarding E2E #16).
       {
@@ -294,6 +329,7 @@ async function seed(): Promise<void> {
       { userId: 'u_seed_customer' },
       { userId: BUSINESS_VENDOR_CUSTOMER.userId },
       { userId: REFUND_QUEUE_CUSTOMER.userId },
+      { userId: LOYALTY_GRANT_CUSTOMER.userId },
     ])
     .onConflictDoNothing()
 
@@ -1356,6 +1392,118 @@ async function seed(): Promise<void> {
           payoutState: 'pending',
           confirmedAt: new Date(slotAt.getTime() - 5 * 24 * 60 * 60 * 1000),
           completedAt: slotEndAt,
+        })
+        .onConflictDoNothing()
+    }
+  }
+
+  // ===================================================================
+  // #26 ADMIN COMMISSION-TIER SCOPE COUNT — dedicated Experience + Bookings
+  // ===================================================================
+  // The admin commission-tier E2E (#26) creates a Festival tier scoped to a
+  // dedicated Experience over a fixed September-2026 window and asserts
+  // getAffectedBookingCount returns the scope-filtered count (the #34 fix,
+  // ADR-0008). Seed a DEDICATED published Experience (never surfaced in any
+  // public flow — a fixture slug) owned by the business Vendor on the
+  // bir-billing / paragliding scope, plus COMMISSION_SCOPE_IN_WINDOW confirmed
+  // Bookings whose created_at is pinned INSIDE the window + one control Booking
+  // created BEFORE it. The fixed counts make the scope-count assertion stable.
+  const [commissionScopeExp] = await db
+    .insert(experiences)
+    .values({
+      vendorUserId: 'u_seed_v_business',
+      slug: COMMISSION_SCOPE_SLUG,
+      title: 'Commission Scope Fixture — Bir Billing (admin #26)',
+      shortDescription: 'Dedicated fixture Experience for the admin commission-tier scope-count E2E (#26).',
+      longDescription:
+        'A dedicated Experience whose confirmed Bookings (pinned to a fixed September-2026 window) drive the admin commission-tier getAffectedBookingCount scope-filter assertion. Not in any public catalog flow.',
+      cancellationPreset: 'flexible' as const,
+      paymentModesAllowed: ['full_upfront'] as (
+        | 'full_upfront'
+        | 'partial_pay'
+        | 'reserve_now_pay_later'
+      )[],
+      pricePerPerson_1_2: '3000.00',
+      pricePerPerson_3_5: '2800.00',
+      pricePerPerson_6_plus: '2600.00',
+      regionSlug: 'bir-billing',
+      activitySlug: 'paragliding',
+      status: 'published' as const,
+    })
+    .onConflictDoNothing()
+    .returning({ id: experiences.id })
+
+  const commissionScopeExpId =
+    commissionScopeExp?.id ??
+    (
+      await db
+        .select({ id: experiences.id })
+        .from(experiences)
+        .where(eq(experiences.slug, COMMISSION_SCOPE_SLUG))
+    )[0]?.id
+
+  if (commissionScopeExpId) {
+    // created_at values: three inside the [Sep 1, Sep 30] window + one control
+    // before it. Booking.created_at is what getAffectedBookingCount filters on.
+    const commissionScopeCreatedAts = [
+      new Date('2026-09-05T08:00:00.000Z'),
+      new Date('2026-09-15T08:00:00.000Z'),
+      new Date('2026-09-25T08:00:00.000Z'),
+      // Control: BEFORE the window — must NOT be counted.
+      new Date('2026-08-15T08:00:00.000Z'),
+    ]
+    // Each Booking sits on its own dedicated past slot (distinct fixed UTC
+    // start) so the (experience_id, start_at) pair never collides.
+    for (let i = 0; i < commissionScopeCreatedAts.length; i++) {
+      const createdAt = commissionScopeCreatedAts[i]
+      const slotAt = new Date('2026-09-01T06:00:00.000Z')
+      slotAt.setUTCDate(slotAt.getUTCDate() + i)
+      const slotEndAt = new Date(slotAt.getTime() + 4 * 60 * 60 * 1000)
+
+      const [slot] = await db
+        .insert(availabilitySlots)
+        .values({
+          experienceId: commissionScopeExpId,
+          startAt: slotAt,
+          endAt: slotEndAt,
+          capacity: 8,
+          capacityTaken: 2,
+        })
+        .onConflictDoNothing()
+        .returning({ id: availabilitySlots.id })
+
+      const slotId =
+        slot?.id ??
+        (
+          await db
+            .select({ id: availabilitySlots.id })
+            .from(availabilitySlots)
+            .where(eq(availabilitySlots.startAt, slotAt))
+        ).find(() => true)?.id
+
+      if (!slotId) continue
+
+      await db
+        .insert(bookings)
+        .values({
+          customerUserId: 'u_seed_customer',
+          experienceId: commissionScopeExpId,
+          slotId,
+          participantCount: 2,
+          state: 'confirmed',
+          paymentMode: 'full_upfront',
+          grossTotalSnapshot: '6000.00',
+          pricePerParticipantSnapshot: '3000.00',
+          pricingBasisSnapshot: 'base_price',
+          commissionRateSnapshot: '20.00',
+          commissionBasisSnapshot: 'platform_default',
+          gstRateOnCommissionSnapshot: '18.00',
+          tdsAmountSnapshot: '6.00',
+          cancellationPresetSnapshot: 'flexible',
+          vendorPanSnapshot: 'PQRST6789U',
+          vendorIsResidentSnapshot: true,
+          createdAt,
+          confirmedAt: createdAt,
         })
         .onConflictDoNothing()
     }

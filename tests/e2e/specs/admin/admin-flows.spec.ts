@@ -15,27 +15,38 @@
 
 import { test, expect } from '../../fixtures/devtools'
 import {
+  clearWalletForUser,
   countAdminVendorAuditRows,
+  countBookingsInWindowForExperience,
+  countCommissionTierAuditRows,
   countDisputeAuditRows,
   countExperienceAuditRows,
   countPayoutAuditRows,
+  countPromoAuditRows,
   countRefundAuditRows,
+  deleteCommissionTierById,
   deleteDisputedBookingFixture,
+  deletePromoCodeById,
   getAdminVendorState,
   getBookingLifecycle,
   getBookingPayoutState,
+  getCommissionTierById,
+  getCommissionTierByName,
   getEarliestBookingCommissionSnapshotForVendor,
   getExperienceIdBySlug,
   getExperienceSlugRegion,
   getExperienceStatus,
   getLatestAdminVendorAudit,
   getLatestClosureAudit,
+  getLatestCommissionTierAudit,
   getLatestDisputeAudit,
   getLatestExperienceAudit,
   getLatestPayoutAudit,
   getLatestRefundAudit,
   getPendingPayoutBookingsForVendor,
   getPendingRefundRequestsForCustomer,
+  getPromoCodeByCode,
+  getPromoCodeById,
   getRefundBalanceCreditAuditForBooking,
   getRefundRequestForBooking,
   getRefundRequestStateById,
@@ -43,6 +54,8 @@ import {
   getRegionClosureByReason,
   getVendorManualPayoutsRemaining,
   getWalletBalanceRupees,
+  getWalletGrantAudit,
+  getWalletTransactions,
   insertDisputedBookingFixture,
   setVendorCommissionRate,
   setVendorSuspended,
@@ -58,6 +71,22 @@ const SEED_IDENTITY_VENDOR_ID = 'u_seed_v_identity'
 const SEED_REFUND_QUEUE_CUSTOMER_ID = 'u_seed_customer_refundq'
 const SEED_PAYOUT_QUEUE_VENDOR_ID = 'u_seed_v_payout'
 const REFUND_QUEUE_CUSTOMER_EMAIL = 'customer-refundq@seed.outvers.dev'
+
+// #26 commission-tier scope-count + loyalty-grant fixtures — must match db/seed.ts.
+const SEED_LOYALTY_CUSTOMER_ID = 'u_seed_customer_loyalty'
+const SEED_LOYALTY_CUSTOMER_EMAIL = 'customer-loyalty@seed.outvers.dev'
+const SEED_COMMISSION_SCOPE_SLUG = 'commission-scope-fixture-bir-billing'
+// The fixed September-2026 window the commission-scope fixture Bookings sit in.
+// `*_FILL` are minute-precision strings for the datetime-local inputs (no
+// seconds — datetime-local rejects them); `*_ISO` are the precise boundaries
+// the independent DB-count reference uses. The minute-precision window still
+// brackets the three 08:00-UTC in-window Bookings and excludes the Aug control.
+const COMMISSION_SCOPE_WINDOW_START_FILL = '2026-09-01T00:00'
+const COMMISSION_SCOPE_WINDOW_END_FILL = '2026-09-30T23:59'
+const COMMISSION_SCOPE_WINDOW_START_ISO = '2026-09-01T00:00:00.000Z'
+const COMMISSION_SCOPE_WINDOW_END_ISO = '2026-09-30T23:59:59.000Z'
+// Three Bookings created INSIDE the window (one control created before it).
+const COMMISSION_SCOPE_IN_WINDOW = 3
 
 // Dedicated Experience-moderation seed slugs — must match db/seed.ts.
 // Each is owned by the identity-tier Vendor and is isolated from every other
@@ -1717,6 +1746,431 @@ test.describe('Admin region-closure create/delete (#25)', () => {
           await deleteRegionClosure(createdClosureId)
         }
       }
+    }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 19. Functional: admin commission-tier CRUD + scope count (#26, ADR-0008)
+//
+// Drives the commission-tier CRUD Server Actions FROM THE UI (create / edit /
+// delete) and the scope-filtered getAffectedBookingCount surfaced in the table
+// (the #34 fix), asserting BOTH the persisted commission_tiers row AND the
+// append-only audit_logs trail.
+//
+//   - CREATE : a Festival tier with a fixed Sept-2026 window SCOPED to the
+//              dedicated COMMISSION_SCOPE Experience → persists (name, window,
+//              rate, scope arrays). The table's affected-Booking count for the
+//              new tier equals the scope-filtered DB count = the seeded 3
+//              in-window Bookings (the August control is excluded → proves the
+//              count honours the window AND the scope, ADR-0008 / #34).
+//   - EDIT   : change the rate + reason → persists.
+//   - DELETE : remove the tier → row gone from the DB.
+//
+// The tier is created freshly in-test (unique name stamp) and removed in a
+// finally, so it never disturbs other specs. The scope fixture (dedicated
+// Experience + 3 in-window + 1 control Bookings) is seeded deterministically;
+// no other spec books on that fixture Experience. Serial so the create→edit→
+// delete chain runs against a known single tier.
+// ---------------------------------------------------------------------------
+test.describe('Admin commission-tier CRUD + scope count (#26)', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  const TIER_NAME = `e2e-festival-${Date.now()}`
+  let tierId: string | null = null
+
+  test.afterAll(async () => {
+    // Force-clean the tier in case an assertion aborted before the UI delete.
+    if (tierId) {
+      const stale = await getCommissionTierById(tierId)
+      if (stale) await deleteCommissionTierById(tierId)
+    }
+  })
+
+  test('create Festival tier (window + Experience scope) persists + scope-filtered count + audit', async ({
+    page,
+  }) => {
+    const scopeExperienceId = await getExperienceIdBySlug(SEED_COMMISSION_SCOPE_SLUG)
+    expect(
+      scopeExperienceId,
+      `seed commission-scope Experience ${SEED_COMMISSION_SCOPE_SLUG} must exist`,
+    ).not.toBeNull()
+
+    // The independent DB count of in-window Bookings on the scope Experience.
+    const expectedCount = await countBookingsInWindowForExperience(
+      scopeExperienceId!,
+      new Date(COMMISSION_SCOPE_WINDOW_START_ISO),
+      new Date(COMMISSION_SCOPE_WINDOW_END_ISO),
+    )
+    expect(
+      expectedCount,
+      'seed must place exactly COMMISSION_SCOPE_IN_WINDOW Bookings inside the window',
+    ).toBe(COMMISSION_SCOPE_IN_WINDOW)
+
+    await page.goto('/admin/commission')
+    await expect(page.locator('h1')).toContainText('Commission Tiers')
+
+    // Fill the Create Festival Tier form: a Sept-2026 window scoped to the
+    // dedicated fixture Experience (so the count discriminates on scope).
+    await page.locator('#name').fill(TIER_NAME)
+    await page.locator('#rateOverride').fill('12.5')
+    await page.locator('#startAt').fill(COMMISSION_SCOPE_WINDOW_START_FILL)
+    await page.locator('#endAt').fill(COMMISSION_SCOPE_WINDOW_END_FILL)
+    await page.locator('#appliesToExperienceIds').fill(scopeExperienceId!)
+    await page.locator('#reason').fill('E2E festival-season commission override (#26)')
+    await page.getByRole('button', { name: 'Create Commission Tier' }).click()
+
+    await expect(page.getByText('Commission tier created.')).toBeVisible({ timeout: 15_000 })
+
+    // ── Assert: the tier persisted with window + scope ───────────────────
+    const tier = await getCommissionTierByName(TIER_NAME)
+    expect(tier, 'the UI-created Festival tier must persist').not.toBeNull()
+    tierId = tier!.id
+    expect(Number(tier!.rateOverride)).toBe(12.5)
+    expect(tier!.appliesToExperienceIds).toEqual([scopeExperienceId])
+    expect(tier!.appliesToCategories).toEqual([])
+    expect(tier!.appliesToVendorIds).toEqual([])
+
+    // ── Assert: exactly one create audit row with actor + window ─────────
+    expect(
+      await countCommissionTierAuditRows('admin.commission_tier.create', tierId!),
+    ).toBe(1)
+    const createAudit = await getLatestCommissionTierAudit(
+      'admin.commission_tier.create',
+      tierId!,
+    )
+    expect(createAudit!.actorUserId).toBe(SEED_ADMIN_ID)
+    expect(createAudit!.payload).toMatchObject({ name: TIER_NAME, rateOverride: 12.5 })
+
+    // ── Assert: the table surfaces the SCOPE-FILTERED affected count ─────
+    // The Sept-2026 window is in the future → the tier is "Upcoming". Read its
+    // row's affected-Booking count cell and assert it equals the scope-filtered
+    // DB count (3 in-window; the August control is excluded — proves window +
+    // scope, ADR-0008 / #34).
+    await page.goto('/admin/commission')
+    await page.getByRole('tab', { name: /Upcoming/ }).click()
+    const row = page.locator(`tr[data-tier-id="${tierId}"]`)
+    await expect(row).toBeVisible({ timeout: 15_000 })
+    const countCell = row.locator('[data-affected-count]')
+    await expect(countCell).toHaveText(String(expectedCount))
+    await expect(countCell).toHaveAttribute('data-affected-count', String(expectedCount))
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/admin-commission-tier-created.png',
+      fullPage: true,
+    })
+  })
+
+  test('edit Festival tier: rate + reason update persists + audit', async ({ page }) => {
+    expect(tierId, 'create test must have produced a tier id').not.toBeNull()
+    const NEW_REASON = `E2E edited reason ${Date.now()}`
+
+    await page.goto('/admin/commission')
+    await page.getByRole('tab', { name: /Upcoming/ }).click()
+    const row = page.locator(`tr[data-tier-id="${tierId}"]`)
+    await expect(row).toBeVisible({ timeout: 15_000 })
+    await row.getByRole('button', { name: 'Edit' }).click()
+
+    const dialog = page.locator('[data-slot="dialog-content"]')
+    await expect(dialog.getByText('Edit Commission Tier')).toBeVisible()
+    await dialog.locator(`#edit-rate-${tierId}`).fill('17.5')
+    await dialog.locator(`#edit-reason-${tierId}`).fill(NEW_REASON)
+    await dialog.getByRole('button', { name: 'Save Changes' }).click()
+
+    // The dialog closes on a successful save.
+    await expect(dialog.getByText('Edit Commission Tier')).not.toBeVisible({
+      timeout: 15_000,
+    })
+
+    // ── Assert: the rate + reason persisted ──────────────────────────────
+    await expect
+      .poll(async () => (await getCommissionTierById(tierId!))?.rateOverride, {
+        timeout: 15_000,
+      })
+      .toBe('17.50')
+    const updated = await getCommissionTierById(tierId!)
+    expect(updated!.reason).toBe(NEW_REASON)
+    // The window + scope are untouched by a rate/reason edit.
+    expect(updated!.appliesToExperienceIds).toHaveLength(1)
+
+    // ── Assert: an update audit row with actor ───────────────────────────
+    expect(
+      await countCommissionTierAuditRows('admin.commission_tier.update', tierId!),
+    ).toBe(1)
+    const updateAudit = await getLatestCommissionTierAudit(
+      'admin.commission_tier.update',
+      tierId!,
+    )
+    expect(updateAudit!.actorUserId).toBe(SEED_ADMIN_ID)
+  })
+
+  test('delete Festival tier: removed from the DB + audit', async ({ page }) => {
+    expect(tierId, 'create test must have produced a tier id').not.toBeNull()
+
+    await page.goto('/admin/commission')
+    await page.getByRole('tab', { name: /Upcoming/ }).click()
+    const row = page.locator(`tr[data-tier-id="${tierId}"]`)
+    await expect(row).toBeVisible({ timeout: 15_000 })
+
+    // The delete button confirms via window.confirm — auto-accept it.
+    page.once('dialog', (dialog) => dialog.accept())
+    await row.getByRole('button', { name: 'Delete' }).click()
+
+    // After the action + revalidation the deleted row drops out of the table.
+    await expect(row).toHaveCount(0, { timeout: 15_000 })
+
+    // ── Assert: the tier row is gone from the DB ─────────────────────────
+    await expect
+      .poll(async () => await getCommissionTierById(tierId!), { timeout: 15_000 })
+      .toBeNull()
+
+    // ── Assert: a delete audit row with actor ────────────────────────────
+    expect(
+      await countCommissionTierAuditRows('admin.commission_tier.delete', tierId!),
+    ).toBe(1)
+    const deleteAudit = await getLatestCommissionTierAudit(
+      'admin.commission_tier.delete',
+      tierId!,
+    )
+    expect(deleteAudit!.actorUserId).toBe(SEED_ADMIN_ID)
+    tierId = null
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 20. Functional: admin promo CRUD (#26, ADR-0004)
+//
+// Drives the promo Server Actions FROM THE UI (create percent-style credit
+// amount + flat, toggle active/inactive, delete) and asserts the persisted
+// promo_codes rows + the append-only audit_logs trail.
+//
+//   - CREATE  : two promos — one with an expiry, one without → persist with the
+//               right credit amount, active flag, and expiry.
+//   - TOGGLE  : deactivate then reactivate one → active flag flips, audited.
+//   - DELETE  : remove a 0-use promo → row gone from the DB.
+//
+// Both promos are created freshly in-test (unique code stamps) and removed in a
+// finally, so they never disturb other specs. Serial so the create→toggle→
+// delete chain runs against known rows.
+// ---------------------------------------------------------------------------
+test.describe('Admin promo CRUD (#26)', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  const PROMO_FLAT = `E2EFLAT${Date.now()}`
+  const PROMO_EXPIRY = `E2EEXP${Date.now()}`
+  let flatId: string | null = null
+  let expiryId: string | null = null
+
+  test.afterAll(async () => {
+    for (const id of [flatId, expiryId]) {
+      if (id) {
+        const stale = await getPromoCodeById(id)
+        if (stale) await deletePromoCodeById(id)
+      }
+    }
+  })
+
+  test('create: a flat promo + an expiring promo persist with the right credit + expiry', async ({
+    page,
+  }) => {
+    await page.goto('/admin/promo')
+    await expect(page.locator('h1')).toContainText('Promo Codes')
+
+    // ── Promo 1: a flat ₹500 credit, no expiry ───────────────────────────
+    await page.locator('#code').fill(PROMO_FLAT)
+    await page.locator('#creditAmount').fill('500')
+    await page.getByRole('button', { name: 'Create Promo Code' }).click()
+    await expect(page.getByText('Promo code created.')).toBeVisible({ timeout: 15_000 })
+
+    const flat = await getPromoCodeByCode(PROMO_FLAT)
+    expect(flat, 'the flat promo must persist').not.toBeNull()
+    flatId = flat!.id
+    expect(flat!.creditAmountRupees).toBe(500)
+    expect(flat!.active).toBe(true)
+    expect(flat!.expiresAt).toBeNull()
+    expect(flat!.currentUses).toBe(0)
+
+    // ── Assert: a create audit row (entity_id = the code) ────────────────
+    expect(await countPromoAuditRows('admin.promo_code.create', PROMO_FLAT)).toBe(1)
+
+    // ── Promo 2: a ₹1000 credit WITH an expiry ───────────────────────────
+    await page.goto('/admin/promo')
+    await page.locator('#code').fill(PROMO_EXPIRY)
+    await page.locator('#creditAmount').fill('1000')
+    await page.locator('#expiresAt').fill('2027-12-31T23:59')
+    await page.getByRole('button', { name: 'Create Promo Code' }).click()
+    await expect(page.getByText('Promo code created.')).toBeVisible({ timeout: 15_000 })
+
+    const expiring = await getPromoCodeByCode(PROMO_EXPIRY)
+    expect(expiring, 'the expiring promo must persist').not.toBeNull()
+    expiryId = expiring!.id
+    expect(expiring!.creditAmountRupees).toBe(1000)
+    expect(expiring!.expiresAt, 'the expiry must persist').not.toBeNull()
+    expect(expiring!.expiresAt!.getUTCFullYear()).toBe(2027)
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/admin-promo-created.png',
+      fullPage: true,
+    })
+  })
+
+  test('toggle: deactivate then reactivate the flat promo + audit', async ({ page }) => {
+    expect(flatId, 'create test must have produced a flat promo id').not.toBeNull()
+
+    await page.goto('/admin/promo')
+    const row = page.locator('tr').filter({ hasText: PROMO_FLAT })
+    await expect(row).toBeVisible()
+
+    // ── Deactivate ───────────────────────────────────────────────────────
+    await row.getByRole('button', { name: 'Deactivate' }).click()
+    await expect
+      .poll(async () => (await getPromoCodeById(flatId!))?.active, { timeout: 15_000 })
+      .toBe(false)
+    expect(await countPromoAuditRows('admin.promo_code.deactivate', flatId!)).toBe(1)
+
+    // ── Reactivate (the button now reads "Activate") ─────────────────────
+    const refreshedRow = page.locator('tr').filter({ hasText: PROMO_FLAT })
+    await expect(refreshedRow.getByRole('button', { name: 'Activate' })).toBeVisible({
+      timeout: 15_000,
+    })
+    await refreshedRow.getByRole('button', { name: 'Activate' }).click()
+    await expect
+      .poll(async () => (await getPromoCodeById(flatId!))?.active, { timeout: 15_000 })
+      .toBe(true)
+    expect(await countPromoAuditRows('admin.promo_code.activate', flatId!)).toBe(1)
+  })
+
+  test('delete: a 0-use promo is removed from the DB + audit', async ({ page }) => {
+    expect(expiryId, 'create test must have produced an expiring promo id').not.toBeNull()
+
+    await page.goto('/admin/promo')
+    const row = page.locator('tr').filter({ hasText: PROMO_EXPIRY })
+    await expect(row).toBeVisible()
+    await row.getByRole('button', { name: 'Delete' }).click()
+
+    // After the action + revalidation the deleted row drops out of the table.
+    await expect(row).toHaveCount(0, { timeout: 15_000 })
+
+    // ── Assert: the promo row is gone from the DB ────────────────────────
+    await expect
+      .poll(async () => await getPromoCodeById(expiryId!), { timeout: 15_000 })
+      .toBeNull()
+    expect(await countPromoAuditRows('admin.promo_code.delete', expiryId!)).toBe(1)
+    expiryId = null
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 21. Functional: admin loyalty grant — Outvers credit bucket + expiry (#26)
+//
+// Drives the manual loyalty grant Server Action (adminGrantCredit) FROM THE UI
+// and asserts the grant lands in the CORRECT wallet bucket per ADR-0004:
+//
+//   - OUTVERS CREDIT : a grant of Outvers credit creates an admin-source
+//                      wallet_transactions row in the outvers_credit bucket
+//                      (NOT refund_balance) WITH an expires_at 12–18 months out
+//                      (ADR-0004 — closed-loop promo credit expires), the
+//                      aggregate outvers_credit balance increments by the
+//                      amount, the Refund balance is UNTOUCHED, and a
+//                      wallet.grant_credit audit row records the admin actor +
+//                      the expiry.
+//
+// The grant targets a DEDICATED Customer (u_seed_customer_loyalty) so crediting
+// it never disturbs #13–#15's u_seed_customer two-bucket wallet determinism.
+// The customer's wallet is cleared in a finally so the grant leaves no residue.
+// ---------------------------------------------------------------------------
+test.describe('Admin loyalty grant — Outvers credit bucket + expiry (#26)', () => {
+  test('grant Outvers credit → outvers_credit bucket WITH expiry, NOT Refund balance + audit', async ({
+    page,
+  }) => {
+    const GRANT_RUPEES = 750
+    const outversBefore = await getWalletBalanceRupees(
+      SEED_LOYALTY_CUSTOMER_ID,
+      'outvers_credit',
+    )
+    const refundBefore = await getWalletBalanceRupees(
+      SEED_LOYALTY_CUSTOMER_ID,
+      'refund_balance',
+    )
+
+    try {
+      await page.goto('/admin/loyalty')
+      await expect(page.locator('h1')).toContainText('Loyalty & Credits')
+
+      // Fill the Manual Credit Grant form: Outvers credit to the dedicated
+      // loyalty Customer.
+      await page.locator('#userId').fill(SEED_LOYALTY_CUSTOMER_ID)
+      await page.locator('#amountRupees').fill(String(GRANT_RUPEES))
+      await page.selectOption('#balanceType', 'outvers_credit')
+      await page.locator('#reason').fill(`E2E goodwill loyalty grant ${Date.now()}`)
+      await page.getByRole('button', { name: 'Grant Credit' }).click()
+
+      // Inline success state surfaces the new wallet_transaction id.
+      await expect(page.getByText(/Credit granted\. Transaction:/)).toBeVisible({
+        timeout: 15_000,
+      })
+
+      // ── Assert: an admin-source outvers_credit ledger row WITH expiry ────
+      const outversTxns = await getWalletTransactions(
+        SEED_LOYALTY_CUSTOMER_ID,
+        'outvers_credit',
+        'admin',
+      )
+      expect(outversTxns.length, 'one admin Outvers-credit grant must exist').toBe(1)
+      const txn = outversTxns[0]
+      expect(txn.amountRupees).toBe(GRANT_RUPEES)
+      // ── ADR-0004: Outvers credit MUST carry an expiry 12–18 months out ──
+      expect(txn.expiresAt, 'Outvers credit grant must have an expiry (ADR-0004)').not.toBeNull()
+      const monthsOut =
+        (txn.expiresAt!.getTime() - txn.createdAt.getTime()) /
+        (1000 * 60 * 60 * 24 * 30)
+      expect(monthsOut).toBeGreaterThanOrEqual(11.5)
+      expect(monthsOut).toBeLessThanOrEqual(18.5)
+
+      // ── Assert: the Outvers credit aggregate incremented by the amount ──
+      const outversAfter = await getWalletBalanceRupees(
+        SEED_LOYALTY_CUSTOMER_ID,
+        'outvers_credit',
+      )
+      expect(outversAfter).toBe(outversBefore + GRANT_RUPEES)
+
+      // ── Assert: the Refund balance bucket is UNTOUCHED ──────────────────
+      const refundAfter = await getWalletBalanceRupees(
+        SEED_LOYALTY_CUSTOMER_ID,
+        'refund_balance',
+      )
+      expect(refundAfter).toBe(refundBefore)
+      const refundTxns = await getWalletTransactions(
+        SEED_LOYALTY_CUSTOMER_ID,
+        'refund_balance',
+      )
+      expect(refundTxns, 'no refund-balance row may be written by an Outvers grant').toHaveLength(0)
+
+      // ── Assert: a wallet.grant_credit audit row with actor + expiry ─────
+      const audit = await getWalletGrantAudit(txn.id)
+      expect(audit, 'a wallet.grant_credit audit row must exist').not.toBeNull()
+      expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+      expect(audit!.payload).toMatchObject({
+        userId: SEED_LOYALTY_CUSTOMER_ID,
+        amountRupees: GRANT_RUPEES,
+        balanceType: 'outvers_credit',
+        source: 'admin',
+      })
+      expect(audit!.payload.expiresAt, 'the audit must record the expiry').not.toBeNull()
+
+      // The granted Customer's email surfaces in the balances table.
+      await page.goto('/admin/loyalty')
+      await expect(page.getByText(SEED_LOYALTY_CUSTOMER_EMAIL).first()).toBeVisible({
+        timeout: 15_000,
+      })
+
+      await page.screenshot({
+        path: 'tests/e2e/screenshots/admin-loyalty-grant.png',
+        fullPage: true,
+      })
+    } finally {
+      // Clear the dedicated Customer's wallet so the grant leaves no residue.
+      await clearWalletForUser(SEED_LOYALTY_CUSTOMER_ID)
     }
   })
 })

@@ -84,6 +84,17 @@ export function CommissionTierCreateForm() {
             Leave empty for all vendors
           </p>
         </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="appliesToExperienceIds">Experience IDs (comma-separated)</Label>
+          <Input
+            id="appliesToExperienceIds"
+            name="appliesToExperienceIds"
+            placeholder="experience_uuid_1, experience_uuid_2"
+          />
+          <p className="text-xs text-muted-foreground">
+            Leave empty for all experiences
+          </p>
+        </div>
         <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
           <Label htmlFor="reason">Reason</Label>
           <Textarea

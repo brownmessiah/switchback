@@ -1821,3 +1821,378 @@ export async function getEarliestBookingCommissionSnapshotForVendor(
     return { bookingId: row.id, commissionRateSnapshot: row.commission_rate_snapshot }
   })
 }
+
+// ---------------------------------------------------------------------------
+// Admin commission-tier CRUD + promo CRUD + loyalty-grant assertions (#26)
+//
+// These drive the commission-tier CRUD (executeCreate/Update/Delete +
+// getAffectedBookingCount), promo CRUD (create/toggle/delete), and the manual
+// loyalty grant (adminGrantCredit) FROM THE UI and assert the persisted
+// commission_tiers / promo_codes / wallet rows plus the append-only audit
+// trail. Per ADR-0008 a Festival tier is time-windowed + scoped; per ADR-0004
+// an Outvers-credit grant lands in the closed-loop bucket WITH an expiry,
+// distinct from the cashable Refund balance.
+// ---------------------------------------------------------------------------
+
+export interface CommissionTierRow {
+  id: string
+  name: string
+  startAt: Date
+  endAt: Date
+  rateOverride: string
+  reason: string
+  appliesToCategories: string[]
+  appliesToVendorIds: string[]
+  appliesToExperienceIds: string[]
+}
+
+/** Fetch the most-recently-created commission_tier whose name matches, or null. */
+export async function getCommissionTierByName(
+  name: string,
+): Promise<CommissionTierRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        id: string
+        name: string
+        start_at: Date
+        end_at: Date
+        rate_override: string
+        reason: string
+        applies_to_categories: string[]
+        applies_to_vendor_ids: string[]
+        applies_to_experience_ids: string[]
+      }[]
+    >`
+      SELECT id, name, start_at, end_at, rate_override, reason,
+             applies_to_categories, applies_to_vendor_ids, applies_to_experience_ids
+      FROM commission_tiers
+      WHERE name = ${name}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    const row = rows[0]
+    if (!row) return null
+    return {
+      id: row.id,
+      name: row.name,
+      startAt: new Date(row.start_at),
+      endAt: new Date(row.end_at),
+      rateOverride: row.rate_override,
+      reason: row.reason,
+      appliesToCategories: row.applies_to_categories,
+      appliesToVendorIds: row.applies_to_vendor_ids,
+      appliesToExperienceIds: row.applies_to_experience_ids,
+    }
+  })
+}
+
+/** Read a commission_tier by id, or null (proves a delete persisted). */
+export async function getCommissionTierById(
+  id: string,
+): Promise<CommissionTierRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        id: string
+        name: string
+        start_at: Date
+        end_at: Date
+        rate_override: string
+        reason: string
+        applies_to_categories: string[]
+        applies_to_vendor_ids: string[]
+        applies_to_experience_ids: string[]
+      }[]
+    >`
+      SELECT id, name, start_at, end_at, rate_override, reason,
+             applies_to_categories, applies_to_vendor_ids, applies_to_experience_ids
+      FROM commission_tiers
+      WHERE id = ${id}
+      LIMIT 1
+    `
+    const row = rows[0]
+    if (!row) return null
+    return {
+      id: row.id,
+      name: row.name,
+      startAt: new Date(row.start_at),
+      endAt: new Date(row.end_at),
+      rateOverride: row.rate_override,
+      reason: row.reason,
+      appliesToCategories: row.applies_to_categories,
+      appliesToVendorIds: row.applies_to_vendor_ids,
+      appliesToExperienceIds: row.applies_to_experience_ids,
+    }
+  })
+}
+
+/** Delete a commission_tier by id (test cleanup / restore). */
+export async function deleteCommissionTierById(id: string): Promise<void> {
+  await withSql(async (sql) => {
+    await sql`DELETE FROM commission_tiers WHERE id = ${id}`
+  })
+}
+
+/**
+ * Count Bookings whose created_at falls inside [startAt, endAt] AND whose
+ * Experience matches the given scope (here: a single Experience id). Mirrors
+ * the scope-filtered getAffectedBookingCount predicate (ADR-0008, #34 fix) so
+ * the E2E can assert the UI-surfaced count against the live DB independently.
+ */
+export async function countBookingsInWindowForExperience(
+  experienceId: string,
+  startAt: Date,
+  endAt: Date,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT COUNT(*) AS n
+      FROM bookings
+      WHERE experience_id = ${experienceId}
+        AND created_at >= ${startAt.toISOString()}::timestamptz
+        AND created_at <= ${endAt.toISOString()}::timestamptz
+    `
+    return Number(rows[0]?.n ?? 0)
+  })
+}
+
+/** Count audit_logs rows for a commission-tier action on a tier id. */
+export async function countCommissionTierAuditRows(
+  action: string,
+  tierId: string,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT COUNT(*) AS n
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_type = 'commission_tier'
+        AND entity_id = ${tierId}
+    `
+    return Number(rows[0]?.n ?? 0)
+  })
+}
+
+/** Fetch the most-recent commission-tier audit payload + actor for a tier, or null. */
+export async function getLatestCommissionTierAudit(
+  action: string,
+  tierId: string,
+): Promise<{ actorUserId: string | null; payload: Record<string, unknown> } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { actor_user_id: string | null; payload: Record<string, unknown> }[]
+    >`
+      SELECT actor_user_id, payload
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_type = 'commission_tier'
+        AND entity_id = ${tierId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return { actorUserId: rows[0].actor_user_id, payload: rows[0].payload }
+  })
+}
+
+export interface PromoCodeRow {
+  id: string
+  code: string
+  creditAmountRupees: number
+  active: boolean
+  expiresAt: Date | null
+  maxTotalUses: number | null
+  currentUses: number
+}
+
+/** Fetch a promo_code row by code (uppercased to mirror the action), or null. */
+export async function getPromoCodeByCode(
+  code: string,
+): Promise<PromoCodeRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        id: string
+        code: string
+        credit_amount: string
+        active: boolean
+        expires_at: Date | null
+        max_total_uses: number | null
+        current_uses: number
+      }[]
+    >`
+      SELECT id, code, credit_amount, active, expires_at, max_total_uses, current_uses
+      FROM promo_codes
+      WHERE code = ${code.toUpperCase()}
+      LIMIT 1
+    `
+    const row = rows[0]
+    if (!row) return null
+    return {
+      id: row.id,
+      code: row.code,
+      creditAmountRupees: Math.floor(Number(row.credit_amount)),
+      active: row.active,
+      expiresAt: row.expires_at ? new Date(row.expires_at) : null,
+      maxTotalUses: row.max_total_uses,
+      currentUses: row.current_uses,
+    }
+  })
+}
+
+/** Read a promo_code by id, or null (proves a delete persisted). */
+export async function getPromoCodeById(id: string): Promise<PromoCodeRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        id: string
+        code: string
+        credit_amount: string
+        active: boolean
+        expires_at: Date | null
+        max_total_uses: number | null
+        current_uses: number
+      }[]
+    >`
+      SELECT id, code, credit_amount, active, expires_at, max_total_uses, current_uses
+      FROM promo_codes
+      WHERE id = ${id}
+      LIMIT 1
+    `
+    const row = rows[0]
+    if (!row) return null
+    return {
+      id: row.id,
+      code: row.code,
+      creditAmountRupees: Math.floor(Number(row.credit_amount)),
+      active: row.active,
+      expiresAt: row.expires_at ? new Date(row.expires_at) : null,
+      maxTotalUses: row.max_total_uses,
+      currentUses: row.current_uses,
+    }
+  })
+}
+
+/** Delete a promo_code by id (test cleanup). */
+export async function deletePromoCodeById(id: string): Promise<void> {
+  await withSql(async (sql) => {
+    await sql`DELETE FROM promo_codes WHERE id = ${id}`
+  })
+}
+
+/** Count audit_logs rows for a promo-code action on a code (entity_id = code). */
+export async function countPromoAuditRows(
+  action: string,
+  entityId: string,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT COUNT(*) AS n
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_type = 'promo_code'
+        AND entity_id = ${entityId}
+    `
+    return Number(rows[0]?.n ?? 0)
+  })
+}
+
+export interface WalletTransactionRow {
+  id: string
+  balanceType: string
+  amountRupees: number
+  source: string
+  referenceId: string | null
+  expiresAt: Date | null
+  createdAt: Date
+}
+
+/**
+ * Fetch a user's wallet_transactions of a given balance_type + source (newest
+ * first). The #26 loyalty-grant E2E reads the admin-source outvers_credit /
+ * refund_balance ledger rows to assert the grant landed in the RIGHT bucket
+ * with the RIGHT expiry (ADR-0004).
+ */
+export async function getWalletTransactions(
+  userId: string,
+  balanceType: 'outvers_credit' | 'refund_balance',
+  source?: string,
+): Promise<WalletTransactionRow[]> {
+  return withSql(async (sql) => {
+    const rows = source
+      ? await sql<
+          {
+            id: string
+            balance_type: string
+            amount: string
+            source: string
+            reference_id: string | null
+            expires_at: Date | null
+            created_at: Date
+          }[]
+        >`
+          SELECT id, balance_type, amount, source, reference_id, expires_at, created_at
+          FROM wallet_transactions
+          WHERE user_id = ${userId}
+            AND balance_type = ${balanceType}
+            AND source = ${source}
+          ORDER BY created_at DESC
+        `
+      : await sql<
+          {
+            id: string
+            balance_type: string
+            amount: string
+            source: string
+            reference_id: string | null
+            expires_at: Date | null
+            created_at: Date
+          }[]
+        >`
+          SELECT id, balance_type, amount, source, reference_id, expires_at, created_at
+          FROM wallet_transactions
+          WHERE user_id = ${userId}
+            AND balance_type = ${balanceType}
+          ORDER BY created_at DESC
+        `
+    return rows.map((r) => ({
+      id: r.id,
+      balanceType: r.balance_type,
+      amountRupees: Math.floor(Number(r.amount)),
+      source: r.source,
+      referenceId: r.reference_id,
+      expiresAt: r.expires_at ? new Date(r.expires_at) : null,
+      createdAt: new Date(r.created_at),
+    }))
+  })
+}
+
+/** Fetch the most-recent wallet.grant_credit audit payload + actor for a wallet_transaction id. */
+export async function getWalletGrantAudit(
+  walletTransactionId: string,
+): Promise<{ actorUserId: string | null; payload: Record<string, unknown> } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { actor_user_id: string | null; payload: Record<string, unknown> }[]
+    >`
+      SELECT actor_user_id, payload
+      FROM audit_logs
+      WHERE action = 'wallet.grant_credit'
+        AND entity_type = 'wallet_transaction'
+        AND entity_id = ${walletTransactionId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return { actorUserId: rows[0].actor_user_id, payload: rows[0].payload }
+  })
+}
+
+/** Delete a user's wallet rows (transactions + balances) — test cleanup/restore. */
+export async function clearWalletForUser(userId: string): Promise<void> {
+  await withSql(async (sql) => {
+    await sql`DELETE FROM wallet_transactions WHERE user_id = ${userId}`
+    await sql`DELETE FROM wallet_balances WHERE user_id = ${userId}`
+  })
+}

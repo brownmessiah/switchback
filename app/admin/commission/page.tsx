@@ -1,4 +1,4 @@
-import { desc, eq, sql } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,12 +12,12 @@ import {
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { db } from '@/db/client'
-import { bookings } from '@/db/schema/bookings'
 import { commissionTiers } from '@/db/schema/commission-tiers'
 import { users } from '@/db/schema/users'
 
 import { CommissionTierActionsCell } from './commission-tier-actions-cell'
 import { CommissionTierCreateForm } from './commission-tier-form'
+import { getAffectedBookingCount } from './actions'
 
 // ── Helpers ────────────────────────────────────────────────────────
 
@@ -78,17 +78,18 @@ export default async function CommissionPage() {
   const upcomingTiers = classified.filter((t) => t.status === 'upcoming')
   const expiredTiers = classified.filter((t) => t.status === 'expired')
 
-  // For active tiers, get the count of bookings that fall within the window
-  const activeBookingCounts: Record<string, number> = {}
-  for (const tier of activeTiers) {
-    const [result] = await db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(bookings)
-      .where(
-        sql`${bookings.createdAt} >= ${tier.startAt} AND ${bookings.createdAt} <= ${tier.endAt}`,
-      )
-    activeBookingCounts[tier.id] = result?.count ?? 0
-  }
+  // Affected-Booking "blast radius" preview per tier. Per ADR-0008 + the #34
+  // scope-filter fix this is the SCOPE-filtered count (honours
+  // appliesToCategories / VendorIds / ExperienceIds), not a window-only count —
+  // so an admin sees exactly how many existing Bookings a tier change touches.
+  // Computed for every tier (active / upcoming / expired), since the preview is
+  // meaningful regardless of the tier's live-window status.
+  const bookingCounts: Record<string, number> = {}
+  await Promise.all(
+    classified.map(async (tier) => {
+      bookingCounts[tier.id] = await getAffectedBookingCount(db, tier.id)
+    }),
+  )
 
   return (
     <div className="space-y-6">
@@ -129,7 +130,7 @@ export default async function CommissionPage() {
             tiers={activeTiers}
             emptyMessage="No active commission tiers."
             showBookingCount
-            bookingCounts={activeBookingCounts}
+            bookingCounts={bookingCounts}
           />
         </TabsContent>
 
@@ -137,6 +138,8 @@ export default async function CommissionPage() {
           <TierTable
             tiers={upcomingTiers}
             emptyMessage="No upcoming commission tiers."
+            showBookingCount
+            bookingCounts={bookingCounts}
           />
         </TabsContent>
 
@@ -144,6 +147,8 @@ export default async function CommissionPage() {
           <TierTable
             tiers={expiredTiers}
             emptyMessage="No expired commission tiers."
+            showBookingCount
+            bookingCounts={bookingCounts}
           />
         </TabsContent>
       </Tabs>
@@ -221,7 +226,7 @@ function TierTable({
               const scopeLabel = scopeParts.length > 0 ? scopeParts.join(' | ') : 'All'
 
               return (
-                <TableRow key={t.id}>
+                <TableRow key={t.id} data-tier-id={t.id}>
                   <TableCell className="text-sm font-mono font-medium">
                     {t.name}
                   </TableCell>
@@ -240,7 +245,7 @@ function TierTable({
                     </Badge>
                   </TableCell>
                   {showBookingCount && (
-                    <TableCell className="text-sm">
+                    <TableCell className="text-sm" data-affected-count={bookingCounts[t.id] ?? 0}>
                       {bookingCounts[t.id] ?? 0}
                     </TableCell>
                   )}

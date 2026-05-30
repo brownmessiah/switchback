@@ -2,31 +2,19 @@
 
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
-import { z } from 'zod'
 
-import { db } from '@/db/client'
+import { db as prodDb } from '@/db/client'
 import { auth } from '@/lib/auth'
-import { grantCredit } from '@/lib/payments/wallet-ledger'
 
-// ── Result types ────────────────────────────────────────────────────
+import {
+  executeGrantCredit,
+  manualGrantSchema,
+  type GrantCreditResult,
+} from './grant-logic'
 
-export type GrantCreditResult =
-  | { ok: true; walletTransactionId: string }
-  | { ok: false; error: string }
+export type { GrantCreditResult } from './grant-logic'
 
-// ── Validation schemas ─────────────────────────────────────────────
-
-const manualGrantSchema = z.object({
-  userId: z
-    .string()
-    .trim()
-    .min(1, 'User ID is required.'),
-  amountRupees: z.coerce.number().int().positive('Amount must be a positive integer.'),
-  balanceType: z.enum(['outvers_credit', 'refund_balance']),
-  reason: z.string().trim().min(1, 'Reason is required.').max(500),
-})
-
-// ── Actions ────────────────────────────────────────────────────────
+// ── Server Action wrapper (Next.js boundary) ────────────────────────
 
 export async function adminGrantCredit(
   formData: FormData,
@@ -40,20 +28,10 @@ export async function adminGrantCredit(
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Validation failed.' }
   }
 
-  try {
-    const result = await grantCredit(db, {
-      userId: parsed.data.userId,
-      amountRupees: parsed.data.amountRupees,
-      source: 'admin',
-      balanceType: parsed.data.balanceType,
-      referenceId: `manual:${parsed.data.reason}`,
-      actorUserId: session.user.id,
-    })
+  const result = await executeGrantCredit(prodDb, session.user.id, parsed.data)
 
+  if (result.ok) {
     revalidatePath('/admin/loyalty')
-    return { ok: true, walletTransactionId: result.walletTransactionId }
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to grant credit.'
-    return { ok: false, error: message }
   }
+  return result
 }

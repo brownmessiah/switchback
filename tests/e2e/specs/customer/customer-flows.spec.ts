@@ -230,21 +230,37 @@ test.describe('Browse to checkout', () => {
     // Checkout page should load
     await expect(page.locator('h1')).toContainText('Checkout')
 
-    // Order summary card renders
+    // Order summary card renders (persistent rail — visible on BOTH steps)
     await expect(page.getByText('Order summary')).toBeVisible()
 
-    // Pricing details are present
+    // Pricing details are present (in the persistent rail)
     await expect(page.getByText('Experience', { exact: true })).toBeVisible()
     await expect(page.getByText('Participants', { exact: true })).toBeVisible()
     await expect(page.getByText('Price per person')).toBeVisible()
     await expect(page.getByText('Total', { exact: true })).toBeVisible()
 
-    // Payment/pay button is visible
+    // Guided-stepper (#70 / Direction A): the checkout is a 2-screen wizard.
+    // STEP 1 "Your details" lands first; the Pay button lives on STEP 2 and is
+    // NOT in the DOM until the Customer advances. Assert the step structure.
+    await expect(
+      page.getByRole('button', { name: /continue to payment/i }),
+    ).toBeVisible()
+    // The real Pay button (label "Pay ₹…") is NOT in the DOM on step 1. Match by
+    // accessible name starting with "Pay" so it doesn't collide with the
+    // "Continue to payment" advance control (which contains the substring "pay").
+    await expect(
+      page.getByRole('button', { name: /^Pay\s/i }),
+    ).toHaveCount(0)
+
+    // Cancellation policy badge is shown on STEP 1's review.
+    await expect(page.getByText('cancellation policy', { exact: true })).toBeVisible()
+
+    // Advance to STEP 2 "Payment".
+    await page.getByRole('button', { name: /continue to payment/i }).click()
+
+    // Payment/pay button is now visible on step 2.
     const payButton = page.locator('button:has-text("Pay")')
     await expect(payButton).toBeVisible()
-
-    // Cancellation policy badge is shown
-    await expect(page.getByText('cancellation policy', { exact: true })).toBeVisible()
 
     // Graceful degradation (Issue #112 / ADR-0002): the checkout payment-mode
     // surface must NEVER advertise reserve-now-pay-later. Only the two shipped
@@ -361,11 +377,23 @@ test.describe('Revenue spine: checkout → confirmation', () => {
     await bookNow.click()
     await expect(page.locator('h1')).toContainText('Checkout')
 
-    // Worked example surfaced in the UI: ₹3,000 total, ₹750 due now.
+    // Worked example surfaced in the UI's persistent order-summary rail:
+    // ₹3,000 total, ₹750 due now. The rail is visible on BOTH steps.
     await expect(page.getByText('Order summary')).toBeVisible()
     await expect(
       page.getByText(`₹${EXPECTED_GROSS.toLocaleString('en-IN')}`).first(),
     ).toBeVisible()
+
+    // Guided-stepper (#70 / Direction A): Pay lives on STEP 2. The Revenue-spine
+    // money invariant (partial_pay DEFAULT) must hold by simply advancing past
+    // step 1 and paying — no payment-mode radio change. Assert the real Pay
+    // button ("Pay ₹…") is gated behind "Continue to payment", then advance.
+    // (Match by accessible name starting with "Pay" to avoid the substring
+    // collision with the "Continue to payment" advance control.)
+    await expect(page.getByRole('button', { name: /^Pay\s/i })).toHaveCount(0)
+    await page.getByRole('button', { name: /continue to payment/i }).click()
+
+    // partial_pay is the DEFAULT mode → the Pay button reflects the 25% Advance.
     const payButton = page.locator('button:has-text("Pay")')
     await expect(payButton).toContainText(
       `₹${EXPECTED_ADVANCE.toLocaleString('en-IN')}`,
@@ -624,6 +652,11 @@ test.describe('Checkout validation', () => {
 
     await expect(page.locator('h1')).toContainText('Checkout')
     await expect(page.getByText('Order summary')).toBeVisible()
+
+    // Guided-stepper (#70 / Direction A): advance past step 1 "Your details" to
+    // reach the Pay control on step 2. The missing-slot guard fires server-side
+    // on Pay, NOT as a step-1 gate (checkout stays a clean review step).
+    await page.getByRole('button', { name: /continue to payment/i }).click()
 
     const payButton = page.locator('button:has-text("Pay")')
     await expect(payButton).toBeVisible()

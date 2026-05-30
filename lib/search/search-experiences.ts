@@ -3,30 +3,10 @@ import { getMeiliClient, type MeiliLike } from './meilisearch-client'
 
 const EXPERIENCE_INDEX = 'experiences'
 
-/**
- * One-shot guard so the search page configures the index's filter/sort
- * settings at most once per server process. A freshly provisioned (or
- * pre-existing but unconfigured) Meilisearch index has EMPTY filterable +
- * sortable attributes, which makes every filtered/sorted query 400 and
- * crash the search page (ADR-0013). We self-heal on the first search.
- */
-let settingsEnsured: Promise<void> | null = null
-
-async function ensureSettingsOnce(client: MeiliLike): Promise<void> {
-  if (!settingsEnsured) {
-    settingsEnsured = ensureExperienceIndexSettings({ client }).catch((err) => {
-      // Reset so a transient failure can retry on the next search.
-      settingsEnsured = null
-      throw err
-    })
-  }
-  await settingsEnsured
-}
-
-/** Test-only — clear the one-shot settings guard between cases. */
-export function _resetSettingsGuardForTests(): void {
-  settingsEnsured = null
-}
+// The one-shot settings guard lives in `indexer.ts` so the search READ path
+// and the index WRITE path share a single process-level guard. Re-export the
+// test reset from there.
+export { _resetSettingsGuardForTests } from './indexer'
 
 export type SortOption = 'relevance' | 'price_asc' | 'price_desc' | 'newest'
 
@@ -107,9 +87,10 @@ export async function searchExperiences(
 
   try {
     // Self-heal the index's filter/sort settings before the first query so a
-    // Customer applying a filter never hits a 400 (ADR-0013). Inside the try so
-    // even a settings failure degrades gracefully rather than crashing the page.
-    await ensureSettingsOnce(client)
+    // Customer applying a filter never hits a 400 (ADR-0013). The guard is
+    // process-level one-shot (shared with the index write path). Inside the try
+    // so even a settings failure degrades gracefully rather than crashing.
+    await ensureExperienceIndexSettings({ client })
 
     const result = await client.index(EXPERIENCE_INDEX).search(params.q ?? '', {
       filter: filter || undefined,
@@ -121,9 +102,12 @@ export async function searchExperiences(
     return {
       hits: result.hits as SearchExperienceHit[],
     }
-  } catch {
+  } catch (err) {
     // Never crash the customer-facing search page on a Meilisearch error —
-    // degrade to an empty result set (the page renders its empty state).
+    // degrade to an empty result set (the page renders its empty state). Log
+    // server-side first so a full Meilisearch outage is observable rather than
+    // silently rendering "0 results" indefinitely.
+    console.error('[search] Meilisearch query failed; returning empty results', err)
     return { hits: [] }
   }
 }

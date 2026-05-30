@@ -83,19 +83,56 @@ function toMeiliDoc(doc: ExperienceSearchDoc): MeiliPayload {
 }
 
 /**
+ * Raw settings write — enqueues a Meilisearch `updateSettings` task that
+ * declares the filterable + sortable attributes the search page relies on.
+ * NOT a no-op on re-apply: each call enqueues a fresh task, so callers must
+ * go through the one-shot `ensureExperienceIndexSettings` guard below rather
+ * than invoking this directly.
+ */
+async function applyExperienceIndexSettings(client: MeiliLike): Promise<void> {
+  await client.index(EXPERIENCE_INDEX).updateSettings({
+    filterableAttributes: [...EXPERIENCE_FILTERABLE_ATTRIBUTES],
+    sortableAttributes: [...EXPERIENCE_SORTABLE_ATTRIBUTES],
+  })
+}
+
+/**
+ * One-shot guard so the index's filter/sort settings are configured at most
+ * once per server process — shared by BOTH the search READ path
+ * (`searchExperiences`) and the index WRITE path (`indexExperience`). A
+ * freshly provisioned (or pre-existing but unconfigured) Meilisearch index
+ * has EMPTY filterable + sortable attributes, which makes every
+ * filtered/sorted query 400 and crash the search page (ADR-0013); we
+ * self-heal once. Without this, a busy moderation queue would thrash a
+ * `updateSettings` task on every re-index.
+ */
+let settingsEnsured: Promise<void> | null = null
+
+/**
  * Configure the Experiences index's filterable + sortable attributes so the
- * customer search page's filter/sort form never 400s (ADR-0013). Idempotent:
- * Meilisearch's updateSettings is a full replace, so re-applying the same set
- * is a no-op task. Safe to call before the first search or alongside an index.
+ * customer search page's filter/sort form never 400s (ADR-0013). Process-level
+ * one-shot: the first call enqueues the settings task and caches the promise;
+ * subsequent calls await the cached promise without re-enqueuing. A transient
+ * failure resets the guard so the next call retries. Safe to call before the
+ * first search or alongside an index.
  */
 export async function ensureExperienceIndexSettings(
   opts: IndexerOpts = {},
 ): Promise<void> {
   const client = opts.client ?? getMeiliClient()
-  await client.index(EXPERIENCE_INDEX).updateSettings({
-    filterableAttributes: [...EXPERIENCE_FILTERABLE_ATTRIBUTES],
-    sortableAttributes: [...EXPERIENCE_SORTABLE_ATTRIBUTES],
-  })
+  if (!settingsEnsured) {
+    settingsEnsured = applyExperienceIndexSettings(client).catch((err) => {
+      // Reset so a transient failure can retry on the next call.
+      settingsEnsured = null
+      throw err
+    })
+  }
+  await settingsEnsured
+}
+
+/** Test-only — clear the one-shot settings guard between cases. */
+export function _resetSettingsGuardForTests(): void {
+  settingsEnsured = null
 }
 
 /**
@@ -106,6 +143,9 @@ export async function ensureExperienceIndexSettings(
  *
  * Ensures the index's filter/sort settings on first write so a freshly
  * provisioned Meilisearch (empty settings) does not break the search page.
+ * The settings call is one-shot per process (shared with the search read
+ * path), so a busy moderation queue re-indexing many Experiences enqueues at
+ * most one `updateSettings` task.
  */
 export async function indexExperience(
   doc: ExperienceSearchDoc,

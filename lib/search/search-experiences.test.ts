@@ -138,15 +138,24 @@ describe('searchExperiences resilience (ADR-0013)', () => {
     expect(stub.searchCalls).toBe(3)
   })
 
-  it('degrades to empty hits instead of crashing when Meilisearch throws', async () => {
-    const stub = makeProbeStub(async () => {
-      throw new Error('invalid_search_filter')
-    })
-    const result = await searchExperiences(
-      { activity: 'rafting' },
-      { client: stub.client },
-    )
-    expect(result.hits).toEqual([])
+  it('degrades to empty hits AND logs server-side when Meilisearch throws', async () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      const stub = makeProbeStub(async () => {
+        throw new Error('invalid_search_filter')
+      })
+      const result = await searchExperiences(
+        { activity: 'rafting' },
+        { client: stub.client },
+      )
+      expect(result.hits).toEqual([])
+      // A full Meili outage must be observable, not a silent "0 results".
+      expect(errSpy).toHaveBeenCalledTimes(1)
+      expect(errSpy.mock.calls[0]![0]).toContain('Meilisearch query failed')
+      expect(errSpy.mock.calls[0]![1]).toBeInstanceOf(Error)
+    } finally {
+      errSpy.mockRestore()
+    }
   })
 
   it('returns the index hits on a successful search', async () => {

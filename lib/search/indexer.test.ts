@@ -1,7 +1,8 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   type ExperienceSearchDoc,
+  _resetSettingsGuardForTests,
   deindexExperience,
   ensureExperienceIndexSettings,
   EXPERIENCE_FILTERABLE_ATTRIBUTES,
@@ -53,6 +54,11 @@ const sampleDoc: ExperienceSearchDoc = {
 }
 
 describe('search indexer', () => {
+  beforeEach(() => {
+    // Each case starts with a fresh one-shot guard so settings re-apply.
+    _resetSettingsGuardForTests()
+  })
+
   it('indexExperience sends the document to the experiences index', async () => {
     const { client, addCalls } = makeStub()
     await indexExperience(sampleDoc, { client })
@@ -92,6 +98,11 @@ describe('search indexer', () => {
 })
 
 describe('ensureExperienceIndexSettings', () => {
+  beforeEach(() => {
+    // The settings guard is process-level one-shot; reset between cases.
+    _resetSettingsGuardForTests()
+  })
+
   it('configures the filterable + sortable attributes the search page relies on', async () => {
     const { client, settingsCalls } = makeStub()
     await ensureExperienceIndexSettings({ client })
@@ -113,5 +124,50 @@ describe('ensureExperienceIndexSettings', () => {
     expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('pricePerPersonRupees')
     expect(EXPERIENCE_SORTABLE_ATTRIBUTES).toContain('pricePerPersonRupees')
     expect(EXPERIENCE_SORTABLE_ATTRIBUTES).toContain('publishedAtEpochMs')
+  })
+
+  it('enqueues updateSettings at most once per process across direct calls', async () => {
+    const { client, settingsCalls } = makeStub()
+    await ensureExperienceIndexSettings({ client })
+    await ensureExperienceIndexSettings({ client })
+    await ensureExperienceIndexSettings({ client })
+    expect(settingsCalls).toHaveLength(1)
+  })
+
+  it('indexExperience enqueues updateSettings only ONCE across many re-indexes', async () => {
+    // Guards the write path: a busy moderation queue re-indexing N Experiences
+    // must not thrash a fresh updateSettings task per index (#30 review).
+    const { client, settingsCalls, addCalls } = makeStub()
+    await indexExperience(sampleDoc, { client })
+    await indexExperience({ ...sampleDoc, id: 'a' }, { client })
+    await indexExperience({ ...sampleDoc, id: 'b' }, { client })
+    await indexExperience({ ...sampleDoc, id: 'c' }, { client })
+    expect(settingsCalls).toHaveLength(1)
+    expect(addCalls).toHaveLength(4)
+  })
+
+  it('retries updateSettings after a transient failure', async () => {
+    // First updateSettings rejects; the guard must reset so the next call
+    // re-enqueues rather than caching the failed promise forever.
+    let attempts = 0
+    const settingsCalls: number[] = []
+    const client: MeiliLike = {
+      index: () => ({
+        addDocuments: vi.fn(),
+        deleteDocument: vi.fn(),
+        search: vi.fn(async () => ({ hits: [] })),
+        updateSettings: async () => {
+          attempts += 1
+          settingsCalls.push(attempts)
+          if (attempts === 1) throw new Error('transient')
+          return { taskUid: 3 }
+        },
+      }),
+    }
+    await expect(ensureExperienceIndexSettings({ client })).rejects.toThrow(
+      'transient',
+    )
+    await ensureExperienceIndexSettings({ client })
+    expect(settingsCalls).toEqual([1, 2])
   })
 })

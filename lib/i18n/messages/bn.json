@@ -8,6 +8,7 @@
       "searchButton": "খুঁজুন"
     },
     "trustBadges": {
+      "freeCancellation": "বিনামূল্যে বাতিলকরণ",
       "kycVerified": "KYC-যাচাইকৃত বিক্রেতা",
       "refundSla": "24 ঘণ্টার রিফান্ড SLA",
       "transparentPricing": "স্বচ্ছ মূল্য নির্ধারণ"

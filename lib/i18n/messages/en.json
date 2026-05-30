@@ -8,6 +8,7 @@
       "searchButton": "Search"
     },
     "trustBadges": {
+      "freeCancellation": "Free cancellation",
       "kycVerified": "KYC-verified vendors",
       "refundSla": "24-hour refund SLA",
       "transparentPricing": "Transparent pricing"

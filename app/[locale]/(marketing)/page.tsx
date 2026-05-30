@@ -3,10 +3,20 @@ import Image from 'next/image'
 import Link from 'next/link'
 import type { ReactElement } from 'react'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
+import {
+  ChevronDown,
+  CreditCard,
+  MapPin,
+  Search,
+  ShieldCheck,
+  XCircle,
+} from 'lucide-react'
 
 import { ExperienceCard } from '@/components/experience-card'
+import { Badge } from '@/components/ui/badge'
 import { db } from '@/db/client'
 import { env } from '@/lib/env'
+import { getActivityIcon } from '@/lib/home/activity-icons'
 import { loadHomePageData } from '@/lib/home/queries'
 import { getHeroImage, getRegionImage } from '@/lib/images'
 import { generateAlternates } from '@/lib/seo/hreflang'
@@ -59,6 +69,31 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
       'Indian adventure-activity marketplace — rafting, paragliding, scuba, trekking from KYC-verified vendors.',
   }
 
+  // Trust band — opaque chips on an opaque strip (Direction B). Each pairs a
+  // semantic-status colour with a lucide icon (status never by colour alone,
+  // DESIGN.md §1.3) so it clears AA over imagery where the as-is overlaid
+  // micro-text failed.
+  const trustChips = [
+    {
+      key: 'freeCancellation',
+      Icon: XCircle,
+      label: t('trustBadges.freeCancellation'),
+      variant: 'success' as const,
+    },
+    {
+      key: 'kycVerified',
+      Icon: ShieldCheck,
+      label: t('trustBadges.kycVerified'),
+      variant: 'success' as const,
+    },
+    {
+      key: 'transparentPricing',
+      Icon: CreditCard,
+      label: t('trustBadges.transparentPricing'),
+      variant: 'info' as const,
+    },
+  ]
+
   return (
     <main>
       <script
@@ -70,8 +105,9 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJson) }}
       />
 
-      {/* CINEMATIC HERO — full-viewport */}
-      <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden">
+      {/* CINEMATIC HERO (Direction B) — full-bleed photo + scrim, opaque search
+          card lifted off the image, opaque trust strip, activity chip scroll. */}
+      <section className="relative flex min-h-[88vh] flex-col items-center justify-center overflow-hidden pt-20 pb-12">
         <div className="absolute inset-0">
           <Image
             src={getHeroImage()}
@@ -82,165 +118,176 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
             priority
             sizes="100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/70" />
+          {/* Scrim: darker at top (keeps the overlay header's white text AA)
+              and bottom, so the display headline + chips read over imagery. */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/45 to-black/80" />
         </div>
 
-        <div className="relative z-10 flex flex-col items-center px-4 text-center">
-          <h1 className="max-w-3xl text-5xl font-bold leading-[1.08] tracking-tight text-white sm:text-6xl lg:text-7xl whitespace-pre-line">
+        <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center px-4 text-center">
+          <h1 className="max-w-3xl whitespace-pre-line text-h1 font-heading font-bold text-white sm:text-display">
             {t('hero.title')}
           </h1>
 
-          <p className="mt-5 max-w-lg text-base text-white/80 sm:text-lg">
+          <p className="mt-5 max-w-lg text-base text-white/90 sm:text-lg">
             {t('hero.subtitle')}
           </p>
 
-          {/* Glassmorphic search bar */}
+          {/* Opaque search card — bg-surface-0, --shadow-lg lifts it off the
+              photo. The field + button are full-contrast (fixes the as-is
+              translucent low-contrast overlay). */}
           <form
             action="/search"
             method="get"
-            className="mt-8 flex w-full max-w-xl flex-col gap-2 rounded-2xl border border-white/25 bg-white/15 p-2 backdrop-blur-xl sm:flex-row"
+            className="mt-8 flex w-full max-w-xl flex-col gap-2 rounded-[var(--radius-card)] bg-surface-0 p-2 shadow-[var(--shadow-lg)] ring-1 ring-foreground/10 sm:flex-row sm:items-center"
           >
             <label htmlFor="home-search" className="sr-only">
               {t('hero.searchLabel')}
             </label>
-            <input
-              id="home-search"
-              name="q"
-              type="search"
-              placeholder={t('hero.searchPlaceholder')}
-              className="flex-1 rounded-xl bg-white/10 px-5 py-3 text-sm text-white placeholder:text-white/60 focus:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
-            />
+            <div className="flex flex-1 items-center gap-2 rounded-[var(--radius-control)] bg-surface-1 px-4 focus-within:ring-2 focus-within:ring-ring">
+              <Search
+                className="size-4 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <input
+                id="home-search"
+                name="q"
+                type="search"
+                placeholder={t('hero.searchPlaceholder')}
+                className="h-11 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+              />
+            </div>
             <button
               type="submit"
-              className="rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-lg transition hover:opacity-90"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-[var(--radius-control)] bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors duration-150 hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
             >
+              <Search className="size-4" aria-hidden="true" />
               {t('hero.searchButton')}
             </button>
           </form>
 
-          {/* Trust badges on hero */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
-            <div className="flex items-center gap-2 text-white/80">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              <span className="text-xs font-medium sm:text-sm">{t('trustBadges.kycVerified')}</span>
-            </div>
-            <div className="flex items-center gap-2 text-white/80">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="text-xs font-medium sm:text-sm">{t('trustBadges.refundSla')}</span>
-            </div>
-            <div className="flex items-center gap-2 text-white/80">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-              </svg>
-              <span className="text-xs font-medium sm:text-sm">{t('trustBadges.transparentPricing')}</span>
-            </div>
+          {/* Opaque trust strip — semantic-status chips with paired icons. */}
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+            {trustChips.map(({ key, Icon, label, variant }) => (
+              <Badge
+                key={key}
+                variant={variant}
+                className="h-7 px-3 py-1 text-xs shadow-[var(--shadow-sm)]"
+              >
+                <Icon aria-hidden="true" />
+                {label}
+              </Badge>
+            ))}
           </div>
+
+          {/* Activity-category chip scroll — pill Badges with lucide icons. */}
+          {data.featuredActivities.length > 0 && (
+            <nav
+              aria-label={t('activities.heading')}
+              className="mt-8 w-full max-w-xl"
+            >
+              <ul className="flex snap-x flex-nowrap gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:justify-center sm:overflow-visible">
+                {data.featuredActivities.map((a) => {
+                  const Icon = getActivityIcon(a.slug)
+                  return (
+                    <li key={a.slug} className="snap-start">
+                      <Link
+                        href={`/search?activity=${a.slug}`}
+                        className="inline-flex items-center gap-2 whitespace-nowrap rounded-[var(--radius-pill)] bg-surface-0 px-4 py-2 text-sm font-medium text-foreground shadow-[var(--shadow-sm)] ring-1 ring-foreground/10 transition-colors duration-150 hover:bg-surface-1 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                      >
+                        <Icon
+                          className="size-4 text-primary-strong"
+                          aria-hidden="true"
+                        />
+                        {a.displayNameEn}
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+            </nav>
+          )}
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 animate-bounce motion-reduce:animate-none">
-          <svg
-            className="h-6 w-6 text-white/60"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-            aria-hidden="true"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
+        <div className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 animate-bounce motion-reduce:animate-none">
+          <ChevronDown className="size-6 text-white/70" aria-hidden="true" />
         </div>
       </section>
 
-      {/* ACTIVITIES — pill chips */}
-      <section
-        aria-label={t('activities.heading')}
-        className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16"
-      >
-        <h2 className="mb-6 text-2xl font-bold tracking-tight">
-          {t('activities.heading')}
-        </h2>
-        <div className="flex flex-wrap gap-3">
-          {data.featuredActivities.map((a) => (
-            <Link
-              key={a.slug}
-              href={`/search?activity=${a.slug}`}
-              className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-5 py-2.5 text-sm font-medium transition hover:border-primary hover:text-primary"
-            >
-              {a.displayNameEn}
-              {a.experienceCount > 0 && (
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                  {a.experienceCount}
-                </span>
-              )}
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* DESTINATIONS — 4-col image grid */}
+      {/* DESTINATIONS — decision-complete tiles with activity counts */}
       <section
         aria-label={t('destinations.heading')}
-        className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 sm:pb-20"
+        className="mx-auto max-w-6xl px-4 py-[var(--space-section)] sm:px-6"
       >
         <header className="mb-8 flex items-baseline justify-between">
-          <h2 className="text-2xl font-bold tracking-tight">
+          <h2 className="font-heading text-h3 font-bold tracking-tight">
             {t('destinations.heading')}
           </h2>
-          <Link href="/search" className="text-sm font-medium text-foreground underline-offset-4 hover:underline">
+          <Link
+            href="/search"
+            className="text-sm font-medium text-primary-strong underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
             {t('destinations.browseAll')}
           </Link>
         </header>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <ul className="grid grid-cols-2 gap-[var(--space-grid-gap)] sm:grid-cols-3 lg:grid-cols-4">
           {data.featuredDestinations.map((d) => (
-            <Link
-              key={d.slug}
-              href={`/adventure/${DEFAULT_DESTINATION_ACTIVITY}-in-${d.slug}`}
-              className="group relative overflow-hidden rounded-xl"
-            >
-              <div className="relative aspect-[3/2]">
-                <Image
-                  src={getRegionImage(d.slug)}
-                  alt={d.displayNameEn}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:group-hover:scale-100"
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-              </div>
-              <div className="absolute inset-x-0 bottom-0 p-3">
-                <p className="text-sm font-semibold text-white">{d.displayNameEn}</p>
-                <p className="text-xs text-white/85">{d.state}</p>
-                {d.experienceCount > 0 && (
-                  <p className="mt-0.5 text-xs text-white/75">
-                    {t('destinations.experienceCount', { count: d.experienceCount })}
+            <li key={d.slug}>
+              <Link
+                href={`/adventure/${DEFAULT_DESTINATION_ACTIVITY}-in-${d.slug}`}
+                className="group relative block overflow-hidden rounded-[var(--radius-card)] shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:hover:translate-y-0"
+              >
+                <div className="relative aspect-[3/2]">
+                  <Image
+                    src={getRegionImage(d.slug)}
+                    alt=""
+                    role="presentation"
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:group-hover:scale-100"
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                </div>
+                <div className="absolute inset-x-0 bottom-0 p-3">
+                  <p className="font-heading text-sm font-semibold text-white">
+                    {d.displayNameEn}
                   </p>
-                )}
-              </div>
-            </Link>
+                  <p className="flex items-center gap-1 text-xs text-white/85">
+                    <MapPin className="size-3 shrink-0" aria-hidden="true" />
+                    {d.state}
+                  </p>
+                  {d.experienceCount > 0 && (
+                    <p className="mt-1.5 inline-flex items-center rounded-[var(--radius-pill)] bg-white/90 px-2 py-0.5 text-xs font-medium tabular-nums text-foreground">
+                      {t('destinations.experienceCount', {
+                        count: d.experienceCount,
+                      })}
+                    </p>
+                  )}
+                </div>
+              </Link>
+            </li>
           ))}
-        </div>
+        </ul>
       </section>
 
-      {/* FEATURED EXPERIENCES — 4-col compact grid */}
+      {/* FEATURED EXPERIENCES — A1 decision-complete card grid */}
       {data.featuredExperiences.length > 0 && (
         <section
           aria-label={t('featured.heading')}
-          className="mx-auto max-w-6xl px-4 pb-20 sm:px-6 sm:pb-28"
+          className="mx-auto max-w-6xl px-4 pb-[var(--space-section)] sm:px-6"
         >
           <header className="mb-8 flex items-baseline justify-between">
-            <h2 className="text-2xl font-bold tracking-tight">
+            <h2 className="font-heading text-h3 font-bold tracking-tight">
               {t('featured.heading')}
             </h2>
-            <Link href="/search" className="text-sm font-medium text-foreground underline-offset-4 hover:underline">
+            <Link
+              href="/search"
+              className="text-sm font-medium text-primary-strong underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
               {t('featured.viewAll')}
             </Link>
           </header>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-[var(--space-grid-gap)] sm:grid-cols-2 lg:grid-cols-4">
             {data.featuredExperiences.map((exp) => (
               <ExperienceCard
                 key={exp.id}

@@ -23,8 +23,6 @@ import { generateAlternates } from '@/lib/seo/hreflang'
 
 export const revalidate = 60
 
-const DEFAULT_DESTINATION_ACTIVITY = 'rafting'
-
 type Props = {
   readonly params: Promise<{ locale: string }>
 }
@@ -234,7 +232,7 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
           {data.featuredDestinations.map((d) => (
             <li key={d.slug}>
               <Link
-                href={`/adventure/${DEFAULT_DESTINATION_ACTIVITY}-in-${d.slug}`}
+                href={`/search?region=${d.slug}`}
                 className="group relative block overflow-hidden rounded-[var(--radius-card)] shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:hover:translate-y-0"
               >
                 <div className="relative aspect-[3/2]">

@@ -24,6 +24,53 @@ test.describe('Home page', () => {
       fullPage: true,
     })
   })
+
+  // Variant-B functional contract: the hero search form and the activity
+  // chips are real GET navigations to /search. Behaviour-level — fill +
+  // submit + click, then assert the resulting URL — not coupled to markup.
+  test('hero search submits to /search?q=', async ({ page }) => {
+    await page.goto('/')
+
+    await page.locator('input#home-search').fill('rishikesh rafting')
+    await Promise.all([
+      page.waitForURL(/\/search\?.*\bq=rishikesh(\+|%20)rafting\b/),
+      page.locator('input#home-search').press('Enter'),
+    ])
+
+    expect(new URL(page.url()).searchParams.get('q')).toBe('rishikesh rafting')
+  })
+
+  test('activity chip navigates to /search?activity=rafting', async ({
+    page,
+  }) => {
+    await page.goto('/')
+
+    const raftingChip = page.locator('a[href="/search?activity=rafting"]')
+    await expect(raftingChip).toBeVisible()
+    await raftingChip.click()
+
+    await page.waitForURL('**/search?activity=rafting')
+    expect(new URL(page.url()).searchParams.get('activity')).toBe('rafting')
+  })
+
+  test('destination tile links to /search?region= and resolves 200', async ({
+    page,
+  }) => {
+    await page.goto('/')
+
+    // Issue-1 fix: destination tiles point at the region-filtered search
+    // page (all activities in that region) — not a hardcoded activity
+    // collection. Grab the first such tile, follow it, assert it lands on
+    // a populated, all-activities-in-region result set.
+    const regionTile = page.locator('a[href^="/search?region="]').first()
+    await expect(regionTile).toBeVisible()
+    const href = await regionTile.getAttribute('href')
+    expect(href).toMatch(/^\/search\?region=[a-z-]+$/)
+
+    const response = await page.goto(href!)
+    expect(response?.status()).toBe(200)
+    expect(new URL(page.url()).searchParams.get('region')).toBeTruthy()
+  })
 })
 
 // ---------------------------------------------------------------------------

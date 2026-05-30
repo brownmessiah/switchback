@@ -1105,3 +1105,138 @@ export async function countBookingTierCapRejectedAuditRows(
     return Number(rows[0]?.n ?? 0)
   })
 }
+
+// ---------------------------------------------------------------------------
+// Admin vendor KYC + commission + suspend assertions (Issue #22)
+//
+// These drive the four privileged admin Server Actions FROM THE UI
+// (executeKycApproval / executeKycRejection / executeCommissionRateUpdate /
+// executeSuspendToggle) and assert the persisted vendor_profiles state plus
+// the append-only audit_logs trail. The KYC approve test mutates a seed
+// Vendor's tier (phone → identity); the commission + suspend tests revert
+// their writes so seed determinism for parallel specs is preserved.
+// ---------------------------------------------------------------------------
+
+export interface AdminVendorStateRow {
+  kycTier: string
+  commissionRate: string
+  suspended: boolean
+}
+
+/** Read a Vendor's admin-controlled state (tier, commission rate, suspension). */
+export async function getAdminVendorState(
+  vendorUserId: string,
+): Promise<AdminVendorStateRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { kyc_tier: string; commission_rate: string; suspended: boolean }[]
+    >`
+      SELECT kyc_tier, commission_rate, suspended
+      FROM vendor_profiles
+      WHERE user_id = ${vendorUserId}
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return {
+      kycTier: rows[0].kyc_tier,
+      commissionRate: rows[0].commission_rate,
+      suspended: rows[0].suspended,
+    }
+  })
+}
+
+/** Set a Vendor's commission base rate directly (test setup / restore). */
+export async function setVendorCommissionRate(
+  vendorUserId: string,
+  commissionRate: string,
+): Promise<void> {
+  await withSql(async (sql) => {
+    await sql`
+      UPDATE vendor_profiles SET commission_rate = ${commissionRate}, updated_at = NOW()
+      WHERE user_id = ${vendorUserId}
+    `
+  })
+}
+
+/** Set a Vendor's suspended flag directly (test setup / restore). */
+export async function setVendorSuspended(
+  vendorUserId: string,
+  suspended: boolean,
+): Promise<void> {
+  await withSql(async (sql) => {
+    await sql`
+      UPDATE vendor_profiles SET suspended = ${suspended}, updated_at = NOW()
+      WHERE user_id = ${vendorUserId}
+    `
+  })
+}
+
+/**
+ * Count audit_logs rows for a privileged admin action on a vendor_profile.
+ * Used to assert each KYC / commission / suspend action wrote exactly one row.
+ */
+export async function countAdminVendorAuditRows(
+  action: string,
+  vendorUserId: string,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT COUNT(*) AS n
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_type = 'vendor_profile'
+        AND entity_id = ${vendorUserId}
+    `
+    return Number(rows[0]?.n ?? 0)
+  })
+}
+
+/**
+ * Fetch the most-recent admin-action audit payload + actor for a vendor.
+ * Lets the test assert the privileged action recorded its actor (the admin)
+ * and the decision context (notes / reason / rate change) per ADR-0007.
+ */
+export async function getLatestAdminVendorAudit(
+  action: string,
+  vendorUserId: string,
+): Promise<{ actorUserId: string | null; payload: Record<string, unknown> } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { actor_user_id: string | null; payload: Record<string, unknown> }[]
+    >`
+      SELECT actor_user_id, payload
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_type = 'vendor_profile'
+        AND entity_id = ${vendorUserId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return { actorUserId: rows[0].actor_user_id, payload: rows[0].payload }
+  })
+}
+
+/**
+ * Read the commission_rate_snapshot of the earliest existing Booking owned by
+ * a Vendor (joined through experiences). Used to prove ADR-0008 snapshot
+ * immutability: changing the Vendor's base rate must NOT alter an existing
+ * Booking's locked commission snapshot.
+ */
+export async function getEarliestBookingCommissionSnapshotForVendor(
+  vendorUserId: string,
+): Promise<{ bookingId: string; commissionRateSnapshot: string } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ id: string; commission_rate_snapshot: string }[]>`
+      SELECT b.id, b.commission_rate_snapshot
+      FROM bookings b
+      JOIN experiences e ON e.id = b.experience_id
+      WHERE e.vendor_user_id = ${vendorUserId}
+      ORDER BY b.created_at ASC
+      LIMIT 1
+    `
+    const row = rows[0]
+    if (!row) return null
+    return { bookingId: row.id, commissionRateSnapshot: row.commission_rate_snapshot }
+  })
+}

@@ -72,6 +72,7 @@ export type BookingCreateErrorCode =
   | 'INSUFFICIENT_CAPACITY'
   | 'EXPERIENCE_NOT_FOUND'
   | 'VENDOR_NOT_FOUND'
+  | 'VENDOR_SUSPENDED'
   | 'VENDOR_PAYOUT_NOT_CONFIGURED'
   | 'TIER_CAP_EXCEEDED'
 
@@ -203,6 +204,17 @@ export async function createBooking(
       throw new BookingCreateError(
         'VENDOR_NOT_FOUND',
         `vendor ${exp.vendorUserId} not found`,
+      )
+    }
+
+    // 5a. Admin suspension gate (vendor_profiles.suspended). A Vendor an admin
+    // has suspended cannot accept new Bookings — the flag is re-checked here
+    // because the Experience may have been published before the suspension.
+    // Refusal rolls back the whole transaction atomically.
+    if (vendor.suspended) {
+      throw new BookingCreateError(
+        'VENDOR_SUSPENDED',
+        `vendor ${exp.vendorUserId} is suspended and cannot accept new bookings`,
       )
     }
 

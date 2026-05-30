@@ -63,7 +63,9 @@ export function SuspendToggleForm({ vendorUserId, suspended }: SuspendToggleForm
           )}
           {state?.ok && (
             <p className="text-sm text-green-600">
-              {suspended ? 'Vendor reactivated.' : 'Vendor suspended.'}
+              {/* `suspended` reflects the POST-action state after revalidation:
+                  true means the suspend just succeeded, false the reactivation. */}
+              {suspended ? 'Vendor suspended.' : 'Vendor reactivated.'}
             </p>
           )}
           <Button

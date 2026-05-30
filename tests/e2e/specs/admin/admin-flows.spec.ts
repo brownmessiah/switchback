@@ -14,6 +14,19 @@
  */
 
 import { test, expect } from '../../fixtures/devtools'
+import {
+  countAdminVendorAuditRows,
+  getAdminVendorState,
+  getEarliestBookingCommissionSnapshotForVendor,
+  getLatestAdminVendorAudit,
+  setVendorCommissionRate,
+  setVendorSuspended,
+} from '../../helpers/db-assertions'
+
+// Seed user IDs — must match db/seed.ts.
+const SEED_ADMIN_ID = 'u_seed_admin'
+const SEED_PHONE_VENDOR_ID = 'u_seed_v_phone'
+const SEED_IDENTITY_VENDOR_ID = 'u_seed_v_identity'
 
 // ---------------------------------------------------------------------------
 // 1. Dashboard: loads with stat cards
@@ -501,4 +514,243 @@ test.describe('Admin smoke batch', () => {
       })
     })
   }
+})
+
+// ---------------------------------------------------------------------------
+// 14. Functional: admin vendor KYC + commission + suspend (#22)
+//
+// Drives the four privileged admin Server Actions FROM THE UI and asserts
+// the persisted vendor_profiles state plus the append-only audit_logs trail.
+//   - KYC APPROVE: phone → identity (the ADR-0007 manual-review path from #16)
+//   - KYC REJECT : tier unchanged, reason recorded
+//   - COMMISSION : base rate persists + existing Booking snapshot UNCHANGED
+//                  (ADR-0008 snapshot immutability)
+//   - SUSPEND    : toggle suspends then reactivates
+//
+// Each privileged action MUST write exactly one audit_logs row with the
+// admin as actor. Mutating tests (commission, suspend) restore their writes
+// in a finally so seed determinism for parallel specs is preserved. The KYC
+// approve permanently promotes the phone-tier seed Vendor — that Vendor has
+// no listings/bookings and no other spec depends on its tier, so the one-way
+// transition is safe and is exactly the documented manual-approve behaviour.
+// ---------------------------------------------------------------------------
+test.describe('Admin vendor KYC + commission + suspend (#22)', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  test('KYC approve: phone-tier vendor → identity + audit row with actor + notes', async ({
+    page,
+  }) => {
+    const before = await getAdminVendorState(SEED_PHONE_VENDOR_ID)
+    expect(before, 'seed phone-tier vendor must exist').not.toBeNull()
+    // Best-effort idempotency on a reused DB: if a prior run already promoted
+    // this vendor, the approve UI will not be available — skip in that case.
+    test.skip(before!.kycTier !== 'phone', 'phone-tier vendor already promoted')
+
+    const APPROVE_NOTES = `E2E: Aadhaar + PAN verified offline ${Date.now()}`
+
+    await page.goto(`/admin/vendors/${SEED_PHONE_VENDOR_ID}`)
+    await expect(page.getByText('KYC Tier Management')).toBeVisible()
+
+    // The approval form is the first of the two KYC forms (approve / reject).
+    await page.locator('#approve-notes').fill(APPROVE_NOTES)
+    await page.getByRole('button', { name: /Approve → identity/ }).click()
+
+    // Inline success state on a persisted promotion.
+    await expect(page.getByText('KYC tier promoted successfully.')).toBeVisible({
+      timeout: 15_000,
+    })
+
+    // ── Assert: tier persisted as identity ───────────────────────────────
+    const after = await getAdminVendorState(SEED_PHONE_VENDOR_ID)
+    expect(after!.kycTier).toBe('identity')
+
+    // ── Assert: exactly one approve audit row with actor + decision notes ─
+    expect(
+      await countAdminVendorAuditRows('admin.kyc.approve', SEED_PHONE_VENDOR_ID),
+    ).toBe(1)
+    const audit = await getLatestAdminVendorAudit(
+      'admin.kyc.approve',
+      SEED_PHONE_VENDOR_ID,
+    )
+    expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+    expect(audit!.payload).toMatchObject({
+      previousTier: 'phone',
+      newTier: 'identity',
+      notes: APPROVE_NOTES,
+    })
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/admin-vendor-kyc-approve.png',
+      fullPage: true,
+    })
+  })
+
+  test('KYC reject: tier unchanged + reason recorded in audit row', async ({
+    page,
+  }) => {
+    const before = await getAdminVendorState(SEED_IDENTITY_VENDOR_ID)
+    expect(before, 'seed identity-tier vendor must exist').not.toBeNull()
+    const tierBefore = before!.kycTier
+    const rejectsBefore = await countAdminVendorAuditRows(
+      'admin.kyc.reject',
+      SEED_IDENTITY_VENDOR_ID,
+    )
+
+    const REJECT_REASON = `E2E: GSTIN certificate illegible ${Date.now()}`
+
+    await page.goto(`/admin/vendors/${SEED_IDENTITY_VENDOR_ID}`)
+    await expect(page.getByText('KYC Tier Management')).toBeVisible()
+
+    await page.locator('#reject-reason').fill(REJECT_REASON)
+    await page.getByRole('button', { name: 'Reject Promotion' }).click()
+
+    await expect(page.getByText('Rejection recorded.')).toBeVisible({
+      timeout: 15_000,
+    })
+
+    // ── Assert: rejection does NOT change the tier ───────────────────────
+    const after = await getAdminVendorState(SEED_IDENTITY_VENDOR_ID)
+    expect(after!.kycTier).toBe(tierBefore)
+
+    // ── Assert: a new reject audit row with the reason was appended ───────
+    expect(
+      await countAdminVendorAuditRows('admin.kyc.reject', SEED_IDENTITY_VENDOR_ID),
+    ).toBe(rejectsBefore + 1)
+    const audit = await getLatestAdminVendorAudit(
+      'admin.kyc.reject',
+      SEED_IDENTITY_VENDOR_ID,
+    )
+    expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+    expect(audit!.payload).toMatchObject({
+      currentTier: tierBefore,
+      reason: REJECT_REASON,
+    })
+  })
+
+  test('commission-rate update persists + existing Booking snapshot UNCHANGED (ADR-0008)', async ({
+    page,
+  }) => {
+    // The identity-tier Vendor owns existing seed Bookings whose commission
+    // snapshot was locked at booking-create (20.00). Changing the base rate
+    // must NOT touch that snapshot.
+    const booking = await getEarliestBookingCommissionSnapshotForVendor(
+      SEED_IDENTITY_VENDOR_ID,
+    )
+    expect(booking, 'identity vendor must own an existing booking').not.toBeNull()
+    const snapshotBefore = booking!.commissionRateSnapshot
+
+    const stateBefore = await getAdminVendorState(SEED_IDENTITY_VENDOR_ID)
+    const rateBefore = stateBefore!.commissionRate
+    const NEW_RATE = '12.50'
+    expect(rateBefore, 'pick a rate distinct from the seed default').not.toBe(NEW_RATE)
+
+    try {
+      await page.goto(`/admin/vendors/${SEED_IDENTITY_VENDOR_ID}`)
+      await expect(page.getByText('Commission Rate')).toBeVisible()
+
+      // The Commission Rate card shows the value read-only; click Edit to
+      // reveal the inline form (the only Edit button on the detail page).
+      await page.getByRole('button', { name: 'Edit' }).click()
+
+      await page.locator('#commissionRate').fill(NEW_RATE)
+      await page.getByRole('button', { name: 'Save', exact: true }).click()
+
+      await expect(page.getByText('Rate updated successfully.')).toBeVisible({
+        timeout: 15_000,
+      })
+
+      // ── Assert: base rate persisted on the Vendor ──────────────────────
+      const stateAfter = await getAdminVendorState(SEED_IDENTITY_VENDOR_ID)
+      expect(stateAfter!.commissionRate).toBe(NEW_RATE)
+
+      // ── Assert: the existing Booking's snapshot is UNCHANGED ───────────
+      const bookingAfter = await getEarliestBookingCommissionSnapshotForVendor(
+        SEED_IDENTITY_VENDOR_ID,
+      )
+      expect(bookingAfter!.bookingId).toBe(booking!.bookingId)
+      expect(bookingAfter!.commissionRateSnapshot).toBe(snapshotBefore)
+
+      // ── Assert: an update audit row with actor + before/after rate ─────
+      const audit = await getLatestAdminVendorAudit(
+        'admin.commission_rate.update',
+        SEED_IDENTITY_VENDOR_ID,
+      )
+      expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+      expect(audit!.payload).toMatchObject({
+        previousRate: rateBefore,
+        newRate: NEW_RATE,
+      })
+
+      await page.screenshot({
+        path: 'tests/e2e/screenshots/admin-vendor-commission.png',
+        fullPage: true,
+      })
+    } finally {
+      // Restore the seed base rate so parallel/later specs see deterministic data.
+      await setVendorCommissionRate(SEED_IDENTITY_VENDOR_ID, rateBefore)
+    }
+  })
+
+  test('suspend toggle: suspends then reactivates + audit rows', async ({ page }) => {
+    // Operate on the phone-tier Vendor (no listings/bookings) so the toggle
+    // never disturbs other specs' booking determinism.
+    const before = await getAdminVendorState(SEED_PHONE_VENDOR_ID)
+    expect(before, 'seed phone-tier vendor must exist').not.toBeNull()
+    const suspendsBefore = await countAdminVendorAuditRows(
+      'admin.vendor.suspend',
+      SEED_PHONE_VENDOR_ID,
+    )
+    const reactivatesBefore = await countAdminVendorAuditRows(
+      'admin.vendor.reactivate',
+      SEED_PHONE_VENDOR_ID,
+    )
+
+    try {
+      // Ensure a known starting point (active) regardless of prior runs.
+      await setVendorSuspended(SEED_PHONE_VENDOR_ID, false)
+
+      await page.goto(`/admin/vendors/${SEED_PHONE_VENDOR_ID}`)
+      await expect(page.getByText('Account Status')).toBeVisible()
+
+      // ── Suspend ────────────────────────────────────────────────────────
+      await page.locator('#suspend-notes').fill('E2E: repeated policy violations.')
+      await page.getByRole('button', { name: 'Suspend Vendor' }).click()
+      await expect(page.getByText('Vendor suspended.')).toBeVisible({ timeout: 15_000 })
+
+      const suspended = await getAdminVendorState(SEED_PHONE_VENDOR_ID)
+      expect(suspended!.suspended).toBe(true)
+      expect(
+        await countAdminVendorAuditRows('admin.vendor.suspend', SEED_PHONE_VENDOR_ID),
+      ).toBe(suspendsBefore + 1)
+
+      // ── Reactivate ──────────────────────────────────────────────────────
+      // After revalidation the form now renders the reactivate variant.
+      await expect(page.getByRole('button', { name: 'Reactivate Vendor' })).toBeVisible({
+        timeout: 15_000,
+      })
+      await page.locator('#suspend-notes').fill('E2E: issue resolved, reinstated.')
+      await page.getByRole('button', { name: 'Reactivate Vendor' }).click()
+      await expect(page.getByText('Vendor reactivated.')).toBeVisible({ timeout: 15_000 })
+
+      const reactivated = await getAdminVendorState(SEED_PHONE_VENDOR_ID)
+      expect(reactivated!.suspended).toBe(false)
+      expect(
+        await countAdminVendorAuditRows('admin.vendor.reactivate', SEED_PHONE_VENDOR_ID),
+      ).toBe(reactivatesBefore + 1)
+
+      const audit = await getLatestAdminVendorAudit(
+        'admin.vendor.reactivate',
+        SEED_PHONE_VENDOR_ID,
+      )
+      expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+      expect(audit!.payload).toMatchObject({ suspended: false })
+
+      await page.screenshot({
+        path: 'tests/e2e/screenshots/admin-vendor-suspend.png',
+        fullPage: true,
+      })
+    } finally {
+      await setVendorSuspended(SEED_PHONE_VENDOR_ID, false)
+    }
+  })
 })

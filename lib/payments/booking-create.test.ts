@@ -1,5 +1,5 @@
 import { eq, sql } from 'drizzle-orm'
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import { auditLogs } from '@/db/schema/audit-logs'
 import { availabilitySlots } from '@/db/schema/availability-slots'
@@ -484,6 +484,70 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
         .from(availabilitySlots)
         .where(eq(availabilitySlots.id, slotId))
       expect(slot?.capacityTaken).toBe(0) // slot unchanged on rollback
+    })
+  })
+
+  describe('vendor suspension (admin-controlled)', () => {
+    // ADR-0007 + vendor_profiles.suspended: an admin-suspended Vendor cannot
+    // accept new Bookings. The flag is re-checked at booking-create time (the
+    // Experience may have been published before the suspension), and the whole
+    // transaction rolls back atomically on refusal.
+    afterEach(async () => {
+      // The vendor row lives in beforeAll (not beforeEach), so un-suspend it
+      // here to keep the rest of the suite's happy-path fixtures intact.
+      await db
+        .update(vendorProfiles)
+        .set({ suspended: false })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+    })
+
+    it('rejects a booking when the Vendor is suspended', async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ suspended: true })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+
+      const err = await expectBookingCreateError(createBooking(db, defaultInput()))
+      expect(err.code).toBe('VENDOR_SUSPENDED')
+    })
+
+    it('rolls back atomically — no booking, no audit row, capacity unchanged', async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ suspended: true })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+
+      await expectBookingCreateError(createBooking(db, defaultInput()))
+
+      const allBookings = await db.select().from(bookings)
+      expect(allBookings).toHaveLength(0)
+      const allAudit = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.action, 'booking.create'))
+      expect(allAudit).toHaveLength(0)
+      const [slot] = await db
+        .select()
+        .from(availabilitySlots)
+        .where(eq(availabilitySlots.id, slotId))
+      expect(slot?.capacityTaken).toBe(0)
+    })
+
+    it('allows the booking again once the Vendor is reactivated', async () => {
+      // Suspend, fail, reactivate, succeed — proves the toggle is read live.
+      await db
+        .update(vendorProfiles)
+        .set({ suspended: true })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+      await expectBookingCreateError(createBooking(db, defaultInput()))
+
+      await db
+        .update(vendorProfiles)
+        .set({ suspended: false })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+
+      const r = await createBooking(db, defaultInput())
+      expect(r.bookingId).toMatch(/^[0-9a-f-]{36}$/)
     })
   })
 

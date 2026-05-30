@@ -321,6 +321,33 @@ test.describe('Edit listing', () => {
     expect(Number(initialValue)).toBeGreaterThan(0)
     await expect(page.locator('#title')).toHaveValue(/.+/)
 
+    // ── Graceful degradation (Issue #112 / ADR-0002) ─────────────────────
+    // The vendor-facing payment-mode picker must offer ONLY the two shipped
+    // modes (Full upfront / Partial pay). Reserve-now-pay-later is schema-
+    // named but unbuilt, so it must NOT appear as a selectable control here.
+    // The "Payment modes" section heading is present…
+    await expect(
+      page.getByText('Payment modes', { exact: true }),
+    ).toBeVisible()
+    // …and renders exactly the two shipped modes as checkbox labels.
+    await expect(
+      page.locator('label').filter({ hasText: 'Full upfront' }),
+    ).toBeVisible()
+    await expect(
+      page.locator('label').filter({ hasText: 'Partial pay' }),
+    ).toBeVisible()
+    // No RNPL option / tile / badge anywhere in the form.
+    const formText = (await page.locator('form').innerText()).toLowerCase()
+    expect(formText, 'vendor edit must not offer RNPL').not.toContain(
+      'reserve now',
+    )
+    expect(formText, 'vendor edit must not offer "pay later"').not.toContain(
+      'pay later',
+    )
+    expect(formText, 'vendor edit must not surface the RNPL acronym').not.toContain(
+      'rnpl',
+    )
+
     // Change the headline (1-2) price and save.
     await priceInput.fill(String(NEW_PRICE))
     await page.locator('button[type="submit"]').click()

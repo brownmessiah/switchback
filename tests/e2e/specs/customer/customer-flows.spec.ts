@@ -246,6 +246,21 @@ test.describe('Browse to checkout', () => {
     // Cancellation policy badge is shown
     await expect(page.getByText('cancellation policy', { exact: true })).toBeVisible()
 
+    // Graceful degradation (Issue #112 / ADR-0002): the checkout payment-mode
+    // surface must NEVER advertise reserve-now-pay-later. Only the two shipped
+    // modes (full upfront / 25-75 partial pay) may appear. Assert no RNPL tile,
+    // badge, or "pay later" copy leaks into the checkout body.
+    const checkoutText = (await page.locator('main').innerText()).toLowerCase()
+    expect(checkoutText, 'checkout must not advertise RNPL').not.toContain(
+      'reserve now',
+    )
+    expect(checkoutText, 'checkout must not show a "pay later" badge').not.toContain(
+      'pay later',
+    )
+    expect(checkoutText, 'checkout must not surface the RNPL acronym').not.toContain(
+      'rnpl',
+    )
+
     await page.screenshot({
       path: 'tests/e2e/screenshots/customer-checkout.png',
       fullPage: true,

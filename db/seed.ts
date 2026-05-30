@@ -32,8 +32,10 @@ import {
   adminProfiles,
   availabilitySlots,
   bookings,
+  conversations,
   customerProfiles,
   experiences,
+  messages,
   payments,
   reviews,
   users,
@@ -707,6 +709,238 @@ async function seed(): Promise<void> {
         status: 'published',
       })
       .onConflictDoNothing()
+  }
+
+  // ===================================================================
+  // BUSINESS-VENDOR SECONDARY SURFACES (Issue #20)
+  // ===================================================================
+  // The vendor reviews / payouts / messages surfaces are validated against
+  // the business-tier Vendor (u_seed_v_business — the E2E vendor session).
+  // The demo data above seeds Reviews only on the IDENTITY vendor's
+  // Experiences, no Payout-earning Booking with the full ADR-0016 tax
+  // breakdown, and no Conversation at all — so #20 surfaces would have
+  // nothing to validate. Seed exactly one of each, deterministically and
+  // isolated from the #18/#19 fixtures:
+  //
+  //   - REVIEW : one published Review with NO vendor response yet, on a
+  //              dedicated completed Booking. The "respond once" E2E submits
+  //              a response (persists) then asserts a 2nd is rejected.
+  //   - PAYOUT : one completed Booking on bir-billing-paragliding-full-day
+  //              with round worked-example tax amounts (gross ₹100,000) so
+  //              the payouts breakdown asserts cleanly against
+  //              computeVendorNetPayout.
+  //   - MESSAGES: one active Conversation + two messages (customer →
+  //              vendor) so the inbox list and thread render real content,
+  //              not the static "No messages yet" empty state.
+  //
+  // Both Bookings are owned by BUSINESS_VENDOR_CUSTOMER (not u_seed_customer)
+  // and live on DISTINCT, fixed-UTC-hour slots (06:00 UTC) anchored to fixed
+  // PAST calendar dates well clear of the July-2026 availability window
+  // (#18) and the 02:00-UTC manageable-booking slots (#19), so no suite
+  // clobbers another. Payments are NOT seeded for these Bookings (the #20
+  // surfaces read snapshots + Review/Conversation rows, not the Payment
+  // Timeline), and no booking.create audit rows are written.
+
+  // ----- #20 REVIEW — a business-vendor Review awaiting a response -----
+  // On goa-scuba-diving-padi-dsd: #19 only ever queries that Experience in
+  // the `disputed` state, so a `completed` Review Booking here never collides
+  // with getVendorBookingByStateAndSlug (which is keyed on state + slug).
+  const REVIEW_SLUG = 'goa-scuba-diving-padi-dsd'
+  const reviewExp = allExperiences.find((e) => e.slug === REVIEW_SLUG)
+  const reviewExpData = EXPERIENCES.find((e) => e.slug === REVIEW_SLUG)
+  if (reviewExp && reviewExpData) {
+    const reviewStartAt = new Date('2026-03-04T06:00:00.000Z')
+    const reviewEndAt = new Date(reviewStartAt.getTime() + 4 * 60 * 60 * 1000)
+
+    const [reviewSlot] = await db
+      .insert(availabilitySlots)
+      .values({
+        experienceId: reviewExp.id,
+        startAt: reviewStartAt,
+        endAt: reviewEndAt,
+        capacity: 8,
+        capacityTaken: 2,
+      })
+      .onConflictDoNothing()
+      .returning({ id: availabilitySlots.id })
+
+    const reviewSlotId =
+      reviewSlot?.id ??
+      (
+        await db
+          .select({ id: availabilitySlots.id })
+          .from(availabilitySlots)
+          .where(eq(availabilitySlots.startAt, reviewStartAt))
+      ).find(() => true)?.id
+
+    if (reviewSlotId) {
+      const reviewPrice = Math.floor(Number(reviewExpData.pricePerPerson_1_2))
+      const reviewGross = reviewPrice * 2
+      const [reviewBookingRow] = await db
+        .insert(bookings)
+        .values({
+          customerUserId: BUSINESS_VENDOR_CUSTOMER.userId,
+          experienceId: reviewExp.id,
+          slotId: reviewSlotId,
+          participantCount: 2,
+          state: 'completed',
+          paymentMode: 'full_upfront',
+          grossTotalSnapshot: String(reviewGross),
+          pricePerParticipantSnapshot: String(reviewPrice),
+          pricingBasisSnapshot: 'base_price',
+          commissionRateSnapshot: '20.00',
+          commissionBasisSnapshot: 'platform_default',
+          gstRateOnCommissionSnapshot: '18.00',
+          tdsAmountSnapshot: String(Math.floor(reviewGross * 0.001)),
+          tcsAmountSnapshot: String(Math.floor(reviewGross * 0.005)),
+          tcsRateSnapshot: '0.50',
+          cancellationPresetSnapshot: 'flexible',
+          vendorPanSnapshot: 'GHIJK5678L',
+          vendorIsResidentSnapshot: true,
+          confirmedAt: new Date(reviewStartAt.getTime() - 5 * 24 * 60 * 60 * 1000),
+          completedAt: reviewEndAt,
+        })
+        .onConflictDoNothing()
+        .returning({ id: bookings.id })
+
+      if (reviewBookingRow) {
+        seededBookings.push({
+          id: reviewBookingRow.id,
+          experienceId: reviewExp.id,
+          state: 'completed',
+        })
+        await db
+          .insert(reviews)
+          .values({
+            bookingId: reviewBookingRow.id,
+            customerUserId: BUSINESS_VENDOR_CUSTOMER.userId,
+            experienceId: reviewExp.id,
+            vendorUserId: 'u_seed_v_business',
+            rating: 5,
+            title: 'Best dive of the trip',
+            body: 'The Grande Island reef was spectacular and the instructor kept the whole group calm and safe. Gear was in great shape and the boat crew were friendly. Already booking again.',
+            status: 'published',
+            // vendorResponse intentionally NULL — the #20 E2E responds once
+            // and asserts a 2nd response is rejected.
+          })
+          .onConflictDoNothing()
+      }
+    }
+  }
+
+  // ----- #20 PAYOUT — a completed Booking with round worked-example math --
+  // Gross ₹100,000 @ 20% commission, 18% GST on commission, 0.1% TDS, 0.5%
+  // TCS. Net = 100000 − 20000 − 3600 − 100 − 500 = ₹75,800. The payouts
+  // breakdown E2E asserts each line against computeVendorNetPayout.
+  const PAYOUT_SLUG = 'bir-billing-paragliding-full-day'
+  const payoutExp = allExperiences.find((e) => e.slug === PAYOUT_SLUG)
+  if (payoutExp) {
+    const payoutStartAt = new Date('2026-02-11T06:00:00.000Z')
+    const payoutEndAt = new Date(payoutStartAt.getTime() + 4 * 60 * 60 * 1000)
+    const PAYOUT_GROSS = 100000
+    const PAYOUT_PARTICIPANTS = 2
+
+    const [payoutSlot] = await db
+      .insert(availabilitySlots)
+      .values({
+        experienceId: payoutExp.id,
+        startAt: payoutStartAt,
+        endAt: payoutEndAt,
+        capacity: 8,
+        capacityTaken: PAYOUT_PARTICIPANTS,
+      })
+      .onConflictDoNothing()
+      .returning({ id: availabilitySlots.id })
+
+    const payoutSlotId =
+      payoutSlot?.id ??
+      (
+        await db
+          .select({ id: availabilitySlots.id })
+          .from(availabilitySlots)
+          .where(eq(availabilitySlots.startAt, payoutStartAt))
+      ).find(() => true)?.id
+
+    if (payoutSlotId) {
+      const [payoutBookingRow] = await db
+        .insert(bookings)
+        .values({
+          customerUserId: BUSINESS_VENDOR_CUSTOMER.userId,
+          experienceId: payoutExp.id,
+          slotId: payoutSlotId,
+          participantCount: PAYOUT_PARTICIPANTS,
+          state: 'completed',
+          paymentMode: 'full_upfront',
+          grossTotalSnapshot: String(PAYOUT_GROSS),
+          pricePerParticipantSnapshot: String(PAYOUT_GROSS / PAYOUT_PARTICIPANTS),
+          pricingBasisSnapshot: 'base_price',
+          commissionRateSnapshot: '20.00',
+          commissionBasisSnapshot: 'platform_default',
+          gstRateOnCommissionSnapshot: '18.00',
+          // TDS 0.1% of gross = ₹100; TCS 0.5% of gross = ₹500.
+          tdsAmountSnapshot: String(Math.floor(PAYOUT_GROSS * 0.001)),
+          tcsAmountSnapshot: String(Math.floor(PAYOUT_GROSS * 0.005)),
+          tcsRateSnapshot: '0.50',
+          cancellationPresetSnapshot: 'flexible',
+          vendorPanSnapshot: 'GHIJK5678L',
+          vendorIsResidentSnapshot: true,
+          confirmedAt: new Date(payoutStartAt.getTime() - 5 * 24 * 60 * 60 * 1000),
+          completedAt: payoutEndAt,
+        })
+        .onConflictDoNothing()
+        .returning({ id: bookings.id })
+
+      if (payoutBookingRow) {
+        seededBookings.push({
+          id: payoutBookingRow.id,
+          experienceId: payoutExp.id,
+          state: 'completed',
+        })
+      }
+    }
+  }
+
+  // ----- #20 MESSAGES — an active Conversation + thread for the inbox -----
+  // A customer-initiated Conversation with two messages so the inbox list and
+  // the thread both render real content. Keyed on a fixed subject so reseeds
+  // against a non-reset DB stay idempotent (no natural unique key otherwise).
+  const SEED_CONVERSATION_SUBJECT = 'Question about the Bir-Billing flight window'
+  const existingConvo = await db
+    .select({ id: conversations.id })
+    .from(conversations)
+    .where(eq(conversations.subject, SEED_CONVERSATION_SUBJECT))
+    .limit(1)
+
+  if (existingConvo.length === 0) {
+    const convoCreatedAt = new Date('2026-03-01T09:00:00.000Z')
+    const [convo] = await db
+      .insert(conversations)
+      .values({
+        vendorUserId: 'u_seed_v_business',
+        customerUserId: BUSINESS_VENDOR_CUSTOMER.userId,
+        subject: SEED_CONVERSATION_SUBJECT,
+        status: 'active',
+        createdAt: convoCreatedAt,
+        updatedAt: new Date('2026-03-01T11:30:00.000Z'),
+      })
+      .returning({ id: conversations.id })
+
+    if (convo) {
+      await db.insert(messages).values([
+        {
+          conversationId: convo.id,
+          senderUserId: BUSINESS_VENDOR_CUSTOMER.userId,
+          body: 'Hi! We are visiting Bir on the 11th — what time window gives the best thermals for a tandem flight?',
+          createdAt: convoCreatedAt,
+        },
+        {
+          conversationId: convo.id,
+          senderUserId: 'u_seed_v_business',
+          body: 'Hello! Late morning, around 10:30–12:00, is usually the sweet spot. I will hold two slots for you.',
+          createdAt: new Date('2026-03-01T11:30:00.000Z'),
+        },
+      ])
+    }
   }
 
   // ----- WALLET — give the seed customer both buckets (ADR-0004) -----

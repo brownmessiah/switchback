@@ -15,6 +15,8 @@ import path from 'node:path'
 
 import postgres from 'postgres'
 
+import { computeVendorNetPayout } from '@/lib/payments/payout-calculator'
+
 import { test, expect } from '../../fixtures/devtools'
 import { e2eDbUrl } from '../../helpers/config'
 import {
@@ -34,6 +36,11 @@ import {
   getPaymentsForBooking,
   getRefundRequestForBooking,
   getRefundBalanceCreditAuditForBooking,
+  getVendorReviewAwaitingResponse,
+  getReviewResponse,
+  getVendorEarningBookings,
+  getVendorConversationBySubject,
+  getVendorProfileSettings,
 } from '../../helpers/db-assertions'
 import { getIndexedExperience } from '../../helpers/meili-assertions'
 import { storageFileExists } from '../../helpers/storage-assertions'
@@ -863,10 +870,12 @@ test.describe('Vendor payouts', () => {
     await expect(h1).toBeVisible()
     await expect(h1).toContainText('Payouts')
 
-    // Earnings summary cards are visible
-    await expect(page.getByText('Gross earnings')).toBeVisible()
+    // Earnings summary cards are visible. "Gross earnings" / "Net payout"
+    // appear both as a headline card and as a breakdown line, so match the
+    // first occurrence.
+    await expect(page.getByText('Gross earnings').first()).toBeVisible()
     await expect(page.getByText('Commission', { exact: true })).toBeVisible()
-    await expect(page.getByText('Net payout')).toBeVisible()
+    await expect(page.getByText('Net payout').first()).toBeVisible()
 
     // Payout method section
     await expect(page.getByText('Payout method')).toBeVisible()
@@ -918,15 +927,12 @@ test.describe('Vendor messages', () => {
     await expect(h1).toBeVisible()
     await expect(h1).toContainText('Messages')
 
-    // Either the empty state or conversations list is visible
-    const hasMessages = await page
-      .locator('[class*="conversation"]')
-      .first()
-      .isVisible()
-      .catch(() => false)
-    if (!hasMessages) {
-      await expect(page.getByText('No messages yet')).toBeVisible()
-    }
+    // The seed (#20) provides one Conversation, so the inbox lists it rather
+    // than the static "No messages yet" empty state (variant-synth #55).
+    await expect(page.getByText('No messages yet')).toHaveCount(0)
+    await expect(
+      page.getByText('Question about the Bir-Billing flight window'),
+    ).toBeVisible()
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/vendor-messages.png',
@@ -1263,3 +1269,306 @@ async function countBusinessVendorBookings(): Promise<number> {
     await sql.end()
   }
 }
+
+// ---------------------------------------------------------------------------
+// 12. Vendor reviews — respond functionally (#20)
+//
+//     The business Vendor owns one seeded published Review with no response
+//     yet (db/seed.ts, on goa-scuba-diving-fun-dive-cert). Submitting a
+//     response persists it; a SECOND response must be rejected — exactly one
+//     public response per Review (executeSubmitVendorResponse guard). After
+//     a response exists the UI no longer offers any compose control, so the
+//     single-response invariant holds end-to-end.
+// ---------------------------------------------------------------------------
+test.describe('Vendor review responses (#20)', () => {
+  test('submit one response → persists; the compose control then disappears (exactly one)', async ({
+    page,
+  }) => {
+    const review = await getVendorReviewAwaitingResponse(SEED_BUSINESS_VENDOR_ID)
+    expect(
+      review,
+      'seed must provide a business-vendor review awaiting a response',
+    ).not.toBeNull()
+    const reviewId = review!.id
+
+    // Pre-condition: no response yet.
+    const before = await getReviewResponse(reviewId)
+    expect(before!.vendorResponse).toBeNull()
+
+    await page.goto('/vendor/reviews')
+    await expect(page.locator('h1')).toContainText('Reviews')
+
+    // The Review card is in the list (data, not the dead empty state #54).
+    await expect(page.getByText('No reviews yet')).toHaveCount(0)
+    await expect(page.getByText('Best dive of the trip')).toBeVisible()
+
+    // Open the compose form for the (single) un-responded Review and submit.
+    const responseText = 'Thank you so much — it was a pleasure diving with you. See you next season!'
+    await page.getByRole('button', { name: 'Respond' }).first().click()
+    await page.getByPlaceholder('Write your response...').fill(responseText)
+    await page.getByRole('button', { name: 'Submit Response' }).click()
+
+    // The response renders inline once the action resolves.
+    await expect(page.getByText(responseText)).toBeVisible({ timeout: 15_000 })
+
+    // ── Assert: the response persisted exactly once ──────────────────────
+    // Poll the DB to absorb any cross-connection commit-visibility lag
+    // between the client transition resolving and the row being readable.
+    await expect
+      .poll(async () => (await getReviewResponse(reviewId))!.vendorResponse, {
+        timeout: 10_000,
+      })
+      .toBe(responseText)
+    const after = await getReviewResponse(reviewId)
+    expect(after!.respondedAt).not.toBeNull()
+
+    // ── Reload → the stored response is shown and there is NO compose
+    //     control any more (the UI enforces a single public response). ─────
+    await page.reload()
+    await expect(page.getByText(responseText)).toBeVisible()
+    await expect(page.getByText('Your response')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Respond' })).toHaveCount(0)
+    await expect(
+      page.getByRole('button', { name: 'Submit Response' }),
+    ).toHaveCount(0)
+
+    // ── Assert: the DB still holds exactly one non-null response for it ───
+    const stillOne = await getReviewResponse(reviewId)
+    expect(stillOne!.vendorResponse).toBe(responseText)
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/vendor-review-response.png',
+      fullPage: true,
+    })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 13. Vendor payouts — the ADR-0016 deduction breakdown (#20)
+//
+//     The payouts view must surface the full waterfall:
+//       gross − Commission − GST(18% on commission) − TDS(0.1% Sec 194-O)
+//             − GST TCS(0.5% Sec 52) = net
+//     The seed funds a completed Booking with round worked-example math
+//     (gross ₹100,000 → net ₹75,800). We assert (a) the worked example is
+//     exact and (b) the page's displayed totals equal the sum over all of
+//     the Vendor's earning Bookings via computeVendorNetPayout.
+// ---------------------------------------------------------------------------
+test.describe('Vendor payouts breakdown (#20)', () => {
+  test('shows gross − commission − GST − TDS − TCS = net matching a worked example', async ({
+    page,
+  }) => {
+    // ── The worked example (the seeded ₹100,000 Booking, ADR-0016) ───────
+    const worked = computeVendorNetPayout({
+      grossRupees: 100_000,
+      commissionRatePercent: '20.00',
+      gstRateOnCommissionPercent: '18.00',
+      tdsRupees: 100, // 0.1% of 100,000
+      tcsRupees: 500, // 0.5% of 100,000
+    })
+    expect(worked.commissionRupees).toBe(20_000)
+    expect(worked.gstOnCommissionRupees).toBe(3_600)
+    expect(worked.netPayoutRupees).toBe(75_800)
+
+    // ── Expected page TOTALS: sum the breakdown over every earning Booking.
+    //     Robust to the #19 serial mutations (state stays in the earning set)
+    //     and to whatever else the seed leaves completed/awaiting. ─────────
+    const earning = await getVendorEarningBookings(SEED_BUSINESS_VENDOR_ID)
+    expect(
+      earning.length,
+      'business vendor must have at least the seeded earning bookings',
+    ).toBeGreaterThanOrEqual(1)
+
+    const totals = earning.reduce(
+      (acc, b) => {
+        const bd = computeVendorNetPayout(b)
+        return {
+          gross: acc.gross + bd.grossRupees,
+          commission: acc.commission + bd.commissionRupees,
+          gst: acc.gst + bd.gstOnCommissionRupees,
+          tds: acc.tds + bd.tdsRupees,
+          tcs: acc.tcs + bd.tcsRupees,
+          net: acc.net + bd.netPayoutRupees,
+        }
+      },
+      { gross: 0, commission: 0, gst: 0, tds: 0, tcs: 0, net: 0 },
+    )
+    // The waterfall must reconcile: gross − all deductions === net.
+    expect(
+      totals.gross - totals.commission - totals.gst - totals.tds - totals.tcs,
+    ).toBe(totals.net)
+
+    await page.goto('/vendor/payouts')
+    await expect(page.locator('h1')).toContainText('Payouts')
+
+    // The breakdown block is present (regression guard for the "reconcile
+    // nothing" variant-synth flag #54 — the page now surfaces every line).
+    await expect(
+      page.getByText('Payout breakdown', { exact: true }),
+    ).toBeVisible()
+
+    const breakdown = page
+      .locator('dl')
+      .filter({ has: page.getByText('GST on commission (18%)') })
+      .first()
+
+    // Each deduction LINE is present and shows the summed amount.
+    const inr = (n: number) => n.toLocaleString('en-IN')
+    await expect(
+      breakdown.getByText(`₹${inr(totals.gross)}`),
+    ).toBeVisible()
+    await expect(
+      breakdown.getByText(`-₹${inr(totals.commission)}`),
+    ).toBeVisible()
+    await expect(page.getByText('GST on commission (18%)')).toBeVisible()
+    await expect(
+      breakdown.getByText(`-₹${inr(totals.gst)}`),
+    ).toBeVisible()
+    await expect(page.getByText('TDS (0.1%, Sec 194-O)')).toBeVisible()
+    await expect(
+      breakdown.getByText(`-₹${inr(totals.tds)}`),
+    ).toBeVisible()
+    await expect(page.getByText('GST TCS (0.5%, Sec 52)')).toBeVisible()
+    await expect(
+      breakdown.getByText(`-₹${inr(totals.tcs)}`),
+    ).toBeVisible()
+    // Net payout appears as the breakdown footer AND the headline card.
+    await expect(
+      page.getByText(`₹${inr(totals.net)}`).first(),
+    ).toBeVisible()
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/vendor-payouts-breakdown.png',
+      fullPage: true,
+    })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 14. Vendor settings — business details + payout method persist (#20)
+// ---------------------------------------------------------------------------
+test.describe('Vendor settings persistence (#20)', () => {
+  test('update business details → persists across reload (DB + form)', async ({
+    page,
+  }) => {
+    // Deterministic new values. The slug stays the seed slug so we never
+    // collide with another vendor's unique slug; we mutate name + about.
+    const before = await getVendorProfileSettings(SEED_BUSINESS_VENDOR_ID)
+    expect(before).not.toBeNull()
+    const newAbout = `Goa's longest-running PADI dive center. Updated ${Date.now()}.`
+
+    await page.goto('/vendor/settings')
+    await expect(page.locator('h1')).toContainText('Settings')
+
+    // Business tab is the default; update the About field and save.
+    await page.locator('#about').fill(newAbout)
+    await page.getByRole('button', { name: 'Save changes' }).click()
+    await expect(page.getByText('Business details updated.')).toBeVisible({
+      timeout: 15_000,
+    })
+
+    // ── Assert: persisted to the DB ──────────────────────────────────────
+    const afterSave = await getVendorProfileSettings(SEED_BUSINESS_VENDOR_ID)
+    expect(afterSave!.about).toBe(newAbout)
+    expect(afterSave!.slug).toBe(before!.slug)
+
+    // ── Assert: survives reload (the form re-populates from the DB) ──────
+    await page.reload()
+    await expect(page.locator('#about')).toHaveValue(newAbout)
+  })
+
+  test('update payout method → persists + 7-day cooling-off notice (ADR-0016)', async ({
+    page,
+  }) => {
+    // Switch to a UPI destination with a deterministic VPA, then assert it
+    // persists and the cooling-off notice (destination changed < 7 days ago)
+    // is shown.
+    const newVpa = `goadive${Date.now()}@okhdfcbank`
+
+    await page.goto('/vendor/settings')
+    await expect(page.locator('h1')).toContainText('Settings')
+
+    // Open the Payout method tab.
+    await page.getByRole('tab', { name: 'Payout method' }).click()
+
+    // Choose UPI and fill the VPA.
+    await page.getByRole('radio', { name: 'UPI VPA' }).click()
+    await page.locator('#vpa').fill(newVpa)
+    await page.getByRole('button', { name: 'Update payout method' }).click()
+
+    // Success banner mentions the 7-day cooling-off (ADR-0016).
+    await expect(page.getByText(/7-day cooling-off/i)).toBeVisible({
+      timeout: 15_000,
+    })
+
+    // ── Assert: persisted to the DB with a fresh changed-at timestamp ────
+    const afterSave = await getVendorProfileSettings(SEED_BUSINESS_VENDOR_ID)
+    expect(afterSave!.payoutMethod).toBe('upi')
+    expect((afterSave!.payoutDestination as { vpa?: string }).vpa).toBe(newVpa)
+    expect(afterSave!.payoutDestinationChangedAt).not.toBeNull()
+    // The change just happened, so the cooling-off window is active.
+    const changedMsAgo =
+      Date.now() - new Date(afterSave!.payoutDestinationChangedAt!).getTime()
+    expect(changedMsAgo).toBeLessThan(7 * 24 * 60 * 60 * 1000)
+
+    // ── Assert: the persisted VPA + cooling-off notice survive a reload ──
+    await page.reload()
+    await page.getByRole('tab', { name: 'Payout method' }).click()
+    await expect(page.locator('#vpa')).toHaveValue(newVpa)
+    await expect(page.getByText(/cooling-off period/i)).toBeVisible()
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/vendor-settings-payout.png',
+      fullPage: true,
+    })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 15. Vendor messages — list + thread render real content (#20)
+//
+//     The seed adds one active Conversation with two messages. The inbox must
+//     list it (not the static "No messages yet" empty state #55), and the
+//     thread must render both messages.
+// ---------------------------------------------------------------------------
+test.describe('Vendor messages (#20)', () => {
+  const SEED_CONVERSATION_SUBJECT =
+    'Question about the Bir-Billing flight window'
+
+  test('inbox lists the seeded conversation and the thread renders its messages', async ({
+    page,
+  }) => {
+    const convo = await getVendorConversationBySubject(
+      SEED_BUSINESS_VENDOR_ID,
+      SEED_CONVERSATION_SUBJECT,
+    )
+    expect(convo, 'seed must provide a business-vendor conversation').not.toBeNull()
+    expect(convo!.messageCount).toBe(2)
+
+    // ── Inbox: the conversation is listed (NOT the empty state) ──────────
+    await page.goto('/vendor/messages')
+    await expect(page.locator('h1')).toContainText('Messages')
+    await expect(page.getByText('No messages yet')).toHaveCount(0)
+    await expect(page.getByText(SEED_CONVERSATION_SUBJECT)).toBeVisible()
+
+    // Open the thread by clicking the conversation card.
+    await page.getByText(SEED_CONVERSATION_SUBJECT).click()
+    await page.waitForURL(new RegExp(`/vendor/messages/${convo!.id}`))
+
+    // ── Thread: both seeded messages render (not the dead empty state) ───
+    await expect(
+      page.getByText('No messages in this conversation yet.'),
+    ).toHaveCount(0)
+    await expect(
+      page.getByText(/what time window gives the best thermals/i),
+    ).toBeVisible()
+    await expect(
+      page.getByText(/Late morning, around 10:30–12:00/i),
+    ).toBeVisible()
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/vendor-messages-thread.png',
+      fullPage: true,
+    })
+  })
+})

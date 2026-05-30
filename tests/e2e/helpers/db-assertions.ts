@@ -796,3 +796,185 @@ export async function getPaymentsForBooking(
     }))
   })
 }
+
+// ---------------------------------------------------------------------------
+// #20 — vendor reviews / payouts / settings / messages helpers
+// ---------------------------------------------------------------------------
+
+export interface VendorReviewRow {
+  id: string
+  vendorResponse: string | null
+  rating: number
+}
+
+/**
+ * Fetch the (single) published Review owned by a Vendor that has NOT yet
+ * received a vendor response. Used by the "respond once" E2E.
+ */
+export async function getVendorReviewAwaitingResponse(
+  vendorUserId: string,
+): Promise<VendorReviewRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { id: string; vendor_response: string | null; rating: number }[]
+    >`
+      SELECT id, vendor_response, rating
+      FROM reviews
+      WHERE vendor_user_id = ${vendorUserId}
+        AND vendor_response IS NULL
+        AND status = 'published'
+      ORDER BY created_at ASC
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return {
+      id: rows[0].id,
+      vendorResponse: rows[0].vendor_response,
+      rating: rows[0].rating,
+    }
+  })
+}
+
+/** Fetch a Review's vendor_response + vendor_responded_at by review id. */
+export async function getReviewResponse(
+  reviewId: string,
+): Promise<{ vendorResponse: string | null; respondedAt: Date | null } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { vendor_response: string | null; vendor_responded_at: Date | null }[]
+    >`
+      SELECT vendor_response, vendor_responded_at
+      FROM reviews
+      WHERE id = ${reviewId}
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return {
+      vendorResponse: rows[0].vendor_response,
+      respondedAt: rows[0].vendor_responded_at,
+    }
+  })
+}
+
+export interface VendorEarningBookingRow {
+  grossRupees: number
+  commissionRatePercent: string
+  gstRateOnCommissionPercent: string
+  tdsRupees: number
+  tcsRupees: number
+}
+
+/**
+ * Fetch every Payout-earning Booking for a Vendor (state in completed /
+ * awaiting_completion) with the snapshot columns the payout breakdown reads.
+ * The payouts E2E sums computeVendorNetPayout over these rows and asserts the
+ * page's displayed totals match — robust to whatever Bookings the seed and
+ * the #19 serial mutations leave in those states.
+ */
+export async function getVendorEarningBookings(
+  vendorUserId: string,
+): Promise<VendorEarningBookingRow[]> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        gross_total_snapshot: string
+        commission_rate_snapshot: string
+        gst_rate_on_commission_snapshot: string
+        tds_amount_snapshot: string
+        tcs_amount_snapshot: string
+      }[]
+    >`
+      SELECT b.gross_total_snapshot,
+             b.commission_rate_snapshot,
+             b.gst_rate_on_commission_snapshot,
+             b.tds_amount_snapshot,
+             b.tcs_amount_snapshot
+      FROM bookings b
+      JOIN experiences e ON b.experience_id = e.id
+      WHERE e.vendor_user_id = ${vendorUserId}
+        AND b.state IN ('completed', 'awaiting_completion')
+    `
+    return rows.map((r) => ({
+      grossRupees: Math.floor(Number(r.gross_total_snapshot)),
+      commissionRatePercent: r.commission_rate_snapshot,
+      gstRateOnCommissionPercent: r.gst_rate_on_commission_snapshot,
+      tdsRupees: Math.floor(Number(r.tds_amount_snapshot)),
+      tcsRupees: Math.floor(Number(r.tcs_amount_snapshot)),
+    }))
+  })
+}
+
+export interface VendorConversationRow {
+  id: string
+  subject: string
+  messageCount: number
+}
+
+/** Fetch a Vendor's Conversation by subject + its message count. */
+export async function getVendorConversationBySubject(
+  vendorUserId: string,
+  subject: string,
+): Promise<VendorConversationRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { id: string; subject: string; message_count: string }[]
+    >`
+      SELECT c.id,
+             c.subject,
+             (SELECT count(*) FROM messages m WHERE m.conversation_id = c.id)::text
+               AS message_count
+      FROM conversations c
+      WHERE c.vendor_user_id = ${vendorUserId}
+        AND c.subject = ${subject}
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return {
+      id: rows[0].id,
+      subject: rows[0].subject,
+      messageCount: Number(rows[0].message_count),
+    }
+  })
+}
+
+export interface VendorProfileSettingsRow {
+  businessName: string
+  slug: string
+  about: string | null
+  payoutMethod: string | null
+  payoutDestination: Record<string, unknown> | null
+  payoutDestinationChangedAt: Date | null
+}
+
+/** Fetch the editable business + payout settings for a Vendor. */
+export async function getVendorProfileSettings(
+  vendorUserId: string,
+): Promise<VendorProfileSettingsRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        business_name: string
+        slug: string
+        about: string | null
+        payout_method: string | null
+        payout_destination: Record<string, unknown> | null
+        payout_destination_changed_at: Date | null
+      }[]
+    >`
+      SELECT business_name, slug, about, payout_method,
+             payout_destination, payout_destination_changed_at
+      FROM vendor_profiles
+      WHERE user_id = ${vendorUserId}
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return {
+      businessName: rows[0].business_name,
+      slug: rows[0].slug,
+      about: rows[0].about,
+      payoutMethod: rows[0].payout_method,
+      payoutDestination: rows[0].payout_destination,
+      payoutDestinationChangedAt: rows[0].payout_destination_changed_at,
+    }
+  })
+}

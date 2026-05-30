@@ -1516,6 +1516,50 @@ export async function getBookingPayoutState(
   })
 }
 
+/**
+ * Reset a Booking's payout_state for deterministic test staging. Used by the
+ * permission-gate spec to guarantee a known-pending target even when the
+ * shared SEED_PAYOUT_QUEUE_VENDOR fixture has been consumed by the #24 payout
+ * queue tests earlier in the same run (the #109 order-dependent fixture race).
+ * Does NOT touch the manual-payout gate or write an audit row — it only stages
+ * a known starting state; the assertions remain intact.
+ */
+export async function setBookingPayoutStateForTest(
+  bookingId: string,
+  payoutState: 'pending' | 'approved' | 'held' | 'rejected',
+): Promise<void> {
+  await withSql(async (sql) => {
+    await sql`
+      UPDATE bookings
+      SET payout_state = ${payoutState}, payout_rejection_reason = NULL
+      WHERE id = ${bookingId}
+    `
+  })
+}
+
+/**
+ * Fetch a Vendor's completed Bookings in the payout queue REGARDLESS of
+ * payout_state (ordered by slot start_at). Lets the permission-gate spec pick a
+ * deterministic target and reset it to pending even after the #24 tests have
+ * advanced every booking out of the pending/held set.
+ */
+export async function getCompletedPayoutBookingsForVendor(
+  vendorUserId: string,
+): Promise<{ bookingId: string; payoutState: string }[]> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ id: string; payout_state: string }[]>`
+      SELECT b.id, b.payout_state
+      FROM bookings b
+      JOIN experiences e ON e.id = b.experience_id
+      JOIN availability_slots s ON s.id = b.slot_id
+      WHERE e.vendor_user_id = ${vendorUserId}
+        AND b.state = 'completed'
+      ORDER BY s.start_at ASC
+    `
+    return rows.map((r) => ({ bookingId: r.id, payoutState: r.payout_state }))
+  })
+}
+
 /** Read a Vendor's current manual_payouts_remaining count (the first-3 gate). */
 export async function getVendorManualPayoutsRemaining(
   vendorUserId: string,

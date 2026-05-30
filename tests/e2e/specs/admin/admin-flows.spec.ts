@@ -30,6 +30,8 @@ import {
   getAdminVendorState,
   getBookingLifecycle,
   getBookingPayoutState,
+  getCompletedPayoutBookingsForVendor,
+  setBookingPayoutStateForTest,
   getCommissionTierById,
   getCommissionTierByName,
   getEarliestBookingCommissionSnapshotForVendor,
@@ -672,6 +674,116 @@ test.describe('Admin payouts page', () => {
       path: 'tests/e2e/screenshots/admin-payouts.png',
       fullPage: true,
     })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 7b. Variant-B "Split-View Ledger" co-presence + A4 exact-figure confirm
+//     (#90/#91/#92, archetype #58 direction B)
+//
+// The load-bearing redesign fix: the Commission Snapshot decomposition
+// (Gross → Commission → GST → TDS → TCS → Net) and the money-moving action are
+// finally CO-PRESENT on screen, and every money action is guarded by the A4
+// exact-figure confirm Dialog that restates the EXACT ₹ before commit (a
+// misclick must NOT move money). These read-only assertions never mutate state.
+// ---------------------------------------------------------------------------
+test.describe('Admin money queues — variant B split-view ledger', () => {
+  test('payouts: Commission Snapshot is co-present with the approve action, A4 confirm restates the exact ₹', async ({
+    page,
+  }) => {
+    const pending = await getPendingPayoutBookingsForVendor(SEED_PAYOUT_QUEUE_VENDOR_ID)
+    const target = pending.find((p) => p.payoutState === 'pending')
+    expect(target, 'seed must provide a pending Payout for the split-view assertion').toBeTruthy()
+
+    await page.goto('/admin/payouts')
+    const row = page.locator(`tr[data-booking-id="${target!.bookingId}"]`)
+    await expect(row).toBeVisible()
+    // Select the record → its detail pane shows the full Commission Snapshot
+    // CO-PRESENT with the approve action (the load-bearing fix).
+    await row.getByRole('button', { name: /select/i }).click()
+    const detail = page.getByTestId('ledger-detail-pane')
+    await expect(detail.getByText('Commission Snapshot')).toBeVisible()
+    await expect(detail.getByTestId('snapshot-net')).toBeVisible()
+    await expect(detail.getByRole('button', { name: 'Approve', exact: true })).toBeVisible()
+
+    // The in-row approve opens the A4 confirm Dialog restating the EXACT net ₹;
+    // it does NOT move money on its own — Cancel leaves the state untouched.
+    await row.getByRole('button', { name: 'Approve', exact: true }).click()
+    const dialog = page.locator('[data-slot="dialog-content"]')
+    await expect(dialog.getByRole('heading', { name: 'Approve Payout' })).toBeVisible()
+    await expect(dialog.getByTestId('confirm-money-amount')).toContainText('₹')
+    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await expect(dialog).toHaveCount(0)
+  })
+
+  test('refunds: refund breakdown is co-present with the approve action, A4 confirm restates the exact ₹', async ({
+    page,
+  }) => {
+    await page.goto('/admin/refunds?status=pending')
+    await expect(page.locator('h1')).toContainText('Refund requests')
+
+    const detail = page.getByTestId('ledger-detail-pane')
+    await expect(detail).toBeVisible()
+
+    const firstRow = page.locator('tr[data-refund-request-id]').first()
+    if ((await firstRow.count()) === 0) {
+      test.skip(true, 'no pending refund requests seeded for the split-view assertion')
+    }
+    await firstRow.getByRole('button', { name: /select/i }).click()
+    // The detail pane shows the refund amount + its target Wallet bucket
+    // co-present with the approve action.
+    await expect(detail.getByTestId('refund-amount')).toBeVisible()
+    await expect(detail.getByText(/Refund balance/i).first()).toBeVisible()
+    await expect(detail.getByRole('button', { name: 'Approve', exact: true })).toBeVisible()
+
+    // The approve opens the A4 exact-figure confirm; Cancel moves no money.
+    await firstRow.getByRole('button', { name: 'Approve', exact: true }).click()
+    const dialog = page.locator('[data-slot="dialog-content"]')
+    await expect(dialog.getByRole('heading', { name: 'Approve Refund' })).toBeVisible()
+    await expect(dialog.getByTestId('confirm-money-amount')).toContainText('₹')
+    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await expect(dialog).toHaveCount(0)
+  })
+
+  test('commission: tier rate + blast radius are co-present with the edit action behind a rate confirm', async ({
+    page,
+  }) => {
+    // Self-seed a dedicated upcoming tier via the Create Festival Tier form so
+    // the split-view assertion is deterministic (no reliance on seeded tiers).
+    const splitTierName = `split-view-${Date.now()}`
+    await page.goto('/admin/commission')
+    await expect(page.locator('h1')).toContainText('Commission Tiers')
+
+    await page.locator('#name').fill(splitTierName)
+    await page.locator('#rateOverride').fill('14')
+    await page.locator('#startAt').fill('2027-01-01T00:00')
+    await page.locator('#endAt').fill('2027-02-01T00:00')
+    await page.locator('#reason').fill('E2E split-view co-presence assertion')
+    await page.getByRole('button', { name: 'Create Commission Tier' }).click()
+    await expect(page.getByText('Commission tier created.')).toBeVisible({ timeout: 15_000 })
+
+    let tierId: string | null = null
+    try {
+      const created = await getCommissionTierByName(splitTierName)
+      expect(created, 'the split-view fixture tier must persist').not.toBeNull()
+      tierId = created!.id
+
+      await page.goto('/admin/commission')
+      await page.getByRole('tab', { name: /Upcoming/ }).click()
+      const detail = page.getByTestId('ledger-detail-pane')
+      await expect(detail).toBeVisible()
+
+      const tierRow = page.locator(`tr[data-tier-id="${tierId}"]`)
+      await expect(tierRow).toBeVisible({ timeout: 15_000 })
+      await tierRow.getByRole('button', { name: /select/i }).click()
+
+      // The rate and the affected-Booking blast radius are co-present with Edit.
+      await expect(detail.getByTestId('tier-rate')).toContainText('14')
+      await expect(detail.getByTestId('tier-affected')).toBeVisible()
+      await expect(detail.getByRole('button', { name: 'Edit', exact: true })).toBeVisible()
+    } finally {
+      if (tierId) await deleteCommissionTierById(tierId)
+    }
   })
 })
 
@@ -1358,7 +1470,15 @@ test.describe('Admin payout queue + first-3 manual gate (#24)', () => {
 
       const row = page.locator(`tr[data-booking-id="${target.bookingId}"]`)
       await expect(row).toBeVisible()
+      // The split-view ledger (#58-B) guards every money move behind the A4
+      // exact-figure confirm Dialog — the in-row Approve opens it; only the
+      // Dialog's explicit confirm moves money. The Dialog restates the EXACT
+      // Net Vendor Payout being disbursed before commit.
       await row.getByRole('button', { name: 'Approve', exact: true }).click()
+      const approveDialog = page.locator('[data-slot="dialog-content"]')
+      await expect(approveDialog.getByRole('heading', { name: 'Approve Payout' })).toBeVisible()
+      await expect(approveDialog.getByTestId('confirm-money-amount')).toContainText('₹')
+      await approveDialog.getByRole('button', { name: 'Approve Payout' }).click()
 
       // After the action + revalidation the row's actions cell flips to the
       // "Approved" badge (no more Approve button).
@@ -1948,8 +2068,16 @@ test.describe('Admin commission-tier CRUD + scope count (#26)', () => {
     await dialog.locator(`#edit-reason-${tierId}`).fill(NEW_REASON)
     await dialog.getByRole('button', { name: 'Save Changes' }).click()
 
+    // Variant-B (#58-B) guards the rate change behind the exact-figure confirm
+    // Dialog: Save Changes opens it restating the EXACT new rate; only the
+    // explicit "Confirm rate change" commits the update.
+    const confirmDialog = page.locator('[data-slot="dialog-content"]')
+    await expect(confirmDialog.getByText('Confirm commission rate change')).toBeVisible()
+    await expect(confirmDialog.getByTestId('tier-rate-confirm')).toContainText('17.5')
+    await confirmDialog.getByRole('button', { name: 'Confirm rate change' }).click()
+
     // The dialog closes on a successful save.
-    await expect(dialog.getByText('Edit Commission Tier')).not.toBeVisible({
+    await expect(confirmDialog.getByText('Confirm commission rate change')).not.toBeVisible({
       timeout: 15_000,
     })
 
@@ -2793,11 +2921,15 @@ test.describe('Admin permission gate — server-side enforcement (#28)', () => {
   test('BLOCKED: a Sub-admin lacking `payouts` cannot approve a Payout (server-side)', async ({
     browser,
   }) => {
-    // A pending Payout from the dedicated payout-queue Vendor (#24 fixture).
-    const pending = await getPendingPayoutBookingsForVendor(SEED_PAYOUT_QUEUE_VENDOR_ID)
-    const target = pending.find((p) => p.payoutState === 'pending')
-    expect(target, 'seed must leave a pending Payout for the gate test').toBeTruthy()
+    // A Payout from the dedicated payout-queue Vendor (#24 fixture). The #24
+    // payout-queue tests may have consumed every pending Booking earlier in the
+    // run (shared-fixture race, #109), so stage a deterministic known-pending
+    // target on a completed Booking of this Vendor before the gate assertion.
+    const completed = await getCompletedPayoutBookingsForVendor(SEED_PAYOUT_QUEUE_VENDOR_ID)
+    const target = completed[completed.length - 1]
+    expect(target, 'seed must provide a completed Payout-queue Booking for the gate test').toBeTruthy()
     const bookingId = target!.bookingId
+    await setBookingPayoutStateForTest(bookingId, 'pending')
 
     const stateBefore = (await getBookingPayoutState(bookingId))?.payoutState
     expect(stateBefore).toBe('pending')
@@ -2813,10 +2945,18 @@ test.describe('Admin permission gate — server-side enforcement (#28)', () => {
 
       const row = subPage.locator(`tr[data-booking-id="${bookingId}"]`)
       await expect(row).toBeVisible()
+      // Variant-B (#58-B): the in-row Approve opens the A4 exact-figure confirm
+      // Dialog; the gated Server Action fires only from the Dialog's confirm.
       await row.getByRole('button', { name: 'Approve', exact: true }).click()
+      const dialog = subPage.locator('[data-slot="dialog-content"]')
+      await expect(dialog.getByRole('heading', { name: 'Approve Payout' })).toBeVisible()
+      await dialog.getByRole('button', { name: 'Approve Payout' }).click()
 
-      // The action returns { ok: false } → the row never flips to "Approved".
-      // Give the action time to run, then assert the row is still actionable.
+      // The gated Server Action returns { ok: false } → the confirm Dialog
+      // surfaces the permission denial and stays open; the row never flips to
+      // "Approved". Dismiss the Dialog, then assert it stayed actionable.
+      await expect(dialog.getByText(/permission/i)).toBeVisible({ timeout: 10_000 })
+      await dialog.getByRole('button', { name: 'Cancel' }).click()
       await expect(row.getByRole('button', { name: 'Approve', exact: true })).toBeVisible({
         timeout: 10_000,
       })

@@ -5,8 +5,8 @@
  * useTranslations('VendorNav') when wrapped with NextIntlClientProvider.
  */
 
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { cleanup, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import enMessages from '@/lib/i18n/messages/en.json'
 import hiMessages from '@/lib/i18n/messages/hi.json'
@@ -32,6 +32,18 @@ function renderWithIntl(
     </NextIntlClientProvider>,
   )
 }
+
+// Unmount every rendered tree after each test. VendorSidebar is a 'use client'
+// component whose effects schedule React work via the scheduler's setImmediate.
+// Without an explicit unmount, that deferred task can fire AFTER vitest disposes
+// the jsdom `window` under full-suite parallelism, throwing
+// `ReferenceError: window is not defined` from performWorkOnRootViaSchedulerTask
+// and tripping `pnpm test` to a non-zero exit despite all assertions passing
+// (#109). cleanup() unmounts synchronously, cancelling the pending scheduler
+// task so nothing is left to fire at teardown.
+afterEach(() => {
+  cleanup()
+})
 
 describe('VendorSidebar i18n', () => {
   it('renders English nav labels when locale is en', () => {

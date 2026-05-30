@@ -108,6 +108,12 @@ const SEED_REFUND_QUEUE_CUSTOMER_ID = 'u_seed_customer_refundq'
 const SEED_PAYOUT_QUEUE_VENDOR_ID = 'u_seed_v_payout'
 const REFUND_QUEUE_CUSTOMER_EMAIL = 'customer-refundq@seed.outvers.dev'
 
+// #28 permission-gate dedicated payout Vendor — must match db/seed.ts. Owns a
+// single completed pending-payout Booking touched by NO other admin spec, so
+// the #24 payout-queue approve/hold/reject sweep (a parallel describe block)
+// can never mutate it out from under the server-side gate assertion (#109).
+const SEED_PAYOUT_GATE_VENDOR_ID = 'u_seed_v_payout_gate'
+
 // #26 commission-tier scope-count + loyalty-grant fixtures — must match db/seed.ts.
 const SEED_LOYALTY_CUSTOMER_ID = 'u_seed_customer_loyalty'
 const SEED_LOYALTY_CUSTOMER_EMAIL = 'customer-loyalty@seed.outvers.dev'
@@ -2342,7 +2348,15 @@ test.describe('Admin promo CRUD (#26)', () => {
     await expect
       .poll(async () => (await getPromoCodeById(flatId!))?.active, { timeout: 15_000 })
       .toBe(false)
-    expect(await countPromoAuditRows('admin.promo_code.deactivate', flatId!)).toBe(1)
+    // The active-flag flip and the audit-row insert are observed over separate
+    // DB connections; under parallel load the audit row can lag the active-flag
+    // poll. Poll the count (same exact assertion, read-after-write tolerant) —
+    // the #109 order-dependent promo race.
+    await expect
+      .poll(async () => countPromoAuditRows('admin.promo_code.deactivate', flatId!), {
+        timeout: 15_000,
+      })
+      .toBe(1)
 
     // ── Reactivate (the button now reads "Activate") ─────────────────────
     const refreshedRow = page.locator('tr').filter({ hasText: PROMO_FLAT })
@@ -2353,7 +2367,11 @@ test.describe('Admin promo CRUD (#26)', () => {
     await expect
       .poll(async () => (await getPromoCodeById(flatId!))?.active, { timeout: 15_000 })
       .toBe(true)
-    expect(await countPromoAuditRows('admin.promo_code.activate', flatId!)).toBe(1)
+    await expect
+      .poll(async () => countPromoAuditRows('admin.promo_code.activate', flatId!), {
+        timeout: 15_000,
+      })
+      .toBe(1)
   })
 
   test('delete: a 0-use promo is removed from the DB + audit', async ({ page }) => {
@@ -2582,7 +2600,15 @@ test.describe('Admin review moderation (#27)', () => {
       await expect
         .poll(async () => getReviewStatus(reviewId), { timeout: 15_000 })
         .toBe('flagged')
-      expect(await countReviewAuditRows('admin.review.flag', reviewId)).toBe(1)
+      // The status transition and the audit-row insert are written by the same
+      // moderation action but observed over separate DB connections; under
+      // parallel load the audit row can lag the status poll by a beat. Poll the
+      // count (same exact assertion, just read-after-write tolerant) — #109.
+      await expect
+        .poll(async () => countReviewAuditRows('admin.review.flag', reviewId), {
+          timeout: 15_000,
+        })
+        .toBe(1)
       const flagAudit = await getLatestReviewAudit('admin.review.flag', reviewId)
       expect(flagAudit!.actorUserId).toBe(SEED_ADMIN_ID)
       expect(flagAudit!.payload).toMatchObject({
@@ -2610,7 +2636,11 @@ test.describe('Admin review moderation (#27)', () => {
       await expect
         .poll(async () => getReviewStatus(reviewId), { timeout: 15_000 })
         .toBe('published')
-      expect(await countReviewAuditRows('admin.review.publish', reviewId)).toBe(1)
+      await expect
+        .poll(async () => countReviewAuditRows('admin.review.publish', reviewId), {
+          timeout: 15_000,
+        })
+        .toBe(1)
       const publishAudit = await getLatestReviewAudit(
         'admin.review.publish',
         reviewId,
@@ -2641,7 +2671,11 @@ test.describe('Admin review moderation (#27)', () => {
       await expect
         .poll(async () => getReviewStatus(reviewId), { timeout: 15_000 })
         .toBe('removed')
-      expect(await countReviewAuditRows('admin.review.remove', reviewId)).toBe(1)
+      await expect
+        .poll(async () => countReviewAuditRows('admin.review.remove', reviewId), {
+          timeout: 15_000,
+        })
+        .toBe(1)
       const removeAudit = await getLatestReviewAudit(
         'admin.review.remove',
         reviewId,
@@ -3019,9 +3053,17 @@ test.describe('Admin sub-admin CRUD + audit (#28)', () => {
       .toEqual(['audit', 'vendors'])
 
     // ── Assert: an edit audit row records the before/after permissions ────
-    expect(
-      await countSubAdminAuditRows('admin.sub_admin.edit_permissions', INVITEE_USER_ID),
-    ).toBe(1)
+    // The permission update and the audit insert are observed over separate DB
+    // connections; poll the count (same exact assertion, read-after-write
+    // tolerant) so the audit row's lag behind the permissions poll under
+    // parallel load can't flake the gate — the #109 edit-permissions race.
+    await expect
+      .poll(
+        async () =>
+          countSubAdminAuditRows('admin.sub_admin.edit_permissions', INVITEE_USER_ID),
+        { timeout: 15_000 },
+      )
+      .toBe(1)
     const audit = await getLatestSubAdminAudit(
       'admin.sub_admin.edit_permissions',
       INVITEE_USER_ID,
@@ -3078,13 +3120,16 @@ test.describe('Admin permission gate — server-side enforcement (#28)', () => {
   test('BLOCKED: a Sub-admin lacking `payouts` cannot approve a Payout (server-side)', async ({
     browser,
   }) => {
-    // A Payout from the dedicated payout-queue Vendor (#24 fixture). The #24
-    // payout-queue tests may have consumed every pending Booking earlier in the
-    // run (shared-fixture race, #109), so stage a deterministic known-pending
-    // target on a completed Booking of this Vendor before the gate assertion.
-    const completed = await getCompletedPayoutBookingsForVendor(SEED_PAYOUT_QUEUE_VENDOR_ID)
+    // A Payout from the DEDICATED permission-gate Vendor (#28 fixture, distinct
+    // from the #24 payout-queue Vendor). The #24 payout-queue tests run in a
+    // PARALLEL describe block and approve/hold/REJECT every pending Booking of
+    // THEIR vendor; sharing that pool let #24 reject this Booking out from under
+    // the gate assertion (the #109 payout race). This Vendor is touched by no
+    // other spec, so its single completed Booking is ours alone — stage it to a
+    // known `pending` state before the gate assertion.
+    const completed = await getCompletedPayoutBookingsForVendor(SEED_PAYOUT_GATE_VENDOR_ID)
     const target = completed[completed.length - 1]
-    expect(target, 'seed must provide a completed Payout-queue Booking for the gate test').toBeTruthy()
+    expect(target, 'seed must provide a completed Payout-gate Booking for the gate test').toBeTruthy()
     const bookingId = target!.bookingId
     await setBookingPayoutStateForTest(bookingId, 'pending')
 

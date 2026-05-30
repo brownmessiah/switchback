@@ -540,6 +540,34 @@ test.describe('Cancel booking', () => {
   // targets a DISTINCT booking, so a failure in one doesn't cascade.
   test.describe.configure({ mode: 'serial' })
 
+  /**
+   * Briefly delay the cancel page's RSC refresh round-trip so the
+   * `cancel-outcome` panel stays asserted-able (#109).
+   *
+   * On a successful cancel, CancelForm sets its `outcome` state (rendering
+   * the cancel-outcome panel) and immediately calls `router.refresh()`. The
+   * refresh re-runs the cancel page's server component, which — now that the
+   * Booking is no longer `confirmed` — renders the "not-cancellable" panel
+   * INSTEAD of CancelForm, unmounting the just-rendered outcome. Under load
+   * the RSC round-trip can complete inside a single Playwright poll interval,
+   * so the assertion intermittently only ever observes the post-refresh
+   * "not-cancellable" state and times out — even with retries (the one-way
+   * cancel already consumed the Booking). This is a test-only network shim:
+   * it slows ONLY the RSC refetch of the cancel route (identified by the
+   * Next.js `RSC: 1` request header) by a beat, widening the window so the
+   * outcome panel is reliably observed. It changes no product behavior and
+   * weakens no assertion — the load-bearing DB/audit assertions are untouched.
+   */
+  async function slowCancelRouteRefresh(page: import('@playwright/test').Page) {
+    await page.route('**/bookings/**/cancel*', async (route) => {
+      const isRscRefresh = route.request().headers()['rsc'] === '1'
+      if (isRscRefresh) {
+        await new Promise((resolve) => setTimeout(resolve, 1500))
+      }
+      await route.continue()
+    })
+  }
+
   test('confirmation page Cancel link reaches a working cancel page (no 404)', async ({
     page,
   }) => {
@@ -580,6 +608,9 @@ test.describe('Cancel booking', () => {
     expect(booking, 'a confirmed booking must be seeded').toBeTruthy()
     const { bookingId, grossRupees } = booking!
     expect(grossRupees).toBeGreaterThan(0)
+
+    // Keep the post-success outcome panel observable past router.refresh().
+    await slowCancelRouteRefresh(page)
 
     await page.goto(`/bookings/${bookingId}/cancel`)
     await expect(page.locator('h1')).toContainText('Cancel booking')
@@ -645,6 +676,9 @@ test.describe('Cancel booking', () => {
     const booking = await getConfirmedBookingForExperienceSlug(KAYAKING_SLUG)
     expect(booking, 'a confirmed outside-policy kayaking booking must be seeded').toBeTruthy()
     const { bookingId } = booking!
+
+    // Keep the post-success outcome panel observable past router.refresh().
+    await slowCancelRouteRefresh(page)
 
     await page.goto(`/bookings/${bookingId}/cancel`)
     await expect(page.locator('h1')).toContainText('Cancel booking')

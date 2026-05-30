@@ -120,7 +120,13 @@ test.describe('Cross-surface: admin approve -> customer search finds -> remove -
       .locator('tr')
       .filter({ hasText: XSURFACE_SEARCH_TITLE })
     await expect(pendingRow).toBeVisible()
+    // Approve is consequential (publishes + indexes, ADR-0013) so it is gated
+    // behind a confirm Dialog (#88) — click through the confirm to fire it.
     await pendingRow.locator('button').filter({ hasText: 'Approve' }).click()
+    await page
+      .getByTestId('approve-confirm')
+      .getByRole('button', { name: 'Approve & publish' })
+      .click()
     // The now-published row drops OUT of the pending_review-filtered list.
     await expect(pendingRow).toHaveCount(0, { timeout: 15_000 })
 
@@ -169,7 +175,13 @@ test.describe('Cross-surface: admin approve -> customer search finds -> remove -
       .locator('tr')
       .filter({ hasText: XSURFACE_SEARCH_TITLE })
     await expect(publishedRow).toBeVisible()
+    // Pause de-indexes from search (ADR-0013) so it is gated behind a confirm
+    // Dialog (#88) — click through the confirm to fire it.
     await publishedRow.locator('button').filter({ hasText: 'Pause' }).click()
+    await page
+      .getByTestId('pause-confirm')
+      .getByRole('button', { name: 'Pause' })
+      .click()
     await expect(publishedRow).toHaveCount(0, { timeout: 15_000 })
 
     // Cross-surface side effects: paused in DB AND de-indexed from Meili.
@@ -279,8 +291,24 @@ test.describe('Cross-surface: vendor creates -> admin approves -> collection sho
       .filter({ hasText: REGION_LABEL })
       .click()
 
-    await vendorPage.fill('#price12', '3500')
+    // ── #76 variant A "Guided Builder": the create form is a sectioned B5
+    //    stepper (Details → Pricing → Policy → Review). #price12 lives on the
+    //    Pricing section, NOT Details — advance via the sticky-footer "Continue"
+    //    control (which runs per-section inline validation) before filling it,
+    //    and submit only on the final Review step. (#109: the cross-surface
+    //    spec predated the wizard and filled #price12 on Details, hanging the
+    //    test until its 60s timeout.)
+    await vendorPage.getByRole('button', { name: 'Continue' }).click()
 
+    // ── Section 2: Pricing — 1-2 guests bracket ────────────────────────────
+    await expect(vendorPage.locator('#price12')).toBeVisible()
+    await vendorPage.fill('#price12', '3500')
+    await vendorPage.getByRole('button', { name: 'Continue' }).click()
+
+    // ── Section 3: Policy & payment → advance to Review ────────────────────
+    await vendorPage.getByRole('button', { name: 'Continue' }).click()
+
+    // ── Section 4: Review — submit the listing ─────────────────────────────
     await vendorPage.locator('button[type="submit"]').click()
     await vendorPage.waitForURL(/\/vendor\/listings$/, { timeout: 15_000 })
     await expect(vendorPage.getByText(uniqueTitle)).toBeVisible({
@@ -340,7 +368,13 @@ test.describe('Cross-surface: vendor creates -> admin approves -> collection sho
     const pendingRow = page.locator('tr').filter({ hasText: uniqueTitle })
     await expect(pendingRow).toBeVisible()
     await expect(pendingRow.getByText('pending review')).toBeVisible()
+    // Approve is consequential (publishes + indexes, ADR-0013) so it is gated
+    // behind a confirm Dialog (#88) — click through the confirm to fire it.
     await pendingRow.locator('button').filter({ hasText: 'Approve' }).click()
+    await page
+      .getByTestId('approve-confirm')
+      .getByRole('button', { name: 'Approve & publish' })
+      .click()
     // The now-published row drops OUT of the pending_review-filtered list.
     await expect(pendingRow).toHaveCount(0, { timeout: 15_000 })
 

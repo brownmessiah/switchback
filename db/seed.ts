@@ -147,6 +147,26 @@ const PAYOUT_QUEUE_VENDOR = {
 } as const
 
 /**
+ * A DEDICATED Identity-verified Vendor whose SINGLE completed, pending-payout
+ * Booking is owned EXCLUSIVELY by the #28 server-side permission-gate E2E
+ * ("BLOCKED: a Sub-admin lacking `payouts` cannot approve a Payout"). Kept
+ * DISTINCT from PAYOUT_QUEUE_VENDOR (#24) because the #24 payout-queue tests
+ * approve/hold/REJECT every pending Booking of their vendor in PARALLEL worker
+ * describe blocks. When #28 force-staged a PAYOUT_QUEUE_VENDOR Booking to
+ * `pending`, the #24 reject test (running concurrently) grabbed and rejected it
+ * out from under #28, flipping the gate assertion's expected `pending` →
+ * `rejected` (the #109 order-dependent payout race). Isolating #28 on its own
+ * vendor pool removes the cross-describe contention entirely. manual_payouts_
+ * remaining is irrelevant here (the gate denies BEFORE any decrement).
+ */
+const PAYOUT_GATE_VENDOR = {
+  userId: 'u_seed_v_payout_gate',
+  email: 'payout-gate@seed.outvers.dev',
+  businessName: 'Sentinel Payout-Gate Vendor (Identity Tier)',
+  slug: 'sentinel-payout-gate-vendor',
+} as const
+
+/**
  * A DEDICATED Customer who receives the manual Outvers-credit / Refund-balance
  * grants the admin loyalty-grant E2E (#26) issues. Kept DISTINCT from
  * `u_seed_customer` (whose two-bucket wallet is asserted exactly by #13–#15)
@@ -324,6 +344,11 @@ async function seed(): Promise<void> {
         name: PAYOUT_QUEUE_VENDOR.businessName,
       },
       {
+        id: PAYOUT_GATE_VENDOR.userId,
+        email: PAYOUT_GATE_VENDOR.email,
+        name: PAYOUT_GATE_VENDOR.businessName,
+      },
+      {
         id: LOYALTY_GRANT_CUSTOMER.userId,
         email: LOYALTY_GRANT_CUSTOMER.email,
         name: LOYALTY_GRANT_CUSTOMER.name,
@@ -417,6 +442,25 @@ async function seed(): Promise<void> {
       manualPayoutsRemaining: 3,
       payoutMethod: 'upi',
       payoutDestination: { vpa: 'apex-payout@upi' },
+    })
+    .onConflictDoNothing()
+
+  // ----- #28 PERMISSION-GATE VENDOR — dedicated, isolated from #24 ----------
+  // Owns a single completed pending-payout Booking the #28 server-side gate
+  // test force-stages to `pending` and asserts the Sub-admin CANNOT approve.
+  // Separate vendor so the #24 payout-queue approve/hold/reject sweep (a
+  // parallel describe block) never touches it (#109 payout race fix).
+  await db
+    .insert(vendorProfiles)
+    .values({
+      userId: PAYOUT_GATE_VENDOR.userId,
+      businessName: PAYOUT_GATE_VENDOR.businessName,
+      slug: PAYOUT_GATE_VENDOR.slug,
+      kycTier: 'identity',
+      pan: 'STUVW1234X',
+      manualPayoutsRemaining: 3,
+      payoutMethod: 'upi',
+      payoutDestination: { vpa: 'sentinel-gate@upi' },
     })
     .onConflictDoNothing()
 
@@ -1630,6 +1674,109 @@ async function seed(): Promise<void> {
           payoutState: 'pending',
           confirmedAt: new Date(slotAt.getTime() - 5 * 24 * 60 * 60 * 1000),
           completedAt: slotEndAt,
+        })
+        .onConflictDoNothing()
+    }
+  }
+
+  // ===================================================================
+  // #28 ADMIN PERMISSION-GATE PAYOUT — single dedicated pending Booking
+  // ===================================================================
+  // The #28 server-side permission-gate E2E force-stages ONE completed Booking
+  // of PAYOUT_GATE_VENDOR to `pending` and asserts a Sub-admin lacking the
+  // `payouts` permission CANNOT approve it (payout_state stays `pending`, no
+  // approve audit row). This Vendor is touched by NO other admin spec, so the
+  // #24 payout-queue sweep (a parallel describe block that approves/holds/
+  // rejects every pending Booking of PAYOUT_QUEUE_VENDOR) can never grab and
+  // mutate this Booking out from under the gate assertion (#109 payout race).
+  const PAYOUT_GATE_SLUG = 'payout-gate-fixture-bir-billing'
+  const [payoutGateExp] = await db
+    .insert(experiences)
+    .values({
+      vendorUserId: PAYOUT_GATE_VENDOR.userId,
+      slug: PAYOUT_GATE_SLUG,
+      title: 'Payout Gate Fixture — Bir Billing (admin #28)',
+      shortDescription: 'Dedicated fixture Experience for the admin permission-gate payout E2E (#28).',
+      longDescription:
+        'A dedicated Experience whose single completed, pending-payout Booking drives the #28 server-side permission-gate assertion (a Sub-admin lacking `payouts` cannot approve a Payout). Not in any public catalog flow.',
+      cancellationPreset: 'flexible' as const,
+      paymentModesAllowed: ['full_upfront'] as (
+        | 'full_upfront'
+        | 'partial_pay'
+        | 'reserve_now_pay_later'
+      )[],
+      pricePerPerson_1_2: '25000.00',
+      pricePerPerson_3_5: '25000.00',
+      pricePerPerson_6_plus: '25000.00',
+      regionSlug: 'bir-billing',
+      activitySlug: 'paragliding',
+      status: 'published' as const,
+    })
+    .onConflictDoNothing()
+    .returning({ id: experiences.id })
+
+  const payoutGateExpId =
+    payoutGateExp?.id ??
+    (
+      await db
+        .select({ id: experiences.id })
+        .from(experiences)
+        .where(eq(experiences.slug, PAYOUT_GATE_SLUG))
+    )[0]?.id
+
+  if (payoutGateExpId) {
+    // A single fixed-UTC past slot disjoint from every other fixture's slots.
+    const PAYOUT_GATE_GROSS = 50000
+    const PAYOUT_GATE_PARTICIPANTS = 2
+    const gateSlotAt = new Date('2026-02-20T10:00:00.000Z')
+    const gateSlotEndAt = new Date(gateSlotAt.getTime() + 4 * 60 * 60 * 1000)
+
+    const [gateSlot] = await db
+      .insert(availabilitySlots)
+      .values({
+        experienceId: payoutGateExpId,
+        startAt: gateSlotAt,
+        endAt: gateSlotEndAt,
+        capacity: 8,
+        capacityTaken: PAYOUT_GATE_PARTICIPANTS,
+      })
+      .onConflictDoNothing()
+      .returning({ id: availabilitySlots.id })
+
+    const gateSlotId =
+      gateSlot?.id ??
+      (
+        await db
+          .select({ id: availabilitySlots.id })
+          .from(availabilitySlots)
+          .where(eq(availabilitySlots.startAt, gateSlotAt))
+      ).find(() => true)?.id
+
+    if (gateSlotId) {
+      await db
+        .insert(bookings)
+        .values({
+          customerUserId: REFUND_QUEUE_CUSTOMER.userId,
+          experienceId: payoutGateExpId,
+          slotId: gateSlotId,
+          participantCount: PAYOUT_GATE_PARTICIPANTS,
+          state: 'completed',
+          paymentMode: 'full_upfront',
+          grossTotalSnapshot: String(PAYOUT_GATE_GROSS),
+          pricePerParticipantSnapshot: String(PAYOUT_GATE_GROSS / PAYOUT_GATE_PARTICIPANTS),
+          pricingBasisSnapshot: 'base_price',
+          commissionRateSnapshot: '20.00',
+          commissionBasisSnapshot: 'platform_default',
+          gstRateOnCommissionSnapshot: '18.00',
+          tdsAmountSnapshot: String(Math.floor(PAYOUT_GATE_GROSS * 0.001)),
+          tcsAmountSnapshot: String(Math.floor(PAYOUT_GATE_GROSS * 0.005)),
+          tcsRateSnapshot: '0.50',
+          cancellationPresetSnapshot: 'flexible',
+          vendorPanSnapshot: 'STUVW1234X',
+          vendorIsResidentSnapshot: true,
+          payoutState: 'pending',
+          confirmedAt: new Date(gateSlotAt.getTime() - 5 * 24 * 60 * 60 * 1000),
+          completedAt: gateSlotEndAt,
         })
         .onConflictDoNothing()
     }

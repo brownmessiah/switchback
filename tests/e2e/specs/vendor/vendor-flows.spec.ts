@@ -288,6 +288,13 @@ test.describe('Create listing', () => {
     await expect(h1).toBeVisible()
     await expect(h1).toContainText('Create listing')
 
+    // ── #76 variant A "Guided Builder": the create form is now a sectioned B5
+    //    stepper (Details → Pricing → Policy → Review). Fields live on focused
+    //    sections; we advance via the sticky-footer "Continue" control (which
+    //    runs per-section inline validation) and submit only on the final
+    //    Review step. Every original assertion below is preserved verbatim.
+
+    // ── Section 1: Details — title, description, activity, region ──────────
     // Fill title
     await page.fill('#title', title)
 
@@ -311,16 +318,24 @@ test.describe('Create listing', () => {
     await regionTrigger.click()
     await page.locator('[data-slot="select-item"]').filter({ hasText: 'Goa' }).click()
 
-    // Fill pricing — 1-2 guests
-    await page.fill('#price12', '2500')
+    // Advance to the Pricing section (validates Details first).
+    await page.getByRole('button', { name: 'Continue' }).click()
 
-    // Defocus any open Select dropdown by clicking on the heading,
-    // then wait for React state to settle before submitting.
-    await page.locator('h1').click()
-    await page.waitForTimeout(500)
+    // ── Section 2: Pricing — 1-2 guests bracket ────────────────────────────
+    await expect(page.locator('#price12')).toBeVisible()
+    await page.fill('#price12', '2500')
+    await page.getByRole('button', { name: 'Continue' }).click()
+
+    // ── Section 3: Policy & payment → advance to Review ────────────────────
+    await page.getByRole('button', { name: 'Continue' }).click()
+
+    // ── Section 4: Review — commission (20%) is shown before the final submit ─
+    await expect(page.getByText(/20%/).first()).toBeVisible()
+    const submit = page.locator('button[type="submit"]')
+    await expect(submit).toBeVisible()
 
     // Submit the form
-    await page.locator('button[type="submit"]').click()
+    await submit.click()
 
     // Wait for the client-side navigation to the listings page
     await page.waitForURL(/\/vendor\/listings$/, { timeout: 15_000 })
@@ -376,14 +391,27 @@ test.describe('Edit listing', () => {
     await page.goto(`/vendor/listings/${experienceId}/edit`)
     await expect(page.locator('h1')).toContainText('Edit experience')
 
-    // Verify the form fields are populated from the database.
+    // ── #77 variant A "Guided Builder": the edit form is the SAME sectioned
+    //    B5 stepper (Details → Pricing → Policy → Review). #title is on the
+    //    opening Details section (pre-filled from the DB); the price brackets
+    //    live on the Pricing section; the payment-mode controls live on the
+    //    Policy section. We navigate via the sticky-footer "Continue" control,
+    //    preserving every original assertion.
+
+    // Details (step 1): #title is pre-filled from the database.
+    await expect(page.locator('#title')).toHaveValue(/.+/)
+    await page.getByRole('button', { name: 'Continue' }).click()
+
+    // Pricing (step 2): the price fields are populated from the database.
     const priceInput = page.locator('#price12')
     await expect(priceInput).toBeVisible()
     const initialValue = await priceInput.inputValue()
     expect(Number(initialValue)).toBeGreaterThan(0)
-    await expect(page.locator('#title')).toHaveValue(/.+/)
+    // Change the headline (1-2) price.
+    await priceInput.fill(String(NEW_PRICE))
+    await page.getByRole('button', { name: 'Continue' }).click()
 
-    // ── Graceful degradation (Issue #112 / ADR-0002) ─────────────────────
+    // ── Graceful degradation (Issue #112 / ADR-0002) — Policy & payment step ─
     // The vendor-facing payment-mode picker must offer ONLY the two shipped
     // modes (Full upfront / Partial pay). Reserve-now-pay-later is schema-
     // named but unbuilt, so it must NOT appear as a selectable control here.
@@ -410,8 +438,7 @@ test.describe('Edit listing', () => {
       'rnpl',
     )
 
-    // Change the headline (1-2) price and save.
-    await priceInput.fill(String(NEW_PRICE))
+    // Save from the persistent footer submit (edit mode can save from any step).
     await page.locator('button[type="submit"]').click()
 
     // The form surfaces an inline success state on a persisted update.
@@ -424,8 +451,10 @@ test.describe('Edit listing', () => {
 
     // ── Assert: price SURVIVES RELOAD (form re-populates from the DB) ─────
     // The numeric column round-trips as e.g. "4750.00"; compare the value
-    // rather than the exact string format.
+    // rather than the exact string format. After reload the stepper opens on
+    // Details; advance to the Pricing section to read the persisted #price12.
     await page.reload()
+    await page.getByRole('button', { name: 'Continue' }).click()
     const reloadedValue = await page.locator('#price12').inputValue()
     expect(Number(reloadedValue)).toBe(NEW_PRICE)
 
@@ -535,6 +564,9 @@ test.describe('Over-cap publish rejection (Identity tier, ADR-0007)', () => {
     await page.goto(`/vendor/listings/${experienceId}/edit`)
     await expect(page.locator('h1')).toContainText('Edit experience')
 
+    // #76/#77 stepper: the price brackets live on the Pricing section.
+    await page.getByRole('button', { name: 'Continue' }).click()
+
     // Submit an edit that keeps the price over the cap (still Rs.9,000).
     await page.locator('#price12').fill('9000')
     await page.locator('#price35').fill('9000')
@@ -575,6 +607,8 @@ test.describe('Over-cap publish rejection (Identity tier, ADR-0007)', () => {
     await page.goto(`/vendor/listings/${experienceId}/edit`)
     await expect(page.locator('h1')).toContainText('Edit experience')
 
+    // #76/#77 stepper: the price brackets live on the Pricing section.
+    await page.getByRole('button', { name: 'Continue' }).click()
     await page.locator('#price12').fill(String(newPrice))
     await page.locator('button[type="submit"]').click()
 
@@ -640,6 +674,8 @@ test.describe('Tier-cap matrix — publish path (Identity tier, ADR-0007, #21)',
     try {
       await page.goto(`/vendor/listings/${experienceId}/edit`)
       await expect(page.locator('h1')).toContainText('Edit experience')
+      // #76/#77 stepper: the price brackets live on the Pricing section.
+      await page.getByRole('button', { name: 'Continue' }).click()
 
       // ── 5001 → BLOCKED. The per-person cap is on the HIGHEST bracket, so
       //    pushing the 1-2 bracket one rupee over the cap must trip PRICE_OVER_CAP.
@@ -667,6 +703,7 @@ test.describe('Tier-cap matrix — publish path (Identity tier, ADR-0007, #21)',
     } finally {
       // Restore ALL THREE seed brackets so parallel/repeat runs stay deterministic.
       await page.goto(`/vendor/listings/${experienceId}/edit`)
+      await page.getByRole('button', { name: 'Continue' }).click()
       await page.locator('#price12').fill(String(Number(orig12)))
       await page.locator('#price35').fill(String(Number(orig35)))
       await page.locator('#price6').fill(String(Number(orig6)))
@@ -685,6 +722,11 @@ test.describe('Tier-cap matrix — publish path (Identity tier, ADR-0007, #21)',
 
     await page.goto(`/vendor/listings/${experienceId}/edit`)
     await expect(page.locator('h1')).toContainText('Edit experience')
+
+    // #76/#77 stepper: the combo / settings controls live on the Policy &
+    // settings section (Details → Pricing → Policy). Advance to it.
+    await page.getByRole('button', { name: 'Continue' }).click()
+    await page.getByRole('button', { name: 'Continue' }).click()
 
     // Tick the "Combo experience" checkbox and save — the guard must reject.
     await page

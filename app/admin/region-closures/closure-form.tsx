@@ -51,7 +51,10 @@ export function CreateClosureButton() {
           <DialogHeader>
             <DialogTitle>Create Region Closure</DialogTitle>
             <DialogDescription>
-              Block all bookings in a region for a date range.
+              Block all bookings in a region for a date range. This is destructive:
+              creating the closure immediately pauses every affected Booking in the
+              region and disables Book-now on its Experiences (ADR-0011). Confirm
+              before you create.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">

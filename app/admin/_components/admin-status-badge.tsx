@@ -32,6 +32,8 @@ const STATUS_MAP: Record<string, StatusSpec> = {
   credited: { variant: 'success', icon: CheckCircle2Icon },
   completed: { variant: 'success', icon: CheckCircle2Icon },
   active: { variant: 'success', icon: CheckCircle2Icon },
+  // Booking lifecycle (DESIGN.md §4 A3): a confirmed Booking is affirmative.
+  confirmed: { variant: 'success', icon: CheckCircle2Icon },
   // Awaiting operator action
   pending: { variant: 'warning', icon: ClockIcon },
   upcoming: { variant: 'info', icon: ClockIcon },
@@ -44,6 +46,12 @@ const STATUS_MAP: Record<string, StatusSpec> = {
   rejected: { variant: 'destructive', icon: XCircleIcon },
   failed: { variant: 'destructive', icon: AlertTriangleIcon },
   expired: { variant: 'destructive', icon: XCircleIcon },
+  // Booking lifecycle negatives (DESIGN.md §4 A3): cancelled_* → destructive;
+  // disputed is an active money-on-hold conflict → destructive + alert icon.
+  disputed: { variant: 'destructive', icon: AlertTriangleIcon },
+  cancelled_by_customer: { variant: 'destructive', icon: XCircleIcon },
+  cancelled_by_vendor: { variant: 'destructive', icon: XCircleIcon },
+  cancelled_post_experience: { variant: 'destructive', icon: XCircleIcon },
 }
 
 const FALLBACK: StatusSpec = { variant: 'outline', icon: InfoIcon }

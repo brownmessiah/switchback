@@ -54,8 +54,9 @@ export function DeleteClosureButton({
           <DialogHeader>
             <DialogTitle>Delete Region Closure</DialogTitle>
             <DialogDescription>
-              Remove the closure for <strong>{regionSlug}</strong>? This will
-              re-enable bookings in this region for the affected dates.
+              Remove the closure for <strong>{regionSlug}</strong>? This is destructive:
+              it immediately restores bookability in this region — re-enabling Book-now on
+              its Experiences for the affected dates (ADR-0011). Confirm before you delete.
             </DialogDescription>
           </DialogHeader>
           {error && <p className="text-sm text-destructive">{error}</p>}

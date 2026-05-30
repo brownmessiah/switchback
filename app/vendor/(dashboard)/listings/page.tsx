@@ -1,59 +1,198 @@
-import { eq } from 'drizzle-orm'
+import { and, count, eq, inArray } from 'drizzle-orm'
+import {
+  Archive,
+  CircleCheck,
+  CircleDashed,
+  Clock,
+  PauseCircle,
+} from 'lucide-react'
 import { headers } from 'next/headers'
 import Link from 'next/link'
 
 import { Badge } from '@/components/ui/badge'
 import { buttonVariants } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { db } from '@/db/client'
-import { experiences } from '@/db/schema'
+import { experiences, mediaAssets } from '@/db/schema'
 import { auth } from '@/lib/auth'
+import { computeListingCompleteness } from '@/lib/vendor/listing-completeness'
 
-const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
-  published: 'default',
-  draft: 'outline',
-  pending_review: 'secondary',
-  paused: 'secondary',
-  archived: 'outline',
+import { CompletenessRing } from './completeness-ring'
+import { ListingsControls } from './listings-controls'
+import {
+  LISTING_SORTS,
+  LISTING_STATUS_FILTERS,
+  type ListingSort,
+  type ListingStatusFilter,
+} from './listings-options'
+
+/**
+ * Status → semantic Badge variant + lucide icon + label. Status is conveyed by
+ * an icon paired with color (DESIGN.md §1.3 / WCAG 1.4.1), never color alone.
+ */
+const STATUS_META: Record<
+  string,
+  {
+    variant: 'success' | 'warning' | 'info' | 'secondary' | 'outline'
+    Icon: typeof CircleCheck
+    label: string
+  }
+> = {
+  published: { variant: 'success', Icon: CircleCheck, label: 'Published' },
+  draft: { variant: 'outline', Icon: CircleDashed, label: 'Draft' },
+  pending_review: { variant: 'info', Icon: Clock, label: 'Pending review' },
+  paused: { variant: 'warning', Icon: PauseCircle, label: 'Paused' },
+  archived: { variant: 'secondary', Icon: Archive, label: 'Archived' },
 }
 
-export default async function VendorListingsPage() {
+/** Rank used by the "Status" sort (most actionable first). */
+const STATUS_SORT_RANK: Record<string, number> = {
+  draft: 0,
+  pending_review: 1,
+  published: 2,
+  paused: 3,
+  archived: 4,
+}
+
+const VALID_STATUS = new Set(LISTING_STATUS_FILTERS.map((f) => f.value))
+const VALID_SORT = new Set(LISTING_SORTS.map((s) => s.value))
+
+function parseStatus(raw: string | string[] | undefined): ListingStatusFilter {
+  const value = Array.isArray(raw) ? raw[0] : raw
+  return value && VALID_STATUS.has(value as ListingStatusFilter)
+    ? (value as ListingStatusFilter)
+    : 'all'
+}
+
+function parseSort(raw: string | string[] | undefined): ListingSort {
+  const value = Array.isArray(raw) ? raw[0] : raw
+  return value && VALID_SORT.has(value as ListingSort)
+    ? (value as ListingSort)
+    : 'created_desc'
+}
+
+interface VendorListingsPageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export default async function VendorListingsPage({
+  searchParams,
+}: VendorListingsPageProps) {
   const session = await auth.api.getSession({ headers: await headers() })
   const userId = session!.user.id
 
-  const listings = await db
+  const params = await searchParams
+  const statusFilter = parseStatus(params.status)
+  const sort = parseSort(params.sort)
+
+  // Read this Vendor's Experiences with every field the completeness scorer
+  // and the A3 table need (extends the page's own read; no write path touched).
+  const rows = await db
     .select({
       id: experiences.id,
-      slug: experiences.slug,
       title: experiences.title,
+      shortDescription: experiences.shortDescription,
+      longDescription: experiences.longDescription,
       status: experiences.status,
       activitySlug: experiences.activitySlug,
       regionSlug: experiences.regionSlug,
       pricePerPerson_1_2: experiences.pricePerPerson_1_2,
+      pricePerPerson_3_5: experiences.pricePerPerson_3_5,
+      pricePerPerson_6_plus: experiences.pricePerPerson_6_plus,
       createdAt: experiences.createdAt,
     })
     .from(experiences)
     .where(eq(experiences.vendorUserId, userId))
-    .orderBy(experiences.createdAt)
+
+  // Count media assets per Experience in one grouped query, then join in
+  // memory — a listing with ≥1 photo counts the `imageCount` field as filled.
+  const experienceIds = rows.map((r) => r.id)
+  const imageCounts = new Map<string, number>()
+  if (experienceIds.length > 0) {
+    const counts = await db
+      .select({
+        entityId: mediaAssets.entityId,
+        n: count(),
+      })
+      .from(mediaAssets)
+      .where(
+        and(
+          eq(mediaAssets.entityType, 'experience'),
+          inArray(mediaAssets.entityId, experienceIds),
+        ),
+      )
+      .groupBy(mediaAssets.entityId)
+    for (const c of counts) {
+      imageCounts.set(c.entityId, Number(c.n))
+    }
+  }
+
+  // Decorate each row with its real completeness score.
+  const decorated = rows.map((row) => ({
+    ...row,
+    completeness: computeListingCompleteness({
+      title: row.title,
+      shortDescription: row.shortDescription,
+      longDescription: row.longDescription,
+      pricePerPerson_1_2: row.pricePerPerson_1_2,
+      pricePerPerson_3_5: row.pricePerPerson_3_5,
+      pricePerPerson_6_plus: row.pricePerPerson_6_plus,
+      activitySlug: row.activitySlug,
+      regionSlug: row.regionSlug,
+      imageCount: imageCounts.get(row.id) ?? 0,
+    }),
+  }))
+
+  // Filter by status (server-side from searchParams).
+  const filtered =
+    statusFilter === 'all'
+      ? decorated
+      : decorated.filter((r) => r.status === statusFilter)
+
+  // Sort (server-side from searchParams). Spread first to avoid mutating.
+  const listings = [...filtered].sort((a, b) => {
+    switch (sort) {
+      case 'created_asc':
+        return a.createdAt.getTime() - b.createdAt.getTime()
+      case 'title':
+        return a.title.localeCompare(b.title)
+      case 'completeness':
+        return b.completeness.percent - a.completeness.percent
+      case 'status':
+        return (
+          (STATUS_SORT_RANK[a.status] ?? 99) - (STATUS_SORT_RANK[b.status] ?? 99)
+        )
+      case 'created_desc':
+      default:
+        return b.createdAt.getTime() - a.createdAt.getTime()
+    }
+  })
+
+  const totalCount = decorated.length
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Listings</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {listings.length} experience{listings.length === 1 ? '' : 's'}
+            {totalCount} experience{totalCount === 1 ? '' : 's'}
           </p>
         </div>
-        <Link
-          href="/vendor/listings/new"
-          className={buttonVariants()}
-        >
+        <Link href="/vendor/listings/new" className={buttonVariants()}>
           Create listing
         </Link>
       </div>
 
-      {listings.length === 0 ? (
+      {totalCount === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <p className="text-lg font-medium">No listings yet</p>
@@ -69,35 +208,106 @@ export default async function VendorListingsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {listings.map((listing) => (
-            <Link
-              key={listing.id}
-              href={`/vendor/listings/${listing.id}/edit`}
-              className="block"
-            >
-              <Card className="transition hover:border-foreground/20 hover:shadow-sm">
-                <CardContent className="flex items-center justify-between py-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="truncate font-medium">{listing.title}</h3>
-                      <Badge
-                        variant={STATUS_VARIANTS[listing.status] ?? 'outline'}
-                        className="shrink-0 capitalize text-xs"
-                      >
-                        {listing.status.replace('_', ' ')}
-                      </Badge>
-                    </div>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {listing.activitySlug} · {listing.regionSlug} · From ₹
-                      {Math.floor(Number(listing.pricePerPerson_1_2)).toLocaleString('en-IN')}
-                    </p>
-                  </div>
-                  <span className="ml-4 text-sm text-muted-foreground">→</span>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+        <div className="space-y-4">
+          <ListingsControls status={statusFilter} sort={sort} />
+
+          <Card>
+            <CardContent className="p-0">
+              {listings.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <p className="text-lg font-medium">No matching listings</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    No listings match the current filter. Clear the filter to see
+                    all {totalCount} experience{totalCount === 1 ? '' : 's'}.
+                  </p>
+                  <Link
+                    href="/vendor/listings"
+                    className={buttonVariants({
+                      variant: 'outline',
+                      className: 'mt-4',
+                    })}
+                  >
+                    Clear filter
+                  </Link>
+                </div>
+              ) : (
+                <Table>
+                  <caption className="sr-only">
+                    Your experience listings with status, activity, region,
+                    starting price, and completeness.
+                  </caption>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead scope="col">Experience</TableHead>
+                      <TableHead scope="col">Status</TableHead>
+                      <TableHead scope="col">Activity / Region</TableHead>
+                      <TableHead scope="col" className="text-right">
+                        From
+                      </TableHead>
+                      <TableHead scope="col">Completeness</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {listings.map((listing) => {
+                      const meta =
+                        STATUS_META[listing.status] ?? STATUS_META.draft
+                      const StatusIcon = meta.Icon
+                      return (
+                        <TableRow
+                          key={listing.id}
+                          data-testid="listing-row"
+                          data-listing-id={listing.id}
+                          data-listing-status={listing.status}
+                          className="hover:bg-muted/50"
+                        >
+                          <TableCell className="font-medium">
+                            <Link
+                              href={`/vendor/listings/${listing.id}/edit`}
+                              className="hover:underline"
+                            >
+                              {listing.title}
+                            </Link>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={meta.variant}
+                              className="text-xs"
+                              data-testid="listing-status"
+                            >
+                              <StatusIcon aria-hidden="true" />
+                              {meta.label}
+                            </Badge>
+                          </TableCell>
+                          <TableCell
+                            className="text-sm text-muted-foreground"
+                            data-testid="listing-taxonomy"
+                          >
+                            {listing.activitySlug} · {listing.regionSlug}
+                          </TableCell>
+                          <TableCell
+                            className="text-right tabular-nums"
+                            data-testid="listing-price"
+                          >
+                            ₹
+                            {Math.floor(
+                              Number(listing.pricePerPerson_1_2),
+                            ).toLocaleString('en-IN')}
+                          </TableCell>
+                          <TableCell>
+                            <CompletenessRing
+                              percent={listing.completeness.percent}
+                              filled={listing.completeness.filled}
+                              total={listing.completeness.total}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

@@ -186,7 +186,9 @@ test.describe('Vendor onboarding flow (no profile yet)', () => {
 // 2. Listings page — shows vendor's seeded experiences
 // ---------------------------------------------------------------------------
 test.describe('Vendor listings', () => {
-  test('renders listing cards for seeded experiences', async ({ page }) => {
+  test('renders the A3 listings table with status, price, and completeness', async ({
+    page,
+  }) => {
     const response = await page.goto('/vendor/listings')
     expect(response?.status()).toBe(200)
 
@@ -198,24 +200,71 @@ test.describe('Vendor listings', () => {
     // Count subtitle — the business-tier vendor has 4 seeded experiences
     await expect(page.getByText(/\d+ experience/)).toBeVisible()
 
-    // "Create listing" link is visible
+    // "Create listing" link is visible (preserved CTA → …/new)
     await expect(page.locator('a[href="/vendor/listings/new"]')).toBeVisible()
 
-    // At least one listing card is visible with a title and status badge
-    const listingCards = page.locator('a[href*="/vendor/listings/"]').filter({
-      has: page.locator('h3'),
-    })
-    const cardCount = await listingCards.count()
-    expect(cardCount).toBeGreaterThanOrEqual(1)
+    // ── #75 variant A: a dense A3 table, one row per listing, addressed by a
+    //    stable data-testid (the title is now a table-cell link, not an
+    //    <a><h3>). At least one row for the seeded experiences.
+    const rows = page.getByTestId('listing-row')
+    const rowCount = await rows.count()
+    expect(rowCount).toBeGreaterThanOrEqual(1)
 
-    // Verify the first listing shows activity/region/price info
-    const firstCard = listingCards.first()
-    await expect(firstCard).toBeVisible()
+    const firstRow = rows.first()
+    await expect(firstRow).toBeVisible()
+
+    // Each row links to its edit page (preserved per-listing link intent).
+    const editLink = firstRow.locator('a[href*="/vendor/listings/"]').first()
+    await expect(editLink).toBeVisible()
+    await expect(editLink).toHaveAttribute('href', /\/vendor\/listings\/[^/]+\/edit/)
+
+    // Each row carries a status Badge (preserved status signal).
+    await expect(firstRow.getByTestId('listing-status')).toBeVisible()
+
+    // Each row shows activity/region and a price (preserved info).
+    await expect(firstRow.getByTestId('listing-taxonomy')).toBeVisible()
+    await expect(firstRow.getByTestId('listing-price')).toContainText('₹')
+
+    // ── New (#75): a per-listing completeness indicator (the ring) with an
+    //    accessible percentage value.
+    const completeness = firstRow.getByTestId('listing-completeness')
+    await expect(completeness).toBeVisible()
+    await expect(completeness).toContainText('%')
+
+    // ── New (#75): the filter + sort controls (a small client island).
+    await expect(page.getByTestId('listing-status-filter')).toBeVisible()
+    await expect(page.getByTestId('listing-sort')).toBeVisible()
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/vendor-listings.png',
       fullPage: true,
     })
+  })
+
+  test('filters listings by status via the status filter', async ({ page }) => {
+    // The business vendor has both published and draft seeded experiences.
+    await page.goto('/vendor/listings')
+    await expect(page.locator('h1')).toContainText('Listings')
+
+    const allCount = await page.getByTestId('listing-row').count()
+    expect(allCount).toBeGreaterThanOrEqual(1)
+
+    // Narrow to published only via the URL-driven filter (SSR-safe; no
+    // dependency on a hydrated control to drive the query).
+    await page.goto('/vendor/listings?status=published')
+    await expect(page.locator('h1')).toContainText('Listings')
+
+    const publishedRows = page.getByTestId('listing-row')
+    const publishedCount = await publishedRows.count()
+    expect(publishedCount).toBeGreaterThanOrEqual(1)
+    // Every visible row in the published view shows a "published" status.
+    for (let i = 0; i < publishedCount; i++) {
+      await expect(
+        publishedRows.nth(i).getByTestId('listing-status'),
+      ).toContainText(/published/i)
+    }
+    // Filtering is a strict subset of the unfiltered list.
+    expect(publishedCount).toBeLessThanOrEqual(allCount)
   })
 })
 
@@ -286,11 +335,12 @@ test.describe('Create listing', () => {
     expect(created!.pricePerPerson_1_2).toBe(2500)
     expect(created!.vendorUserId).toBe(SEED_BUSINESS_VENDOR_ID)
 
-    // The list card carries the draft status badge.
-    const card = page
-      .locator('a[href*="/vendor/listings/"]')
+    // The new listing's row carries the draft status badge (#75 A3 table:
+    // the row is addressed by its stable testid and filtered by the title).
+    const row = page
+      .getByTestId('listing-row')
       .filter({ has: page.getByText(title) })
-    await expect(card.getByText('draft')).toBeVisible()
+    await expect(row.getByTestId('listing-status')).toContainText(/draft/i)
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/vendor-create-listing.png',
@@ -870,10 +920,13 @@ test.describe('Availability management', () => {
     await page.goto('/vendor/listings')
     await expect(page.locator('h1')).toContainText('Listings')
 
-    // Click the first listing to go to edit page
-    const listingLink = page.locator('a[href*="/vendor/listings/"]').filter({
-      has: page.locator('h3'),
-    }).first()
+    // Click the first listing's edit link to go to its edit page (#75 A3
+    // table: the title is a row-cell link addressed via the row testid).
+    const listingLink = page
+      .getByTestId('listing-row')
+      .first()
+      .locator('a[href*="/vendor/listings/"]')
+      .first()
     await listingLink.click()
     await page.waitForURL(/\/vendor\/listings\/([^/]+)\/edit/)
 

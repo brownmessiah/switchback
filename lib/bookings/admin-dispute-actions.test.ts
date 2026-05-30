@@ -365,6 +365,39 @@ describe('admin dispute resolution (ADR-0003)', () => {
       }
     })
 
+    // ── Guard: non-notes validation failures surface the raw message ──
+
+    it('surfaces a non-notes validation error verbatim (invalid bookingId)', async () => {
+      const result = await executeResolveAsCompleted(db, {
+        adminUserId: 'u_admin',
+        bookingId: 'not-a-uuid',
+        notes: 'Valid notes here.',
+      })
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        // Hits the `errorMsg.includes('notes')` false arm and the generic
+        // `return { ok: false, error: errorMsg }` path — distinct from the
+        // notes-required guard above.
+        expect(result.error).toMatch(/UUID/i)
+        expect(result.error).not.toMatch(/Admin notes are required/i)
+      }
+    })
+
+    it('surfaces the negative partial-refund validation error', async () => {
+      const result = await executeResolveAsCompleted(db, {
+        adminUserId: 'u_admin',
+        bookingId: crypto.randomUUID(),
+        notes: 'Valid notes here.',
+        partialRefundRupees: -100,
+      })
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toMatch(/non-negative/i)
+      }
+    })
+
     // ── Guard: only disputed bookings ────────────────────────────────
 
     it('rejects if booking is not in disputed state (confirmed)', async () => {
@@ -566,6 +599,20 @@ describe('admin dispute resolution (ADR-0003)', () => {
       expect(result.ok).toBe(false)
       if (!result.ok) {
         expect(result.error).toMatch(/notes.*required/i)
+      }
+    })
+
+    it('surfaces a non-notes validation error verbatim (invalid bookingId)', async () => {
+      const result = await executeResolveAsCancelledPostExperience(db, {
+        adminUserId: 'u_admin',
+        bookingId: 'not-a-uuid',
+        notes: 'Valid notes here.',
+      })
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toMatch(/UUID/i)
+        expect(result.error).not.toMatch(/Admin notes are required/i)
       }
     })
 

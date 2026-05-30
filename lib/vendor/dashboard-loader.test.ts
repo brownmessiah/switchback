@@ -10,7 +10,14 @@ import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 
-import { loadVendorDashboard, slaColor } from './dashboard-loader'
+import {
+  fillDays,
+  formatDate,
+  loadVendorDashboard,
+  mapUpcomingBooking,
+  shapeDashboardStats,
+  slaColor,
+} from './dashboard-loader'
 
 describe('loadVendorDashboard', () => {
   let db: TestDB
@@ -335,6 +342,105 @@ describe('loadVendorDashboard', () => {
     expect(result.slaScore).toBe(100)
     expect(result.listingsCount).toBe(0)
     expect(result.totalBookings).toBe(0)
+  })
+})
+
+describe('shapeDashboardStats', () => {
+  it('applies safe defaults when every aggregate row is missing', () => {
+    // A brand-new vendor whose queries return no rows: the shaper must not
+    // produce undefined/NaN — it falls back to phone tier, 100 SLA, zeros.
+    const stats = shapeDashboardStats({})
+
+    expect(stats.businessName).toBeNull()
+    expect(stats.kycTier).toBe('phone')
+    expect(stats.listingsCount).toBe(0)
+    expect(stats.totalBookings).toBe(0)
+    expect(stats.totalRevenue).toBe(0)
+    expect(stats.todayBookings).toBe(0)
+    expect(stats.monthRevenue).toBe(0)
+    expect(stats.slaScore).toBe(100)
+  })
+
+  it('coerces null aggregate fields to 0 and floors revenue', () => {
+    const stats = shapeDashboardStats({
+      vendor: { businessName: 'Acme', kycTier: 'business', responseTimeSlaScore: '88.50' },
+      expCount: { count: 3 },
+      allTimeStats: { total: 4, revenue: '12345.99' },
+      todayStats: { count: null },
+      monthRevenueResult: { revenue: null },
+    })
+
+    expect(stats.businessName).toBe('Acme')
+    expect(stats.kycTier).toBe('business')
+    expect(stats.listingsCount).toBe(3)
+    expect(stats.totalBookings).toBe(4)
+    expect(stats.totalRevenue).toBe(12345) // floored
+    expect(stats.todayBookings).toBe(0) // null -> 0
+    expect(stats.monthRevenue).toBe(0) // null -> 0
+    expect(stats.slaScore).toBe(88.5)
+  })
+})
+
+describe('mapUpcomingBooking', () => {
+  it('floors gross to integer rupees', () => {
+    const row = mapUpcomingBooking({
+      bookingId: 'b1',
+      participantCount: 2,
+      state: 'confirmed',
+      gross: '9999.99',
+      slotStart: new Date('2026-04-01T00:00:00Z'),
+      expTitle: 'Trek',
+    })
+    expect(row.gross).toBe(9999)
+    expect(row.bookingId).toBe('b1')
+  })
+
+  it('defaults a null gross to 0 (defensive fallback)', () => {
+    const row = mapUpcomingBooking({
+      bookingId: 'b2',
+      participantCount: 1,
+      state: 'confirmed',
+      gross: null,
+      slotStart: null,
+      expTitle: 'Climb',
+    })
+    expect(row.gross).toBe(0)
+    expect(row.slotStart).toBeNull()
+  })
+})
+
+describe('fillDays', () => {
+  it('materialises every day in the range, inserting 0 for missing days', () => {
+    const from = new Date('2026-01-01T00:00:00Z')
+    const to = new Date('2026-01-03T00:00:00Z')
+    const result = fillDays(from, to, [{ date: '2026-01-02', count: 5 }], 'count')
+
+    expect(result).toHaveLength(3)
+    expect(result.map((d) => d.date)).toEqual(['2026-01-01', '2026-01-02', '2026-01-03'])
+    expect(result.find((d) => d.date === '2026-01-02')?.value).toBe(5)
+    // Days with no row default to 0.
+    expect(result.find((d) => d.date === '2026-01-01')?.value).toBe(0)
+  })
+
+  it('coerces a null/undefined aggregate value to 0 (defensive sum() path)', () => {
+    const day = new Date('2026-02-10T00:00:00Z')
+    // A SUM() over an empty group can surface as null from the driver;
+    // the `?? 0` fallback must not produce NaN.
+    const result = fillDays(day, day, [{ date: '2026-02-10', total: null }], 'total')
+
+    expect(result).toHaveLength(1)
+    expect(result[0]!.value).toBe(0)
+  })
+})
+
+describe('formatDate', () => {
+  it('returns an em dash for a null date', () => {
+    expect(formatDate(null)).toBe('—')
+  })
+
+  it('formats a real date in en-IN day/month form', () => {
+    const formatted = formatDate(new Date('2026-03-15T00:00:00Z'))
+    expect(formatted).toMatch(/Mar/)
   })
 })
 

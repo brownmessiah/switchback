@@ -255,8 +255,59 @@ export async function loadVendorDashboard(
     })
   }
 
-  const slaScore = Number(vendor?.responseTimeSlaScore ?? 100)
+  return {
+    ...shapeDashboardStats({
+      vendor,
+      expCount,
+      allTimeStats,
+      todayStats,
+      monthRevenueResult,
+    }),
+    pendingActionsCount: pendingBookings.length,
+    bookingsTrend,
+    revenueTrend,
+    actionItems,
+    upcomingBookings: (upcomingBookings as RawUpcomingBooking[]).map(
+      mapUpcomingBooking,
+    ),
+  }
+}
 
+/** Raw aggregate rows feeding the stat cards. Any may be undefined when a
+ *  query returns no row, and numeric aggregates may be null — the shaper
+ *  applies the safe fallbacks in one place. */
+interface RawDashboardStats {
+  vendor?: {
+    businessName?: string | null
+    kycTier?: string | null
+    responseTimeSlaScore?: string | number | null
+  }
+  expCount?: { count?: number | null }
+  allTimeStats?: { total?: number | null; revenue?: string | number | null }
+  todayStats?: { count?: number | null }
+  monthRevenueResult?: { revenue?: string | number | null }
+}
+
+type DashboardStatCards = Pick<
+  VendorDashboardData,
+  | 'businessName'
+  | 'kycTier'
+  | 'listingsCount'
+  | 'totalBookings'
+  | 'totalRevenue'
+  | 'todayBookings'
+  | 'monthRevenue'
+  | 'slaScore'
+>
+
+/**
+ * Apply the defensive fallbacks for the headline stat cards. Exported so the
+ * "missing/null aggregate row" paths (e.g. a brand-new vendor with no rows,
+ * or a driver surfacing null from SUM()) are unit-testable without forcing
+ * the DB to violate its own NOT NULL constraints.
+ */
+export function shapeDashboardStats(raw: RawDashboardStats): DashboardStatCards {
+  const { vendor, expCount, allTimeStats, todayStats, monthRevenueResult } = raw
   return {
     businessName: vendor?.businessName ?? null,
     kycTier: vendor?.kycTier ?? 'phone',
@@ -265,33 +316,45 @@ export async function loadVendorDashboard(
     totalRevenue: Math.floor(Number(allTimeStats?.revenue ?? 0)),
     todayBookings: todayStats?.count ?? 0,
     monthRevenue: Math.floor(Number(monthRevenueResult?.revenue ?? 0)),
-    slaScore,
-    pendingActionsCount: pendingBookings.length,
-    bookingsTrend,
-    revenueTrend,
-    actionItems,
-    upcomingBookings: (upcomingBookings as Array<{
-      bookingId: string
-      participantCount: number
-      state: string
-      gross: string | null
-      slotStart: Date | null
-      expTitle: string
-    }>).map((b) => ({
-      bookingId: b.bookingId,
-      participantCount: b.participantCount,
-      state: b.state,
-      gross: Math.floor(Number(b.gross ?? 0)),
-      slotStart: b.slotStart,
-      expTitle: b.expTitle,
-    })),
+    slaScore: Number(vendor?.responseTimeSlaScore ?? 100),
+  }
+}
+
+interface RawUpcomingBooking {
+  bookingId: string
+  participantCount: number
+  state: string
+  gross: string | null
+  slotStart: Date | null
+  expTitle: string
+}
+
+/**
+ * Map one raw upcoming-booking row to the API shape, flooring the gross to
+ * integer rupees and defaulting a missing gross to 0. Exported for direct
+ * testing of the `gross ?? 0` fallback.
+ */
+export function mapUpcomingBooking(
+  b: RawUpcomingBooking,
+): VendorDashboardData['upcomingBookings'][number] {
+  return {
+    bookingId: b.bookingId,
+    participantCount: b.participantCount,
+    state: b.state,
+    gross: Math.floor(Number(b.gross ?? 0)),
+    slotStart: b.slotStart,
+    expTitle: b.expTitle,
   }
 }
 
 /**
  * Fill a date range with data points, inserting 0 for missing days.
+ *
+ * Exported for direct unit testing of the day-fill + null-value defensive
+ * paths: trend rows from the DB can carry a null aggregate value, and
+ * gap days must materialise as 0 rather than disappearing.
  */
-function fillDays(
+export function fillDays(
   from: Date,
   to: Date,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -317,7 +380,11 @@ function fillDays(
   return result
 }
 
-function formatDate(d: Date | null): string {
+/**
+ * Format a slot date for action-item subtitles. Returns an em dash for a
+ * missing date. Exported for direct unit testing of the null path.
+ */
+export function formatDate(d: Date | null): string {
   if (!d) return '—'
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 }

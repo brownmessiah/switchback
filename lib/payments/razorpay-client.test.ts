@@ -656,3 +656,88 @@ describe('cached-client fallback in createOrder/capturePayment/createRefund', ()
     expect(rfnd.refundId).toBe('rfnd_TEST')
   })
 })
+
+/**
+ * Error-normalization fallback arms.
+ *
+ * Razorpay errors don't always carry a structured `error.description` or
+ * `error.code`. These cases drive the `description ?? upstreamCode ?? '…'`
+ * fallback chains and the non-Error throw path so the human-readable
+ * message is always populated and the retryable/code classification stays
+ * correct regardless of the upstream payload shape.
+ */
+describe('normalizeError fallbacks (sparse upstream payloads)', () => {
+  function captureThrowing(thrown: unknown): RazorpaySdkLike {
+    return {
+      orders: { create: vi.fn() },
+      payments: {
+        capture: vi.fn(async () => {
+          throw thrown
+        }),
+      },
+      refunds: { all: vi.fn(), fetch: vi.fn() },
+      paymentsForRefund: { refund: vi.fn() },
+    } as unknown as RazorpaySdkLike
+  }
+
+  async function captureExpectingError(thrown: unknown): Promise<RazorpayClientError> {
+    const client = captureThrowing(thrown)
+    try {
+      await capturePayment({ paymentId: 'pay_X', amountRupees: 100 }, { client })
+      throw new Error('expected capturePayment to throw')
+    } catch (err) {
+      expect(err).toBeInstanceOf(RazorpayClientError)
+      return err as RazorpayClientError
+    }
+  }
+
+  it('classifies a 5xx with no description/code as UPSTREAM_5XX retryable with "unknown"', async () => {
+    const err = await captureExpectingError({ statusCode: 500 })
+    expect(err.code).toBe('UPSTREAM_5XX')
+    expect(err.retryable).toBe(true)
+    expect(err.message).toContain('unknown')
+  })
+
+  it('classifies a 429 with no description as RAZORPAY_RATE_LIMITED retryable', async () => {
+    const err = await captureExpectingError({ statusCode: 429 })
+    expect(err.code).toBe('RAZORPAY_RATE_LIMITED')
+    expect(err.retryable).toBe(true)
+    expect(err.message).toMatch(/slow down/)
+  })
+
+  it('classifies a 404 with no description as RAZORPAY_NOT_FOUND non-retryable', async () => {
+    const err = await captureExpectingError({ statusCode: 404 })
+    expect(err.code).toBe('RAZORPAY_NOT_FOUND')
+    expect(err.retryable).toBe(false)
+    expect(err.message).toMatch(/unknown entity/)
+  })
+
+  it('classifies a generic 4xx with no description as RAZORPAY_BAD_REQUEST non-retryable', async () => {
+    const err = await captureExpectingError({ statusCode: 422 })
+    expect(err.code).toBe('RAZORPAY_BAD_REQUEST')
+    expect(err.retryable).toBe(false)
+    expect(err.message).toMatch(/bad request/)
+  })
+
+  it('falls back to upstreamCode when description is absent but code is present', async () => {
+    const err = await captureExpectingError({
+      statusCode: 404,
+      error: { code: 'PAYMENT_NOT_FOUND' },
+    })
+    expect(err.code).toBe('RAZORPAY_NOT_FOUND')
+    expect(err.message).toContain('PAYMENT_NOT_FOUND')
+  })
+
+  it('wraps a non-Error primitive throw via String(err) as RAZORPAY_UNKNOWN', async () => {
+    const err = await captureExpectingError('catastrophic boom')
+    expect(err.code).toBe('RAZORPAY_UNKNOWN')
+    expect(err.retryable).toBe(false)
+    expect(err.message).toBe('catastrophic boom')
+  })
+
+  it('wraps an error with no statusCode as RAZORPAY_UNKNOWN using the Error message', async () => {
+    const err = await captureExpectingError(new Error('socket hang up'))
+    expect(err.code).toBe('RAZORPAY_UNKNOWN')
+    expect(err.message).toBe('socket hang up')
+  })
+})

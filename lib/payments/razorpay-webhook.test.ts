@@ -504,6 +504,47 @@ describe('processRazorpayWebhook (ADR-0001)', () => {
       // unrecoverable capture failure. In M2 we only record the failure.
       expect(bk?.state).toBe('confirmed')
     })
+
+    it('records a sparse failure payload (no error_* fields, no order_id) with null fallbacks', async () => {
+      // Razorpay does not always populate the structured error fields. The
+      // handler must still record the failure, nulling the absent fields
+      // rather than throwing — drives the `?? null` fallback arms.
+      const body = JSON.stringify({
+        entity: 'event',
+        account_id: 'acc_test',
+        event: 'payment.failed',
+        contains: ['payment'],
+        payload: {
+          payment: {
+            entity: {
+              id: 'pay_fail_sparse',
+              entity: 'payment',
+              amount: 500_000,
+              currency: 'INR',
+              status: 'failed',
+              notes: { booking_id: bookingId },
+              created_at: 1_700_000_000,
+            },
+          },
+        },
+        created_at: 1_700_000_000,
+        id: 'evt_fail_sparse',
+      })
+
+      const result = await call({ body })
+      expect(result.status).toBe(200)
+
+      const auditRows = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.action, 'webhook.payment.failed'))
+      expect(auditRows).toHaveLength(1)
+      const payload = auditRows[0]?.payload as Record<string, unknown>
+      expect(payload.errorCode).toBeNull()
+      expect(payload.errorDescription).toBeNull()
+      expect(payload.errorSource).toBeNull()
+      expect(payload.errorReason).toBeNull()
+    })
   })
 
   describe('refund.processed', () => {
@@ -540,6 +581,45 @@ describe('processRazorpayWebhook (ADR-0001)', () => {
         .where(eq(auditLogs.action, 'webhook.refund.processed'))
       expect(auditRows).toHaveLength(1)
       expect(auditRows[0]?.entityId).toBe('rfnd_1')
+    })
+
+    it('records a refund with no notes (booking_id unresolvable) as null bookingId', async () => {
+      // A refund.processed event whose entity carries no notes object —
+      // extractBookingId returns null and the handler records the audit
+      // row anyway. Drives the `if (!notes) return null` arm + the
+      // `?? null` fallbacks for bookingId and eventId.
+      const body = JSON.stringify({
+        entity: 'event',
+        account_id: 'acc_test',
+        event: 'refund.processed',
+        contains: ['refund'],
+        payload: {
+          refund: {
+            entity: {
+              id: 'rfnd_no_notes',
+              entity: 'refund',
+              amount: 100_000,
+              currency: 'INR',
+              payment_id: 'pay_Y',
+              status: 'processed',
+              created_at: 1_700_000_000,
+            },
+          },
+        },
+        created_at: 1_700_000_000,
+        id: 'evt_refund_no_notes',
+      })
+
+      const result = await call({ body })
+      expect(result.status).toBe(200)
+
+      const auditRows = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.action, 'webhook.refund.processed'))
+      expect(auditRows).toHaveLength(1)
+      const payload = auditRows[0]?.payload as Record<string, unknown>
+      expect(payload.bookingId).toBeNull()
     })
   })
 

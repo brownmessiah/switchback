@@ -79,7 +79,7 @@ export default async function AdminPayoutsPage() {
                   const tds = Math.floor(Number(row.tdsAmount ?? 0))
                   const net = gross - commission - tds
                   return (
-                    <TableRow key={row.bookingId}>
+                    <TableRow key={row.bookingId} data-booking-id={row.bookingId}>
                       <TableCell className="font-medium">{row.vendorName}</TableCell>
                       <TableCell className="text-sm">{row.expTitle}</TableCell>
                       <TableCell className="text-sm">

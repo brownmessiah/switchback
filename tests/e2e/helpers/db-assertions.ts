@@ -1308,6 +1308,238 @@ export async function setExperienceStatus(
   })
 }
 
+// ---------------------------------------------------------------------------
+// Admin refund-queue + payout-queue assertions (Issue #24)
+//
+// These drive the admin refund (executeApproveRefund / executeRejectRefund)
+// and payout (executeApprovePayout / Hold / Reject) Server Actions FROM THE UI
+// and assert the persisted refund_requests / bookings.payout_state /
+// vendor_profiles.manual_payouts_remaining state plus the append-only
+// audit_logs trail. The refund fixtures credit a DEDICATED customer's Refund
+// balance; the payout fixtures exercise the ADR-0016 first-3-manual gate on a
+// DEDICATED Identity-verified Vendor — both isolated from every other spec.
+// ---------------------------------------------------------------------------
+
+export interface PendingRefundFixtureRow {
+  refundRequestId: string
+  bookingId: string
+  amountRupees: number
+  customerUserId: string
+}
+
+/**
+ * Fetch a Customer's PENDING refund_requests (oldest first). The #24 fixtures
+ * seed two — one for the approve E2E, one for the reject E2E. Returning all of
+ * them lets the test deterministically pick distinct targets.
+ */
+export async function getPendingRefundRequestsForCustomer(
+  customerUserId: string,
+): Promise<PendingRefundFixtureRow[]> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        id: string
+        booking_id: string
+        amount: string
+        requested_by_user_id: string
+      }[]
+    >`
+      SELECT id, booking_id, amount, requested_by_user_id
+      FROM refund_requests
+      WHERE requested_by_user_id = ${customerUserId}
+        AND state = 'pending'
+      ORDER BY created_at ASC
+    `
+    return rows.map((r) => ({
+      refundRequestId: r.id,
+      bookingId: r.booking_id,
+      amountRupees: Math.floor(Number(r.amount)),
+      customerUserId: r.requested_by_user_id,
+    }))
+  })
+}
+
+export interface RefundRequestStateRow {
+  state: string
+  notes: string | null
+  amountRupees: number
+  resolvedAt: Date | null
+}
+
+/** Read a refund_request's state / notes / resolved_at by id, or null. */
+export async function getRefundRequestStateById(
+  refundRequestId: string,
+): Promise<RefundRequestStateRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { state: string; notes: string | null; amount: string; resolved_at: Date | null }[]
+    >`
+      SELECT state, notes, amount, resolved_at
+      FROM refund_requests
+      WHERE id = ${refundRequestId}
+      LIMIT 1
+    `
+    const row = rows[0]
+    if (!row) return null
+    return {
+      state: row.state,
+      notes: row.notes,
+      amountRupees: Math.floor(Number(row.amount)),
+      resolvedAt: row.resolved_at,
+    }
+  })
+}
+
+/** Count audit_logs rows for an admin refund action on a refund_request. */
+export async function countRefundAuditRows(
+  action: string,
+  refundRequestId: string,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT COUNT(*) AS n
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_type = 'refund_request'
+        AND entity_id = ${refundRequestId}
+    `
+    return Number(rows[0]?.n ?? 0)
+  })
+}
+
+/** Fetch the most-recent admin refund-action audit payload + actor, or null. */
+export async function getLatestRefundAudit(
+  action: string,
+  refundRequestId: string,
+): Promise<{ actorUserId: string | null; payload: Record<string, unknown> } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { actor_user_id: string | null; payload: Record<string, unknown> }[]
+    >`
+      SELECT actor_user_id, payload
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_type = 'refund_request'
+        AND entity_id = ${refundRequestId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return { actorUserId: rows[0].actor_user_id, payload: rows[0].payload }
+  })
+}
+
+export interface PendingPayoutBookingRow {
+  bookingId: string
+  payoutState: string
+  startAt: Date
+}
+
+/**
+ * Fetch a Vendor's completed Bookings that are in the admin payout queue
+ * (payout_state pending/held), ordered by slot start_at so the #24 E2E picks
+ * deterministic targets (slot[0] for approve, slot[1] for hold, etc.).
+ */
+export async function getPendingPayoutBookingsForVendor(
+  vendorUserId: string,
+): Promise<PendingPayoutBookingRow[]> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { id: string; payout_state: string; start_at: Date }[]
+    >`
+      SELECT b.id, b.payout_state, s.start_at
+      FROM bookings b
+      JOIN experiences e ON e.id = b.experience_id
+      JOIN availability_slots s ON s.id = b.slot_id
+      WHERE e.vendor_user_id = ${vendorUserId}
+        AND b.state = 'completed'
+        AND b.payout_state IN ('pending', 'held')
+      ORDER BY s.start_at ASC
+    `
+    return rows.map((r) => ({
+      bookingId: r.id,
+      payoutState: r.payout_state,
+      startAt: new Date(r.start_at),
+    }))
+  })
+}
+
+/** Read a Booking's current payout_state + rejection reason, or null. */
+export async function getBookingPayoutState(
+  bookingId: string,
+): Promise<{ payoutState: string; payoutRejectionReason: string | null } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { payout_state: string; payout_rejection_reason: string | null }[]
+    >`
+      SELECT payout_state, payout_rejection_reason
+      FROM bookings
+      WHERE id = ${bookingId}
+      LIMIT 1
+    `
+    const row = rows[0]
+    if (!row) return null
+    return {
+      payoutState: row.payout_state,
+      payoutRejectionReason: row.payout_rejection_reason,
+    }
+  })
+}
+
+/** Read a Vendor's current manual_payouts_remaining count (the first-3 gate). */
+export async function getVendorManualPayoutsRemaining(
+  vendorUserId: string,
+): Promise<number | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ manual_payouts_remaining: number }[]>`
+      SELECT manual_payouts_remaining
+      FROM vendor_profiles
+      WHERE user_id = ${vendorUserId}
+      LIMIT 1
+    `
+    return rows[0]?.manual_payouts_remaining ?? null
+  })
+}
+
+/** Count audit_logs rows for an admin payout action on a Booking. */
+export async function countPayoutAuditRows(
+  action: string,
+  bookingId: string,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT COUNT(*) AS n
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_type = 'booking'
+        AND entity_id = ${bookingId}
+    `
+    return Number(rows[0]?.n ?? 0)
+  })
+}
+
+/** Fetch the most-recent admin payout-action audit payload + actor, or null. */
+export async function getLatestPayoutAudit(
+  action: string,
+  bookingId: string,
+): Promise<{ actorUserId: string | null; payload: Record<string, unknown> } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { actor_user_id: string | null; payload: Record<string, unknown> }[]
+    >`
+      SELECT actor_user_id, payload
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_type = 'booking'
+        AND entity_id = ${bookingId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return { actorUserId: rows[0].actor_user_id, payload: rows[0].payload }
+  })
+}
+
 /**
  * Read the commission_rate_snapshot of the earliest existing Booking owned by
  * a Vendor (joined through experiences). Used to prove ADR-0008 snapshot

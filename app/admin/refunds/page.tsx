@@ -99,7 +99,7 @@ export default async function AdminRefundsPage({ searchParams }: AdminRefundsPag
                 {rows.map((row) => {
                   const amount = Math.floor(Number(row.amount))
                   return (
-                    <TableRow key={row.id}>
+                    <TableRow key={row.id} data-refund-request-id={row.id}>
                       <TableCell className="text-sm">{row.customerEmail}</TableCell>
                       <TableCell className="text-sm font-mono text-xs">
                         {row.bookingId.slice(0, 8)}...

@@ -17,12 +17,23 @@ import { test, expect } from '../../fixtures/devtools'
 import {
   countAdminVendorAuditRows,
   countExperienceAuditRows,
+  countPayoutAuditRows,
+  countRefundAuditRows,
   getAdminVendorState,
+  getBookingPayoutState,
   getEarliestBookingCommissionSnapshotForVendor,
   getExperienceIdBySlug,
   getExperienceStatus,
   getLatestAdminVendorAudit,
   getLatestExperienceAudit,
+  getLatestPayoutAudit,
+  getLatestRefundAudit,
+  getPendingPayoutBookingsForVendor,
+  getPendingRefundRequestsForCustomer,
+  getRefundBalanceCreditAuditForBooking,
+  getRefundRequestStateById,
+  getVendorManualPayoutsRemaining,
+  getWalletBalanceRupees,
   setVendorCommissionRate,
   setVendorSuspended,
 } from '../../helpers/db-assertions'
@@ -32,6 +43,11 @@ import { getIndexedExperience } from '../../helpers/meili-assertions'
 const SEED_ADMIN_ID = 'u_seed_admin'
 const SEED_PHONE_VENDOR_ID = 'u_seed_v_phone'
 const SEED_IDENTITY_VENDOR_ID = 'u_seed_v_identity'
+
+// #24 refund-queue + payout-queue dedicated fixtures — must match db/seed.ts.
+const SEED_REFUND_QUEUE_CUSTOMER_ID = 'u_seed_customer_refundq'
+const SEED_PAYOUT_QUEUE_VENDOR_ID = 'u_seed_v_payout'
+const REFUND_QUEUE_CUSTOMER_EMAIL = 'customer-refundq@seed.outvers.dev'
 
 // Dedicated Experience-moderation seed slugs — must match db/seed.ts.
 // Each is owned by the identity-tier Vendor and is isolated from every other
@@ -998,5 +1014,351 @@ test.describe('Admin vendor KYC + commission + suspend (#22)', () => {
     } finally {
       await setVendorSuspended(SEED_PHONE_VENDOR_ID, false)
     }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 15. Functional: admin refund queue (#24)
+//
+// Drives the two admin refund Server Actions FROM THE UI (approve / reject)
+// and asserts BOTH the persisted refund_requests.state AND the money movement
+// (approve → credit the Customer's Refund balance per ADR-0004/0005; reject →
+// NOT credited, reason recorded), plus the append-only audit_logs trail.
+//
+//   - APPROVE : a seeded pending refund_request → approve the full amount →
+//               state credited; a wallet.credit_refund_balance audit row for
+//               the Booking proves the Refund balance was credited (race-free
+//               proof — the live balance row can be moved by other specs);
+//               an admin.refund.approve audit row with the admin as actor.
+//   - REJECT  : a SECOND seeded pending refund_request → reject with a reason →
+//               state rejected; NO credit audit row for that Booking; the
+//               reason persisted on the row + in an admin.refund.reject audit.
+//
+// Both fixtures are DEDICATED pending refund_requests owned by
+// REFUND_QUEUE_CUSTOMER on DISTINCT Bookings (the one_active_refund_per_booking
+// partial unique forbids two active requests on one Booking), so crediting
+// THIS customer never disturbs #13–#15's u_seed_customer wallet determinism.
+// Serial so the approve/reject pair claim distinct seeded fixtures in order.
+// ---------------------------------------------------------------------------
+test.describe('Admin refund queue (#24)', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  test('approve: pending refund → credited to Customer Refund balance + audit row', async ({
+    page,
+  }) => {
+    const pending = await getPendingRefundRequestsForCustomer(
+      SEED_REFUND_QUEUE_CUSTOMER_ID,
+    )
+    expect(
+      pending.length,
+      'seed must provide a pending refund_request to approve',
+    ).toBeGreaterThanOrEqual(1)
+    const target = pending[0]
+
+    // Pre-credit balance for the dedicated customer (race-free: only #24 ever
+    // touches this customer's wallet, and this test runs before the credit).
+    const balanceBefore = await getWalletBalanceRupees(
+      SEED_REFUND_QUEUE_CUSTOMER_ID,
+      'refund_balance',
+    )
+
+    await page.goto('/admin/refunds?status=pending')
+    await expect(page.locator('h1')).toContainText('Refund requests')
+
+    const row = page.locator(`tr[data-refund-request-id="${target.refundRequestId}"]`)
+    await expect(row).toBeVisible()
+    await expect(row).toContainText(REFUND_QUEUE_CUSTOMER_EMAIL)
+
+    // Open the approve dialog and confirm the full requested amount.
+    await row.getByRole('button', { name: 'Approve', exact: true }).click()
+    const dialog = page.locator('[data-slot="dialog-content"]')
+    await expect(dialog.getByRole('heading', { name: 'Approve Refund' })).toBeVisible()
+    await dialog.getByRole('button', { name: 'Approve Refund' }).click()
+
+    // After the server action + revalidation the credited row drops OUT of the
+    // pending-filtered list.
+    await expect(row).toHaveCount(0, { timeout: 15_000 })
+
+    // ── Assert: persisted state is credited ──────────────────────────────
+    await expect
+      .poll(async () => (await getRefundRequestStateById(target.refundRequestId))?.state, {
+        timeout: 15_000,
+      })
+      .toBe('credited')
+
+    // ── Assert: the Refund balance was credited the full amount ──────────
+    // The immutable wallet.credit_refund_balance audit row is the race-free
+    // proof the credit landed in the Refund (cashable) bucket.
+    const creditAudit = await getRefundBalanceCreditAuditForBooking(target.bookingId)
+    expect(creditAudit, 'a refund-balance credit must have been written').not.toBeNull()
+    expect(creditAudit!.amountRupees).toBe(target.amountRupees)
+    expect(creditAudit!.userId).toBe(SEED_REFUND_QUEUE_CUSTOMER_ID)
+    expect(creditAudit!.refundRequestId).toBe(target.refundRequestId)
+
+    // The live balance row reflects the credit too (only #24 moves it).
+    const balanceAfter = await getWalletBalanceRupees(
+      SEED_REFUND_QUEUE_CUSTOMER_ID,
+      'refund_balance',
+    )
+    expect(balanceAfter).toBe(balanceBefore + target.amountRupees)
+
+    // ── Assert: exactly one approve audit row with actor + transition ────
+    expect(
+      await countRefundAuditRows('admin.refund.approve', target.refundRequestId),
+    ).toBe(1)
+    const audit = await getLatestRefundAudit('admin.refund.approve', target.refundRequestId)
+    expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+    expect(audit!.payload).toMatchObject({
+      previousState: 'pending',
+      newState: 'credited',
+      approvedAmountRupees: target.amountRupees,
+      customerUserId: SEED_REFUND_QUEUE_CUSTOMER_ID,
+    })
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/admin-refund-approved.png',
+      fullPage: true,
+    })
+  })
+
+  test('reject: pending refund → rejected (NOT credited), reason recorded + audit row', async ({
+    page,
+  }) => {
+    const pending = await getPendingRefundRequestsForCustomer(
+      SEED_REFUND_QUEUE_CUSTOMER_ID,
+    )
+    expect(
+      pending.length,
+      'seed must provide a second pending refund_request to reject',
+    ).toBeGreaterThanOrEqual(1)
+    const target = pending[0]
+
+    const balanceBefore = await getWalletBalanceRupees(
+      SEED_REFUND_QUEUE_CUSTOMER_ID,
+      'refund_balance',
+    )
+
+    const REJECT_REASON = `E2E: refund denied — outside policy, no exception ${Date.now()}`
+
+    await page.goto('/admin/refunds?status=pending')
+    const row = page.locator(`tr[data-refund-request-id="${target.refundRequestId}"]`)
+    await expect(row).toBeVisible()
+
+    await row.getByRole('button', { name: 'Reject', exact: true }).click()
+    const dialog = page.locator('[data-slot="dialog-content"]')
+    await expect(dialog.getByRole('heading', { name: 'Reject Refund' })).toBeVisible()
+    await dialog.locator('textarea').fill(REJECT_REASON)
+    await dialog.getByRole('button', { name: 'Reject Refund' }).click()
+
+    // Drops out of the pending-filtered list once rejected.
+    await expect(row).toHaveCount(0, { timeout: 15_000 })
+
+    // ── Assert: persisted state is rejected + reason recorded in notes ───
+    await expect
+      .poll(async () => (await getRefundRequestStateById(target.refundRequestId))?.state, {
+        timeout: 15_000,
+      })
+      .toBe('rejected')
+    const refund = await getRefundRequestStateById(target.refundRequestId)
+    expect(refund!.notes).toBe(REJECT_REASON)
+    expect(refund!.resolvedAt).not.toBeNull()
+
+    // ── Assert: NOT credited — no refund-balance credit for this Booking ─
+    expect(
+      await getRefundBalanceCreditAuditForBooking(target.bookingId),
+      'a rejected refund must NOT credit the Refund balance',
+    ).toBeNull()
+    const balanceAfter = await getWalletBalanceRupees(
+      SEED_REFUND_QUEUE_CUSTOMER_ID,
+      'refund_balance',
+    )
+    expect(balanceAfter).toBe(balanceBefore)
+
+    // ── Assert: exactly one reject audit row with actor + reason ─────────
+    expect(
+      await countRefundAuditRows('admin.refund.reject', target.refundRequestId),
+    ).toBe(1)
+    const audit = await getLatestRefundAudit('admin.refund.reject', target.refundRequestId)
+    expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+    expect(audit!.payload).toMatchObject({
+      previousState: 'pending',
+      newState: 'rejected',
+      reason: REJECT_REASON,
+    })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 16. Functional: admin payout queue + first-3 manual gate (#24, ADR-0016)
+//
+// Drives the three admin payout Server Actions FROM THE UI (approve / hold /
+// reject) on a DEDICATED Identity-verified Vendor and asserts the persisted
+// bookings.payout_state transitions, the ADR-0016 first-3-manual-approval gate
+// (vendor_profiles.manual_payouts_remaining 3→2→1→0, auto thereafter), and the
+// append-only audit_logs trail.
+//
+//   - FIRST-3 GATE : approve the vendor's first three pending Payouts in order
+//                    → payout_state approved each, manual_payouts_remaining
+//                    decrements 3→2→1→0. The 4th approval finds the gate OPEN
+//                    (remaining already 0) → no further decrement (auto path).
+//   - HOLD         : a pending Payout → held (Dispute pause); reason audited.
+//   - REJECT       : a pending Payout → rejected; reason persisted + audited.
+//
+// The vendor + its six pending-payout Bookings are DEDICATED seed fixtures, so
+// the one-way payout-state transitions + the gate decrement never disturb
+// #20's u_seed_v_business payout sums or #22's u_seed_v_identity mutations.
+// Serial so the gate decrement is asserted against a known approval order.
+// ---------------------------------------------------------------------------
+test.describe('Admin payout queue + first-3 manual gate (#24)', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  test('first-3 gate: approve 3 → manual_payouts_remaining 3→2→1→0; 4th is auto', async ({
+    page,
+  }) => {
+    const remainingBefore = await getVendorManualPayoutsRemaining(
+      SEED_PAYOUT_QUEUE_VENDOR_ID,
+    )
+    expect(remainingBefore, 'seed payout vendor must start at the full manual gate').toBe(3)
+
+    const pending = await getPendingPayoutBookingsForVendor(SEED_PAYOUT_QUEUE_VENDOR_ID)
+    expect(
+      pending.length,
+      'seed must provide ≥4 pending Payouts to exercise the first-3 gate + auto',
+    ).toBeGreaterThanOrEqual(4)
+
+    // Approve the first FOUR in slot order; assert the gate decrements only on
+    // the first three (3→2→1→0) and the 4th approval is auto (stays 0).
+    const expectedRemainingAfter = [2, 1, 0, 0]
+    for (let i = 0; i < 4; i++) {
+      const target = pending[i]
+      await page.goto('/admin/payouts')
+      await expect(page.locator('h1')).toContainText('Payout queue')
+
+      const row = page.locator(`tr[data-booking-id="${target.bookingId}"]`)
+      await expect(row).toBeVisible()
+      await row.getByRole('button', { name: 'Approve', exact: true }).click()
+
+      // After the action + revalidation the row's actions cell flips to the
+      // "Approved" badge (no more Approve button).
+      await expect(row.getByText('Approved', { exact: true })).toBeVisible({
+        timeout: 15_000,
+      })
+
+      // ── Assert: payout_state approved ──────────────────────────────────
+      await expect
+        .poll(async () => (await getBookingPayoutState(target.bookingId))?.payoutState, {
+          timeout: 15_000,
+        })
+        .toBe('approved')
+
+      // ── Assert: the gate decremented (or stayed 0 on the auto 4th) ──────
+      await expect
+        .poll(async () => getVendorManualPayoutsRemaining(SEED_PAYOUT_QUEUE_VENDOR_ID), {
+          timeout: 15_000,
+        })
+        .toBe(expectedRemainingAfter[i])
+
+      // ── Assert: approve audit row with actor + gate before/after ───────
+      const audit = await getLatestPayoutAudit('admin.payout.approve', target.bookingId)
+      expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+      expect(audit!.payload).toMatchObject({
+        previousPayoutState: 'pending',
+        newPayoutState: 'approved',
+        manualPayoutsRemainingBefore: i < 3 ? 3 - i : 0,
+        manualPayoutsRemainingAfter: expectedRemainingAfter[i],
+      })
+    }
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/admin-payout-approved.png',
+      fullPage: true,
+    })
+  })
+
+  test('hold: pending Payout → held (Dispute pause) + audit row', async ({ page }) => {
+    const pending = await getPendingPayoutBookingsForVendor(SEED_PAYOUT_QUEUE_VENDOR_ID)
+    const target = pending.find((p) => p.payoutState === 'pending')
+    expect(target, 'seed must leave a pending Payout to hold').toBeTruthy()
+
+    const HOLD_REASON = `E2E: payout held pending Dispute review ${Date.now()}`
+
+    await page.goto('/admin/payouts')
+    const row = page.locator(`tr[data-booking-id="${target!.bookingId}"]`)
+    await expect(row).toBeVisible()
+    await row.getByRole('button', { name: 'Hold', exact: true }).click()
+
+    const dialog = page.locator('[data-slot="dialog-content"]')
+    await expect(dialog.getByRole('heading', { name: 'Hold Payout' })).toBeVisible()
+    await dialog.locator('textarea').fill(HOLD_REASON)
+    await dialog.getByRole('button', { name: 'Hold Payout' }).click()
+
+    // After revalidation the held row shows the "Held" badge.
+    await expect(row.getByText('Held', { exact: true })).toBeVisible({ timeout: 15_000 })
+
+    // ── Assert: payout_state held ────────────────────────────────────────
+    await expect
+      .poll(async () => (await getBookingPayoutState(target!.bookingId))?.payoutState, {
+        timeout: 15_000,
+      })
+      .toBe('held')
+
+    // ── Assert: hold audit row with actor + reason ───────────────────────
+    expect(
+      await countPayoutAuditRows('admin.payout.hold', target!.bookingId),
+    ).toBe(1)
+    const audit = await getLatestPayoutAudit('admin.payout.hold', target!.bookingId)
+    expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+    expect(audit!.payload).toMatchObject({
+      previousPayoutState: 'pending',
+      newPayoutState: 'held',
+      reason: HOLD_REASON,
+    })
+  })
+
+  test('reject: pending Payout → rejected, reason recorded + audit row', async ({ page }) => {
+    const pending = await getPendingPayoutBookingsForVendor(SEED_PAYOUT_QUEUE_VENDOR_ID)
+    const target = pending.find((p) => p.payoutState === 'pending')
+    expect(target, 'seed must leave a pending Payout to reject').toBeTruthy()
+
+    const REJECT_REASON = `E2E: payout rejected — Vendor account flagged ${Date.now()}`
+
+    await page.goto('/admin/payouts')
+    const row = page.locator(`tr[data-booking-id="${target!.bookingId}"]`)
+    await expect(row).toBeVisible()
+    await row.getByRole('button', { name: 'Reject', exact: true }).click()
+
+    const dialog = page.locator('[data-slot="dialog-content"]')
+    await expect(dialog.getByText('Reject Payout')).toBeVisible()
+    await dialog.locator('textarea').fill(REJECT_REASON)
+    await dialog.getByRole('button', { name: 'Reject', exact: true }).click()
+
+    // After revalidation the rejected row shows the "Rejected" badge.
+    await expect(row.getByText('Rejected', { exact: true })).toBeVisible({ timeout: 15_000 })
+
+    // ── Assert: payout_state rejected + reason persisted ─────────────────
+    await expect
+      .poll(async () => (await getBookingPayoutState(target!.bookingId))?.payoutState, {
+        timeout: 15_000,
+      })
+      .toBe('rejected')
+    const after = await getBookingPayoutState(target!.bookingId)
+    expect(after!.payoutRejectionReason).toBe(REJECT_REASON)
+
+    // ── Assert: reject audit row with actor + reason ─────────────────────
+    expect(
+      await countPayoutAuditRows('admin.payout.reject', target!.bookingId),
+    ).toBe(1)
+    const audit = await getLatestPayoutAudit('admin.payout.reject', target!.bookingId)
+    expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+    expect(audit!.payload).toMatchObject({
+      previousPayoutState: 'pending',
+      newPayoutState: 'rejected',
+      reason: REJECT_REASON,
+    })
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/admin-payout-rejected.png',
+      fullPage: true,
+    })
   })
 })

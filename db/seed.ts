@@ -37,6 +37,7 @@ import {
   experiences,
   messages,
   payments,
+  refundRequests,
   reviews,
   users,
   vendorProfiles,
@@ -114,6 +115,35 @@ const BUSINESS_VENDOR_CUSTOMER = {
   userId: 'u_seed_customer_biz',
   email: 'customer-biz@seed.outvers.dev',
   name: 'Seed Customer (Business-Vendor Bookings)',
+} as const
+
+/**
+ * A DEDICATED Customer who owns the pending refund_request fixtures the admin
+ * refund-queue E2E (#24) approves / rejects. Kept DISTINCT from both
+ * `u_seed_customer` (#13–#15 wallet determinism) and BUSINESS_VENDOR_CUSTOMER
+ * (#19/#20) so crediting THIS customer's Refund balance on approve never
+ * disturbs any other spec's wallet assertions.
+ */
+const REFUND_QUEUE_CUSTOMER = {
+  userId: 'u_seed_customer_refundq',
+  email: 'customer-refundq@seed.outvers.dev',
+  name: 'Seed Customer (Admin Refund Queue)',
+} as const
+
+/**
+ * A DEDICATED Identity-verified Vendor who owns the pending Payout fixtures the
+ * admin payout-queue E2E (#24) approves / holds / rejects + exercises the
+ * ADR-0016 first-3-manual-approval gate against. Kept DISTINCT from the three
+ * demo Vendors so the gate's manual_payouts_remaining 3→2→1→0 decrement and
+ * the one-way payout-state transitions never disturb #20's vendor-side payout
+ * sums (which read u_seed_v_business) or #22's KYC/commission mutations
+ * (which read u_seed_v_identity / u_seed_v_phone).
+ */
+const PAYOUT_QUEUE_VENDOR = {
+  userId: 'u_seed_v_payout',
+  email: 'payout-queue@seed.outvers.dev',
+  businessName: 'Apex Payout Vendor (Identity Tier)',
+  slug: 'apex-payout-vendor',
 } as const
 
 const EXPERIENCES: SeededExperience[] = [
@@ -231,6 +261,16 @@ async function seed(): Promise<void> {
         email: BUSINESS_VENDOR_CUSTOMER.email,
         name: BUSINESS_VENDOR_CUSTOMER.name,
       },
+      {
+        id: REFUND_QUEUE_CUSTOMER.userId,
+        email: REFUND_QUEUE_CUSTOMER.email,
+        name: REFUND_QUEUE_CUSTOMER.name,
+      },
+      {
+        id: PAYOUT_QUEUE_VENDOR.userId,
+        email: PAYOUT_QUEUE_VENDOR.email,
+        name: PAYOUT_QUEUE_VENDOR.businessName,
+      },
       ...VENDORS.map((v) => ({ id: v.userId, email: v.email, name: v.businessName })),
       // Signed-up vendor with no profile yet (drives onboarding E2E #16).
       {
@@ -253,6 +293,7 @@ async function seed(): Promise<void> {
     .values([
       { userId: 'u_seed_customer' },
       { userId: BUSINESS_VENDOR_CUSTOMER.userId },
+      { userId: REFUND_QUEUE_CUSTOMER.userId },
     ])
     .onConflictDoNothing()
 
@@ -271,6 +312,25 @@ async function seed(): Promise<void> {
       })
       .onConflictDoNothing()
   }
+
+  // ----- #24 PAYOUT-QUEUE VENDOR — dedicated Identity-verified Vendor -----
+  // Identity-tier with manual_payouts_remaining = 3 (the schema default; set
+  // explicitly so the ADR-0016 first-3-manual gate starts from a known count
+  // regardless of any future default change). Payout destination configured so
+  // the payout-snapshot CHECK is satisfiable on its Bookings.
+  await db
+    .insert(vendorProfiles)
+    .values({
+      userId: PAYOUT_QUEUE_VENDOR.userId,
+      businessName: PAYOUT_QUEUE_VENDOR.businessName,
+      slug: PAYOUT_QUEUE_VENDOR.slug,
+      kycTier: 'identity',
+      pan: 'PQRST6789U',
+      manualPayoutsRemaining: 3,
+      payoutMethod: 'upi',
+      payoutDestination: { vpa: 'apex-payout@upi' },
+    })
+    .onConflictDoNothing()
 
   // ----- EXPERIENCES (status=published so the public pages find them) -----
   const insertedExperiences = await db
@@ -1044,6 +1104,261 @@ async function seed(): Promise<void> {
       .insert(availabilitySlots)
       .values({ experienceId: m.id, startAt: modStartAt, endAt: modEndAt, capacity: 8 })
       .onConflictDoNothing()
+  }
+
+  // ===================================================================
+  // #24 ADMIN REFUND QUEUE — pending refund_request fixtures
+  // ===================================================================
+  // The admin refund queue (executeApproveRefund / executeRejectRefund) acts
+  // on PENDING refund_requests routed from disputes (#14 outside-policy cancel
+  // → Dispute → out-of-policy refund request). The demo seed creates no
+  // refund_requests, so without these fixtures the refund-queue E2E (#24) has
+  // nothing to approve/reject.
+  //
+  // Seed TWO dedicated pending refund_requests on TWO dedicated completed
+  // Bookings (the `one_active_refund_per_booking` partial unique forbids two
+  // active requests on one Booking) owned by REFUND_QUEUE_CUSTOMER:
+  //   - APPROVE target → admin approves → credited to THIS customer's Refund
+  //                       balance (isolated from #13–#15's u_seed_customer).
+  //   - REJECT  target → admin rejects → NOT credited, reason recorded.
+  // Both live on a DEDICATED identity-Vendor Experience at distinct fixed-UTC
+  // (03:00) past slots, disjoint from every other spec's slot hours.
+  const REFUND_QUEUE_SLUG = 'refund-queue-fixture-rishikesh'
+  const [refundQueueExp] = await db
+    .insert(experiences)
+    .values({
+      vendorUserId: 'u_seed_v_identity',
+      slug: REFUND_QUEUE_SLUG,
+      title: 'Refund Queue Fixture — Rishikesh (admin #24)',
+      shortDescription: 'Dedicated fixture Experience for the admin refund-queue E2E (#24).',
+      longDescription:
+        'A dedicated Experience whose completed Bookings carry pending refund_requests for validating admin approve/reject refund actions. Not in any public catalog flow.',
+      cancellationPreset: 'flexible' as const,
+      paymentModesAllowed: ['full_upfront'] as (
+        | 'full_upfront'
+        | 'partial_pay'
+        | 'reserve_now_pay_later'
+      )[],
+      pricePerPerson_1_2: '3000.00',
+      pricePerPerson_3_5: '3000.00',
+      pricePerPerson_6_plus: '3000.00',
+      regionSlug: 'rishikesh',
+      activitySlug: 'rafting',
+      status: 'published' as const,
+    })
+    .onConflictDoNothing()
+    .returning({ id: experiences.id })
+
+  const refundQueueExpId =
+    refundQueueExp?.id ??
+    (
+      await db
+        .select({ id: experiences.id })
+        .from(experiences)
+        .where(eq(experiences.slug, REFUND_QUEUE_SLUG))
+    )[0]?.id
+
+  if (refundQueueExpId) {
+    // Two pending refund fixtures: one each for the approve / reject E2E.
+    // Fixed PAST calendar dates so slots are deterministic across reseeds and
+    // never collide with any future-window fixture. Amount ₹3,000 each.
+    const REFUND_FIXTURES = [
+      {
+        slotAt: new Date('2026-01-07T03:00:00.000Z'),
+        amount: '3000.00',
+        reason: 'outside_policy_dispute_resolved' as const,
+      },
+      {
+        slotAt: new Date('2026-01-08T03:00:00.000Z'),
+        amount: '3000.00',
+        reason: 'outside_policy_dispute_resolved' as const,
+      },
+    ]
+
+    for (const rf of REFUND_FIXTURES) {
+      const slotEndAt = new Date(rf.slotAt.getTime() + 4 * 60 * 60 * 1000)
+      const [slot] = await db
+        .insert(availabilitySlots)
+        .values({
+          experienceId: refundQueueExpId,
+          startAt: rf.slotAt,
+          endAt: slotEndAt,
+          capacity: 8,
+          capacityTaken: 2,
+        })
+        .onConflictDoNothing()
+        .returning({ id: availabilitySlots.id })
+
+      const slotId =
+        slot?.id ??
+        (
+          await db
+            .select({ id: availabilitySlots.id })
+            .from(availabilitySlots)
+            .where(eq(availabilitySlots.startAt, rf.slotAt))
+        ).find(() => true)?.id
+
+      if (!slotId) continue
+
+      const [bookingRow] = await db
+        .insert(bookings)
+        .values({
+          customerUserId: REFUND_QUEUE_CUSTOMER.userId,
+          experienceId: refundQueueExpId,
+          slotId,
+          participantCount: 2,
+          state: 'completed',
+          paymentMode: 'full_upfront',
+          grossTotalSnapshot: '6000.00',
+          pricePerParticipantSnapshot: '3000.00',
+          pricingBasisSnapshot: 'base_price',
+          commissionRateSnapshot: '20.00',
+          commissionBasisSnapshot: 'platform_default',
+          gstRateOnCommissionSnapshot: '18.00',
+          tdsAmountSnapshot: '6.00',
+          cancellationPresetSnapshot: 'flexible',
+          vendorIsResidentSnapshot: true,
+          confirmedAt: new Date(rf.slotAt.getTime() - 5 * 24 * 60 * 60 * 1000),
+          completedAt: slotEndAt,
+        })
+        .onConflictDoNothing()
+        .returning({ id: bookings.id })
+
+      // If the Booking already existed (reseed against a non-reset DB), the
+      // pending refund_request also already exists (the partial unique would
+      // block a duplicate), so skip the refund insert.
+      if (!bookingRow) continue
+
+      await db
+        .insert(refundRequests)
+        .values({
+          bookingId: bookingRow.id,
+          requestedByUserId: REFUND_QUEUE_CUSTOMER.userId,
+          reason: rf.reason,
+          destination: 'refund_balance',
+          state: 'pending',
+          amount: rf.amount,
+          // Outside-policy dispute resolution → the refund preset is the
+          // Experience's flexible preset; basis recorded as outside_policy.
+          cancellationPresetSnapshot: 'flexible',
+          policyWindowBasisSnapshot: 'outside_policy',
+        })
+        .onConflictDoNothing()
+    }
+  }
+
+  // ===================================================================
+  // #24 ADMIN PAYOUT QUEUE — pending Payout fixtures for the first-3 gate
+  // ===================================================================
+  // The admin payout queue (executeApprovePayout / Hold / Reject) acts on
+  // completed Bookings whose payout_state is pending/held, and the ADR-0016
+  // first-3-manual gate decrements PAYOUT_QUEUE_VENDOR.manual_payouts_remaining
+  // 3→2→1→0 across the vendor's first three approvals (auto thereafter).
+  //
+  // Seed a DEDICATED Experience owned by PAYOUT_QUEUE_VENDOR + SIX completed,
+  // payout_state='pending' Bookings on it (round ₹50,000 gross each), at
+  // distinct fixed-UTC (10:00) past slots disjoint from every other fixture:
+  //   - 4 for the approve-sequence E2E (approve x3 proves 3→2→1→0; the 4th
+  //     proves the gate is open → no further decrement / auto path)
+  //   - 1 for the HOLD E2E (pending → held, Dispute pause)
+  //   - 1 for the REJECT E2E (pending → rejected, reason recorded)
+  // Each Booking is keyed by a DISTINCT slot start_at so the queue rows are
+  // individually addressable from the UI and reseed-idempotent.
+  const PAYOUT_QUEUE_SLUG = 'payout-queue-fixture-bir-billing'
+  const [payoutQueueExp] = await db
+    .insert(experiences)
+    .values({
+      vendorUserId: PAYOUT_QUEUE_VENDOR.userId,
+      slug: PAYOUT_QUEUE_SLUG,
+      title: 'Payout Queue Fixture — Bir Billing (admin #24)',
+      shortDescription: 'Dedicated fixture Experience for the admin payout-queue E2E (#24).',
+      longDescription:
+        'A dedicated Experience whose completed, pending-payout Bookings drive admin approve/hold/reject + the ADR-0016 first-3 manual-approval gate. Not in any public catalog flow.',
+      cancellationPreset: 'flexible' as const,
+      paymentModesAllowed: ['full_upfront'] as (
+        | 'full_upfront'
+        | 'partial_pay'
+        | 'reserve_now_pay_later'
+      )[],
+      pricePerPerson_1_2: '25000.00',
+      pricePerPerson_3_5: '25000.00',
+      pricePerPerson_6_plus: '25000.00',
+      regionSlug: 'bir-billing',
+      activitySlug: 'paragliding',
+      status: 'published' as const,
+    })
+    .onConflictDoNothing()
+    .returning({ id: experiences.id })
+
+  const payoutQueueExpId =
+    payoutQueueExp?.id ??
+    (
+      await db
+        .select({ id: experiences.id })
+        .from(experiences)
+        .where(eq(experiences.slug, PAYOUT_QUEUE_SLUG))
+    )[0]?.id
+
+  if (payoutQueueExpId) {
+    // Six distinct fixed-UTC past slots, one per pending-payout Booking. Gross
+    // ₹50,000 @ 20% commission, 18% GST on commission, 0.1% TDS, 0.5% TCS.
+    const PAYOUT_QUEUE_GROSS = 50000
+    const PAYOUT_QUEUE_PARTICIPANTS = 2
+    for (let i = 0; i < 6; i++) {
+      const slotAt = new Date('2026-02-01T10:00:00.000Z')
+      slotAt.setUTCDate(slotAt.getUTCDate() + i)
+      const slotEndAt = new Date(slotAt.getTime() + 4 * 60 * 60 * 1000)
+
+      const [slot] = await db
+        .insert(availabilitySlots)
+        .values({
+          experienceId: payoutQueueExpId,
+          startAt: slotAt,
+          endAt: slotEndAt,
+          capacity: 8,
+          capacityTaken: PAYOUT_QUEUE_PARTICIPANTS,
+        })
+        .onConflictDoNothing()
+        .returning({ id: availabilitySlots.id })
+
+      const slotId =
+        slot?.id ??
+        (
+          await db
+            .select({ id: availabilitySlots.id })
+            .from(availabilitySlots)
+            .where(eq(availabilitySlots.startAt, slotAt))
+        ).find(() => true)?.id
+
+      if (!slotId) continue
+
+      await db
+        .insert(bookings)
+        .values({
+          customerUserId: REFUND_QUEUE_CUSTOMER.userId,
+          experienceId: payoutQueueExpId,
+          slotId,
+          participantCount: PAYOUT_QUEUE_PARTICIPANTS,
+          state: 'completed',
+          paymentMode: 'full_upfront',
+          grossTotalSnapshot: String(PAYOUT_QUEUE_GROSS),
+          pricePerParticipantSnapshot: String(PAYOUT_QUEUE_GROSS / PAYOUT_QUEUE_PARTICIPANTS),
+          pricingBasisSnapshot: 'base_price',
+          commissionRateSnapshot: '20.00',
+          commissionBasisSnapshot: 'platform_default',
+          gstRateOnCommissionSnapshot: '18.00',
+          tdsAmountSnapshot: String(Math.floor(PAYOUT_QUEUE_GROSS * 0.001)),
+          tcsAmountSnapshot: String(Math.floor(PAYOUT_QUEUE_GROSS * 0.005)),
+          tcsRateSnapshot: '0.50',
+          cancellationPresetSnapshot: 'flexible',
+          vendorPanSnapshot: 'PQRST6789U',
+          vendorIsResidentSnapshot: true,
+          payoutState: 'pending',
+          confirmedAt: new Date(slotAt.getTime() - 5 * 24 * 60 * 60 * 1000),
+          completedAt: slotEndAt,
+        })
+        .onConflictDoNothing()
+    }
   }
 
   // ----- WALLET — give the seed customer both buckets (ADR-0004) -----

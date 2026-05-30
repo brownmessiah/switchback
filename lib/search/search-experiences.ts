@@ -1,6 +1,32 @@
+import { ensureExperienceIndexSettings } from './indexer'
 import { getMeiliClient, type MeiliLike } from './meilisearch-client'
 
 const EXPERIENCE_INDEX = 'experiences'
+
+/**
+ * One-shot guard so the search page configures the index's filter/sort
+ * settings at most once per server process. A freshly provisioned (or
+ * pre-existing but unconfigured) Meilisearch index has EMPTY filterable +
+ * sortable attributes, which makes every filtered/sorted query 400 and
+ * crash the search page (ADR-0013). We self-heal on the first search.
+ */
+let settingsEnsured: Promise<void> | null = null
+
+async function ensureSettingsOnce(client: MeiliLike): Promise<void> {
+  if (!settingsEnsured) {
+    settingsEnsured = ensureExperienceIndexSettings({ client }).catch((err) => {
+      // Reset so a transient failure can retry on the next search.
+      settingsEnsured = null
+      throw err
+    })
+  }
+  await settingsEnsured
+}
+
+/** Test-only — clear the one-shot settings guard between cases. */
+export function _resetSettingsGuardForTests(): void {
+  settingsEnsured = null
+}
 
 export type SortOption = 'relevance' | 'price_asc' | 'price_desc' | 'newest'
 
@@ -79,14 +105,25 @@ export async function searchExperiences(
   const filter = buildMeiliFilter(params)
   const sort = meiliSort(params.sort)
 
-  const result = await client.index(EXPERIENCE_INDEX).search(params.q ?? '', {
-    filter: filter || undefined,
-    sort: sort.length > 0 ? sort : undefined,
-    facets: ['activitySlug', 'regionSlug'],
-    limit: 20,
-  })
+  try {
+    // Self-heal the index's filter/sort settings before the first query so a
+    // Customer applying a filter never hits a 400 (ADR-0013). Inside the try so
+    // even a settings failure degrades gracefully rather than crashing the page.
+    await ensureSettingsOnce(client)
 
-  return {
-    hits: result.hits as SearchExperienceHit[],
+    const result = await client.index(EXPERIENCE_INDEX).search(params.q ?? '', {
+      filter: filter || undefined,
+      sort: sort.length > 0 ? sort : undefined,
+      facets: ['activitySlug', 'regionSlug'],
+      limit: 20,
+    })
+
+    return {
+      hits: result.hits as SearchExperienceHit[],
+    }
+  } catch {
+    // Never crash the customer-facing search page on a Meilisearch error —
+    // degrade to an empty result set (the page renders its empty state).
+    return { hits: [] }
   }
 }

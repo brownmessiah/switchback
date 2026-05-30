@@ -1,6 +1,15 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { buildMeiliFilter } from './search-experiences'
+import {
+  EXPERIENCE_FILTERABLE_ATTRIBUTES,
+  EXPERIENCE_SORTABLE_ATTRIBUTES,
+} from './indexer'
+import type { MeiliIndexSettings, MeiliLike } from './meilisearch-client'
+import {
+  _resetSettingsGuardForTests,
+  buildMeiliFilter,
+  searchExperiences,
+} from './search-experiences'
 
 describe('buildMeiliFilter (Task 23)', () => {
   it('returns empty string when no filters are active', () => {
@@ -68,5 +77,84 @@ describe('isFilteredSearch', () => {
   it('returns false when no params are set', async () => {
     const { isFilteredSearch } = await import('./search-experiences')
     expect(isFilteredSearch({})).toBe(false)
+  })
+})
+
+interface ProbeStub {
+  client: MeiliLike
+  settingsCalls: MeiliIndexSettings[]
+  searchCalls: number
+}
+
+function makeProbeStub(searchImpl?: () => Promise<{ hits: unknown[] }>): ProbeStub {
+  const settingsCalls: MeiliIndexSettings[] = []
+  let searchCalls = 0
+  const stub: ProbeStub = {
+    settingsCalls,
+    get searchCalls() {
+      return searchCalls
+    },
+    client: {
+      index: () => ({
+        addDocuments: vi.fn(),
+        deleteDocument: vi.fn(),
+        updateSettings: async (settings) => {
+          settingsCalls.push(settings)
+          return { taskUid: 1 }
+        },
+        search: async () => {
+          searchCalls += 1
+          return searchImpl ? searchImpl() : { hits: [] }
+        },
+      }),
+    },
+  }
+  return stub
+}
+
+describe('searchExperiences resilience (ADR-0013)', () => {
+  beforeEach(() => {
+    _resetSettingsGuardForTests()
+  })
+
+  it('configures the index filter/sort settings before searching', async () => {
+    const stub = makeProbeStub(async () => ({ hits: [{ id: 'x' }] }))
+    await searchExperiences({ activity: 'rafting' }, { client: stub.client })
+    expect(stub.settingsCalls).toHaveLength(1)
+    expect(stub.settingsCalls[0]!.filterableAttributes).toEqual([
+      ...EXPERIENCE_FILTERABLE_ATTRIBUTES,
+    ])
+    expect(stub.settingsCalls[0]!.sortableAttributes).toEqual([
+      ...EXPERIENCE_SORTABLE_ATTRIBUTES,
+    ])
+  })
+
+  it('ensures settings at most once per process across many searches', async () => {
+    const stub = makeProbeStub()
+    await searchExperiences({ q: 'a' }, { client: stub.client })
+    await searchExperiences({ q: 'b' }, { client: stub.client })
+    await searchExperiences({ region: 'goa' }, { client: stub.client })
+    expect(stub.settingsCalls).toHaveLength(1)
+    expect(stub.searchCalls).toBe(3)
+  })
+
+  it('degrades to empty hits instead of crashing when Meilisearch throws', async () => {
+    const stub = makeProbeStub(async () => {
+      throw new Error('invalid_search_filter')
+    })
+    const result = await searchExperiences(
+      { activity: 'rafting' },
+      { client: stub.client },
+    )
+    expect(result.hits).toEqual([])
+  })
+
+  it('returns the index hits on a successful search', async () => {
+    const stub = makeProbeStub(async () => ({
+      hits: [{ id: 'h1', slug: 'grand-rafting', title: 'Grand Rafting' }],
+    }))
+    const result = await searchExperiences({ q: 'rafting' }, { client: stub.client })
+    expect(result.hits).toHaveLength(1)
+    expect(result.hits[0]!.slug).toBe('grand-rafting')
   })
 })

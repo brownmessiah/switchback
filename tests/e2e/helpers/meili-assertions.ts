@@ -66,3 +66,40 @@ export async function getIndexedExperience(
   }
   return null
 }
+
+/**
+ * Remove an Experience document from the search index directly, bypassing the
+ * app. Used by the cross-surface approve→search spec to establish a clean
+ * "absent from search" precondition that is independent of any residue a prior
+ * test run may have left in the shared (never-reset) Meilisearch index.
+ *
+ * Waits for the delete task to finish so a subsequent search reflects it. No-op
+ * if Meilisearch is not configured.
+ */
+export async function removeIndexedExperience(
+  experienceId: string,
+  opts: { timeoutMs?: number } = {},
+): Promise<void> {
+  const cfg = meiliConfig()
+  if (!cfg) return
+
+  const url = `${cfg.host}/indexes/${EXPERIENCE_INDEX}/documents/${experienceId}`
+  try {
+    await fetch(url, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${cfg.key}` },
+      signal: AbortSignal.timeout(2000),
+    })
+  } catch {
+    // Best effort — the spec re-asserts absence via getIndexedExperience.
+  }
+
+  // Confirm the document is gone (Meili delete is async).
+  const deadline = Date.now() + (opts.timeoutMs ?? 5000)
+  while (Date.now() < deadline) {
+    if ((await getIndexedExperience(experienceId, { timeoutMs: 500 })) === null) {
+      return
+    }
+    await new Promise((r) => setTimeout(r, 200))
+  }
+}

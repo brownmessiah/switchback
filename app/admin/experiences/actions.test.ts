@@ -374,6 +374,9 @@ describe('Admin experience moderation actions', () => {
           async search() {
             return { hits: [] }
           },
+          async updateSettings() {
+            return { taskUid: null }
+          },
         }),
       }
     }

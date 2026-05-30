@@ -36,6 +36,7 @@ function makeSearchStub(): {
         return { taskUid: 2 }
       },
       search: vi.fn(async () => ({ hits: [] })),
+      updateSettings: vi.fn(async () => ({ taskUid: 3 })),
     }),
   }
   return { client, addCalls, deleteCalls }

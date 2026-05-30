@@ -1195,6 +1195,71 @@ async function seed(): Promise<void> {
   }
 
   // ===================================================================
+  // #30 CROSS-SURFACE APPROVE → SEARCH — dedicated pending_review fixture
+  // ===================================================================
+  // The cross-surface E2E (#30) proves the full publish → index → search
+  // journey from the CUSTOMER search surface: a pending_review Experience is
+  // absent from /search, the admin approves it (indexing it into Meilisearch),
+  // it then APPEARS on the rendered search page, and pausing it removes it.
+  //
+  // This needs its OWN fixture, isolated from the #23 `mod-*` set: the
+  // cross-surface Playwright project depends on the `admin` project, which
+  // approves/pauses/archives every `mod-*` fixture before cross-surface runs,
+  // so reusing one would leave nothing pending to approve. The title carries a
+  // UNIQUE token ("Outvers Xsurface Approve-Search Beacon") so a `?q=` text
+  // search matches only this Experience — never any other seed row. Same
+  // identity-tier Vendor, distinct 09:00-UTC slot, within the tier price cap so
+  // admin-approve publishes cleanly (no ADR-0007 rejection).
+  const XSURFACE_SEARCH_SLUG = 'xsurface-approve-search-rishikesh'
+  const [xsurfaceSearchExp] = await db
+    .insert(experiences)
+    .values({
+      vendorUserId: 'u_seed_v_identity',
+      slug: XSURFACE_SEARCH_SLUG,
+      title: 'Outvers Xsurface Approve-Search Beacon (Rishikesh)',
+      shortDescription:
+        'Dedicated pending_review fixture for the #30 cross-surface approve → index → search E2E.',
+      longDescription:
+        'A dedicated pending_review Experience the #30 cross-surface E2E approves so it indexes into Meilisearch and appears on the rendered customer search page, then pauses so it disappears. Isolated from every other spec.',
+      cancellationPreset: 'flexible' as const,
+      paymentModesAllowed: ['full_upfront'] as (
+        | 'full_upfront'
+        | 'partial_pay'
+        | 'reserve_now_pay_later'
+      )[],
+      pricePerPerson_1_2: '2700.00',
+      pricePerPerson_3_5: '2700.00',
+      pricePerPerson_6_plus: '2700.00',
+      regionSlug: 'rishikesh',
+      activitySlug: 'rafting',
+      status: 'pending_review' as const,
+    })
+    .onConflictDoNothing()
+    .returning({ id: experiences.id })
+
+  const xsurfaceSearchExpId =
+    xsurfaceSearchExp?.id ??
+    (
+      await db
+        .select({ id: experiences.id })
+        .from(experiences)
+        .where(eq(experiences.slug, XSURFACE_SEARCH_SLUG))
+    )[0]?.id
+
+  if (xsurfaceSearchExpId) {
+    // One single-day, capacity-8 slot at 09:00 UTC, T+14d — disjoint from the
+    // #23 moderation slots (08:00 UTC) and every other fixture window so the
+    // within-cap approve never trips a tier guard.
+    const xsStartAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+    xsStartAt.setUTCHours(9, 0, 0, 0)
+    const xsEndAt = new Date(xsStartAt.getTime() + 4 * 60 * 60 * 1000)
+    await db
+      .insert(availabilitySlots)
+      .values({ experienceId: xsurfaceSearchExpId, startAt: xsStartAt, endAt: xsEndAt, capacity: 8 })
+      .onConflictDoNothing()
+  }
+
+  // ===================================================================
   // #24 ADMIN REFUND QUEUE — pending refund_request fixtures
   // ===================================================================
   // The admin refund queue (executeApproveRefund / executeRejectRefund) acts

@@ -18,131 +18,177 @@ import { test, expect } from '../../fixtures/devtools'
 
 import path from 'node:path'
 
+import {
+  getExperienceIdBySlug,
+  getExperienceStatus,
+} from '../../helpers/db-assertions'
+import {
+  getIndexedExperience,
+  removeIndexedExperience,
+} from '../../helpers/meili-assertions'
+
 const AUTH_DIR = path.join(__dirname, '../../.auth')
 
+// Dedicated #30 fixture (db/seed.ts): a pending_review Experience whose title
+// carries a unique beacon token so a `?q=` text search matches ONLY this row.
+const XSURFACE_SEARCH_SLUG = 'xsurface-approve-search-rishikesh'
+const XSURFACE_SEARCH_TITLE = 'Outvers Xsurface Approve-Search Beacon (Rishikesh)'
+// Unique multi-word query the Meilisearch text index ranks this title top for.
+const XSURFACE_SEARCH_QUERY = 'Outvers Xsurface Beacon'
+
 // ---------------------------------------------------------------------------
-// 1. Admin approves -> customer searches @cross-surface
+// 1. Admin approves -> indexed -> CUSTOMER SEARCH PAGE finds it -> remove ->
+//    gone  (#30 full publish → index → search journey across surfaces)
 //
-// Flow: Admin approves a pending experience -> wait for indexing ->
-//       Customer navigates to search/collection page -> verifies it appears.
+// This is the cross-surface proof of ADR-0013: a published Experience is
+// indexed in Meilisearch, the customer /search page reads Meilisearch, and a
+// pause de-indexes it. We assert against the RENDERED customer search page
+// (what the user sees), not the Meili index directly — that is the
+// cross-surface end-to-end claim.
 //
-// If no pending_review experiences exist, the test verifies the full admin
-// moderation + customer search surfaces still show consistent published data.
+//   Admin (UI) approve  ──►  Meili index  ──►  /search?q=<beacon> shows card
+//   Admin (UI) pause    ──►  Meili de-index ──► /search?q=<beacon> shows none
+//
+// Uses a DEDICATED pending_review seed fixture (the "Beacon"), isolated from
+// the #23 mod-* set the admin project consumes. Runs on the gated `page`
+// fixture so DevTools (console/network) + axe gates cover the customer search
+// surface on every navigation.
 // ---------------------------------------------------------------------------
-test.describe('Cross-surface: admin approves -> customer searches @cross-surface', () => {
-  test('experience approved by admin becomes visible to customer', async ({
-    browser,
+test.describe('Cross-surface: admin approve -> customer search finds -> remove -> gone @cross-surface', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  // The default cross-surface `page` carries the admin session, so it both
+  // drives the admin moderation UI AND views the public /search page.
+  test('publish → index → customer search finds it, then pause → de-index → gone', async ({
+    page,
   }) => {
-    // ── Admin context: find and approve a pending experience ─────────
-    const adminContext = await browser.newContext({
-      storageState: path.join(AUTH_DIR, 'admin-storage.json'),
-    })
-    const adminPage = await adminContext.newPage()
+    const experienceId = await getExperienceIdBySlug(XSURFACE_SEARCH_SLUG)
+    expect(
+      experienceId,
+      `seed #30 fixture ${XSURFACE_SEARCH_SLUG} must exist`,
+    ).not.toBeNull()
 
-    // Navigate to admin experiences page with pending_review filter
-    await adminPage.goto('/admin/experiences?status=pending_review')
-    await expect(adminPage.locator('h1')).toContainText('Experience Moderation')
+    // The search page sets `revalidate = 60`, so the full route cache is keyed
+    // by URL. A fresh, unique throwaway param per request guarantees a cache
+    // miss → a live Meilisearch query — so the poll reflects the index, not a
+    // stale cached render. `parseSearchParams` ignores unknown params.
+    const searchUrl = (): string =>
+      `/search?q=${encodeURIComponent(XSURFACE_SEARCH_QUERY)}&_cb=${Date.now()}-${Math.random().toString(36).slice(2)}`
 
-    // Look for pending experiences that are APPROVABLE — exclude any over-cap
-    // fixture (title marked "Over-Cap"), whose approve is rejected by the
-    // ADR-0007 tier-cap guard and would never publish.
-    const pendingRows = adminPage
-      .locator('tr')
-      .filter({ has: adminPage.locator('text=pending review') })
-      .filter({ hasNotText: 'Over-Cap' })
-    const pendingCount = await pendingRows.count()
+    // The shared Meilisearch index is never reset between runs. Guarantee a
+    // clean "absent from search" precondition by removing any residue this
+    // fixture's id may have left in the index on a prior run. (This does not
+    // touch the DB row, which the admin UI flow drives.)
+    await removeIndexedExperience(experienceId!)
 
-    let approvedTitle: string | null = null
+    // On a reused DB a prior run of THIS test may have left the row published
+    // or paused. Re-run is still meaningful: we re-establish pending_review so
+    // the approve→search→pause chain runs cleanly from the canonical state.
+    const statusBefore = await getExperienceStatus(experienceId!)
+    test.skip(
+      statusBefore !== 'pending_review',
+      `fixture already moderated on a reused DB (status=${statusBefore})`,
+    )
 
-    if (pendingCount > 0) {
-      // Approve the first approvable pending experience. Capture its title FIRST
-      // so we can assert that specific row leaves the filtered list (other
-      // pending rows remain, so a positional `.first()` would still resolve to
-      // one of them).
-      const firstPendingRow = pendingRows.first()
-      const titleCell = firstPendingRow.locator('td').first()
-      approvedTitle = (await titleCell.textContent())?.trim() ?? null
-      expect(approvedTitle).toBeTruthy()
-
-      const approveButton = firstPendingRow
-        .locator('button')
-        .filter({ hasText: 'Approve' })
-      await expect(approveButton).toBeVisible()
-      await approveButton.click()
-
-      // After the server action + revalidation the now-published experience
-      // drops OUT of the pending_review-filtered list (the page re-queries with
-      // the active status filter), so the approved row is removed rather than
-      // its badge flipping in place.
-      const approvedRow = adminPage
-        .locator('tr')
-        .filter({ hasText: approvedTitle! })
-      await expect(approvedRow).toHaveCount(0, { timeout: 15_000 })
-
-      // ...and now appears under the published filter (cross-surface DB write).
-      await adminPage.goto('/admin/experiences?status=published')
-      await expect(
-        adminPage.locator('tr').filter({ hasText: approvedTitle! }),
-      ).toBeVisible({ timeout: 15_000 })
-    }
-
-    // Navigate to the full experiences list to get a published title
-    // for customer-side verification (in case no pending existed)
-    if (!approvedTitle) {
-      await adminPage.goto('/admin/experiences?status=published')
-      await expect(adminPage.locator('h1')).toContainText(
-        'Experience Moderation',
-      )
-
-      const publishedRows = adminPage.locator('tr').filter({
-        has: adminPage.locator('text=published'),
-      })
-      const publishedCount = await publishedRows.count()
-      expect(publishedCount).toBeGreaterThanOrEqual(1)
-
-      const titleCell = publishedRows.first().locator('td').first()
-      approvedTitle = await titleCell.textContent()
-    }
-
-    expect(approvedTitle).toBeTruthy()
-
-    await adminPage.screenshot({
-      path: 'tests/e2e/screenshots/cross-surface-admin-approved.png',
-      fullPage: true,
-    })
-    await adminContext.close()
-
-    // ── Customer context: search for the experience ─────────────────
-    const customerContext = await browser.newContext({
-      storageState: path.join(AUTH_DIR, 'customer-storage.json'),
-    })
-    const customerPage = await customerContext.newPage()
-
-    // Use the collection page (DB-backed, not Meilisearch) for reliable
-    // cross-surface verification. Seed data has rafting in rishikesh.
-    await customerPage.goto('/adventure/rafting-in-rishikesh')
-    await expect(customerPage.locator('h1')).toBeVisible()
-
-    // Verify at least one experience card is visible
-    const experienceCards = customerPage.locator('a[href*="/experience/"]')
-    const cardCount = await experienceCards.count()
-    expect(cardCount).toBeGreaterThanOrEqual(1)
-
-    // Click through to the first experience detail page
-    await experienceCards.first().click()
-    await expect(customerPage.locator('h1')).toBeVisible()
-
-    // Verify the detail page has pricing and a book-now link
-    await expect(customerPage.getByText('/ person').first()).toBeVisible()
+    // ── Precondition: pending → NOT on the customer search page ──────────
+    await page.goto(searchUrl())
+    await expect(page.locator('h1')).toContainText('Results for')
+    const beaconLink = page.locator(
+      `a[href*="/experience/${XSURFACE_SEARCH_SLUG}"]`,
+    )
     await expect(
-      customerPage.locator('a:has-text("Book now")'),
-    ).toBeVisible()
+      beaconLink,
+      'pending_review experience must be absent from customer search',
+    ).toHaveCount(0)
 
-    await customerPage.screenshot({
-      path: 'tests/e2e/screenshots/cross-surface-customer-search.png',
+    // ── Admin (UI): approve the pending Experience ───────────────────────
+    await page.goto('/admin/experiences?status=pending_review')
+    await expect(page.locator('h1')).toContainText('Experience Moderation')
+    const pendingRow = page
+      .locator('tr')
+      .filter({ hasText: XSURFACE_SEARCH_TITLE })
+    await expect(pendingRow).toBeVisible()
+    await pendingRow.locator('button').filter({ hasText: 'Approve' }).click()
+    // The now-published row drops OUT of the pending_review-filtered list.
+    await expect(pendingRow).toHaveCount(0, { timeout: 15_000 })
+
+    // ── Cross-surface side effects: published in DB AND indexed in Meili ──
+    await expect
+      .poll(async () => getExperienceStatus(experienceId!), { timeout: 15_000 })
+      .toBe('published')
+    expect(
+      await getIndexedExperience(experienceId!),
+      'approved experience must be indexed in Meilisearch',
+    ).not.toBeNull()
+
+    // ── THE cross-surface claim: it now APPEARS on the customer search page.
+    //    Meili indexing is async; re-navigate (search page revalidates) and
+    //    poll until the rendered results include the beacon card.
+    await expect
+      .poll(
+        async () => {
+          await page.goto(searchUrl(), { waitUntil: 'networkidle' })
+          return page
+            .locator(`a[href*="/experience/${XSURFACE_SEARCH_SLUG}"]`)
+            .count()
+        },
+        {
+          timeout: 20_000,
+          message: 'approved experience must appear on the customer search page',
+        },
+      )
+      .toBeGreaterThanOrEqual(1)
+
+    // The rendered card shows the Experience's title and price (₹2,700/person).
+    const foundCard = page
+      .locator(`a[href*="/experience/${XSURFACE_SEARCH_SLUG}"]`)
+      .first()
+    await expect(foundCard.locator('h3')).toContainText('Outvers Xsurface')
+    await expect(foundCard.getByText('/ person')).toBeVisible()
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/cross-surface-search-found.png',
       fullPage: true,
     })
-    await customerContext.close()
+
+    // ── Remove round-trip (UI): pause → de-index → gone from search ──────
+    await page.goto('/admin/experiences?status=published')
+    const publishedRow = page
+      .locator('tr')
+      .filter({ hasText: XSURFACE_SEARCH_TITLE })
+    await expect(publishedRow).toBeVisible()
+    await publishedRow.locator('button').filter({ hasText: 'Pause' }).click()
+    await expect(publishedRow).toHaveCount(0, { timeout: 15_000 })
+
+    // Cross-surface side effects: paused in DB AND de-indexed from Meili.
+    await expect
+      .poll(async () => getExperienceStatus(experienceId!), { timeout: 15_000 })
+      .toBe('paused')
+    expect(
+      await getIndexedExperience(experienceId!, { timeoutMs: 5000 }),
+      'paused experience must be de-indexed from Meilisearch',
+    ).toBeNull()
+
+    // ── THE remove claim: it DISAPPEARS from the customer search page ─────
+    await expect
+      .poll(
+        async () => {
+          await page.goto(searchUrl(), { waitUntil: 'networkidle' })
+          return page
+            .locator(`a[href*="/experience/${XSURFACE_SEARCH_SLUG}"]`)
+            .count()
+        },
+        {
+          timeout: 20_000,
+          message: 'paused experience must disappear from the customer search page',
+        },
+      )
+      .toBe(0)
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/cross-surface-search-gone.png',
+      fullPage: true,
+    })
   })
 })
 

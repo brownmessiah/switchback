@@ -3,17 +3,22 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   type ExperienceSearchDoc,
   deindexExperience,
+  ensureExperienceIndexSettings,
+  EXPERIENCE_FILTERABLE_ATTRIBUTES,
+  EXPERIENCE_SORTABLE_ATTRIBUTES,
   indexExperience,
 } from './indexer'
-import type { MeiliLike } from './meilisearch-client'
+import type { MeiliIndexSettings, MeiliLike } from './meilisearch-client'
 
 function makeStub(): {
   client: MeiliLike
   addCalls: unknown[][]
   deleteCalls: string[]
+  settingsCalls: MeiliIndexSettings[]
 } {
   const addCalls: unknown[][] = []
   const deleteCalls: string[] = []
+  const settingsCalls: MeiliIndexSettings[] = []
   const client: MeiliLike = {
     index: () => ({
       addDocuments: async (docs) => {
@@ -25,9 +30,13 @@ function makeStub(): {
         return { taskUid: 2 }
       },
       search: vi.fn(async () => ({ hits: [] })),
+      updateSettings: async (settings) => {
+        settingsCalls.push(settings)
+        return { taskUid: 3 }
+      },
     }),
   }
-  return { client, addCalls, deleteCalls }
+  return { client, addCalls, deleteCalls, settingsCalls }
 }
 
 const sampleDoc: ExperienceSearchDoc = {
@@ -79,5 +88,30 @@ describe('search indexer', () => {
     await indexExperience({ ...sampleDoc, shortDescription: null }, { client })
     const doc = (addCalls[0] as Array<Record<string, unknown>>)[0]!
     expect(doc.shortDescription).toBeNull()
+  })
+})
+
+describe('ensureExperienceIndexSettings', () => {
+  it('configures the filterable + sortable attributes the search page relies on', async () => {
+    const { client, settingsCalls } = makeStub()
+    await ensureExperienceIndexSettings({ client })
+    expect(settingsCalls).toHaveLength(1)
+    expect(settingsCalls[0]!.filterableAttributes).toEqual(
+      EXPERIENCE_FILTERABLE_ATTRIBUTES,
+    )
+    expect(settingsCalls[0]!.sortableAttributes).toEqual(
+      EXPERIENCE_SORTABLE_ATTRIBUTES,
+    )
+  })
+
+  it('covers every facet the customer search filter/sort form can emit', async () => {
+    // The search page filters by activitySlug, regionSlug, and a price range,
+    // and sorts by price + recency. Each must be configured or Meilisearch
+    // rejects the query with a 400 and the search page crashes (ADR-0013).
+    expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('activitySlug')
+    expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('regionSlug')
+    expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('pricePerPersonRupees')
+    expect(EXPERIENCE_SORTABLE_ATTRIBUTES).toContain('pricePerPersonRupees')
+    expect(EXPERIENCE_SORTABLE_ATTRIBUTES).toContain('publishedAtEpochMs')
   })
 })

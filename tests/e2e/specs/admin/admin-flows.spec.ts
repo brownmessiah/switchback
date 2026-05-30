@@ -16,17 +16,32 @@
 import { test, expect } from '../../fixtures/devtools'
 import {
   countAdminVendorAuditRows,
+  countExperienceAuditRows,
   getAdminVendorState,
   getEarliestBookingCommissionSnapshotForVendor,
+  getExperienceIdBySlug,
+  getExperienceStatus,
   getLatestAdminVendorAudit,
+  getLatestExperienceAudit,
   setVendorCommissionRate,
   setVendorSuspended,
 } from '../../helpers/db-assertions'
+import { getIndexedExperience } from '../../helpers/meili-assertions'
 
 // Seed user IDs — must match db/seed.ts.
 const SEED_ADMIN_ID = 'u_seed_admin'
 const SEED_PHONE_VENDOR_ID = 'u_seed_v_phone'
 const SEED_IDENTITY_VENDOR_ID = 'u_seed_v_identity'
+
+// Dedicated Experience-moderation seed slugs — must match db/seed.ts.
+// Each is owned by the identity-tier Vendor and is isolated from every other
+// spec (no bookings, no reviews, distinct slugs/slots). The within-cap ones
+// approve cleanly; the over-cap one is rejected by the ADR-0007 tier-cap guard.
+const MOD_APPROVE_SLUG = 'mod-pending-approve-within-cap'
+const MOD_OVERCAP_SLUG = 'mod-pending-overcap'
+const MOD_REJECT_SLUG = 'mod-pending-reject'
+const MOD_PAUSE_SLUG = 'mod-pending-pause'
+const MOD_ARCHIVE_SLUG = 'mod-pending-archive'
 
 // ---------------------------------------------------------------------------
 // 1. Dashboard: loads with stat cards
@@ -107,55 +122,286 @@ test.describe('Admin vendors list and detail', () => {
 })
 
 // ---------------------------------------------------------------------------
-// 3. Experiences: approve pending -- find pending -> approve -> verify status
+// 3. Functional: admin Experience moderation (#23)
+//
+// Drives the four admin Experience-moderation Server Actions FROM THE UI
+// (approve / reject / pause / archive) and asserts BOTH the persisted
+// experiences.status AND the Meilisearch index/deindex side-effect
+// (ADR-0013), plus the append-only audit_logs trail.
+//
+//   - APPROVE     : pending_review → published AND INDEXED into Meilisearch
+//                   (getIndexedExperience returns the doc → searchable).
+//   - APPROVE cap : an OVER-CAP pending Experience (price > Rs.5000 for an
+//                   identity-tier Vendor) is REJECTED by the ADR-0007 tier-cap
+//                   guard — stays pending_review, NOT indexed, a
+//                   tier_cap_rejected audit row written (ADR-0007).
+//   - REJECT      : pending_review → archived (stays OUT of the live catalog),
+//                   reason recorded in the audit payload, NOT indexed.
+//   - PAUSE       : a freshly-approved (published + indexed) Experience →
+//                   paused AND DE-INDEXED (getIndexedExperience returns null).
+//   - ARCHIVE     : a freshly-approved (published + indexed) Experience →
+//                   archived AND DE-INDEXED.
+//
+// Each action writes exactly one audit_logs row with the admin as actor.
+// Every Experience here is a DEDICATED moderation seed (identity-tier Vendor,
+// no bookings, no reviews, distinct slugs/slots) so these one-way status
+// transitions never disturb any other spec's determinism. The seed does NOT
+// pre-index into Meilisearch, so pause/archive first approve (proving the doc
+// IS indexed) and then prove the de-index — a full index→deindex round-trip.
+//
+// Serial so the per-Experience approve→pause / approve→archive chains run in
+// a known order against the shared E2E DB + Meili index.
 // ---------------------------------------------------------------------------
-test.describe('Admin experience approval', () => {
-  test('find pending experience, approve it, verify status changes to published', async ({
+test.describe('Admin experience moderation (#23)', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  test('approve: pending_review → published AND indexed into Meilisearch + audit row', async ({
     page,
   }) => {
-    // Navigate to experiences with pending_review filter
+    const experienceId = await getExperienceIdBySlug(MOD_APPROVE_SLUG)
+    expect(experienceId, `seed moderation experience ${MOD_APPROVE_SLUG} must exist`).not.toBeNull()
+    // Best-effort idempotency on a reused DB: skip if a prior run already approved it.
+    const statusBefore = await getExperienceStatus(experienceId!)
+    test.skip(statusBefore !== 'pending_review', 'already moderated on a reused DB')
+
     await page.goto('/admin/experiences?status=pending_review')
     await expect(page.locator('h1')).toContainText('Experience Moderation')
 
-    // Check if there are pending experiences
-    const pendingRows = page.locator('tr').filter({
-      has: page.locator('text=pending review'),
+    const row = page.locator('tr').filter({ hasText: 'Approve me — Within-Cap Pending' })
+    await expect(row).toBeVisible()
+    await row.locator('button').filter({ hasText: 'Approve' }).click()
+
+    // After the server action + revalidation the now-published row drops OUT
+    // of the pending_review-filtered list.
+    await expect(row).toHaveCount(0, { timeout: 15_000 })
+
+    // ── Assert: persisted status is published ────────────────────────────
+    await expect
+      .poll(async () => getExperienceStatus(experienceId!), { timeout: 15_000 })
+      .toBe('published')
+
+    // ── Assert: INDEXED into Meilisearch → discoverable in search ────────
+    const doc = await getIndexedExperience(experienceId!)
+    expect(doc, 'approved experience must be indexed in Meilisearch').not.toBeNull()
+    expect(doc!.id).toBe(experienceId)
+    expect(doc!.slug).toBe(MOD_APPROVE_SLUG)
+
+    // ── Assert: exactly one approve audit row with actor + transition ────
+    expect(
+      await countExperienceAuditRows('admin.experience.approve', experienceId!),
+    ).toBe(1)
+    const audit = await getLatestExperienceAudit('admin.experience.approve', experienceId!)
+    expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+    expect(audit!.payload).toMatchObject({
+      previousStatus: 'pending_review',
+      newStatus: 'published',
     })
-    const pendingCount = await pendingRows.count()
-
-    if (pendingCount === 0) {
-      // No pending experiences -- navigate to unfiltered list and skip
-      // (this test is best-effort against seeded data)
-      test.skip(true, 'No pending experiences in seed data')
-      return
-    }
-
-    // Find the Approve button in the first pending row
-    const firstPendingRow = pendingRows.first()
-    const approveButton = firstPendingRow.locator('button').filter({ hasText: 'Approve' })
-    await expect(approveButton).toBeVisible()
-
-    // Capture the experience title for verification
-    const titleCell = firstPendingRow.locator('td').first()
-    const experienceTitle = await titleCell.textContent()
-
-    // Click Approve
-    await approveButton.click()
-
-    // Wait for the page to update -- the row should now show "published"
-    // After server action + revalidation, the status badge changes
-    await expect(
-      firstPendingRow.locator('text=published'),
-    ).toBeVisible({ timeout: 15_000 })
-
-    // Verify by navigating to published filter
-    await page.goto('/admin/experiences?status=published')
-    await expect(
-      page.getByText(experienceTitle?.trim() ?? ''),
-    ).toBeVisible({ timeout: 10_000 })
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/admin-experience-approved.png',
+      fullPage: true,
+    })
+  })
+
+  test('approve over-cap: tier-cap guard rejects — stays pending_review, NOT indexed, rejection audited (ADR-0007)', async ({
+    page,
+  }) => {
+    const experienceId = await getExperienceIdBySlug(MOD_OVERCAP_SLUG)
+    expect(experienceId, `seed over-cap experience ${MOD_OVERCAP_SLUG} must exist`).not.toBeNull()
+    const statusBefore = await getExperienceStatus(experienceId!)
+    test.skip(statusBefore !== 'pending_review', 'already moderated on a reused DB')
+
+    await page.goto('/admin/experiences?status=pending_review')
+    await expect(page.locator('h1')).toContainText('Experience Moderation')
+
+    const row = page.locator('tr').filter({ hasText: 'Over-Cap Pending' })
+    await expect(row).toBeVisible()
+    await row.locator('button').filter({ hasText: 'Approve' }).click()
+
+    // The inline cell surfaces the guard's rejection reason; the badge never
+    // flips to published.
+    await expect(row.getByText(/Rs\.5000 per person/)).toBeVisible({ timeout: 15_000 })
+
+    // ── Assert: REJECTED — status unchanged, never published ─────────────
+    expect(await getExperienceStatus(experienceId!)).toBe('pending_review')
+
+    // ── Assert: NOT indexed into Meilisearch ─────────────────────────────
+    expect(
+      await getIndexedExperience(experienceId!, { timeoutMs: 2000 }),
+      'over-cap experience must NOT be indexed',
+    ).toBeNull()
+
+    // ── Assert: no approve row, exactly one tier_cap_rejected row (ADR-0007)
+    expect(
+      await countExperienceAuditRows('admin.experience.approve', experienceId!),
+    ).toBe(0)
+    expect(
+      await countExperienceAuditRows('admin.experience.tier_cap_rejected', experienceId!),
+    ).toBe(1)
+    const audit = await getLatestExperienceAudit(
+      'admin.experience.tier_cap_rejected',
+      experienceId!,
+    )
+    expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+    expect(audit!.payload).toMatchObject({ code: 'PRICE_OVER_CAP' })
+  })
+
+  test('reject: pending_review → archived (out of catalog), reason recorded, NOT indexed', async ({
+    page,
+  }) => {
+    const experienceId = await getExperienceIdBySlug(MOD_REJECT_SLUG)
+    expect(experienceId, `seed reject experience ${MOD_REJECT_SLUG} must exist`).not.toBeNull()
+    const statusBefore = await getExperienceStatus(experienceId!)
+    test.skip(statusBefore !== 'pending_review', 'already moderated on a reused DB')
+
+    const REJECT_REASON = `E2E: photos do not match the activity ${Date.now()}`
+
+    await page.goto('/admin/experiences?status=pending_review')
+    const row = page.locator('tr').filter({ hasText: 'Reject me — Pending' })
+    await expect(row).toBeVisible()
+    await row.locator('button').filter({ hasText: 'Reject' }).click()
+
+    // The reject dialog opens; provide a reason and confirm.
+    const dialog = page.locator('[data-slot="dialog-content"]')
+    await expect(dialog.getByText('Reject Experience')).toBeVisible()
+    await dialog.locator('textarea').fill(REJECT_REASON)
+    await dialog.getByRole('button', { name: 'Reject', exact: true }).click()
+
+    // ── Assert: archived — out of the live catalog, never published ──────
+    await expect
+      .poll(async () => getExperienceStatus(experienceId!), { timeout: 15_000 })
+      .toBe('archived')
+
+    // ── Assert: NOT indexed ──────────────────────────────────────────────
+    expect(
+      await getIndexedExperience(experienceId!, { timeoutMs: 2000 }),
+      'rejected experience must NOT be indexed',
+    ).toBeNull()
+
+    // ── Assert: reject audit row with actor + reason ─────────────────────
+    expect(
+      await countExperienceAuditRows('admin.experience.reject', experienceId!),
+    ).toBe(1)
+    const audit = await getLatestExperienceAudit('admin.experience.reject', experienceId!)
+    expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+    expect(audit!.payload).toMatchObject({
+      previousStatus: 'pending_review',
+      newStatus: 'archived',
+      reason: REJECT_REASON,
+    })
+  })
+
+  test('pause: approve (published + indexed) → pause → paused AND de-indexed + audit row', async ({
+    page,
+  }) => {
+    const experienceId = await getExperienceIdBySlug(MOD_PAUSE_SLUG)
+    expect(experienceId, `seed pause experience ${MOD_PAUSE_SLUG} must exist`).not.toBeNull()
+    const statusBefore = await getExperienceStatus(experienceId!)
+    test.skip(statusBefore !== 'pending_review', 'already moderated on a reused DB')
+
+    // ── Step 1: approve so it is published AND indexed (proves index) ────
+    await page.goto('/admin/experiences?status=pending_review')
+    const pendingRow = page.locator('tr').filter({ hasText: 'Pause me — Pending' })
+    await expect(pendingRow).toBeVisible()
+    await pendingRow.locator('button').filter({ hasText: 'Approve' }).click()
+    // Drops out of the pending_review filter once published.
+    await expect(pendingRow).toHaveCount(0, { timeout: 15_000 })
+
+    await expect
+      .poll(async () => getExperienceStatus(experienceId!), { timeout: 15_000 })
+      .toBe('published')
+    expect(
+      await getIndexedExperience(experienceId!),
+      'experience must be indexed after approve',
+    ).not.toBeNull()
+
+    // ── Step 2: pause the now-published Experience ───────────────────────
+    await page.goto('/admin/experiences?status=published')
+    const publishedRow = page.locator('tr').filter({ hasText: 'Pause me — Pending' })
+    await expect(publishedRow).toBeVisible()
+    await publishedRow.locator('button').filter({ hasText: 'Pause' }).click()
+    // Drops out of the published filter once paused.
+    await expect(publishedRow).toHaveCount(0, { timeout: 15_000 })
+
+    // ── Assert: persisted status is paused ───────────────────────────────
+    await expect
+      .poll(async () => getExperienceStatus(experienceId!), { timeout: 15_000 })
+      .toBe('paused')
+
+    // ── Assert: DE-INDEXED — no longer in search ─────────────────────────
+    expect(
+      await getIndexedExperience(experienceId!, { timeoutMs: 4000 }),
+      'paused experience must be de-indexed',
+    ).toBeNull()
+
+    // ── Assert: pause audit row with actor + transition ──────────────────
+    expect(
+      await countExperienceAuditRows('admin.experience.pause', experienceId!),
+    ).toBe(1)
+    const audit = await getLatestExperienceAudit('admin.experience.pause', experienceId!)
+    expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+    expect(audit!.payload).toMatchObject({
+      previousStatus: 'published',
+      newStatus: 'paused',
+    })
+  })
+
+  test('archive: approve (published + indexed) → archive → archived AND de-indexed + audit row', async ({
+    page,
+  }) => {
+    const experienceId = await getExperienceIdBySlug(MOD_ARCHIVE_SLUG)
+    expect(experienceId, `seed archive experience ${MOD_ARCHIVE_SLUG} must exist`).not.toBeNull()
+    const statusBefore = await getExperienceStatus(experienceId!)
+    test.skip(statusBefore !== 'pending_review', 'already moderated on a reused DB')
+
+    // ── Step 1: approve so it is published AND indexed ───────────────────
+    await page.goto('/admin/experiences?status=pending_review')
+    const pendingRow = page.locator('tr').filter({ hasText: 'Archive me — Pending' })
+    await expect(pendingRow).toBeVisible()
+    await pendingRow.locator('button').filter({ hasText: 'Approve' }).click()
+    // Drops out of the pending_review filter once published.
+    await expect(pendingRow).toHaveCount(0, { timeout: 15_000 })
+
+    await expect
+      .poll(async () => getExperienceStatus(experienceId!), { timeout: 15_000 })
+      .toBe('published')
+    expect(
+      await getIndexedExperience(experienceId!),
+      'experience must be indexed after approve',
+    ).not.toBeNull()
+
+    // ── Step 2: archive the now-published Experience ─────────────────────
+    await page.goto('/admin/experiences?status=published')
+    const publishedRow = page.locator('tr').filter({ hasText: 'Archive me — Pending' })
+    await expect(publishedRow).toBeVisible()
+    await publishedRow.locator('button').filter({ hasText: 'Archive' }).click()
+    // Drops out of the published filter once archived.
+    await expect(publishedRow).toHaveCount(0, { timeout: 15_000 })
+
+    // ── Assert: persisted status is archived ─────────────────────────────
+    await expect
+      .poll(async () => getExperienceStatus(experienceId!), { timeout: 15_000 })
+      .toBe('archived')
+
+    // ── Assert: DE-INDEXED — no longer in search ─────────────────────────
+    expect(
+      await getIndexedExperience(experienceId!, { timeoutMs: 4000 }),
+      'archived experience must be de-indexed',
+    ).toBeNull()
+
+    // ── Assert: archive audit row with actor + transition ────────────────
+    expect(
+      await countExperienceAuditRows('admin.experience.archive', experienceId!),
+    ).toBe(1)
+    const audit = await getLatestExperienceAudit('admin.experience.archive', experienceId!)
+    expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+    expect(audit!.payload).toMatchObject({
+      previousStatus: 'published',
+      newStatus: 'archived',
+    })
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/admin-experience-archived.png',
       fullPage: true,
     })
   })

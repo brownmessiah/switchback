@@ -43,31 +43,46 @@ test.describe('Cross-surface: admin approves -> customer searches @cross-surface
     await adminPage.goto('/admin/experiences?status=pending_review')
     await expect(adminPage.locator('h1')).toContainText('Experience Moderation')
 
-    // Look for pending experiences
-    const pendingRows = adminPage.locator('tr').filter({
-      has: adminPage.locator('text=pending review'),
-    })
+    // Look for pending experiences that are APPROVABLE — exclude any over-cap
+    // fixture (title marked "Over-Cap"), whose approve is rejected by the
+    // ADR-0007 tier-cap guard and would never publish.
+    const pendingRows = adminPage
+      .locator('tr')
+      .filter({ has: adminPage.locator('text=pending review') })
+      .filter({ hasNotText: 'Over-Cap' })
     const pendingCount = await pendingRows.count()
 
     let approvedTitle: string | null = null
 
     if (pendingCount > 0) {
-      // Approve the first pending experience
+      // Approve the first approvable pending experience. Capture its title FIRST
+      // so we can assert that specific row leaves the filtered list (other
+      // pending rows remain, so a positional `.first()` would still resolve to
+      // one of them).
       const firstPendingRow = pendingRows.first()
+      const titleCell = firstPendingRow.locator('td').first()
+      approvedTitle = (await titleCell.textContent())?.trim() ?? null
+      expect(approvedTitle).toBeTruthy()
+
       const approveButton = firstPendingRow
         .locator('button')
         .filter({ hasText: 'Approve' })
       await expect(approveButton).toBeVisible()
-
-      // Capture the title for later verification
-      const titleCell = firstPendingRow.locator('td').first()
-      approvedTitle = await titleCell.textContent()
-
       await approveButton.click()
 
-      // Wait for status to change to "published"
+      // After the server action + revalidation the now-published experience
+      // drops OUT of the pending_review-filtered list (the page re-queries with
+      // the active status filter), so the approved row is removed rather than
+      // its badge flipping in place.
+      const approvedRow = adminPage
+        .locator('tr')
+        .filter({ hasText: approvedTitle! })
+      await expect(approvedRow).toHaveCount(0, { timeout: 15_000 })
+
+      // ...and now appears under the published filter (cross-surface DB write).
+      await adminPage.goto('/admin/experiences?status=published')
       await expect(
-        firstPendingRow.locator('text=published'),
+        adminPage.locator('tr').filter({ hasText: approvedTitle! }),
       ).toBeVisible({ timeout: 15_000 })
     }
 

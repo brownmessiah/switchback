@@ -1217,6 +1217,97 @@ export async function getLatestAdminVendorAudit(
   })
 }
 
+// ---------------------------------------------------------------------------
+// Admin Experience moderation assertions (Issue #23)
+//
+// These drive the four admin Experience-moderation Server Actions FROM THE UI
+// (approve / reject / pause / archive) and assert the persisted experiences
+// status, the Meilisearch index/deindex side-effect (via meili-assertions),
+// and the append-only audit_logs trail. The mutating tests operate on
+// dedicated pending_review / published seed Experiences that no other spec
+// books or reviews, so seed determinism for parallel specs is preserved.
+// ---------------------------------------------------------------------------
+
+/** Read an Experience's current status, or null if it does not exist. */
+export async function getExperienceStatus(
+  experienceId: string,
+): Promise<string | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ status: string }[]>`
+      SELECT status FROM experiences WHERE id = ${experienceId} LIMIT 1
+    `
+    return rows[0]?.status ?? null
+  })
+}
+
+/** Resolve a seeded Experience id by its slug, or null. */
+export async function getExperienceIdBySlug(
+  slug: string,
+): Promise<string | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ id: string }[]>`
+      SELECT id FROM experiences WHERE slug = ${slug} LIMIT 1
+    `
+    return rows[0]?.id ?? null
+  })
+}
+
+/** Count audit_logs rows for an admin Experience-moderation action on an Experience. */
+export async function countExperienceAuditRows(
+  action: string,
+  experienceId: string,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT COUNT(*) AS n
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_type = 'experience'
+        AND entity_id = ${experienceId}
+    `
+    return Number(rows[0]?.n ?? 0)
+  })
+}
+
+/**
+ * Fetch the most-recent admin Experience-moderation audit payload + actor for
+ * an Experience. Lets the test assert the action recorded its actor (the admin)
+ * and the decision context (status transition / rejection reason).
+ */
+export async function getLatestExperienceAudit(
+  action: string,
+  experienceId: string,
+): Promise<{ actorUserId: string | null; payload: Record<string, unknown> } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { actor_user_id: string | null; payload: Record<string, unknown> }[]
+    >`
+      SELECT actor_user_id, payload
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_type = 'experience'
+        AND entity_id = ${experienceId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return { actorUserId: rows[0].actor_user_id, payload: rows[0].payload }
+  })
+}
+
+/** Set an Experience's status directly (test setup / restore). */
+export async function setExperienceStatus(
+  experienceId: string,
+  status: 'draft' | 'pending_review' | 'published' | 'paused' | 'archived',
+): Promise<void> {
+  await withSql(async (sql) => {
+    await sql`
+      UPDATE experiences SET status = ${status}, updated_at = NOW()
+      WHERE id = ${experienceId}
+    `
+  })
+}
+
 /**
  * Read the commission_rate_snapshot of the earliest existing Booking owned by
  * a Vendor (joined through experiences). Used to prove ADR-0008 snapshot

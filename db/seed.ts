@@ -943,6 +943,109 @@ async function seed(): Promise<void> {
     }
   }
 
+  // ===================================================================
+  // ADMIN EXPERIENCE-MODERATION FIXTURES (Issue #23)
+  // ===================================================================
+  // The admin Experience-moderation surface (approve / reject / pause /
+  // archive) is only reachable for Experiences seeded into pending_review —
+  // there is no draft→pending_review submit transition yet (#10 review). The
+  // demo Experiences above are all `published`, so without these fixtures the
+  // moderation E2E (#23) would have nothing to approve/reject.
+  //
+  // Seed five DEDICATED pending_review Experiences owned by the identity-tier
+  // Vendor (one per moderation action, plus one OVER-CAP price for the
+  // ADR-0007 tier-cap guard rejection path). They are isolated from every
+  // other spec: distinct `mod-*` slugs (never in SLOT_PRIORITY, never booked
+  // or reviewed) and their own slots at a distinct 08:00-UTC hour (disjoint
+  // from the 02:00/04:00/06:00-UTC demo + #19/#20 slots and the July-2026
+  // availability window in #18). Within-cap ones (price ≤ Rs.5000, single-day
+  // capacity-8 slot) approve cleanly; the over-cap one (price Rs.7500) is
+  // rejected by the tier-cap guard at admin-approve time.
+  interface ModerationExperienceSeed {
+    readonly slug: string
+    readonly title: string
+    readonly price: string
+  }
+
+  const MODERATION_EXPERIENCES: ModerationExperienceSeed[] = [
+    {
+      slug: 'mod-pending-approve-within-cap',
+      title: 'Approve me — Within-Cap Pending (Rishikesh)',
+      price: '2500.00',
+    },
+    {
+      slug: 'mod-pending-reject',
+      title: 'Reject me — Pending (Rishikesh)',
+      price: '2200.00',
+    },
+    {
+      slug: 'mod-pending-pause',
+      title: 'Pause me — Pending (Rishikesh)',
+      price: '2800.00',
+    },
+    {
+      slug: 'mod-pending-archive',
+      title: 'Archive me — Pending (Rishikesh)',
+      price: '3100.00',
+    },
+    // Over the identity-tier Rs.5000 per-person cap — the admin-approve
+    // tier-cap guard (ADR-0007) must REJECT this, leaving it pending_review.
+    {
+      slug: 'mod-pending-overcap',
+      title: 'Over-Cap Pending — Rejected on Approve (Rishikesh)',
+      price: '7500.00',
+    },
+  ]
+
+  const insertedModeration = await db
+    .insert(experiences)
+    .values(
+      MODERATION_EXPERIENCES.map((m) => ({
+        vendorUserId: 'u_seed_v_identity',
+        slug: m.slug,
+        title: m.title,
+        shortDescription: 'Seeded pending_review Experience for the admin moderation E2E (#23).',
+        longDescription:
+          'A dedicated pending_review fixture for validating admin approve/reject/pause/archive + Meilisearch index/deindex. Not bookable; not reviewed.',
+        cancellationPreset: 'flexible' as const,
+        paymentModesAllowed: ['full_upfront'] as (
+          | 'full_upfront'
+          | 'partial_pay'
+          | 'reserve_now_pay_later'
+        )[],
+        pricePerPerson_1_2: m.price,
+        pricePerPerson_3_5: m.price,
+        pricePerPerson_6_plus: m.price,
+        regionSlug: 'rishikesh',
+        activitySlug: 'rafting',
+        status: 'pending_review' as const,
+      })),
+    )
+    .onConflictDoNothing()
+    .returning({ id: experiences.id, slug: experiences.slug })
+
+  const moderationExperiences = insertedModeration.length
+    ? insertedModeration
+    : await db
+        .select({ id: experiences.id, slug: experiences.slug })
+        .from(experiences)
+        .where(inArray(experiences.slug, MODERATION_EXPERIENCES.map((m) => m.slug)))
+
+  // One single-day, capacity-8 slot per moderation Experience at a fixed
+  // 08:00-UTC hour, T+14d (well clear of the T+7d demo slots and the
+  // T+10d #19 manageable Booking). Single-day + capacity-8 keeps the
+  // within-cap Experiences inside the identity-tier caps so the only thing
+  // that rejects the over-cap one is its price.
+  const modStartAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+  modStartAt.setUTCHours(8, 0, 0, 0)
+  const modEndAt = new Date(modStartAt.getTime() + 4 * 60 * 60 * 1000)
+  for (const m of moderationExperiences) {
+    await db
+      .insert(availabilitySlots)
+      .values({ experienceId: m.id, startAt: modStartAt, endAt: modEndAt, capacity: 8 })
+      .onConflictDoNothing()
+  }
+
   // ----- WALLET — give the seed customer both buckets (ADR-0004) -----
   // Two SEPARATE balance buckets:
   //   refund_balance  — cashable to the original payment method (5–7 day

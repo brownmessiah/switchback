@@ -16,24 +16,34 @@
 import { test, expect } from '../../fixtures/devtools'
 import {
   countAdminVendorAuditRows,
+  countDisputeAuditRows,
   countExperienceAuditRows,
   countPayoutAuditRows,
   countRefundAuditRows,
+  deleteDisputedBookingFixture,
   getAdminVendorState,
+  getBookingLifecycle,
   getBookingPayoutState,
   getEarliestBookingCommissionSnapshotForVendor,
   getExperienceIdBySlug,
+  getExperienceSlugRegion,
   getExperienceStatus,
   getLatestAdminVendorAudit,
+  getLatestClosureAudit,
+  getLatestDisputeAudit,
   getLatestExperienceAudit,
   getLatestPayoutAudit,
   getLatestRefundAudit,
   getPendingPayoutBookingsForVendor,
   getPendingRefundRequestsForCustomer,
   getRefundBalanceCreditAuditForBooking,
+  getRefundRequestForBooking,
   getRefundRequestStateById,
+  getRegionClosureById,
+  getRegionClosureByReason,
   getVendorManualPayoutsRemaining,
   getWalletBalanceRupees,
+  insertDisputedBookingFixture,
   setVendorCommissionRate,
   setVendorSuspended,
 } from '../../helpers/db-assertions'
@@ -58,6 +68,18 @@ const MOD_OVERCAP_SLUG = 'mod-pending-overcap'
 const MOD_REJECT_SLUG = 'mod-pending-reject'
 const MOD_PAUSE_SLUG = 'mod-pending-pause'
 const MOD_ARCHIVE_SLUG = 'mod-pending-archive'
+
+// #25 dispute-resolution + region-closure fixtures.
+// Staged disputed Bookings are owned by an existing seed customer; the refund
+// is asserted via the immutable wallet.credit_refund_balance audit row (keyed
+// by bookingId), so no dedicated wallet is required. The Experience hosts the
+// staged disputed Bookings (on fresh past slots) and is also the surface the
+// region-closure test asserts the inline customer-facing block on.
+const SEED_DISPUTE_CUSTOMER_ID = 'u_seed_customer_biz'
+// A business-Vendor published Experience in the bir-billing region. No other
+// admin test asserts a bir-billing closure, so the closure this test creates +
+// deletes via the UI never races another admin assertion.
+const DISPUTE_EXPERIENCE_SLUG = 'bir-billing-paragliding-full-day'
 
 // ---------------------------------------------------------------------------
 // 1. Dashboard: loads with stat cards
@@ -1360,5 +1382,341 @@ test.describe('Admin payout queue + first-3 manual gate (#24)', () => {
       path: 'tests/e2e/screenshots/admin-payout-rejected.png',
       fullPage: true,
     })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 17. Functional: admin dispute resolution (#25, ADR-0003)
+//
+// Drives the two admin dispute Server Actions FROM THE UI on dedicated staged
+// disputed Bookings and asserts the persisted bookings.state + payout_state
+// transitions, the optional partial / full refund credited to the Customer's
+// Refund balance, and the append-only audit_logs trail.
+//
+//   - COMPLETION : disputed → completed (Vendor's favour). Payout resumes
+//                  (held → pending). Optional partial refund credited to the
+//                  Customer's Refund balance + commission adjustment recorded
+//                  in the audit. (ADR-0003)
+//   - CANCEL POST-EXPERIENCE : disputed → cancelled_post_experience (Customer
+//                  wins). Full refund to the Customer's Refund balance, NO
+//                  Payout (held → rejected), Commission effectively zero.
+//
+// Each test stages its own disputed Booking on a fresh past slot (distinct UTC
+// hour so the two never collide) and removes it in a finally, so the seed's
+// single disputed Booking (#19) and all parallel specs are undisturbed. Serial
+// so the dispute-queue row counts stay deterministic across the two tests.
+// ---------------------------------------------------------------------------
+test.describe('Admin dispute resolution (#25)', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  test('resolve as Completion: disputed → completed, partial refund + commission adjust, payout resumes (held → pending) + audit row', async ({
+    page,
+  }) => {
+    const exp = await getExperienceSlugRegion(DISPUTE_EXPERIENCE_SLUG)
+    expect(exp, 'seed Experience for the dispute fixture must exist').not.toBeNull()
+
+    const GROSS = 9000
+    const PARTIAL_REFUND = 2000
+    const ADJUSTED_RATE = '10.00'
+    const fixture = await insertDisputedBookingFixture({
+      experienceId: exp!.id,
+      customerUserId: SEED_DISPUTE_CUSTOMER_ID,
+      grossRupees: GROSS,
+      participantCount: 2,
+      slotHourUtc: 11,
+    })
+
+    try {
+      const NOTES = `E2E: resolved in Vendor favour — partial goodwill refund ${Date.now()}`
+
+      await page.goto('/admin/disputes')
+      await expect(page.locator('h1')).toContainText('Dispute queue')
+
+      // Target THIS staged disputed Booking's row deterministically.
+      const row = page.locator(`tr[data-booking-id="${fixture.bookingId}"]`)
+      await expect(row).toBeVisible()
+
+      // Open the "Complete" dialog, supply notes + a partial refund + an
+      // adjusted commission rate, then resolve.
+      await row.getByRole('button', { name: 'Complete', exact: true }).click()
+      const dialog = page.locator('[data-slot="dialog-content"]')
+      await expect(dialog.getByRole('heading', { name: 'Resolve as Completed' })).toBeVisible()
+      await dialog.locator('#complete-notes').fill(NOTES)
+      await dialog.locator('#partial-refund').fill(String(PARTIAL_REFUND))
+      await dialog.locator('#adjusted-rate').fill(ADJUSTED_RATE)
+      await dialog.getByRole('button', { name: 'Resolve as Completed' }).click()
+
+      // After the server action + revalidation the resolved row drops OUT of
+      // the disputed-only queue.
+      await expect(row).toHaveCount(0, { timeout: 15_000 })
+
+      // ── Assert: booking state completed + payout resumed (held → pending) ─
+      await expect
+        .poll(async () => (await getBookingLifecycle(fixture.bookingId))?.state, {
+          timeout: 15_000,
+        })
+        .toBe('completed')
+      const lifecycle = await getBookingLifecycle(fixture.bookingId)
+      expect(lifecycle!.payoutState).toBe('pending')
+      expect(lifecycle!.completedAt).not.toBeNull()
+
+      // ── Assert: the partial refund was credited to the Refund balance ────
+      const creditAudit = await getRefundBalanceCreditAuditForBooking(fixture.bookingId)
+      expect(creditAudit, 'a partial-refund credit must have been written').not.toBeNull()
+      expect(creditAudit!.amountRupees).toBe(PARTIAL_REFUND)
+      expect(creditAudit!.userId).toBe(SEED_DISPUTE_CUSTOMER_ID)
+
+      // A refund_request row records the goodwill refund (credited, refund_balance).
+      const refundReq = await getRefundRequestForBooking(fixture.bookingId)
+      expect(refundReq!.state).toBe('credited')
+      expect(refundReq!.destination).toBe('refund_balance')
+      expect(refundReq!.amount).toBe(PARTIAL_REFUND)
+      expect(refundReq!.reason).toBe('outside_policy_dispute_resolved')
+
+      // ── Assert: exactly one resolve-complete audit row, actor + adjustment ─
+      expect(
+        await countDisputeAuditRows('booking.dispute_resolved_complete', fixture.bookingId),
+      ).toBe(1)
+      const audit = await getLatestDisputeAudit(
+        'booking.dispute_resolved_complete',
+        fixture.bookingId,
+      )
+      expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+      expect(audit!.payload).toMatchObject({
+        previousState: 'disputed',
+        newState: 'completed',
+        partialRefundRupees: PARTIAL_REFUND,
+        adjustedCommissionRate: ADJUSTED_RATE,
+        payoutStateChange: 'held → pending',
+      })
+
+      await page.screenshot({
+        path: 'tests/e2e/screenshots/admin-dispute-completed.png',
+        fullPage: true,
+      })
+    } finally {
+      await deleteDisputedBookingFixture(fixture)
+    }
+  })
+
+  test('resolve as cancelled_post_experience: disputed → cancelled, full refund, no commission, no payout (held → rejected) + audit row', async ({
+    page,
+  }) => {
+    const exp = await getExperienceSlugRegion(DISPUTE_EXPERIENCE_SLUG)
+    expect(exp, 'seed Experience for the dispute fixture must exist').not.toBeNull()
+
+    const GROSS = 7000
+    const fixture = await insertDisputedBookingFixture({
+      experienceId: exp!.id,
+      customerUserId: SEED_DISPUTE_CUSTOMER_ID,
+      grossRupees: GROSS,
+      participantCount: 2,
+      slotHourUtc: 13,
+    })
+
+    try {
+      const NOTES = `E2E: resolved for Customer — experience not delivered ${Date.now()}`
+
+      await page.goto('/admin/disputes')
+      const row = page.locator(`tr[data-booking-id="${fixture.bookingId}"]`)
+      await expect(row).toBeVisible()
+
+      // Open the "Cancel & Refund" dialog, supply notes, full-refund resolve.
+      await row.getByRole('button', { name: 'Cancel & Refund' }).click()
+      const dialog = page.locator('[data-slot="dialog-content"]')
+      await expect(dialog.getByRole('heading', { name: 'Cancel Post-Experience' })).toBeVisible()
+      await dialog.locator('#cancel-notes').fill(NOTES)
+      await dialog.getByRole('button', { name: 'Cancel & Full Refund' }).click()
+
+      // Drops OUT of the disputed-only queue once resolved.
+      await expect(row).toHaveCount(0, { timeout: 15_000 })
+
+      // ── Assert: booking state cancelled_post_experience; payout rejected ──
+      await expect
+        .poll(async () => (await getBookingLifecycle(fixture.bookingId))?.state, {
+          timeout: 15_000,
+        })
+        .toBe('cancelled_post_experience')
+      const lifecycle = await getBookingLifecycle(fixture.bookingId)
+      expect(lifecycle!.payoutState).toBe('rejected')
+      expect(lifecycle!.cancelledAt).not.toBeNull()
+      expect(lifecycle!.cancellationReason).toBe(NOTES)
+
+      // ── Assert: the FULL gross was credited to the Refund balance ────────
+      const creditAudit = await getRefundBalanceCreditAuditForBooking(fixture.bookingId)
+      expect(creditAudit, 'a full-refund credit must have been written').not.toBeNull()
+      expect(creditAudit!.amountRupees).toBe(GROSS)
+      expect(creditAudit!.userId).toBe(SEED_DISPUTE_CUSTOMER_ID)
+
+      const refundReq = await getRefundRequestForBooking(fixture.bookingId)
+      expect(refundReq!.state).toBe('credited')
+      expect(refundReq!.destination).toBe('refund_balance')
+      expect(refundReq!.amount).toBe(GROSS)
+
+      // ── Assert: exactly one resolve-cancel audit row; commission zero ────
+      expect(
+        await countDisputeAuditRows('booking.dispute_resolved_cancel', fixture.bookingId),
+      ).toBe(1)
+      const audit = await getLatestDisputeAudit(
+        'booking.dispute_resolved_cancel',
+        fixture.bookingId,
+      )
+      expect(audit!.actorUserId).toBe(SEED_ADMIN_ID)
+      expect(audit!.payload).toMatchObject({
+        previousState: 'disputed',
+        newState: 'cancelled_post_experience',
+        refundAmountRupees: GROSS,
+        commissionEffectivelyZero: true,
+        payoutStateChange: 'held → rejected',
+      })
+
+      await page.screenshot({
+        path: 'tests/e2e/screenshots/admin-dispute-cancelled.png',
+        fullPage: true,
+      })
+    } finally {
+      await deleteDisputedBookingFixture(fixture)
+    }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 18. Functional: admin region-closure create / delete (#25, ADR-0011)
+//
+// Drives the two admin region-closure Server Actions FROM THE UI
+// (createClosureAction / deleteClosureAction) and asserts the persisted
+// region_closures row, the inline customer-facing block (the Experience detail
+// page surfaces the closure and DISABLES Book-now per ADR-0011), and that a
+// delete RESTORES the bookable state. Also asserts the create + delete
+// audit_logs trail.
+//
+// The closure targets the bir-billing region (DISPUTE_EXPERIENCE_SLUG's
+// region) over a window covering "now", so the Experience detail page enters
+// the closed state immediately. A unique reason stamp resolves the UI-created
+// row deterministically; the test deletes it via the UI (and force-cleans in a
+// finally) so it leaves no residue for parallel specs.
+// ---------------------------------------------------------------------------
+test.describe('Admin region-closure create/delete (#25)', () => {
+  test('create blocks booking inline on the Experience page; delete restores it + audit rows', async ({
+    page,
+  }) => {
+    const exp = await getExperienceSlugRegion(DISPUTE_EXPERIENCE_SLUG)
+    expect(exp, 'seed Experience for the closure test must exist').not.toBeNull()
+    const region = exp!.regionSlug
+
+    const REASON = `E2E closure: maintenance window — reopens soon ${Date.now()}`
+    // A window that brackets "now" (start yesterday, end +60d) so the
+    // Experience detail page enters the closed state immediately and the
+    // closure overlaps the materialiser's 90-day booking window.
+    const startDate = new Date(Date.now() - 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10)
+    const endDate = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10)
+
+    let createdClosureId: string | null = null
+
+    try {
+      // ── Pre-condition: the Experience page is bookable (Book-now enabled) ─
+      await page.goto(`/experience/${DISPUTE_EXPERIENCE_SLUG}`)
+      await expect(
+        page.getByRole('link', { name: 'Book now' }),
+        'Experience must be bookable before the closure',
+      ).toBeVisible({ timeout: 15_000 })
+      await expect(page.getByText('Currently closed')).toHaveCount(0)
+
+      // ── Create the closure via the admin UI ──────────────────────────────
+      await page.goto('/admin/region-closures')
+      await expect(page.locator('h1')).toContainText('Region Closures')
+
+      await page.getByRole('button', { name: 'Add Closure' }).click()
+      const createDialog = page.locator('[data-slot="dialog-content"]')
+      await expect(createDialog.getByRole('heading', { name: 'Create Region Closure' })).toBeVisible()
+      await createDialog.locator('#region-slug').fill(region)
+      await createDialog.locator('#start-date').fill(startDate)
+      await createDialog.locator('#end-date').fill(endDate)
+      await createDialog.locator('#reason').fill(REASON)
+      await createDialog.getByRole('button', { name: 'Create', exact: true }).click()
+
+      // The new closure row appears in the table (region cell).
+      await expect(
+        page.locator('tr', { hasText: REASON }),
+      ).toBeVisible({ timeout: 15_000 })
+
+      // ── Assert: the closure persisted to region_closures (source 'admin') ─
+      const closure = await getRegionClosureByReason(region, REASON)
+      expect(closure, 'the UI-created closure must persist').not.toBeNull()
+      createdClosureId = closure!.id
+      expect(closure!.regionSlug).toBe(region)
+      expect(closure!.source).toBe('admin')
+
+      // ── Assert: exactly one create audit row with actor + window ─────────
+      const createAudit = await getLatestClosureAudit(
+        'admin.region_closure.create',
+        createdClosureId,
+      )
+      expect(createAudit!.actorUserId).toBe(SEED_ADMIN_ID)
+      expect(createAudit!.payload).toMatchObject({ regionSlug: region, reason: REASON })
+
+      // ── Assert: booking is BLOCKED inline on the Experience page ─────────
+      // (ADR-0011 — the closure is surfaced inline and Book-now is disabled.)
+      await page.goto(`/experience/${DISPUTE_EXPERIENCE_SLUG}`)
+      await expect(page.getByText('Currently closed')).toBeVisible({ timeout: 15_000 })
+      await expect(page.getByText(REASON)).toBeVisible()
+      // The Book-now link is gone — replaced by a disabled button.
+      await expect(page.getByRole('link', { name: 'Book now' })).toHaveCount(0)
+      const disabledBook = page.getByRole('button', { name: 'Book now' })
+      await expect(disabledBook).toBeVisible()
+      await expect(disabledBook).toBeDisabled()
+
+      await page.screenshot({
+        path: 'tests/e2e/screenshots/admin-region-closure-blocked.png',
+        fullPage: true,
+      })
+
+      // ── Delete the closure via the admin UI ──────────────────────────────
+      await page.goto('/admin/region-closures')
+      const closureRow = page.locator('tr', { hasText: REASON })
+      await expect(closureRow).toBeVisible()
+      await closureRow.getByRole('button', { name: 'Delete', exact: true }).click()
+      const deleteDialog = page.locator('[data-slot="dialog-content"]')
+      await expect(deleteDialog.getByRole('heading', { name: 'Delete Region Closure' })).toBeVisible()
+      await deleteDialog.getByRole('button', { name: 'Delete', exact: true }).click()
+
+      // The row drops out of the table.
+      await expect(closureRow).toHaveCount(0, { timeout: 15_000 })
+
+      // ── Assert: the closure row is gone from the DB ──────────────────────
+      await expect
+        .poll(async () => await getRegionClosureById(createdClosureId!), { timeout: 15_000 })
+        .toBeNull()
+
+      // ── Assert: exactly one delete audit row with actor ──────────────────
+      const deleteAudit = await getLatestClosureAudit(
+        'admin.region_closure.delete',
+        createdClosureId,
+      )
+      expect(deleteAudit!.actorUserId).toBe(SEED_ADMIN_ID)
+      expect(deleteAudit!.payload).toMatchObject({ regionSlug: region })
+
+      // ── Assert: the Experience page is bookable AGAIN (closure restored) ─
+      await page.goto(`/experience/${DISPUTE_EXPERIENCE_SLUG}`)
+      await expect(
+        page.getByRole('link', { name: 'Book now' }),
+        'deleting the closure must restore the bookable state',
+      ).toBeVisible({ timeout: 15_000 })
+      await expect(page.getByText('Currently closed')).toHaveCount(0)
+      createdClosureId = null
+    } finally {
+      // Force-clean in case an assertion failed before the UI delete landed.
+      if (createdClosureId) {
+        const stale = await getRegionClosureById(createdClosureId)
+        if (stale) {
+          const { deleteRegionClosure } = await import('../../helpers/db-assertions')
+          await deleteRegionClosure(createdClosureId)
+        }
+      }
+    }
   })
 })

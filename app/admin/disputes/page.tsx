@@ -79,7 +79,7 @@ export default async function AdminDisputesPage() {
                 {rows.map((row) => {
                   const grossRupees = Math.floor(Number(row.grossTotalSnapshot))
                   return (
-                    <TableRow key={row.id}>
+                    <TableRow key={row.id} data-booking-id={row.id}>
                       <TableCell>
                         <div className="text-sm font-medium">{row.customerName}</div>
                         <div className="text-xs text-muted-foreground">{row.customerEmail}</div>

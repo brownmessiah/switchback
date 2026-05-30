@@ -1540,6 +1540,264 @@ export async function getLatestPayoutAudit(
   })
 }
 
+// ---------------------------------------------------------------------------
+// Admin dispute-resolution assertions (Issue #25)
+//
+// These drive the two admin dispute Server Actions FROM THE UI
+// (resolveAsCompletedAction / resolveAsCancelledAction) and assert the
+// persisted bookings.state + payout_state transitions per ADR-0003, the
+// optional partial refund / full refund credited to the Customer's Refund
+// balance, and the append-only audit_logs trail.
+//
+// Each resolution consumes its target disputed Booking (one-way state
+// transition), so the spec stages TWO dedicated disputed-Booking fixtures
+// in-test (insertDisputedBookingFixture) on a DEDICATED past slot owned by
+// an existing seed customer, then removes the staged rows in a finally so
+// seed determinism for parallel specs is preserved. The seed's own single
+// disputed Booking (#19) is left untouched.
+// ---------------------------------------------------------------------------
+
+export interface DisputedBookingFixture {
+  bookingId: string
+  slotId: string
+  customerUserId: string
+  grossRupees: number
+}
+
+/**
+ * Stage a `disputed` Booking on a fresh, dedicated availability_slot for the
+ * given Experience, owned by `customerUserId`, with payout_state `held`
+ * (mirroring how a real Dispute freezes the Payout timer per ADR-0003). The
+ * slot start_at is pinned to a fixed UTC hour offset by `slotHourOffset` so
+ * two staged fixtures never collide on the (experience_id, start_at) unique
+ * pair. Returns the ids + gross so the test can target the row and assert the
+ * refund amount. Caller MUST remove it with deleteDisputedBookingFixture in a
+ * finally.
+ */
+export async function insertDisputedBookingFixture(input: {
+  experienceId: string
+  customerUserId: string
+  grossRupees: number
+  participantCount: number
+  /** Unique UTC hour (e.g. 11, 13) so staged slots never collide. */
+  slotHourUtc: number
+}): Promise<DisputedBookingFixture> {
+  return withSql(async (sql) => {
+    // A deterministic PAST slot (5 days ago) at the caller's unique UTC hour —
+    // disjoint from the 02:00/04:00/06:00-UTC seed slots and the July-2026
+    // availability window, so it never clobbers another spec's fixtures.
+    const start = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
+    start.setUTCHours(input.slotHourUtc, 0, 0, 0)
+    const startIso = start.toISOString()
+    const endIso = new Date(start.getTime() + 4 * 60 * 60 * 1000).toISOString()
+
+    const [slot] = await sql<{ id: string }[]>`
+      INSERT INTO availability_slots
+        (experience_id, start_at, end_at, capacity, capacity_taken)
+      VALUES (${input.experienceId}, ${startIso}::timestamptz,
+              ${endIso}::timestamptz, 8, ${input.participantCount})
+      RETURNING id
+    `
+
+    const pricePerParticipant = Math.floor(input.grossRupees / input.participantCount)
+
+    const [booking] = await sql<{ id: string }[]>`
+      INSERT INTO bookings (
+        customer_user_id, experience_id, slot_id, participant_count,
+        state, payment_mode, gross_total_snapshot,
+        price_per_participant_snapshot, pricing_basis_snapshot,
+        commission_rate_snapshot, commission_basis_snapshot,
+        cancellation_preset_snapshot, vendor_pan_snapshot,
+        vendor_is_resident_snapshot, payout_method_snapshot,
+        payout_destination_snapshot, payout_state, confirmed_at
+      )
+      VALUES (
+        ${input.customerUserId}, ${input.experienceId}, ${slot.id},
+        ${input.participantCount}, 'disputed', 'full_upfront',
+        ${String(input.grossRupees)}, ${String(pricePerParticipant)},
+        'base_price', '20.00', 'platform_default', 'flexible',
+        'GHIJK5678L', true, 'bank_account',
+        ${sql.json({ accountHolder: 'E2E Dispute Vendor', ifsc: 'HDFC0000123', accountNumber: '1234567890' })},
+        'held', NOW() - interval '6 days'
+      )
+      RETURNING id
+    `
+
+    return {
+      bookingId: booking.id,
+      slotId: slot.id,
+      customerUserId: input.customerUserId,
+      grossRupees: input.grossRupees,
+    }
+  })
+}
+
+/**
+ * Remove a staged disputed-Booking fixture (its refund_requests, then the
+ * booking, then the slot) so the in-test fixture leaves no residue. Order
+ * respects the ON DELETE RESTRICT FKs (refund_requests → booking → slot).
+ */
+export async function deleteDisputedBookingFixture(
+  fixture: DisputedBookingFixture,
+): Promise<void> {
+  await withSql(async (sql) => {
+    await sql`DELETE FROM payments WHERE booking_id = ${fixture.bookingId}`
+    await sql`DELETE FROM refund_requests WHERE booking_id = ${fixture.bookingId}`
+    await sql`DELETE FROM bookings WHERE id = ${fixture.bookingId}`
+    await sql`DELETE FROM availability_slots WHERE id = ${fixture.slotId}`
+  })
+}
+
+/**
+ * Fetch the most-recent dispute-resolution audit payload + actor for a
+ * Booking. `action` is `booking.dispute_resolved_complete` or
+ * `booking.dispute_resolved_cancel` (admin-dispute-actions.ts).
+ */
+export async function getLatestDisputeAudit(
+  action: string,
+  bookingId: string,
+): Promise<{ actorUserId: string | null; payload: Record<string, unknown> } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { actor_user_id: string | null; payload: Record<string, unknown> }[]
+    >`
+      SELECT actor_user_id, payload
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_type = 'booking'
+        AND entity_id = ${bookingId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return { actorUserId: rows[0].actor_user_id, payload: rows[0].payload }
+  })
+}
+
+/** Count dispute-resolution audit rows for a Booking (proves exactly one). */
+export async function countDisputeAuditRows(
+  action: string,
+  bookingId: string,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT COUNT(*) AS n
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_type = 'booking'
+        AND entity_id = ${bookingId}
+    `
+    return Number(rows[0]?.n ?? 0)
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Admin region-closure assertions (Issue #25, ADR-0011)
+//
+// These drive the two admin region-closure Server Actions FROM THE UI
+// (createClosureAction / deleteClosureAction) and assert the persisted
+// region_closures row + the inline customer-facing block (the slot
+// materialiser skips closed dates; the Experience detail page surfaces the
+// closure and disables Book-now per ADR-0011) + the audit_logs trail. The
+// closure targets a region whose closure no OTHER admin test asserts, and is
+// deleted via the UI so it leaves no residue.
+// ---------------------------------------------------------------------------
+
+export interface RegionClosureRow {
+  id: string
+  regionSlug: string
+  reason: string
+  source: string
+}
+
+/**
+ * Fetch the most-recently-created region_closure for a region whose reason
+ * matches `reason` (the test stamps a unique reason so it resolves its own
+ * UI-created row deterministically), or null.
+ */
+export async function getRegionClosureByReason(
+  regionSlug: string,
+  reason: string,
+): Promise<RegionClosureRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { id: string; region_slug: string; reason: string; source: string }[]
+    >`
+      SELECT id, region_slug, reason, source
+      FROM region_closures
+      WHERE region_slug = ${regionSlug}
+        AND reason = ${reason}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return {
+      id: rows[0].id,
+      regionSlug: rows[0].region_slug,
+      reason: rows[0].reason,
+      source: rows[0].source,
+    }
+  })
+}
+
+/** Read a region_closure by id, or null if it does not exist (proves delete). */
+export async function getRegionClosureById(
+  id: string,
+): Promise<RegionClosureRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { id: string; region_slug: string; reason: string; source: string }[]
+    >`
+      SELECT id, region_slug, reason, source
+      FROM region_closures
+      WHERE id = ${id}
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return {
+      id: rows[0].id,
+      regionSlug: rows[0].region_slug,
+      reason: rows[0].reason,
+      source: rows[0].source,
+    }
+  })
+}
+
+/** Fetch the most-recent admin region-closure audit payload + actor, or null. */
+export async function getLatestClosureAudit(
+  action: string,
+  closureId: string,
+): Promise<{ actorUserId: string | null; payload: Record<string, unknown> } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { actor_user_id: string | null; payload: Record<string, unknown> }[]
+    >`
+      SELECT actor_user_id, payload
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_type = 'region_closure'
+        AND entity_id = ${closureId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    if (!rows[0]) return null
+    return { actorUserId: rows[0].actor_user_id, payload: rows[0].payload }
+  })
+}
+
+/** Resolve a published Experience's slug + region by slug (for the closure test). */
+export async function getExperienceSlugRegion(
+  slug: string,
+): Promise<{ id: string; regionSlug: string } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ id: string; region_slug: string }[]>`
+      SELECT id, region_slug FROM experiences WHERE slug = ${slug} LIMIT 1
+    `
+    if (!rows[0]) return null
+    return { id: rows[0].id, regionSlug: rows[0].region_slug }
+  })
+}
+
 /**
  * Read the commission_rate_snapshot of the earliest existing Booking owned by
  * a Vendor (joined through experiences). Used to prove ADR-0008 snapshot

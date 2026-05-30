@@ -648,4 +648,46 @@ test.describe('Error pages', () => {
       fullPage: true,
     })
   })
+
+  // Direction B "The Refund Calculator" (#68): the interactive hero computes the
+  // EXACT refund the money path would pay, by delegating to the same pure
+  // `quoteRefund` (lib/payments/refund-policy.ts) — never a reimplementation.
+  // Behaviour-level contract: drive the calculator with a known case and assert
+  // the displayed rupee figure + slab match the expected quoteRefund result.
+  // Flexible ₹1000, cancelling 48h before start → free window → full ₹1,000.
+  test('refund calculator computes the exact quoteRefund figure for a known case', async ({
+    page,
+  }) => {
+    await page.goto('/cancellation-policy')
+
+    const calc = page.getByTestId('refund-calculator')
+    await expect(calc).toBeVisible()
+
+    // Empty state shows a neutral prompt, never NaN.
+    await expect(page.getByTestId('calc-prompt')).toBeVisible()
+
+    await page.getByTestId('calc-amount').fill('1000')
+    await page.getByTestId('calc-preset').selectOption('flexible')
+    // 48h before start (free window for Flexible, freeHours=24) → full refund.
+    await page.getByTestId('calc-start').fill('2026-06-10T09:00')
+    await page.getByTestId('calc-cancel').fill('2026-06-08T09:00')
+
+    const slab = page.getByTestId('calc-slab')
+    await expect(slab).toHaveAttribute('data-basis', 'free_window')
+    await expect(page.getByTestId('calc-refund')).toHaveText('₹1,000')
+
+    // Move to the half-refund window (12h before, ≥ halfHours=2) → 50% = ₹500.
+    await page.getByTestId('calc-cancel').fill('2026-06-09T21:00')
+    await expect(slab).toHaveAttribute('data-basis', '50%_window')
+    await expect(page.getByTestId('calc-refund')).toHaveText('₹500')
+
+    // Move inside the no-refund window (1h before, < halfHours) → ₹0.
+    await page.getByTestId('calc-cancel').fill('2026-06-10T08:00')
+    await expect(slab).toHaveAttribute('data-basis', 'no_refund_window')
+    await expect(page.getByTestId('calc-refund')).toHaveText('₹0')
+
+    // Cancelling on/after start is outside-policy → honest dispute notice, no NaN.
+    await page.getByTestId('calc-cancel').fill('2026-06-10T10:00')
+    await expect(page.getByTestId('calc-outside')).toBeVisible()
+  })
 })

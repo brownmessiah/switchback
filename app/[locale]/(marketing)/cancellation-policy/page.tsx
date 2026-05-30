@@ -1,9 +1,12 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import type { ReactElement } from 'react'
+import { CheckCircle2, Clock, CircleSlash } from 'lucide-react'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 import { generateAlternates } from '@/lib/seo/hreflang'
+
+import { RefundCalculatorIsland } from './refund-calculator-island'
 
 /**
  * Cancellation policy SEO + trust content per ADR-0005.
@@ -17,7 +20,13 @@ import { generateAlternates } from '@/lib/seo/hreflang'
  *      is present in the site header + footer and every booking
  *      confirmation. This page is the canonical destination.
  *
- * Content is fully static — no DB query. Server Component, ISR n/a.
+ * Direction B ("The Refund Calculator", #68): an interactive pre-login refund
+ * quote — the single highest-differentiation element — is the hero, sitting
+ * ABOVE the reference policy doc. The calculator computes the EXACT figure via
+ * the same pure `quoteRefund` the money path uses (no reimplementation). The
+ * reference doc below is redesigned onto the DESIGN.md token system (status
+ * colours per slab, capped measure, display heading face). Refund prose is
+ * still a Server Component; only the calculator is a client island.
  */
 
 interface PageProps {
@@ -57,58 +66,70 @@ export default async function CancellationPolicyPage({ params }: PageProps): Pro
   return (
     <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
       <header className="mb-10">
-        <nav aria-label="Breadcrumb" className="mb-4 text-sm text-zinc-500">
-          <Link href="/" className="hover:text-zinc-700 dark:hover:text-zinc-300">
+        <nav aria-label="Breadcrumb" className="mb-4 text-sm text-muted-foreground">
+          <Link href="/" className="transition-colors hover:text-primary-strong">
             {tCommon('breadcrumb.home')}
           </Link>{' '}
           <span aria-hidden>&#8250;</span>{' '}
-          <span aria-current="page" className="text-zinc-700 dark:text-zinc-300">
+          <span aria-current="page" className="text-foreground">
             {t('breadcrumb.refundPolicy')}
           </span>
         </nav>
-        <h1 className="text-3xl font-semibold leading-tight tracking-tight text-zinc-900 sm:text-4xl dark:text-zinc-50">
+        <h1 className="font-[family-name:var(--font-heading)] text-h1 font-semibold text-foreground">
           {t('hero.title')}
         </h1>
-        <p className="mt-4 text-base text-zinc-600 dark:text-zinc-400">
+        <p className="mt-4 max-w-[var(--measure)] text-base text-muted-foreground">
           {t('hero.description')}
         </p>
       </header>
 
+      {/* Direction B hero — interactive Refund Calculator, ABOVE the doc. */}
+      <RefundCalculatorIsland />
+
       <section aria-label={t('presets.heading')} className="mb-12">
-        <h2 className="mb-4 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+        <h2 className="mb-4 font-[family-name:var(--font-heading)] text-h3 font-semibold text-foreground">
           {t('presets.heading')}
         </h2>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-[var(--radius-card)] border border-border">
           <table className="w-full border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-zinc-300 dark:border-zinc-700">
-                <th className="py-3 pr-4 font-semibold text-zinc-700 dark:text-zinc-300">
+              <tr className="border-b border-border bg-surface-2">
+                <th className="px-4 py-3 font-semibold text-foreground">
                   {t('presets.columnPreset')}
                 </th>
-                <th className="py-3 pr-4 font-semibold text-zinc-700 dark:text-zinc-300">
-                  {t('presets.columnFullRefund')}
+                <th className="px-4 py-3 font-semibold text-foreground">
+                  <span className="inline-flex items-center gap-1.5">
+                    <CheckCircle2 className="size-4 text-success" aria-hidden />
+                    {t('presets.columnFullRefund')}
+                  </span>
                 </th>
-                <th className="py-3 pr-4 font-semibold text-zinc-700 dark:text-zinc-300">
-                  {t('presets.columnHalfRefund')}
+                <th className="px-4 py-3 font-semibold text-foreground">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock className="size-4 text-warning" aria-hidden />
+                    {t('presets.columnHalfRefund')}
+                  </span>
                 </th>
-                <th className="py-3 font-semibold text-zinc-700 dark:text-zinc-300">
-                  {t('presets.columnAfter')}
+                <th className="px-4 py-3 font-semibold text-foreground">
+                  <span className="inline-flex items-center gap-1.5">
+                    <CircleSlash className="size-4 text-destructive" aria-hidden />
+                    {t('presets.columnAfter')}
+                  </span>
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            <tbody className="divide-y divide-border">
               {PRESET_KEYS.map((row) => (
-                <tr key={row.key}>
-                  <td className="py-3 pr-4 font-medium text-zinc-900 dark:text-zinc-50">
+                <tr key={row.key} className="hover:bg-muted/40">
+                  <td className="px-4 py-3 font-medium text-foreground">
                     {t(`presets.${row.key}`)}
                   </td>
-                  <td className="py-3 pr-4 text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-success">
                     {t(`presets.${row.key}Full`)}
                   </td>
-                  <td className="py-3 pr-4 text-zinc-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-warning">
                     {t(`presets.${row.key}Half`)}
                   </td>
-                  <td className="py-3 text-zinc-700 dark:text-zinc-300">{t('presets.noRefund')}</td>
+                  <td className="px-4 py-3 text-destructive">{t('presets.noRefund')}</td>
                 </tr>
               ))}
             </tbody>
@@ -117,19 +138,19 @@ export default async function CancellationPolicyPage({ params }: PageProps): Pro
       </section>
 
       <section aria-label={t('examples.heading')} className="mb-12">
-        <h2 className="mb-4 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+        <h2 className="mb-4 font-[family-name:var(--font-heading)] text-h3 font-semibold text-foreground">
           {t('examples.heading')}
         </h2>
         <ul className="space-y-5">
           {PRESET_KEYS.map((row) => (
             <li
               key={row.key}
-              className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"
+              className="rounded-[var(--radius-card)] border border-border bg-surface-1 p-5 shadow-[var(--shadow-sm)]"
             >
-              <h3 className="text-base font-medium text-zinc-900 dark:text-zinc-50">
+              <h3 className="text-base font-medium text-foreground">
                 {t(`presets.${row.key}`)} — {t(`examples.${row.key}Title`)}
               </h3>
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              <p className="mt-2 max-w-[var(--measure)] text-sm text-muted-foreground">
                 {t(`examples.${row.key}Body`)}
               </p>
             </li>
@@ -138,31 +159,31 @@ export default async function CancellationPolicyPage({ params }: PageProps): Pro
       </section>
 
       <section aria-label={t('specialCases.heading')} className="mb-12">
-        <h2 className="mb-4 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+        <h2 className="mb-4 font-[family-name:var(--font-heading)] text-h3 font-semibold text-foreground">
           {t('specialCases.heading')}
         </h2>
         <dl className="space-y-5">
           <div>
-            <dt className="font-medium text-zinc-900 dark:text-zinc-50">
+            <dt className="font-medium text-foreground">
               {t('specialCases.vendorCancelledTitle')}
             </dt>
-            <dd className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            <dd className="mt-1 max-w-[var(--measure)] text-sm text-muted-foreground">
               {t('specialCases.vendorCancelledBody')}
             </dd>
           </div>
           <div>
-            <dt className="font-medium text-zinc-900 dark:text-zinc-50">
+            <dt className="font-medium text-foreground">
               {t('specialCases.outsideWindowTitle')}
             </dt>
-            <dd className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            <dd className="mt-1 max-w-[var(--measure)] text-sm text-muted-foreground">
               {t('specialCases.outsideWindowBody')}
             </dd>
           </div>
           <div>
-            <dt className="font-medium text-zinc-900 dark:text-zinc-50">
+            <dt className="font-medium text-foreground">
               {t('specialCases.customPoliciesTitle')}
             </dt>
-            <dd className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            <dd className="mt-1 max-w-[var(--measure)] text-sm text-muted-foreground">
               {t('specialCases.customPoliciesBody')}
             </dd>
           </div>
@@ -170,19 +191,19 @@ export default async function CancellationPolicyPage({ params }: PageProps): Pro
       </section>
 
       <section aria-label={t('refundSla.heading')} className="mb-12">
-        <h2 className="mb-4 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+        <h2 className="mb-4 font-[family-name:var(--font-heading)] text-h3 font-semibold text-foreground">
           {t('refundSla.heading')}
         </h2>
-        <p className="text-base text-zinc-700 dark:text-zinc-300">
+        <p className="max-w-[var(--measure)] text-base text-foreground">
           {t('refundSla.body')}
         </p>
       </section>
 
       <section aria-label={t('questions.heading')}>
-        <h2 className="mb-4 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+        <h2 className="mb-4 font-[family-name:var(--font-heading)] text-h3 font-semibold text-foreground">
           {t('questions.heading')}
         </h2>
-        <p className="text-base text-zinc-700 dark:text-zinc-300">
+        <p className="max-w-[var(--measure)] text-base text-foreground">
           {t('questions.body', {
             email: emailAddress,
           }).split(emailAddress).map((part, i, arr) =>
@@ -191,7 +212,7 @@ export default async function CancellationPolicyPage({ params }: PageProps): Pro
                 {part}
                 <a
                   href={`mailto:${emailAddress}`}
-                  className="font-medium text-zinc-900 underline underline-offset-2 dark:text-zinc-50"
+                  className="font-medium text-primary-strong underline underline-offset-2"
                 >
                   {emailAddress}
                 </a>

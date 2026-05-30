@@ -369,6 +369,28 @@
     "breadcrumb": {
       "refundPolicy": "Refund policy"
     },
+    "calculator": {
+      "eyebrow": "Refund calculator",
+      "heading": "See your exact refund before you book",
+      "description": "Enter a booking total, pick the preset, and choose when you would cancel. We run the same refund calculation the money path uses — so the figure here is the figure you would get.",
+      "amountLabel": "Booking amount",
+      "amountPlaceholder": "e.g. 1000",
+      "presetLabel": "Cancellation preset",
+      "presetFlexible": "Flexible policy",
+      "presetModerate": "Moderate policy",
+      "presetStrict": "Strict policy",
+      "startLabel": "Experience starts",
+      "cancelLabel": "You cancel on",
+      "resultLabel": "Computed refund",
+      "feeLabel": "Cancellation fee",
+      "slabFree": "Free-cancellation window — full refund",
+      "slabHalf": "Half-refund window — 50% back",
+      "slabNone": "No-refund window",
+      "promptEmpty": "Enter an amount and both dates to see your refund.",
+      "promptInvalid": "Your cancellation is on or after the start time, so it falls outside the policy window and would open a support dispute rather than an automatic refund.",
+      "walletNoteHeading": "Where the refund lands",
+      "walletNoteBody": "An eligible refund credits your Refund balance — the cash-returnable bucket of your two-bucket Wallet. You can spend it on a future booking or cash it out to your original payment method (5–7 working days). It is not Outvers credit, which is promotional and spendable on Outvers only."
+    },
     "hero": {
       "title": "Refund and cancellation policy",
       "description": "Every Outvers Experience has one of three named cancellation presets — Flexible, Moderate, or Strict. The preset is locked when you book and is shown on every Experience card, the checkout page, the confirmation email, and the WhatsApp confirmation. Refund math is a pure function of the preset, your cancellation timestamp, and the booking total. No human review inside the policy window."

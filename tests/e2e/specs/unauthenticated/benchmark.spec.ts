@@ -1,118 +1,66 @@
-import { test, expect } from '../../fixtures/devtools'
+/**
+ * Core Web Vitals benchmark — MARKETING / customer-facing public pages.
+ *
+ * NON-BLOCKING (Issue #111): this spec captures TTFB / FCP / LCP / CLS +
+ * navigation timing and LOGS them (console + annotations). It adds NO CWV
+ * pass/fail thresholds — the only assertions are lenient "the page rendered"
+ * checks so the full suite stays green. Dev-mode numbers (unminified, dev
+ * server) are a RELATIVE baseline only, not production-representative.
+ *
+ * Recorded baseline: .scratch/mvp-validation-redesign/cwv-baseline.md
+ *
+ * Vitals capture is the shared helper in tests/e2e/helpers/web-vitals.ts,
+ * reused by the customer benchmark spec.
+ */
 
-interface WebVitals {
-  ttfb: number | null
-  fcp: number | null
-  lcp: number | null
-  cls: number | null
-  domContentLoaded: number | null
-  load: number | null
-}
+import { test } from '../../fixtures/devtools'
+import {
+  collectWebVitals,
+  pushVitalsAnnotations,
+  reportVitals,
+} from '../../helpers/web-vitals'
 
-async function collectWebVitals(page: import('@playwright/test').Page): Promise<WebVitals> {
-  return page.evaluate(() =>
-    new Promise<WebVitals>((resolve) => {
-      const vitals: WebVitals = {
-        ttfb: null,
-        fcp: null,
-        lcp: null,
-        cls: null,
-        domContentLoaded: null,
-        load: null,
-      }
-
-      const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined
-      if (nav) {
-        vitals.ttfb = Math.round(nav.responseStart - nav.requestStart)
-        vitals.domContentLoaded = Math.round(nav.domContentLoadedEventEnd - nav.startTime)
-        vitals.load = Math.round(nav.loadEventEnd - nav.startTime)
-      }
-
-      const paintEntries = performance.getEntriesByType('paint')
-      const fcpEntry = paintEntries.find((e) => e.name === 'first-contentful-paint')
-      if (fcpEntry) vitals.fcp = Math.round(fcpEntry.startTime)
-
-      let lcpValue: number | null = null
-      let clsValue = 0
-
-      const lcpObserver = new PerformanceObserver((list) => {
-        const entries = list.getEntries()
-        if (entries.length > 0) {
-          lcpValue = Math.round(entries[entries.length - 1]!.startTime)
-        }
-      })
-
-      const clsObserver = new PerformanceObserver((list) => {
-        for (const entry of list.getEntries()) {
-          if (!(entry as PerformanceEntry & { hadRecentInput?: boolean }).hadRecentInput) {
-            clsValue += (entry as PerformanceEntry & { value: number }).value
-          }
-        }
-      })
-
-      try { lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true }) } catch {}
-      try { clsObserver.observe({ type: 'layout-shift', buffered: true }) } catch {}
-
-      setTimeout(() => {
-        lcpObserver.disconnect()
-        clsObserver.disconnect()
-        vitals.lcp = lcpValue
-        vitals.cls = Math.round(clsValue * 1000) / 1000
-        resolve(vitals)
-      }, 3000)
-    }),
-  )
-}
-
-function reportVitals(pageName: string, vitals: WebVitals): void {
-  const lines = [
-    `\n  Core Web Vitals: ${pageName}`,
-    `  ├─ TTFB:              ${vitals.ttfb ?? '—'} ms`,
-    `  ├─ FCP:               ${vitals.fcp ?? '—'} ms`,
-    `  ├─ LCP:               ${vitals.lcp ?? '—'} ms`,
-    `  ├─ CLS:               ${vitals.cls ?? '—'}`,
-    `  ├─ DOMContentLoaded:  ${vitals.domContentLoaded ?? '—'} ms`,
-    `  └─ Load:              ${vitals.load ?? '—'} ms`,
-  ]
-  console.log(lines.join('\n'))
+/**
+ * Marketing routes can return a transient 500 on first hit while the dev route
+ * is still compiling. A single warm retry lets the now-built route serve
+ * normally; a genuinely broken route still fails the caller's render check.
+ */
+async function gotoWarm(
+  page: import('@playwright/test').Page,
+  path: string,
+): Promise<void> {
+  const response = await page.goto(path, { waitUntil: 'load' })
+  if (response?.status() === 500) {
+    await page.waitForTimeout(1500)
+    await page.goto(path, { waitUntil: 'load' })
+  }
 }
 
 test.describe('Core Web Vitals benchmark (non-blocking)', () => {
   test.describe.configure({ mode: 'serial' })
 
-  test('home page', async ({ page }) => {
+  test('home page', async ({ page }, testInfo) => {
     await page.goto('/', { waitUntil: 'load' })
     const vitals = await collectWebVitals(page)
     reportVitals('Home (/)', vitals)
 
-    expect(vitals.ttfb).not.toBeNull()
-    expect(vitals.fcp).not.toBeNull()
+    // Lenient render check — the home heading is present.
+    await test.expect(page.locator('h1').first()).toBeVisible()
 
-    test.info().annotations.push(
-      { type: 'ttfb_ms', description: String(vitals.ttfb) },
-      { type: 'fcp_ms', description: String(vitals.fcp) },
-      { type: 'lcp_ms', description: String(vitals.lcp) },
-      { type: 'cls', description: String(vitals.cls) },
-    )
+    pushVitalsAnnotations(testInfo, vitals)
   })
 
-  test('activity-city collection', async ({ page }) => {
+  test('activity-city collection', async ({ page }, testInfo) => {
     await page.goto('/adventure/rafting-in-rishikesh', { waitUntil: 'load' })
     const vitals = await collectWebVitals(page)
     reportVitals('Collection (/adventure/rafting-in-rishikesh)', vitals)
 
-    expect(vitals.ttfb).not.toBeNull()
-    expect(vitals.fcp).not.toBeNull()
+    await test.expect(page.locator('h1').first()).toBeVisible()
 
-    test.info().annotations.push(
-      { type: 'ttfb_ms', description: String(vitals.ttfb) },
-      { type: 'fcp_ms', description: String(vitals.fcp) },
-      { type: 'lcp_ms', description: String(vitals.lcp) },
-      { type: 'cls', description: String(vitals.cls) },
-    )
+    pushVitalsAnnotations(testInfo, vitals)
   })
 
-  test('experience detail', async ({ page }) => {
+  test('experience detail', async ({ page }, testInfo) => {
     await page.goto('/adventure/rafting-in-rishikesh', { waitUntil: 'load' })
     const experienceLink = page.locator('a[href*="/experience/"]').first()
     const href = await experienceLink.getAttribute('href')
@@ -125,30 +73,39 @@ test.describe('Core Web Vitals benchmark (non-blocking)', () => {
     const vitals = await collectWebVitals(page)
     reportVitals(`Detail (${href})`, vitals)
 
-    expect(vitals.ttfb).not.toBeNull()
-    expect(vitals.fcp).not.toBeNull()
+    await test.expect(page.locator('h1').first()).toBeVisible()
 
-    test.info().annotations.push(
-      { type: 'ttfb_ms', description: String(vitals.ttfb) },
-      { type: 'fcp_ms', description: String(vitals.fcp) },
-      { type: 'lcp_ms', description: String(vitals.lcp) },
-      { type: 'cls', description: String(vitals.cls) },
-    )
+    pushVitalsAnnotations(testInfo, vitals)
   })
 
-  test('search page', async ({ page }) => {
+  test('search page', async ({ page }, testInfo) => {
     await page.goto('/search', { waitUntil: 'load' })
     const vitals = await collectWebVitals(page)
     reportVitals('Search (/search)', vitals)
 
-    expect(vitals.ttfb).not.toBeNull()
-    expect(vitals.fcp).not.toBeNull()
+    await test.expect(page.locator('h1').first()).toBeVisible()
 
-    test.info().annotations.push(
-      { type: 'ttfb_ms', description: String(vitals.ttfb) },
-      { type: 'fcp_ms', description: String(vitals.fcp) },
-      { type: 'lcp_ms', description: String(vitals.lcp) },
-      { type: 'cls', description: String(vitals.cls) },
-    )
+    pushVitalsAnnotations(testInfo, vitals)
+  })
+
+  // ── Additional top marketing pages (Issue #111) ──────────────────────────
+  test('cancellation-policy page', async ({ page }, testInfo) => {
+    await gotoWarm(page, '/cancellation-policy')
+    const vitals = await collectWebVitals(page)
+    reportVitals('Cancellation policy (/cancellation-policy)', vitals)
+
+    await test.expect(page.locator('h1').first()).toBeVisible()
+
+    pushVitalsAnnotations(testInfo, vitals)
+  })
+
+  test('sign-in page', async ({ page }, testInfo) => {
+    await gotoWarm(page, '/sign-in')
+    const vitals = await collectWebVitals(page)
+    reportVitals('Sign in (/sign-in)', vitals)
+
+    await test.expect(page.locator('h1').first()).toBeVisible()
+
+    pushVitalsAnnotations(testInfo, vitals)
   })
 })

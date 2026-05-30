@@ -2253,7 +2253,12 @@ test.describe('Admin promo CRUD (#26)', () => {
     await expect(row).toBeVisible()
 
     // ── Deactivate ───────────────────────────────────────────────────────
+    // #95: deactivating stops a LIVE promo, so it is gated behind a confirm
+    // Dialog (DESIGN.md §4 A4). Open the confirm, then commit from inside it.
     await row.getByRole('button', { name: 'Deactivate' }).click()
+    const deactivateConfirm = page.getByTestId('promo-deactivate-confirm')
+    await expect(deactivateConfirm).toBeVisible()
+    await deactivateConfirm.getByRole('button', { name: 'Deactivate' }).click()
     await expect
       .poll(async () => (await getPromoCodeById(flatId!))?.active, { timeout: 15_000 })
       .toBe(false)
@@ -2277,7 +2282,12 @@ test.describe('Admin promo CRUD (#26)', () => {
     await page.goto('/admin/promo')
     const row = page.locator('tr').filter({ hasText: PROMO_EXPIRY })
     await expect(row).toBeVisible()
+    // #95: deleting permanently removes the promo, so it is gated behind a
+    // confirm Dialog (DESIGN.md §4 A4). Open the confirm, then commit from it.
     await row.getByRole('button', { name: 'Delete' }).click()
+    const deleteConfirm = page.getByTestId('promo-delete-confirm')
+    await expect(deleteConfirm).toBeVisible()
+    await deleteConfirm.getByRole('button', { name: 'Delete' }).click()
 
     // After the action + revalidation the deleted row drops out of the table.
     await expect(row).toHaveCount(0, { timeout: 15_000 })
@@ -2335,6 +2345,20 @@ test.describe('Admin loyalty grant — Outvers credit bucket + expiry (#26)', ()
       await page.selectOption('#balanceType', 'outvers_credit')
       await page.locator('#reason').fill(`E2E goodwill loyalty grant ${Date.now()}`)
       await page.getByRole('button', { name: 'Grant Credit' }).click()
+
+      // #96: the grant is a MONEY action, gated behind the shared A4
+      // ConfirmMoneyDialog (DESIGN.md §4 A4). The confirm restates the EXACT ₹
+      // figure and that it lands in the Outvers credit bucket WITH expiry
+      // (ADR-0004), NOT the Refund balance — a misclick must NOT grant money.
+      const grantConfirm = page.getByTestId('grant-credit-confirm')
+      await expect(grantConfirm).toBeVisible()
+      await expect(grantConfirm.getByTestId('confirm-money-amount')).toHaveText(
+        `₹${GRANT_RUPEES}`,
+      )
+      await expect(grantConfirm).toContainText(/Outvers credit/i)
+      await expect(grantConfirm).toContainText(/expir/i)
+      // Commit the grant from the dialog's explicit Confirm.
+      await grantConfirm.getByRole('button', { name: 'Grant Credit' }).click()
 
       // Inline success state surfaces the new wallet_transaction id.
       await expect(page.getByText(/Credit granted\. Transaction:/)).toBeVisible({

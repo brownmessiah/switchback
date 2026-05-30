@@ -48,6 +48,8 @@ export interface ConfirmMoneyDialogProps {
   confirmDisabled?: boolean
   /** Optional error string rendered below the body. */
   error?: string | null
+  /** Optional test id placed on the DialogContent (e.g. "grant-credit-confirm"). */
+  dialogTestId?: string
 }
 
 export function ConfirmMoneyDialog({
@@ -63,10 +65,11 @@ export function ConfirmMoneyDialog({
   confirmVariant = 'default',
   confirmDisabled = false,
   error,
+  dialogTestId,
 }: ConfirmMoneyDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent data-testid={dialogTestId}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>

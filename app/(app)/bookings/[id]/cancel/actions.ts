@@ -1,9 +1,16 @@
 'use server'
 
+import { eq } from 'drizzle-orm'
 import { headers } from 'next/headers'
 
 import { db } from '@/db/client'
+import { bookings } from '@/db/schema/bookings'
+import { experiences } from '@/db/schema/experiences'
 import { auth } from '@/lib/auth'
+import {
+  notifyBookingCancelled,
+  safeNotify,
+} from '@/lib/notifications/booking-events'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 import { processRefund, RefundFlowError } from '@/lib/payments/refund-flow'
 
@@ -65,6 +72,30 @@ export async function executeCancelBooking(
         actorUserId: args.actorUserId,
       }),
     )
+
+    // ── Fire-and-forget cancellation notification (post-commit) ──────
+    // Runs OUTSIDE the refund transaction above so a notification write
+    // can never roll back the cancel/refund/wallet-credit. The customer
+    // (booking owner) is notified; the experience title is resolved with
+    // a read-only query.
+    await safeNotify('booking_cancelled', async () => {
+      const [row] = await database
+        .select({
+          customerUserId: bookings.customerUserId,
+          experienceTitle: experiences.title,
+        })
+        .from(bookings)
+        .innerJoin(experiences, eq(bookings.experienceId, experiences.id))
+        .where(eq(bookings.id, args.bookingId))
+        .limit(1)
+      if (!row) return
+      await notifyBookingCancelled(database, {
+        bookingId: args.bookingId,
+        experienceTitle: row.experienceTitle,
+        customerUserId: row.customerUserId,
+      })
+    })
+
     return {
       ok: true,
       bookingId: args.bookingId,

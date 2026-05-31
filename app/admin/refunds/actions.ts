@@ -12,6 +12,10 @@ import { users } from '@/db/schema/users'
 import { auth } from '@/lib/auth'
 import { hasAdminPermission } from '@/lib/auth/permissions'
 import { writeAuditLog } from '@/lib/audit/write'
+import {
+  notifyRefundCredited,
+  safeNotify,
+} from '@/lib/notifications/booking-events'
 import { creditRefundBalance } from '@/lib/payments/wallet'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
@@ -147,6 +151,18 @@ export async function executeApproveRefund(
       customerUserId: refundReq.requestedByUserId,
     },
   })
+
+  // ── Fire-and-forget refund notification (post-credit) ────────────
+  // Runs after the wallet credit + state transition + audit row. Wrapped
+  // in safeNotify so a notification failure can never fail the refund
+  // approval. The refund-core (creditRefundBalance) is untouched.
+  await safeNotify('refund_credited', () =>
+    notifyRefundCredited(db, {
+      refundRequestId,
+      customerUserId: refundReq.requestedByUserId,
+      amountRupees: amount,
+    }),
+  )
 
   return { ok: true }
 }

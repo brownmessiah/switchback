@@ -5,8 +5,14 @@ import { headers } from 'next/headers'
 
 import { db } from '@/db/client'
 import { bookings } from '@/db/schema/bookings'
+import { experiences } from '@/db/schema/experiences'
 import { auth } from '@/lib/auth'
 import { env } from '@/lib/env'
+import {
+  notifyBookingConfirmed,
+  notifyBookingCreated,
+  safeNotify,
+} from '@/lib/notifications/booking-events'
 import {
   BookingCreateError,
   createBooking,
@@ -96,6 +102,37 @@ export async function executeStartCheckout(
         },
       })
       orderId = order.orderId
+    }
+
+    // ── Fire-and-forget lifecycle notifications (post-create) ────────
+    // These run AFTER the booking + wallet/order work above. They are
+    // wrapped in safeNotify so a notification failure can NEVER turn a
+    // successful booking into an error. The money path (createBooking /
+    // applyWalletToCheckout / createOrder) is untouched.
+    const [expRow] = await database
+      .select({
+        title: experiences.title,
+        vendorUserId: experiences.vendorUserId,
+      })
+      .from(experiences)
+      .where(eq(experiences.id, input.experienceId))
+      .limit(1)
+
+    if (expRow) {
+      await safeNotify('booking_confirmed', () =>
+        notifyBookingConfirmed(database, {
+          bookingId: bookingResult.bookingId,
+          experienceTitle: expRow.title,
+          customerUserId: input.customerUserId,
+        }),
+      )
+      await safeNotify('booking_created', () =>
+        notifyBookingCreated(database, {
+          bookingId: bookingResult.bookingId,
+          experienceTitle: expRow.title,
+          vendorUserId: expRow.vendorUserId,
+        }),
+      )
     }
 
     return {

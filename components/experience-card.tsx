@@ -1,6 +1,9 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { MapPin, ShieldCheck } from 'lucide-react'
 
+import { Badge } from '@/components/ui/badge'
 import { getActivityImage } from '@/lib/images'
 
 export interface ExperienceCardData {
@@ -46,7 +49,17 @@ const REGION_LABELS: Record<string, string> = {
   coorg: 'Coorg',
 }
 
+/**
+ * A1 Card (DESIGN.md §4) — decision-complete Experience tile.
+ *
+ * Unified card contract: `bg-card` (= --surface-1), `--radius-card`,
+ * `--shadow-sm` resting → `--shadow-md` hover-lift (motion-reduce guarded).
+ * Status overlay = a `--success` Free-cancellation Badge with a lucide icon
+ * (status never by colour alone, §1.3). Price renders in `.tabular-nums`;
+ * coral affordance uses `text-primary-strong` (AA-safe), never `text-primary`.
+ */
 export function ExperienceCard({ experience }: ExperienceCardProps) {
+  const t = useTranslations('HomePage')
   const activityLabel = ACTIVITY_LABELS[experience.activitySlug] ?? experience.activitySlug
   const regionLabel = REGION_LABELS[experience.regionSlug] ?? experience.regionSlug
   const imageUrl = getActivityImage(experience.activitySlug)
@@ -54,40 +67,41 @@ export function ExperienceCard({ experience }: ExperienceCardProps) {
   return (
     <Link
       href={`/experience/${experience.slug}`}
-      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:shadow-md"
+      className="group flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-border bg-card shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:hover:translate-y-0"
     >
       <div className="relative aspect-[3/2] w-full overflow-hidden">
         <Image
           src={imageUrl}
-          alt={experience.title}
+          alt=""
+          role="presentation"
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:group-hover:scale-100"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
         />
         <div className="absolute left-2 top-2">
-          <span className="inline-flex items-center rounded-full bg-black/40 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
+          <Badge variant="secondary" className="backdrop-blur-sm">
             {activityLabel}
-          </span>
+          </Badge>
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-1 p-3">
-        <h3 className="line-clamp-2 text-sm font-semibold leading-snug tracking-tight">
+      <div className="flex flex-1 flex-col gap-2 p-[var(--space-card-pad)]">
+        <h3 className="line-clamp-2 font-heading text-sm font-semibold leading-snug tracking-tight">
           {experience.title}
         </h3>
 
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            {regionLabel}
-          </span>
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <MapPin className="size-3 shrink-0" aria-hidden="true" />
+          {regionLabel}
         </div>
 
+        <Badge variant="success" className="self-start">
+          <ShieldCheck aria-hidden="true" />
+          {t('trustBadges.freeCancellation')}
+        </Badge>
+
         <div className="mt-auto pt-1">
-          <span className="text-sm font-bold text-foreground">
+          <span className="text-sm font-bold tabular-nums text-foreground">
             ₹{experience.pricePerParticipantRupees.toLocaleString('en-IN')}
           </span>
           <span className="ml-1 text-xs text-muted-foreground">/ person</span>

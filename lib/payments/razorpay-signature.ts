@@ -28,6 +28,16 @@ export function verifyWebhookSignature(
   signature: string,
   secret: string,
 ): boolean {
+  // E2E test-mode bypass: when the app runs as a real server with
+  // RAZORPAY_TEST_MODE=true, skip HMAC verification so we can test
+  // the full webhook flow without a real Razorpay signature.
+  if (process.env['RAZORPAY_TEST_MODE'] === 'true') {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('RAZORPAY_TEST_MODE must not be enabled in production')
+    }
+    return true
+  }
+
   if (typeof body !== 'string' || body.length === 0) return false
   if (typeof signature !== 'string' || signature.length === 0) return false
   if (typeof secret !== 'string' || secret.length === 0) return false

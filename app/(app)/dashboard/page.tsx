@@ -1,29 +1,81 @@
-import { eq } from 'drizzle-orm'
+import { and, asc, eq, gt, isNotNull } from 'drizzle-orm'
+import {
+  ArrowRight,
+  CircleCheck,
+  CircleSlash,
+  Clock,
+  Info,
+  ShieldCheck,
+  Wallet,
+  XCircle,
+} from 'lucide-react'
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
+import type { ComponentType } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { db } from '@/db/client'
-import { bookings, experiences, walletBalances } from '@/db/schema'
+import {
+  availabilitySlots,
+  bookings,
+  experiences,
+  walletBalances,
+  walletTransactions,
+} from '@/db/schema'
 import { auth } from '@/lib/auth'
 
-const STATE_VARIANTS: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
-  confirmed: 'default',
-  awaiting_completion: 'secondary',
-  completed: 'default',
-  cancelled_by_customer: 'destructive',
-  cancelled_by_vendor: 'destructive',
+type BadgeVariant =
+  | 'default'
+  | 'secondary'
+  | 'outline'
+  | 'destructive'
+  | 'success'
+  | 'warning'
+  | 'info'
+
+type StatusPresentation = {
+  variant: BadgeVariant
+  Icon: ComponentType<{ className?: string }>
 }
+
+// Semantic status mapping (DESIGN.md §2.1 / A3): status is conveyed by a
+// meaningful color family PAIRED WITH an icon — never coral fill, never color
+// alone (DESIGN.md §1.3, WCAG 1.4.1). `confirmed → success`,
+// `awaiting_completion → warning`, `cancelled_* → destructive`,
+// `completed → secondary` (neutral done), `disputed → info`.
+const STATE_PRESENTATION: Record<string, StatusPresentation> = {
+  confirmed: { variant: 'success', Icon: CircleCheck },
+  awaiting_completion: { variant: 'warning', Icon: Clock },
+  completed: { variant: 'secondary', Icon: CircleCheck },
+  disputed: { variant: 'info', Icon: Info },
+  cancelled_by_customer: { variant: 'destructive', Icon: XCircle },
+  cancelled_by_vendor: { variant: 'destructive', Icon: XCircle },
+  cancelled_post_experience: { variant: 'destructive', Icon: XCircle },
+}
+
+const FALLBACK_PRESENTATION: StatusPresentation = {
+  variant: 'outline',
+  Icon: CircleSlash,
+}
+
+// Partial-pay Advance share (ADR-0001). The 25% Advance is captured at create;
+// the 75% balance is auto-captured at T-24h. The balance-due chip surfaces that
+// remaining 75% so a Customer with a reserved Booking sees what's still owed.
+const PARTIAL_PAY_ADVANCE_SHARE = 0.25
 
 export default async function CustomerDashboardPage() {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) redirect('/sign-in')
 
   const userId = session.user.id
+  const t = await getTranslations('CustomerNav')
 
+  // The page owns its own query. Direction B leads with upcoming-first,
+  // decision-complete Booking cards, so we join the booked slot and select its
+  // start date — used for both the upcoming-first sort and the card's date.
   const userBookings = await db
     .select({
       id: bookings.id,
@@ -33,12 +85,27 @@ export default async function CustomerDashboardPage() {
       paymentMode: bookings.paymentMode,
       expTitle: experiences.title,
       expSlug: experiences.slug,
+      slotStartAt: availabilitySlots.startAt,
       createdAt: bookings.createdAt,
     })
     .from(bookings)
     .innerJoin(experiences, eq(bookings.experienceId, experiences.id))
+    .innerJoin(availabilitySlots, eq(bookings.slotId, availabilitySlots.id))
     .where(eq(bookings.customerUserId, userId))
     .orderBy(bookings.createdAt)
+
+  // Upcoming-first ordering (Direction B): future slots ascending (soonest
+  // next), then past slots descending (most recent first). Done in-memory on
+  // the page's own rows — no change to lib/bookings or money logic.
+  const now = Date.now()
+  const sortedBookings = [...userBookings].sort((a, b) => {
+    const aStart = new Date(a.slotStartAt).getTime()
+    const bStart = new Date(b.slotStartAt).getTime()
+    const aUpcoming = aStart >= now
+    const bUpcoming = bStart >= now
+    if (aUpcoming !== bUpcoming) return aUpcoming ? -1 : 1
+    return aUpcoming ? aStart - bStart : bStart - aStart
+  })
 
   const walletRows = await db
     .select({
@@ -55,93 +122,225 @@ export default async function CustomerDashboardPage() {
     Number(walletRows.find((r) => r.balanceType === 'outvers_credit')?.amount ?? 0),
   )
 
+  // Outvers credit expires 12–18mo from issue (ADR-0004). The aggregate
+  // wallet_balances row has no expiry of its own — expiry lives on the
+  // immutable ledger. Surface the SOONEST upcoming expiry for the credit
+  // bucket so the Customer knows their closed-loop credit is time-bound.
+  const [nextCreditExpiry] = await db
+    .select({ expiresAt: walletTransactions.expiresAt })
+    .from(walletTransactions)
+    .where(
+      and(
+        eq(walletTransactions.userId, userId),
+        eq(walletTransactions.balanceType, 'outvers_credit'),
+        isNotNull(walletTransactions.expiresAt),
+        gt(walletTransactions.expiresAt, new Date()),
+      ),
+    )
+    .orderBy(asc(walletTransactions.expiresAt))
+    .limit(1)
+
+  const creditExpiresAt =
+    outversCredit > 0 ? (nextCreditExpiry?.expiresAt ?? null) : null
+
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:py-12">
-      <h1 className="mb-8 text-2xl font-semibold tracking-tight">My bookings</h1>
+    <main
+      data-testid="customer-dashboard"
+      className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:py-12"
+    >
+      <h1 className="mb-8 text-2xl font-semibold tracking-tight">{t('pageTitle')}</h1>
 
-      {/* Wallet */}
-      <div className="mb-8 grid gap-4 sm:grid-cols-2">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Refund balance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold">
-              ₹{refundBalance.toLocaleString('en-IN')}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Cashable or usable on next booking
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Outvers credit
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold">
-              ₹{outversCredit.toLocaleString('en-IN')}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Promotional credit — use on any booking
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Direction B: Trip Timeline (lead) + Wallet Action Rail (pinned aside) */}
+      <div className="grid gap-8 lg:grid-cols-[1fr_20rem] lg:items-start">
+        {/* ── Trip Timeline — upcoming-first, decision-complete Booking cards ── */}
+        <section className="order-2 lg:order-1">
+          {sortedBookings.length === 0 ? (
+            <div className="rounded-xl border border-dashed py-16 text-center">
+              <p className="text-lg font-medium">{t('bookings.empty')}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t('bookings.emptyHint')}
+              </p>
+              <Link
+                href="/en/search"
+                className="mt-4 inline-block rounded-lg bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                {t('bookings.explore')}
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {sortedBookings.map((b) => {
+                const presentation =
+                  STATE_PRESENTATION[b.state] ?? FALLBACK_PRESENTATION
+                const StatusIcon = presentation.Icon
+                const gross = Math.floor(Number(b.gross ?? 0))
+                const isCancellable = b.state === 'confirmed'
+                const isUpcoming = new Date(b.slotStartAt).getTime() >= now
+                // 75% balance still owed on a partial-pay Booking (ADR-0001).
+                const balanceDue =
+                  b.paymentMode === 'partial_pay' &&
+                  (b.state === 'confirmed' || b.state === 'awaiting_completion')
+                    ? Math.round(gross * (1 - PARTIAL_PAY_ADVANCE_SHARE))
+                    : 0
 
-      <Separator className="mb-8" />
-
-      {/* Bookings list */}
-      {userBookings.length === 0 ? (
-        <div className="rounded-xl border border-dashed py-16 text-center">
-          <p className="text-lg font-medium">No bookings yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Explore experiences and book your first adventure.
-          </p>
-          <Link
-            href="/en/search"
-            className="mt-4 inline-block rounded-lg bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            Explore
-          </Link>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {userBookings.map((b) => (
-            <Link key={b.id} href={`/bookings/${b.id}/confirmation`} className="block">
-              <Card className="transition hover:border-foreground/20 hover:shadow-sm">
-                <CardContent className="flex items-center justify-between py-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="truncate font-medium">{b.expTitle}</h3>
-                      <Badge
-                        variant={STATE_VARIANTS[b.state] ?? 'outline'}
-                        className="shrink-0 capitalize text-xs"
+                return (
+                  <Card
+                    key={b.id}
+                    className="transition hover:border-foreground/20 hover:shadow-sm"
+                  >
+                    <CardContent className="py-4">
+                      {/* The whole card is the primary affordance → confirmation. */}
+                      <Link
+                        href={`/bookings/${b.id}/confirmation`}
+                        className="block"
                       >
-                        {b.state.replace(/_/g, ' ')}
-                      </Badge>
-                    </div>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {b.participantCount} guest{b.participantCount === 1 ? '' : 's'} ·
-                      ₹{Math.floor(Number(b.gross ?? 0)).toLocaleString('en-IN')} ·{' '}
-                      {new Date(b.createdAt).toLocaleDateString('en-IN', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
-                    </p>
-                  </div>
-                  <span className="ml-4 text-sm text-muted-foreground">→</span>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3 className="truncate font-medium">{b.expTitle}</h3>
+                              <Badge
+                                data-testid="booking-status"
+                                variant={presentation.variant}
+                                className="shrink-0 text-xs capitalize"
+                              >
+                                <StatusIcon className="size-3" aria-hidden />
+                                {b.state.replace(/_/g, ' ')}
+                              </Badge>
+                              {isUpcoming ? (
+                                <Badge
+                                  variant="info"
+                                  className="shrink-0 text-xs"
+                                >
+                                  {t('bookings.upcoming')}
+                                </Badge>
+                              ) : null}
+                            </div>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {b.participantCount} guest
+                              {b.participantCount === 1 ? '' : 's'} ·{' '}
+                              <span className="tabular-nums">
+                                ₹{gross.toLocaleString('en-IN')}
+                              </span>{' '}
+                              ·{' '}
+                              {new Date(b.slotStartAt).toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
+                            </p>
+                            {/* Partial-pay balance-due chip — the 75% remainder. */}
+                            {balanceDue > 0 ? (
+                              <span
+                                data-testid="balance-due-chip"
+                                className="mt-2 inline-flex items-center gap-1 rounded-[var(--radius-pill)] bg-warning-subtle px-2 py-0.5 text-xs font-medium text-warning"
+                              >
+                                <Clock className="size-3" aria-hidden />
+                                {t('bookings.balanceDue', {
+                                  amount: balanceDue.toLocaleString('en-IN'),
+                                })}
+                              </span>
+                            ) : null}
+                          </div>
+                          <ArrowRight
+                            className="mt-1 size-4 shrink-0 text-muted-foreground"
+                            aria-hidden
+                          />
+                        </div>
+                      </Link>
+
+                      {/* Inline "Cancel — see refund" → live B7 quote on /cancel.
+                          Only confirmed Bookings are cancellable (cancel page
+                          guard). The refund quote is NOT computed here. */}
+                      {isCancellable ? (
+                        <div className="mt-3 border-t pt-3">
+                          <Link
+                            data-testid="dashboard-cancel-link"
+                            href={`/bookings/${b.id}/cancel`}
+                            className="inline-flex items-center gap-1 text-sm font-medium text-primary-strong underline-offset-4 hover:underline"
+                          >
+                            {t('bookings.cancelSeeRefund')}
+                          </Link>
+                        </div>
+                      ) : null}
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* ── Wallet — pinned action rail, two SEPARATE buckets (ADR-0004) ── */}
+        <aside className="order-1 space-y-4 lg:sticky lg:top-8 lg:order-2">
+          {/* Refund balance — success/info tone; cashable to original method */}
+          <Card data-testid="wallet-bucket-refund_balance" className="border-success/30">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <ShieldCheck className="size-4 text-success" aria-hidden />
+                {t('wallet.refundBalance')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p
+                data-testid="wallet-amount"
+                className="text-2xl font-semibold tabular-nums"
+              >
+                ₹{refundBalance.toLocaleString('en-IN')}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t('wallet.refundHint')}
+              </p>
+              {/* Cashable-to-original-method option (ADR-0004). The cashout flow
+                  itself is deferred; the OPTION must be surfaced. */}
+              <p
+                data-testid="wallet-cashout-option"
+                className="mt-2 text-xs text-muted-foreground"
+              >
+                {t('wallet.cashoutOption')}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Outvers credit — credit tone; closed-loop, never cashable, EXPIRES */}
+          <Card data-testid="wallet-bucket-outvers_credit" className="border-credit/30">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Wallet className="size-4 text-credit" aria-hidden />
+                {t('wallet.outversCredit')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p
+                data-testid="wallet-amount"
+                className="text-2xl font-semibold tabular-nums"
+              >
+                ₹{outversCredit.toLocaleString('en-IN')}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t('wallet.creditHint')}
+              </p>
+              {/* Expiry (12–18mo from issue, ADR-0004) — closed-loop credit is
+                  time-bound, so the soonest upcoming expiry is surfaced as a
+                  warning-toned chip (DESIGN.md B4). */}
+              {creditExpiresAt ? (
+                <span
+                  data-testid="wallet-credit-expiry"
+                  className="mt-2 inline-flex items-center gap-1 rounded-[var(--radius-pill)] bg-warning-subtle px-2 py-0.5 text-xs font-medium text-warning"
+                >
+                  <Clock className="size-3" aria-hidden />
+                  {t('wallet.creditExpiry', {
+                    date: new Date(creditExpiresAt).toLocaleDateString('en-IN', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    }),
+                  })}
+                </span>
+              ) : null}
+            </CardContent>
+          </Card>
+        </aside>
+      </div>
     </main>
   )
 }

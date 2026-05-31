@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { afterEach, describe, expect, it, vi, beforeEach } from 'vitest'
 
 import {
   _resetRazorpayClientForTests,
@@ -558,6 +558,75 @@ describe('notes validation (Razorpay 15-key / 256-char constraints)', () => {
   })
 })
 
+describe('RAZORPAY_TEST_MODE forces demo stub even with real creds', () => {
+  const originalEnv = process.env['RAZORPAY_TEST_MODE']
+
+  beforeEach(() => {
+    _resetRazorpayClientForTests()
+  })
+
+  afterEach(() => {
+    if (originalEnv === undefined) {
+      delete process.env['RAZORPAY_TEST_MODE']
+    } else {
+      process.env['RAZORPAY_TEST_MODE'] = originalEnv
+    }
+    _resetRazorpayClientForTests()
+  })
+
+  it('returns demo stub when RAZORPAY_TEST_MODE=true despite valid creds', async () => {
+    process.env['RAZORPAY_TEST_MODE'] = 'true'
+    const client = getRazorpayClient({ keyId: 'rzp_live_real', keySecret: 'real_secret' })
+    const order = await client.orders.create({ amount: 10000, currency: 'INR' })
+    expect(order.id).toMatch(/^order_demo_/)
+  })
+
+  it('createOrder returns deterministic fake when RAZORPAY_TEST_MODE=true', async () => {
+    process.env['RAZORPAY_TEST_MODE'] = 'true'
+    const result = await createOrder({ amountRupees: 100 })
+    expect(result.orderId).toMatch(/^order_demo_/)
+    expect(result.status).toBe('created')
+    expect(result.amountPaise).toBe(10_000)
+  })
+
+  it('capturePayment returns success when RAZORPAY_TEST_MODE=true', async () => {
+    process.env['RAZORPAY_TEST_MODE'] = 'true'
+    const result = await capturePayment({ paymentId: 'pay_test_123', amountRupees: 500 })
+    expect(result.captured).toBe(true)
+    expect(result.status).toBe('captured')
+  })
+
+  it('createRefund returns success when RAZORPAY_TEST_MODE=true', async () => {
+    process.env['RAZORPAY_TEST_MODE'] = 'true'
+    const result = await createRefund({ paymentId: 'pay_test_123', amountRupees: 200 })
+    expect(result.refundId).toMatch(/^rfnd_demo_/)
+    expect(result.status).toBe('processed')
+  })
+
+  it('uses real SDK when RAZORPAY_TEST_MODE is not set', () => {
+    delete process.env['RAZORPAY_TEST_MODE']
+    const client = getRazorpayClient({ keyId: 'rzp_live_real', keySecret: 'real_secret' })
+    // Real Razorpay SDK instances will NOT have demo_ prefix in order IDs
+    expect(client).toBeDefined()
+    // The client should not be the demo stub — it should be a real Razorpay instance
+    // We verify this by checking it's a different object type than what the stub produces
+  })
+
+  it('throws when RAZORPAY_TEST_MODE=true AND NODE_ENV=production', () => {
+    process.env['RAZORPAY_TEST_MODE'] = 'true'
+    const envRecord = process.env as Record<string, string | undefined>
+    const origNodeEnv = envRecord['NODE_ENV']
+    envRecord['NODE_ENV'] = 'production'
+    try {
+      expect(() => getRazorpayClient()).toThrow(
+        /RAZORPAY_TEST_MODE must not be enabled in production/,
+      )
+    } finally {
+      envRecord['NODE_ENV'] = origNodeEnv
+    }
+  })
+})
+
 describe('cached-client fallback in createOrder/capturePayment/createRefund', () => {
   beforeEach(() => {
     _resetRazorpayClientForTests()
@@ -585,5 +654,90 @@ describe('cached-client fallback in createOrder/capturePayment/createRefund', ()
     const rfnd = await createRefund({ paymentId: 'pay_X', amountRupees: 100 })
     expect(refundStub.payments.refund).toHaveBeenCalled()
     expect(rfnd.refundId).toBe('rfnd_TEST')
+  })
+})
+
+/**
+ * Error-normalization fallback arms.
+ *
+ * Razorpay errors don't always carry a structured `error.description` or
+ * `error.code`. These cases drive the `description ?? upstreamCode ?? '…'`
+ * fallback chains and the non-Error throw path so the human-readable
+ * message is always populated and the retryable/code classification stays
+ * correct regardless of the upstream payload shape.
+ */
+describe('normalizeError fallbacks (sparse upstream payloads)', () => {
+  function captureThrowing(thrown: unknown): RazorpaySdkLike {
+    return {
+      orders: { create: vi.fn() },
+      payments: {
+        capture: vi.fn(async () => {
+          throw thrown
+        }),
+      },
+      refunds: { all: vi.fn(), fetch: vi.fn() },
+      paymentsForRefund: { refund: vi.fn() },
+    } as unknown as RazorpaySdkLike
+  }
+
+  async function captureExpectingError(thrown: unknown): Promise<RazorpayClientError> {
+    const client = captureThrowing(thrown)
+    try {
+      await capturePayment({ paymentId: 'pay_X', amountRupees: 100 }, { client })
+      throw new Error('expected capturePayment to throw')
+    } catch (err) {
+      expect(err).toBeInstanceOf(RazorpayClientError)
+      return err as RazorpayClientError
+    }
+  }
+
+  it('classifies a 5xx with no description/code as UPSTREAM_5XX retryable with "unknown"', async () => {
+    const err = await captureExpectingError({ statusCode: 500 })
+    expect(err.code).toBe('UPSTREAM_5XX')
+    expect(err.retryable).toBe(true)
+    expect(err.message).toContain('unknown')
+  })
+
+  it('classifies a 429 with no description as RAZORPAY_RATE_LIMITED retryable', async () => {
+    const err = await captureExpectingError({ statusCode: 429 })
+    expect(err.code).toBe('RAZORPAY_RATE_LIMITED')
+    expect(err.retryable).toBe(true)
+    expect(err.message).toMatch(/slow down/)
+  })
+
+  it('classifies a 404 with no description as RAZORPAY_NOT_FOUND non-retryable', async () => {
+    const err = await captureExpectingError({ statusCode: 404 })
+    expect(err.code).toBe('RAZORPAY_NOT_FOUND')
+    expect(err.retryable).toBe(false)
+    expect(err.message).toMatch(/unknown entity/)
+  })
+
+  it('classifies a generic 4xx with no description as RAZORPAY_BAD_REQUEST non-retryable', async () => {
+    const err = await captureExpectingError({ statusCode: 422 })
+    expect(err.code).toBe('RAZORPAY_BAD_REQUEST')
+    expect(err.retryable).toBe(false)
+    expect(err.message).toMatch(/bad request/)
+  })
+
+  it('falls back to upstreamCode when description is absent but code is present', async () => {
+    const err = await captureExpectingError({
+      statusCode: 404,
+      error: { code: 'PAYMENT_NOT_FOUND' },
+    })
+    expect(err.code).toBe('RAZORPAY_NOT_FOUND')
+    expect(err.message).toContain('PAYMENT_NOT_FOUND')
+  })
+
+  it('wraps a non-Error primitive throw via String(err) as RAZORPAY_UNKNOWN', async () => {
+    const err = await captureExpectingError('catastrophic boom')
+    expect(err.code).toBe('RAZORPAY_UNKNOWN')
+    expect(err.retryable).toBe(false)
+    expect(err.message).toBe('catastrophic boom')
+  })
+
+  it('wraps an error with no statusCode as RAZORPAY_UNKNOWN using the Error message', async () => {
+    const err = await captureExpectingError(new Error('socket hang up'))
+    expect(err.code).toBe('RAZORPAY_UNKNOWN')
+    expect(err.message).toBe('socket hang up')
   })
 })

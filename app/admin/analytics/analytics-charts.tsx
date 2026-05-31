@@ -22,19 +22,29 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 import type { CategoryDataPoint, MonthDataPoint, WeekDataPoint } from './loaders'
 
-// ── Colors ────────────────────────────────────────────────────────
+// ── Brand chart tokens (DESIGN.md §2.1) ───────────────────────────
+//
+// The as-is charts used an off-brand literal `hsl(...)` palette. DESIGN.md
+// §2.1 keeps the `--chart-1..5` token family verbatim — chart-1 is the coral
+// brand (tracks `--primary`), charts 2–5 are theme-invariant (green / blue /
+// amber / purple) and re-value automatically in `.dark`. recharts accepts a
+// CSS-var string for fill/stroke (this is exactly what #74 vendor-dashboard
+// did), so each series is bound to a token, not a baked literal.
 
-const CHART_COLORS = [
-  'hsl(221, 83%, 53%)',
-  'hsl(142, 71%, 45%)',
-  'hsl(38, 92%, 50%)',
-  'hsl(0, 84%, 60%)',
-  'hsl(262, 83%, 58%)',
-  'hsl(190, 90%, 50%)',
-  'hsl(330, 81%, 60%)',
-  'hsl(50, 98%, 50%)',
-  'hsl(160, 60%, 45%)',
-  'hsl(280, 65%, 60%)',
+/** Coral brand — booking volume bars (the platform's primary throughput). */
+export const CHART_TOKEN_BOOKINGS = 'var(--chart-1)' as const
+/** Green — revenue trend area (affirmative money growth). */
+export const CHART_TOKEN_REVENUE = 'var(--chart-2)' as const
+/** Purple — vendor growth line (supply-side, distinct from money/throughput). */
+export const CHART_TOKEN_VENDORS = 'var(--chart-5)' as const
+
+/** Full chart-1..5 family, cycled across the category-performance pie slices. */
+export const CATEGORY_CHART_TOKENS = [
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
 ] as const
 
 // ── Revenue trend (area chart, monthly) ───────────────────────────
@@ -56,9 +66,9 @@ export function RevenueTrendChart({ data }: RevenueTrendChartProps) {
   }))
 
   return (
-    <Card>
+    <Card data-testid="chart-revenue-trend" data-chart-token={CHART_TOKEN_REVENUE}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-medium">Revenue trend (monthly)</CardTitle>
+        <CardTitle className="text-h3 font-heading font-semibold">Revenue trend (monthly)</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[280px] w-full">
@@ -66,11 +76,11 @@ export function RevenueTrendChart({ data }: RevenueTrendChartProps) {
             <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="revenue-gradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0} />
+                  <stop offset="5%" stopColor={CHART_TOKEN_REVENUE} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={CHART_TOKEN_REVENUE} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis
                 dataKey="label"
                 tick={{ fontSize: 11 }}
@@ -87,13 +97,13 @@ export function RevenueTrendChart({ data }: RevenueTrendChartProps) {
                 tickFormatter={(v: number) => `₹${(v / 1000).toFixed(0)}k`}
               />
               <Tooltip
-                content={({ active, payload }: { active?: boolean; payload?: Array<{ payload: unknown }> }) => {
+                content={({ active, payload }: { active?: boolean; payload?: ReadonlyArray<{ payload?: unknown }> }) => {
                   if (!active || !payload?.length) return null
                   const point = payload[0]!.payload as MonthDataPoint & { label: string }
                   return (
-                    <div className="rounded-lg border bg-background p-2 shadow-sm">
+                    <div className="rounded-[var(--radius-control)] border bg-popover p-2 shadow-md">
                       <p className="text-xs text-muted-foreground">{point.label}</p>
-                      <p className="text-sm font-semibold">
+                      <p className="text-sm font-semibold tabular-nums">
                         ₹{point.value.toLocaleString('en-IN')}
                       </p>
                     </div>
@@ -103,7 +113,7 @@ export function RevenueTrendChart({ data }: RevenueTrendChartProps) {
               <Area
                 type="monotone"
                 dataKey="value"
-                stroke="hsl(142, 71%, 45%)"
+                stroke={CHART_TOKEN_REVENUE}
                 strokeWidth={2}
                 fill="url(#revenue-gradient)"
               />
@@ -123,15 +133,15 @@ interface BookingVolumeChartProps {
 
 export function BookingVolumeChart({ data }: BookingVolumeChartProps) {
   return (
-    <Card>
+    <Card data-testid="chart-booking-volume" data-chart-token={CHART_TOKEN_BOOKINGS}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-medium">Booking volume (weekly)</CardTitle>
+        <CardTitle className="text-h3 font-heading font-semibold">Booking volume (weekly)</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[280px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis
                 dataKey="week"
                 tick={{ fontSize: 11 }}
@@ -148,18 +158,18 @@ export function BookingVolumeChart({ data }: BookingVolumeChartProps) {
                 allowDecimals={false}
               />
               <Tooltip
-                content={({ active, payload }: { active?: boolean; payload?: Array<{ payload: unknown }> }) => {
+                content={({ active, payload }: { active?: boolean; payload?: ReadonlyArray<{ payload?: unknown }> }) => {
                   if (!active || !payload?.length) return null
                   const point = payload[0]!.payload as WeekDataPoint
                   return (
-                    <div className="rounded-lg border bg-background p-2 shadow-sm">
+                    <div className="rounded-[var(--radius-control)] border bg-popover p-2 shadow-md">
                       <p className="text-xs text-muted-foreground">{point.week}</p>
-                      <p className="text-sm font-semibold">{point.value} bookings</p>
+                      <p className="text-sm font-semibold tabular-nums">{point.value} bookings</p>
                     </div>
                   )
                 }}
               />
-              <Bar dataKey="value" fill="hsl(221, 83%, 53%)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="value" fill={CHART_TOKEN_BOOKINGS} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -181,15 +191,15 @@ export function VendorGrowthChart({ data }: VendorGrowthChartProps) {
   }))
 
   return (
-    <Card>
+    <Card data-testid="chart-vendor-growth" data-chart-token={CHART_TOKEN_VENDORS}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-medium">Vendor growth (monthly)</CardTitle>
+        <CardTitle className="text-h3 font-heading font-semibold">Vendor growth (monthly)</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[280px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis
                 dataKey="label"
                 tick={{ fontSize: 11 }}
@@ -206,13 +216,13 @@ export function VendorGrowthChart({ data }: VendorGrowthChartProps) {
                 allowDecimals={false}
               />
               <Tooltip
-                content={({ active, payload }: { active?: boolean; payload?: Array<{ payload: unknown }> }) => {
+                content={({ active, payload }: { active?: boolean; payload?: ReadonlyArray<{ payload?: unknown }> }) => {
                   if (!active || !payload?.length) return null
                   const point = payload[0]!.payload as MonthDataPoint & { label: string }
                   return (
-                    <div className="rounded-lg border bg-background p-2 shadow-sm">
+                    <div className="rounded-[var(--radius-control)] border bg-popover p-2 shadow-md">
                       <p className="text-xs text-muted-foreground">{point.label}</p>
-                      <p className="text-sm font-semibold">{point.value} new vendors</p>
+                      <p className="text-sm font-semibold tabular-nums">{point.value} new vendors</p>
                     </div>
                   )
                 }}
@@ -220,9 +230,9 @@ export function VendorGrowthChart({ data }: VendorGrowthChartProps) {
               <Line
                 type="monotone"
                 dataKey="value"
-                stroke="hsl(262, 83%, 58%)"
+                stroke={CHART_TOKEN_VENDORS}
                 strokeWidth={2}
-                dot={{ fill: 'hsl(262, 83%, 58%)', r: 3 }}
+                dot={{ fill: CHART_TOKEN_VENDORS, r: 3 }}
                 activeDot={{ r: 5 }}
               />
             </LineChart>
@@ -253,9 +263,9 @@ export function CategoryPerformanceChart({ data }: CategoryPerformanceChartProps
   }))
 
   return (
-    <Card>
+    <Card data-testid="chart-category-performance" data-chart-token={CATEGORY_CHART_TOKENS[0]}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-medium">Category performance</CardTitle>
+        <CardTitle className="text-h3 font-heading font-semibold">Category performance</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[280px] w-full">
@@ -274,22 +284,22 @@ export function CategoryPerformanceChart({ data }: CategoryPerformanceChartProps
                   outerRadius={100}
                   paddingAngle={2}
                   dataKey="value"
-                  label={({ name, percent }: { name: string; percent: number }) =>
-                    `${name} (${(percent * 100).toFixed(0)}%)`
+                  label={({ name, percent }: { name?: string; percent?: number }) =>
+                    `${name ?? ''} (${((percent ?? 0) * 100).toFixed(0)}%)`
                   }
                 >
                   {chartData.map((_, i) => (
-                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                    <Cell key={i} fill={CATEGORY_CHART_TOKENS[i % CATEGORY_CHART_TOKENS.length]} />
                   ))}
                 </Pie>
                 <Tooltip
-                  content={({ active, payload }: { active?: boolean; payload?: Array<{ payload: unknown }> }) => {
+                  content={({ active, payload }: { active?: boolean; payload?: ReadonlyArray<{ payload?: unknown }> }) => {
                     if (!active || !payload?.length) return null
                     const point = payload[0]!.payload as CategoryDataPoint & { name: string }
                     return (
-                      <div className="rounded-lg border bg-background p-2 shadow-sm">
+                      <div className="rounded-[var(--radius-control)] border bg-popover p-2 shadow-md">
                         <p className="text-xs text-muted-foreground">{point.name}</p>
-                        <p className="text-sm font-semibold">{point.value} bookings</p>
+                        <p className="text-sm font-semibold tabular-nums">{point.value} bookings</p>
                       </div>
                     )
                   }}

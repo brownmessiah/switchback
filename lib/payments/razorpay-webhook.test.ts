@@ -121,6 +121,9 @@ describe('processRazorpayWebhook (ADR-0001)', () => {
       userId: 'u_v',
       businessName: 'Webhook Test Vendor',
       slug: 'webhook-test',
+      // Identity-verified (ADR-0007 Tier 2) so the seeded within-cap
+      // Experience can accept Bookings through createBooking's tier re-check.
+      kycTier: 'identity',
       pan: 'ABCDE1234F',
       commissionRate: '20.00',
       payoutMethod: 'upi',
@@ -154,7 +157,14 @@ describe('processRazorpayWebhook (ADR-0001)', () => {
       })
       .returning({ id: experiences.id })
 
-    const startAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    // T+7d PINNED to 06:00-10:00 UTC so the slot stays inside one UTC
+    // calendar day regardless of the wall-clock run time — otherwise the
+    // Tier-2 single-day cap spuriously fires on the identity Vendor when
+    // the suite runs late in the UTC day.
+    const base = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    const startAt = new Date(
+      Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate(), 6, 0, 0),
+    )
     const endAt = new Date(startAt.getTime() + 4 * 60 * 60 * 1000)
     const [slot] = await db
       .insert(availabilitySlots)
@@ -350,6 +360,88 @@ describe('processRazorpayWebhook (ADR-0001)', () => {
       expect(paymentRows).toHaveLength(1)
     })
 
+    it('replaying the SAME captured event N times yields a SINGLE Booking + one state transition (#35 idempotency)', async () => {
+      // AC: assert exactly one Booking / one state transition after N
+      // replays. The webhook records a capture against an existing Booking;
+      // the "single state transition" invariant is one webhook.payment.captured
+      // audit row + an unchanged Booking count, regardless of how many times
+      // Razorpay re-delivers the same event.
+      const bookingsBefore = await db.select().from(bookings)
+      expect(bookingsBefore).toHaveLength(1)
+
+      const body = buildPaymentCapturedBody({
+        eventId: 'evt_single_transition',
+        paymentId: 'pay_single_transition',
+        orderId: 'order_single_transition',
+        bookingId,
+        amountPaise: 500_000,
+      })
+
+      const N = 25
+      for (let i = 0; i < N; i++) {
+        const r = await call({ body })
+        expect(r.status).toBe(200)
+      }
+
+      // Exactly one capture row applied (no double-capture across replays).
+      const paymentRows = await db.select().from(payments)
+      expect(paymentRows).toHaveLength(1)
+
+      // Exactly one state transition: a single webhook.payment.captured
+      // audit row despite N deliveries.
+      const captureAudit = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.action, 'webhook.payment.captured'))
+      expect(captureAudit).toHaveLength(1)
+
+      // No second Booking was created by the replays.
+      const bookingsAfter = await db.select().from(bookings)
+      expect(bookingsAfter).toHaveLength(1)
+      expect(bookingsAfter[0]!.id).toBe(bookingId)
+    })
+
+    it('replaying the same captured event after a Redis eviction still applies ONE capture + ONE audit row (#35)', async () => {
+      // Combines the DB-floor path with the single-state-transition AC: even
+      // when Redis evicts the dedup key between deliveries (so every replay
+      // re-enters the DB transaction), the razorpay_payment_id unique index
+      // + onConflictDoNothing keep it at one capture row and one audit row.
+      const body = buildPaymentCapturedBody({
+        eventId: 'evt_evict_replay',
+        paymentId: 'pay_evict_replay',
+        orderId: 'order_evict_replay',
+        bookingId,
+        amountPaise: 500_000,
+      })
+
+      for (let i = 0; i < 5; i++) {
+        // New event id each delivery + cache wipe ⇒ Redis dedup always misses,
+        // forcing the DB unique constraint to be the sole idempotency floor.
+        _resetRedisCacheForTests()
+        const reDelivered = buildPaymentCapturedBody({
+          eventId: `evt_evict_replay_${i}`,
+          paymentId: 'pay_evict_replay', // same payment id across deliveries
+          orderId: 'order_evict_replay',
+          bookingId,
+          amountPaise: 500_000,
+        })
+        const r = await call({ body: i === 0 ? body : reDelivered })
+        expect(r.status).toBe(200)
+      }
+
+      const paymentRows = await db.select().from(payments)
+      expect(paymentRows).toHaveLength(1)
+      const captureAudit = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.action, 'webhook.payment.captured'))
+      // onConflictDoNothing skips the audit write on the duplicate inserts,
+      // so exactly one capture audit row survives all deliveries.
+      expect(captureAudit).toHaveLength(1)
+      const bookingsAfter = await db.select().from(bookings)
+      expect(bookingsAfter).toHaveLength(1)
+    })
+
     it('DB-level idempotency: when Redis evicts the dedup key, a re-delivered event with a new event id no-ops via ON CONFLICT', async () => {
       const body = buildPaymentCapturedBody({
         eventId: 'evt_db_1',
@@ -412,6 +504,47 @@ describe('processRazorpayWebhook (ADR-0001)', () => {
       // unrecoverable capture failure. In M2 we only record the failure.
       expect(bk?.state).toBe('confirmed')
     })
+
+    it('records a sparse failure payload (no error_* fields, no order_id) with null fallbacks', async () => {
+      // Razorpay does not always populate the structured error fields. The
+      // handler must still record the failure, nulling the absent fields
+      // rather than throwing — drives the `?? null` fallback arms.
+      const body = JSON.stringify({
+        entity: 'event',
+        account_id: 'acc_test',
+        event: 'payment.failed',
+        contains: ['payment'],
+        payload: {
+          payment: {
+            entity: {
+              id: 'pay_fail_sparse',
+              entity: 'payment',
+              amount: 500_000,
+              currency: 'INR',
+              status: 'failed',
+              notes: { booking_id: bookingId },
+              created_at: 1_700_000_000,
+            },
+          },
+        },
+        created_at: 1_700_000_000,
+        id: 'evt_fail_sparse',
+      })
+
+      const result = await call({ body })
+      expect(result.status).toBe(200)
+
+      const auditRows = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.action, 'webhook.payment.failed'))
+      expect(auditRows).toHaveLength(1)
+      const payload = auditRows[0]?.payload as Record<string, unknown>
+      expect(payload.errorCode).toBeNull()
+      expect(payload.errorDescription).toBeNull()
+      expect(payload.errorSource).toBeNull()
+      expect(payload.errorReason).toBeNull()
+    })
   })
 
   describe('refund.processed', () => {
@@ -448,6 +581,45 @@ describe('processRazorpayWebhook (ADR-0001)', () => {
         .where(eq(auditLogs.action, 'webhook.refund.processed'))
       expect(auditRows).toHaveLength(1)
       expect(auditRows[0]?.entityId).toBe('rfnd_1')
+    })
+
+    it('records a refund with no notes (booking_id unresolvable) as null bookingId', async () => {
+      // A refund.processed event whose entity carries no notes object —
+      // extractBookingId returns null and the handler records the audit
+      // row anyway. Drives the `if (!notes) return null` arm + the
+      // `?? null` fallbacks for bookingId and eventId.
+      const body = JSON.stringify({
+        entity: 'event',
+        account_id: 'acc_test',
+        event: 'refund.processed',
+        contains: ['refund'],
+        payload: {
+          refund: {
+            entity: {
+              id: 'rfnd_no_notes',
+              entity: 'refund',
+              amount: 100_000,
+              currency: 'INR',
+              payment_id: 'pay_Y',
+              status: 'processed',
+              created_at: 1_700_000_000,
+            },
+          },
+        },
+        created_at: 1_700_000_000,
+        id: 'evt_refund_no_notes',
+      })
+
+      const result = await call({ body })
+      expect(result.status).toBe(200)
+
+      const auditRows = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.action, 'webhook.refund.processed'))
+      expect(auditRows).toHaveLength(1)
+      const payload = auditRows[0]?.payload as Record<string, unknown>
+      expect(payload.bookingId).toBeNull()
     })
   })
 

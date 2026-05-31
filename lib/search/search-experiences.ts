@@ -1,6 +1,12 @@
+import { ensureExperienceIndexSettings } from './indexer'
 import { getMeiliClient, type MeiliLike } from './meilisearch-client'
 
 const EXPERIENCE_INDEX = 'experiences'
+
+// The one-shot settings guard lives in `indexer.ts` so the search READ path
+// and the index WRITE path share a single process-level guard. Re-export the
+// test reset from there.
+export { _resetSettingsGuardForTests } from './indexer'
 
 export type SortOption = 'relevance' | 'price_asc' | 'price_desc' | 'newest'
 
@@ -79,14 +85,29 @@ export async function searchExperiences(
   const filter = buildMeiliFilter(params)
   const sort = meiliSort(params.sort)
 
-  const result = await client.index(EXPERIENCE_INDEX).search(params.q ?? '', {
-    filter: filter || undefined,
-    sort: sort.length > 0 ? sort : undefined,
-    facets: ['activitySlug', 'regionSlug'],
-    limit: 20,
-  })
+  try {
+    // Self-heal the index's filter/sort settings before the first query so a
+    // Customer applying a filter never hits a 400 (ADR-0013). The guard is
+    // process-level one-shot (shared with the index write path). Inside the try
+    // so even a settings failure degrades gracefully rather than crashing.
+    await ensureExperienceIndexSettings({ client })
 
-  return {
-    hits: result.hits as SearchExperienceHit[],
+    const result = await client.index(EXPERIENCE_INDEX).search(params.q ?? '', {
+      filter: filter || undefined,
+      sort: sort.length > 0 ? sort : undefined,
+      facets: ['activitySlug', 'regionSlug'],
+      limit: 20,
+    })
+
+    return {
+      hits: result.hits as SearchExperienceHit[],
+    }
+  } catch (err) {
+    // Never crash the customer-facing search page on a Meilisearch error —
+    // degrade to an empty result set (the page renders its empty state). Log
+    // server-side first so a full Meilisearch outage is observable rather than
+    // silently rendering "0 results" indefinitely.
+    console.error('[search] Meilisearch query failed; returning empty results', err)
+    return { hits: [] }
   }
 }

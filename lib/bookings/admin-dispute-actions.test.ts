@@ -365,6 +365,39 @@ describe('admin dispute resolution (ADR-0003)', () => {
       }
     })
 
+    // ── Guard: non-notes validation failures surface the raw message ──
+
+    it('surfaces a non-notes validation error verbatim (invalid bookingId)', async () => {
+      const result = await executeResolveAsCompleted(db, {
+        adminUserId: 'u_admin',
+        bookingId: 'not-a-uuid',
+        notes: 'Valid notes here.',
+      })
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        // Hits the `errorMsg.includes('notes')` false arm and the generic
+        // `return { ok: false, error: errorMsg }` path — distinct from the
+        // notes-required guard above.
+        expect(result.error).toMatch(/UUID/i)
+        expect(result.error).not.toMatch(/Admin notes are required/i)
+      }
+    })
+
+    it('surfaces the negative partial-refund validation error', async () => {
+      const result = await executeResolveAsCompleted(db, {
+        adminUserId: 'u_admin',
+        bookingId: crypto.randomUUID(),
+        notes: 'Valid notes here.',
+        partialRefundRupees: -100,
+      })
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toMatch(/non-negative/i)
+      }
+    })
+
     // ── Guard: only disputed bookings ────────────────────────────────
 
     it('rejects if booking is not in disputed state (confirmed)', async () => {
@@ -569,6 +602,20 @@ describe('admin dispute resolution (ADR-0003)', () => {
       }
     })
 
+    it('surfaces a non-notes validation error verbatim (invalid bookingId)', async () => {
+      const result = await executeResolveAsCancelledPostExperience(db, {
+        adminUserId: 'u_admin',
+        bookingId: 'not-a-uuid',
+        notes: 'Valid notes here.',
+      })
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toMatch(/UUID/i)
+        expect(result.error).not.toMatch(/Admin notes are required/i)
+      }
+    })
+
     // ── Guard: only disputed bookings ────────────────────────────────
 
     it('rejects non-disputed bookings (confirmed)', async () => {
@@ -603,6 +650,104 @@ describe('admin dispute resolution (ADR-0003)', () => {
       if (!result.ok) {
         expect(result.error).toMatch(/not found/i)
       }
+    })
+  })
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Dispute pause / resume lifecycle (ADR-0016)
+  // ═══════════════════════════════════════════════════════════════════
+  //
+  // "Dispute open at T+7 → Payout held, timer pauses, resumes T+7 after
+  //  Dispute resolves for Vendor, or cancelled if Customer wins."
+  //
+  // The seedBooking helper above creates disputed Bookings already in
+  // payoutState='held' (the pause). These tests assert the two resume
+  // branches end-to-end on the payout state itself.
+
+  describe('dispute pause/resume on Payout (ADR-0016)', () => {
+    it('resolved for Vendor: payout RESUMES (held → pending) so the T+7 timer restarts', async () => {
+      const { bookingId } = await seedBooking({ state: 'disputed' })
+
+      // Precondition: the Dispute paused the payout (held).
+      const [before] = await db
+        .select({ payoutState: bookings.payoutState })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+      expect(before?.payoutState).toBe('held')
+
+      const result = await executeResolveAsCompleted(db, {
+        adminUserId: 'u_admin',
+        bookingId,
+        notes: 'Vendor delivered; dispute closed in Vendor favour.',
+      })
+      expect(result.ok).toBe(true)
+
+      // Resume: held → pending; booking is completed so the payout countdown runs again.
+      const [after] = await db
+        .select({ payoutState: bookings.payoutState, state: bookings.state })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+      expect(after?.payoutState).toBe('pending')
+      expect(after?.state).toBe('completed')
+
+      // Audit row documents the held → pending resume for reconciliation.
+      const [auditRow] = await db
+        .select()
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.action, 'booking.dispute_resolved_complete'),
+            eq(auditLogs.entityId, bookingId),
+          ),
+        )
+      const payload = auditRow?.payload as Record<string, unknown>
+      expect(payload.payoutStateChange).toBe('held → pending')
+    })
+
+    it('resolved for Customer: payout is CANCELLED (held → rejected), no Vendor disbursement', async () => {
+      const { bookingId } = await seedBooking({ state: 'disputed', grossRupees: 5000 })
+
+      const [before] = await db
+        .select({ payoutState: bookings.payoutState })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+      expect(before?.payoutState).toBe('held')
+
+      const result = await executeResolveAsCancelledPostExperience(db, {
+        adminUserId: 'u_admin',
+        bookingId,
+        notes: 'Experience not delivered; Customer wins, full refund.',
+      })
+      expect(result.ok).toBe(true)
+
+      // Cancelled: held → rejected; booking moves to cancelled_post_experience.
+      const [after] = await db
+        .select({
+          payoutState: bookings.payoutState,
+          state: bookings.state,
+          payoutRejectionReason: bookings.payoutRejectionReason,
+        })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+      expect(after?.payoutState).toBe('rejected')
+      expect(after?.state).toBe('cancelled_post_experience')
+      expect(after?.payoutRejectionReason).toContain('Dispute resolved')
+
+      // Customer received the full refund (no Vendor payout occurs).
+      expect(await readRefundBalance('u_customer')).toBe(5000)
+
+      const [auditRow] = await db
+        .select()
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.action, 'booking.dispute_resolved_cancel'),
+            eq(auditLogs.entityId, bookingId),
+          ),
+        )
+      const payload = auditRow?.payload as Record<string, unknown>
+      expect(payload.payoutStateChange).toBe('held → rejected')
+      expect(payload.commissionEffectivelyZero).toBe(true)
     })
   })
 })

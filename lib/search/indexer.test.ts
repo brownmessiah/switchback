@@ -1,19 +1,25 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   type ExperienceSearchDoc,
+  _resetSettingsGuardForTests,
   deindexExperience,
+  ensureExperienceIndexSettings,
+  EXPERIENCE_FILTERABLE_ATTRIBUTES,
+  EXPERIENCE_SORTABLE_ATTRIBUTES,
   indexExperience,
 } from './indexer'
-import type { MeiliLike } from './meilisearch-client'
+import type { MeiliIndexSettings, MeiliLike } from './meilisearch-client'
 
 function makeStub(): {
   client: MeiliLike
   addCalls: unknown[][]
   deleteCalls: string[]
+  settingsCalls: MeiliIndexSettings[]
 } {
   const addCalls: unknown[][] = []
   const deleteCalls: string[] = []
+  const settingsCalls: MeiliIndexSettings[] = []
   const client: MeiliLike = {
     index: () => ({
       addDocuments: async (docs) => {
@@ -25,9 +31,13 @@ function makeStub(): {
         return { taskUid: 2 }
       },
       search: vi.fn(async () => ({ hits: [] })),
+      updateSettings: async (settings) => {
+        settingsCalls.push(settings)
+        return { taskUid: 3 }
+      },
     }),
   }
-  return { client, addCalls, deleteCalls }
+  return { client, addCalls, deleteCalls, settingsCalls }
 }
 
 const sampleDoc: ExperienceSearchDoc = {
@@ -44,6 +54,11 @@ const sampleDoc: ExperienceSearchDoc = {
 }
 
 describe('search indexer', () => {
+  beforeEach(() => {
+    // Each case starts with a fresh one-shot guard so settings re-apply.
+    _resetSettingsGuardForTests()
+  })
+
   it('indexExperience sends the document to the experiences index', async () => {
     const { client, addCalls } = makeStub()
     await indexExperience(sampleDoc, { client })
@@ -79,5 +94,80 @@ describe('search indexer', () => {
     await indexExperience({ ...sampleDoc, shortDescription: null }, { client })
     const doc = (addCalls[0] as Array<Record<string, unknown>>)[0]!
     expect(doc.shortDescription).toBeNull()
+  })
+})
+
+describe('ensureExperienceIndexSettings', () => {
+  beforeEach(() => {
+    // The settings guard is process-level one-shot; reset between cases.
+    _resetSettingsGuardForTests()
+  })
+
+  it('configures the filterable + sortable attributes the search page relies on', async () => {
+    const { client, settingsCalls } = makeStub()
+    await ensureExperienceIndexSettings({ client })
+    expect(settingsCalls).toHaveLength(1)
+    expect(settingsCalls[0]!.filterableAttributes).toEqual(
+      EXPERIENCE_FILTERABLE_ATTRIBUTES,
+    )
+    expect(settingsCalls[0]!.sortableAttributes).toEqual(
+      EXPERIENCE_SORTABLE_ATTRIBUTES,
+    )
+  })
+
+  it('covers every facet the customer search filter/sort form can emit', async () => {
+    // The search page filters by activitySlug, regionSlug, and a price range,
+    // and sorts by price + recency. Each must be configured or Meilisearch
+    // rejects the query with a 400 and the search page crashes (ADR-0013).
+    expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('activitySlug')
+    expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('regionSlug')
+    expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('pricePerPersonRupees')
+    expect(EXPERIENCE_SORTABLE_ATTRIBUTES).toContain('pricePerPersonRupees')
+    expect(EXPERIENCE_SORTABLE_ATTRIBUTES).toContain('publishedAtEpochMs')
+  })
+
+  it('enqueues updateSettings at most once per process across direct calls', async () => {
+    const { client, settingsCalls } = makeStub()
+    await ensureExperienceIndexSettings({ client })
+    await ensureExperienceIndexSettings({ client })
+    await ensureExperienceIndexSettings({ client })
+    expect(settingsCalls).toHaveLength(1)
+  })
+
+  it('indexExperience enqueues updateSettings only ONCE across many re-indexes', async () => {
+    // Guards the write path: a busy moderation queue re-indexing N Experiences
+    // must not thrash a fresh updateSettings task per index (#30 review).
+    const { client, settingsCalls, addCalls } = makeStub()
+    await indexExperience(sampleDoc, { client })
+    await indexExperience({ ...sampleDoc, id: 'a' }, { client })
+    await indexExperience({ ...sampleDoc, id: 'b' }, { client })
+    await indexExperience({ ...sampleDoc, id: 'c' }, { client })
+    expect(settingsCalls).toHaveLength(1)
+    expect(addCalls).toHaveLength(4)
+  })
+
+  it('retries updateSettings after a transient failure', async () => {
+    // First updateSettings rejects; the guard must reset so the next call
+    // re-enqueues rather than caching the failed promise forever.
+    let attempts = 0
+    const settingsCalls: number[] = []
+    const client: MeiliLike = {
+      index: () => ({
+        addDocuments: vi.fn(),
+        deleteDocument: vi.fn(),
+        search: vi.fn(async () => ({ hits: [] })),
+        updateSettings: async () => {
+          attempts += 1
+          settingsCalls.push(attempts)
+          if (attempts === 1) throw new Error('transient')
+          return { taskUid: 3 }
+        },
+      }),
+    }
+    await expect(ensureExperienceIndexSettings({ client })).rejects.toThrow(
+      'transient',
+    )
+    await ensureExperienceIndexSettings({ client })
+    expect(settingsCalls).toEqual([1, 2])
   })
 })

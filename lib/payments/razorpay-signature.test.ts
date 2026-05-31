@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto'
 
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 
 import { verifyWebhookSignature } from './razorpay-signature'
 
@@ -94,5 +94,52 @@ describe('verifyWebhookSignature', () => {
     const signature = createHmac('sha256', SECRET).update(body).digest('hex')
     expect(signature).toMatch(/^[0-9a-f]+$/)
     expect(verifyWebhookSignature(body, signature, SECRET)).toBe(true)
+  })
+
+  describe('RAZORPAY_TEST_MODE bypass', () => {
+    const originalEnv = process.env['RAZORPAY_TEST_MODE']
+
+    afterEach(() => {
+      if (originalEnv === undefined) {
+        delete process.env['RAZORPAY_TEST_MODE']
+      } else {
+        process.env['RAZORPAY_TEST_MODE'] = originalEnv
+      }
+    })
+
+    it('returns true for any inputs when RAZORPAY_TEST_MODE=true', () => {
+      process.env['RAZORPAY_TEST_MODE'] = 'true'
+      expect(
+        verifyWebhookSignature('any-body', 'wrong-signature', 'wrong-secret'),
+      ).toBe(true)
+    })
+
+    it('still validates normally when RAZORPAY_TEST_MODE is not set', () => {
+      delete process.env['RAZORPAY_TEST_MODE']
+      expect(
+        verifyWebhookSignature('any-body', 'wrong-signature', 'wrong-secret'),
+      ).toBe(false)
+    })
+
+    it('still validates normally when RAZORPAY_TEST_MODE=false', () => {
+      process.env['RAZORPAY_TEST_MODE'] = 'false'
+      expect(
+        verifyWebhookSignature('any-body', 'wrong-signature', 'wrong-secret'),
+      ).toBe(false)
+    })
+
+    it('throws when RAZORPAY_TEST_MODE=true AND NODE_ENV=production', () => {
+      process.env['RAZORPAY_TEST_MODE'] = 'true'
+      const envRecord = process.env as Record<string, string | undefined>
+      const origNodeEnv = envRecord['NODE_ENV']
+      envRecord['NODE_ENV'] = 'production'
+      try {
+        expect(() =>
+          verifyWebhookSignature('any-body', 'any-sig', 'any-secret'),
+        ).toThrow(/RAZORPAY_TEST_MODE must not be enabled in production/)
+      } finally {
+        envRecord['NODE_ENV'] = origNodeEnv
+      }
+    })
   })
 })

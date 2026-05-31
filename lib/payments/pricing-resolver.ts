@@ -1,4 +1,4 @@
-import { and, eq, lte, sql } from 'drizzle-orm'
+import { and, eq, gt, lte, sql } from 'drizzle-orm'
 
 import { experiences } from '@/db/schema/experiences'
 import { pricingTiers } from '@/db/schema/pricing-tiers'
@@ -82,7 +82,13 @@ export async function resolvePricing(
     .where(
       and(
         lte(pricingTiers.startAt, now),
-        sql`${pricingTiers.endAt} > ${now}`,
+        // Use drizzle's `gt` (not a raw `sql` interpolation) so the Date is
+        // serialised to the column type. A raw `sql\`... > ${now}\`` passes
+        // the JS Date straight to postgres-js, which throws
+        // ERR_INVALID_ARG_TYPE ("string argument ... received Date") on the
+        // real driver — PGlite tolerates it, so unit tests miss it. This is
+        // on the money path (booking-create → resolvePricing). (Issue #13)
+        gt(pricingTiers.endAt, now),
         sql`(
           array_length(${pricingTiers.appliesToCategories}, 1) IS NULL
           OR ${exp.activitySlug} = ANY(${pricingTiers.appliesToCategories})

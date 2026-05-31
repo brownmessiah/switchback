@@ -2,7 +2,7 @@
 
 ## Context
 
-The plan committed to "T+7 typical, Bank transfer + UPI" for Vendor Payouts but never specified Dispute interaction with the Payout timer, batching strategy, or any tax treatment. Two specific Indian regulatory obligations were absent: 18% IGST on Outvers' commission to Vendors (mandatory regardless of Vendor's GSTIN status) and 1% TDS under Section 194-O on the gross value paid to resident-Indian Vendors (a real legal obligation for e-commerce operators). Getting these wrong is a tax-authority audit risk, not just a feature gap.
+The plan committed to "T+7 typical, Bank transfer + UPI" for Vendor Payouts but never specified Dispute interaction with the Payout timer, batching strategy, or any tax treatment. Three Indian regulatory obligations were absent: 18% IGST on Outvers' commission to Vendors (mandatory regardless of Vendor's GSTIN status), TDS under Section 194-O on the gross value paid to resident-Indian Vendors, and GST TCS under Section 52 on Vendors' supplies made through the platform — all real legal obligations for e-commerce operators. Getting these wrong is a tax-authority audit risk, not just a feature gap. (See **Amendments** at the foot of this ADR for post-decision rate corrections.)
 
 ## Decision
 
@@ -28,18 +28,29 @@ The plan committed to "T+7 typical, Bank transfer + UPI" for Vendor Payouts but 
 
 - 18% IGST applied to commission, regardless of Vendor's GSTIN status.
 - Invoice issued either way; GSTIN-holding Vendors can claim input credit on their own returns.
-- **Vendor net = booking_gross − commission − (commission × 0.18) − TDS.**
+- **Vendor net = booking_gross − commission − (commission × 0.18) − TDS (194-O) − TCS (Section 52).**
+
+### GST TCS — Section 52 (e-commerce operator)
+
+- Outvers collects Customer payments on the Vendor's behalf, so it is an "e-commerce operator" under CGST Act Section 52 and **must collect TCS** on the Vendor's supplies made through the platform.
+- **Rate: 0.5%** (0.25% CGST + 0.25% SGST intra-state, or 0.5% IGST inter-state) on the **net taxable value** of the Vendor's supply, net of returns (reduced from 1% w.e.f. 10 Jul 2024). Confirm the exact taxable base with the CA before implementation.
+- **Separate from and additional to** the 18% IGST on Outvers' own commission. TCS is withheld from the Vendor's payout and deposited against the Vendor's GSTIN; the Vendor claims it as input credit on their own return.
+- Adventure Experiences are **not** a Section 9(5) notified service (unlike hotel accommodation / passenger transport), so the TCS regime applies — Outvers does not discharge the Vendor's output GST itself.
+- **Monthly GSTR-8** by the 10th of the following month; per-Vendor TCS statements feed the Vendor's GST credit.
+- Schema: snapshot `bookings.tcs_amount_snapshot` and `bookings.tcs_rate_snapshot` at Booking-create — same immutability rule as commission/TDS.
 
 ### TDS — Section 194-O
 
-- 1% TDS on gross Booking value to resident Indian Vendors. Calculated on gross, not net.
+- **0.1% TDS** on gross Booking value to resident Indian Vendors, calculated on gross not net (reduced from 1% by Finance Act 2024, w.e.f. 1 Oct 2024).
+- **Threshold exemption:** no 194-O deduction for a resident **individual / HUF** Vendor whose gross supplies through the platform are ≤ ₹5,00,000 in the financial year **and** who has furnished PAN/Aadhaar. Above the threshold, deduct on the full gross.
+- **Section 206AA:** if a Vendor has not furnished PAN, the statutory rate is 5% (v1 blocks Booking-create instead — see `lib/payments/tds-calculator.ts`).
 - Quarterly Form 26Q returns; Form 16A available to Vendors via dashboard.
 - Not applicable to foreign Vendors (out of v1 scope anyway).
 - Schema: `bookings.tds_amount_snapshot`, `payouts.tds_total`.
 
 ### Vendor statements
 
-- Monthly month-end statement: gross, commission, GST, TDS, net payouts; PDF + queryable view.
+- Monthly month-end statement: gross, commission, commission GST (18%), GST TCS (0.5%), income-tax TDS (194-O), net payout; PDF + queryable view.
 
 ### Payout failures
 
@@ -56,7 +67,13 @@ The plan committed to "T+7 typical, Bank transfer + UPI" for Vendor Payouts but 
 
 - Payouts module (M3 deliverable per the plan) must include the admin approval queue for first-3-Payouts. Without that UI, all Identity-verified Vendor Payouts block.
 - Form 26Q filing is a quarterly operational task; build a generator in `lib/tax/tds-returns.ts` to emit the file in the format the Income Tax portal expects. Manual filing in v1; automation deferred.
-- `bookings.tds_amount_snapshot` and `bookings.commission_rate_snapshot` are both locked at create — recomputing tax post-hoc is the same hazard as recomputing commission.
+- `bookings.tds_amount_snapshot` and `bookings.commission_rate_snapshot` are both locked at create — recomputing tax post-hoc is the same hazard as recomputing commission. `bookings.tcs_amount_snapshot` / `bookings.tcs_rate_snapshot` follow the same rule.
+- **GST TCS is a monthly obligation** (GSTR-8). Build a generator (e.g. `lib/tax/tcs-returns.ts`) alongside the 26Q one. **Code gap:** `lib/payments/gst-calculator.ts` currently models only the 18% commission GST and does not compute TCS — tracked in `.scratch/tax-compliance-gaps/`.
+- **Code gap:** `lib/payments/tds-calculator.ts` implements the 0.1% rate correctly but does not apply the ₹5L individual/HUF 194-O threshold exemption — it over-deducts for small individual Vendors. Tracked in `.scratch/tax-compliance-gaps/`.
 - The 7-day cooling-off on destination changes needs to be visible in the Vendor UI ("New UPI will be used from {date}"). Don't make security tradeoffs invisible.
 - The extended dispute window (T+30 for treks / permit-required) needs to be communicated to Vendors at onboarding — they need to know cash flow on these Bookings is slower than day-trips.
 - Monthly statement generation runs as a scheduled job (1st of each month for prior month); PDF generation via React Email or a similar templating layer.
+
+## Amendments
+
+- **2026-05-29:** Corrected the Section 194-O TDS rate from 1% to **0.1%** (Finance Act 2024, effective 1 Oct 2024) — the code (`lib/payments/tds-calculator.ts`) already used 0.1%; this ADR had lagged. Added the **₹5L individual/HUF 194-O threshold exemption** and the **GST TCS obligation (Section 52, 0.5%, monthly GSTR-8)**, both of which the original decision and the code omitted. Open code gaps (TCS not implemented; 194-O threshold not implemented) are tracked in `.scratch/tax-compliance-gaps/`.

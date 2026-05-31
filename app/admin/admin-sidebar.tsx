@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { usePathname } from 'next/navigation'
 
 import { cn } from '@/lib/utils'
@@ -33,6 +34,7 @@ function SidebarContent({
   onNavigate,
 }: AdminSidebarProps & { readonly onNavigate?: () => void }) {
   const pathname = usePathname()
+  const t = useTranslations('AdminNav')
 
   // A group is open if it contains the active route, or user toggled it
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => {
@@ -81,6 +83,7 @@ function SidebarContent({
     <nav className="flex flex-col gap-1 py-2">
       {groups.map((group) => {
         const isOpen = openGroups.has(group.label)
+        const groupLabel = t(`groups.${group.labelKey}`)
         return (
           <div key={group.label}>
             <button
@@ -89,7 +92,7 @@ function SidebarContent({
               className="flex w-full items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
               aria-expanded={isOpen}
             >
-              <span>{group.label}</span>
+              <span>{groupLabel}</span>
               <ChevronIcon open={isOpen} />
             </button>
 
@@ -113,7 +116,7 @@ function SidebarContent({
                           : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                       )}
                     >
-                      <span>{item.label}</span>
+                      <span>{t(`items.${item.labelKey}`)}</span>
                       {badge != null && badge > 0 && (
                         <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-medium text-destructive-foreground">
                           {badge}
@@ -210,6 +213,7 @@ function CloseIcon() {
 
 export function AdminSidebar({ groups, badgeCounts }: AdminSidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const t = useTranslations('AdminNav')
 
   // Close mobile sidebar on route change
   const pathname = usePathname()
@@ -229,6 +233,8 @@ export function AdminSidebar({ groups, badgeCounts }: AdminSidebarProps) {
     }
   }, [mobileOpen])
 
+  const sidebarTitle = t('sidebarTitle')
+
   return (
     <>
       {/* Mobile header bar */}
@@ -241,7 +247,7 @@ export function AdminSidebar({ groups, badgeCounts }: AdminSidebarProps) {
         >
           <HamburgerIcon />
         </button>
-        <span className="text-sm font-semibold text-primary">Admin</span>
+        <span className="text-sm font-semibold text-primary">{sidebarTitle}</span>
       </div>
 
       {/* Mobile overlay */}
@@ -256,7 +262,7 @@ export function AdminSidebar({ groups, badgeCounts }: AdminSidebarProps) {
           {/* Sidebar panel */}
           <div className="absolute inset-y-0 left-0 w-72 bg-background shadow-lg">
             <div className="flex items-center justify-between border-b px-4 py-3">
-              <span className="text-sm font-semibold text-primary">Admin</span>
+              <span className="text-sm font-semibold text-primary">{sidebarTitle}</span>
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
@@ -281,7 +287,7 @@ export function AdminSidebar({ groups, badgeCounts }: AdminSidebarProps) {
       <aside className="hidden w-60 shrink-0 border-r bg-background lg:block">
         <div className="sticky top-0 overflow-y-auto" style={{ maxHeight: '100vh' }}>
           <div className="border-b px-4 py-3">
-            <span className="text-sm font-semibold text-primary">Admin</span>
+            <span className="text-sm font-semibold text-primary">{sidebarTitle}</span>
           </div>
           <SidebarContent groups={groups} badgeCounts={badgeCounts} />
         </div>

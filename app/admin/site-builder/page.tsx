@@ -49,8 +49,10 @@ export default async function SiteBuilderPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Site Builder</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="font-heading text-h1 font-semibold tracking-tight">
+          Site Builder
+        </h1>
+        <p className="mt-1 text-xs text-muted-foreground">
           Manage hero, announcements, homepage layout, branding, SEO, and
           footer content. Each section saves independently.
         </p>

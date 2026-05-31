@@ -226,6 +226,36 @@ describe('quoteRefund (ADR-0005)', () => {
       expect(r.basis).toBe('outside_policy')
       expect(r.routesToDispute).toBe(true)
     })
+
+    // Matrix gap-fill (#33): the outside-policy → Dispute route must hold for
+    // every preset, not just Flexible. cancellationAt >= startAt short-circuits
+    // before the preset window table is consulted, so Moderate and Strict must
+    // route identically (0% refund, full fee held, routesToDispute=true).
+    it('routes to Dispute past start_at on Moderate', () => {
+      const r = quoteRefund({
+        preset: 'moderate',
+        startAt,
+        cancellationAt: new Date(startAt.getTime() + 3_600_000),
+        bookingTotalRupees: 5000,
+      })
+      expect(r.refundAmountRupees).toBe(0)
+      expect(r.cancellationFeeRupees).toBe(5000)
+      expect(r.basis).toBe('outside_policy')
+      expect(r.routesToDispute).toBe(true)
+    })
+
+    it('routes to Dispute past start_at on Strict', () => {
+      const r = quoteRefund({
+        preset: 'strict',
+        startAt,
+        cancellationAt: new Date(startAt.getTime() + 3_600_000),
+        bookingTotalRupees: 20000,
+      })
+      expect(r.refundAmountRupees).toBe(0)
+      expect(r.cancellationFeeRupees).toBe(20000)
+      expect(r.basis).toBe('outside_policy')
+      expect(r.routesToDispute).toBe(true)
+    })
   })
 
   describe('custom preset', () => {
@@ -236,6 +266,47 @@ describe('quoteRefund (ADR-0005)', () => {
           startAt,
           cancellationAt: hoursBefore(48),
           bookingTotalRupees: 3000,
+        }),
+      ).toThrow(/custom/i)
+    })
+
+    // Matrix gap-fill (#33): Custom has NO preset window table row — its
+    // behaviour is bespoke (admin-defined table, not yet shipped). The
+    // implemented behaviour is to throw *unconditionally*, independent of
+    // cancellation timing. Assert that the throw is timing-independent so a
+    // future "Custom inside the free window auto-refunds via the default
+    // table" regression cannot silently slip in: it must stay an explicit
+    // throw until the admin table lands.
+    it('throws inside what would be the free window (timing-independent)', () => {
+      expect(() =>
+        quoteRefund({
+          preset: 'custom',
+          startAt,
+          cancellationAt: hoursBefore(1),
+          bookingTotalRupees: 3000,
+        }),
+      ).toThrow(/custom/i)
+    })
+
+    it('throws even when cancellationAt is past start_at (not routed to Dispute)', () => {
+      expect(() =>
+        quoteRefund({
+          preset: 'custom',
+          startAt,
+          cancellationAt: new Date(startAt.getTime() + 3_600_000),
+          bookingTotalRupees: 3000,
+        }),
+      ).toThrow(/custom/i)
+    })
+
+    it('throws even when vendorCancelled is true (preset guard precedes any branch)', () => {
+      expect(() =>
+        quoteRefund({
+          preset: 'custom',
+          startAt,
+          cancellationAt: hoursBefore(48),
+          bookingTotalRupees: 3000,
+          vendorCancelled: true,
         }),
       ).toThrow(/custom/i)
     })

@@ -9,6 +9,7 @@ import { db as prodDb } from '@/db/client'
 import { blogPosts, BLOG_CATEGORIES, BLOG_STATUSES } from '@/db/schema/blog-posts'
 import { mediaAssets } from '@/db/schema/media-assets'
 import { auth } from '@/lib/auth'
+import { hasAdminPermission } from '@/lib/auth/permissions'
 import { writeAuditLog } from '@/lib/audit/write'
 import { LocalFileAdapter } from '@/lib/storage/local'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
@@ -21,20 +22,7 @@ export type BlogActionResult =
 
 // ── Slug generation ─────────────────────────────────────────────────
 
-/**
- * Generate a URL-safe slug from a title.
- * - Lowercases, strips non-alphanumeric (except spaces/hyphens),
- *   collapses consecutive hyphens, trims leading/trailing hyphens.
- */
-export function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/[\s]+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-}
+import { generateSlug } from './slug-utils'
 
 /**
  * Generate a unique slug by appending a numeric suffix when collisions
@@ -45,7 +33,7 @@ export async function generateUniqueSlug(
   title: string,
   excludeId?: string,
 ): Promise<string> {
-  const base = generateSlug(title)
+  const base = await generateSlug(title)
   if (!base) return `post-${Date.now()}`
 
   let candidate = base
@@ -71,12 +59,26 @@ export async function generateUniqueSlug(
 
 // ── Validation schemas ─────────────────────────────────────────────
 
+/**
+ * A cover-image URL may be either an absolute URL (e.g. a CDN/S3 URL in
+ * production) OR a root-relative path the storage mock returns
+ * (`/uploads/blog/...`). The default `z.string().url()` rejects relative
+ * paths, which broke the cover-image upload path entirely with the local
+ * storage adapter — so accept both forms here.
+ */
+const coverImageUrlSchema = z
+  .string()
+  .refine(
+    (v) => v.startsWith('/') || /^https?:\/\//.test(v),
+    'Cover image must be an absolute URL or an app-relative /uploads path.',
+  )
+
 const createSchema = z.object({
   title: z.string().trim().min(1, 'Title is required.').max(300),
   content: z.string().default(''),
   excerpt: z.string().max(500).nullable().optional(),
   category: z.enum(BLOG_CATEGORIES, { message: 'Invalid category.' }),
-  coverImageUrl: z.string().url().nullable().optional(),
+  coverImageUrl: coverImageUrlSchema.nullable().optional(),
   status: z.enum(BLOG_STATUSES).default('draft'),
 })
 
@@ -88,7 +90,7 @@ const updateSchema = z.object({
   content: z.string().optional(),
   excerpt: z.string().max(500).nullable().optional(),
   category: z.enum(BLOG_CATEGORIES, { message: 'Invalid category.' }).optional(),
-  coverImageUrl: z.string().url().nullable().optional(),
+  coverImageUrl: coverImageUrlSchema.nullable().optional(),
   status: z.enum(BLOG_STATUSES).optional(),
 })
 
@@ -242,6 +244,9 @@ export async function createBlogPost(
 ): Promise<BlogActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'blog'))) {
+    return { ok: false, error: 'You do not have permission to manage blog posts.' }
+  }
 
   const result = await executeCreateBlogPost(prodDb, session.user.id, input)
 
@@ -256,6 +261,9 @@ export async function updateBlogPost(
 ): Promise<BlogActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'blog'))) {
+    return { ok: false, error: 'You do not have permission to manage blog posts.' }
+  }
 
   const result = await executeUpdateBlogPost(prodDb, session.user.id, input)
 
@@ -270,6 +278,9 @@ export async function deleteBlogPost(
 ): Promise<BlogActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'blog'))) {
+    return { ok: false, error: 'You do not have permission to manage blog posts.' }
+  }
 
   const result = await executeDeleteBlogPost(prodDb, session.user.id, postId)
 
@@ -291,6 +302,9 @@ export async function uploadBlogCoverImage(
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) {
     return { ok: false, error: 'Not authenticated.' }
+  }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'blog'))) {
+    return { ok: false, error: 'You do not have permission to manage blog posts.' }
   }
 
   const file = formData.get('file') as File | null

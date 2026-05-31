@@ -195,6 +195,24 @@ describe('bookings snapshot UPDATE lock (ADRs 0008/0011/0016)', () => {
     ).rejects.toThrow(/snapshot/i)
   })
 
+  it('rejects UPDATE on tcs_amount_snapshot', async () => {
+    await expect(
+      db
+        .update(bookings)
+        .set({ tcsAmountSnapshot: '999.00' })
+        .where(eq(bookings.id, bookingId)),
+    ).rejects.toThrow(/snapshot/i)
+  })
+
+  it('rejects UPDATE on tcs_rate_snapshot', async () => {
+    await expect(
+      db
+        .update(bookings)
+        .set({ tcsRateSnapshot: '1.00' })
+        .where(eq(bookings.id, bookingId)),
+    ).rejects.toThrow(/snapshot/i)
+  })
+
   it('allows UPDATE on state (lifecycle column)', async () => {
     await db
       .update(bookings)

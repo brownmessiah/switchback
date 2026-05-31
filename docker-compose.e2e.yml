@@ -1,0 +1,17 @@
+# E2E test infrastructure — services needed by Playwright tests.
+# Usage: docker compose -f docker-compose.e2e.yml up -d
+
+services:
+  meilisearch:
+    image: getmeili/meilisearch:v1.14
+    ports:
+      - '7700:7700'
+    environment:
+      MEILI_MASTER_KEY: test-key
+      MEILI_ENV: development
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:7700/health']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s

@@ -5,8 +5,10 @@ import { useRef, useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -55,8 +57,12 @@ export function SubAdminActionsCell({
 }: SubAdminActionsCellProps) {
   const [isPending, startTransition] = useTransition()
   const [editOpen, setEditOpen] = useState(false)
+  const [revokeOpen, setRevokeOpen] = useState(false)
   const [editResult, setEditResult] = useState<SubAdminActionResult | null>(null)
+  const [revokeError, setRevokeError] = useState<string | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
+
+  const display = name ?? email ?? userId
 
   function handleEdit(formData: FormData) {
     formData.set('userId', userId)
@@ -70,26 +76,33 @@ export function SubAdminActionsCell({
   }
 
   function handleRevoke() {
-    const display = email ?? name ?? userId
-    if (!confirm(`Revoke admin access for "${display}"? This cannot be undone.`)) return
+    setRevokeError(null)
     startTransition(async () => {
-      await revokeSubAdmin(userId)
+      const res = await revokeSubAdmin(userId)
+      if (!res.ok) {
+        setRevokeError(res.error)
+        return
+      }
+      setRevokeOpen(false)
     })
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center justify-end gap-2">
+      {/* Edit permissions — the confirm itself: restates the full subset and
+          requires an explicit Save before any access change is committed. */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogTrigger
           render={<Button variant="outline" size="sm" disabled={isPending} />}
         >
           Edit
         </DialogTrigger>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg" data-testid="edit-subadmin-permissions">
           <DialogHeader>
             <DialogTitle>Edit Permissions</DialogTitle>
             <DialogDescription>
-              Update permissions for {email ?? name ?? userId}.
+              Update the permission subset for {display}. Unchecking a permission
+              removes that access; checking one grants it.
             </DialogDescription>
           </DialogHeader>
           <form ref={formRef} action={handleEdit} className="space-y-4">
@@ -99,7 +112,7 @@ export function SubAdminActionsCell({
                 {ADMIN_PERMISSIONS.map((perm) => (
                   <label
                     key={perm}
-                    className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted/50 cursor-pointer"
+                    className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-control)] border px-3 py-2 text-sm hover:bg-muted/50"
                   >
                     <input
                       type="checkbox"
@@ -120,31 +133,67 @@ export function SubAdminActionsCell({
               </p>
             )}
 
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setEditOpen(false)}
-              >
+            <DialogFooter>
+              <DialogClose render={<Button type="button" variant="outline" />}>
                 Cancel
-              </Button>
+              </DialogClose>
               <Button type="submit" disabled={isPending}>
-                {isPending ? 'Saving...' : 'Save Permissions'}
+                {isPending ? 'Saving…' : 'Save Permissions'}
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      <Button
-        variant="outline"
-        size="sm"
-        disabled={isPending}
-        onClick={handleRevoke}
-        className="text-destructive hover:text-destructive"
-      >
-        Revoke
-      </Button>
+      {/* Revoke — destructive: gated behind an A4 confirm Dialog that restates
+          the access change before commit (DESIGN.md §4 A4). Cancel is the
+          non-default focus; the action only fires from the explicit confirm. */}
+      <Dialog open={revokeOpen} onOpenChange={setRevokeOpen}>
+        <DialogTrigger
+          render={
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isPending}
+              className="text-destructive hover:text-destructive"
+              data-testid="subadmin-revoke-trigger"
+            />
+          }
+        >
+          Revoke
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md" data-testid="revoke-subadmin-confirm">
+          <DialogHeader>
+            <DialogTitle>Revoke admin access</DialogTitle>
+            <DialogDescription>
+              This permanently removes <span className="font-medium">all</span>{' '}
+              admin access for{' '}
+              <span className="font-medium text-foreground">{display}</span>. They
+              will lose every permission immediately. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          {revokeError && (
+            <p className="text-sm text-destructive" role="alert">
+              {revokeError}
+            </p>
+          )}
+
+          <DialogFooter>
+            <DialogClose render={<Button type="button" variant="outline" />}>
+              Cancel
+            </DialogClose>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={isPending}
+              onClick={handleRevoke}
+            >
+              {isPending ? 'Revoking…' : 'Revoke Access'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

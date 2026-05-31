@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback } from 'react'
 
+import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -10,9 +11,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Button } from '@/components/ui/button'
 
-const STATUSES = ['pending', 'published', 'flagged', 'removed'] as const
+/** Filter values are the real reviews.status keys; labels are operator-facing. */
+const STATUSES = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'published', label: 'Visible' },
+  { value: 'flagged', label: 'Hidden (flagged)' },
+  { value: 'removed', label: 'Removed' },
+] as const
 const RATINGS = [1, 2, 3, 4, 5] as const
 
 interface ReviewFiltersProps {
@@ -52,31 +58,39 @@ export function ReviewFilters({ currentFilters }: ReviewFiltersProps) {
         value={currentFilters.status ?? 'all'}
         onValueChange={(v) => updateFilter('status', v)}
       >
-        <SelectTrigger className="w-[150px]">
+        <SelectTrigger className="w-[170px]">
           <SelectValue placeholder="Status" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All statuses</SelectItem>
           {STATUSES.map((s) => (
-            <SelectItem key={s} value={s} className="capitalize">
-              {s}
+            <SelectItem key={s.value} value={s.value}>
+              {s.label}
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
 
       <Select
-        value={currentFilters.rating !== undefined ? String(currentFilters.rating) : 'all'}
+        value={
+          currentFilters.rating !== undefined
+            ? String(currentFilters.rating)
+            : 'all'
+        }
         onValueChange={(v) => updateFilter('rating', v)}
       >
-        <SelectTrigger className="w-[140px]">
+        <SelectTrigger className="w-[150px]">
           <SelectValue placeholder="Rating" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All ratings</SelectItem>
           {RATINGS.map((r) => (
             <SelectItem key={r} value={String(r)}>
-              {'★'.repeat(r)}{'☆'.repeat(5 - r)} ({r})
+              <span className="tabular-nums">
+                {'★'.repeat(r)}
+                {'☆'.repeat(5 - r)}
+              </span>{' '}
+              ({r})
             </SelectItem>
           ))}
         </SelectContent>

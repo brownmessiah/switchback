@@ -13,10 +13,16 @@ import { env } from '@/lib/env'
  * PGlite + the stub in unit tests.
  */
 
+export interface MeiliIndexSettings {
+  filterableAttributes?: string[]
+  sortableAttributes?: string[]
+}
+
 export interface MeiliIndex {
   addDocuments(docs: unknown[]): Promise<unknown>
   deleteDocument(id: string): Promise<unknown>
   search(query: string, opts?: Record<string, unknown>): Promise<{ hits: unknown[] }>
+  updateSettings(settings: MeiliIndexSettings): Promise<unknown>
 }
 
 export interface MeiliLike {
@@ -36,6 +42,9 @@ function makeStub(): MeiliLike {
       },
       async search() {
         return { hits: [] }
+      },
+      async updateSettings() {
+        return { taskUid: null }
       },
     }),
   }

@@ -1,11 +1,12 @@
 import { eq, sql } from 'drizzle-orm'
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import { auditLogs } from '@/db/schema/audit-logs'
 import { availabilitySlots } from '@/db/schema/availability-slots'
 import { bookings } from '@/db/schema/bookings'
 import { commissionTiers } from '@/db/schema/commission-tiers'
 import { experiences } from '@/db/schema/experiences'
+import { pricingTiers } from '@/db/schema/pricing-tiers'
 import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { _resetRedisCacheForTests } from '@/lib/redis'
@@ -60,6 +61,10 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
       userId: 'u_v',
       businessName: 'Test Adventures',
       slug: 'test-adventures',
+      // Identity-verified (ADR-0007 Tier 2): the seeded Experience (single-day,
+      // Rs.1,500/person, capacity 8, non-combo) sits within the Tier-2 caps,
+      // so the booking-create tier re-check passes for the happy path.
+      kycTier: 'identity',
       pan: 'ABCDE1234F',
       commissionRate: '20.00',
       payoutMethod: 'upi',
@@ -98,14 +103,31 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
       .returning({ id: experiences.id })
     experienceId = exp!.id
 
-    const startAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // T+7d
-    const endAt = new Date(startAt.getTime() + 4 * 60 * 60 * 1000)
+    // T+7d but PINNED to 06:00 UTC so the +4h slot never crosses UTC
+    // midnight (which would trip the Tier-2 single-day cap). Anchoring on
+    // Date.now()'s wall-clock hour made the fixture flaky after ~20:00 UTC.
+    const { startAt, endAt } = futureSingleDaySlot(7)
     const [slot] = await db
       .insert(availabilitySlots)
       .values({ experienceId, startAt, endAt, capacity: 8 })
       .returning({ id: availabilitySlots.id })
     slotId = slot!.id
   })
+
+  /**
+   * Build a single-day slot `daysAhead` days from now, pinned to 06:00-10:00
+   * UTC. Pinning the hour keeps the slot inside one UTC calendar day
+   * regardless of the wall-clock time the suite runs at, so the Tier-2
+   * single-day cap never spuriously fires on the happy-path fixture.
+   */
+  function futureSingleDaySlot(daysAhead: number): { startAt: Date; endAt: Date } {
+    const base = new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000)
+    const startAt = new Date(
+      Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate(), 6, 0, 0),
+    )
+    const endAt = new Date(startAt.getTime() + 4 * 60 * 60 * 1000)
+    return { startAt, endAt }
+  }
 
   function uuid(): string {
     return crypto.randomUUID()
@@ -282,10 +304,40 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
       expect(err.code).toBe('PAYMENT_MODE_NOT_ALLOWED')
     })
 
+    it('keeps partial_pay (25% Advance route) for the default case: ≥48h out AND ≤Rs.25,000 (ADR-0001, #35)', async () => {
+      // Default partial-pay: the seeded slot is T+7d (≥48h) and gross is
+      // 3000 (≤Rs.25,000), so the Booking stays partial_pay with the
+      // booking_create capture trigger — the 25% Advance is taken now and
+      // the 75% balance is auto-captured at T-24h by the cron. Advance basis
+      // = floor(3000*0.25) = 750; balance = 3000-750 = 2250.
+      const r = await createBooking(db, { ...defaultInput(), paymentMode: 'partial_pay' })
+      expect(r.effectivePaymentMode).toBe('partial_pay')
+
+      const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
+      expect(row?.paymentMode).toBe('partial_pay')
+      expect(row?.grossTotalSnapshot).toBe('3000.00')
+
+      const [auditRow] = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.entityId, r.bookingId))
+      const payload = auditRow?.payload as Record<string, unknown>
+      // booking_create (NOT escrow_full_capture) ⇒ the 25% Advance route,
+      // distinguishing the default from the >Rs.25,000 escrow carve-out.
+      expect(payload.captureTrigger).toBe('booking_create')
+      expect(payload.effectivePaymentMode).toBe('partial_pay')
+      expect(payload.coercedUnder48h).toBe(false)
+      // Advance + balance reconstitute the gross with the worker's rounding.
+      const gross = Number(payload.grossRupees)
+      const advance = Math.floor(gross * 0.25)
+      expect(advance).toBe(750)
+      expect(gross - advance).toBe(2250)
+    })
+
     it('coerces partial_pay to full_upfront when booking is <48h before slot (ADR-0001)', async () => {
-      // Re-create slot at T+24h
-      const startAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
-      const endAt = new Date(startAt.getTime() + 4 * 60 * 60 * 1000)
+      // Tomorrow 06:00-10:00 UTC: always in the future and strictly <48h
+      // out, and single-day regardless of the wall-clock run time.
+      const { startAt, endAt } = futureSingleDaySlot(1)
       const [slot] = await db
         .insert(availabilitySlots)
         .values({ experienceId, startAt, endAt, capacity: 8 })
@@ -309,6 +361,12 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
     })
 
     it('escrow-flavours partial_pay when gross > Rs.25,000 (ADR-0001)', async () => {
+      // A >Rs.25,000 ticket exceeds the Tier-2 per-person cap, so this is a
+      // Business-verified Vendor (ADR-0007 unrestricted listing).
+      await db
+        .update(vendorProfiles)
+        .set({ kycTier: 'business' })
+        .where(eq(vendorProfiles.userId, 'u_v'))
       // Push price up so 2 participants × X > 25000
       await db
         .update(experiences)
@@ -429,6 +487,70 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
     })
   })
 
+  describe('vendor suspension (admin-controlled)', () => {
+    // ADR-0007 + vendor_profiles.suspended: an admin-suspended Vendor cannot
+    // accept new Bookings. The flag is re-checked at booking-create time (the
+    // Experience may have been published before the suspension), and the whole
+    // transaction rolls back atomically on refusal.
+    afterEach(async () => {
+      // The vendor row lives in beforeAll (not beforeEach), so un-suspend it
+      // here to keep the rest of the suite's happy-path fixtures intact.
+      await db
+        .update(vendorProfiles)
+        .set({ suspended: false })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+    })
+
+    it('rejects a booking when the Vendor is suspended', async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ suspended: true })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+
+      const err = await expectBookingCreateError(createBooking(db, defaultInput()))
+      expect(err.code).toBe('VENDOR_SUSPENDED')
+    })
+
+    it('rolls back atomically — no booking, no audit row, capacity unchanged', async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ suspended: true })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+
+      await expectBookingCreateError(createBooking(db, defaultInput()))
+
+      const allBookings = await db.select().from(bookings)
+      expect(allBookings).toHaveLength(0)
+      const allAudit = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.action, 'booking.create'))
+      expect(allAudit).toHaveLength(0)
+      const [slot] = await db
+        .select()
+        .from(availabilitySlots)
+        .where(eq(availabilitySlots.id, slotId))
+      expect(slot?.capacityTaken).toBe(0)
+    })
+
+    it('allows the booking again once the Vendor is reactivated', async () => {
+      // Suspend, fail, reactivate, succeed — proves the toggle is read live.
+      await db
+        .update(vendorProfiles)
+        .set({ suspended: true })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+      await expectBookingCreateError(createBooking(db, defaultInput()))
+
+      await db
+        .update(vendorProfiles)
+        .set({ suspended: false })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+
+      const r = await createBooking(db, defaultInput())
+      expect(r.bookingId).toMatch(/^[0-9a-f-]{36}$/)
+    })
+  })
+
   describe('input validation', () => {
     it('rejects participantCount <= 0', async () => {
       await expect(
@@ -490,6 +612,338 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
       expect(row?.tdsAmountSnapshot).toBe('0.00')
       expect(row?.vendorIsResidentSnapshot).toBe(false)
       expect(row?.vendorPanSnapshot).toBeNull()
+    })
+  })
+
+  describe('GST TCS (Section 52) + 194-O threshold (ADR-0016)', () => {
+    // The 'non-resident vendor edge' suite above nulls vendor.pan and the
+    // top-level beforeEach does not reset vendor_profiles — restore a known
+    // resident vendor with no taxpayer type so each test starts clean.
+    beforeEach(async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ pan: 'ABCDE1234F', taxpayerType: null })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+    })
+
+    it('snapshots 0.5% TCS on the booking gross', async () => {
+      const r = await createBooking(db, defaultInput())
+      const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
+      expect(row?.tcsAmountSnapshot).toBe('15.00') // 0.5% of 3000
+      expect(row?.tcsRateSnapshot).toBe('0.50')
+    })
+
+    it('records TCS in the booking.create audit payload', async () => {
+      const r = await createBooking(db, defaultInput())
+      const [auditRow] = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.entityId, r.bookingId))
+      const payload = auditRow?.payload as Record<string, unknown>
+      expect(payload.tcsRupees).toBe(15)
+    })
+
+    it('exempts an individual vendor under ₹5L FY gross from TDS (Section 194-O(2))', async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ taxpayerType: 'individual' })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+      const r = await createBooking(db, defaultInput())
+      const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
+      expect(row?.tdsAmountSnapshot).toBe('0.00')
+      const [auditRow] = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.entityId, r.bookingId))
+      const payload = auditRow?.payload as Record<string, unknown>
+      expect(payload.tdsBasis).toBe('section_194o_below_threshold')
+    })
+
+    it('starts deducting TDS once the vendor crosses ₹5L cumulative FY gross', async () => {
+      // Rs.150,000/person far exceeds the Tier-2 cap, so this is a
+      // Business-verified Vendor (an individual taxpayer can still be Tier 3).
+      await db
+        .update(vendorProfiles)
+        .set({ taxpayerType: 'individual', kycTier: 'business' })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+      await db
+        .update(experiences)
+        .set({
+          pricePerPerson_1_2: '150000.00',
+          pricePerPerson_3_5: '150000.00',
+          pricePerPerson_6_plus: '150000.00',
+        })
+        .where(eq(experiences.id, experienceId))
+
+      // Booking 1: gross 300000, cumulative 300000 ≤ ₹5L → exempt.
+      const r1 = await createBooking(db, defaultInput())
+      const [row1] = await db.select().from(bookings).where(eq(bookings.id, r1.bookingId))
+      expect(row1?.tdsAmountSnapshot).toBe('0.00')
+
+      // Booking 2: gross 300000, cumulative 600000 > ₹5L → deduct 0.1% of 300000 = 300.
+      const r2 = await createBooking(db, defaultInput())
+      const [row2] = await db.select().from(bookings).where(eq(bookings.id, r2.bookingId))
+      expect(row2?.tdsAmountSnapshot).toBe('300.00')
+    })
+
+    it('does not exempt a company vendor even under ₹5L', async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ taxpayerType: 'company' })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+      const r = await createBooking(db, defaultInput())
+      const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
+      expect(row?.tdsAmountSnapshot).toBe('3.00') // 0.1% of 3000, not exempt
+    })
+  })
+
+  // ── Pricing precedence snapshotted at booking-create (ADR-0011) ───
+  //
+  // The resolver-level precedence is unit-tested in pricing-resolver.test.ts.
+  // These assert the INTEGRATION fact: at booking-create the resolved arm is
+  // locked onto bookings.price_per_participant_snapshot + pricing_basis_snapshot
+  // and never recomputed — pricing_tier override beats the group-size bracket,
+  // and the bracket itself is chosen by participant_count.
+  describe('pricing precedence snapshot (ADR-0011)', () => {
+    // Reset the shared Vendor to a clean identity tier — sibling suites mutate
+    // kyc_tier / taxpayer_type and vendor_profiles is not truncated in the
+    // top-level beforeEach.
+    beforeEach(async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ kycTier: 'identity', pan: 'ABCDE1234F', taxpayerType: null })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+    })
+
+    /**
+     * A fresh capacity-8 single-day slot `daysAhead` out so each booking has
+     * its own seats AND a distinct start_at (the unique index is on
+     * (experience_id, start_at)).
+     */
+    async function freshSlot(daysAhead: number): Promise<string> {
+      const { startAt, endAt } = futureSingleDaySlot(daysAhead)
+      const [slot] = await db
+        .insert(availabilitySlots)
+        .values({ experienceId, startAt, endAt, capacity: 8 })
+        .returning({ id: availabilitySlots.id })
+      return slot!.id
+    }
+
+    it('locks the group-size bracket chosen by participant_count (1-2 / 3-5 / 6+)', async () => {
+      // 2 → 1_2 (1500), 4 → 3_5 (1300), 7 → 6_plus (1100). Distinct values
+      // make the fired bracket observable on the snapshot. Each booking
+      // takes its own capacity-8 slot on a distinct day.
+      const r2 = await createBooking(db, {
+        ...defaultInput(),
+        slotId: await freshSlot(8),
+        participantCount: 2,
+      })
+      const [b2] = await db.select().from(bookings).where(eq(bookings.id, r2.bookingId))
+      expect(b2?.pricePerParticipantSnapshot).toBe('1500.00')
+      expect(b2?.pricingBasisSnapshot).toBe('experience_bracket:1_2')
+
+      const r4 = await createBooking(db, {
+        ...defaultInput(),
+        slotId: await freshSlot(9),
+        participantCount: 4,
+      })
+      const [b4] = await db.select().from(bookings).where(eq(bookings.id, r4.bookingId))
+      expect(b4?.pricePerParticipantSnapshot).toBe('1300.00')
+      expect(b4?.pricingBasisSnapshot).toBe('experience_bracket:3_5')
+
+      const r7 = await createBooking(db, {
+        ...defaultInput(),
+        slotId: await freshSlot(10),
+        participantCount: 7,
+      })
+      const [b7] = await db.select().from(bookings).where(eq(bookings.id, r7.bookingId))
+      expect(b7?.pricePerParticipantSnapshot).toBe('1100.00')
+      expect(b7?.pricingBasisSnapshot).toBe('experience_bracket:6_plus')
+    })
+
+    it('an active pricing_tier override beats the bracket and is snapshotted', async () => {
+      // Pricing resolves as-of slot.start_at (T+7d). A tier window that spans
+      // now → far future fires over the 1_2 bracket (which would be 1500).
+      const start = new Date(Date.now() - 24 * 60 * 60 * 1000)
+      const end = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)
+      await db.insert(pricingTiers).values({
+        name: 'monsoon_2026',
+        startAt: start,
+        endAt: end,
+        pricePerPersonOverride: '999.00',
+        reason: 'Monsoon promo',
+        createdByAdminUserId: 'u_v',
+      })
+
+      const r = await createBooking(db, { ...defaultInput(), participantCount: 2 })
+      const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
+      // Override wins over the 1_2 bracket (1500): snapshot is the tier price.
+      expect(row?.pricePerParticipantSnapshot).toBe('999.00')
+      expect(row?.pricingBasisSnapshot).toBe('pricing_tier:monsoon_2026')
+      // gross = 999 × 2 = 1998 (floored).
+      expect(row?.grossTotalSnapshot).toBe('1998.00')
+    })
+
+    it('does not re-resolve pricing when the tier price changes after booking (snapshot rule)', async () => {
+      const start = new Date(Date.now() - 24 * 60 * 60 * 1000)
+      const end = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)
+      const [tier] = await db
+        .insert(pricingTiers)
+        .values({
+          name: 'monsoon_2026',
+          startAt: start,
+          endAt: end,
+          pricePerPersonOverride: '999.00',
+          reason: 'Monsoon promo',
+          createdByAdminUserId: 'u_v',
+        })
+        .returning({ id: pricingTiers.id })
+
+      const r = await createBooking(db, { ...defaultInput(), participantCount: 2 })
+      // Mutate the tier price AFTER the booking.
+      await db
+        .update(pricingTiers)
+        .set({ pricePerPersonOverride: '111.00' })
+        .where(eq(pricingTiers.id, tier!.id))
+
+      const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
+      // Snapshot is frozen at the booking-time value.
+      expect(row?.pricePerParticipantSnapshot).toBe('999.00')
+      expect(row?.pricingBasisSnapshot).toBe('pricing_tier:monsoon_2026')
+    })
+  })
+
+  // ── Tier-2 cap re-check at booking-create (ADR-0007) ──────────────
+  //
+  // The caps are double-checked at booking-create because the Vendor's
+  // KYC tier may have been downgraded AFTER the Experience was published.
+  // An over-cap Booking against a now-downgraded Vendor must be refused.
+  describe('Tier-2 cap re-check (ADR-0007)', () => {
+    // Restore a clean identity-tier Vendor before each case — sibling suites
+    // mutate kyc_tier and vendor_profiles is not truncated in the top-level
+    // beforeEach, so ordering would otherwise leak prior state in.
+    beforeEach(async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ kycTier: 'identity', pan: 'ABCDE1234F', taxpayerType: null })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+    })
+
+    it('rejects a booking when the Vendor has been downgraded to phone', async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ kycTier: 'phone' })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+
+      const err = await expectBookingCreateError(createBooking(db, defaultInput()))
+      expect(err.code).toBe('TIER_CAP_EXCEEDED')
+
+      // No booking row created — the transaction rolled back.
+      const rows = await db.select().from(bookings)
+      expect(rows).toHaveLength(0)
+      // Slot capacity untouched.
+      const [slot] = await db
+        .select()
+        .from(availabilitySlots)
+        .where(eq(availabilitySlots.id, slotId))
+      expect(slot?.capacityTaken).toBe(0)
+    })
+
+    it('rejects a booking when the booked slot now spans multiple days for an identity Vendor (single-day cap)', async () => {
+      // Vendor stays identity; the booked slot crosses a calendar-day
+      // boundary (an Experience published while business-verified, then
+      // downgraded). The single-day cap is re-checked at booking-create
+      // against the actual booked slot — this is the multi-day arm that
+      // the publish-time suite covers at publish but was untested here.
+      const startAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      const endAt = new Date(startAt.getTime() + 26 * 60 * 60 * 1000) // +26h → next day
+      const [multiDaySlot] = await db
+        .insert(availabilitySlots)
+        .values({ experienceId, startAt, endAt, capacity: 8 })
+        .returning({ id: availabilitySlots.id })
+
+      const err = await expectBookingCreateError(
+        createBooking(db, { ...defaultInput(), slotId: multiDaySlot!.id }),
+      )
+      expect(err.code).toBe('TIER_CAP_EXCEEDED')
+      expect(err.tierCapViolationCode).toBe('MULTI_DAY_NOT_ALLOWED')
+
+      // No booking row; the multi-day slot's capacity is untouched.
+      const rows = await db.select().from(bookings)
+      expect(rows).toHaveLength(0)
+      const [slot] = await db
+        .select()
+        .from(availabilitySlots)
+        .where(eq(availabilitySlots.id, multiDaySlot!.id))
+      expect(slot?.capacityTaken).toBe(0)
+    })
+
+    it('rejects a booking when the booked slot now exceeds the 8-participant cap for an identity Vendor', async () => {
+      // Vendor stays identity, but the slot capacity is raised above the cap
+      // (e.g. an Experience published while business-verified, then downgraded).
+      await db
+        .update(availabilitySlots)
+        .set({ capacity: 20 })
+        .where(eq(availabilitySlots.id, slotId))
+
+      const err = await expectBookingCreateError(createBooking(db, defaultInput()))
+      expect(err.code).toBe('TIER_CAP_EXCEEDED')
+
+      const rows = await db.select().from(bookings)
+      expect(rows).toHaveLength(0)
+    })
+
+    it('rejects a booking when the Experience is now over the per-person price cap for an identity Vendor', async () => {
+      await db
+        .update(experiences)
+        .set({
+          pricePerPerson_1_2: '9000.00',
+          pricePerPerson_3_5: '9000.00',
+          pricePerPerson_6_plus: '9000.00',
+        })
+        .where(eq(experiences.id, experienceId))
+
+      const err = await expectBookingCreateError(createBooking(db, defaultInput()))
+      expect(err.code).toBe('TIER_CAP_EXCEEDED')
+
+      const rows = await db.select().from(bookings)
+      expect(rows).toHaveLength(0)
+    })
+
+    it('writes a TIER_CAP_EXCEEDED audit row on rejection', async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ kycTier: 'phone' })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+
+      await expectBookingCreateError(createBooking(db, defaultInput()))
+
+      // The rejection audit row is written outside the rolled-back booking
+      // transaction so it survives.
+      const rows = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.action, 'booking.tier_cap_rejected'))
+      expect(rows).toHaveLength(1)
+      expect(rows[0]?.entityType).toBe('experience')
+      expect(rows[0]?.entityId).toBe(experienceId)
+      const payload = rows[0]?.payload as Record<string, unknown>
+      expect(payload.code).toBe('PHONE_CANNOT_PUBLISH')
+      expect(payload.kycTier).toBe('phone')
+    })
+
+    it('allows a booking when the Vendor is business-verified regardless of caps', async () => {
+      await db
+        .update(vendorProfiles)
+        .set({ kycTier: 'business' })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+      await db
+        .update(availabilitySlots)
+        .set({ capacity: 30 })
+        .where(eq(availabilitySlots.id, slotId))
+
+      const r = await createBooking(db, defaultInput())
+      expect(r.bookingId).toMatch(/^[0-9a-f-]{36}$/)
     })
   })
 })

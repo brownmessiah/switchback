@@ -7,9 +7,14 @@ import { z } from 'zod'
 
 import { db as prodDb } from '@/db/client'
 import { experiences } from '@/db/schema/experiences'
+import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { auth } from '@/lib/auth'
+import { hasAdminPermission } from '@/lib/auth/permissions'
 import { writeAuditLog } from '@/lib/audit/write'
+import { assertExperienceWithinTier } from '@/lib/kyc/enforce-tier-caps'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
+import { indexExperience, deindexExperience, type ExperienceSearchDoc } from '@/lib/search/indexer'
+import type { MeiliLike } from '@/lib/search/meilisearch-client'
 
 // ── Result types ────────────────────────────────────────────────────
 
@@ -46,12 +51,20 @@ const rejectSchema = z.object({
     .max(2000),
 })
 
+// ── Search indexing options ─────────────────────────────────────────
+
+export interface ModerationOpts {
+  /** Injected Meilisearch client for testing; defaults to singleton. */
+  searchClient?: MeiliLike
+}
+
 // ── Core testable functions ─────────────────────────────────────────
 
 export async function executeApproveExperience(
   db: DBOrTx,
   adminUserId: string,
   input: { experienceId: string },
+  opts: ModerationOpts = {},
 ): Promise<ExperienceModerationResult> {
   const parsed = experienceIdSchema.safeParse(input)
   if (!parsed.success) {
@@ -61,8 +74,19 @@ export async function executeApproveExperience(
   const { experienceId } = parsed.data
 
   const [exp] = await db
-    .select({ status: experiences.status })
+    .select({
+      status: experiences.status,
+      slug: experiences.slug,
+      title: experiences.title,
+      shortDescription: experiences.shortDescription,
+      activitySlug: experiences.activitySlug,
+      regionSlug: experiences.regionSlug,
+      vendorSlug: vendorProfiles.slug,
+      pricePerPerson_1_2: experiences.pricePerPerson_1_2,
+      isCombo: experiences.isCombo,
+    })
     .from(experiences)
+    .innerJoin(vendorProfiles, eq(experiences.vendorUserId, vendorProfiles.userId))
     .where(eq(experiences.id, experienceId))
     .limit(1)
 
@@ -77,9 +101,30 @@ export async function executeApproveExperience(
     }
   }
 
+  // ADR-0007 — enforce the Vendor's KYC-tier caps before publishing. An
+  // over-cap Experience (price, combo, multi-day, or per-slot capacity) is
+  // rejected; the rejection reason is written to audit_logs and the status
+  // stays pending_review.
+  const tierCheck = await assertExperienceWithinTier(db, experienceId)
+  if (!tierCheck.ok) {
+    await writeAuditLog(db, {
+      actorUserId: adminUserId,
+      action: 'admin.experience.tier_cap_rejected',
+      entityType: 'experience',
+      entityId: experienceId,
+      payload: {
+        code: tierCheck.code,
+        reason: tierCheck.reason,
+      },
+    })
+    return { ok: false, error: tierCheck.reason }
+  }
+
+  const now = new Date()
+
   await db
     .update(experiences)
-    .set({ status: 'published', updatedAt: new Date() })
+    .set({ status: 'published', updatedAt: now })
     .where(eq(experiences.id, experienceId))
 
   await writeAuditLog(db, {
@@ -93,6 +138,21 @@ export async function executeApproveExperience(
     },
   })
 
+  // Index in Meilisearch so the experience appears in search results.
+  const searchDoc: ExperienceSearchDoc = {
+    id: experienceId,
+    slug: exp.slug,
+    title: exp.title,
+    shortDescription: exp.shortDescription,
+    activitySlug: exp.activitySlug,
+    regionSlug: exp.regionSlug,
+    vendorSlug: exp.vendorSlug,
+    pricePerPersonRupees: Math.round(Number(exp.pricePerPerson_1_2)),
+    isCombo: exp.isCombo,
+    publishedAt: now,
+  }
+  await indexExperience(searchDoc, { client: opts.searchClient })
+
   return { ok: true }
 }
 
@@ -100,6 +160,7 @@ export async function executeRejectExperience(
   db: DBOrTx,
   adminUserId: string,
   input: { experienceId: string; reason: string },
+  opts: ModerationOpts = {},
 ): Promise<ExperienceModerationResult> {
   const parsed = rejectSchema.safeParse(input)
   if (!parsed.success) {
@@ -142,6 +203,9 @@ export async function executeRejectExperience(
     },
   })
 
+  // Deindex: rejected experiences must not appear in search.
+  await deindexExperience(experienceId, { client: opts.searchClient })
+
   return { ok: true }
 }
 
@@ -149,6 +213,7 @@ export async function executePauseExperience(
   db: DBOrTx,
   adminUserId: string,
   input: { experienceId: string },
+  opts: ModerationOpts = {},
 ): Promise<ExperienceModerationResult> {
   const parsed = experienceIdSchema.safeParse(input)
   if (!parsed.success) {
@@ -190,6 +255,9 @@ export async function executePauseExperience(
     },
   })
 
+  // Deindex: paused experiences must not appear in search.
+  await deindexExperience(experienceId, { client: opts.searchClient })
+
   return { ok: true }
 }
 
@@ -197,6 +265,7 @@ export async function executeArchiveExperience(
   db: DBOrTx,
   adminUserId: string,
   input: { experienceId: string },
+  opts: ModerationOpts = {},
 ): Promise<ExperienceModerationResult> {
   const parsed = experienceIdSchema.safeParse(input)
   if (!parsed.success) {
@@ -238,6 +307,9 @@ export async function executeArchiveExperience(
     },
   })
 
+  // Deindex: archived experiences must not appear in search.
+  await deindexExperience(experienceId, { client: opts.searchClient })
+
   return { ok: true }
 }
 
@@ -248,6 +320,9 @@ export async function approveExperienceAction(
 ): Promise<ExperienceModerationResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'experiences'))) {
+    return { ok: false, error: 'You do not have permission to moderate experiences.' }
+  }
 
   const result = await executeApproveExperience(prodDb, session.user.id, {
     experienceId,
@@ -263,6 +338,9 @@ export async function rejectExperienceAction(
 ): Promise<ExperienceModerationResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'experiences'))) {
+    return { ok: false, error: 'You do not have permission to moderate experiences.' }
+  }
 
   const result = await executeRejectExperience(prodDb, session.user.id, {
     experienceId,
@@ -278,6 +356,9 @@ export async function pauseExperienceAction(
 ): Promise<ExperienceModerationResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'experiences'))) {
+    return { ok: false, error: 'You do not have permission to moderate experiences.' }
+  }
 
   const result = await executePauseExperience(prodDb, session.user.id, {
     experienceId,
@@ -292,6 +373,9 @@ export async function archiveExperienceAction(
 ): Promise<ExperienceModerationResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'experiences'))) {
+    return { ok: false, error: 'You do not have permission to moderate experiences.' }
+  }
 
   const result = await executeArchiveExperience(prodDb, session.user.id, {
     experienceId,

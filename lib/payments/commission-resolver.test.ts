@@ -1,6 +1,8 @@
 import { eq, sql } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
+import { availabilitySlots } from '@/db/schema/availability-slots'
+import { bookings } from '@/db/schema/bookings'
 import { commissionTiers } from '@/db/schema/commission-tiers'
 import { experiences } from '@/db/schema/experiences'
 import { users } from '@/db/schema/users'
@@ -111,6 +113,129 @@ describe('resolveCommission (ADR-0008)', () => {
       const r = await resolveCommission(db, { experienceId })
       expect(r.rate).toBe('17.50')
       expect(r.basis).toBe('vendor_default')
+    })
+
+    it('experience override beats vendor base rate when both are set', async () => {
+      // Distinct values on both layers so we can prove which one fired.
+      await db
+        .update(vendorProfiles)
+        .set({ commissionRate: '17.50' })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+      await db
+        .update(experiences)
+        .set({ commissionRateOverride: '12.34' })
+        .where(eq(experiences.id, experienceId))
+      const r = await resolveCommission(db, { experienceId })
+      expect(r.rate).toBe('12.34')
+      expect(r.basis).toBe('experience_override')
+    })
+
+    it('asserts the full precedence ladder (ADR-0008): festival > experience > vendor', async () => {
+      // Seed all three reachable layers with DISTINCT rates so each resolution
+      // proves which arm fired by both rate AND basis label. (The platform_default
+      // arm is unreachable with valid FK data — experiences.vendor_user_id
+      // references vendor_profiles NOT NULL — and is exercised separately below.)
+      const start = new Date('2026-09-01T00:00:00Z')
+      const end = new Date('2026-09-30T23:59:59Z')
+      const inFestival = new Date('2026-09-15T12:00:00Z')
+      const outsideFestival = new Date('2026-12-01T00:00:00Z')
+
+      await db
+        .update(vendorProfiles)
+        .set({ commissionRate: '17.50' })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+      await db
+        .update(experiences)
+        .set({ commissionRateOverride: '12.34' })
+        .where(eq(experiences.id, experienceId))
+      await db.insert(commissionTiers).values({
+        name: 'ladder_festival',
+        startAt: start,
+        endAt: end,
+        rateOverride: '5.00',
+        reason: 'Top of the ladder',
+        createdByAdminUserId: 'u_v',
+      })
+
+      // Layer 1 — festival tier wins over experience override AND vendor rate.
+      const withFestival = await resolveCommission(db, {
+        experienceId,
+        now: inFestival,
+      })
+      expect(withFestival.rate).toBe('5.00')
+      expect(withFestival.basis).toBe('festival:ladder_festival')
+
+      // Layer 2 — outside the festival window, the experience override wins over
+      // the vendor base rate.
+      const withExperience = await resolveCommission(db, {
+        experienceId,
+        now: outsideFestival,
+      })
+      expect(withExperience.rate).toBe('12.34')
+      expect(withExperience.basis).toBe('experience_override')
+
+      // Layer 3 — clear the experience override → vendor base rate fires.
+      await db
+        .update(experiences)
+        .set({ commissionRateOverride: null })
+        .where(eq(experiences.id, experienceId))
+      const withVendor = await resolveCommission(db, {
+        experienceId,
+        now: outsideFestival,
+      })
+      expect(withVendor.rate).toBe('17.50')
+      expect(withVendor.basis).toBe('vendor_default')
+    })
+
+    it('returns the platform_default constant (arm 4) when the vendor row is absent', async () => {
+      // Arm 4 is the defensive fallback for a missing vendor row. With the real
+      // schema it is unreachable (experiences.vendor_user_id is a NOT NULL FK to
+      // vendor_profiles), so we exercise it directly against a minimal stub db
+      // that returns the experience but no vendor — proving the resolver returns
+      // PLATFORM_DEFAULT_COMMISSION_RATE / 'platform_default' rather than throwing.
+      const stubExperience = {
+        id: 'exp-stub',
+        vendorUserId: 'u-missing',
+        activitySlug: 'rafting',
+        commissionRateOverride: null,
+      }
+      let selectCall = 0
+      const stubDb = {
+        select() {
+          return {
+            from() {
+              return {
+                where() {
+                  return {
+                    limit() {
+                      // 1st select → experience; 3rd select (vendor) → empty.
+                      selectCall += 1
+                      return selectCall === 1 ? [stubExperience] : []
+                    },
+                    orderBy() {
+                      // 2nd select → festival tiers (none match).
+                      return { limit: () => [] }
+                    },
+                  }
+                },
+              }
+            },
+          }
+        },
+      } as unknown as Parameters<typeof resolveCommission>[0]
+
+      const r = await resolveCommission(stubDb, { experienceId: 'exp-stub' })
+      expect(r.rate).toBe(PLATFORM_DEFAULT_COMMISSION_RATE)
+      expect(r.basis).toBe('platform_default')
+      // Structural guard: pin the resolver's query sequence so this test fails
+      // loudly if the resolver short-circuits or reorders its lookups. Reaching
+      // arm 4 requires walking the full chain — experience (1), festival tiers
+      // (none match, but the query still runs), vendor (absent) — i.e. exactly
+      // two select() entries on the stub (the festival-tier branch resolves via
+      // orderBy().limit(), not the limit-counting branch, so it does not
+      // increment selectCall). selectCall therefore lands on 2: arm 1 reads the
+      // experience, arm 3 reads the (empty) vendor row.
+      expect(selectCall).toBe(2)
     })
   })
 
@@ -316,6 +441,149 @@ describe('resolveCommission (ADR-0008)', () => {
   describe('platform default constant', () => {
     it('exports 20.00 as the platform default commission rate', () => {
       expect(PLATFORM_DEFAULT_COMMISSION_RATE).toBe('20.00')
+    })
+  })
+
+  /**
+   * Snapshot immutability (ADR-0008): the commission rate + basis are resolved
+   * ONCE at Booking-create and frozen onto the row. Any later change to an
+   * upstream layer (vendor base rate, experience override, or a new/edited
+   * festival tier) must NEVER retroactively alter an existing Booking's
+   * commission_rate_snapshot / commission_basis_snapshot. Mirrors the
+   * snapshot-discrimination style in refund-flow.test.ts.
+   */
+  describe('snapshot immutability at Booking-create (ADR-0008)', () => {
+    /**
+     * Insert a Booking carrying an explicit commission snapshot, modelling the
+     * row createBooking would write at create-time. We snapshot the resolved
+     * rate verbatim so the assertion below proves the snapshot is the source of
+     * truth, decoupled from the live upstream config.
+     */
+    async function seedBookingWithSnapshot(snapshot: {
+      rate: string
+      basis: string
+    }): Promise<string> {
+      const startAt = new Date(Date.now() + 72 * 60 * 60 * 1000)
+      const endAt = new Date(startAt.getTime() + 4 * 60 * 60 * 1000)
+      const [slot] = await db
+        .insert(availabilitySlots)
+        .values({ experienceId, startAt, endAt, capacity: 8 })
+        .returning({ id: availabilitySlots.id })
+      const [booking] = await db
+        .insert(bookings)
+        .values({
+          customerUserId: 'u_c_snap',
+          experienceId,
+          slotId: slot!.id,
+          participantCount: 2,
+          paymentMode: 'full_upfront',
+          state: 'confirmed',
+          grossTotalSnapshot: '3000.00',
+          pricePerParticipantSnapshot: '1500.00',
+          pricingBasisSnapshot: 'experience_bracket:1_2',
+          commissionRateSnapshot: snapshot.rate,
+          commissionBasisSnapshot: snapshot.basis,
+          cancellationPresetSnapshot: 'flexible',
+          tdsAmountSnapshot: '30.00',
+          gstRateOnCommissionSnapshot: '18.00',
+          vendorPanSnapshot: 'ABCDE1234F',
+          vendorIsResidentSnapshot: true,
+          payoutMethodSnapshot: 'upi',
+          payoutDestinationSnapshot: { vpa: 'vendor@upi' },
+        })
+        .returning({ id: bookings.id })
+      return booking!.id
+    }
+
+    async function readSnapshot(
+      bookingId: string,
+    ): Promise<{ rate: string; basis: string }> {
+      const [row] = await db
+        .select({
+          rate: bookings.commissionRateSnapshot,
+          basis: bookings.commissionBasisSnapshot,
+        })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+        .limit(1)
+      return { rate: row!.rate, basis: row!.basis }
+    }
+
+    beforeAll(async () => {
+      await db.insert(users).values({ id: 'u_c_snap', email: 'c-snap@example.com' })
+    })
+
+    afterAll(async () => {
+      await db.execute(
+        sql`TRUNCATE TABLE bookings, availability_slots CASCADE`,
+      )
+      await db.delete(users).where(eq(users.id, 'u_c_snap'))
+    })
+
+    it('bumping the vendor base rate does NOT alter an existing Booking snapshot', async () => {
+      // Booking created when vendor rate was 20% → snapshot vendor_default 20.
+      const resolved = await resolveCommission(db, { experienceId })
+      expect(resolved.basis).toBe('vendor_default')
+      const bookingId = await seedBookingWithSnapshot(resolved)
+
+      // Admin later bumps the vendor's live commission rate.
+      await db
+        .update(vendorProfiles)
+        .set({ commissionRate: '35.00' })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+
+      // A NEW resolution would now see 35%, but the existing Booking is frozen.
+      const liveNow = await resolveCommission(db, { experienceId })
+      expect(liveNow.rate).toBe('35.00')
+
+      const snap = await readSnapshot(bookingId)
+      expect(snap.rate).toBe('20.00')
+      expect(snap.basis).toBe('vendor_default')
+    })
+
+    it('setting an experience override later does NOT alter an existing Booking snapshot', async () => {
+      const resolved = await resolveCommission(db, { experienceId })
+      expect(resolved.basis).toBe('vendor_default')
+      const bookingId = await seedBookingWithSnapshot(resolved)
+
+      // Admin/vendor sets a per-Experience override after the Booking exists.
+      await db
+        .update(experiences)
+        .set({ commissionRateOverride: '9.00' })
+        .where(eq(experiences.id, experienceId))
+
+      const liveNow = await resolveCommission(db, { experienceId })
+      expect(liveNow.rate).toBe('9.00')
+      expect(liveNow.basis).toBe('experience_override')
+
+      const snap = await readSnapshot(bookingId)
+      expect(snap.rate).toBe('20.00')
+      expect(snap.basis).toBe('vendor_default')
+    })
+
+    it('adding a festival tier later does NOT alter an existing Booking snapshot', async () => {
+      const resolved = await resolveCommission(db, { experienceId })
+      expect(resolved.basis).toBe('vendor_default')
+      const bookingId = await seedBookingWithSnapshot(resolved)
+
+      // Admin introduces a festival tier whose window covers "now".
+      const now = new Date()
+      await db.insert(commissionTiers).values({
+        name: 'retro_festival',
+        startAt: new Date(now.getTime() - 60 * 60 * 1000),
+        endAt: new Date(now.getTime() + 60 * 60 * 1000),
+        rateOverride: '3.00',
+        reason: 'Festival added after the Booking existed',
+        createdByAdminUserId: 'u_v',
+      })
+
+      const liveNow = await resolveCommission(db, { experienceId, now })
+      expect(liveNow.rate).toBe('3.00')
+      expect(liveNow.basis).toBe('festival:retro_festival')
+
+      const snap = await readSnapshot(bookingId)
+      expect(snap.rate).toBe('20.00')
+      expect(snap.basis).toBe('vendor_default')
     })
   })
 })

@@ -67,9 +67,38 @@ export async function requirePermission(
     .where(eq(adminProfiles.userId, userId))
     .limit(1)
 
-  if (!admin || !admin.permissions.includes(permission)) {
+  if (!admin || !(admin.permissions.includes('*') || admin.permissions.includes(permission))) {
     notFound()
   }
+}
+
+/**
+ * Non-throwing variant of {@link requirePermission} for use inside admin
+ * Server Actions (write boundary).
+ *
+ * Per ADR-0006 every privileged action must be permission-gated server-side,
+ * not merely hidden in the UI. Page-level Server Components gate reads via
+ * `requirePermission` (which calls `notFound()`); Server Actions instead
+ * return a typed result envelope, so they need a boolean check rather than a
+ * `notFound()` throw. A full admin (`'*'`) passes every check; a Sub-admin
+ * passes only for permissions in their strict subset.
+ *
+ * @returns `true` if the user holds `permission` (or the `'*'` wildcard),
+ *          `false` otherwise (no admin_profiles row, or permission absent).
+ */
+export async function hasAdminPermission(
+  db: DBOrTx,
+  userId: string,
+  permission: AdminPermission,
+): Promise<boolean> {
+  const [admin] = await db
+    .select({ permissions: adminProfiles.permissions })
+    .from(adminProfiles)
+    .where(eq(adminProfiles.userId, userId))
+    .limit(1)
+
+  if (!admin) return false
+  return admin.permissions.includes('*') || admin.permissions.includes(permission)
 }
 
 /**

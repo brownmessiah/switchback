@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { db as prodDb } from '@/db/client'
 import { promoCodes } from '@/db/schema/promo-codes'
 import { auth } from '@/lib/auth'
+import { hasAdminPermission } from '@/lib/auth/permissions'
 import { writeAuditLog } from '@/lib/audit/write'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
@@ -19,18 +20,43 @@ export type PromoActionResult =
 
 // ── Validation schemas ─────────────────────────────────────────────
 
+// An empty <input> in a submitted FormData arrives as an empty STRING, not
+// undefined. Plain `z.coerce.number()` turns '' into 0 (fails .positive()) and
+// `z.coerce.date()` turns '' into an Invalid Date — so an admin who leaves the
+// optional "Max Total Uses" / "Starts At" / "Expires At" fields blank (the
+// documented "unlimited / no schedule" case) would hit a confusing validation
+// error. Normalise blank strings to undefined BEFORE coercion.
+const emptyToUndefined = (v: unknown) =>
+  typeof v === 'string' && v.trim() === '' ? undefined : v
+
+const optionalPositiveInt = z.preprocess(
+  emptyToUndefined,
+  z.coerce.number().int().positive().nullable().optional(),
+)
+const optionalNonNegInt = z.preprocess(
+  emptyToUndefined,
+  z.coerce.number().int().nonnegative().nullable().optional(),
+)
+const optionalDate = z.preprocess(
+  emptyToUndefined,
+  z.coerce.date().nullable().optional(),
+)
+
 const createPromoSchema = z.object({
   code: z
     .string()
     .transform((s) => s.trim().toUpperCase())
     .pipe(z.string().min(1, 'Code is required.').max(50, 'Code too long.')),
   creditAmount: z.coerce.number().int().positive('Credit amount must be positive.'),
-  minBookingAmount: z.coerce.number().int().nonnegative().nullable().optional(),
-  maxTotalUses: z.coerce.number().int().positive().nullable().optional(),
-  perUserLimit: z.coerce.number().int().positive().default(1),
+  minBookingAmount: optionalNonNegInt,
+  maxTotalUses: optionalPositiveInt,
+  perUserLimit: z.preprocess(
+    emptyToUndefined,
+    z.coerce.number().int().positive().default(1),
+  ),
   active: z.coerce.boolean().default(true),
-  startsAt: z.coerce.date().nullable().optional(),
-  expiresAt: z.coerce.date().nullable().optional(),
+  startsAt: optionalDate,
+  expiresAt: optionalDate,
 })
 
 export type CreatePromoInput = z.infer<typeof createPromoSchema>
@@ -38,9 +64,12 @@ export type CreatePromoInput = z.infer<typeof createPromoSchema>
 const updatePromoSchema = z.object({
   id: z.string().uuid(),
   active: z.coerce.boolean().optional(),
-  maxTotalUses: z.coerce.number().int().positive().nullable().optional(),
-  perUserLimit: z.coerce.number().int().positive().optional(),
-  expiresAt: z.coerce.date().nullable().optional(),
+  maxTotalUses: optionalPositiveInt,
+  perUserLimit: z.preprocess(
+    emptyToUndefined,
+    z.coerce.number().int().positive().optional(),
+  ),
+  expiresAt: optionalDate,
 })
 
 // ── Actions ────────────────────────────────────────────────────────
@@ -59,6 +88,10 @@ export async function createPromoCode(
   }
 
   const db = injectedDb ?? prodDb
+
+  if (!(await hasAdminPermission(db, session.user.id, 'commission'))) {
+    return { ok: false, error: 'You do not have permission to manage promo codes.' }
+  }
 
   try {
     await db.insert(promoCodes).values({
@@ -99,6 +132,9 @@ export async function togglePromoCode(
 ): Promise<PromoActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'commission'))) {
+    return { ok: false, error: 'You do not have permission to manage promo codes.' }
+  }
 
   await prodDb
     .update(promoCodes)
@@ -120,6 +156,9 @@ export async function togglePromoCode(
 export async function deletePromoCode(id: string): Promise<PromoActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'commission'))) {
+    return { ok: false, error: 'You do not have permission to manage promo codes.' }
+  }
 
   // Only allow deleting promos with 0 uses
   const [promo] = await prodDb

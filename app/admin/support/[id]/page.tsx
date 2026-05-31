@@ -10,6 +10,8 @@ import { auth } from '@/lib/auth'
 import { requirePermission } from '@/lib/auth/permissions'
 import { loadTicketDetail } from '@/lib/admin/support-ticket-actions'
 
+import { AdminStatusBadge } from '../../_components/admin-status-badge'
+
 import {
   AddMessageForm,
   AssignToMeButton,
@@ -18,13 +20,14 @@ import {
 
 // ── Variant maps ───────────────────────────────────────────────────
 
-const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
-  open: 'destructive',
-  in_progress: 'default',
-  resolved: 'secondary',
-  closed: 'outline',
+const STATUS_LABELS: Record<string, string> = {
+  open: 'Open',
+  in_progress: 'In progress',
+  resolved: 'Resolved',
+  closed: 'Closed',
 }
 
+/** Priority is not a status-family member — a neutral chip (DESIGN.md §2.1). */
 const PRIORITY_VARIANTS: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
   high: 'destructive',
   medium: 'default',
@@ -72,24 +75,25 @@ export default async function TicketDetailPage({ params }: TicketDetailPageProps
         / {ticket.subject}
       </div>
 
-      {/* Header */}
+      {/* Header — subject + status (AdminStatusBadge: colour + icon) + actions.
+          DESIGN.md B6: detail header = title + status Badge → action panel. */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{ticket.subject}</h1>
+          <h1 className="font-heading text-2xl font-semibold tracking-tight">
+            {ticket.subject}
+          </h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Badge
-              variant={STATUS_VARIANTS[ticket.status] ?? 'outline'}
-              className="capitalize text-xs"
-            >
-              {ticket.status.replace(/_/g, ' ')}
-            </Badge>
+            <AdminStatusBadge
+              status={ticket.status}
+              label={STATUS_LABELS[ticket.status] ?? ticket.status}
+            />
             <Badge
               variant={PRIORITY_VARIANTS[ticket.priority] ?? 'outline'}
-              className="capitalize text-xs"
+              className="text-xs capitalize"
             >
               {ticket.priority}
             </Badge>
-            <Badge variant="outline" className="capitalize text-xs">
+            <Badge variant="outline" className="text-xs capitalize">
               {ticket.category}
             </Badge>
           </div>
@@ -108,7 +112,7 @@ export default async function TicketDetailPage({ params }: TicketDetailPageProps
         </div>
       </div>
 
-      {/* Metadata */}
+      {/* Parties + lifecycle facts */}
       <Card>
         <CardContent className="p-4">
           <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
@@ -118,7 +122,7 @@ export default async function TicketDetailPage({ params }: TicketDetailPageProps
             </div>
             <div>
               <dt className="text-muted-foreground">Assigned to</dt>
-              <dd className="font-medium">
+              <dd className="font-medium" data-testid="ticket-assignee">
                 {ticket.assignedToAdminId ?? 'Unassigned'}
               </dd>
             </div>
@@ -134,14 +138,14 @@ export default async function TicketDetailPage({ params }: TicketDetailPageProps
         </CardContent>
       </Card>
 
-      {/* Messages */}
+      {/* Conversation thread */}
       <Card>
         <CardHeader>
-          <CardTitle>Messages</CardTitle>
+          <CardTitle className="text-base">Messages</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {messages.map((msg, idx) => (
-            <div key={msg.id}>
+            <div key={msg.id} data-testid="ticket-message">
               {idx > 0 && <Separator className="mb-4" />}
               <div className="flex items-start justify-between">
                 <div className="text-sm font-medium">

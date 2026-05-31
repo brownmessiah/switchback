@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 
 import { NotificationBell } from './notification-bell'
@@ -17,6 +18,7 @@ interface UserData {
 export function AuthStatus() {
   const [user, setUser] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(true)
+  const t = useTranslations('Nav')
 
   useEffect(() => {
     authClient.getSession().then((res) => {
@@ -52,7 +54,7 @@ export function AuthStatus() {
       href="/sign-in"
       className="rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
     >
-      Sign in
+      {t('signIn')}
     </Link>
   )
 }

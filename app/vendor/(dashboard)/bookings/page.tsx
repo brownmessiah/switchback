@@ -1,0 +1,212 @@
+import { eq } from 'drizzle-orm'
+import {
+  Ban,
+  CheckCircle2,
+  Clock,
+  Info,
+  TriangleAlert,
+  type LucideIcon,
+} from 'lucide-react'
+import Link from 'next/link'
+import { headers } from 'next/headers'
+
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { db } from '@/db/client'
+import { availabilitySlots, bookings, experiences, users } from '@/db/schema'
+import { auth } from '@/lib/auth'
+import { computeVendorNetPayout } from '@/lib/payments/payout-calculator'
+
+import { VendorTableTabs } from '../vendor-table-tabs'
+
+import { MarkCompleteButton } from './mark-complete-button'
+import { VendorCancelButton } from './vendor-cancel-button'
+
+/**
+ * Booking-state → semantic Badge variant + paired lucide icon (DESIGN.md §3
+ * A3 STATE_VARIANTS, §1.3/§5: status is NEVER conveyed by color alone — fixes
+ * the as-is color-only-text defect).
+ */
+const STATE_BADGE: Record<
+  string,
+  { variant: 'success' | 'warning' | 'info' | 'destructive' | 'outline'; Icon: LucideIcon }
+> = {
+  confirmed: { variant: 'success', Icon: CheckCircle2 },
+  awaiting_completion: { variant: 'warning', Icon: Clock },
+  completed: { variant: 'success', Icon: CheckCircle2 },
+  cancelled_by_customer: { variant: 'destructive', Icon: Ban },
+  cancelled_by_vendor: { variant: 'destructive', Icon: Ban },
+  disputed: { variant: 'destructive', Icon: TriangleAlert },
+}
+
+/** States in which the vendor can cancel. */
+const VENDOR_CANCELLABLE_STATES = new Set(['confirmed', 'awaiting_completion'])
+
+const inr = (n: number) => `₹${Math.floor(n).toLocaleString('en-IN')}`
+
+export default async function VendorBookingsPage() {
+  const session = await auth.api.getSession({ headers: await headers() })
+  const userId = session!.user.id
+
+  const rows = await db
+    .select({
+      bookingId: bookings.id,
+      state: bookings.state,
+      participantCount: bookings.participantCount,
+      gross: bookings.grossTotalSnapshot,
+      commissionRate: bookings.commissionRateSnapshot,
+      gstRate: bookings.gstRateOnCommissionSnapshot,
+      tdsAmount: bookings.tdsAmountSnapshot,
+      tcsAmount: bookings.tcsAmountSnapshot,
+      paymentMode: bookings.paymentMode,
+      customerName: users.name,
+      expTitle: experiences.title,
+      slotStart: availabilitySlots.startAt,
+      createdAt: bookings.createdAt,
+    })
+    .from(bookings)
+    .innerJoin(experiences, eq(bookings.experienceId, experiences.id))
+    .innerJoin(users, eq(bookings.customerUserId, users.id))
+    .leftJoin(availabilitySlots, eq(bookings.slotId, availabilitySlots.id))
+    .where(eq(experiences.vendorUserId, userId))
+    .orderBy(bookings.createdAt)
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Bookings</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {rows.length} booking{rows.length === 1 ? '' : 's'}
+        </p>
+      </div>
+
+      <VendorTableTabs active="bookings" />
+
+      <Card>
+        <CardContent className="p-0">
+          {rows.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <p className="text-lg font-medium">No bookings yet</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Bookings will appear here once customers start booking your experiences.
+              </p>
+              <Link href="/vendor/listings" className="mt-4">
+                <Button variant="outline" size="sm">
+                  Manage your listings
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Experience</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Guests</TableHead>
+                  <TableHead className="text-right">Gross</TableHead>
+                  <TableHead className="text-right">Commission</TableHead>
+                  <TableHead className="text-right">Net</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((row) => {
+                  // Per-Booking deduction trail via the EXISTING payout
+                  // calculator (ADR-0016) — re-derives Commission from the
+                  // snapshot rate; never re-implements the math.
+                  const breakdown = computeVendorNetPayout({
+                    grossRupees: Math.floor(Number(row.gross ?? 0)),
+                    commissionRatePercent: String(row.commissionRate ?? '20.00'),
+                    gstRateOnCommissionPercent: String(row.gstRate ?? '18.00'),
+                    tdsRupees: Math.floor(Number(row.tdsAmount ?? 0)),
+                    tcsRupees: Math.floor(Number(row.tcsAmount ?? 0)),
+                  })
+                  const badge = STATE_BADGE[row.state] ?? {
+                    variant: 'outline' as const,
+                    Icon: Info,
+                  }
+                  const StatusIcon = badge.Icon
+                  return (
+                    <TableRow
+                      key={row.bookingId}
+                      data-testid="booking-row"
+                      data-booking-id={row.bookingId}
+                      data-booking-state={row.state}
+                    >
+                      <TableCell className="font-medium">
+                        {row.customerName ?? 'Customer'}
+                      </TableCell>
+                      <TableCell className="text-sm">{row.expTitle}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {row.slotStart
+                          ? new Date(row.slotStart).toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })
+                          : '—'}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {row.participantCount}
+                      </TableCell>
+                      <TableCell
+                        data-testid="booking-gross"
+                        className="text-right tabular-nums"
+                      >
+                        {inr(breakdown.grossRupees)}
+                      </TableCell>
+                      <TableCell
+                        data-testid="booking-commission"
+                        className="text-right tabular-nums text-muted-foreground"
+                      >
+                        -{inr(breakdown.commissionRupees)}
+                      </TableCell>
+                      <TableCell
+                        data-testid="booking-net"
+                        className="text-right font-medium tabular-nums"
+                      >
+                        {inr(breakdown.netPayoutRupees)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={badge.variant} className="capitalize text-xs">
+                          <StatusIcon aria-hidden="true" />
+                          {row.state.replace(/_/g, ' ')}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Link href={`/vendor/bookings/${row.bookingId}`}>
+                            <Button variant="outline" size="sm">
+                              View
+                            </Button>
+                          </Link>
+                          {row.state === 'awaiting_completion' && (
+                            <MarkCompleteButton bookingId={row.bookingId} />
+                          )}
+                          {VENDOR_CANCELLABLE_STATES.has(row.state) && (
+                            <VendorCancelButton bookingId={row.bookingId} />
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

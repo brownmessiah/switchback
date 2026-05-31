@@ -93,6 +93,7 @@ export async function loadRevenueTrend(db: DBOrTx): Promise<readonly MonthDataPo
   twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12)
   twelveMonthsAgo.setDate(1)
   twelveMonthsAgo.setHours(0, 0, 0, 0)
+  const cutoff = twelveMonthsAgo.toISOString()
 
   const rows = await db
     .select({
@@ -101,7 +102,7 @@ export async function loadRevenueTrend(db: DBOrTx): Promise<readonly MonthDataPo
     })
     .from(payments)
     .where(
-      sql`${payments.captureTrigger} <> 'refund_reverse' AND ${payments.capturedAt} >= ${twelveMonthsAgo}`,
+      sql`${payments.captureTrigger} <> 'refund_reverse' AND ${payments.capturedAt} >= ${cutoff}::timestamptz`,
     )
     .groupBy(sql`to_char(${payments.capturedAt}, 'YYYY-MM')`)
     .orderBy(sql`to_char(${payments.capturedAt}, 'YYYY-MM')`)
@@ -115,6 +116,7 @@ export async function loadBookingVolume(db: DBOrTx): Promise<readonly WeekDataPo
   const twelveWeeksAgo = new Date()
   twelveWeeksAgo.setDate(twelveWeeksAgo.getDate() - 84) // 12 weeks
   twelveWeeksAgo.setHours(0, 0, 0, 0)
+  const cutoff = twelveWeeksAgo.toISOString()
 
   const rows = await db
     .select({
@@ -122,7 +124,7 @@ export async function loadBookingVolume(db: DBOrTx): Promise<readonly WeekDataPo
       count: count(),
     })
     .from(bookings)
-    .where(gte(bookings.confirmedAt, twelveWeeksAgo))
+    .where(sql`${bookings.confirmedAt} >= ${cutoff}::timestamptz`)
     .groupBy(sql`to_char(${bookings.confirmedAt}, 'IYYY-"W"IW')`)
     .orderBy(sql`to_char(${bookings.confirmedAt}, 'IYYY-"W"IW')`)
 
@@ -139,6 +141,7 @@ export async function loadVendorGrowth(db: DBOrTx): Promise<readonly MonthDataPo
   twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12)
   twelveMonthsAgo.setDate(1)
   twelveMonthsAgo.setHours(0, 0, 0, 0)
+  const cutoff = twelveMonthsAgo.toISOString()
 
   const rows = await db
     .select({
@@ -146,7 +149,7 @@ export async function loadVendorGrowth(db: DBOrTx): Promise<readonly MonthDataPo
       count: count(),
     })
     .from(vendorProfiles)
-    .where(gte(vendorProfiles.createdAt, twelveMonthsAgo))
+    .where(sql`${vendorProfiles.createdAt} >= ${cutoff}::timestamptz`)
     .groupBy(sql`to_char(${vendorProfiles.createdAt}, 'YYYY-MM')`)
     .orderBy(sql`to_char(${vendorProfiles.createdAt}, 'YYYY-MM')`)
 

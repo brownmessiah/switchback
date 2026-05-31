@@ -1,0 +1,499 @@
+{
+  "HomePage": {
+    "hero": {
+      "title": "وہ منظر بُک کریں جو آپ\nجینا چاہتے ہیں۔",
+      "subtitle": "رشی کیش میں رافٹنگ۔ بیر بلنگ میں پیراگلائیڈنگ۔ گوا میں سکوبا۔ تصدیق شدہ وینڈرز، شفاف قیمتیں۔",
+      "searchLabel": "تجربات تلاش کریں",
+      "searchPlaceholder": "\"رافٹنگ رشی کیش\" یا \"سکوبا گوا\" آزمائیں",
+      "searchButton": "تلاش کریں"
+    },
+    "trustBadges": {
+      "freeCancellation": "مفت منسوخی",
+      "kycVerified": "KYC-تصدیق شدہ وینڈرز",
+      "refundSla": "24 گھنٹے کا ریفنڈ SLA",
+      "transparentPricing": "شفاف قیمتیں"
+    },
+    "activities": {
+      "heading": "سرگرمی کے مطابق براؤز کریں"
+    },
+    "destinations": {
+      "heading": "مقبول مقامات",
+      "browseAll": "سب دیکھیں",
+      "experienceCount": "{count, plural, one {# تجربہ} other {# تجربات}}"
+    },
+    "featured": {
+      "heading": "نمایاں تجربات",
+      "viewAll": "سب دیکھیں"
+    }
+  },
+  "Metadata": {
+    "title": "Outvers — بھارت میں ایڈونچر سرگرمیاں",
+    "description": "پورے بھارت میں رافٹنگ، پیراگلائیڈنگ، سکوبا، ٹریکنگ اور بہت کچھ بُک کریں۔ وینڈر-تصدیق شدہ تجربات، شفاف ریفنڈ پالیسی اور 24 گھنٹے کا ریفنڈ SLA۔"
+  },
+  "Common": {
+    "breadcrumb": {
+      "home": "ہوم"
+    },
+    "notFound": "نہیں ملا · Outvers",
+    "actions": {
+      "save": "محفوظ کریں",
+      "cancel": "منسوخ کریں",
+      "delete": "حذف کریں",
+      "back": "واپس",
+      "edit": "ترمیم کریں",
+      "submit": "جمع کریں",
+      "confirm": "تصدیق کریں",
+      "close": "بند کریں",
+      "search": "تلاش کریں",
+      "loading": "لوڈ ہو رہا ہے..."
+    },
+    "status": {
+      "confirmed": "تصدیق شدہ",
+      "pending": "زیر التوا",
+      "completed": "مکمل",
+      "cancelled": "منسوخ",
+      "disputed": "متنازع",
+      "active": "فعال",
+      "inactive": "غیر فعال",
+      "draft": "ڈرافٹ",
+      "published": "شائع شدہ",
+      "pendingReview": "جائزہ زیر التوا"
+    }
+  },
+  "AdminNav": {
+    "sidebarTitle": "ایڈمن",
+    "groups": {
+      "dashboard": "ڈیش بورڈ",
+      "marketplace": "مارکیٹ پلیس",
+      "finance": "مالیات",
+      "content": "مواد",
+      "operations": "آپریشنز"
+    },
+    "items": {
+      "overview": "جائزہ",
+      "analytics": "تجزیات",
+      "vendors": "وینڈرز",
+      "experiences": "تجربات",
+      "bookings": "بکنگز",
+      "reviews": "جائزے",
+      "commission": "کمیشن",
+      "payouts": "ادائیگیاں",
+      "refunds": "ریفنڈز",
+      "disputes": "تنازعات",
+      "promoCodes": "پرومو کوڈز",
+      "loyalty": "لائلٹی",
+      "blog": "بلاگ",
+      "siteBuilder": "سائٹ بلڈر",
+      "support": "سپورٹ",
+      "regionClosures": "علاقائی بندشیں",
+      "auditLogs": "آڈٹ لاگز",
+      "subAdmins": "ذیلی ایڈمنز",
+      "reports": "رپورٹیں"
+    }
+  },
+  "VendorNav": {
+    "portalTitle": "وینڈر پورٹل",
+    "completeSetup": "سیٹ اپ مکمل کریں",
+    "items": {
+      "dashboard": "ڈیش بورڈ",
+      "listings": "لسٹنگز",
+      "bookings": "بکنگز",
+      "payouts": "ادائیگیاں",
+      "reviews": "جائزے",
+      "messages": "پیغامات",
+      "settings": "ترتیبات"
+    }
+  },
+  "CustomerNav": {
+    "pageTitle": "میری بکنگز",
+    "wallet": {
+      "refundBalance": "ریفنڈ بیلنس",
+      "refundHint": "نقد یا اگلی بکنگ میں استعمال کریں",
+      "cashoutOption": "5–7 کاروباری دنوں میں اپنے اصل ادائیگی کے طریقے پر نقد نکالیں، یا اگلی بکنگ پر استعمال کریں۔",
+      "outversCredit": "Outvers کریڈٹ",
+      "creditHint": "پروموشنل کریڈٹ — کسی بھی بکنگ پر استعمال کریں",
+      "creditExpiry": "{date} کو ختم ہوگا"
+    },
+    "bookings": {
+      "empty": "ابھی کوئی بکنگ نہیں",
+      "emptyHint": "تجربات تلاش کریں اور اپنا پہلا ایڈونچر بُک کریں۔",
+      "explore": "تلاش کریں",
+      "upcoming": "آئندہ",
+      "balanceDue": "بقایا رقم ₹{amount}",
+      "cancelSeeRefund": "منسوخ کریں — ریفنڈ دیکھیں"
+    }
+  },
+  "AdventurePage": {
+    "metadata": {
+      "title": "{region} میں {activity} · Outvers",
+      "description": "KYC-تصدیق شدہ وینڈرز سے {region} میں {activity} تجربات بُک کریں۔ شفاف قیمتیں، 24 گھنٹے کا ریفنڈ SLA، ریئل ٹائم سلاٹ دستیابی۔"
+    },
+    "hero": {
+      "description": "KYC-تصدیق شدہ وینڈرز سے {region} میں {activity} تجربات بُک کریں۔ شفاف قیمتیں، ریئل ٹائم سلاٹ دستیابی، اور 24 گھنٹے کا ریفنڈ SLA۔"
+    },
+    "experiences": {
+      "sectionLabel": "{activity} تجربات",
+      "emptyTitle": "{region} میں ابھی کوئی {activity} تجربات نہیں",
+      "emptySubtitle": "جلد واپس آئیں — نئی لسٹنگز باقاعدگی سے شامل کی جاتی ہیں۔",
+      "heading": "{region} میں اعلیٰ {activity} تجربات",
+      "count": "{count, plural, =0 {ابھی کوئی تجربہ نہیں} one {# تجربہ} other {# تجربات}}",
+      "rankingDisclosure": "ہم کیسے درجہ بندی کرتے ہیں: نتائج تازگی اور بیچنے والے کی تصدیق کی بنیاد پر ترتیب دیے جاتے ہیں — کبھی ادا شدہ تقرری کے ذریعے نہیں۔"
+    },
+    "faq": {
+      "heading": "اکثر پوچھے جانے والے سوالات",
+      "safetyQuestion": "کیا {region} میں {activity} محفوظ ہے؟",
+      "safetyAnswer": "Outvers پر درج تمام تجربات KYC-تصدیق شدہ وینڈرز کے ذریعے چلائے جاتے ہیں۔ سیفٹی-سٹیک تجربات کے لیے قابل اعتماد رابطہ اور ٹرپ-چیک-اِن پنگ ضروری ہیں۔",
+      "bestTimeQuestion": "{region} میں {activity} کے لیے بہترین وقت کب ہے؟",
+      "bestTimeAnswer": "موسم اور علاقائی بندش کے اوقات کے لیے ہر تجربے کی لسٹنگ دیکھیں۔ مانسون اور موسمی بندشیں بکنگ مرحلے پر ان لائن دکھائی جاتی ہیں۔",
+      "cancellationQuestion": "منسوخی کی پالیسی کیا ہے؟",
+      "cancellationAnswer": "ہر تجربے کی اپنی منسوخی پالیسی ہوتی ہے (لچکدار / معتدل / سخت)۔ پالیسی کے اندر منسوخی پر ریفنڈ 24 گھنٹوں میں آپ کے Outvers والٹ میں جمع ہوتا ہے۔"
+    },
+    "itemList": {
+      "name": "{region} میں اعلیٰ {activity} تجربات"
+    },
+    "heroTitle": "{region} میں {activity} — مفت منسوخی",
+    "heroEyebrow": "منتخب مہم جوئیاں",
+    "refundLead": "اپنے سلاٹ سے 24 گھنٹے پہلے تک مفت منسوخ کریں اور مکمل رقم واپس پائیں — نیچے {region} میں ہر {activity} تجربہ، جو Outvers پر بک کیا گیا، اس میں شامل ہے۔",
+    "editorialIntro": "{region} میں {activity} کا ہاتھ سے جانچا گیا مجموعہ، صرف KYC-تصدیق شدہ بیچنے والوں کے ذریعے چلایا جاتا ہے۔ شفاف قیمت، حقیقی وقت میں سلاٹ دستیابی، اور 24 گھنٹوں میں رقم کی واپسی۔",
+    "trust": {
+      "freeCancellation": "24 گھنٹے تک مفت منسوخی",
+      "verifiedVendor": "شناخت-تصدیق شدہ بیچنے والے",
+      "refundSla": "24 گھنٹے کی رقم واپسی SLA"
+    }
+  },
+  "ExperiencePage": {
+    "metadata": {
+      "title": "{title} · {region} میں {activity} · Outvers",
+      "description": "KYC-تصدیق شدہ وینڈر سے {region} میں {title} بُک کریں۔ شفاف قیمتیں، 24 گھنٹے کا ریفنڈ SLA۔"
+    },
+    "vendor": {
+      "by": "{name} کی طرف سے"
+    },
+    "sections": {
+      "about": "اس تجربے کے بارے میں",
+      "cancellationPolicy": "منسوخی کی پالیسی",
+      "requiredPermits": "مطلوبہ پرمٹ",
+      "permitsNotice": "شرکت سے پہلے آپ کو درج ذیل پرمٹ درکار ہیں۔ Outvers آپ کی جانب سے پرمٹ حاصل نہیں کرتا۔",
+      "reviews": "جائزے",
+      "faq": "اکثر پوچھے جانے والے سوالات"
+    },
+    "pricing": {
+      "heading": "قیمتیں",
+      "tier1_2": "1-2 شرکاء",
+      "tier3_5": "3-5 شرکاء",
+      "tier6Plus": "6+ شرکاء",
+      "perPerson": "/ فی شخص",
+      "partialPay": "ابھی 25% ادا کریں، بقایا تجربے سے 24 گھنٹے پہلے۔",
+      "bookNow": "ابھی بُک کریں",
+      "freeCancellation": "مفت منسوخی · 24 گھنٹے ریفنڈ SLA",
+      "priceTable": "فی شریک قیمت جدول",
+      "breakdown": "لائیو قیمت کی تفصیل",
+      "advanceDue": "ابھی واجب الادا Advance (25%)",
+      "balanceDue": "T-24h پر بقیہ رقم"
+    },
+    "closure": {
+      "heading": "فی الحال بند ہے",
+      "reopens": "{date} کو دوبارہ کھلے گا",
+      "bookingDisabled": "اس علاقے کے بند رہنے تک بُکنگ روک دی گئی ہے۔"
+    },
+    "cancellation": {
+      "flexible": "تجربے سے 24 گھنٹے پہلے مفت منسوخی۔ 2 گھنٹوں میں 50% ریفنڈ۔ اس کے بعد کوئی ریفنڈ نہیں۔",
+      "moderate": "7 دن پہلے مفت منسوخی۔ 48 گھنٹوں میں 50% ریفنڈ۔ اس کے بعد کوئی ریفنڈ نہیں۔",
+      "strict": "7 دن پہلے 50% ریفنڈ۔ اس کے بعد کوئی ریفنڈ نہیں۔",
+      "fallback": "یہ تجربہ {preset} منسوخی پالیسی کی پیروی کرتا ہے۔"
+    },
+    "faq": {
+      "safetyQuestion": "کیا {title} محفوظ ہے؟",
+      "safetyAnswer": "Outvers پر درج تمام تجربات KYC-تصدیق شدہ وینڈرز کے ذریعے چلائے جاتے ہیں۔ سیفٹی-سٹیک تجربات کے لیے قابل اعتماد رابطہ اور ٹرپ-چیک-اِن پنگ ضروری ہیں۔",
+      "cancellationQuestion": "{title} کے لیے منسوخی کی پالیسی کیا ہے؟",
+      "cancellationAnswer": "یہ تجربہ {preset} منسوخی پالیسی کی پیروی کرتا ہے۔ پالیسی کے اندر منسوخی پر ریفنڈ 24 گھنٹوں میں آپ کے Outvers والٹ میں جمع ہوتا ہے۔",
+      "paymentQuestion": "ادائیگی کیسے کام کرتی ہے؟",
+      "paymentAnswerPartial": "آپ ابھی 25% ادا کر سکتے ہیں اور بقایا تجربہ شروع ہونے سے 24 گھنٹے پہلے۔ مکمل پیشگی ادائیگی بھی دستیاب ہے۔",
+      "paymentAnswerFull": "بکنگ کے وقت مکمل ادائیگی لی جاتی ہے۔"
+    },
+    "kyc": {
+      "business": "کاروبار تصدیق شدہ",
+      "identity": "شناخت تصدیق شدہ",
+      "phone": "فون تصدیق شدہ"
+    },
+    "rating": {
+      "reviews": "{count, plural, one {جائزہ} other {جائزے}}"
+    },
+    "nav": {
+      "label": "سیکشن نیویگیشن",
+      "overview": "جائزہ",
+      "permits": "اجازت نامے",
+      "cancellation": "منسوخی",
+      "reviews": "جائزے",
+      "faq": "اکثر پوچھے گئے سوالات"
+    },
+    "assurance": {
+      "freeCancellation": "تجربے سے 24 گھنٹے پہلے تک مفت منسوخی",
+      "verifiedVendor": "شناخت-تصدیق شدہ Vendor",
+      "exactRefund": "تصدیق سے پہلے درست رقم کی واپسی دکھائی جاتی ہے"
+    }
+  },
+  "SearchPage": {
+    "metadata": {
+      "title": "تجربات تلاش کریں · Outvers",
+      "description": "پورے بھارت میں ایڈونچر تجربات تلاش اور فلٹر کریں۔ KYC-تصدیق شدہ وینڈرز سے رافٹنگ، پیراگلائیڈنگ، ٹریکنگ، سکوبا ڈائیونگ، اور بہت کچھ۔"
+    },
+    "heading": {
+      "withQuery": "\"{query}\" کے نتائج",
+      "default": "تجربات تلاش کریں"
+    },
+    "results": {
+      "count": "{count} تجرب{count, plural, one {ہ} other {ات}} مل{count, plural, one {ا} other {ے}}",
+      "empty": "کوئی تجربات نہیں ملے",
+      "emptyHint": "اپنے فلٹرز میں تبدیلی کریں یا کچھ اور تلاش کریں۔",
+      "sectionLabel": "تلاش کے نتائج"
+    },
+    "filters": {
+      "heading": "فلٹرز",
+      "sheetDescription": "سرگرمی، علاقہ، ترتیب اور قیمت کے مطابق تجربات کو بہتر بنائیں۔",
+      "activity": "سرگرمی",
+      "allActivities": "تمام سرگرمیاں",
+      "region": "علاقہ",
+      "allRegions": "تمام علاقے",
+      "sortBy": "ترتیب",
+      "relevance": "مطابقت",
+      "priceLowHigh": "قیمت: کم سے زیادہ",
+      "priceHighLow": "قیمت: زیادہ سے کم",
+      "newest": "نئے ترین",
+      "priceRange": "قیمت کی حد",
+      "minPrice": "کم از کم ₹",
+      "maxPrice": "زیادہ سے زیادہ ₹",
+      "anyPrice": "کوئی بھی",
+      "applyFilters": "فلٹرز لاگو کریں",
+      "clear": "فلٹرز صاف کریں"
+    },
+    "activities": {
+      "rafting": "ریفٹنگ",
+      "paragliding": "پیراگلائیڈنگ",
+      "scubaDiving": "اسکوبا ڈائیونگ",
+      "trekking": "ٹریکنگ",
+      "bungeeJumping": "بنجی جمپنگ",
+      "skiing": "اسکیئنگ",
+      "kayaking": "کیاکنگ",
+      "rockClimbing": "راک کلائمبنگ",
+      "safari": "جنگلی حیات سفاری",
+      "camping": "کیمپنگ"
+    },
+    "regions": {
+      "rishikesh": "رشی کیش",
+      "manali": "منالی",
+      "birBilling": "بیر بلنگ",
+      "goa": "گوا",
+      "lehLadakh": "لیہ-لداخ",
+      "kasol": "کسول",
+      "spiti": "اسپیتی وادی",
+      "andaman": "انڈمان جزائر",
+      "lonavala": "لوناولا",
+      "auli": "اولی"
+    }
+  },
+  "SignInPage": {
+    "metadata": {
+      "title": "سائن ان — Outvers",
+      "description": "بھارت بھر میں ایڈونچر تجربات بُک کرنے کے لیے Outvers پر سائن ان کریں۔"
+    },
+    "form": {
+      "signInTitle": "Outvers پر سائن ان کریں",
+      "signUpTitle": "اکاؤنٹ بنائیں",
+      "signInSubtitle": "آگے بڑھنے کے لیے اپنا ای میل درج کریں",
+      "signUpSubtitle": "ایڈونچرز بُک کرنے کے لیے سائن اپ کریں",
+      "nameLabel": "نام",
+      "namePlaceholder": "آپ کا نام",
+      "emailLabel": "ای میل",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "پاس ورڈ",
+      "passwordPlaceholder": "کم از کم 8 حروف",
+      "signInButton": "سائن ان",
+      "signUpButton": "اکاؤنٹ بنائیں",
+      "loading": "براہ کرم انتظار کریں...",
+      "newHere": "نئے ہیں؟",
+      "createAccount": "اکاؤنٹ بنائیں",
+      "alreadyHaveAccount": "پہلے سے اکاؤنٹ ہے؟",
+      "signInLink": "سائن ان",
+      "networkError": "نیٹ ورک خرابی۔ براہ کرم دوبارہ کوشش کریں۔",
+      "signInError": "سائن ان ناکام۔ اپنی اسناد چیک کریں۔",
+      "signUpError": "سائن اپ ناکام۔ دوسرا ای میل آزمائیں۔",
+      "continue": "ای میل کے ساتھ جاری رکھیں",
+      "step1Hint": "سائن ان کرنے یا اکاؤنٹ بنانے کے لیے اپنا ای میل درج کریں۔",
+      "editEmail": "مختلف ای میل استعمال کریں",
+      "vendorPrompt": "کیا آپ وینڈر ہیں؟",
+      "vendorCta": "آن بورڈنگ شروع کریں"
+    },
+    "trustPanel": {
+      "heading": "‫40,000+‬ مسافروں نے بک کیا۔",
+      "chipVerified": "شناخت اور کاروبار سے تصدیق شدہ وینڈرز",
+      "chipRefund": "تصدیق سے پہلے درست ریفنڈ دکھایا جاتا ہے",
+      "chipPartialPay": "جزوی ادائیگی — ابھی 25% ادا کریں"
+    }
+  },
+  "VendorPage": {
+    "metadata": {
+      "title": "{name} · Outvers وینڈر",
+      "description": "Outvers پر {name} سے ایڈونچر تجربات بُک کریں۔ KYC-تصدیق شدہ، شفاف قیمتیں، 24 گھنٹے کا ریفنڈ SLA۔",
+      "notFound": "وینڈر نہیں ملا · Outvers"
+    },
+    "eyebrow": "تصدیق شدہ وینڈر اسٹور فرنٹ",
+    "stats": {
+      "experiences": "تجربات",
+      "verification": "تصدیق",
+      "responseRate": "جوابی شرح",
+      "responseScore": "جوابی سکور: {score}%",
+      "experiencesLabel": "شائع شدہ",
+      "regionsLabel": "احاطہ شدہ علاقے"
+    },
+    "message": {
+      "action": "وینڈر کو پیغام بھیجیں",
+      "comingSoon": "جلد آ رہا ہے"
+    },
+    "trust": {
+      "provenanceHeading": "ہم نے کیا تصدیق کیا",
+      "stateVerified": "تصدیق شدہ",
+      "statePending": "ابھی تصدیق نہیں ہوئی",
+      "identity": {
+        "label": "شناخت",
+        "checkedDescription": "آدھار eKYC اور PAN کی تصدیق ہو گئی",
+        "pendingDescription": "آدھار اور PAN کی تصدیق ابھی باقی ہے"
+      },
+      "business": {
+        "label": "کاروبار",
+        "checkedDescription": "ویڈیو کال جائزہ، GSTIN یا اُدیم، اور گائیڈ سرٹیفکیٹس کی تصدیق ہو گئی",
+        "pendingDescription": "ویڈیو کال جائزہ اور کاروباری دستاویزات کی تصدیق ابھی باقی ہے"
+      }
+    },
+    "experiencesList": {
+      "heading": "{name} کے تجربات",
+      "empty": "ابھی کوئی شائع شدہ تجربات نہیں۔"
+    },
+    "kyc": {
+      "business": "کاروبار تصدیق شدہ",
+      "identity": "شناخت تصدیق شدہ",
+      "phone": "فون تصدیق شدہ"
+    }
+  },
+  "CancellationPolicyPage": {
+    "metadata": {
+      "title": "ریفنڈ اور منسوخی کی پالیسی · Outvers",
+      "description": "Outvers ریفنڈ پالیسی کی وضاحت — لچکدار، معتدل، سخت پری سیٹ، ریفنڈ SLA، وینڈر-منسوخ بکنگز، اور اپنے والٹ سے کیش آؤٹ کیسے کریں۔"
+    },
+    "breadcrumb": {
+      "refundPolicy": "ریفنڈ پالیسی"
+    },
+    "calculator": {
+      "eyebrow": "ریفنڈ کیلکولیٹر",
+      "heading": "بکنگ سے پہلے اپنا درست ریفنڈ دیکھیں",
+      "description": "بکنگ رقم درج کریں، پری سیٹ منتخب کریں اور منتخب کریں کہ آپ کب منسوخ کریں گے۔ ہم وہی ریفنڈ حساب چلاتے ہیں جو منی پاتھ استعمال کرتا ہے — اس لیے یہاں دکھائی گئی رقم وہی ہے جو آپ کو ملے گی۔",
+      "amountLabel": "بکنگ رقم",
+      "amountPlaceholder": "مثلاً 1000",
+      "presetLabel": "منسوخی پری سیٹ",
+      "presetFlexible": "لچکدار پالیسی",
+      "presetModerate": "معتدل پالیسی",
+      "presetStrict": "سخت پالیسی",
+      "startLabel": "تجربہ شروع ہوتا ہے",
+      "cancelLabel": "آپ منسوخ کرتے ہیں",
+      "resultLabel": "حساب شدہ ریفنڈ",
+      "feeLabel": "منسوخی فیس",
+      "slabFree": "مفت-منسوخی مدت — مکمل ریفنڈ",
+      "slabHalf": "نصف-ریفنڈ مدت — 50% واپس",
+      "slabNone": "کوئی-ریفنڈ نہیں مدت",
+      "promptEmpty": "اپنا ریفنڈ دیکھنے کے لیے رقم اور دونوں تاریخیں درج کریں۔",
+      "promptInvalid": "آپ کی منسوخی شروع ہونے کے وقت یا اس کے بعد ہے، اس لیے یہ پالیسی مدت سے باہر آتی ہے اور خودکار ریفنڈ کے بجائے ایک سپورٹ تنازعہ کھولے گی۔",
+      "walletNoteHeading": "ریفنڈ کہاں جمع ہوتا ہے",
+      "walletNoteBody": "اہل ریفنڈ آپ کے ریفنڈ بیلنس میں جمع ہوتا ہے — آپ کے دو-بکٹ والیٹ کا نقد-واپسی کے قابل بکٹ۔ آپ اسے مستقبل کی بکنگ پر خرچ کر سکتے ہیں یا اپنے اصل ادائیگی طریقے میں کیش-آؤٹ کر سکتے ہیں (5–7 کاروباری دن)۔ یہ Outvers کریڈٹ نہیں ہے، جو پروموشنل ہے اور صرف Outvers پر خرچ کے قابل ہے۔"
+    },
+    "hero": {
+      "title": "ریفنڈ اور منسوخی کی پالیسی",
+      "description": "ہر Outvers تجربے میں تین نامزد منسوخی پری سیٹ میں سے ایک ہوتا ہے — لچکدار، معتدل، یا سخت۔ بکنگ کے وقت پری سیٹ لاک ہو جاتا ہے اور ہر تجربے کے کارڈ، چیک آؤٹ پیج، تصدیقی ای میل، اور WhatsApp تصدیق پر دکھایا جاتا ہے۔ ریفنڈ حساب پری سیٹ، آپ کی منسوخی کے وقت، اور بکنگ کل کا خالص فنکشن ہے۔ پالیسی ونڈو کے اندر کوئی انسانی جائزہ نہیں۔"
+    },
+    "presets": {
+      "heading": "تین پری سیٹ",
+      "columnPreset": "پری سیٹ",
+      "columnFullRefund": "مکمل ریفنڈ تک",
+      "columnHalfRefund": "50% ریفنڈ تک",
+      "columnAfter": "اس کے بعد",
+      "flexible": "لچکدار",
+      "moderate": "معتدل",
+      "strict": "سخت",
+      "flexibleFull": "شروع سے 24 گھنٹے پہلے تک",
+      "flexibleHalf": "شروع سے 2 گھنٹے پہلے تک",
+      "moderateFull": "شروع سے 72 گھنٹے پہلے تک",
+      "moderateHalf": "شروع سے 24 گھنٹے پہلے تک",
+      "strictFull": "شروع سے 14 دن پہلے تک",
+      "strictHalf": "شروع سے 7 دن پہلے تک",
+      "noRefund": "کوئی ریفنڈ نہیں"
+    },
+    "examples": {
+      "heading": "مثالیں",
+      "flexibleTitle": "ایک چھوٹی ڈے ٹرپ — ہفتے کی صبح 9 بجے رشی کیش رافٹنگ",
+      "flexibleBody": "جمعے صبح 9 بجے تک منسوخ کریں → مکمل ریفنڈ۔ جمعہ 9 AM سے ہفتہ 7 AM → 50% ریفنڈ۔ ہفتہ 7 AM کے بعد → کوئی ریفنڈ نہیں۔",
+      "moderateTitle": "ہفتے کی صبح 6 بجے شروع ہونے والا ویک اینڈ ٹریک",
+      "moderateBody": "بدھ صبح 6 بجے تک منسوخ کریں → مکمل ریفنڈ۔ بدھ 6 AM سے جمعہ 6 AM → 50% ریفنڈ۔ جمعہ 6 AM کے بعد → کوئی ریفنڈ نہیں۔",
+      "strictTitle": "20 تاریخ سے شروع ہونے والا کئی دنوں کا ہمالیائی ٹریک",
+      "strictBody": "6 تاریخ تک منسوخ کریں → مکمل ریفنڈ۔ 6 سے 13 تاریخ کے درمیان → 50% ریفنڈ۔ 13 تاریخ کے بعد → کوئی ریفنڈ نہیں۔"
+    },
+    "specialCases": {
+      "heading": "خصوصی صورتیں",
+      "vendorCancelledTitle": "وینڈر کی طرف سے منسوخ بکنگز",
+      "vendorCancelledBody": "اگر وینڈر منسوخ کرے — موسم، آلات کی خرابی، عملے کی کمی — پری سیٹ سے قطع نظر آپ کو 100% ریفنڈ ملتا ہے۔ وینڈر کا جوابی وقت SLA سکور متاثر ہوتا ہے۔",
+      "outsideWindowTitle": "پالیسی ونڈو سے باہر کی بکنگز",
+      "outsideWindowBody": "اگر آپ تجربے کے شروع ہونے کے بعد منسوخ کرتے ہیں تو منسوخی تنازعہ کھولتی ہے۔ حل ایڈمن کی صوابدید پر ہے؛ واضح وینڈر-غلطی کے معاملات کے علاوہ بطور ڈیفالٹ مسترد کیا جاتا ہے۔",
+      "customPoliciesTitle": "اپنی مرضی کی پالیسیاں",
+      "customPoliciesBody": "کچھ بلند ارتفاع مہمات اور تہوار-دن تجربات میں ناقابل واپسی پرمٹ یا گائیڈ ڈپازٹس کے ساتھ اپنی مرضی کی پالیسی ہوتی ہے۔ یہ لسٹنگ کے وقت ایڈمن-منظور ہوتی ہیں اور تجربے کے صفحے پر سادہ زبان میں دکھائی جاتی ہیں۔"
+    },
+    "refundSla": {
+      "heading": "پیسے کب نظر آئیں گے",
+      "body": "پالیسی کے اندر منسوخی کے 24 گھنٹوں میں اہل ریفنڈز آپ کے Outvers والٹ میں جمع ہوتے ہیں۔ والٹ بیلنس کسی بھی مستقبل کی بکنگ پر خرچ کیا جا سکتا ہے؛ آپ کسی بھی وقت اپنے اصل ادائیگی طریقے پر کیش آؤٹ کی درخواست کر سکتے ہیں — Razorpay 5–7 کاروباری دنوں میں بینک ٹرانسفر کرتا ہے۔"
+    },
+    "questions": {
+      "heading": "ابھی سوالات ہیں؟",
+      "body": "{email} پر ای میل کریں یا کسی بھی بکنگ پر اِن-ایپ چیٹ استعمال کریں — پالیسی ونڈو کے اندر دائر تنازعات 48 گھنٹوں میں حل ہوتے ہیں۔",
+      "emailAddress": "support@outvers.com"
+    }
+  },
+  "Nav": {
+    "home": "Outvers",
+    "homeAriaLabel": "Outvers ہوم",
+    "search": "تلاش کریں",
+    "adventures": "ایڈونچرز",
+    "refundPolicy": "ریفنڈ پالیسی",
+    "signIn": "سائن ان",
+    "openMenu": "مینو کھولیں",
+    "footer": {
+      "tagline": "KYC-تصدیق شدہ وینڈرز سے پورے بھارت میں ایڈونچر سرگرمیاں۔ شفاف ریفنڈ پالیسی، ریئل ٹائم سلاٹ دستیابی۔",
+      "explore": "تلاش کریں",
+      "paragliding": "پیراگلائیڈنگ",
+      "scubaDiving": "سکوبا ڈائیونگ",
+      "support": "سپورٹ",
+      "helpCentre": "مدد مرکز (جلد)",
+      "contactUs": "ہم سے رابطہ کریں (جلد)",
+      "forVendors": "وینڈرز کے لیے",
+      "listYourExperience": "اپنا تجربہ درج کریں",
+      "vendorDashboard": "وینڈر ڈیش بورڈ",
+      "vendorKyc": "وینڈر KYC (جلد)",
+      "copyright": "تمام تجربات تھرڈ پارٹی وینڈرز کے ذریعے چلائے جاتے ہیں۔"
+    }
+  },
+  "NotFound": {
+    "heading": "404",
+    "message": "یہ صفحہ موجود نہیں ہے یا منتقل ہو گیا ہے۔",
+    "backToHome": "ہوم پر واپس جائیں"
+  },
+  "CheckoutPage": {
+    "title": "چیک آؤٹ",
+    "orderSummary": "آرڈر کا خلاصہ",
+    "paymentBreakdown": "ادائیگی کی تفصیل",
+    "experience": "تجربہ",
+    "participants": "شرکاء",
+    "pricePerPerson": "فی شخص قیمت",
+    "dueNow": "ابھی واجب الادا (25%)",
+    "dueLater": "تجربے سے 24 گھنٹے پہلے واجب الادا",
+    "cancellationPolicy": "منسوخی کی پالیسی",
+    "autoCapture": "بقایا رقم تجربے کے شروع ہونے سے 24 گھنٹے پہلے خودکار طور پر وصول ہوتی ہے۔",
+    "payWithRazorpay": "Razorpay سے ادا کریں",
+    "error": "کچھ غلط ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔"
+  }
+}

@@ -10,9 +10,9 @@ import {
   executeCreateBlogPost,
   executeUpdateBlogPost,
   executeDeleteBlogPost,
-  generateSlug,
   generateUniqueSlug,
 } from './actions'
+import { generateSlug } from './slug-utils'
 
 // ── Test helpers ────────────────────────────────────────────────────
 
@@ -25,27 +25,27 @@ async function seedAdmin(db: TestDB): Promise<string> {
 // ── Tests ───────────────────────────────────────────────────────────
 
 describe('Blog post slug generation', () => {
-  it('generates a slug from a simple title', () => {
-    expect(generateSlug('Hello World')).toBe('hello-world')
+  it('generates a slug from a simple title', async () => {
+    expect(await generateSlug('Hello World')).toBe('hello-world')
   })
 
-  it('strips special characters', () => {
-    expect(generateSlug("A Guide to Rishikesh's Best Rafting!")).toBe(
+  it('strips special characters', async () => {
+    expect(await generateSlug("A Guide to Rishikesh's Best Rafting!")).toBe(
       'a-guide-to-rishikeshs-best-rafting',
     )
   })
 
-  it('collapses multiple spaces and hyphens', () => {
-    expect(generateSlug('Too   many   spaces')).toBe('too-many-spaces')
-    expect(generateSlug('too---many---hyphens')).toBe('too-many-hyphens')
+  it('collapses multiple spaces and hyphens', async () => {
+    expect(await generateSlug('Too   many   spaces')).toBe('too-many-spaces')
+    expect(await generateSlug('too---many---hyphens')).toBe('too-many-hyphens')
   })
 
-  it('trims leading and trailing hyphens', () => {
-    expect(generateSlug(' -hello- ')).toBe('hello')
+  it('trims leading and trailing hyphens', async () => {
+    expect(await generateSlug(' -hello- ')).toBe('hello')
   })
 
-  it('handles empty string', () => {
-    expect(generateSlug('')).toBe('')
+  it('handles empty string', async () => {
+    expect(await generateSlug('')).toBe('')
   })
 })
 
@@ -178,6 +178,54 @@ describe('Admin blog post actions', () => {
         title: 'Bad Category',
         content: 'content',
         category: 'invalid' as 'guides',
+      })
+
+      expect(result.ok).toBe(false)
+    })
+
+    it('accepts a root-relative /uploads cover image URL (storage-mock path)', async () => {
+      // The LocalFileAdapter (and the storage mock) returns root-relative URLs
+      // like `/uploads/blog/<id>/<file>.png`. The cover-image upload path is
+      // broken if create rejects these — assert it persists the relative URL.
+      const adminId = await seedAdmin(db)
+
+      const result = await executeCreateBlogPost(db, adminId, {
+        title: 'Relative Cover URL',
+        content: 'content',
+        category: 'guides',
+        coverImageUrl: '/uploads/blog/new/123-abc.png',
+      })
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      const [row] = await db
+        .select({ coverImageUrl: blogPosts.coverImageUrl })
+        .from(blogPosts)
+        .where(eq(blogPosts.id, result.id!))
+      expect(row?.coverImageUrl).toBe('/uploads/blog/new/123-abc.png')
+    })
+
+    it('accepts an absolute https cover image URL (CDN path)', async () => {
+      const adminId = await seedAdmin(db)
+
+      const result = await executeCreateBlogPost(db, adminId, {
+        title: 'Absolute Cover URL',
+        content: 'content',
+        category: 'guides',
+        coverImageUrl: 'https://cdn.example.com/blog/cover.png',
+      })
+
+      expect(result.ok).toBe(true)
+    })
+
+    it('rejects a non-URL, non-relative cover image string', async () => {
+      const adminId = await seedAdmin(db)
+
+      const result = await executeCreateBlogPost(db, adminId, {
+        title: 'Bad Cover URL',
+        content: 'content',
+        category: 'guides',
+        coverImageUrl: 'not a url at all',
       })
 
       expect(result.ok).toBe(false)

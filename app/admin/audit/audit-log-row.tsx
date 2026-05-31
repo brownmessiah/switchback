@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-import { Badge } from '@/components/ui/badge'
+import { AdminStatusBadge } from '@/app/admin/_components/admin-status-badge'
 import { Button } from '@/components/ui/button'
 import { TableCell, TableRow } from '@/components/ui/table'
 
@@ -19,21 +19,28 @@ interface AuditLogRowProps {
 }
 
 /**
- * Severity derived from action prefix. Not stored in the schema
- * (the existing audit_logs table does not have a severity column),
- * so we infer it from the action string for display purposes.
+ * Severity derived from the action prefix. Not stored in the schema (the
+ * existing audit_logs table has no severity column), so it is inferred from the
+ * action string for display only. Maps to the shared AdminStatusBadge severity
+ * keys so the read-only type chip pairs colour WITH an icon (DESIGN.md §5).
  */
-function inferSeverity(action: string): {
-  label: string
-  variant: 'default' | 'secondary' | 'outline' | 'destructive'
-} {
-  if (action.includes('delete') || action.includes('revoke') || action.includes('cancel')) {
-    return { label: 'critical', variant: 'destructive' }
+function inferSeverity(action: string): { status: string; label: string } {
+  if (
+    action.includes('delete') ||
+    action.includes('revoke') ||
+    action.includes('cancel')
+  ) {
+    return { status: 'severity_critical', label: 'Critical' }
   }
-  if (action.includes('approve') || action.includes('reject') || action.includes('edit') || action.includes('update')) {
-    return { label: 'warning', variant: 'secondary' }
+  if (
+    action.includes('approve') ||
+    action.includes('reject') ||
+    action.includes('edit') ||
+    action.includes('update')
+  ) {
+    return { status: 'severity_warning', label: 'Warning' }
   }
-  return { label: 'info', variant: 'outline' }
+  return { status: 'severity_info', label: 'Info' }
 }
 
 function formatDate(dateStr: string): string {
@@ -67,15 +74,15 @@ export function AuditLogRow({
         className="cursor-pointer hover:bg-muted/50"
         onClick={() => setExpanded((prev) => !prev)}
       >
-        <TableCell className="text-xs text-muted-foreground font-mono">
+        <TableCell className="font-mono text-xs text-muted-foreground tabular-nums">
           {formatDate(createdAt)}
         </TableCell>
-        <TableCell className="text-sm">
-          <Badge variant={severity.variant} className="text-xs">
-            {severity.label}
-          </Badge>
+        <TableCell>
+          <span data-testid="audit-action-badge">
+            <AdminStatusBadge status={severity.status} label={severity.label} />
+          </span>
         </TableCell>
-        <TableCell className="text-sm font-mono">{action}</TableCell>
+        <TableCell className="font-mono text-sm">{action}</TableCell>
         <TableCell className="text-sm">
           <span className="text-muted-foreground">{entityType}</span>
           <span className="mx-1 text-muted-foreground/50">/</span>
@@ -124,7 +131,7 @@ export function AuditLogRow({
                 <p className="mb-1 text-xs font-medium text-muted-foreground">
                   Metadata (JSON):
                 </p>
-                <pre className="max-h-64 overflow-auto rounded-md bg-muted p-3 text-xs font-mono">
+                <pre className="max-h-64 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
                   {JSON.stringify(payload, null, 2)}
                 </pre>
               </div>

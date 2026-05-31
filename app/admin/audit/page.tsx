@@ -80,9 +80,12 @@ export default async function AuditLogsPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Audit Logs</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {result.total} log{result.total === 1 ? '' : 's'} total
+        <h1 className="font-heading text-h1 font-semibold tracking-tight">
+          Audit Logs
+        </h1>
+        <p className="mt-1 text-xs text-muted-foreground">
+          <span className="tabular-nums">{result.total}</span> log
+          {result.total === 1 ? '' : 's'} total
           {params.entityType || params.action || params.actorUserId || params.dateFrom || params.dateTo
             ? ' (filtered)'
             : ''}
@@ -103,15 +106,19 @@ export default async function AuditLogsPage({
 
       <Card>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table>
+            <caption className="sr-only">
+              Read-only audit log: timestamp, action type, action, target and actor
+            </caption>
             <TableHeader>
               <TableRow>
-                <TableHead>Time</TableHead>
-                <TableHead>Severity</TableHead>
-                <TableHead>Action</TableHead>
-                <TableHead>Target</TableHead>
-                <TableHead>Actor</TableHead>
-                <TableHead className="w-20" />
+                <TableHead scope="col">Time</TableHead>
+                <TableHead scope="col">Type</TableHead>
+                <TableHead scope="col">Action</TableHead>
+                <TableHead scope="col">Target</TableHead>
+                <TableHead scope="col">Actor</TableHead>
+                <TableHead scope="col" className="w-20" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -141,6 +148,7 @@ export default async function AuditLogsPage({
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 

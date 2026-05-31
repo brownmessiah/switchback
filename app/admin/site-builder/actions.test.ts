@@ -9,8 +9,8 @@ import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 import {
   executeSaveSection,
   executeLoadSection,
-  SECTION_VALUE_SCHEMAS,
 } from './actions'
+import { SECTION_VALUE_SCHEMAS } from './schema'
 
 // ── Test helpers ────────────────────────────────────────────────────
 

@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import type { SiteSection } from '@/db/schema/site-content'
 
-import { saveSection, type SaveSectionInput, type SiteBuilderResult } from './actions'
+import { saveSection } from './actions'
+import type { SaveSectionInput, SiteBuilderResult } from './schema'
 
 // ── Field definitions per section ──────────────────────────────────
 
@@ -117,9 +118,13 @@ export function SectionForm({ section, initialValues, currentVersion }: SectionF
     <Card>
       <CardContent className="space-y-4 pt-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">{SECTION_LABELS[section]}</h3>
+          <h3 className="font-heading text-h3 font-semibold tracking-tight">
+            {SECTION_LABELS[section]}
+          </h3>
           {currentVersion !== null && (
-            <span className="text-xs text-muted-foreground">v{currentVersion}</span>
+            <span className="text-xs tabular-nums text-muted-foreground">
+              v{currentVersion}
+            </span>
           )}
         </div>
 
@@ -137,7 +142,7 @@ export function SectionForm({ section, initialValues, currentVersion }: SectionF
                   type="checkbox"
                   checked={Boolean(values[field.name])}
                   onChange={(e) => handleChange(field.name, e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300"
+                  className="size-4 rounded-[var(--radius-control)] border border-input accent-primary focus-visible:ring-3 focus-visible:ring-ring/50"
                 />
                 <span className="text-sm text-muted-foreground">
                   {Boolean(values[field.name]) ? 'Enabled' : 'Disabled'}
@@ -186,8 +191,9 @@ export function SectionForm({ section, initialValues, currentVersion }: SectionF
 
           {result && !isPending && (
             <span
+              role={result.ok ? 'status' : 'alert'}
               className={`text-sm ${
-                result.ok ? 'text-green-600' : 'text-destructive'
+                result.ok ? 'text-success' : 'text-destructive'
               }`}
             >
               {result.ok

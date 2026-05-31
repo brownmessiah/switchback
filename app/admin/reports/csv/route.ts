@@ -1,10 +1,9 @@
-import { eq } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { type NextRequest, NextResponse } from 'next/server'
 
 import { db } from '@/db/client'
-import { adminProfiles } from '@/db/schema'
 import { auth } from '@/lib/auth'
+import { hasAdminPermission } from '@/lib/auth/permissions'
 
 import {
   loadBookingsForCsv,
@@ -30,13 +29,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
-  const [admin] = await db
-    .select({ permissions: adminProfiles.permissions })
-    .from(adminProfiles)
-    .where(eq(adminProfiles.userId, session.user.id))
-    .limit(1)
-
-  if (!admin || !admin.permissions.includes('reports')) {
+  // Server-side permission gate per ADR-0006. hasAdminPermission honors the
+  // full-admin wildcard ('*'); a Sub-admin needs `reports` in its subset.
+  if (!(await hasAdminPermission(db, session.user.id, 'reports'))) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
 

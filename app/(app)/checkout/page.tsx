@@ -44,8 +44,8 @@ export default async function CheckoutPage({ searchParams }: PageProps) {
   const grossTotal = pricePerPerson * participantCount
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
-      <h1 className="mb-8 text-2xl font-semibold tracking-tight sm:text-3xl">
+    <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+      <h1 className="mb-8 font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
         Checkout
       </h1>
 
@@ -58,6 +58,8 @@ export default async function CheckoutPage({ searchParams }: PageProps) {
         grossTotal={grossTotal}
         cancellationPreset={experienceRow.cancellationPreset}
         paymentModesAllowed={experienceRow.paymentModesAllowed as string[]}
+        customerName={session.user.name ?? null}
+        customerEmail={session.user.email ?? null}
       />
     </main>
   )

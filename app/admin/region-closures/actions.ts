@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 
 import { db as prodDb } from '@/db/client'
 import { auth } from '@/lib/auth'
+import { hasAdminPermission } from '@/lib/auth/permissions'
 import {
   executeCreateClosure,
   executeDeleteClosure,
@@ -19,6 +20,9 @@ export async function createClosureAction(
 ): Promise<ClosureActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'region_closures'))) {
+    return { ok: false, error: 'You do not have permission to manage region closures.' }
+  }
 
   const result = await executeCreateClosure(prodDb, session.user.id, {
     regionSlug,
@@ -36,6 +40,9 @@ export async function deleteClosureAction(
 ): Promise<ClosureActionResult> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, error: 'Not authenticated.' }
+  if (!(await hasAdminPermission(prodDb, session.user.id, 'region_closures'))) {
+    return { ok: false, error: 'You do not have permission to manage region closures.' }
+  }
 
   const result = await executeDeleteClosure(prodDb, session.user.id, closureId)
 

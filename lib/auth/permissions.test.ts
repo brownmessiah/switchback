@@ -9,6 +9,7 @@ import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 import {
   ADMIN_PERMISSIONS,
   FULL_ADMIN_PERMISSIONS,
+  hasAdminPermission,
   requirePermission,
   requireVendorProfile,
 } from './permissions'
@@ -96,6 +97,73 @@ describe('requirePermission (ADR-0006)', () => {
 
   it('FULL_ADMIN_PERMISSIONS matches ADMIN_PERMISSIONS', () => {
     expect([...FULL_ADMIN_PERMISSIONS]).toEqual([...ADMIN_PERMISSIONS])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// hasAdminPermission — non-throwing action-boundary gate (ADR-0006)
+//
+// Server Actions (the write boundary) must deny actions outside a Sub-admin's
+// permission subset server-side. Unlike requirePermission (which calls
+// notFound()), this returns a boolean so the action can return a typed
+// { ok: false } envelope. A full admin ('*') passes everything; a Sub-admin
+// passes only for permissions in their strict subset.
+// ---------------------------------------------------------------------------
+describe('hasAdminPermission (ADR-0006 — Server Action gate)', () => {
+  let db: TestDB
+  let teardown: () => Promise<void>
+
+  beforeAll(async () => {
+    const setup = await setupTestDb()
+    db = setup.db
+    teardown = setup.teardown
+  })
+
+  afterAll(async () => {
+    await teardown()
+  })
+
+  beforeEach(async () => {
+    await db.execute(sql`TRUNCATE TABLE admin_profiles, users CASCADE`)
+  })
+
+  it('full admin (wildcard) returns true for every permission', async () => {
+    await db.insert(users).values({ id: 'u_full', email: 'full@test.com' })
+    await db.insert(adminProfiles).values({ userId: 'u_full', permissions: ['*'] })
+
+    for (const perm of ADMIN_PERMISSIONS) {
+      expect(await hasAdminPermission(db, 'u_full', perm)).toBe(true)
+    }
+  })
+
+  it('sub-admin returns true only for permissions in its subset', async () => {
+    await db.insert(users).values({ id: 'u_sub', email: 'sub@test.com' })
+    await db.insert(adminProfiles).values({
+      userId: 'u_sub',
+      permissions: ['vendors', 'audit'],
+    })
+
+    expect(await hasAdminPermission(db, 'u_sub', 'vendors')).toBe(true)
+    expect(await hasAdminPermission(db, 'u_sub', 'audit')).toBe(true)
+    // Outside the subset — must be denied (the security-critical case).
+    expect(await hasAdminPermission(db, 'u_sub', 'payouts')).toBe(false)
+    expect(await hasAdminPermission(db, 'u_sub', 'refunds')).toBe(false)
+    expect(await hasAdminPermission(db, 'u_sub', 'sub_admins')).toBe(false)
+  })
+
+  it('non-admin user (no admin_profiles row) returns false for all', async () => {
+    for (const perm of ADMIN_PERMISSIONS) {
+      expect(await hasAdminPermission(db, 'u_ghost', perm)).toBe(false)
+    }
+  })
+
+  it('admin with empty permissions array returns false for all', async () => {
+    await db.insert(users).values({ id: 'u_empty', email: 'empty@test.com' })
+    await db.insert(adminProfiles).values({ userId: 'u_empty', permissions: [] })
+
+    for (const perm of ADMIN_PERMISSIONS) {
+      expect(await hasAdminPermission(db, 'u_empty', perm)).toBe(false)
+    }
   })
 })
 

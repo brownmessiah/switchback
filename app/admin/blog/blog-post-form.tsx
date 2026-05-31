@@ -75,7 +75,7 @@ export function BlogPostCreateForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Create Blog Post</CardTitle>
+        <CardTitle className="font-heading text-h3">Create Blog Post</CardTitle>
       </CardHeader>
       <CardContent>
         <form ref={formRef} action={handleSubmit} className="space-y-4">
@@ -123,7 +123,9 @@ export function BlogPostCreateForm() {
                 <p className="text-xs text-muted-foreground">Uploading...</p>
               )}
               {coverImageUrl && (
-                <p className="text-xs text-green-600">Image uploaded.</p>
+                <p className="text-xs text-success" role="status">
+                  Image uploaded.
+                </p>
               )}
             </div>
 
@@ -173,7 +175,7 @@ export function BlogPostCreateForm() {
             </p>
           )}
           {result?.ok && (
-            <p className="text-sm text-green-600" role="status">
+            <p className="text-sm text-success" role="status">
               Blog post created.
             </p>
           )}

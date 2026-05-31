@@ -5,8 +5,10 @@ import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -52,6 +54,7 @@ export function BlogPostActionsCell({
 }: BlogPostActionsCellProps) {
   const [isPending, startTransition] = useTransition()
   const [editOpen, setEditOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const [editResult, setEditResult] = useState<BlogActionResult | null>(null)
   const [editCategory, setEditCategory] = useState(category)
   const [editContent, setEditContent] = useState(content)
@@ -80,9 +83,9 @@ export function BlogPostActionsCell({
   }
 
   function handleDelete() {
-    if (!confirm(`Delete blog post "${title}"?`)) return
     startTransition(async () => {
       await deleteBlogPost(id)
+      setDeleteOpen(false)
     })
   }
 
@@ -177,7 +180,7 @@ export function BlogPostActionsCell({
                   <p className="text-xs text-muted-foreground">Uploading...</p>
                 )}
                 {editCoverImageUrl && (
-                  <p className="text-xs text-green-600 truncate">
+                  <p className="truncate text-xs text-success" role="status">
                     {editCoverImageUrl}
                   </p>
                 )}
@@ -254,15 +257,47 @@ export function BlogPostActionsCell({
         </DialogContent>
       </Dialog>
 
-      <Button
-        variant="outline"
-        size="sm"
-        disabled={isPending}
-        onClick={handleDelete}
-        className="text-destructive hover:text-destructive"
-      >
-        Delete
-      </Button>
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogTrigger
+          render={
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isPending}
+              className="text-destructive hover:text-destructive"
+            />
+          }
+        >
+          Delete
+        </DialogTrigger>
+        {/* DESIGN.md §4 A4: the destructive delete is consequential, so it never
+            fires inline — it fires only from the explicit Confirm control inside
+            this Dialog, which restates the permanent effect. Cancel is the
+            non-default focus. English-only (admin). */}
+        <DialogContent className="sm:max-w-md" data-testid="blog-delete-confirm">
+          <DialogHeader>
+            <DialogTitle>Delete blog post</DialogTitle>
+            <DialogDescription>
+              This permanently deletes &ldquo;{title}&rdquo;. The post is removed
+              from the marketing site and cannot be recovered. Continue?
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <DialogClose render={<Button type="button" variant="outline" />}>
+              Cancel
+            </DialogClose>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={isPending}
+              onClick={handleDelete}
+            >
+              {isPending ? 'Deleting…' : 'Delete post'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

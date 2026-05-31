@@ -28,6 +28,21 @@ export const kycTierEnum = pgEnum('kyc_tier', ['phone', 'identity', 'business'])
 export const payoutMethodEnum = pgEnum('payout_method', ['upi', 'bank_account'])
 
 /**
+ * Income-tax taxpayer classification per ADR-0016. Drives the Section
+ * 194-O(2) ₹5L threshold exemption — only individual/HUF Vendors qualify.
+ * Nullable on the profile: existing Vendors predate this field, and NULL
+ * means "unknown", which the TDS calculator treats conservatively (no
+ * exemption, deduct as normal).
+ */
+export const vendorTaxpayerTypeEnum = pgEnum('vendor_taxpayer_type', [
+  'individual',
+  'huf',
+  'company',
+  'firm',
+  'other',
+])
+
+/**
  * Vendor-role data per ADR-0006 + ADR-0007 + ADR-0008 + ADR-0016.
  * FK to users.id; cascade on delete.
  *
@@ -48,6 +63,8 @@ export const vendorProfiles = pgTable('vendor_profiles', {
   pan: text('pan'),
   gstin: text('gstin'),
   udyamId: text('udyam_id'),
+  // ADR-0016 — income-tax classification for the Section 194-O(2) exemption.
+  taxpayerType: vendorTaxpayerTypeEnum('taxpayer_type'),
   aadhaarVerifiedAt: timestamp('aadhaar_verified_at', { withTimezone: true }),
   videoCallVerifiedAt: timestamp('video_call_verified_at', { withTimezone: true }),
 

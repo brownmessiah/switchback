@@ -245,29 +245,36 @@ test.describe('RNPL degrades gracefully — no tile / badge on the PDP', () => {
 })
 
 // ---------------------------------------------------------------------------
-// 4. Footer "stub" affordances are non-links, not dead links.
+// 4. Footer affordances: built ones link; unbuilt ones degrade gracefully.
 //
-//    Help centre, Contact us, and Vendor KYC are intentionally NOT linked yet
-//    — they render as plain <span> text labelled "(soon)", which is a graceful
-//    coming-soon state, not a dead <a href> 404. Assert they exist as text but
-//    carry no anchor pointing nowhere.
+//    Issue 07 SHIPPED /help + /contact, so Help centre / Contact us are now
+//    REAL links (no "(soon)" suffix) that resolve 200. Vendor KYC remains
+//    intentionally unbuilt and renders as plain <span> text labelled "(soon)"
+//    — a graceful coming-soon state, not a dead <a href> 404.
 // ---------------------------------------------------------------------------
-test.describe('Footer unbuilt affordances degrade gracefully', () => {
-  test('Help centre / Contact us render as non-link "(soon)" text (no dead anchor)', async ({
+test.describe('Footer affordances degrade gracefully', () => {
+  test('Help centre / Contact us are live links; Vendor KYC stays a non-link "(soon)" stub', async ({
     page,
   }) => {
     await gotoWarm(page, '/')
     const footer = page.locator('footer')
     await expect(footer).toBeVisible()
 
-    // The stub labels render with an explicit "(soon)" coming-soon suffix…
-    for (const label of ['Help centre (soon)', 'Contact us (soon)']) {
-      const node = footer.getByText(label, { exact: true })
-      await expect(node).toBeVisible()
-      // …and are NOT rendered inside an anchor (i.e. not a dead link).
-      const isAnchor = await node.evaluate((el) => el.closest('a') !== null)
-      expect(isAnchor, `"${label}" must not be a dead link`).toBe(false)
-    }
+    // Help centre + Contact us are now built — real links to /help and /contact,
+    // with the "(soon)" suffix dropped.
+    const helpLink = footer.getByRole('link', { name: 'Help centre', exact: true })
+    const contactLink = footer.getByRole('link', { name: 'Contact us', exact: true })
+    await expect(helpLink).toBeVisible()
+    await expect(contactLink).toBeVisible()
+    await expect(helpLink).toHaveAttribute('href', /\/help$/)
+    await expect(contactLink).toHaveAttribute('href', /\/contact$/)
+
+    // Vendor KYC is still unbuilt: rendered as a non-link "(soon)" stub, never a
+    // dead anchor.
+    const kycStub = footer.getByText('Vendor KYC (soon)', { exact: true })
+    await expect(kycStub).toBeVisible()
+    const isAnchor = await kycStub.evaluate((el) => el.closest('a') !== null)
+    expect(isAnchor, '"Vendor KYC (soon)" must not be a dead link').toBe(false)
   })
 })
 

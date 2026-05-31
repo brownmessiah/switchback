@@ -79,10 +79,14 @@ export function SiteFooter(): ReactElement {
                   </Link>
                 </li>
                 <li>
-                  <span className="text-muted-foreground">{tf('helpCentre')}</span>
+                  <Link href="/help" className="text-foreground/80 transition hover:text-foreground">
+                    {tf('helpCentre')}
+                  </Link>
                 </li>
                 <li>
-                  <span className="text-muted-foreground">{tf('contactUs')}</span>
+                  <Link href="/contact" className="text-foreground/80 transition hover:text-foreground">
+                    {tf('contactUs')}
+                  </Link>
                 </li>
               </ul>
             </div>

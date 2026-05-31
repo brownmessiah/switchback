@@ -468,8 +468,8 @@
       "paragliding": "પેરાગ્લાઇડિંગ",
       "scubaDiving": "સ્કૂબા ડાઇવિંગ",
       "support": "સહાય",
-      "helpCentre": "સહાય કેન્દ્ર (ટૂંક સમયમાં)",
-      "contactUs": "અમારો સંપર્ક કરો (ટૂંક સમયમાં)",
+      "helpCentre": "સહાય કેન્દ્ર",
+      "contactUs": "અમારો સંપર્ક કરો",
       "forVendors": "વેન્ડર્સ માટે",
       "listYourExperience": "તમારો અનુભવ લિસ્ટ કરો",
       "vendorDashboard": "વેન્ડર ડેશબોર્ડ",
@@ -495,5 +495,92 @@
     "autoCapture": "બાકીની રકમ અનુભવ શરૂ થવાના 24 કલાક પહેલાં આપમેળે વસૂલ થાય છે.",
     "payWithRazorpay": "Razorpay થી ચુકવણી કરો",
     "error": "કંઈક ખોટું થયું. કૃપા કરી ફરી પ્રયાસ કરો."
+  },
+  "HelpPage": {
+    "metadata": {
+      "title": "સહાય કેન્દ્ર · Outvers",
+      "description": "Outvers પર સાહસિક Experiences બુક કરવા વિશે સામાન્ય પ્રશ્નોના જવાબો — Partial pay, Cancellation policy પ્રીસેટ્સ, તમારું બે-બકેટ Wallet, KYC-ચકાસાયેલ Vendors, જરૂરી પરમિટ, અને Safety stack."
+    },
+    "breadcrumb": {
+      "help": "સહાય કેન્દ્ર"
+    },
+    "hero": {
+      "title": "અમે કેવી રીતે મદદ કરી શકીએ?",
+      "description": "Customers સૌથી વધુ પૂછે છે તે પ્રશ્નોના જવાબો — બુકિંગ, ચુકવણી, રિફંડ, તમારું Wallet, Vendor ચકાસણી, અને Outvers પર સલામતી વિશે."
+    },
+    "faq": {
+      "whatIsOutvers": {
+        "question": "Outvers શું છે?",
+        "answer": "Outvers એક ભારતીય સાહસ-પ્રવૃત્તિ માર્કેટપ્લેસ છે; અહીં તમે સ્વતંત્ર Vendors ચલાવતા Experiences — રાફ્ટિંગ, પેરાગ્લાઇડિંગ, ટ્રેક વગેરે — બુક કરો છો. દરેક Vendor KYC-ચકાસાયેલ હોય છે, દરેક Experience સ્પષ્ટ Cancellation policy બતાવે છે, અને જગ્યા હોય ત્યારે જ બુક કરી શકાય તે માટે slot ઉપલબ્ધતા રીઅલ-ટાઇમમાં બતાવાય છે."
+      },
+      "howToBook": {
+        "question": "એક Experience કેવી રીતે બુક કરવો?",
+        "answer": "Experience પૃષ્ઠ ખોલો, ઉપલબ્ધ slot અને સહભાગીઓની સંખ્યા પસંદ કરો, પછી checkout પર જાઓ. તમારી વ્યક્તિ-દીઠ કિંમત તમારા જૂથના Group-size bracket (1-2, 3-5, અથવા 6+) મુજબ હોય છે. Razorpay દ્વારા ચુકવણી કરીને તમે પુષ્ટિ કરો છો; ચુકવણી કૅપ્ચર થતાં જ તમારી Booking નિશ્ચિત થાય છે."
+      },
+      "partialPay": {
+        "question": "શું પૂરી રકમ અગાઉથી ચૂકવવી પડે?",
+        "answer": "48 કલાક કે તેથી વધુ દૂરની અને Rs.25,000 સુધીની મોટાભાગની Bookings ડિફૉલ્ટ રૂપે Partial pay માં હોય છે: બુકિંગ સમયે Outvers 25% Advance કૅપ્ચર કરે છે, બાકીના 75% Experience શરૂ થવાના 24 કલાક પહેલાં આપમેળે કૅપ્ચર થાય છે. ચોક્કસ Advance અને બાકી રકમ ચુકવણી પહેલાં checkout પૃષ્ઠ પર બતાવાય છે."
+      },
+      "cancellation": {
+        "question": "શું હું રદ કરી શકું, કેટલું પાછું મળશે?",
+        "answer": "દરેક Experience ત્રણ Cancellation policy પ્રીસેટ્સમાંથી એક વાપરે છે — Flexible, Moderate, અથવા Strict — Vendor પસંદ કરે છે અને બુકિંગ સમયે તમારી Booking પર લૉક થાય છે. કેટલું પાછું મળશે તે તમે શરૂઆતના સમય પહેલાં કેટલા વહેલા રદ કરો છો તેના પર આધાર રાખે છે. ચોક્કસ આંકડો Experience પૃષ્ઠ પર અને તમારી બુકિંગ પુષ્ટિમાં હોય છે; અમારા cancellation policy પૃષ્ઠ પરના refund calculator થી તેનું પૂર્વાવલોકન કરી શકાય."
+      },
+      "refundBalance": {
+        "question": "મારું રિફંડ ક્યાં જાય છે, રોકડ પાછી મળે?",
+        "answer": "નીતિ-અંદરનું રદ્દીકરણ કોઈ માનવ સમીક્ષા વિના તમારા Refund balance માં આપમેળે જમા થાય છે, સામાન્ય રીતે 24-48 કલાકમાં. તમારું Refund balance ડિફૉલ્ટ રૂપે એક Wallet ક્રેડિટ; તેને આગામી Booking પર ખર્ચી શકાય, પણ વિનંતી પર તમારી મૂળ ચુકવણી પદ્ધતિમાં રોકડ પાછી મેળવી શકાય — 5-7 કાર્યદિવસની Razorpay રાઉન્ડ-ટ્રિપ."
+      },
+      "walletBuckets": {
+        "question": "Outvers credit અને Refund balance વચ્ચે શું તફાવત છે?",
+        "answer": "તમારું Wallet બે અલગ બકેટ ધરાવે છે. Outvers credit એ રેફરલ, તહેવાર પ્રોમો, લૉયલ્ટી રિવૉર્ડ્સમાંથી આવતી પ્રમોશનલ બેલેન્સ છે — ફક્ત Outvers Bookings પર ખર્ચી શકાય, ક્યારેય રોકડ નહીં, જારી થયાના 12-18 મહિનામાં સમાપ્ત થાય છે. Refund balance એ તમારા સંચિત રિફંડ; તેને Bookings પર ખર્ચી શકાય અથવા તમારી બેંકમાં રોકડ ઉપાડી શકાય."
+      },
+      "vendorVerification": {
+        "question": "કોઈ Vendor વિશ્વસનીય છે તે કેવી રીતે જાણવું?",
+        "answer": "દરેક Vendor વ્યવહાર પહેલાં KYC પૂર્ણ કરે છે. એક Identity verified Vendor એ Aadhaar અને PAN ચકાસણીઓ પૂર્ણ કરી છે; એક Business verified Vendor એ વધારામાં વિડિયો કૉલ, GSTIN અથવા સ્વ-ઘોષણા, અને શ્રેણી-સંબંધિત ગાઇડ પ્રમાણપત્રો પૂર્ણ કર્યા છે. દરેક Vendor નો ચકાસણી બૅજ અને Response-time SLA score તેમની પ્રોફાઇલ પર બતાવાય છે."
+      },
+      "permits": {
+        "question": "શું કેટલાક Experiences માટે પરમિટ જરૂરી છે?",
+        "answer": "કેટલાક Experiences પરમિટ-નિયંત્રિત હોય છે; તેમના માટે એક Required permit જરૂરી છે — ઉદાહરણ તરીકે Inner Line Permit અથવા વન્યજીવ-વિસ્તાર પ્રવેશ. Outvers આ જરૂરિયાત Experience પૃષ્ઠ પર બતાવે છે અને સત્તાવાર પ્રક્રિયા સાથે તમને લિંક કરે છે. v1 માં તમે જાતે પરમિટ મેળવો છો; Outvers તમારા વતી પરમિટ મેળવતું નથી."
+      },
+      "safetyStack": {
+        "question": "Outvers કઈ સલામતી સુવિધાઓ આપે છે?",
+        "answer": "જેના માટે ફ્લેગ કરાયેલા Experiences Safety stack વાપરે છે: બુકિંગ પહેલાં તમે નોંધાવેલ એક Trusted contact, પ્રવાસ શરૂ અને અંતે આપમેળે check-in પિંગ, એક SOS બટન, અને કામચલાઉ લાઇવ-લોકેશન શેરિંગ. SOS ટ્રિગર પર Outvers તમારા Trusted contact, Vendor અને Outvers ops ને WhatsApp અને SMS દ્વારા જાણ કરે છે — Outvers જાણ કરે છે, મોકલતું નથી."
+      }
+    },
+    "stillStuck": {
+      "title": "હજુ મદદ જોઈએ છે?",
+      "body": "જો તમારા પ્રશ્નનો જવાબ અહીં ન હોય, તો અમને એક સંદેશ મોકલો, Outvers સપોર્ટ ટીમ તમારો સંપર્ક કરશે.",
+      "cta": "અમારો સંપર્ક કરો"
+    }
+  },
+  "ContactPage": {
+    "metadata": {
+      "title": "અમારો સંપર્ક કરો · Outvers",
+      "description": "Outvers સપોર્ટ ટીમનો સંપર્ક કરો. એક Booking, ચુકવણી, Experience અથવા બીજા કશા વિશે અમને સંદેશ મોકલો, અમે સંપર્ક કરીશું."
+    },
+    "breadcrumb": {
+      "contact": "અમારો સંપર્ક કરો"
+    },
+    "hero": {
+      "title": "અમારો સંપર્ક કરો",
+      "description": "એક Booking, રિફંડ અથવા Experience વિશે પ્રશ્ન છે? અમને એક સંદેશ મોકલો, Outvers સપોર્ટ ટીમ ઇમેઇલ દ્વારા તમારો સંપર્ક કરશે."
+    },
+    "helpHint": "ઘણા પ્રશ્નોના જવાબ અમારા",
+    "helpHintLink": "સહાય કેન્દ્રમાં છે",
+    "form": {
+      "nameLabel": "તમારું નામ",
+      "emailLabel": "ઇમેઇલ સરનામું",
+      "subjectLabel": "વિષય",
+      "messageLabel": "સંદેશ",
+      "submit": "સંદેશ મોકલો",
+      "submitting": "મોકલી રહ્યું છે…",
+      "successTitle": "આભાર — અમે સંપર્ક કરીશું",
+      "successBody": "તમારો સંદેશ Outvers સપોર્ટ ટીમ સુધી પહોંચ્યો છે. તમે આપેલા ઇમેઇલ સરનામા પર અમે જવાબ આપીશું.",
+      "errors": {
+        "name": "કૃપા કરીને તમારું નામ દાખલ કરો.",
+        "email": "કૃપા કરીને માન્ય ઇમેઇલ સરનામું દાખલ કરો.",
+        "subject": "કૃપા કરીને એક વિષય દાખલ કરો.",
+        "message": "કૃપા કરીને ઓછામાં ઓછા 10 અક્ષરોનો સંદેશ દાખલ કરો."
+      }
+    }
   }
 }

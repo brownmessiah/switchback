@@ -3069,3 +3069,75 @@ export async function getBookingsByDistinctState(): Promise<AdminBookingListRow[
     }))
   })
 }
+
+// ---------------------------------------------------------------------------
+// Contact form → support_ticket assertions (Issue 07)
+//
+// The /contact lead form creates a real support_ticket (+ first
+// support_message) under the fixed guest-contact system User. These helpers
+// let the E2E confirm a ticket row actually appeared and clean up the rows it
+// created so the support queue stays deterministic for other specs.
+// ---------------------------------------------------------------------------
+
+export interface ContactTicketRow {
+  id: string
+  subject: string
+  status: string
+  category: string
+  priority: string
+}
+
+/** Fetch the most-recent guest-contact support_ticket whose subject contains `needle`. */
+export async function getLatestGuestContactTicketBySubject(
+  needle: string,
+): Promise<ContactTicketRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { id: string; subject: string; status: string; category: string; priority: string }[]
+    >`
+      SELECT id, subject, status, category, priority
+      FROM support_tickets
+      WHERE created_by_user_id = 'u_guest_contact'
+        AND subject LIKE ${'%' + needle + '%'}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    const row = rows[0]
+    if (!row) return null
+    return {
+      id: row.id,
+      subject: row.subject,
+      status: row.status,
+      category: row.category,
+      priority: row.priority,
+    }
+  })
+}
+
+/** Fetch the first support_message body for a ticket id, or null. */
+export async function getFirstSupportMessageBody(
+  ticketId: string,
+): Promise<string | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ body: string }[]>`
+      SELECT body FROM support_messages
+      WHERE ticket_id = ${ticketId}
+      ORDER BY created_at ASC
+      LIMIT 1
+    `
+    return rows[0]?.body ?? null
+  })
+}
+
+/** Delete every guest-contact support_ticket whose subject contains `needle` (test cleanup). */
+export async function deleteGuestContactTicketsBySubject(
+  needle: string,
+): Promise<void> {
+  await withSql(async (sql) => {
+    await sql`
+      DELETE FROM support_tickets
+      WHERE created_by_user_id = 'u_guest_contact'
+        AND subject LIKE ${'%' + needle + '%'}
+    `
+  })
+}

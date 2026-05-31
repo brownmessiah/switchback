@@ -2,6 +2,7 @@ import { desc, eq, sql } from 'drizzle-orm'
 
 import { experiences } from '@/db/schema/experiences'
 
+import { loadExperienceCoverMap } from '@/lib/media/experience-images'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 import { listActivities } from '@/lib/activities/registry'
 import { listRegions } from '@/lib/regions/registry'
@@ -33,6 +34,7 @@ export interface FeaturedExperience {
   pricePerParticipantRupees: number
   regionSlug: string
   activitySlug: string
+  coverImageUrl: string | null
 }
 
 export interface FeaturedDestination {
@@ -78,6 +80,7 @@ export async function loadHomePageData(db: DBOrTx): Promise<HomePageData> {
     .orderBy(desc(experiences.createdAt))
     .limit(FEATURED_EXPERIENCES_LIMIT)
 
+  const coverMap = await loadExperienceCoverMap(db, expRows.map((r) => r.id))
   const featuredExperiences: FeaturedExperience[] = expRows.map((row) => ({
     id: row.id,
     slug: row.slug,
@@ -86,6 +89,7 @@ export async function loadHomePageData(db: DBOrTx): Promise<HomePageData> {
     pricePerParticipantRupees: Math.floor(Number(row.pricePerPerson_1_2)),
     regionSlug: row.regionSlug,
     activitySlug: row.activitySlug,
+    coverImageUrl: coverMap.get(row.id) ?? null,
   }))
 
   // Counts by region + activity over published Experiences. Two cheap

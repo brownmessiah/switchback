@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import { experiences } from '@/db/schema/experiences'
+import { mediaAssets } from '@/db/schema/media-assets'
 import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { setupTestDb, type TestDB } from '@/tests/helpers/db'
@@ -133,6 +134,35 @@ describe('activity-city loader (ADR-0013)', () => {
       expect(result?.experiences.map((e) => e.slug).sort()).toEqual(
         ['easy-rafting', 'grand-rafting'].sort(),
       )
+    })
+
+    it('attaches the media_assets cover per experience, null when none (parity-catchup/02)', async () => {
+      const withMedia = await seedExperience({
+        slug: 'media-rafting',
+        title: 'Media Rafting',
+        activitySlug: 'rafting',
+        regionSlug: 'rishikesh',
+      })
+      await seedExperience({
+        slug: 'plain-rafting',
+        title: 'Plain Rafting',
+        activitySlug: 'rafting',
+        regionSlug: 'rishikesh',
+      })
+      await db.insert(mediaAssets).values({
+        uploadedBy: 'u_v',
+        storageKey: 'm/cover.jpg',
+        url: 'https://cdn/cover.jpg',
+        contentType: 'image/jpeg',
+        sizeBytes: 100,
+        entityType: 'experience',
+        entityId: withMedia,
+      })
+
+      const result = await loadActivityCityCollection(db, { lng: 'en', slug: 'rafting-in-rishikesh' })
+      const coverBySlug = new Map(result!.experiences.map((e) => [e.slug, e.coverImageUrl]))
+      expect(coverBySlug.get('media-rafting')).toBe('https://cdn/cover.jpg')
+      expect(coverBySlug.get('plain-rafting')).toBeNull()
     })
 
     it('excludes draft / paused / archived experiences from the listing', async () => {

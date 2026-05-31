@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl'
 import { MapPin, ShieldCheck } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
-import { getActivityImage } from '@/lib/images'
+import { resolveExperienceCover } from '@/lib/media/experience-images'
 
 export interface ExperienceCardData {
   id: string
@@ -16,6 +16,11 @@ export interface ExperienceCardData {
   activitySlug: string
   vendorName?: string
   vendorKycTier?: 'phone' | 'identity' | 'business'
+  /**
+   * Real per-listing cover image URL from `media_assets` (parity-catchup/02).
+   * When absent, the card falls back to the activity stock photo.
+   */
+  coverImageUrl?: string | null
 }
 
 interface ExperienceCardProps {
@@ -62,7 +67,7 @@ export function ExperienceCard({ experience }: ExperienceCardProps) {
   const t = useTranslations('HomePage')
   const activityLabel = ACTIVITY_LABELS[experience.activitySlug] ?? experience.activitySlug
   const regionLabel = REGION_LABELS[experience.regionSlug] ?? experience.regionSlug
-  const imageUrl = getActivityImage(experience.activitySlug)
+  const imageUrl = resolveExperienceCover(experience.coverImageUrl, experience.activitySlug)
 
   return (
     <Link

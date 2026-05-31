@@ -241,6 +241,7 @@ export default async function ActivityCityCollectionPage({
                   pricePerParticipantRupees: exp.pricePerParticipantRupees,
                   regionSlug: data.region.slug,
                   activitySlug: data.activity.slug,
+                  coverImageUrl: exp.coverImageUrl,
                 }}
               />
             ))}

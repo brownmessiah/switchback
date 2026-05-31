@@ -3,6 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import { availabilitySlots } from '@/db/schema/availability-slots'
 import { experiences } from '@/db/schema/experiences'
+import { mediaAssets } from '@/db/schema/media-assets'
 import { regionClosures } from '@/db/schema/region-closures'
 import { slugRedirects } from '@/db/schema/slug-redirects'
 import { users } from '@/db/schema/users'
@@ -36,6 +37,7 @@ describe('Experience detail loader (ADR-0013)', () => {
     await db.execute(sql`TRUNCATE TABLE availability_slots CASCADE`)
     await db.execute(sql`TRUNCATE TABLE region_closures CASCADE`)
     await db.execute(sql`TRUNCATE TABLE slug_redirects CASCADE`)
+    await db.execute(sql`TRUNCATE TABLE media_assets CASCADE`)
     await db.execute(sql`TRUNCATE TABLE experiences CASCADE`)
   })
 
@@ -105,6 +107,27 @@ describe('Experience detail loader (ADR-0013)', () => {
     // Cancellation + payment
     expect(detail.cancellationPreset).toBe('flexible')
     expect(detail.paymentModesAllowed).toContain('full_upfront')
+  })
+
+  // ---- Gallery from media_assets (parity-catchup/02) ----
+  it('hydrates the gallery from the Experience media_assets, cover first', async () => {
+    const id = await seedExperience({ slug: 'gallery-exp' })
+    await db.insert(mediaAssets).values([
+      { uploadedBy: 'u_vendor', storageKey: 'm/2.jpg', url: 'https://cdn/2.jpg', contentType: 'image/jpeg', sizeBytes: 100, altText: 'two', entityType: 'experience', entityId: id },
+      { uploadedBy: 'u_vendor', storageKey: 'm/1.jpg', url: 'https://cdn/1.jpg', contentType: 'image/jpeg', sizeBytes: 100, altText: 'one', entityType: 'experience', entityId: id },
+    ])
+
+    const result = await loadExperienceDetail(db, { lng: 'en', slug: 'gallery-exp' })
+    if (result?.type !== 'found') throw new Error('expected found')
+    expect(result.data.gallery.map((g) => g.url)).toEqual(['https://cdn/1.jpg', 'https://cdn/2.jpg'])
+    expect(result.data.gallery[0]).toMatchObject({ url: 'https://cdn/1.jpg', altText: 'one' })
+  })
+
+  it('returns an empty gallery when the Experience has no media_assets', async () => {
+    await seedExperience({ slug: 'no-gallery-exp' })
+    const result = await loadExperienceDetail(db, { lng: 'en', slug: 'no-gallery-exp' })
+    if (result?.type !== 'found') throw new Error('expected found')
+    expect(result.data.gallery).toEqual([])
   })
 
   // ---- Slug not found → null ----

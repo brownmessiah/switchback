@@ -9,6 +9,10 @@ import {
   type ActivityMeta,
   getActivity,
 } from '@/lib/activities/registry'
+import {
+  type GalleryImage,
+  loadExperienceGallery,
+} from '@/lib/media/experience-images'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 import {
   type PermitMeta,
@@ -61,6 +65,12 @@ export interface ExperienceDetailData {
   vendor: ExperienceDetailVendor
   activity: ActivityMeta
   region: RegionMeta
+  /**
+   * Per-listing gallery from `media_assets` (cover first), or `[]` when the
+   * Experience has no uploaded media. The PDP renders these when present and
+   * falls back to the activity stock photo otherwise (parity-catchup/02).
+   */
+  gallery: GalleryImage[]
   /**
    * The earliest open Availability slot (capacity remaining) for this
    * Experience, or null when none is bookable. Wired into the Book-now
@@ -230,6 +240,8 @@ async function hydrateDetail(
     .orderBy(asc(regionClosures.endAt))
     .limit(1)
 
+  const gallery = await loadExperienceGallery(db, exp.id)
+
   return {
     type: 'found',
     lng,
@@ -250,6 +262,7 @@ async function hydrateDetail(
       vendor,
       activity,
       region,
+      gallery,
       nextAvailableSlotId: nextSlot?.id ?? null,
       activeClosure: closure
         ? {

@@ -6,6 +6,7 @@ import {
   getActivity,
   isActivitySlug,
 } from '@/lib/activities/registry'
+import { loadExperienceCoverMap } from '@/lib/media/experience-images'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 import {
   type RegionMeta,
@@ -39,6 +40,7 @@ export interface ActivityCityCollectionExperience {
   title: string
   pricePerParticipantRupees: number
   shortDescription: string | null
+  coverImageUrl: string | null
 }
 
 export interface ActivityCityCollectionData {
@@ -112,6 +114,8 @@ export async function loadActivityCityCollection(
     .orderBy(desc(experiences.createdAt))
     .limit(limit)
 
+  const coverMap = await loadExperienceCoverMap(db, rows.map((r) => r.id))
+
   return {
     lng: args.lng,
     activity,
@@ -122,6 +126,7 @@ export async function loadActivityCityCollection(
       title: row.title,
       pricePerParticipantRupees: Math.floor(Number(row.pricePerPerson_1_2)),
       shortDescription: row.shortDescription,
+      coverImageUrl: coverMap.get(row.id) ?? null,
     })),
   }
 }

@@ -16,6 +16,7 @@ import { ExperienceCard } from '@/components/experience-card'
 import { Badge } from '@/components/ui/badge'
 import { db } from '@/db/client'
 import { experiences, vendorProfiles } from '@/db/schema'
+import { loadExperienceCoverMap } from '@/lib/media/experience-images'
 import { generateAlternates } from '@/lib/seo/hreflang'
 
 interface PageProps {
@@ -80,6 +81,11 @@ export default async function VendorProfilePage({ params }: PageProps) {
     })
     .from(experiences)
     .where(eq(experiences.vendorUserId, vendor.userId))
+
+  const vendorCoverMap = await loadExperienceCoverMap(
+    db,
+    vendorExperiences.map((e) => e.id),
+  )
 
   // Pre-resolved KYC label (no dynamic keys), used for the banner badge.
   const kycLabel = t(KYC_LABEL_KEYS[vendor.kycTier] ?? KYC_LABEL_KEYS.phone)
@@ -288,6 +294,7 @@ export default async function VendorProfilePage({ params }: PageProps) {
                       regionSlug: exp.regionSlug,
                       activitySlug: exp.activitySlug,
                       vendorName: vendor.businessName,
+                      coverImageUrl: vendorCoverMap.get(exp.id) ?? null,
                     }}
                   />
                 ))}

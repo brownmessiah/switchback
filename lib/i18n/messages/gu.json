@@ -112,7 +112,8 @@
       "cashoutOption": "5–7 કાર્યકારી દિવસોમાં તમારી મૂળ ચુકવણી પદ્ધતિમાં રોકડ મેળવો, અથવા આગલી બુકિંગમાં વાપરો.",
       "outversCredit": "Outvers ક્રેડિટ",
       "creditHint": "પ્રમોશનલ ક્રેડિટ — કોઈપણ બુકિંગમાં વાપરો",
-      "creditExpiry": "{date} ના રોજ સમાપ્ત થાય છે"
+      "creditExpiry": "{date} ના રોજ સમાપ્ત થાય છે",
+      "viewWallet": "વૉલેટ જુઓ"
     },
     "bookings": {
       "empty": "હજુ કોઈ બુકિંગ નથી",
@@ -495,5 +496,34 @@
     "autoCapture": "બાકીની રકમ અનુભવ શરૂ થવાના 24 કલાક પહેલાં આપમેળે વસૂલ થાય છે.",
     "payWithRazorpay": "Razorpay થી ચુકવણી કરો",
     "error": "કંઈક ખોટું થયું. કૃપા કરી ફરી પ્રયાસ કરો."
+  },
+  "WalletPage": {
+    "title": "વૉલેટ",
+    "subtitle": "તમારું Outvers ક્રેડિટ અને રિફંડ બેલેન્સ, સંપૂર્ણ વ્યવહાર ઇતિહાસ સાથે.",
+    "backToDashboard": "ડેશબોર્ડ પર પાછા જાઓ",
+    "outversCredit": "Outvers ક્રેડિટ",
+    "outversCreditHint": "પ્રમોશનલ ક્રેડિટ — કોઈપણ બુકિંગ પર વાપરો. ક્યારેય રોકડ કરી શકાતું નથી.",
+    "refundBalance": "રિફંડ બેલેન્સ",
+    "refundBalanceHint": "રદ અને રિફંડમાંથી. તમારી આગામી બુકિંગ પર ખર્ચો, અથવા કૅશ આઉટ કરો.",
+    "creditExpiry": "નજીકનું ક્રેડિટ {date} ના રોજ સમાપ્ત થાય છે",
+    "cashOut": "કૅશ આઉટ",
+    "cashOutInfo": "તમારી મૂળ ચુકવણી પદ્ધતિમાં 5–7 કાર્યદિવસોમાં કૅશ આઉટ કરો. આ વિકલ્પ ટૂંક સમયમાં આવી રહ્યો છે — હાલમાં, તમારું રિફંડ બેલેન્સ ચેકઆઉટ પર આપમેળે લાગુ થાય છે.",
+    "ledgerTitle": "વ્યવહાર ઇતિહાસ",
+    "ledgerEmpty": "હજુ સુધી કોઈ વૉલેટ વ્યવહાર નથી.",
+    "colDate": "તારીખ",
+    "colBucket": "બકેટ",
+    "colSource": "સ્રોત",
+    "colAmount": "રકમ",
+    "credit": "ક્રેડિટ",
+    "debit": "ડેબિટ",
+    "page": "પૃષ્ઠ {page}/{totalPages}",
+    "previous": "પાછલું",
+    "next": "આગળ",
+    "sourcePromo": "પ્રોમો",
+    "sourceReferral": "રેફરલ",
+    "sourceRefund": "રિફંડ",
+    "sourceAdmin": "સમાયોજન",
+    "sourceCheckoutDeduction": "ચેકઆઉટ",
+    "sourceExpiry": "સમાપ્તિ"
   }
 }

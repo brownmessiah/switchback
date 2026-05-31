@@ -112,7 +112,8 @@
       "cashoutOption": "Cash out to your original payment method in 5–7 working days, or spend it on your next booking.",
       "outversCredit": "Outvers credit",
       "creditHint": "Promotional credit — use on any booking",
-      "creditExpiry": "Expires {date}"
+      "creditExpiry": "Expires {date}",
+      "viewWallet": "View wallet"
     },
     "bookings": {
       "empty": "No bookings yet",
@@ -495,5 +496,34 @@
     "autoCapture": "The remaining amount is auto-captured 24 hours before the experience starts.",
     "payWithRazorpay": "Pay with Razorpay",
     "error": "Something went wrong. Please try again."
+  },
+  "WalletPage": {
+    "title": "Wallet",
+    "subtitle": "Your Outvers credit and refund balance, with a full transaction history.",
+    "backToDashboard": "Back to dashboard",
+    "outversCredit": "Outvers credit",
+    "outversCreditHint": "Promotional credit — use on any booking. Never cashable.",
+    "refundBalance": "Refund balance",
+    "refundBalanceHint": "From cancellations and refunds. Spend it on your next booking, or cash out.",
+    "creditExpiry": "Soonest credit expires {date}",
+    "cashOut": "Cash out",
+    "cashOutInfo": "Cash out to your original payment method in 5–7 working days. This option is coming soon — for now, your refund balance applies automatically at checkout.",
+    "ledgerTitle": "Transaction history",
+    "ledgerEmpty": "No wallet transactions yet.",
+    "colDate": "Date",
+    "colBucket": "Bucket",
+    "colSource": "Source",
+    "colAmount": "Amount",
+    "credit": "Credit",
+    "debit": "Debit",
+    "page": "Page {page} of {totalPages}",
+    "previous": "Previous",
+    "next": "Next",
+    "sourcePromo": "Promo",
+    "sourceReferral": "Referral",
+    "sourceRefund": "Refund",
+    "sourceAdmin": "Adjustment",
+    "sourceCheckoutDeduction": "Checkout",
+    "sourceExpiry": "Expiry"
   }
 }

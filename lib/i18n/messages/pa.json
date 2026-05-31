@@ -112,7 +112,8 @@
       "cashoutOption": "5–7 ਕੰਮਕਾਜੀ ਦਿਨਾਂ ਵਿੱਚ ਆਪਣੇ ਮੂਲ ਭੁਗਤਾਨ ਢੰਗ 'ਤੇ ਨਕਦ ਕਢਵਾਓ, ਜਾਂ ਅਗਲੀ ਬੁਕਿੰਗ 'ਤੇ ਵਰਤੋ।",
       "outversCredit": "Outvers ਕ੍ਰੈਡਿਟ",
       "creditHint": "ਪ੍ਰਚਾਰ ਕ੍ਰੈਡਿਟ — ਕਿਸੇ ਵੀ ਬੁਕਿੰਗ 'ਤੇ ਵਰਤੋ",
-      "creditExpiry": "{date} ਨੂੰ ਮਿਆਦ ਖਤਮ ਹੁੰਦੀ ਹੈ"
+      "creditExpiry": "{date} ਨੂੰ ਮਿਆਦ ਖਤਮ ਹੁੰਦੀ ਹੈ",
+      "viewWallet": "ਵਾਲਿਟ ਵੇਖੋ"
     },
     "bookings": {
       "empty": "ਅਜੇ ਕੋਈ ਬੁਕਿੰਗ ਨਹੀਂ",
@@ -495,5 +496,34 @@
     "autoCapture": "ਬਾਕੀ ਰਕਮ ਅਨੁਭਵ ਸ਼ੁਰੂ ਹੋਣ ਤੋਂ 24 ਘੰਟੇ ਪਹਿਲਾਂ ਆਟੋ-ਕੈਪਚਰ ਹੁੰਦੀ ਹੈ।",
     "payWithRazorpay": "Razorpay ਨਾਲ ਭੁਗਤਾਨ ਕਰੋ",
     "error": "ਕੁਝ ਗਲਤ ਹੋ ਗਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
+  },
+  "WalletPage": {
+    "title": "ਵਾਲਿਟ",
+    "subtitle": "ਤੁਹਾਡਾ Outvers ਕ੍ਰੈਡਿਟ ਅਤੇ ਰਿਫੰਡ ਬੈਲੇਂਸ, ਪੂਰੇ ਲੈਣ-ਦੇਣ ਇਤਿਹਾਸ ਨਾਲ।",
+    "backToDashboard": "ਡੈਸ਼ਬੋਰਡ ਤੇ ਵਾਪਸ ਜਾਓ",
+    "outversCredit": "Outvers ਕ੍ਰੈਡਿਟ",
+    "outversCreditHint": "ਪ੍ਰਮੋਸ਼ਨਲ ਕ੍ਰੈਡਿਟ — ਕਿਸੇ ਵੀ ਬੁਕਿੰਗ ਤੇ ਵਰਤੋਂ। ਕਦੇ ਵੀ ਨਕਦ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ।",
+    "refundBalance": "ਰਿਫੰਡ ਬੈਲੇਂਸ",
+    "refundBalanceHint": "ਰੱਦ ਕਰਨ ਅਤੇ ਰਿਫੰਡ ਤੋਂ। ਆਪਣੀ ਅਗਲੀ ਬੁਕਿੰਗ ਤੇ ਖਰਚ ਕਰੋ, ਜਾਂ ਕੈਸ਼ ਆਊਟ ਕਰੋ।",
+    "creditExpiry": "ਸਭ ਤੋਂ ਨੇੜਲਾ ਕ੍ਰੈਡਿਟ {date} ਨੂੰ ਖਤਮ ਹੁੰਦਾ ਹੈ",
+    "cashOut": "ਕੈਸ਼ ਆਊਟ",
+    "cashOutInfo": "ਆਪਣੇ ਮੂਲ ਭੁਗਤਾਨ ਢੰਗ ਵਿੱਚ 5–7 ਕੰਮਕਾਜੀ ਦਿਨਾਂ ਵਿੱਚ ਕੈਸ਼ ਆਊਟ ਕਰੋ। ਇਹ ਵਿਕਲਪ ਜਲਦੀ ਆ ਰਿਹਾ ਹੈ — ਫਿਲਹਾਲ, ਤੁਹਾਡਾ ਰਿਫੰਡ ਬੈਲੇਂਸ ਚੈੱਕਆਊਟ ਤੇ ਆਪਣੇ ਆਪ ਲਾਗੂ ਹੁੰਦਾ ਹੈ।",
+    "ledgerTitle": "ਲੈਣ-ਦੇਣ ਇਤਿਹਾਸ",
+    "ledgerEmpty": "ਅਜੇ ਤੱਕ ਕੋਈ ਵਾਲਿਟ ਲੈਣ-ਦੇਣ ਨਹੀਂ।",
+    "colDate": "ਤਾਰੀਖ",
+    "colBucket": "ਬਕੇਟ",
+    "colSource": "ਸਰੋਤ",
+    "colAmount": "ਰਕਮ",
+    "credit": "ਕ੍ਰੈਡਿਟ",
+    "debit": "ਡੈਬਿਟ",
+    "page": "ਪੰਨਾ {page}/{totalPages}",
+    "previous": "ਪਿਛਲਾ",
+    "next": "ਅਗਲਾ",
+    "sourcePromo": "ਪ੍ਰੋਮੋ",
+    "sourceReferral": "ਰੈਫਰਲ",
+    "sourceRefund": "ਰਿਫੰਡ",
+    "sourceAdmin": "ਸਮਾਯੋਜਨ",
+    "sourceCheckoutDeduction": "ਚੈੱਕਆਊਟ",
+    "sourceExpiry": "ਮਿਆਦ"
   }
 }

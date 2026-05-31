@@ -14,9 +14,20 @@ const ACTIVITY_IMAGES: Record<string, string> = {
   camping:
     'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800&h=600&fit=crop&q=80',
   bungee:
-    'https://images.unsplash.com/photo-1567604528969-2f9ffd981816?w=800&h=600&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1564769662533-4f00a87b4056?w=800&h=600&fit=crop&q=80',
+  // Canonical activity-registry slug (lib/activities/registry.ts) — the map
+  // previously only had the short alias `bungee`, so every bungee-jumping
+  // Experience fell through to the trekking fallback (audit P0 fix).
+  'bungee-jumping':
+    'https://images.unsplash.com/photo-1564769662533-4f00a87b4056?w=800&h=600&fit=crop&q=80',
   skiing:
     'https://images.unsplash.com/photo-1551524559-8af4e6624178?w=800&h=600&fit=crop&q=80',
+  // Registry slugs that were missing → distinct, subject-appropriate photos
+  // instead of the generic trekking fallback (audit P0 fix).
+  'rock-climbing':
+    'https://images.unsplash.com/photo-1522163182402-834f871fd851?w=800&h=600&fit=crop&q=80',
+  safari:
+    'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=800&h=600&fit=crop&q=80',
   surfing:
     'https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=800&h=600&fit=crop&q=80',
   canyoning:
@@ -34,6 +45,21 @@ const REGION_IMAGES: Record<string, string> = {
     'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&h=600&fit=crop&q=80',
   ladakh:
     'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&q=80',
+  // Canonical region-registry slugs (lib/regions/registry.ts). The map only
+  // had the alias `ladakh` + several regions that aren't in the registry, so
+  // every leh-ladakh / kasol / spiti / lonavala / auli destination tile fell
+  // through to the identical rishikesh fallback (audit P0 fix — restores
+  // per-region visual variety for a fair design comparison).
+  'leh-ladakh':
+    'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&h=600&fit=crop&q=80',
+  kasol:
+    'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=800&h=600&fit=crop&q=80',
+  spiti:
+    'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&h=600&fit=crop&q=80',
+  lonavala:
+    'https://images.unsplash.com/photo-1604537466158-719b1972feb8?w=800&h=600&fit=crop&q=80',
+  auli:
+    'https://images.unsplash.com/photo-1551524559-8af4e6624178?w=800&h=600&fit=crop&q=80',
   sikkim:
     'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&h=600&fit=crop&q=80',
   kerala:

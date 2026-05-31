@@ -11,14 +11,20 @@
 
 import { NextResponse } from 'next/server'
 
-import { generateSitemapUrls } from '@/lib/seo/sitemap'
+import {
+  generateDestinationSitemapUrls,
+  generateSitemapUrls,
+} from '@/lib/seo/sitemap'
 
 export async function GET(
   _request: Request,
   props: { params: Promise<{ locale: string }> },
 ): Promise<NextResponse> {
   const { locale } = await props.params
-  const entries = generateSitemapUrls(locale)
+  const entries = [
+    ...generateSitemapUrls(locale),
+    ...generateDestinationSitemapUrls(locale),
+  ]
 
   const urls = entries
     .map(

@@ -10,11 +10,13 @@
  */
 
 import { DEFAULT_LOCALE, LAUNCH_LOCALES } from '@/lib/i18n/config'
+import { listRegions } from '@/lib/regions/registry'
 
 /** Static public paths that appear in every locale's sitemap. */
 export const STATIC_PUBLIC_PATHS: readonly string[] = [
   '/',
   '/search',
+  '/destinations',
   '/sign-in',
   '/cancellation-policy',
 ] as const
@@ -61,6 +63,7 @@ function absoluteUrl(pathname: string, locale: string): string {
 const PRIORITY_MAP: Record<string, number> = {
   '/': 1.0,
   '/search': 0.8,
+  '/destinations': 0.8,
   '/sign-in': 0.3,
   '/cancellation-policy': 0.5,
 }
@@ -69,6 +72,7 @@ const PRIORITY_MAP: Record<string, number> = {
 const FREQUENCY_MAP: Record<string, SitemapEntry['changeFrequency']> = {
   '/': 'daily',
   '/search': 'daily',
+  '/destinations': 'weekly',
   '/sign-in': 'monthly',
   '/cancellation-policy': 'monthly',
 }
@@ -91,6 +95,30 @@ export function generateSitemapUrls(locale: string): readonly SitemapEntry[] {
     lastModified: now,
     changeFrequency: FREQUENCY_MAP[path] ?? ('weekly' as const),
     priority: PRIORITY_MAP[path] ?? 0.5,
+  }))
+}
+
+/**
+ * Generate sitemap entries for every region landing
+ * (`/destinations/{slug}`) in a given locale.
+ *
+ * The region list is static (sourced from the region registry), so no DB
+ * query is needed — unlike experience/vendor URLs, these are emitted
+ * directly from the controlled vocabulary.
+ *
+ * @param locale - The locale code (e.g. 'en', 'hi', 'ta')
+ * @returns Array of sitemap entries with absolute URLs
+ */
+export function generateDestinationSitemapUrls(
+  locale: string,
+): readonly SitemapEntry[] {
+  const now = new Date()
+
+  return listRegions().map((region) => ({
+    url: absoluteUrl(`/destinations/${region.slug}`, locale),
+    lastModified: now,
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
   }))
 }
 

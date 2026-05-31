@@ -161,6 +161,42 @@
       "refundSla": "24-hour refund SLA"
     }
   },
+  "DestinationsPage": {
+    "index": {
+      "metadataTitle": "Adventure destinations across India · Outvers",
+      "metadataDescription": "Explore adventure destinations across India. Each region lists KYC-verified Vendor Experiences with transparent pricing and a 24-hour refund SLA.",
+      "breadcrumb": "Destinations",
+      "heroEyebrow": "Where to go",
+      "heroTitle": "Adventure destinations across India",
+      "heroSubtitle": "From Himalayan passes to coastal reefs — browse every region Outvers covers, each with KYC-verified Vendors and free cancellation up to 24h.",
+      "regionsHeading": "All destinations",
+      "regionCount": "{count, plural, =0 {No experiences yet} one {# experience} other {# experiences}}",
+      "exploreCta": "Explore {region}"
+    },
+    "detail": {
+      "metadataTitle": "{region} adventures · Outvers",
+      "metadataDescription": "Book adventure Experiences in {region}, {state} from KYC-verified Vendors. Transparent pricing, real-time slot availability, and a 24-hour refund SLA.",
+      "heroEyebrow": "Destination",
+      "heroTitle": "Adventures in {region}",
+      "heroState": "{region}, {state}",
+      "description": "{region} in {state} is one of India's most-loved adventure bases. Every Experience below is run by a KYC-verified Vendor with transparent pricing and refunds credited within 24 hours.",
+      "bestTimeHeading": "Best time to visit",
+      "bestTime": "Most adventure Experiences in {region} run best in the dry, clear-weather months. Monsoon and seasonal-closure windows are surfaced inline at the booking step for each Experience.",
+      "experiencesHeading": "Experiences in {region}",
+      "experiencesCount": "{count, plural, =0 {No Experiences yet} one {# Experience} other {# Experiences}}",
+      "rankingDisclosure": "How we rank: results are ordered by recency and Vendor verification — never by paid placement.",
+      "emptyTitle": "No Experiences in {region} yet",
+      "emptySubtitle": "Check back soon — new listings are added regularly.",
+      "itemListName": "Top Experiences in {region}",
+      "faqHeading": "Frequently asked questions",
+      "faqSafetyQuestion": "Are adventures in {region} safe?",
+      "faqSafetyAnswer": "Every Outvers-listed Experience in {region} is run by a KYC-verified Vendor. Safety-stack Experiences require a trusted contact and feature in-trip check-in pings.",
+      "faqBestTimeQuestion": "When is the best time to visit {region}?",
+      "faqBestTimeAnswer": "Seasonality varies by Experience. Each listing surfaces its own season and region-closure windows, and weather closures are shown inline at the booking step.",
+      "faqCancellationQuestion": "What is the cancellation policy?",
+      "faqCancellationAnswer": "Each Experience carries its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
+    }
+  },
   "ExperiencePage": {
     "metadata": {
       "title": "{title} · {activity} in {region} · Outvers",

@@ -2,6 +2,7 @@
 
 import { ArrowLeft, CheckCircle2, ShieldCheck } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import Script from 'next/script'
 import { useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
@@ -10,7 +11,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
 
+import { writeAbandonmentAudit } from './abandonment-action'
 import { startCheckoutAction } from './actions'
+
+// The Razorpay checkout.js script injects this global. We model only the
+// surface we use (`open()` / `on()`). This is the single source of the
+// `Window.Razorpay` declaration — the standalone RazorpayCheckoutButton that
+// previously duplicated it has been deleted (#15).
+declare global {
+  interface Window {
+    Razorpay: new (options: Record<string, unknown>) => {
+      open: () => void
+      on: (event: string, handler: () => void) => void
+    }
+  }
+}
 
 interface CheckoutFormProps {
   experienceId: string
@@ -62,12 +77,17 @@ export function CheckoutForm({
 
   const payAmount = paymentMode === 'partial_pay' ? advanceAmount : grossTotal
 
+  function goToConfirmation(bookingId: string) {
+    router.push(`/bookings/${bookingId}/confirmation`)
+  }
+
   async function handleCheckout() {
     setError('')
     setLoading(true)
 
+    let result: Awaited<ReturnType<typeof startCheckoutAction>>
     try {
-      const result = await startCheckoutAction({
+      result = await startCheckoutAction({
         experienceId,
         slotId: slotId ?? '',
         customerUserId: '',
@@ -79,22 +99,74 @@ export function CheckoutForm({
         // whole checkout silently errors — Issue #13.
         idempotencyKey: crypto.randomUUID(),
       })
-
-      if (!result.ok) {
-        setError(result.message)
-        return
-      }
-
-      router.push(`/bookings/${result.bookingId}/confirmation`)
     } catch {
       setError('Something went wrong. Please try again.')
-    } finally {
       setLoading(false)
+      return
     }
+
+    if (!result.ok) {
+      setError(result.message)
+      setLoading(false)
+      return
+    }
+
+    // Wallet fully funded the booking (ADR-0004 wallet-before-Razorpay): there
+    // is no Razorpay remainder to collect, so confirm directly. `orderId` is
+    // null and `amountRupees` is 0 in this case.
+    if (result.orderId == null || result.amountRupees <= 0) {
+      goToConfirmation(result.bookingId)
+      return
+    }
+
+    // There is a real charge to collect — mount the Razorpay pay-sheet. The
+    // webhook is the authoritative capture; this handler only advances the UI.
+    if (typeof window === 'undefined' || !window.Razorpay) {
+      setError('Payment could not be started. Please reload and try again.')
+      setLoading(false)
+      return
+    }
+
+    const bookingId = result.bookingId
+    const options = {
+      key: result.keyId,
+      amount: result.amountRupees * 100,
+      currency: 'INR',
+      name: 'Outvers',
+      description: experienceTitle,
+      order_id: result.orderId,
+      prefill: {
+        name: customerName ?? '',
+        email: customerEmail ?? '',
+        contact: '',
+      },
+      // Payment SUCCESS — the ONLY path that reaches the confirmation page.
+      // We do NOT clear `loading` here: navigation unmounts the form.
+      handler: () => {
+        goToConfirmation(bookingId)
+      },
+      modal: {
+        // Sheet dismissed without paying — record the abandonment for audit,
+        // stay on checkout, and surface a gentle nudge. Never a false success.
+        ondismiss: async () => {
+          await writeAbandonmentAudit(bookingId)
+          setError('Payment was not completed. You have not been charged.')
+          setLoading(false)
+        },
+      },
+    }
+
+    new window.Razorpay(options).open()
   }
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_22rem] lg:items-start">
+      {/* Razorpay checkout.js — loaded eagerly so window.Razorpay exists by the
+          time the customer reaches the Pay button on step 2 (#15). */}
+      <Script
+        src="https://checkout.razorpay.com/v1/checkout.js"
+        strategy="afterInteractive"
+      />
       {/* ── Main column: the guided stepper ─────────────────────────────── */}
       <div className="space-y-6">
         {/* Stepper header — step 1 "Your details" → step 2 "Payment" */}

@@ -28,6 +28,7 @@
 import { eq, inArray } from 'drizzle-orm'
 
 import { db } from './client'
+import { seedCatalog } from './seed-extras'
 import {
   adminProfiles,
   availabilitySlots,
@@ -1937,6 +1938,15 @@ async function seed(): Promise<void> {
   console.warn(
     `seeded ${VENDORS.length} vendors, ${EXPERIENCES.length} experiences, ${allExperiences.length} slots, ${seededBookings.length} bookings, ${completedBookings.length} reviews`,
   )
+
+  // ----- CATALOG ENRICHMENT (parity-catchup/01) -----
+  // Layer a realistic, image-rich, UNIQUE catalog (vendors, experiences,
+  // media, reviews, blog, site_content, notifications, support, promos,
+  // commission/pricing tiers, region closures, patterns, wallet) so every
+  // surface renders populated. Isolation-safe: touches only NEW catalog
+  // entities + archives the four published admin-fixtures. See db/seed-extras.ts.
+  await seedCatalog(db)
+  console.warn('seeded catalog enrichment (image-rich demo data)')
 }
 
 seed()

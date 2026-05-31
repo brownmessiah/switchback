@@ -123,6 +123,60 @@
       "cancelSeeRefund": "منسوخ کریں — ریفنڈ دیکھیں"
     }
   },
+  "SupportPage": {
+    "pageTitle": "مدد",
+    "pageSubtitle": "بکنگ، ادائیگی اور اپنے اکاؤنٹ سے متعلق مدد حاصل کریں۔",
+    "newTicket": "نیا ٹکٹ",
+    "backToList": "مدد پر واپس جائیں",
+    "list": {
+      "heading": "میرے ٹکٹ",
+      "emptyTitle": "ابھی تک کوئی مدد ٹکٹ نہیں",
+      "emptyHint": "کوئی سوال یا مسئلہ ہے؟ ٹکٹ کھولیں، ہماری ٹیم مدد کرے گی۔",
+      "openFirst": "اپنا پہلا ٹکٹ کھولیں",
+      "lastUpdated": "اپ ڈیٹ {date}",
+      "ticketCount": "{count, plural, =0 {کوئی ٹکٹ نہیں} one {# ٹکٹ} other {# ٹکٹ}}"
+    },
+    "form": {
+      "heading": "نیا ٹکٹ کھولیں",
+      "subjectLabel": "موضوع",
+      "subjectPlaceholder": "آپ کے سوال کا مختصر خلاصہ",
+      "categoryLabel": "زمرہ",
+      "messageLabel": "پیغام",
+      "messagePlaceholder": "اپنا سوال یا مسئلہ بیان کریں…",
+      "submit": "ٹکٹ جمع کریں",
+      "submitting": "جمع کیا جا رہا ہے…",
+      "success": "ٹکٹ جمع ہو گیا۔ ہماری ٹیم جلد جواب دے گی۔",
+      "validationError": "براہ کرم موضوع اور پیغام دونوں بھریں۔"
+    },
+    "categories": {
+      "booking": "بکنگ",
+      "payment": "ادائیگی",
+      "experience": "تجربہ",
+      "account": "اکاؤنٹ",
+      "cancellation": "منسوخی",
+      "other": "دیگر"
+    },
+    "status": {
+      "open": "کھلا",
+      "in_progress": "جاری",
+      "resolved": "حل ہو گیا",
+      "closed": "بند"
+    },
+    "thread": {
+      "you": "آپ",
+      "supportTeam": "Outvers مدد",
+      "openedOn": "{date} کو کھولا گیا",
+      "messagesHeading": "گفتگو"
+    },
+    "reply": {
+      "label": "جواب",
+      "placeholder": "اپنا جواب لکھیں…",
+      "submit": "جواب بھیجیں",
+      "submitting": "بھیجا جا رہا ہے…",
+      "success": "جواب بھیج دیا گیا۔",
+      "closedNotice": "یہ ٹکٹ بند ہے۔ اگر آپ کو ابھی بھی مدد درکار ہے تو نیا ٹکٹ کھولیں۔"
+    }
+  },
   "AdventurePage": {
     "metadata": {
       "title": "{region} میں {activity} · Outvers",

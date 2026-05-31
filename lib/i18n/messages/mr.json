@@ -123,6 +123,60 @@
       "cancelSeeRefund": "रद्द करा — परतावा पाहा"
     }
   },
+  "SupportPage": {
+    "pageTitle": "मदत",
+    "pageSubtitle": "बुकिंग, पेमेंट आणि तुमच्या खात्याशी संबंधित मदत मिळवा.",
+    "newTicket": "नवीन तिकीट",
+    "backToList": "मदतीकडे परत जा",
+    "list": {
+      "heading": "माझी तिकिटे",
+      "emptyTitle": "अद्याप कोणतीही मदत तिकिटे नाहीत",
+      "emptyHint": "प्रश्न किंवा समस्या आहे? तिकीट उघडा, आमची टीम मदत करेल.",
+      "openFirst": "तुमचे पहिले तिकीट उघडा",
+      "lastUpdated": "अद्यतनित {date}",
+      "ticketCount": "{count, plural, =0 {तिकिटे नाहीत} one {# तिकीट} other {# तिकिटे}}"
+    },
+    "form": {
+      "heading": "नवीन तिकीट उघडा",
+      "subjectLabel": "विषय",
+      "subjectPlaceholder": "तुमच्या प्रश्नाचा थोडक्यात सारांश",
+      "categoryLabel": "श्रेणी",
+      "messageLabel": "संदेश",
+      "messagePlaceholder": "तुमचा प्रश्न किंवा समस्या वर्णन करा…",
+      "submit": "तिकीट सबमिट करा",
+      "submitting": "सबमिट करत आहे…",
+      "success": "तिकीट सबमिट केले. आमची टीम लवकरच उत्तर देईल.",
+      "validationError": "कृपया विषय आणि संदेश दोन्ही भरा."
+    },
+    "categories": {
+      "booking": "बुकिंग",
+      "payment": "पेमेंट",
+      "experience": "अनुभव",
+      "account": "खाते",
+      "cancellation": "रद्दीकरण",
+      "other": "इतर"
+    },
+    "status": {
+      "open": "उघडे",
+      "in_progress": "प्रगतीपथावर",
+      "resolved": "सोडवले",
+      "closed": "बंद"
+    },
+    "thread": {
+      "you": "तुम्ही",
+      "supportTeam": "Outvers मदत",
+      "openedOn": "{date} रोजी उघडले",
+      "messagesHeading": "संभाषण"
+    },
+    "reply": {
+      "label": "उत्तर",
+      "placeholder": "तुमचे उत्तर टाइप करा…",
+      "submit": "उत्तर पाठवा",
+      "submitting": "पाठवत आहे…",
+      "success": "उत्तर पाठवले.",
+      "closedNotice": "हे तिकीट बंद आहे. तुम्हाला अजूनही मदत हवी असल्यास नवीन तिकीट उघडा."
+    }
+  },
   "AdventurePage": {
     "metadata": {
       "title": "{region} मध्ये {activity} · Outvers",

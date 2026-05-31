@@ -123,6 +123,60 @@
       "cancelSeeRefund": "বাতিল কৰক — ৰিফাণ্ড চাওক"
     }
   },
+  "SupportPage": {
+    "pageTitle": "সহায়তা",
+    "pageSubtitle": "বুকিং, পৰিশোধ আৰু আপোনাৰ একাউণ্ট সম্পৰ্কীয় সহায় লওক।",
+    "newTicket": "নতুন টিকট",
+    "backToList": "সহায়তালৈ উভতি যাওক",
+    "list": {
+      "heading": "মোৰ টিকটসমূহ",
+      "emptyTitle": "এতিয়ালৈকে কোনো সহায়তা টিকট নাই",
+      "emptyHint": "প্ৰশ্ন বা সমস্যা আছেনে? টিকট খোলক, আমাৰ দলে সহায় কৰিব।",
+      "openFirst": "আপোনাৰ প্ৰথম টিকট খোলক",
+      "lastUpdated": "আপডেট {date}",
+      "ticketCount": "{count, plural, =0 {কোনো টিকট নাই} one {# টিকট} other {# টিকট}}"
+    },
+    "form": {
+      "heading": "নতুন টিকট খোলক",
+      "subjectLabel": "বিষয়",
+      "subjectPlaceholder": "আপোনাৰ প্ৰশ্নৰ চমু সাৰাংশ",
+      "categoryLabel": "শ্ৰেণী",
+      "messageLabel": "বাৰ্তা",
+      "messagePlaceholder": "আপোনাৰ প্ৰশ্ন বা সমস্যা বৰ্ণনা কৰক…",
+      "submit": "টিকট দাখিল কৰক",
+      "submitting": "দাখিল হৈ আছে…",
+      "success": "টিকট দাখিল হ'ল। আমাৰ দলে সোনকালে উত্তৰ দিব।",
+      "validationError": "অনুগ্ৰহ কৰি বিষয় আৰু বাৰ্তা দুয়োটা পূৰণ কৰক।"
+    },
+    "categories": {
+      "booking": "বুকিং",
+      "payment": "পৰিশোধ",
+      "experience": "অভিজ্ঞতা",
+      "account": "একাউণ্ট",
+      "cancellation": "বাতিলকৰণ",
+      "other": "অন্যান্য"
+    },
+    "status": {
+      "open": "খোলা",
+      "in_progress": "চলি আছে",
+      "resolved": "সমাধান হ'ল",
+      "closed": "বন্ধ"
+    },
+    "thread": {
+      "you": "আপুনি",
+      "supportTeam": "Outvers সহায়তা",
+      "openedOn": "{date} তাৰিখে খোলা হৈছিল",
+      "messagesHeading": "বাৰ্তালাপ"
+    },
+    "reply": {
+      "label": "উত্তৰ",
+      "placeholder": "আপোনাৰ উত্তৰ লিখক…",
+      "submit": "উত্তৰ পঠিয়াওক",
+      "submitting": "পঠিওৱা হৈ আছে…",
+      "success": "উত্তৰ পঠিওৱা হ'ল।",
+      "closedNotice": "এই টিকটটো বন্ধ। আপোনাক এতিয়াও সহায় লাগিলে নতুন টিকট খোলক।"
+    }
+  },
   "AdventurePage": {
     "metadata": {
       "title": "{region}ত {activity} · Outvers",

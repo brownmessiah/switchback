@@ -36,6 +36,7 @@ export const EXCLUDED_PREFIXES = [
   '/vendor/reviews',
   '/vendor/settings',
   '/dashboard',
+  '/support',
   '/checkout',
   '/bookings',
   '/api',

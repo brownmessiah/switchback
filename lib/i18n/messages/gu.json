@@ -123,6 +123,60 @@
       "cancelSeeRefund": "રદ કરો — રિફંડ જુઓ"
     }
   },
+  "SupportPage": {
+    "pageTitle": "સહાય",
+    "pageSubtitle": "બુકિંગ, ચુકવણી અને તમારા ખાતા સંબંધિત મદદ મેળવો.",
+    "newTicket": "નવી ટિકિટ",
+    "backToList": "સહાય પર પાછા જાઓ",
+    "list": {
+      "heading": "મારી ટિકિટો",
+      "emptyTitle": "હજુ સુધી કોઈ સહાય ટિકિટ નથી",
+      "emptyHint": "કોઈ પ્રશ્ન કે સમસ્યા છે? ટિકિટ ખોલો, અમારી ટીમ મદદ કરશે.",
+      "openFirst": "તમારી પહેલી ટિકિટ ખોલો",
+      "lastUpdated": "અપડેટ {date}",
+      "ticketCount": "{count, plural, =0 {કોઈ ટિકિટ નથી} one {# ટિકિટ} other {# ટિકિટો}}"
+    },
+    "form": {
+      "heading": "નવી ટિકિટ ખોલો",
+      "subjectLabel": "વિષય",
+      "subjectPlaceholder": "તમારા પ્રશ્નનો ટૂંકો સારાંશ",
+      "categoryLabel": "શ્રેણી",
+      "messageLabel": "સંદેશ",
+      "messagePlaceholder": "તમારો પ્રશ્ન કે સમસ્યા વર્ણવો…",
+      "submit": "ટિકિટ સબમિટ કરો",
+      "submitting": "સબમિટ થઈ રહ્યું છે…",
+      "success": "ટિકિટ સબમિટ થઈ. અમારી ટીમ ટૂંક સમયમાં જવાબ આપશે.",
+      "validationError": "કૃપા કરીને વિષય અને સંદેશ બંને ભરો."
+    },
+    "categories": {
+      "booking": "બુકિંગ",
+      "payment": "ચુકવણી",
+      "experience": "અનુભવ",
+      "account": "ખાતું",
+      "cancellation": "રદ્દીકરણ",
+      "other": "અન્ય"
+    },
+    "status": {
+      "open": "ખુલ્લું",
+      "in_progress": "પ્રગતિમાં",
+      "resolved": "ઉકેલાયું",
+      "closed": "બંધ"
+    },
+    "thread": {
+      "you": "તમે",
+      "supportTeam": "Outvers સહાય",
+      "openedOn": "{date} ના રોજ ખોલાયું",
+      "messagesHeading": "વાતચીત"
+    },
+    "reply": {
+      "label": "જવાબ",
+      "placeholder": "તમારો જવાબ લખો…",
+      "submit": "જવાબ મોકલો",
+      "submitting": "મોકલાઈ રહ્યું છે…",
+      "success": "જવાબ મોકલાયો.",
+      "closedNotice": "આ ટિકિટ બંધ છે. જો તમને હજુ પણ મદદ જોઈતી હોય તો નવી ટિકિટ ખોલો."
+    }
+  },
   "AdventurePage": {
     "metadata": {
       "title": "{region}માં {activity} · Outvers",

@@ -123,6 +123,60 @@
       "cancelSeeRefund": "ਰੱਦ ਕਰੋ — ਰਿਫੰਡ ਵੇਖੋ"
     }
   },
+  "SupportPage": {
+    "pageTitle": "ਸਹਾਇਤਾ",
+    "pageSubtitle": "ਬੁਕਿੰਗ, ਭੁਗਤਾਨ ਅਤੇ ਆਪਣੇ ਖਾਤੇ ਨਾਲ ਸਬੰਧਤ ਮਦਦ ਲਵੋ।",
+    "newTicket": "ਨਵੀਂ ਟਿਕਟ",
+    "backToList": "ਸਹਾਇਤਾ ਤੇ ਵਾਪਸ ਜਾਓ",
+    "list": {
+      "heading": "ਮੇਰੀਆਂ ਟਿਕਟਾਂ",
+      "emptyTitle": "ਹਾਲੇ ਕੋਈ ਸਹਾਇਤਾ ਟਿਕਟ ਨਹੀਂ",
+      "emptyHint": "ਕੋਈ ਸਵਾਲ ਜਾਂ ਸਮੱਸਿਆ ਹੈ? ਟਿਕਟ ਖੋਲ੍ਹੋ, ਸਾਡੀ ਟੀਮ ਮਦਦ ਕਰੇਗੀ।",
+      "openFirst": "ਆਪਣੀ ਪਹਿਲੀ ਟਿਕਟ ਖੋਲ੍ਹੋ",
+      "lastUpdated": "ਅੱਪਡੇਟ {date}",
+      "ticketCount": "{count, plural, =0 {ਕੋਈ ਟਿਕਟ ਨਹੀਂ} one {# ਟਿਕਟ} other {# ਟਿਕਟਾਂ}}"
+    },
+    "form": {
+      "heading": "ਨਵੀਂ ਟਿਕਟ ਖੋਲ੍ਹੋ",
+      "subjectLabel": "ਵਿਸ਼ਾ",
+      "subjectPlaceholder": "ਤੁਹਾਡੇ ਸਵਾਲ ਦਾ ਸੰਖੇਪ ਸਾਰ",
+      "categoryLabel": "ਸ਼੍ਰੇਣੀ",
+      "messageLabel": "ਸੁਨੇਹਾ",
+      "messagePlaceholder": "ਆਪਣਾ ਸਵਾਲ ਜਾਂ ਸਮੱਸਿਆ ਦੱਸੋ…",
+      "submit": "ਟਿਕਟ ਜਮ੍ਹਾਂ ਕਰੋ",
+      "submitting": "ਜਮ੍ਹਾਂ ਹੋ ਰਹੀ ਹੈ…",
+      "success": "ਟਿਕਟ ਜਮ੍ਹਾਂ ਹੋ ਗਈ। ਸਾਡੀ ਟੀਮ ਜਲਦੀ ਜਵਾਬ ਦੇਵੇਗੀ।",
+      "validationError": "ਕਿਰਪਾ ਕਰਕੇ ਵਿਸ਼ਾ ਅਤੇ ਸੁਨੇਹਾ ਦੋਵੇਂ ਭਰੋ।"
+    },
+    "categories": {
+      "booking": "ਬੁਕਿੰਗ",
+      "payment": "ਭੁਗਤਾਨ",
+      "experience": "ਅਨੁਭਵ",
+      "account": "ਖਾਤਾ",
+      "cancellation": "ਰੱਦ ਕਰਨਾ",
+      "other": "ਹੋਰ"
+    },
+    "status": {
+      "open": "ਖੁੱਲ੍ਹਾ",
+      "in_progress": "ਜਾਰੀ",
+      "resolved": "ਹੱਲ ਹੋ ਗਿਆ",
+      "closed": "ਬੰਦ"
+    },
+    "thread": {
+      "you": "ਤੁਸੀਂ",
+      "supportTeam": "Outvers ਸਹਾਇਤਾ",
+      "openedOn": "{date} ਨੂੰ ਖੋਲ੍ਹਿਆ ਗਿਆ",
+      "messagesHeading": "ਗੱਲਬਾਤ"
+    },
+    "reply": {
+      "label": "ਜਵਾਬ",
+      "placeholder": "ਆਪਣਾ ਜਵਾਬ ਲਿਖੋ…",
+      "submit": "ਜਵਾਬ ਭੇਜੋ",
+      "submitting": "ਭੇਜਿਆ ਜਾ ਰਿਹਾ ਹੈ…",
+      "success": "ਜਵਾਬ ਭੇਜ ਦਿੱਤਾ।",
+      "closedNotice": "ਇਹ ਟਿਕਟ ਬੰਦ ਹੈ। ਜੇ ਤੁਹਾਨੂੰ ਹਾਲੇ ਵੀ ਮਦਦ ਚਾਹੀਦੀ ਹੈ ਤਾਂ ਨਵੀਂ ਟਿਕਟ ਖੋਲ੍ਹੋ।"
+    }
+  },
   "AdventurePage": {
     "metadata": {
       "title": "{region} ਵਿੱਚ {activity} · Outvers",

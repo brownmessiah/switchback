@@ -123,6 +123,60 @@
       "cancelSeeRefund": "రద్దు చేయండి — రీఫండ్ చూడండి"
     }
   },
+  "SupportPage": {
+    "pageTitle": "మద్దతు",
+    "pageSubtitle": "బుకింగ్, చెల్లింపులు మరియు మీ ఖాతాకు సంబంధించిన సహాయం పొందండి.",
+    "newTicket": "కొత్త టికెట్",
+    "backToList": "మద్దతుకు తిరిగి వెళ్లండి",
+    "list": {
+      "heading": "నా టికెట్లు",
+      "emptyTitle": "ఇంకా మద్దతు టికెట్లు లేవు",
+      "emptyHint": "ప్రశ్న లేదా సమస్య ఉందా? టికెట్ తెరవండి, మా బృందం సహాయం చేస్తుంది.",
+      "openFirst": "మీ మొదటి టికెట్‌ను తెరవండి",
+      "lastUpdated": "నవీకరించబడింది {date}",
+      "ticketCount": "{count, plural, =0 {టికెట్లు లేవు} one {# టికెట్} other {# టికెట్లు}}"
+    },
+    "form": {
+      "heading": "కొత్త టికెట్‌ను తెరవండి",
+      "subjectLabel": "విషయం",
+      "subjectPlaceholder": "మీ ప్రశ్న యొక్క సంక్షిప్త సారాంశం",
+      "categoryLabel": "వర్గం",
+      "messageLabel": "సందేశం",
+      "messagePlaceholder": "మీ ప్రశ్న లేదా సమస్యను వివరించండి…",
+      "submit": "టికెట్ సమర్పించండి",
+      "submitting": "సమర్పిస్తోంది…",
+      "success": "టికెట్ సమర్పించబడింది. మా బృందం త్వరలో సమాధానం ఇస్తుంది.",
+      "validationError": "దయచేసి విషయం మరియు సందేశం రెండింటినీ పూరించండి."
+    },
+    "categories": {
+      "booking": "బుకింగ్",
+      "payment": "చెల్లింపు",
+      "experience": "అనుభవం",
+      "account": "ఖాతా",
+      "cancellation": "రద్దు",
+      "other": "ఇతర"
+    },
+    "status": {
+      "open": "తెరిచి ఉంది",
+      "in_progress": "జరుగుతోంది",
+      "resolved": "పరిష్కరించబడింది",
+      "closed": "మూసివేయబడింది"
+    },
+    "thread": {
+      "you": "మీరు",
+      "supportTeam": "Outvers మద్దతు",
+      "openedOn": "{date}న తెరవబడింది",
+      "messagesHeading": "సంభాషణ"
+    },
+    "reply": {
+      "label": "సమాధానం",
+      "placeholder": "మీ సమాధానాన్ని టైప్ చేయండి…",
+      "submit": "సమాధానం పంపండి",
+      "submitting": "పంపుతోంది…",
+      "success": "సమాధానం పంపబడింది.",
+      "closedNotice": "ఈ టికెట్ మూసివేయబడింది. మీకు ఇంకా సహాయం అవసరమైతే కొత్త టికెట్‌ను తెరవండి."
+    }
+  },
   "AdventurePage": {
     "metadata": {
       "title": "{region} లో {activity} · Outvers",

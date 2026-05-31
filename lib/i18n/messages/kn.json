@@ -123,6 +123,60 @@
       "cancelSeeRefund": "ರದ್ದುಮಾಡಿ — ಮರುಪಾವತಿ ನೋಡಿ"
     }
   },
+  "SupportPage": {
+    "pageTitle": "ಬೆಂಬಲ",
+    "pageSubtitle": "ಬುಕಿಂಗ್, ಪಾವತಿ ಮತ್ತು ನಿಮ್ಮ ಖಾತೆಗೆ ಸಂಬಂಧಿಸಿದ ಸಹಾಯ ಪಡೆಯಿರಿ.",
+    "newTicket": "ಹೊಸ ಟಿಕೆಟ್",
+    "backToList": "ಬೆಂಬಲಕ್ಕೆ ಹಿಂತಿರುಗಿ",
+    "list": {
+      "heading": "ನನ್ನ ಟಿಕೆಟ್‌ಗಳು",
+      "emptyTitle": "ಇನ್ನೂ ಯಾವುದೇ ಬೆಂಬಲ ಟಿಕೆಟ್‌ಗಳಿಲ್ಲ",
+      "emptyHint": "ಪ್ರಶ್ನೆ ಅಥವಾ ಸಮಸ್ಯೆ ಇದೆಯೇ? ಟಿಕೆಟ್ ತೆರೆಯಿರಿ, ನಮ್ಮ ತಂಡ ಸಹಾಯ ಮಾಡುತ್ತದೆ.",
+      "openFirst": "ನಿಮ್ಮ ಮೊದಲ ಟಿಕೆಟ್ ತೆರೆಯಿರಿ",
+      "lastUpdated": "ನವೀಕರಿಸಲಾಗಿದೆ {date}",
+      "ticketCount": "{count, plural, =0 {ಟಿಕೆಟ್‌ಗಳಿಲ್ಲ} one {# ಟಿಕೆಟ್} other {# ಟಿಕೆಟ್‌ಗಳು}}"
+    },
+    "form": {
+      "heading": "ಹೊಸ ಟಿಕೆಟ್ ತೆರೆಯಿರಿ",
+      "subjectLabel": "ವಿಷಯ",
+      "subjectPlaceholder": "ನಿಮ್ಮ ಪ್ರಶ್ನೆಯ ಸಂಕ್ಷಿಪ್ತ ಸಾರಾಂಶ",
+      "categoryLabel": "ವರ್ಗ",
+      "messageLabel": "ಸಂದೇಶ",
+      "messagePlaceholder": "ನಿಮ್ಮ ಪ್ರಶ್ನೆ ಅಥವಾ ಸಮಸ್ಯೆಯನ್ನು ವಿವರಿಸಿ…",
+      "submit": "ಟಿಕೆಟ್ ಸಲ್ಲಿಸಿ",
+      "submitting": "ಸಲ್ಲಿಸಲಾಗುತ್ತಿದೆ…",
+      "success": "ಟಿಕೆಟ್ ಸಲ್ಲಿಸಲಾಗಿದೆ. ನಮ್ಮ ತಂಡ ಶೀಘ್ರದಲ್ಲೇ ಪ್ರತಿಕ್ರಿಯಿಸುತ್ತದೆ.",
+      "validationError": "ದಯವಿಟ್ಟು ವಿಷಯ ಮತ್ತು ಸಂದೇಶ ಎರಡನ್ನೂ ಭರ್ತಿ ಮಾಡಿ."
+    },
+    "categories": {
+      "booking": "ಬುಕಿಂಗ್",
+      "payment": "ಪಾವತಿ",
+      "experience": "ಅನುಭವ",
+      "account": "ಖಾತೆ",
+      "cancellation": "ರದ್ದತಿ",
+      "other": "ಇತರೆ"
+    },
+    "status": {
+      "open": "ತೆರೆದಿದೆ",
+      "in_progress": "ಪ್ರಗತಿಯಲ್ಲಿದೆ",
+      "resolved": "ಪರಿಹರಿಸಲಾಗಿದೆ",
+      "closed": "ಮುಚ್ಚಲಾಗಿದೆ"
+    },
+    "thread": {
+      "you": "ನೀವು",
+      "supportTeam": "Outvers ಬೆಂಬಲ",
+      "openedOn": "{date} ರಂದು ತೆರೆಯಲಾಗಿದೆ",
+      "messagesHeading": "ಸಂಭಾಷಣೆ"
+    },
+    "reply": {
+      "label": "ಉತ್ತರ",
+      "placeholder": "ನಿಮ್ಮ ಉತ್ತರವನ್ನು ಟೈಪ್ ಮಾಡಿ…",
+      "submit": "ಉತ್ತರ ಕಳುಹಿಸಿ",
+      "submitting": "ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ…",
+      "success": "ಉತ್ತರ ಕಳುಹಿಸಲಾಗಿದೆ.",
+      "closedNotice": "ಈ ಟಿಕೆಟ್ ಮುಚ್ಚಲಾಗಿದೆ. ನಿಮಗೆ ಇನ್ನೂ ಸಹಾಯ ಬೇಕಿದ್ದರೆ ಹೊಸ ಟಿಕೆಟ್ ತೆರೆಯಿರಿ."
+    }
+  },
   "AdventurePage": {
     "metadata": {
       "title": "{region} ನಲ್ಲಿ {activity} · Outvers",

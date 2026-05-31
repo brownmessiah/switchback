@@ -123,6 +123,19 @@
       "cancelSeeRefund": "રદ કરો — રિફંડ જુઓ"
     }
   },
+  "WishlistPage": {
+    "heading": "મારી વિશલિસ્ટ",
+    "empty": {
+      "title": "હજુ સુધી કોઈ સાચવેલ અનુભવ નથી",
+      "hint": "કોઈપણ અનુભવ પરના હૃદય આયકન પર ટૅપ કરીને તેને પછી માટે અહીં સાચવો."
+    },
+    "button": {
+      "save": "સાચવો",
+      "saved": "સાચવ્યું",
+      "ariaAdd": "વિશલિસ્ટમાં સાચવો",
+      "ariaRemove": "વિશલિસ્ટમાંથી દૂર કરો"
+    }
+  },
   "AdventurePage": {
     "metadata": {
       "title": "{region}માં {activity} · Outvers",

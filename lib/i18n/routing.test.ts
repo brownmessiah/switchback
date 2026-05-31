@@ -76,6 +76,10 @@ describe('shouldExcludeFromI18n()', () => {
       expect(shouldExcludeFromI18n('/bookings/123')).toBe(true)
     })
 
+    it('excludes /wishlist', () => {
+      expect(shouldExcludeFromI18n('/wishlist')).toBe(true)
+    })
+
     it('excludes /api', () => {
       expect(shouldExcludeFromI18n('/api')).toBe(true)
     })
@@ -125,8 +129,8 @@ describe('shouldExcludeFromI18n()', () => {
   })
 
   describe('EXCLUDED_PREFIXES constant', () => {
-    it('contains all 13 excluded prefixes', () => {
-      expect(EXCLUDED_PREFIXES).toHaveLength(13)
+    it('contains all 14 excluded prefixes', () => {
+      expect(EXCLUDED_PREFIXES).toHaveLength(14)
     })
 
     it('includes /admin', () => {

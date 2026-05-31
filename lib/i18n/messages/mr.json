@@ -123,6 +123,19 @@
       "cancelSeeRefund": "रद्द करा — परतावा पाहा"
     }
   },
+  "WishlistPage": {
+    "heading": "माझी विशलिस्ट",
+    "empty": {
+      "title": "अद्याप कोणताही जतन केलेला अनुभव नाही",
+      "hint": "कोणत्याही अनुभवावरील हृदय चिन्हावर टॅप करून तो नंतरसाठी येथे जतन करा."
+    },
+    "button": {
+      "save": "जतन करा",
+      "saved": "जतन केले",
+      "ariaAdd": "विशलिस्टमध्ये जतन करा",
+      "ariaRemove": "विशलिस्टमधून काढा"
+    }
+  },
   "AdventurePage": {
     "metadata": {
       "title": "{region} मध्ये {activity} · Outvers",

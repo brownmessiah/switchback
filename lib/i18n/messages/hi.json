@@ -123,6 +123,19 @@
       "cancelSeeRefund": "रद्द करें — रिफंड देखें"
     }
   },
+  "WishlistPage": {
+    "heading": "मेरी विशलिस्ट",
+    "empty": {
+      "title": "अभी तक कोई सहेजा गया अनुभव नहीं",
+      "hint": "किसी भी अनुभव पर दिल के निशान को दबाकर उसे यहाँ बाद के लिए सहेजें।"
+    },
+    "button": {
+      "save": "सहेजें",
+      "saved": "सहेजा गया",
+      "ariaAdd": "विशलिस्ट में सहेजें",
+      "ariaRemove": "विशलिस्ट से हटाएँ"
+    }
+  },
   "AdventurePage": {
     "metadata": {
       "title": "{activity} {region} में · Outvers",

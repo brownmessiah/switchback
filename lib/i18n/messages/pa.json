@@ -123,6 +123,19 @@
       "cancelSeeRefund": "ਰੱਦ ਕਰੋ — ਰਿਫੰਡ ਵੇਖੋ"
     }
   },
+  "WishlistPage": {
+    "heading": "ਮੇਰੀ ਵਿਸ਼ਲਿਸਟ",
+    "empty": {
+      "title": "ਅਜੇ ਤੱਕ ਕੋਈ ਸੰਭਾਲਿਆ ਅਨੁਭਵ ਨਹੀਂ",
+      "hint": "ਕਿਸੇ ਵੀ ਅਨੁਭਵ ਉੱਤੇ ਦਿਲ ਦੇ ਆਈਕਨ ਨੂੰ ਟੈਪ ਕਰਕੇ ਇਸਨੂੰ ਬਾਅਦ ਲਈ ਇੱਥੇ ਸੰਭਾਲੋ।"
+    },
+    "button": {
+      "save": "ਸੰਭਾਲੋ",
+      "saved": "ਸੰਭਾਲਿਆ ਗਿਆ",
+      "ariaAdd": "ਵਿਸ਼ਲਿਸਟ ਵਿੱਚ ਸੰਭਾਲੋ",
+      "ariaRemove": "ਵਿਸ਼ਲਿਸਟ ਵਿੱਚੋਂ ਹਟਾਓ"
+    }
+  },
   "AdventurePage": {
     "metadata": {
       "title": "{region} ਵਿੱਚ {activity} · Outvers",

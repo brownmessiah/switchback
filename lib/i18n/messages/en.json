@@ -474,7 +474,8 @@
       "listYourExperience": "List your experience",
       "vendorDashboard": "Vendor dashboard",
       "vendorKyc": "Vendor KYC (soon)",
-      "copyright": "All experiences are operated by third-party vendors."
+      "copyright": "All experiences are operated by third-party vendors.",
+      "blog": "Blog"
     }
   },
   "NotFound": {
@@ -495,5 +496,25 @@
     "autoCapture": "The remaining amount is auto-captured 24 hours before the experience starts.",
     "payWithRazorpay": "Pay with Razorpay",
     "error": "Something went wrong. Please try again."
+  },
+  "BlogPage": {
+    "metadata": {
+      "title": "Blog · Outvers",
+      "description": "Guides, tips and destination stories for adventure travel in India — from KYC-verified Outvers operators."
+    },
+    "heading": "The Outvers Blog",
+    "subheading": "Guides, tips and destination stories for safer, better adventures across India.",
+    "empty": "No posts published yet — check back soon.",
+    "pagination": {
+      "label": "Blog pagination",
+      "prev": "← Newer",
+      "next": "Older →",
+      "page": "Page {page} of {total}"
+    },
+    "article": {
+      "by": "By {author}",
+      "defaultAuthor": "Outvers Editorial",
+      "backToBlog": "← Back to the blog"
+    }
   }
 }

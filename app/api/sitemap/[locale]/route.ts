@@ -11,14 +11,39 @@
 
 import { NextResponse } from 'next/server'
 
-import { generateSitemapUrls } from '@/lib/seo/sitemap'
+import { db } from '@/db/client'
+import {
+  generateAdventureSitemapUrls,
+  generateExperienceSitemapUrls,
+  generateSitemapUrls,
+  generateVendorSitemapUrls,
+  type SitemapEntry,
+} from '@/lib/seo/sitemap'
 
 export async function GET(
   _request: Request,
   props: { params: Promise<{ locale: string }> },
 ): Promise<NextResponse> {
   const { locale } = await props.params
-  const entries = generateSitemapUrls(locale)
+
+  // The per-locale sitemap is the UNION of the static public paths and the
+  // DB-driven dynamic route families. On this branch only the
+  // experience / adventure / vendor families exist; the blog / destinations
+  // / activities / category families are added by their own branches
+  // (#03–#05) and will union in here once merged.
+  const [experienceEntries, adventureEntries, vendorEntries] =
+    await Promise.all([
+      generateExperienceSitemapUrls(db, locale),
+      generateAdventureSitemapUrls(db, locale),
+      generateVendorSitemapUrls(db, locale),
+    ])
+
+  const entries: readonly SitemapEntry[] = [
+    ...generateSitemapUrls(locale),
+    ...experienceEntries,
+    ...adventureEntries,
+    ...vendorEntries,
+  ]
 
   const urls = entries
     .map(

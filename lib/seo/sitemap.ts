@@ -9,6 +9,8 @@
  * - Uses LAUNCH_LOCALES so future locales are included automatically
  */
 
+import { listActivities } from '@/lib/activities/registry'
+import { listCategories } from '@/lib/activities/queries'
 import { DEFAULT_LOCALE, LAUNCH_LOCALES } from '@/lib/i18n/config'
 
 /** Static public paths that appear in every locale's sitemap. */
@@ -91,6 +93,48 @@ export function generateSitemapUrls(locale: string): readonly SitemapEntry[] {
     lastModified: now,
     changeFrequency: FREQUENCY_MAP[path] ?? ('weekly' as const),
     priority: PRIORITY_MAP[path] ?? 0.5,
+  }))
+}
+
+/**
+ * Generate sitemap entries for the cross-region activity landing pages
+ * (`/activities/{slug}`), one per registry activity, for the given locale.
+ *
+ * These complement the activity-in-city collection (`/adventure/{slug}`):
+ * a self-canonical activity-across-all-regions page. Slugs come straight
+ * from the activity registry — no parallel list — so adding an activity
+ * surfaces it here automatically. No DB needed: every registered activity
+ * gets a crawlable landing URL even before it has published Experiences.
+ */
+export function generateActivityLandingUrls(
+  locale: string,
+): readonly SitemapEntry[] {
+  const now = new Date()
+  return listActivities().map((activity) => ({
+    url: absoluteUrl(`/activities/${activity.slug}`, locale),
+    lastModified: now,
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }))
+}
+
+/**
+ * Generate sitemap entries for the category rollup pages
+ * (`/category/{slug}`), one per non-empty category, for the given locale.
+ *
+ * Categories are derived from the activity registry (only those with ≥1
+ * activity — the empty `urban` category is excluded), so the set stays in
+ * lock-step with the registry. No DB needed.
+ */
+export function generateCategoryLandingUrls(
+  locale: string,
+): readonly SitemapEntry[] {
+  const now = new Date()
+  return listCategories().map((category) => ({
+    url: absoluteUrl(`/category/${category}`, locale),
+    lastModified: now,
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
   }))
 }
 

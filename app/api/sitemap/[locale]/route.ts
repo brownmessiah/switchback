@@ -11,14 +11,24 @@
 
 import { NextResponse } from 'next/server'
 
-import { generateSitemapUrls } from '@/lib/seo/sitemap'
+import {
+  generateActivityLandingUrls,
+  generateCategoryLandingUrls,
+  generateSitemapUrls,
+} from '@/lib/seo/sitemap'
 
 export async function GET(
   _request: Request,
   props: { params: Promise<{ locale: string }> },
 ): Promise<NextResponse> {
   const { locale } = await props.params
-  const entries = generateSitemapUrls(locale)
+  const entries = [
+    ...generateSitemapUrls(locale),
+    // Cross-region activity landings (/activities/{slug}) + category rollups
+    // (/category/{slug}) — derived from the activity registry, no DB needed.
+    ...generateActivityLandingUrls(locale),
+    ...generateCategoryLandingUrls(locale),
+  ]
 
   const urls = entries
     .map(

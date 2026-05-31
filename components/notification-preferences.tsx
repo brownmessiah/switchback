@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState } from 'react'
 
 import {
@@ -7,30 +8,9 @@ import {
   upsertNotificationPreference,
 } from '@/lib/notifications/actions'
 import { NOTIFICATION_CHANNELS, NOTIFICATION_TYPES } from '@/lib/notifications/types'
-import type { NotificationChannel, NotificationType } from '@/lib/notifications/types'
 
 interface NotificationPreferencesProps {
   readonly userId: string
-}
-
-/** Pretty labels for notification event types */
-const EVENT_TYPE_LABELS: Record<NotificationType, string> = {
-  booking_created: 'New booking',
-  booking_cancelled: 'Booking cancelled',
-  booking_completed: 'Booking completed',
-  review_posted: 'New review',
-  payout_processed: 'Payout processed',
-  listing_approved: 'Listing approved',
-  listing_rejected: 'Listing rejected',
-  message_received: 'New message',
-}
-
-/** Pretty labels for channels */
-const CHANNEL_LABELS: Record<NotificationChannel, string> = {
-  in_app: 'In-app',
-  email: 'Email',
-  whatsapp: 'WhatsApp',
-  sms: 'SMS',
 }
 
 /**
@@ -40,6 +20,7 @@ const CHANNEL_LABELS: Record<NotificationChannel, string> = {
 type PreferenceState = Record<string, Record<string, boolean>>
 
 export function NotificationPreferences({ userId }: NotificationPreferencesProps) {
+  const t = useTranslations('SettingsPage.notifications')
   const [prefs, setPrefs] = useState<PreferenceState>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
@@ -112,20 +93,18 @@ export function NotificationPreferences({ userId }: NotificationPreferencesProps
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold">Notification preferences</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Choose how you want to be notified for each event type.
-        </p>
+        <h2 className="text-lg font-semibold">{t('heading')}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t('description')}</p>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-sm" role="grid" aria-label="Notification preferences">
+        <table className="w-full text-sm" role="grid" aria-label={t('heading')}>
           <thead>
             <tr className="border-b">
-              <th className="py-3 pr-4 text-left font-medium">Event</th>
+              <th className="py-3 pr-4 text-left font-medium">{t('event')}</th>
               {NOTIFICATION_CHANNELS.map((ch) => (
                 <th key={ch} className="px-4 py-3 text-center font-medium">
-                  {CHANNEL_LABELS[ch]}
+                  {t(`channels.${ch}`)}
                 </th>
               ))}
             </tr>
@@ -133,9 +112,7 @@ export function NotificationPreferences({ userId }: NotificationPreferencesProps
           <tbody>
             {NOTIFICATION_TYPES.map((eventType) => (
               <tr key={eventType} className="border-b last:border-0">
-                <td className="py-3 pr-4 font-medium">
-                  {EVENT_TYPE_LABELS[eventType]}
-                </td>
+                <td className="py-3 pr-4 font-medium">{t(`events.${eventType}`)}</td>
                 {NOTIFICATION_CHANNELS.map((channel) => {
                   const enabled = isEnabled(eventType, channel)
                   const key = `${eventType}:${channel}`
@@ -145,8 +122,9 @@ export function NotificationPreferences({ userId }: NotificationPreferencesProps
                       <button
                         type="button"
                         role="switch"
+                        data-testid={`notif-toggle-${eventType}-${channel}`}
                         aria-checked={enabled}
-                        aria-label={`${EVENT_TYPE_LABELS[eventType]} via ${CHANNEL_LABELS[channel]}`}
+                        aria-label={`${t(`events.${eventType}`)} — ${t(`channels.${channel}`)}`}
                         disabled={isSaving}
                         onClick={() => handleToggle(eventType, channel)}
                         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${

@@ -495,5 +495,58 @@
     "autoCapture": "उर्वरित रक्कम अनुभव सुरू होण्याच्या 24 तास आधी स्वयंचलितपणे वसूल केली जाते.",
     "payWithRazorpay": "Razorpay ने पेमेंट करा",
     "error": "काहीतरी चूक झाली. कृपया पुन्हा प्रयत्न करा."
+  },
+  "SettingsPage": {
+    "title": "खाते सेटिंग्ज",
+    "subtitle": "तुमची प्रोफाइल, पत्ता आणि सूचना प्राधान्ये व्यवस्थापित करा.",
+    "profile": {
+      "heading": "प्रोफाइल",
+      "description": "तुमचे प्रदर्शन नाव आणि अवतार संपूर्ण Outvers मध्ये दिसतात.",
+      "displayName": "प्रदर्शन नाव",
+      "displayNamePlaceholder": "तुमचे नाव",
+      "avatarUrl": "अवतार प्रतिमा URL",
+      "avatarUrlPlaceholder": "https://…"
+    },
+    "address": {
+      "heading": "डीफॉल्ट पत्ता",
+      "description": "चेकआउट आणि बुकिंग आधीच भरण्यासाठी वापरला जातो.",
+      "line1": "पत्ता ओळ",
+      "line1Placeholder": "घर / रस्ता",
+      "city": "शहर",
+      "state": "राज्य",
+      "pincode": "पिनकोड"
+    },
+    "trustedContact": {
+      "heading": "विश्वासू संपर्क",
+      "description": "सुरक्षा-स्टॅक अनुभवांसाठी तुमच्या विश्वासू संपर्कासह शेअर केले जाते.",
+      "name": "नाव",
+      "phone": "फोन",
+      "relationship": "नाते"
+    },
+    "save": "बदल जतन करा",
+    "saving": "जतन करत आहे…",
+    "saved": "बदल जतन केले.",
+    "error": "काहीतरी चूक झाली. कृपया पुन्हा प्रयत्न करा.",
+    "notifications": {
+      "heading": "सूचना प्राधान्ये",
+      "description": "प्रत्येक इव्हेंट प्रकारासाठी तुम्हाला कसे सूचित करायचे ते निवडा.",
+      "event": "इव्हेंट",
+      "events": {
+        "booking_created": "नवीन बुकिंग",
+        "booking_cancelled": "बुकिंग रद्द",
+        "booking_completed": "बुकिंग पूर्ण",
+        "review_posted": "नवीन पुनरावलोकन",
+        "payout_processed": "पेआउट प्रक्रिया केली",
+        "listing_approved": "सूची मंजूर",
+        "listing_rejected": "सूची नाकारली",
+        "message_received": "नवीन संदेश"
+      },
+      "channels": {
+        "in_app": "अॅपमध्ये",
+        "email": "ईमेल",
+        "whatsapp": "WhatsApp",
+        "sms": "SMS"
+      }
+    }
   }
 }

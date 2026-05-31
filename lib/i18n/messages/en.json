@@ -495,5 +495,58 @@
     "autoCapture": "The remaining amount is auto-captured 24 hours before the experience starts.",
     "payWithRazorpay": "Pay with Razorpay",
     "error": "Something went wrong. Please try again."
+  },
+  "SettingsPage": {
+    "title": "Account settings",
+    "subtitle": "Manage your profile, address, and notification preferences.",
+    "profile": {
+      "heading": "Profile",
+      "description": "Your display name and avatar appear across Outvers.",
+      "displayName": "Display name",
+      "displayNamePlaceholder": "Your name",
+      "avatarUrl": "Avatar image URL",
+      "avatarUrlPlaceholder": "https://…"
+    },
+    "address": {
+      "heading": "Default address",
+      "description": "Used to pre-fill checkout and bookings.",
+      "line1": "Address line",
+      "line1Placeholder": "House / street",
+      "city": "City",
+      "state": "State",
+      "pincode": "Pincode"
+    },
+    "trustedContact": {
+      "heading": "Trusted contact",
+      "description": "Shared with your trusted contact for safety-stack experiences.",
+      "name": "Name",
+      "phone": "Phone",
+      "relationship": "Relationship"
+    },
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Changes saved.",
+    "error": "Something went wrong. Please try again.",
+    "notifications": {
+      "heading": "Notification preferences",
+      "description": "Choose how you want to be notified for each event type.",
+      "event": "Event",
+      "events": {
+        "booking_created": "New booking",
+        "booking_cancelled": "Booking cancelled",
+        "booking_completed": "Booking completed",
+        "review_posted": "New review",
+        "payout_processed": "Payout processed",
+        "listing_approved": "Listing approved",
+        "listing_rejected": "Listing rejected",
+        "message_received": "New message"
+      },
+      "channels": {
+        "in_app": "In-app",
+        "email": "Email",
+        "whatsapp": "WhatsApp",
+        "sms": "SMS"
+      }
+    }
   }
 }

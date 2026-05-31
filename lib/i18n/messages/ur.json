@@ -495,5 +495,58 @@
     "autoCapture": "بقایا رقم تجربے کے شروع ہونے سے 24 گھنٹے پہلے خودکار طور پر وصول ہوتی ہے۔",
     "payWithRazorpay": "Razorpay سے ادا کریں",
     "error": "کچھ غلط ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔"
+  },
+  "SettingsPage": {
+    "title": "اکاؤنٹ کی ترتیبات",
+    "subtitle": "اپنی پروفائل، پتہ اور اطلاعات کی ترجیحات کا نظم کریں۔",
+    "profile": {
+      "heading": "پروفائل",
+      "description": "آپ کا ظاہر کرنے والا نام اور اوتار پورے Outvers میں نظر آتا ہے۔",
+      "displayName": "ظاہر کرنے والا نام",
+      "displayNamePlaceholder": "آپ کا نام",
+      "avatarUrl": "اوتار تصویر کا URL",
+      "avatarUrlPlaceholder": "https://…"
+    },
+    "address": {
+      "heading": "ڈیفالٹ پتہ",
+      "description": "چیک آؤٹ اور بکنگ پہلے سے بھرنے کے لیے استعمال ہوتا ہے۔",
+      "line1": "پتہ لائن",
+      "line1Placeholder": "گھر / گلی",
+      "city": "شہر",
+      "state": "ریاست",
+      "pincode": "پن کوڈ"
+    },
+    "trustedContact": {
+      "heading": "قابل اعتماد رابطہ",
+      "description": "سیفٹی اسٹیک تجربات کے لیے آپ کے قابل اعتماد رابطے کے ساتھ شیئر کیا جاتا ہے۔",
+      "name": "نام",
+      "phone": "فون",
+      "relationship": "رشتہ"
+    },
+    "save": "تبدیلیاں محفوظ کریں",
+    "saving": "محفوظ ہو رہا ہے…",
+    "saved": "تبدیلیاں محفوظ ہو گئیں۔",
+    "error": "کچھ غلط ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔",
+    "notifications": {
+      "heading": "اطلاعات کی ترجیحات",
+      "description": "منتخب کریں کہ آپ ہر ایونٹ کی قسم کے لیے کیسے مطلع ہونا چاہتے ہیں۔",
+      "event": "ایونٹ",
+      "events": {
+        "booking_created": "نئی بکنگ",
+        "booking_cancelled": "بکنگ منسوخ",
+        "booking_completed": "بکنگ مکمل",
+        "review_posted": "نیا جائزہ",
+        "payout_processed": "ادائیگی پر کارروائی",
+        "listing_approved": "فہرست منظور",
+        "listing_rejected": "فہرست مسترد",
+        "message_received": "نیا پیغام"
+      },
+      "channels": {
+        "in_app": "ایپ میں",
+        "email": "ای میل",
+        "whatsapp": "WhatsApp",
+        "sms": "SMS"
+      }
+    }
   }
 }

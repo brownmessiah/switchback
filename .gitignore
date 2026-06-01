@@ -59,3 +59,7 @@ tests/e2e/screenshots/
 # predating this rule stay tracked — git ignore does not untrack them)
 .scratch/
 .claude/worktrees/
+
+# local showcase site + captured screenshots (build artifacts)
+screenshots/
+showcase/

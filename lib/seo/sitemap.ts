@@ -29,6 +29,7 @@ export const STATIC_PUBLIC_PATHS: readonly string[] = [
   '/blog',
   '/help',
   '/contact',
+  '/trip-planner',
 ] as const
 
 /** Returns the site's base URL from env, without trailing slash. */
@@ -79,6 +80,7 @@ const PRIORITY_MAP: Record<string, number> = {
   '/blog': 0.6,
   '/help': 0.5,
   '/contact': 0.4,
+  '/trip-planner': 0.7,
 }
 
 /** Change frequency map for different route types. */
@@ -91,6 +93,7 @@ const FREQUENCY_MAP: Record<string, SitemapEntry['changeFrequency']> = {
   '/blog': 'daily',
   '/help': 'monthly',
   '/contact': 'yearly',
+  '/trip-planner': 'weekly',
 }
 
 /**

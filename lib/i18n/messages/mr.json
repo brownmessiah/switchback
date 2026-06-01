@@ -952,5 +952,51 @@
         "sms": "SMS"
       }
     }
+  },
+  "TripPlannerPage": {
+    "metadata": {
+      "title": "AI Trip Planner · Outvers",
+      "description": "Build a day-by-day adventure itinerary grounded in real, bookable Outvers experiences. Pick a destination, days, budget, group size, and style."
+    },
+    "heading": "AI सह तुमची साहसयात्रा आखा",
+    "subheading": "Tell us where and how you like to travel. We build a day-by-day itinerary from real, bookable experiences — never made-up ones.",
+    "aiLabel": "AI-assisted · grounded in live Outvers inventory",
+    "form": {
+      "region": "Destination",
+      "regionPlaceholder": "Choose a destination",
+      "activity": "Activity (optional)",
+      "anyActivity": "Any activity",
+      "days": "Days",
+      "budget": "Total budget (₹)",
+      "budgetPlaceholder": "e.g. 15000",
+      "groupSize": "Group size",
+      "travelStyle": "Travel style",
+      "submit": "Build my itinerary",
+      "submitting": "Building your itinerary…"
+    },
+    "style": {
+      "adventure": "Adventure",
+      "relaxed": "Relaxed",
+      "family": "Family",
+      "budget": "Budget"
+    },
+    "result": {
+      "heading": "Your {days}-day {region} itinerary",
+      "dayHeading": "Day {day}: {title}",
+      "itemCount": "{count} experience{count, plural, one {} other {s}}",
+      "viewExperience": "View experience",
+      "perPerson": "₹{price}/person",
+      "packingHeading": "Packing list",
+      "emptyDay": "A free day — explore on your own or add an experience.",
+      "disclaimer": "Every experience above is real and bookable on Outvers. AI helps arrange them; it never invents experiences."
+    },
+    "empty": {
+      "title": "No live experiences for that destination yet",
+      "body": "We could not find published experiences to ground an itinerary. Try another destination or remove the activity filter."
+    },
+    "error": {
+      "title": "We could not build that itinerary",
+      "body": "Something went wrong. Please adjust your inputs and try again."
+    }
   }
 }

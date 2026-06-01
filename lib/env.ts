@@ -23,6 +23,14 @@ const schema = z.object({
 
   // ===== AI (M4) =====
   OPENAI_API_KEY: z.string().optional(),
+  // Anthropic / Claude. When ABSENT, AI surfaces fall back to a
+  // deterministic, still-RAG-grounded path (ADR-0010); when PRESENT,
+  // they call Claude. Server-only — never exposed to the client bundle.
+  ANTHROPIC_API_KEY: z.string().optional(),
+  // Optional override for the trip-planner model id. Defaults are resolved
+  // in lib/ai/router.ts — concrete model IDs live in config, not hardcoded
+  // call sites (ADR-0010 model-routing).
+  AI_MODEL_TRIP_PLANNER: z.string().optional(),
 
   // ===== Email (M2) =====
   RESEND_API_KEY: z.string().optional(),

@@ -341,8 +341,8 @@ export default async function ExperienceDetailPage({
               <div className="grid grid-cols-2 gap-2 overflow-hidden rounded-[var(--radius-2xl)]">
                 <div className="relative col-span-2 aspect-[16/9] sm:col-span-1 sm:aspect-[4/3]">
                   <Image
-                    src={getActivityImage(detail.activity.slug)}
-                    alt={detail.title}
+                    src={detail.gallery[0]?.url ?? getActivityImage(detail.activity.slug)}
+                    alt={detail.gallery[0]?.altText ?? detail.title}
                     fill
                     className="object-cover"
                     priority
@@ -352,8 +352,8 @@ export default async function ExperienceDetailPage({
                 <div className="hidden gap-2 sm:grid sm:grid-rows-2">
                   <div className="relative overflow-hidden">
                     <Image
-                      src={getActivityImage(detail.activity.slug).replace('w=800', 'w=400').replace('fit=crop', 'fit=crop&crop=top')}
-                      alt=""
+                      src={detail.gallery[1]?.url ?? getActivityImage(detail.activity.slug).replace('w=800', 'w=400').replace('fit=crop', 'fit=crop&crop=top')}
+                      alt={detail.gallery[1]?.altText ?? ''}
                       fill
                       className="object-cover"
                       sizes="25vw"
@@ -361,8 +361,8 @@ export default async function ExperienceDetailPage({
                   </div>
                   <div className="relative overflow-hidden">
                     <Image
-                      src={getActivityImage(detail.activity.slug).replace('w=800', 'w=400').replace('fit=crop', 'fit=crop&crop=bottom')}
-                      alt=""
+                      src={detail.gallery[2]?.url ?? getActivityImage(detail.activity.slug).replace('w=800', 'w=400').replace('fit=crop', 'fit=crop&crop=bottom')}
+                      alt={detail.gallery[2]?.altText ?? ''}
                       fill
                       className="object-cover"
                       sizes="25vw"

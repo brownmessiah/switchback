@@ -5,6 +5,8 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { ExperienceCard } from '@/components/experience-card'
 import { FacetForm } from '@/components/search/facet-form'
 import { FiltersSheet } from '@/components/search/filters-sheet'
+import { db } from '@/db/client'
+import { loadExperienceCoverMap } from '@/lib/media/experience-images'
 import { generateAlternates } from '@/lib/seo/hreflang'
 import {
   isFilteredSearch,
@@ -50,6 +52,7 @@ export default async function SearchPage({
   const rawParams = await searchParams
   const parsed = parseSearchParams(rawParams)
   const { hits } = await searchExperiences(parsed)
+  const coverMap = await loadExperienceCoverMap(db, hits.map((h) => h.id))
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
@@ -110,6 +113,7 @@ export default async function SearchPage({
                     pricePerParticipantRupees: hit.pricePerPersonRupees,
                     regionSlug: hit.regionSlug,
                     activitySlug: hit.activitySlug,
+                    coverImageUrl: coverMap.get(hit.id) ?? null,
                   }}
                 />
               ))}

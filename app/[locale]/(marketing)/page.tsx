@@ -297,6 +297,7 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
                   pricePerParticipantRupees: exp.pricePerParticipantRupees,
                   regionSlug: exp.regionSlug,
                   activitySlug: exp.activitySlug,
+                  coverImageUrl: exp.coverImageUrl,
                 }}
               />
             ))}

@@ -845,5 +845,59 @@
     "sourceAdmin": "ସମନ୍ୱୟ",
     "sourceCheckoutDeduction": "ଚେକଆଉଟ୍",
     "sourceExpiry": "ସମାପ୍ତି"
+  },
+  "SupportPage": {
+    "pageTitle": "ସହାୟତା",
+    "pageSubtitle": "ବୁକିଂ, ଦେୟ ଏବଂ ଆପଣଙ୍କ ଖାତା ସମ୍ବନ୍ଧୀୟ ସହାୟତା ପାଆନ୍ତୁ।",
+    "newTicket": "ନୂଆ ଟିକେଟ୍",
+    "backToList": "ସହାୟତାକୁ ଫେରନ୍ତୁ",
+    "list": {
+      "heading": "ମୋ ଟିକେଟ୍",
+      "emptyTitle": "ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ସହାୟତା ଟିକେଟ୍ ନାହିଁ",
+      "emptyHint": "ପ୍ରଶ୍ନ କିମ୍ବା ସମସ୍ୟା ଅଛି କି? ଟିକେଟ୍ ଖୋଲନ୍ତୁ, ଆମ ଦଳ ସାହାଯ୍ୟ କରିବ।",
+      "openFirst": "ଆପଣଙ୍କ ପ୍ରଥମ ଟିକେଟ୍ ଖୋଲନ୍ତୁ",
+      "lastUpdated": "ଅଦ୍ୟତନ {date}",
+      "ticketCount": "{count, plural, =0 {କୌଣସି ଟିକେଟ୍ ନାହିଁ} one {# ଟିକେଟ୍} other {# ଟିକେଟ୍}}"
+    },
+    "form": {
+      "heading": "ନୂଆ ଟିକେଟ୍ ଖୋଲନ୍ତୁ",
+      "subjectLabel": "ବିଷୟ",
+      "subjectPlaceholder": "ଆପଣଙ୍କ ପ୍ରଶ୍ନର ସଂକ୍ଷିପ୍ତ ସାରାଂଶ",
+      "categoryLabel": "ବର୍ଗ",
+      "messageLabel": "ବାର୍ତ୍ତା",
+      "messagePlaceholder": "ଆପଣଙ୍କ ପ୍ରଶ୍ନ କିମ୍ବା ସମସ୍ୟା ବର୍ଣ୍ଣନା କରନ୍ତୁ…",
+      "submit": "ଟିକେଟ୍ ଦାଖଲ କରନ୍ତୁ",
+      "submitting": "ଦାଖଲ ହେଉଛି…",
+      "success": "ଟିକେଟ୍ ଦାଖଲ ହୋଇଛି। ଆମ ଦଳ ଶୀଘ୍ର ଉତ୍ତର ଦେବ।",
+      "validationError": "ଦୟାକରି ବିଷୟ ଏବଂ ବାର୍ତ୍ତା ଉଭୟ ପୂରଣ କରନ୍ତୁ।"
+    },
+    "categories": {
+      "booking": "ବୁକିଂ",
+      "payment": "ଦେୟ",
+      "experience": "ଅନୁଭବ",
+      "account": "ଖାତା",
+      "cancellation": "ବାତିଲ୍",
+      "other": "ଅନ୍ୟାନ୍ୟ"
+    },
+    "status": {
+      "open": "ଖୋଲା",
+      "in_progress": "ଚାଲିଛି",
+      "resolved": "ସମାଧାନ ହୋଇଛି",
+      "closed": "ବନ୍ଦ"
+    },
+    "thread": {
+      "you": "ଆପଣ",
+      "supportTeam": "Outvers ସହାୟତା",
+      "openedOn": "{date}ରେ ଖୋଲାଯାଇଛି",
+      "messagesHeading": "ବାର୍ତ୍ତାଳାପ"
+    },
+    "reply": {
+      "label": "ଉତ୍ତର",
+      "placeholder": "ଆପଣଙ୍କ ଉତ୍ତର ଟାଇପ୍ କରନ୍ତୁ…",
+      "submit": "ଉତ୍ତର ପଠାନ୍ତୁ",
+      "submitting": "ପଠାଯାଉଛି…",
+      "success": "ଉତ୍ତର ପଠାଯାଇଛି।",
+      "closedNotice": "ଏହି ଟିକେଟ୍ ବନ୍ଦ ଅଛି। ଯଦି ଆପଣଙ୍କୁ ଏବେ ବି ସହାୟତା ଆବଶ୍ୟକ ତେବେ ନୂଆ ଟିକେଟ୍ ଖୋଲନ୍ତୁ।"
+    }
   }
 }

@@ -845,5 +845,59 @@
     "sourceAdmin": "समायोजन",
     "sourceCheckoutDeduction": "चेकआउट",
     "sourceExpiry": "समाप्ति"
+  },
+  "SupportPage": {
+    "pageTitle": "सहायता",
+    "pageSubtitle": "बुकिंग, भुगतान और अपने खाते से जुड़ी मदद पाएँ।",
+    "newTicket": "नया टिकट",
+    "backToList": "सहायता पर वापस जाएँ",
+    "list": {
+      "heading": "मेरे टिकट",
+      "emptyTitle": "अभी तक कोई सहायता टिकट नहीं",
+      "emptyHint": "कोई सवाल या समस्या है? टिकट खोलें और हमारी टीम आपकी मदद करेगी।",
+      "openFirst": "अपना पहला टिकट खोलें",
+      "lastUpdated": "अपडेट {date}",
+      "ticketCount": "{count, plural, =0 {कोई टिकट नहीं} one {# टिकट} other {# टिकट}}"
+    },
+    "form": {
+      "heading": "नया टिकट खोलें",
+      "subjectLabel": "विषय",
+      "subjectPlaceholder": "आपके सवाल का संक्षिप्त सारांश",
+      "categoryLabel": "श्रेणी",
+      "messageLabel": "संदेश",
+      "messagePlaceholder": "अपना सवाल या समस्या बताएँ…",
+      "submit": "टिकट भेजें",
+      "submitting": "भेजा जा रहा है…",
+      "success": "टिकट भेज दिया गया। हमारी टीम जल्द ही जवाब देगी।",
+      "validationError": "कृपया विषय और संदेश दोनों भरें।"
+    },
+    "categories": {
+      "booking": "बुकिंग",
+      "payment": "भुगतान",
+      "experience": "अनुभव",
+      "account": "खाता",
+      "cancellation": "रद्दीकरण",
+      "other": "अन्य"
+    },
+    "status": {
+      "open": "खुला",
+      "in_progress": "प्रगति में",
+      "resolved": "हल हो गया",
+      "closed": "बंद"
+    },
+    "thread": {
+      "you": "आप",
+      "supportTeam": "Outvers सहायता",
+      "openedOn": "{date} को खोला गया",
+      "messagesHeading": "बातचीत"
+    },
+    "reply": {
+      "label": "जवाब",
+      "placeholder": "अपना जवाब लिखें…",
+      "submit": "जवाब भेजें",
+      "submitting": "भेजा जा रहा है…",
+      "success": "जवाब भेज दिया गया।",
+      "closedNotice": "यह टिकट बंद है। यदि आपको अब भी मदद चाहिए तो नया टिकट खोलें।"
+    }
   }
 }

@@ -845,5 +845,59 @@
     "sourceAdmin": "সমন্বয়",
     "sourceCheckoutDeduction": "চেকআউট",
     "sourceExpiry": "মেয়াদ শেষ"
+  },
+  "SupportPage": {
+    "pageTitle": "সহায়তা",
+    "pageSubtitle": "বুকিং, পেমেন্ট ও আপনার অ্যাকাউন্ট সম্পর্কিত সহায়তা নিন।",
+    "newTicket": "নতুন টিকিট",
+    "backToList": "সহায়তায় ফিরে যান",
+    "list": {
+      "heading": "আমার টিকিট",
+      "emptyTitle": "এখনও কোনো সহায়তা টিকিট নেই",
+      "emptyHint": "কোনো প্রশ্ন বা সমস্যা আছে? একটি টিকিট খুলুন, আমাদের দল সাহায্য করবে।",
+      "openFirst": "আপনার প্রথম টিকিট খুলুন",
+      "lastUpdated": "আপডেট {date}",
+      "ticketCount": "{count, plural, =0 {কোনো টিকিট নেই} one {# টিকিট} other {# টিকিট}}"
+    },
+    "form": {
+      "heading": "নতুন টিকিট খুলুন",
+      "subjectLabel": "বিষয়",
+      "subjectPlaceholder": "আপনার প্রশ্নের সংক্ষিপ্ত সারাংশ",
+      "categoryLabel": "বিভাগ",
+      "messageLabel": "বার্তা",
+      "messagePlaceholder": "আপনার প্রশ্ন বা সমস্যা বর্ণনা করুন…",
+      "submit": "টিকিট জমা দিন",
+      "submitting": "জমা দেওয়া হচ্ছে…",
+      "success": "টিকিট জমা হয়েছে। আমাদের দল শীঘ্রই উত্তর দেবে।",
+      "validationError": "অনুগ্রহ করে বিষয় ও বার্তা দুটোই পূরণ করুন।"
+    },
+    "categories": {
+      "booking": "বুকিং",
+      "payment": "পেমেন্ট",
+      "experience": "অভিজ্ঞতা",
+      "account": "অ্যাকাউন্ট",
+      "cancellation": "বাতিলকরণ",
+      "other": "অন্যান্য"
+    },
+    "status": {
+      "open": "খোলা",
+      "in_progress": "চলমান",
+      "resolved": "সমাধান হয়েছে",
+      "closed": "বন্ধ"
+    },
+    "thread": {
+      "you": "আপনি",
+      "supportTeam": "Outvers সহায়তা",
+      "openedOn": "{date} তারিখে খোলা হয়েছে",
+      "messagesHeading": "কথোপকথন"
+    },
+    "reply": {
+      "label": "উত্তর",
+      "placeholder": "আপনার উত্তর লিখুন…",
+      "submit": "উত্তর পাঠান",
+      "submitting": "পাঠানো হচ্ছে…",
+      "success": "উত্তর পাঠানো হয়েছে।",
+      "closedNotice": "এই টিকিটটি বন্ধ। আপনার এখনও সাহায্য প্রয়োজন হলে নতুন টিকিট খুলুন।"
+    }
   }
 }

@@ -845,5 +845,59 @@
     "sourceAdmin": "Adjustment",
     "sourceCheckoutDeduction": "Checkout",
     "sourceExpiry": "Expiry"
+  },
+  "SupportPage": {
+    "pageTitle": "Support",
+    "pageSubtitle": "Get help with bookings, payments, and your account.",
+    "newTicket": "New ticket",
+    "backToList": "Back to support",
+    "list": {
+      "heading": "My tickets",
+      "emptyTitle": "No support tickets yet",
+      "emptyHint": "Have a question or an issue? Open a ticket and our team will help.",
+      "openFirst": "Open your first ticket",
+      "lastUpdated": "Updated {date}",
+      "ticketCount": "{count, plural, =0 {No tickets} one {# ticket} other {# tickets}}"
+    },
+    "form": {
+      "heading": "Open a new ticket",
+      "subjectLabel": "Subject",
+      "subjectPlaceholder": "Short summary of your question",
+      "categoryLabel": "Category",
+      "messageLabel": "Message",
+      "messagePlaceholder": "Describe your question or issue…",
+      "submit": "Submit ticket",
+      "submitting": "Submitting…",
+      "success": "Ticket submitted. Our team will reply shortly.",
+      "validationError": "Please fill in both a subject and a message."
+    },
+    "categories": {
+      "booking": "Booking",
+      "payment": "Payment",
+      "experience": "Experience",
+      "account": "Account",
+      "cancellation": "Cancellation",
+      "other": "Other"
+    },
+    "status": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "thread": {
+      "you": "You",
+      "supportTeam": "Outvers Support",
+      "openedOn": "Opened {date}",
+      "messagesHeading": "Conversation"
+    },
+    "reply": {
+      "label": "Reply",
+      "placeholder": "Type your reply…",
+      "submit": "Send reply",
+      "submitting": "Sending…",
+      "success": "Reply sent.",
+      "closedNotice": "This ticket is closed. Open a new ticket if you still need help."
+    }
   }
 }

@@ -51,9 +51,15 @@ const baseProps = {
   experienceId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
   experienceTitle: 'Sunset Kayaking',
   slotId: SLOT_ID,
+  // Group-size tiers (#12): count=2 falls in the 1-2 bracket → ₹2000/person,
+  // gross ₹4000, 25% advance ₹1000 — matching the mocked startCheckoutAction
+  // amountRupees below. The displayed quote is derived from these; the charge
+  // itself comes from the server action result, not the client quote.
   participantCount: 2,
-  pricePerPerson: 2000,
-  grossTotal: 4000,
+  maxParticipants: 8,
+  priceTier12: 2000,
+  priceTier35: 1800,
+  priceTier6: 1600,
   cancellationPreset: 'flexible',
   paymentModesAllowed: ['partial_pay', 'full_upfront'],
   customerName: 'Asha Rao',

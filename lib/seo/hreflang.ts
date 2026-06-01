@@ -28,6 +28,8 @@ export const PUBLIC_ROUTES: readonly string[] = [
   '/contact',
   '/adventure/[slug]',
   '/destinations/[slug]',
+  '/activities/[slug]',
+  '/category/[slug]',
   '/experience/[slug]',
   '/vendor/[slug]',
 ] as const

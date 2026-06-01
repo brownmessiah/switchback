@@ -161,6 +161,84 @@
       "refundSla": "24-तास परतावा SLA"
     }
   },
+  "ActivitiesPage": {
+    "metadata": {
+      "title": "{activity} across India · Outvers",
+      "description": "Book {activity} Experiences across India from KYC-verified Vendors. Transparent pricing, real-time slot availability, and a 24-hour refund SLA."
+    },
+    "heroEyebrow": "Every region, one place",
+    "heroTitle": "{activity} across India",
+    "refundLead": "Cancel free up to 24 hours before your slot for a full refund — every {activity} Experience below, booked on Outvers, is covered.",
+    "editorialIntro": "A hand-checked collection of {activity} from every region we operate in, run only by KYC-verified Vendors. Compare across destinations, then book with transparent pricing and refunds credited within 24 hours.",
+    "regionHint": "Looking for {activity} in a specific destination? Open an Experience to see its region, or browse {activity} by city from each listing.",
+    "experiences": {
+      "sectionLabel": "{activity} Experiences",
+      "heading": "Top {activity} Experiences across India",
+      "count": "{count, plural, =0 {No Experiences yet} one {# Experience} other {# Experiences}}",
+      "rankingDisclosure": "How we rank: results are ordered by recency and Vendor verification — never by paid placement.",
+      "emptyTitle": "No {activity} experiences listed yet",
+      "emptySubtitle": "Check back soon — new listings are added regularly."
+    },
+    "itemList": {
+      "name": "Top {activity} Experiences across India"
+    },
+    "faq": {
+      "heading": "Frequently asked questions",
+      "safetyQuestion": "Is {activity} safe?",
+      "safetyAnswer": "All Outvers-listed Experiences are run by KYC-verified Vendors. Safety-stack Experiences require a trusted contact and feature in-trip check-in pings.",
+      "regionsQuestion": "Where can I do {activity} in India?",
+      "regionsAnswer": "Each Experience listing shows its region. Open a listing to see its destination, seasonality, and any region-closure windows surfaced at the booking step.",
+      "cancellationQuestion": "What is the cancellation policy?",
+      "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
+    },
+    "trust": {
+      "freeCancellation": "Free cancellation up to 24h",
+      "verifiedVendor": "Identity-verified Vendors",
+      "refundSla": "24-hour refund SLA"
+    }
+  },
+  "CategoryPage": {
+    "metadata": {
+      "title": "{category} adventures across India · Outvers",
+      "description": "Explore {category} Experiences across India from KYC-verified Vendors. Transparent pricing, real-time slot availability, and a 24-hour refund SLA."
+    },
+    "heroEyebrow": "Curated category",
+    "heroTitle": "{category} adventures across India",
+    "refundLead": "Cancel free up to 24 hours before your slot for a full refund — every {category} Experience below, booked on Outvers, is covered.",
+    "editorialIntro": "A hand-checked rollup of {category} adventures from every region we operate in, run only by KYC-verified Vendors. Transparent pricing, real-time slot availability, and refunds credited within 24 hours.",
+    "categories": {
+      "water": "जल क्रीडा",
+      "aerial": "हवाई",
+      "mountain": "पर्वत",
+      "wildlife": "वन्यजीव",
+      "urban": "शहरी"
+    },
+    "experiences": {
+      "sectionLabel": "{category} Experiences",
+      "heading": "Top {category} Experiences across India",
+      "count": "{count, plural, =0 {No Experiences yet} one {# Experience} other {# Experiences}}",
+      "rankingDisclosure": "How we rank: results are ordered by recency and Vendor verification — never by paid placement.",
+      "emptyTitle": "No {category} experiences listed yet",
+      "emptySubtitle": "Check back soon — new listings are added regularly."
+    },
+    "itemList": {
+      "name": "Top {category} Experiences across India"
+    },
+    "faq": {
+      "heading": "Frequently asked questions",
+      "safetyQuestion": "Are {category} Experiences safe?",
+      "safetyAnswer": "All Outvers-listed Experiences are run by KYC-verified Vendors. Safety-stack Experiences require a trusted contact and feature in-trip check-in pings.",
+      "includesQuestion": "What does the {category} category include?",
+      "includesAnswer": "This category groups related activities. Open any Experience to see its specific activity, region, and seasonality.",
+      "cancellationQuestion": "What is the cancellation policy?",
+      "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
+    },
+    "trust": {
+      "freeCancellation": "Free cancellation up to 24h",
+      "verifiedVendor": "Identity-verified Vendors",
+      "refundSla": "24-hour refund SLA"
+    }
+  },
   "ExperiencePage": {
     "metadata": {
       "title": "{title} · {region} मध्ये {activity} · Outvers",

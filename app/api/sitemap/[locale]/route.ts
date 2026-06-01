@@ -15,6 +15,8 @@ import { db } from '@/db/client'
 import { listPublishedBlogPostsForSitemap } from '@/lib/blog/queries'
 import {
   buildSitemapEntry,
+  generateActivityLandingUrls,
+  generateCategoryLandingUrls,
   generateDestinationSitemapUrls,
   generateSitemapUrls,
   type SitemapEntry,
@@ -26,9 +28,10 @@ export async function GET(
 ): Promise<NextResponse> {
   const { locale } = await props.params
 
-  // Static public paths + region landings (/destinations/{slug}) + dynamic
-  // (DB-sourced) published blog posts. Other dynamic families
-  // (experiences/activities) land in #13.
+  // Static public paths + region landings (/destinations/{slug}) +
+  // cross-region activity landings (/activities/{slug}) + category rollups
+  // (/category/{slug}) + dynamic (DB-sourced) published blog posts.
+  // Remaining dynamic families (experiences) land in #13.
   const blogPosts = await listPublishedBlogPostsForSitemap(db)
   const blogEntries: SitemapEntry[] = blogPosts.map((p) =>
     buildSitemapEntry(`/blog/${p.slug}`, locale, p.lastModified, 'weekly', 0.5),
@@ -36,6 +39,8 @@ export async function GET(
   const entries = [
     ...generateSitemapUrls(locale),
     ...generateDestinationSitemapUrls(locale),
+    ...generateActivityLandingUrls(locale),
+    ...generateCategoryLandingUrls(locale),
     ...blogEntries,
   ]
 

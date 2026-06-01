@@ -23,7 +23,7 @@ export interface AdminNavGroup {
 }
 
 /**
- * All 19 admin navigation items organized into 5 groups.
+ * All 20 admin navigation items organized into 5 groups.
  * Source of truth for the admin sidebar — the route-to-permission
  * mapping is defined here and tested in admin-nav.test.ts.
  */
@@ -72,6 +72,7 @@ export const ADMIN_NAV_GROUPS: readonly AdminNavGroup[] = [
     items: [
       { href: '/admin/support', label: 'Support', labelKey: 'support', permission: 'support' },
       { href: '/admin/region-closures', label: 'Region Closures', labelKey: 'regionClosures', permission: 'region_closures' },
+      { href: '/admin/users', label: 'Users', labelKey: 'users', permission: 'users' },
       { href: '/admin/audit', label: 'Audit Logs', labelKey: 'auditLogs', permission: 'audit' },
       { href: '/admin/sub-admins', label: 'Sub-Admins', labelKey: 'subAdmins', permission: 'sub_admins' },
       { href: '/admin/reports', label: 'Reports', labelKey: 'reports', permission: 'reports' },

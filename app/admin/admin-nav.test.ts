@@ -25,9 +25,9 @@ describe('admin-nav', () => {
       ])
     })
 
-    it('has exactly 19 nav items across all groups', () => {
+    it('has exactly 20 nav items across all groups', () => {
       const allItems = getAllNavItems()
-      expect(allItems).toHaveLength(19)
+      expect(allItems).toHaveLength(20)
     })
 
     it('every nav item has a non-empty href, label, and permission', () => {
@@ -58,10 +58,10 @@ describe('admin-nav', () => {
   })
 
   describe('filterNavByPermissions', () => {
-    it('full admin (all 16 permissions) sees all 19 nav items', () => {
+    it('full admin (all 17 permissions) sees all 20 nav items', () => {
       const filtered = filterNavByPermissions([...ADMIN_PERMISSIONS])
       const totalItems = filtered.reduce((sum, g) => sum + g.items.length, 0)
-      expect(totalItems).toBe(19)
+      expect(totalItems).toBe(20)
       expect(filtered).toHaveLength(5) // all 5 groups visible
     })
 
@@ -99,7 +99,29 @@ describe('admin-nav', () => {
       expect(ADMIN_NAV_GROUPS).toHaveLength(originalLength)
       // Verify items within groups are unchanged
       const allItems = getAllNavItems()
-      expect(allItems).toHaveLength(19)
+      expect(allItems).toHaveLength(20)
+    })
+
+    it('the /admin/users item is gated on the `users` permission', () => {
+      const usersItem = getAllNavItems().find((i) => i.href === '/admin/users')
+      expect(usersItem).toBeDefined()
+      expect(usersItem!.permission).toBe('users')
+    })
+
+    it('the default sub-admin grant (vendors/audit/analytics) does NOT see /admin/users', () => {
+      const filtered = filterNavByPermissions(['vendors', 'audit', 'analytics'])
+      const hasUsers = filtered
+        .flatMap((g) => g.items)
+        .some((i) => i.href === '/admin/users')
+      expect(hasUsers).toBe(false)
+    })
+
+    it('a sub-admin explicitly granted `users` sees /admin/users', () => {
+      const filtered = filterNavByPermissions(['users'])
+      const hasUsers = filtered
+        .flatMap((g) => g.items)
+        .some((i) => i.href === '/admin/users')
+      expect(hasUsers).toBe(true)
     })
 
     it('badge keys are preserved on filtered items', () => {

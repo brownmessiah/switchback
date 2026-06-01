@@ -54,11 +54,11 @@ describe('authenticated-route i18n messages', () => {
       expect(groups).toHaveProperty('operations')
     })
 
-    it('includes all 19 admin nav item labels', () => {
+    it('includes all 20 admin nav item labels', () => {
       const adminNav = (enMessages as Record<string, Record<string, unknown>>).AdminNav as Record<string, unknown>
       const items = adminNav.items as Record<string, unknown>
-      // 19 items across all groups
-      expect(Object.keys(items)).toHaveLength(19)
+      // 20 items across all groups (#17 added the general /admin/users screen)
+      expect(Object.keys(items)).toHaveLength(20)
     })
 
     it('includes sidebar title', () => {

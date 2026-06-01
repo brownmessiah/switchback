@@ -34,7 +34,7 @@ describe('requirePermission (ADR-0006)', () => {
     )
   })
 
-  it('full admin (all 16 permissions) passes any permission check', async () => {
+  it('full admin (all 17 permissions) passes any permission check', async () => {
     await db.insert(users).values({ id: 'u_admin', email: 'admin@test.com' })
     await db.insert(adminProfiles).values({
       userId: 'u_admin',
@@ -75,8 +75,8 @@ describe('requirePermission (ADR-0006)', () => {
     }
   })
 
-  it('ADMIN_PERMISSIONS has exactly 16 entries', () => {
-    expect(ADMIN_PERMISSIONS).toHaveLength(16)
+  it('ADMIN_PERMISSIONS has exactly 17 entries', () => {
+    expect(ADMIN_PERMISSIONS).toHaveLength(17)
     expect(ADMIN_PERMISSIONS).toContain('overview')
     expect(ADMIN_PERMISSIONS).toContain('analytics')
     expect(ADMIN_PERMISSIONS).toContain('vendors')
@@ -93,6 +93,7 @@ describe('requirePermission (ADR-0006)', () => {
     expect(ADMIN_PERMISSIONS).toContain('audit')
     expect(ADMIN_PERMISSIONS).toContain('sub_admins')
     expect(ADMIN_PERMISSIONS).toContain('reports')
+    expect(ADMIN_PERMISSIONS).toContain('users')
   })
 
   it('FULL_ADMIN_PERMISSIONS matches ADMIN_PERMISSIONS', () => {

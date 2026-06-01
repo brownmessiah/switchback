@@ -7,8 +7,11 @@ import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Minus, Plus } from 'lucide-react'
+
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
+import { quoteCheckout } from '@/lib/payments/group-size-bracket'
 
 import { startCheckoutAction } from './actions'
 
@@ -16,9 +19,13 @@ interface CheckoutFormProps {
   experienceId: string
   experienceTitle: string
   slotId: string | null
+  /** Initial participant count (from the PDP link / query); editable below. */
   participantCount: number
-  pricePerPerson: number
-  grossTotal: number
+  /** Upper bound for the stepper — the slot's remaining capacity. */
+  maxParticipants: number
+  priceTier12: number
+  priceTier35: number
+  priceTier6: number
   cancellationPreset: string
   paymentModesAllowed: string[]
   customerName: string | null
@@ -37,8 +44,10 @@ export function CheckoutForm({
   experienceTitle,
   slotId,
   participantCount,
-  pricePerPerson,
-  grossTotal,
+  maxParticipants,
+  priceTier12,
+  priceTier35,
+  priceTier6,
   cancellationPreset,
   paymentModesAllowed,
   customerName,
@@ -50,8 +59,24 @@ export function CheckoutForm({
   const [step, setStep] = useState<Step>('details')
 
   const supportsPartialPay = paymentModesAllowed.includes('partial_pay')
-  const advanceAmount = supportsPartialPay ? Math.floor(grossTotal * 0.25) : grossTotal
-  const remainderAmount = grossTotal - advanceAmount
+
+  // Participant count is editable — the price bracket, gross, and 25% advance
+  // all re-resolve live as it changes. The SERVER (createBooking) re-resolves +
+  // snapshots the authoritative price at create; this quote is display-only.
+  const [count, setCount] = useState(
+    Math.min(Math.max(1, participantCount), Math.max(1, maxParticipants)),
+  )
+  const quote = quoteCheckout(
+    { tier12: priceTier12, tier35: priceTier35, tier6: priceTier6 },
+    count,
+    supportsPartialPay,
+  )
+  const pricePerPerson = quote.pricePerPerson
+  const grossTotal = quote.gross
+  const advanceAmount = quote.advance
+  const remainderAmount = quote.balance
+  const canDecrement = count > 1
+  const canIncrement = count < maxParticipants
 
   // Default to partial_pay whenever the Experience allows it — this preserves
   // the money invariant the Revenue-spine E2E asserts (booking.paymentMode ===
@@ -71,7 +96,7 @@ export function CheckoutForm({
         experienceId,
         slotId: slotId ?? '',
         customerUserId: '',
-        participantCount,
+        participantCount: count,
         paymentMode,
         acknowledgedPermits: true,
         // booking-create requires a UUID idempotency key (z.string().uuid()).
@@ -138,6 +163,50 @@ export function CheckoutForm({
                     <span className="font-medium">{customerEmail}</span>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Group size — editable; re-resolves the price bracket + totals live */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Group size</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Number of people</span>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      aria-label="Remove one participant"
+                      onClick={() => setCount((c) => Math.max(1, c - 1))}
+                      disabled={!canDecrement}
+                    >
+                      <Minus aria-hidden="true" className="size-4" />
+                    </Button>
+                    <span
+                      data-testid="participant-count"
+                      aria-live="polite"
+                      className="w-8 text-center text-lg font-semibold tabular-nums"
+                    >
+                      {count}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      aria-label="Add one participant"
+                      onClick={() => setCount((c) => Math.min(maxParticipants, c + 1))}
+                      disabled={!canIncrement}
+                    >
+                      <Plus aria-hidden="true" className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {formatRupees(pricePerPerson)} / person · up to {maxParticipants} seats on this slot.
+                </p>
               </CardContent>
             </Card>
 
@@ -280,7 +349,7 @@ export function CheckoutForm({
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Participants</span>
-              <span className="tabular-nums">{participantCount}</span>
+              <span className="tabular-nums">{count}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Price per person</span>

@@ -899,5 +899,58 @@
       "success": "উত্তর পাঠানো হয়েছে।",
       "closedNotice": "এই টিকিটটি বন্ধ। আপনার এখনও সাহায্য প্রয়োজন হলে নতুন টিকিট খুলুন।"
     }
+  },
+  "SettingsPage": {
+    "title": "অ্যাকাউন্ট সেটিংস",
+    "subtitle": "আপনার প্রোফাইল, ঠিকানা এবং বিজ্ঞপ্তি পছন্দগুলি পরিচালনা করুন।",
+    "profile": {
+      "heading": "প্রোফাইল",
+      "description": "আপনার প্রদর্শন নাম এবং অবতার Outvers জুড়ে প্রদর্শিত হয়।",
+      "displayName": "প্রদর্শন নাম",
+      "displayNamePlaceholder": "আপনার নাম",
+      "avatarUrl": "অবতার ছবির URL",
+      "avatarUrlPlaceholder": "https://…"
+    },
+    "address": {
+      "heading": "ডিফল্ট ঠিকানা",
+      "description": "চেকআউট এবং বুকিং আগে থেকে পূরণ করতে ব্যবহৃত হয়।",
+      "line1": "ঠিকানা লাইন",
+      "line1Placeholder": "বাড়ি / রাস্তা",
+      "city": "শহর",
+      "state": "রাজ্য",
+      "pincode": "পিনকোড"
+    },
+    "trustedContact": {
+      "heading": "বিশ্বস্ত যোগাযোগ",
+      "description": "নিরাপত্তা-স্ট্যাক অভিজ্ঞতার জন্য আপনার বিশ্বস্ত যোগাযোগের সাথে শেয়ার করা হয়।",
+      "name": "নাম",
+      "phone": "ফোন",
+      "relationship": "সম্পর্ক"
+    },
+    "save": "পরিবর্তন সংরক্ষণ করুন",
+    "saving": "সংরক্ষণ করা হচ্ছে…",
+    "saved": "পরিবর্তন সংরক্ষিত হয়েছে।",
+    "error": "কিছু ভুল হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।",
+    "notifications": {
+      "heading": "বিজ্ঞপ্তি পছন্দ",
+      "description": "প্রতিটি ইভেন্টের ধরনের জন্য আপনি কীভাবে অবহিত হতে চান তা চয়ন করুন।",
+      "event": "ইভেন্ট",
+      "events": {
+        "booking_created": "নতুন বুকিং",
+        "booking_cancelled": "বুকিং বাতিল",
+        "booking_completed": "বুকিং সম্পন্ন",
+        "review_posted": "নতুন পর্যালোচনা",
+        "payout_processed": "পেআউট প্রক্রিয়াকৃত",
+        "listing_approved": "তালিকা অনুমোদিত",
+        "listing_rejected": "তালিকা প্রত্যাখ্যাত",
+        "message_received": "নতুন বার্তা"
+      },
+      "channels": {
+        "in_app": "অ্যাপে",
+        "email": "ইমেল",
+        "whatsapp": "WhatsApp",
+        "sms": "SMS"
+      }
+    }
   }
 }

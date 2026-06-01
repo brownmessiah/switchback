@@ -56,6 +56,9 @@ export function UserMenu({ user }: UserMenuProps) {
           <Link href="/support" className="w-full">Support</Link>
         </DropdownMenuItem>
         <DropdownMenuItem>
+          <Link href="/settings" className="w-full">Account settings</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem>
           <Link href="/vendor/dashboard" className="w-full">Vendor dashboard</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

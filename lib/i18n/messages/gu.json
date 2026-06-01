@@ -899,5 +899,58 @@
       "success": "જવાબ મોકલાયો.",
       "closedNotice": "આ ટિકિટ બંધ છે. જો તમને હજુ પણ મદદ જોઈતી હોય તો નવી ટિકિટ ખોલો."
     }
+  },
+  "SettingsPage": {
+    "title": "એકાઉન્ટ સેટિંગ્સ",
+    "subtitle": "તમારી પ્રોફાઇલ, સરનામું અને સૂચના પસંદગીઓ સંચાલિત કરો.",
+    "profile": {
+      "heading": "પ્રોફાઇલ",
+      "description": "તમારું પ્રદર્શન નામ અને અવતાર સમગ્ર Outvers માં દેખાય છે.",
+      "displayName": "પ્રદર્શન નામ",
+      "displayNamePlaceholder": "તમારું નામ",
+      "avatarUrl": "અવતાર છબી URL",
+      "avatarUrlPlaceholder": "https://…"
+    },
+    "address": {
+      "heading": "ડિફૉલ્ટ સરનામું",
+      "description": "ચેકઆઉટ અને બુકિંગ પહેલેથી ભરવા માટે વપરાય છે.",
+      "line1": "સરનામાં લાઇન",
+      "line1Placeholder": "ઘર / શેરી",
+      "city": "શહેર",
+      "state": "રાજ્ય",
+      "pincode": "પિનકોડ"
+    },
+    "trustedContact": {
+      "heading": "વિશ્વસનીય સંપર્ક",
+      "description": "સલામતી-સ્ટૅક અનુભવો માટે તમારા વિશ્વસનીય સંપર્ક સાથે શેર કરવામાં આવે છે.",
+      "name": "નામ",
+      "phone": "ફોન",
+      "relationship": "સંબંધ"
+    },
+    "save": "ફેરફારો સાચવો",
+    "saving": "સાચવી રહ્યું છે…",
+    "saved": "ફેરફારો સાચવ્યા.",
+    "error": "કંઈક ખોટું થયું. કૃપા કરીને ફરી પ્રયાસ કરો.",
+    "notifications": {
+      "heading": "સૂચના પસંદગીઓ",
+      "description": "દરેક ઇવેન્ટ પ્રકાર માટે તમે કેવી રીતે સૂચિત થવા માંગો છો તે પસંદ કરો.",
+      "event": "ઇવેન્ટ",
+      "events": {
+        "booking_created": "નવી બુકિંગ",
+        "booking_cancelled": "બુકિંગ રદ",
+        "booking_completed": "બુકિંગ પૂર્ણ",
+        "review_posted": "નવી સમીક્ષા",
+        "payout_processed": "ચુકવણી પ્રક્રિયા કરી",
+        "listing_approved": "લિસ્ટિંગ મંજૂર",
+        "listing_rejected": "લિસ્ટિંગ નકારી",
+        "message_received": "નવો સંદેશ"
+      },
+      "channels": {
+        "in_app": "ઍપમાં",
+        "email": "ઇમેઇલ",
+        "whatsapp": "WhatsApp",
+        "sms": "SMS"
+      }
+    }
   }
 }

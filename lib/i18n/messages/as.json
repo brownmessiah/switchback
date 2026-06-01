@@ -899,5 +899,58 @@
       "success": "উত্তৰ পঠিওৱা হ'ল।",
       "closedNotice": "এই টিকটটো বন্ধ। আপোনাক এতিয়াও সহায় লাগিলে নতুন টিকট খোলক।"
     }
+  },
+  "SettingsPage": {
+    "title": "একাউণ্ট ছেটিংছ",
+    "subtitle": "আপোনাৰ প্ৰʼফাইল, ঠিকনা আৰু জাননী পছন্দসমূহ পৰিচালনা কৰক।",
+    "profile": {
+      "heading": "প্ৰʼফাইল",
+      "description": "আপোনাৰ প্ৰদৰ্শন নাম আৰু অৱতাৰ সমগ্ৰ Outvers ত দেখা যায়।",
+      "displayName": "প্ৰদৰ্শন নাম",
+      "displayNamePlaceholder": "আপোনাৰ নাম",
+      "avatarUrl": "অৱতাৰ ছবিৰ URL",
+      "avatarUrlPlaceholder": "https://…"
+    },
+    "address": {
+      "heading": "ডিফল্ট ঠিকনা",
+      "description": "চেকআউট আৰু বুকিং আগতেই পূৰণ কৰিবলৈ ব্যৱহৃত হয়।",
+      "line1": "ঠিকনা শাৰী",
+      "line1Placeholder": "ঘৰ / আলি",
+      "city": "চহৰ",
+      "state": "ৰাজ্য",
+      "pincode": "পিনক‌োড"
+    },
+    "trustedContact": {
+      "heading": "বিশ্বাসী যোগাযোগ",
+      "description": "সুৰক্ষা-স্টেক অভিজ্ঞতাৰ বাবে আপোনাৰ বিশ্বাসী যোগাযোগৰ সৈতে ভাগ কৰা হয়।",
+      "name": "নাম",
+      "phone": "ফোন",
+      "relationship": "সম্পৰ্ক"
+    },
+    "save": "সালসলনি সাঁচি থওক",
+    "saving": "সাঁচি থোৱা হৈছে…",
+    "saved": "সালসলনি সাঁচি থোৱা হ‌ল।",
+    "error": "কিবা ভুল হ‌ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
+    "notifications": {
+      "heading": "জাননী পছন্দ",
+      "description": "প্ৰতিটো ইভেণ্ট প্ৰকাৰৰ বাবে আপুনি কেনেদৰে জাননী পাব বিচাৰে সেয়া বাছনি কৰক।",
+      "event": "ইভেণ্ট",
+      "events": {
+        "booking_created": "নতুন বুকিং",
+        "booking_cancelled": "বুকিং বাতিল",
+        "booking_completed": "বুকিং সম্পূৰ্ণ",
+        "review_posted": "নতুন পৰ্যালোচনা",
+        "payout_processed": "পৰিশোধ প্ৰক্ৰিয়াকৃত",
+        "listing_approved": "তালিকা অনুমোদিত",
+        "listing_rejected": "তালিকা প্ৰত্যাখ্যান",
+        "message_received": "নতুন বাৰ্তা"
+      },
+      "channels": {
+        "in_app": "এপত",
+        "email": "ইমেইল",
+        "whatsapp": "WhatsApp",
+        "sms": "SMS"
+      }
+    }
   }
 }

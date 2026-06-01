@@ -38,6 +38,7 @@ export const EXCLUDED_PREFIXES = [
   '/dashboard',
   '/wallet',
   '/support',
+  '/settings',
   '/checkout',
   '/bookings',
   '/wishlist',

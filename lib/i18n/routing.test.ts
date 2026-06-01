@@ -80,6 +80,10 @@ describe('shouldExcludeFromI18n()', () => {
       expect(shouldExcludeFromI18n('/support/123')).toBe(true)
     })
 
+    it('excludes /settings', () => {
+      expect(shouldExcludeFromI18n('/settings')).toBe(true)
+    })
+
     it('excludes /checkout', () => {
       expect(shouldExcludeFromI18n('/checkout')).toBe(true)
     })
@@ -145,8 +149,8 @@ describe('shouldExcludeFromI18n()', () => {
   })
 
   describe('EXCLUDED_PREFIXES constant', () => {
-    it('contains all 16 excluded prefixes', () => {
-      expect(EXCLUDED_PREFIXES).toHaveLength(16)
+    it('contains all 17 excluded prefixes', () => {
+      expect(EXCLUDED_PREFIXES).toHaveLength(17)
     })
 
     it('includes /wallet', () => {
@@ -159,6 +163,10 @@ describe('shouldExcludeFromI18n()', () => {
 
     it('includes /support', () => {
       expect(EXCLUDED_PREFIXES).toContain('/support')
+    })
+
+    it('includes /settings', () => {
+      expect(EXCLUDED_PREFIXES).toContain('/settings')
     })
 
     it('includes /admin', () => {

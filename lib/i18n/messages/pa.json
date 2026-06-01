@@ -899,5 +899,58 @@
       "success": "ਜਵਾਬ ਭੇਜ ਦਿੱਤਾ।",
       "closedNotice": "ਇਹ ਟਿਕਟ ਬੰਦ ਹੈ। ਜੇ ਤੁਹਾਨੂੰ ਹਾਲੇ ਵੀ ਮਦਦ ਚਾਹੀਦੀ ਹੈ ਤਾਂ ਨਵੀਂ ਟਿਕਟ ਖੋਲ੍ਹੋ।"
     }
+  },
+  "SettingsPage": {
+    "title": "ਖਾਤਾ ਸੈਟਿੰਗਾਂ",
+    "subtitle": "ਆਪਣੀ ਪ੍ਰੋਫਾਈਲ, ਪਤਾ ਅਤੇ ਸੂਚਨਾ ਤਰਜੀਹਾਂ ਦਾ ਪ੍ਰਬੰਧਨ ਕਰੋ।",
+    "profile": {
+      "heading": "ਪ੍ਰੋਫਾਈਲ",
+      "description": "ਤੁਹਾਡਾ ਡਿਸਪਲੇ ਨਾਮ ਅਤੇ ਅਵਤਾਰ ਪੂਰੇ Outvers ਵਿੱਚ ਦਿਖਾਈ ਦਿੰਦੇ ਹਨ।",
+      "displayName": "ਡਿਸਪਲੇ ਨਾਮ",
+      "displayNamePlaceholder": "ਤੁਹਾਡਾ ਨਾਮ",
+      "avatarUrl": "ਅਵਤਾਰ ਚਿੱਤਰ URL",
+      "avatarUrlPlaceholder": "https://…"
+    },
+    "address": {
+      "heading": "ਡਿਫੌਲਟ ਪਤਾ",
+      "description": "ਚੈਕਆਊਟ ਅਤੇ ਬੁਕਿੰਗਾਂ ਨੂੰ ਪਹਿਲਾਂ ਤੋਂ ਭਰਨ ਲਈ ਵਰਤਿਆ ਜਾਂਦਾ ਹੈ।",
+      "line1": "ਪਤਾ ਲਾਈਨ",
+      "line1Placeholder": "ਘਰ / ਗਲੀ",
+      "city": "ਸ਼ਹਿਰ",
+      "state": "ਰਾਜ",
+      "pincode": "ਪਿਨਕੋਡ"
+    },
+    "trustedContact": {
+      "heading": "ਭਰੋਸੇਯੋਗ ਸੰਪਰਕ",
+      "description": "ਸੁਰੱਖਿਆ-ਸਟੈਕ ਅਨੁਭਵਾਂ ਲਈ ਤੁਹਾਡੇ ਭਰੋਸੇਯੋਗ ਸੰਪਰਕ ਨਾਲ ਸਾਂਝਾ ਕੀਤਾ ਜਾਂਦਾ ਹੈ।",
+      "name": "ਨਾਮ",
+      "phone": "ਫੋਨ",
+      "relationship": "ਰਿਸ਼ਤਾ"
+    },
+    "save": "ਤਬਦੀਲੀਆਂ ਸੰਭਾਲੋ",
+    "saving": "ਸੰਭਾਲ ਰਿਹਾ ਹੈ…",
+    "saved": "ਤਬਦੀਲੀਆਂ ਸੰਭਾਲੀਆਂ ਗਈਆਂ।",
+    "error": "ਕੁਝ ਗਲਤ ਹੋ ਗਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "notifications": {
+      "heading": "ਸੂਚਨਾ ਤਰਜੀਹਾਂ",
+      "description": "ਚੁਣੋ ਕਿ ਤੁਸੀਂ ਹਰੇਕ ਇਵੈਂਟ ਕਿਸਮ ਲਈ ਕਿਵੇਂ ਸੂਚਿਤ ਹੋਣਾ ਚਾਹੁੰਦੇ ਹੋ।",
+      "event": "ਇਵੈਂਟ",
+      "events": {
+        "booking_created": "ਨਵੀਂ ਬੁਕਿੰਗ",
+        "booking_cancelled": "ਬੁਕਿੰਗ ਰੱਦ",
+        "booking_completed": "ਬੁਕਿੰਗ ਪੂਰੀ",
+        "review_posted": "ਨਵੀਂ ਸਮੀਖਿਆ",
+        "payout_processed": "ਭੁਗਤਾਨ ਪ੍ਰਕਿਰਿਆ ਕੀਤੀ",
+        "listing_approved": "ਸੂਚੀ ਮਨਜ਼ੂਰ",
+        "listing_rejected": "ਸੂਚੀ ਰੱਦ",
+        "message_received": "ਨਵਾਂ ਸੁਨੇਹਾ"
+      },
+      "channels": {
+        "in_app": "ਐਪ ਵਿੱਚ",
+        "email": "ਈਮੇਲ",
+        "whatsapp": "WhatsApp",
+        "sms": "SMS"
+      }
+    }
   }
 }

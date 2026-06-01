@@ -899,5 +899,58 @@
       "success": "जवाब भेज दिया गया।",
       "closedNotice": "यह टिकट बंद है। यदि आपको अब भी मदद चाहिए तो नया टिकट खोलें।"
     }
+  },
+  "SettingsPage": {
+    "title": "खाता सेटिंग्स",
+    "subtitle": "अपनी प्रोफ़ाइल, पता और सूचना प्राथमिकताएँ प्रबंधित करें।",
+    "profile": {
+      "heading": "प्रोफ़ाइल",
+      "description": "आपका प्रदर्शन नाम और अवतार पूरे Outvers में दिखाई देता है।",
+      "displayName": "प्रदर्शन नाम",
+      "displayNamePlaceholder": "आपका नाम",
+      "avatarUrl": "अवतार छवि URL",
+      "avatarUrlPlaceholder": "https://…"
+    },
+    "address": {
+      "heading": "डिफ़ॉल्ट पता",
+      "description": "चेकआउट और बुकिंग को पहले से भरने के लिए उपयोग किया जाता है।",
+      "line1": "पता पंक्ति",
+      "line1Placeholder": "मकान / सड़क",
+      "city": "शहर",
+      "state": "राज्य",
+      "pincode": "पिनकोड"
+    },
+    "trustedContact": {
+      "heading": "विश्वसनीय संपर्क",
+      "description": "सुरक्षा-स्टैक अनुभवों के लिए आपके विश्वसनीय संपर्क के साथ साझा किया गया।",
+      "name": "नाम",
+      "phone": "फ़ोन",
+      "relationship": "रिश्ता"
+    },
+    "save": "परिवर्तन सहेजें",
+    "saving": "सहेजा जा रहा है…",
+    "saved": "परिवर्तन सहेजे गए।",
+    "error": "कुछ गलत हो गया। कृपया फिर से प्रयास करें।",
+    "notifications": {
+      "heading": "सूचना प्राथमिकताएँ",
+      "description": "चुनें कि आप प्रत्येक घटना प्रकार के लिए कैसे सूचित होना चाहते हैं।",
+      "event": "घटना",
+      "events": {
+        "booking_created": "नई बुकिंग",
+        "booking_cancelled": "बुकिंग रद्द",
+        "booking_completed": "बुकिंग पूर्ण",
+        "review_posted": "नई समीक्षा",
+        "payout_processed": "भुगतान संसाधित",
+        "listing_approved": "लिस्टिंग स्वीकृत",
+        "listing_rejected": "लिस्टिंग अस्वीकृत",
+        "message_received": "नया संदेश"
+      },
+      "channels": {
+        "in_app": "ऐप में",
+        "email": "ईमेल",
+        "whatsapp": "WhatsApp",
+        "sms": "SMS"
+      }
+    }
   }
 }

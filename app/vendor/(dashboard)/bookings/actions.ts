@@ -7,6 +7,7 @@ import { db as prodDb } from '@/db/client'
 import { auth } from '@/lib/auth'
 import {
   executeMarkComplete,
+  executeMarkNoShow,
   executeVendorCancel,
   VendorActionError,
 } from '@/lib/bookings/vendor-actions'
@@ -22,9 +23,17 @@ export type VendorCancelResult =
   | { ok: true; bookingId: string; refundAmountRupees: number }
   | { ok: false; error: string }
 
+export type MarkNoShowResult =
+  | { ok: true; bookingId: string }
+  | { ok: false; error: string }
+
 // ── Validation ──────────────────────────────────────────────────────
 
 const markCompleteSchema = z.object({
+  bookingId: z.string().uuid('Invalid booking ID.'),
+})
+
+const markNoShowSchema = z.object({
   bookingId: z.string().uuid('Invalid booking ID.'),
 })
 
@@ -88,6 +97,29 @@ export async function executeVendorCancelAction(
   }
 }
 
+export async function executeMarkNoShowAction(
+  database: DBOrTx,
+  vendorUserId: string,
+  input: { bookingId: string },
+): Promise<MarkNoShowResult> {
+  const parsed = markNoShowSchema.safeParse(input)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Validation failed.' }
+  }
+
+  try {
+    const result = await database.transaction(async (tx) =>
+      executeMarkNoShow(tx, parsed.data.bookingId, vendorUserId),
+    )
+    return { ok: true, bookingId: result.bookingId }
+  } catch (err) {
+    if (err instanceof VendorActionError) {
+      return { ok: false, error: mapVendorActionError(err) }
+    }
+    return { ok: false, error: 'An unexpected error occurred.' }
+  }
+}
+
 // ── Error mapping (sanitised for the client) ────────────────────────
 
 function mapVendorActionError(err: VendorActionError): string {
@@ -100,6 +132,8 @@ function mapVendorActionError(err: VendorActionError): string {
       return 'This booking cannot be updated in its current state.'
     case 'REASON_REQUIRED':
       return 'A cancellation reason is required.'
+    case 'SLOT_NOT_ENDED':
+      return 'A no-show can only be marked after the experience has ended.'
     default:
       return 'An unexpected error occurred.'
   }
@@ -125,4 +159,14 @@ export async function vendorCancelAction(
     return { ok: false, error: 'Sign in to continue.' }
   }
   return executeVendorCancelAction(prodDb, session.user.id, input)
+}
+
+export async function markNoShowAction(
+  bookingId: string,
+): Promise<MarkNoShowResult> {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user) {
+    return { ok: false, error: 'Sign in to continue.' }
+  }
+  return executeMarkNoShowAction(prodDb, session.user.id, { bookingId })
 }

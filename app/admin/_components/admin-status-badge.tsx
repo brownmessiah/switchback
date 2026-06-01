@@ -38,6 +38,8 @@ const STATUS_MAP: Record<string, StatusSpec> = {
   pending: { variant: 'warning', icon: ClockIcon },
   upcoming: { variant: 'info', icon: ClockIcon },
   awaiting_completion: { variant: 'warning', icon: ClockIcon },
+  // Pre-confirmation (ADR-0003 rev 2026-06-01): payment not yet captured.
+  pending_payment: { variant: 'warning', icon: ClockIcon },
   // Frozen
   held: { variant: 'warning', icon: PauseCircleIcon },
   // Refund-to-credit bucket
@@ -89,6 +91,8 @@ const STATUS_MAP: Record<string, StatusSpec> = {
   cancelled_by_customer: { variant: 'destructive', icon: XCircleIcon },
   cancelled_by_vendor: { variant: 'destructive', icon: XCircleIcon },
   cancelled_post_experience: { variant: 'destructive', icon: XCircleIcon },
+  // No-show (ADR-0003 rev 2026-06-01): terminal, customer absent; no refund.
+  no_show: { variant: 'destructive', icon: XCircleIcon },
 }
 
 const FALLBACK: StatusSpec = { variant: 'outline', icon: InfoIcon }

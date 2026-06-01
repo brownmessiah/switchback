@@ -5,6 +5,7 @@ import { getConfirmationPresentation } from './booking-presentation'
 // The booking_state enum (db/schema/bookings.ts). Every value must map to a
 // coherent presentation — headline, body clause, icon, tone must AGREE.
 const ALL_STATES = [
+  'pending_payment',
   'confirmed',
   'awaiting_completion',
   'completed',
@@ -12,6 +13,7 @@ const ALL_STATES = [
   'cancelled_by_customer',
   'cancelled_by_vendor',
   'cancelled_post_experience',
+  'no_show',
 ] as const
 
 describe('getConfirmationPresentation', () => {
@@ -53,6 +55,21 @@ describe('getConfirmationPresentation', () => {
     expect(p.headline).toBe('Under review')
     expect(p.bodyClause).toBe('is under review.')
     expect(p.tone).toBe('warning')
+  })
+
+  it('shows a "Payment pending" warning for a pending_payment booking (never a success check)', () => {
+    const p = getConfirmationPresentation('pending_payment')
+    expect(p.headline).toBe('Payment pending')
+    expect(p.bodyClause).toBe('is awaiting payment.')
+    expect(p.tone).toBe('warning')
+    expect(p.icon).not.toBe('check')
+  })
+
+  it('shows a muted "no-show" presentation for a no_show booking', () => {
+    const p = getConfirmationPresentation('no_show')
+    expect(p.headline).toBe('Marked as no-show')
+    expect(p.bodyClause).toBe('was marked as a no-show.')
+    expect(p.tone).toBe('muted')
   })
 
   it('falls back to a safe neutral presentation for an unknown state', () => {

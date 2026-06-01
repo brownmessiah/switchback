@@ -107,6 +107,7 @@ describe('money-path schema: bookings + payments + commission/pricing tiers (ADR
 
     it('accepts every booking_state enum value', async () => {
       const states = [
+        'pending_payment',
         'confirmed',
         'awaiting_completion',
         'completed',
@@ -114,6 +115,7 @@ describe('money-path schema: bookings + payments + commission/pricing tiers (ADR
         'cancelled_by_customer',
         'cancelled_by_vendor',
         'cancelled_post_experience',
+        'no_show',
       ] as const
 
       for (const state of states) {

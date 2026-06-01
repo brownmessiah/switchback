@@ -49,6 +49,10 @@ export const payoutStateEnum = pgEnum('payout_state', [
  * Vendor-initiated cancellations move to cancelled_by_vendor (ADR-0005).
  */
 export const bookingStateEnum = pgEnum('booking_state', [
+  // Pre-confirmation: the Booking row exists but payment has not been captured
+  // yet. Sanctioned target state for the "create pending → confirm on capture"
+  // checkout flow (ADR-0003 revision 2026-06-01). Not payout/refund-eligible.
+  'pending_payment',
   'confirmed',
   'awaiting_completion',
   'completed',
@@ -56,6 +60,10 @@ export const bookingStateEnum = pgEnum('booking_state', [
   'cancelled_by_customer',
   'cancelled_by_vendor',
   'cancelled_post_experience',
+  // Terminal: Vendor-attested customer no-show after the slot end (ADR-0003
+  // revision 2026-06-01). No customer refund (vendor retains per policy);
+  // no completion ⇒ excluded from the payout countdown.
+  'no_show',
 ])
 
 /**

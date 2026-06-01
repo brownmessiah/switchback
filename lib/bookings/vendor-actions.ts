@@ -1,5 +1,6 @@
-import { and, eq, sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 
+import { availabilitySlots } from '@/db/schema/availability-slots'
 import { bookings } from '@/db/schema/bookings'
 import { experiences } from '@/db/schema/experiences'
 import { refundRequests } from '@/db/schema/refund-requests'
@@ -7,6 +8,8 @@ import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { writeAuditLog } from '@/lib/audit/write'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 import { creditRefundBalance } from '@/lib/payments/wallet'
+
+import { isNoShowMarkableState } from './state-machine'
 
 /**
  * Vendor booking actions per ADR-0003 (Booking Completion State Machine).
@@ -31,6 +34,7 @@ export type VendorActionErrorCode =
   | 'NOT_VENDOR_BOOKING'
   | 'INVALID_STATE'
   | 'REASON_REQUIRED'
+  | 'SLOT_NOT_ENDED'
 
 export class VendorActionError extends Error {
   constructor(
@@ -311,4 +315,121 @@ export async function executeVendorCancel(
     refundRequestId: refundReq.id,
     slaScoreAfter,
   }
+}
+
+// ── Mark-no-show (ADR-0003 revision 2026-06-01) ─────────────────────
+
+export interface MarkNoShowResult {
+  bookingId: string
+  noShowAt: Date
+}
+
+/**
+ * Vendor attests a customer NO-SHOW after the slot has ended (ADR-0003
+ * revision 2026-06-01). Terminal transition:
+ *   confirmed | awaiting_completion → no_show
+ *
+ * Money treatment (per the ADR): the customer is at fault, so there is NO
+ * refund (the Vendor retains the payment via reconciliation — NOT the
+ * completion-gated payout countdown, which `no_show` never enters because it
+ * sets no `completedAt`). The Vendor's SLA score is NOT penalised. Unlike a
+ * Vendor cancellation, no `refund_requests` row and no wallet credit are
+ * written.
+ *
+ * Guards: booking exists, belongs to the calling Vendor, is in a
+ * no-show-markable state (`isNoShowMarkableState`), and its slot's `end_at`
+ * has already passed (you cannot mark a no-show before the experience window
+ * closes). Caller wraps in db.transaction(...) for atomicity.
+ */
+export async function executeMarkNoShow(
+  db: DBOrTx,
+  bookingId: string,
+  vendorUserId: string,
+  opts: { now?: Date } = {},
+): Promise<MarkNoShowResult> {
+  const now = opts.now ?? new Date()
+
+  // 1. Fetch booking + lock
+  const [booking] = await db
+    .select({
+      id: bookings.id,
+      state: bookings.state,
+      experienceId: bookings.experienceId,
+      slotId: bookings.slotId,
+    })
+    .from(bookings)
+    .where(eq(bookings.id, bookingId))
+    .for('update')
+    .limit(1)
+
+  if (!booking) {
+    throw new VendorActionError('BOOKING_NOT_FOUND', `booking ${bookingId} not found`)
+  }
+
+  // 2. Verify the Vendor owns the Experience this Booking is on
+  const [experience] = await db
+    .select({ vendorUserId: experiences.vendorUserId })
+    .from(experiences)
+    .where(eq(experiences.id, booking.experienceId))
+    .limit(1)
+
+  if (!experience || experience.vendorUserId !== vendorUserId) {
+    throw new VendorActionError(
+      'NOT_VENDOR_BOOKING',
+      `vendor ${vendorUserId} does not own booking ${bookingId}`,
+    )
+  }
+
+  // 3. State guard: confirmed or awaiting_completion
+  if (!isNoShowMarkableState(booking.state)) {
+    throw new VendorActionError(
+      'INVALID_STATE',
+      `booking ${bookingId} is in state ${booking.state}; only confirmed or awaiting_completion bookings can be marked no-show`,
+    )
+  }
+
+  // 4. The experience window must have closed — you cannot attest a no-show
+  //    before the slot ends.
+  const [slot] = await db
+    .select({ endAt: availabilitySlots.endAt })
+    .from(availabilitySlots)
+    .where(eq(availabilitySlots.id, booking.slotId))
+    .limit(1)
+
+  if (!slot) {
+    throw new VendorActionError('BOOKING_NOT_FOUND', `slot for booking ${bookingId} not found`)
+  }
+  if (slot.endAt.getTime() > now.getTime()) {
+    throw new VendorActionError(
+      'SLOT_NOT_ENDED',
+      `booking ${bookingId} slot has not ended yet; a no-show can only be marked after the experience window closes`,
+    )
+  }
+
+  const previousState = booking.state
+
+  // 5. Terminal transition → no_show. No completedAt (excludes payout), no
+  //    refund, no SLA penalty.
+  await db
+    .update(bookings)
+    .set({ state: 'no_show', updatedAt: sql`now()` })
+    .where(eq(bookings.id, bookingId))
+
+  // 6. Audit log
+  await writeAuditLog(db, {
+    actorUserId: vendorUserId,
+    action: 'booking.mark_no_show',
+    entityType: 'booking',
+    entityId: bookingId,
+    payload: {
+      bookingId,
+      vendorUserId,
+      previousState,
+      newState: 'no_show',
+      noShowAt: now.toISOString(),
+      customerRefunded: false,
+    },
+  })
+
+  return { bookingId, noShowAt: now }
 }

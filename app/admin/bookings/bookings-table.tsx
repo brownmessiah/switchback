@@ -40,6 +40,7 @@ export interface BookingsTableRow {
 }
 
 const STATE_LABEL: Record<string, string> = {
+  pending_payment: 'Pending Payment',
   confirmed: 'Confirmed',
   awaiting_completion: 'Awaiting Completion',
   completed: 'Completed',
@@ -47,6 +48,7 @@ const STATE_LABEL: Record<string, string> = {
   cancelled_by_customer: 'Cancelled by Customer',
   cancelled_by_vendor: 'Cancelled by Vendor',
   cancelled_post_experience: 'Cancelled Post-Experience',
+  no_show: 'No-Show',
 }
 
 function stateLabel(state: string): string {

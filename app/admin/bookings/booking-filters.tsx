@@ -12,6 +12,7 @@ import type { BookingListFilters } from './loaders'
 
 const BOOKING_STATES = [
   { value: '', label: 'All states' },
+  { value: 'pending_payment', label: 'Pending Payment' },
   { value: 'confirmed', label: 'Confirmed' },
   { value: 'awaiting_completion', label: 'Awaiting Completion' },
   { value: 'completed', label: 'Completed' },
@@ -19,6 +20,7 @@ const BOOKING_STATES = [
   { value: 'cancelled_by_customer', label: 'Cancelled by Customer' },
   { value: 'cancelled_by_vendor', label: 'Cancelled by Vendor' },
   { value: 'cancelled_post_experience', label: 'Cancelled Post-Experience' },
+  { value: 'no_show', label: 'No-Show' },
 ]
 
 interface BookingFiltersProps {

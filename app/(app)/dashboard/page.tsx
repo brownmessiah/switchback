@@ -47,6 +47,8 @@ type StatusPresentation = {
 // `awaiting_completion → warning`, `cancelled_* → destructive`,
 // `completed → secondary` (neutral done), `disputed → info`.
 const STATE_PRESENTATION: Record<string, StatusPresentation> = {
+  // Pre-confirmation (ADR-0003 rev 2026-06-01): payment not yet captured.
+  pending_payment: { variant: 'warning', Icon: Clock },
   confirmed: { variant: 'success', Icon: CircleCheck },
   awaiting_completion: { variant: 'warning', Icon: Clock },
   completed: { variant: 'secondary', Icon: CircleCheck },
@@ -54,6 +56,8 @@ const STATE_PRESENTATION: Record<string, StatusPresentation> = {
   cancelled_by_customer: { variant: 'destructive', Icon: XCircle },
   cancelled_by_vendor: { variant: 'destructive', Icon: XCircle },
   cancelled_post_experience: { variant: 'destructive', Icon: XCircle },
+  // No-show (ADR-0003 rev 2026-06-01): terminal, customer absent.
+  no_show: { variant: 'destructive', Icon: XCircle },
 }
 
 const FALLBACK_PRESENTATION: StatusPresentation = {

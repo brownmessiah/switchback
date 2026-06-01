@@ -51,6 +51,23 @@ const DISPUTED: ConfirmationPresentation = {
   tone: 'warning',
 }
 
+// Pre-confirmation (ADR-0003 rev 2026-06-01): the row exists but payment has
+// not been captured. MUST NOT earn the success check — payment is still owed.
+const PENDING_PAYMENT: ConfirmationPresentation = {
+  headline: 'Payment pending',
+  bodyClause: 'is awaiting payment.',
+  icon: 'alert',
+  tone: 'warning',
+}
+
+// No-show (ADR-0003 rev 2026-06-01): terminal; the customer did not attend.
+const NO_SHOW: ConfirmationPresentation = {
+  headline: 'Marked as no-show',
+  bodyClause: 'was marked as a no-show.',
+  icon: 'cancelled',
+  tone: 'muted',
+}
+
 // Safe neutral fallback for any unrecognised/future state — never a success check.
 const NEUTRAL: ConfirmationPresentation = {
   headline: 'Booking details',
@@ -60,6 +77,7 @@ const NEUTRAL: ConfirmationPresentation = {
 }
 
 const BY_STATE: Record<string, ConfirmationPresentation> = {
+  pending_payment: PENDING_PAYMENT,
   confirmed: CONFIRMED,
   awaiting_completion: CONFIRMED,
   completed: CONFIRMED,
@@ -67,6 +85,7 @@ const BY_STATE: Record<string, ConfirmationPresentation> = {
   cancelled_by_customer: CANCELLED,
   cancelled_by_vendor: CANCELLED,
   cancelled_post_experience: CANCELLED,
+  no_show: NO_SHOW,
 }
 
 export function getConfirmationPresentation(

@@ -24,11 +24,13 @@ import {
 import { db } from '@/db/client'
 import { availabilitySlots, bookings, experiences, users } from '@/db/schema'
 import { auth } from '@/lib/auth'
+import { isNoShowMarkableState } from '@/lib/bookings/state-machine'
 import { computeVendorNetPayout } from '@/lib/payments/payout-calculator'
 
 import { VendorTableTabs } from '../vendor-table-tabs'
 
 import { MarkCompleteButton } from './mark-complete-button'
+import { MarkNoShowButton } from './mark-no-show-button'
 import { VendorCancelButton } from './vendor-cancel-button'
 
 /**
@@ -40,16 +42,35 @@ const STATE_BADGE: Record<
   string,
   { variant: 'success' | 'warning' | 'info' | 'destructive' | 'outline'; Icon: LucideIcon }
 > = {
+  pending_payment: { variant: 'warning', Icon: Clock },
   confirmed: { variant: 'success', Icon: CheckCircle2 },
   awaiting_completion: { variant: 'warning', Icon: Clock },
   completed: { variant: 'success', Icon: CheckCircle2 },
   cancelled_by_customer: { variant: 'destructive', Icon: Ban },
   cancelled_by_vendor: { variant: 'destructive', Icon: Ban },
+  cancelled_post_experience: { variant: 'destructive', Icon: Ban },
   disputed: { variant: 'destructive', Icon: TriangleAlert },
+  no_show: { variant: 'destructive', Icon: Ban },
 }
 
 /** States in which the vendor can cancel. */
 const VENDOR_CANCELLABLE_STATES = new Set(['confirmed', 'awaiting_completion'])
+
+/**
+ * Annotate each booking row with whether its slot has already ended, reading
+ * the clock ONCE outside the render body (react-hooks/purity — same pattern as
+ * the customer dashboard's sortBookingsUpcomingFirst). Drives the no-show
+ * button's visibility: a no-show can only be attested after the experience.
+ */
+function withSlotEnded<T extends { slotEnd: Date | null }>(
+  rows: readonly T[],
+): Array<T & { slotEnded: boolean }> {
+  const now = Date.now()
+  return rows.map((r) => ({
+    ...r,
+    slotEnded: r.slotEnd != null && r.slotEnd.getTime() <= now,
+  }))
+}
 
 const inr = (n: number) => `₹${Math.floor(n).toLocaleString('en-IN')}`
 
@@ -57,7 +78,8 @@ export default async function VendorBookingsPage() {
   const session = await auth.api.getSession({ headers: await headers() })
   const userId = session!.user.id
 
-  const rows = await db
+  const rows = withSlotEnded(
+    await db
     .select({
       bookingId: bookings.id,
       state: bookings.state,
@@ -71,6 +93,7 @@ export default async function VendorBookingsPage() {
       customerName: users.name,
       expTitle: experiences.title,
       slotStart: availabilitySlots.startAt,
+      slotEnd: availabilitySlots.endAt,
       createdAt: bookings.createdAt,
     })
     .from(bookings)
@@ -78,7 +101,8 @@ export default async function VendorBookingsPage() {
     .innerJoin(users, eq(bookings.customerUserId, users.id))
     .leftJoin(availabilitySlots, eq(bookings.slotId, availabilitySlots.id))
     .where(eq(experiences.vendorUserId, userId))
-    .orderBy(bookings.createdAt)
+    .orderBy(bookings.createdAt),
+  )
 
   return (
     <div className="space-y-6">
@@ -196,6 +220,9 @@ export default async function VendorBookingsPage() {
                           )}
                           {VENDOR_CANCELLABLE_STATES.has(row.state) && (
                             <VendorCancelButton bookingId={row.bookingId} />
+                          )}
+                          {isNoShowMarkableState(row.state) && row.slotEnded && (
+                            <MarkNoShowButton bookingId={row.bookingId} />
                           )}
                         </div>
                       </TableCell>

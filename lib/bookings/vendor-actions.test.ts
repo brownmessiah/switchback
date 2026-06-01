@@ -13,6 +13,7 @@ import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 
 import {
   executeMarkComplete,
+  executeMarkNoShow,
   executeVendorCancel,
   VendorActionError,
 } from './vendor-actions'
@@ -105,9 +106,15 @@ describe('vendor booking actions (ADR-0003)', () => {
       | 'disputed'
       | 'cancelled_by_customer'
     grossRupees?: number
+    /** When true, the slot has already ended (4h ago) — used by no-show tests. */
+    past?: boolean
   }): Promise<{ bookingId: string; slotId: string }> {
-    const startAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
-    const endAt = new Date(startAt.getTime() + 4 * 60 * 60 * 1000)
+    const startAt = args.past
+      ? new Date(Date.now() - 8 * 60 * 60 * 1000)
+      : new Date(Date.now() + 24 * 60 * 60 * 1000)
+    const endAt = args.past
+      ? new Date(Date.now() - 4 * 60 * 60 * 1000)
+      : new Date(startAt.getTime() + 4 * 60 * 60 * 1000)
     const [slot] = await db
       .insert(availabilitySlots)
       .values({ experienceId, startAt, endAt, capacity: 8 })
@@ -541,6 +548,108 @@ describe('vendor booking actions (ADR-0003)', () => {
       expect(payload.refundAmountRupees).toBe(3000)
       expect(payload.slaPenalty).toBe('5.00')
       expect(payload.newState).toBe('cancelled_by_vendor')
+    })
+  })
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Mark-no-show (ADR-0003 revision 2026-06-01)
+  // ═══════════════════════════════════════════════════════════════════
+
+  describe('executeMarkNoShow', () => {
+    it('transitions a confirmed booking whose slot has ended → no_show', async () => {
+      const { bookingId } = await seedBooking({ state: 'confirmed', past: true })
+
+      const result = await executeMarkNoShow(db, bookingId, 'u_v')
+      expect(result.bookingId).toBe(bookingId)
+
+      const [row] = await db
+        .select({ state: bookings.state })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+      expect(row?.state).toBe('no_show')
+    })
+
+    it('transitions an awaiting_completion booking whose slot has ended → no_show', async () => {
+      const { bookingId } = await seedBooking({ state: 'awaiting_completion', past: true })
+      await executeMarkNoShow(db, bookingId, 'u_v')
+      const [row] = await db
+        .select({ state: bookings.state })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+      expect(row?.state).toBe('no_show')
+    })
+
+    it('issues NO customer refund and leaves the vendor SLA score untouched', async () => {
+      const { bookingId } = await seedBooking({ state: 'confirmed', past: true, grossRupees: 4000 })
+      const slaBefore = await readSlaScore('u_v')
+
+      await executeMarkNoShow(db, bookingId, 'u_v')
+
+      // No refund_requests row, no refund-balance credit (vendor retains).
+      const refunds = await db
+        .select({ id: refundRequests.id })
+        .from(refundRequests)
+        .where(eq(refundRequests.bookingId, bookingId))
+      expect(refunds).toHaveLength(0)
+      expect(await readRefundBalance('u_c')).toBe(0)
+      // No completion ⇒ no payout countdown.
+      const [row] = await db
+        .select({ completedAt: bookings.completedAt })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+      expect(row?.completedAt).toBeNull()
+      // Customer at fault — vendor is NOT penalised.
+      expect(await readSlaScore('u_v')).toBe(slaBefore)
+    })
+
+    it('rejects when the slot has NOT yet ended (SLOT_NOT_ENDED), leaving state unchanged', async () => {
+      const { bookingId } = await seedBooking({ state: 'confirmed', past: false })
+      await expect(executeMarkNoShow(db, bookingId, 'u_v')).rejects.toMatchObject({
+        code: 'SLOT_NOT_ENDED',
+      })
+      const [row] = await db
+        .select({ state: bookings.state })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+      expect(row?.state).toBe('confirmed')
+    })
+
+    it('rejects a completed booking (INVALID_STATE)', async () => {
+      const { bookingId } = await seedBooking({ state: 'completed', past: true })
+      await expect(executeMarkNoShow(db, bookingId, 'u_v')).rejects.toMatchObject({
+        code: 'INVALID_STATE',
+      })
+    })
+
+    it('rejects when the caller does not own the booking (NOT_VENDOR_BOOKING)', async () => {
+      const { bookingId } = await seedBooking({ state: 'confirmed', past: true })
+      await expect(executeMarkNoShow(db, bookingId, 'u_other_v')).rejects.toMatchObject({
+        code: 'NOT_VENDOR_BOOKING',
+      })
+    })
+
+    it('rejects an unknown booking (BOOKING_NOT_FOUND)', async () => {
+      await expect(
+        executeMarkNoShow(db, '00000000-0000-0000-0000-000000000000', 'u_v'),
+      ).rejects.toMatchObject({ code: 'BOOKING_NOT_FOUND' })
+    })
+
+    it('writes a booking.mark_no_show audit row with the previous state', async () => {
+      const { bookingId } = await seedBooking({ state: 'confirmed', past: true })
+      await executeMarkNoShow(db, bookingId, 'u_v')
+      const rows = await db
+        .select()
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.entityId, bookingId),
+            eq(auditLogs.action, 'booking.mark_no_show'),
+          ),
+        )
+      expect(rows).toHaveLength(1)
+      const payload = rows[0]?.payload as Record<string, unknown>
+      expect(payload.previousState).toBe('confirmed')
+      expect(payload.newState).toBe('no_show')
     })
   })
 })

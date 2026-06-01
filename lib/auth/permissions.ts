@@ -18,9 +18,13 @@ type DBOrTx = PgDatabase<
 >
 
 /**
- * The 16 admin permissions per ADR-0006. A full admin has all 16;
+ * The 17 admin permissions per ADR-0006. A full admin has all 17;
  * a sub-admin holds a strict subset. The distinction is purely
  * governance — there is no separate "sub-admin" role in the schema.
+ *
+ * `users` (the general user-management screen, #17) is intentionally NOT
+ * part of any default sub-admin grant — it is only reachable by a full
+ * admin (`'*'`) or a sub-admin explicitly granted `users`.
  */
 export const ADMIN_PERMISSIONS = [
   'overview',
@@ -39,11 +43,12 @@ export const ADMIN_PERMISSIONS = [
   'audit',
   'sub_admins',
   'reports',
+  'users',
 ] as const
 
 export type AdminPermission = (typeof ADMIN_PERMISSIONS)[number]
 
-/** Convenience constant: all 16 permissions for full-admin creation. */
+/** Convenience constant: all 17 permissions for full-admin creation. */
 export const FULL_ADMIN_PERMISSIONS: readonly AdminPermission[] = [...ADMIN_PERMISSIONS]
 
 /**

@@ -1042,6 +1042,61 @@ test.describe('Admin audit log', () => {
 })
 
 // ---------------------------------------------------------------------------
+// 11b. Users (#17): general user-management list — loads with role badges +
+// search, AND is permission-gated server-side (a Sub-admin lacking `users`
+// gets a 404 not-found, never the list).
+// ---------------------------------------------------------------------------
+test.describe('Admin users list (#17)', () => {
+  test('loads with heading, filters, role badges and the user table', async ({ page }) => {
+    const response = await page.goto('/admin/users')
+    expect(response?.status()).toBe(200)
+
+    const h1 = page.locator('h1')
+    await expect(h1).toBeVisible()
+    await expect(h1).toContainText('Users')
+
+    // User count subtitle (seed guarantees several users).
+    await expect(page.getByText(/\d+ user/)).toBeVisible()
+
+    // Table column headers.
+    await expect(page.getByRole('columnheader', { name: 'User' })).toBeVisible()
+    await expect(page.getByRole('columnheader', { name: 'Roles' })).toBeVisible()
+
+    // At least one data row renders (seed has admins/vendors/customers).
+    await expect(page.locator('tr[data-user-id]').first()).toBeVisible()
+
+    // Search narrows the list — filter by the seed admin's email and assert the
+    // querystring round-trips (the loader matches name/email).
+    const searchResponse = await page.goto('/admin/users?query=seed')
+    expect(searchResponse?.status()).toBe(200)
+    await expect(page.getByText(/\(filtered\)/)).toBeVisible()
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/admin-users-list.png',
+      fullPage: true,
+    })
+  })
+
+  test('BLOCKED: a Sub-admin lacking `users` cannot view /admin/users (server-side gate)', async ({
+    browser,
+  }) => {
+    // The seeded Sub-admin holds vendors/audit/analytics — NOT `users`. The
+    // page-level `requirePermission(db, …, 'users')` calls notFound(), so the
+    // sub-admin gets the 404 not-found page, never the user list.
+    const subCtx = await browser.newContext({ storageState: SUBADMIN_STORAGE })
+    try {
+      const subPage = await subCtx.newPage()
+      const res = await subPage.goto('/admin/users')
+      expect(res?.status()).toBe(404)
+      // And the list heading must NOT be present.
+      await expect(subPage.getByRole('heading', { name: 'Users', exact: true })).toHaveCount(0)
+    } finally {
+      await subCtx.close()
+    }
+  })
+})
+
+// ---------------------------------------------------------------------------
 // 12. Analytics: loads with chart components rendering
 // ---------------------------------------------------------------------------
 test.describe('Admin analytics', () => {

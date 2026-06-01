@@ -88,7 +88,8 @@
       "regionClosures": "Region Closures",
       "auditLogs": "Audit Logs",
       "subAdmins": "Sub-Admins",
-      "reports": "Reports"
+      "reports": "Reports",
+      "users": "Users"
     }
   },
   "VendorNav": {

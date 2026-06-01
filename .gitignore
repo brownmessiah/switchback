@@ -54,3 +54,8 @@ tests/e2e/screenshots/
 .gstack/
 .worktrees/
 .i18n-work/
+
+# agent scratch + worktrees (local-only; tracked records under .scratch
+# predating this rule stay tracked — git ignore does not untrack them)
+.scratch/
+.claude/worktrees/

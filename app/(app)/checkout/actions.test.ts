@@ -154,6 +154,19 @@ describe('executeStartCheckout (Task 20)', () => {
     expect(typeof result.keyId).toBe('string')
   })
 
+  // ---- Trip-group seat guard (ADR-0009 / #20) ----
+  it('rejects a group-tagged checkout when the member cannot book that group', async () => {
+    // A non-existent / ineligible group → assertCanBookForGroup throws, mapped
+    // to a specific error BEFORE any Booking is created (money-path safety).
+    const result = await executeStartCheckout(
+      db,
+      makeInput({ tripGroupId: '00000000-0000-0000-0000-000000000000' }),
+    )
+    expect(result.ok).toBe(false)
+    if (result.ok) throw new Error('unreachable')
+    expect(result.error).toBe('trip_group_ineligible')
+  })
+
   // ---- Wallet applied: reduces Razorpay remainder ----
   it('applies wallet balances and reduces Razorpay remainder', async () => {
     await db.insert(walletBalances).values([

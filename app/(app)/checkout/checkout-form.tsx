@@ -34,6 +34,9 @@ interface CheckoutFormProps {
   experienceId: string
   experienceTitle: string
   slotId: string | null
+  /** When set, this Booking is a seat in a TripGroup (ADR-0009) — tagged but
+   *  still a normal per-member Booking; validated server-side. */
+  tripGroupId?: string | null
   /** Initial participant count (from the PDP link / query); editable below. */
   participantCount: number
   /** Upper bound for the stepper — the slot's remaining capacity. */
@@ -58,6 +61,7 @@ export function CheckoutForm({
   experienceId,
   experienceTitle,
   slotId,
+  tripGroupId,
   participantCount,
   maxParticipants,
   priceTier12,
@@ -119,6 +123,7 @@ export function CheckoutForm({
         participantCount: count,
         paymentMode,
         acknowledgedPermits: true,
+        ...(tripGroupId ? { tripGroupId } : {}),
         // booking-create requires a UUID idempotency key (z.string().uuid()).
         // A non-UUID key (e.g. `checkout-<id>-<ts>`) fails the parse and the
         // whole checkout silently errors — Issue #13.

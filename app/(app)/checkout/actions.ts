@@ -27,6 +27,8 @@ import {
   applyWalletToCheckout,
   type ApplyWalletToCheckoutResult,
 } from '@/lib/payments/wallet'
+import { assertCanBookForGroup } from '@/lib/trip-groups/booking-linkage'
+import { TripGroupError } from '@/lib/trip-groups/errors'
 
 export type StartCheckoutInput = BookingCreateInput
 
@@ -49,6 +51,7 @@ export type StartCheckoutResult =
         | 'slot_unavailable'
         | 'experience_not_found'
         | 'tier_cap_exceeded'
+        | 'trip_group_ineligible'
         | 'payment_failed'
         | 'unknown'
       message: string
@@ -70,6 +73,30 @@ export async function executeStartCheckout(
       ok: false,
       error: 'slot_unavailable',
       message: 'Please select an available date and slot before paying.',
+    }
+  }
+
+  // Trip-group seat (ADR-0009): if this Booking is being tagged to a group,
+  // the member must be an active member of a group that is open for booking and
+  // the Experience must be in the group's locked itinerary. The group never
+  // books on the member's behalf — createBooking still makes a normal,
+  // per-member Booking; we only validate + carry the tag.
+  if (input.tripGroupId) {
+    try {
+      await assertCanBookForGroup(database, {
+        groupId: input.tripGroupId,
+        userId: input.customerUserId,
+        experienceId: input.experienceId,
+      })
+    } catch (err) {
+      if (err instanceof TripGroupError) {
+        return {
+          ok: false,
+          error: 'trip_group_ineligible',
+          message: 'You cannot book this seat for that trip group.',
+        }
+      }
+      throw err
     }
   }
 

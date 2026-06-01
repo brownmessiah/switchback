@@ -24,6 +24,8 @@ export default async function CheckoutPage({ searchParams }: PageProps) {
   const params = await searchParams
   const experienceId = typeof params.experienceId === 'string' ? params.experienceId : null
   const slotId = typeof params.slotId === 'string' ? params.slotId : null
+  const tripGroupId =
+    typeof params.tripGroupId === 'string' ? params.tripGroupId : null
   const participantCount = typeof params.participants === 'string'
     ? parseInt(params.participants, 10)
     : 2
@@ -73,6 +75,7 @@ export default async function CheckoutPage({ searchParams }: PageProps) {
         experienceId={experienceId}
         experienceTitle={experienceRow.title}
         slotId={slotId}
+        tripGroupId={tripGroupId}
         participantCount={initialCount}
         maxParticipants={maxParticipants}
         priceTier12={bracketPrices.tier12}

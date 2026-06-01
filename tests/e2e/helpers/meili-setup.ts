@@ -24,14 +24,24 @@ import { Meilisearch } from 'meilisearch'
 import postgres from 'postgres'
 
 import { experiences, vendorProfiles } from '@/db/schema'
-import {
-  EXPERIENCE_FILTERABLE_ATTRIBUTES,
-  EXPERIENCE_SORTABLE_ATTRIBUTES,
-} from '@/lib/search/indexer'
 
 import { e2eDbUrl } from './config'
 
 const EXPERIENCE_INDEX = 'experiences'
+
+// Mirrors lib/search/indexer.ts EXPERIENCE_{FILTERABLE,SORTABLE}_ATTRIBUTES
+// (ADR-0013). Inlined rather than imported because that module pulls in
+// lib/env, which validates the environment at module load — and global-setup
+// loads .env.local at runtime, after its imports resolve. Kept in sync by the
+// search-index settings test; if the indexer lists change, update here too.
+const EXPERIENCE_FILTERABLE_ATTRIBUTES = [
+  'activitySlug',
+  'regionSlug',
+  'pricePerPersonRupees',
+  'vendorSlug',
+  'isCombo',
+]
+const EXPERIENCE_SORTABLE_ATTRIBUTES = ['pricePerPersonRupees', 'publishedAtEpochMs']
 
 interface MeiliExperienceDoc {
   id: string

@@ -97,15 +97,15 @@ export async function loadRevenueTrend(db: DBOrTx): Promise<readonly MonthDataPo
 
   const rows = await db
     .select({
-      month: sql<string>`to_char(${payments.capturedAt}, 'YYYY-MM')`.as('month'),
+      month: sql<string>`to_char(${payments.capturedAt} AT TIME ZONE 'UTC', 'YYYY-MM')`.as('month'),
       total: sum(payments.amount),
     })
     .from(payments)
     .where(
       sql`${payments.captureTrigger} <> 'refund_reverse' AND ${payments.capturedAt} >= ${cutoff}::timestamptz`,
     )
-    .groupBy(sql`to_char(${payments.capturedAt}, 'YYYY-MM')`)
-    .orderBy(sql`to_char(${payments.capturedAt}, 'YYYY-MM')`)
+    .groupBy(sql`to_char(${payments.capturedAt} AT TIME ZONE 'UTC', 'YYYY-MM')`)
+    .orderBy(sql`to_char(${payments.capturedAt} AT TIME ZONE 'UTC', 'YYYY-MM')`)
 
   return fillMonths(twelveMonthsAgo, new Date(), rows, 'total')
 }
@@ -120,13 +120,13 @@ export async function loadBookingVolume(db: DBOrTx): Promise<readonly WeekDataPo
 
   const rows = await db
     .select({
-      week: sql<string>`to_char(${bookings.confirmedAt}, 'IYYY-"W"IW')`.as('week'),
+      week: sql<string>`to_char(${bookings.confirmedAt} AT TIME ZONE 'UTC', 'IYYY-"W"IW')`.as('week'),
       count: count(),
     })
     .from(bookings)
     .where(sql`${bookings.confirmedAt} >= ${cutoff}::timestamptz`)
-    .groupBy(sql`to_char(${bookings.confirmedAt}, 'IYYY-"W"IW')`)
-    .orderBy(sql`to_char(${bookings.confirmedAt}, 'IYYY-"W"IW')`)
+    .groupBy(sql`to_char(${bookings.confirmedAt} AT TIME ZONE 'UTC', 'IYYY-"W"IW')`)
+    .orderBy(sql`to_char(${bookings.confirmedAt} AT TIME ZONE 'UTC', 'IYYY-"W"IW')`)
 
   return rows.map((r) => ({
     week: r.week,
@@ -145,13 +145,13 @@ export async function loadVendorGrowth(db: DBOrTx): Promise<readonly MonthDataPo
 
   const rows = await db
     .select({
-      month: sql<string>`to_char(${vendorProfiles.createdAt}, 'YYYY-MM')`.as('month'),
+      month: sql<string>`to_char(${vendorProfiles.createdAt} AT TIME ZONE 'UTC', 'YYYY-MM')`.as('month'),
       count: count(),
     })
     .from(vendorProfiles)
     .where(sql`${vendorProfiles.createdAt} >= ${cutoff}::timestamptz`)
-    .groupBy(sql`to_char(${vendorProfiles.createdAt}, 'YYYY-MM')`)
-    .orderBy(sql`to_char(${vendorProfiles.createdAt}, 'YYYY-MM')`)
+    .groupBy(sql`to_char(${vendorProfiles.createdAt} AT TIME ZONE 'UTC', 'YYYY-MM')`)
+    .orderBy(sql`to_char(${vendorProfiles.createdAt} AT TIME ZONE 'UTC', 'YYYY-MM')`)
 
   return fillMonths(twelveMonthsAgo, new Date(), rows, 'count')
 }
@@ -208,16 +208,22 @@ function fillMonths(
   }
 
   const result: MonthDataPoint[] = []
-  const current = new Date(from.getFullYear(), from.getMonth(), 1)
-  const end = new Date(to.getFullYear(), to.getMonth(), 1)
+  // Generate the month labels in UTC so they match the DB's UTC
+  // to_char(...,'YYYY-MM') bucket keys. Using server-local month math here
+  // diverges from the UTC keys whenever the server TZ is behind/ahead of UTC
+  // across a month boundary (e.g. 00:00–05:30 IST on the 1st), dropping that
+  // month's value into the wrong bucket. UTC throughout keeps keys and labels
+  // consistent regardless of server timezone.
+  const current = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), 1))
+  const end = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), 1))
 
   while (current <= end) {
-    const monthStr = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`
+    const monthStr = `${current.getUTCFullYear()}-${String(current.getUTCMonth() + 1).padStart(2, '0')}`
     result.push({
       month: monthStr,
       value: dataMap.get(monthStr) ?? 0,
     })
-    current.setMonth(current.getMonth() + 1)
+    current.setUTCMonth(current.getUTCMonth() + 1)
   }
 
   return result

@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { availabilitySlots } from '@/db/schema/availability-slots'
 import { bookings } from '@/db/schema/bookings'
@@ -201,10 +201,39 @@ describe('Admin analytics loaders', () => {
       await seedPayment(db, bookingId, { amount: '5000.00', capturedAt: now })
 
       const trend = await loadRevenueTrend(db)
-      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+      const currentMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
       const currentMonthPoint = trend.find((t) => t.month === currentMonth)
       expect(currentMonthPoint).toBeDefined()
       expect(currentMonthPoint!.value).toBe(5000)
+    })
+
+    it('buckets revenue by its UTC month at the IST midnight boundary (D1)', async () => {
+      // Boundary instant: 2026-06-01T01:00 IST === 2026-05-31T19:30Z. The local
+      // (Asia/Kolkata) calendar month is JUNE, but the UTC month is MAY. The DB
+      // buckets capturedAt with to_char(...,'YYYY-MM') in UTC, so the trend must
+      // label this revenue under the UTC month — and the zero-fill must agree,
+      // with no spurious local-time June bucket — regardless of the server TZ.
+      vi.useFakeTimers({ toFake: ['Date'] })
+      vi.setSystemTime(new Date('2026-05-31T19:30:00Z'))
+      try {
+        const custId = await seedCustomer(db)
+        const vendorId = await seedVendor(db)
+        const expId = await seedExperience(db, vendorId)
+        const slotId = await seedSlot(db, expId)
+        const bookingId = await seedBooking(db, custId, expId, slotId)
+        await seedPayment(db, bookingId, {
+          amount: '5000.00',
+          capturedAt: new Date('2026-05-31T19:30:00Z'),
+        })
+
+        const trend = await loadRevenueTrend(db)
+        const last = trend.at(-1)!
+        expect(last.month).toBe('2026-05')
+        expect(last.value).toBe(5000)
+        expect(trend.some((t) => t.month === '2026-06')).toBe(false)
+      } finally {
+        vi.useRealTimers()
+      }
     })
   })
 
@@ -242,7 +271,7 @@ describe('Admin analytics loaders', () => {
 
       const growth = await loadVendorGrowth(db)
       const now = new Date()
-      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+      const currentMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
       const currentMonthPoint = growth.find((g) => g.month === currentMonth)
       expect(currentMonthPoint).toBeDefined()
       expect(currentMonthPoint!.value).toBe(1)

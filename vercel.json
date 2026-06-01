@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/partial-pay-autocapture",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/trip-groups-archive",
+      "schedule": "0 3 * * *"
     }
   ]
 }

@@ -149,8 +149,8 @@ describe('shouldExcludeFromI18n()', () => {
   })
 
   describe('EXCLUDED_PREFIXES constant', () => {
-    it('contains all 17 excluded prefixes', () => {
-      expect(EXCLUDED_PREFIXES).toHaveLength(17)
+    it('contains all 18 excluded prefixes', () => {
+      expect(EXCLUDED_PREFIXES).toHaveLength(18)
     })
 
     it('includes /wallet', () => {
@@ -167,6 +167,10 @@ describe('shouldExcludeFromI18n()', () => {
 
     it('includes /settings', () => {
       expect(EXCLUDED_PREFIXES).toContain('/settings')
+    })
+
+    it('includes /community', () => {
+      expect(EXCLUDED_PREFIXES).toContain('/community')
     })
 
     it('includes /admin', () => {

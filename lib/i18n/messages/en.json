@@ -454,6 +454,89 @@
       "emailAddress": "support@outvers.com"
     }
   },
+  "SafetyPage": {
+    "metadata": {
+      "title": "Safety and trust · Outvers",
+      "description": "How Outvers builds trust: a three-tier KYC verification ladder for vendors, transparent cancellation presets with SLA-backed wallet refunds, partial pay, surfaced permit requirements, and a notification-based safety stack."
+    },
+    "breadcrumb": {
+      "safety": "Safety & trust"
+    },
+    "hero": {
+      "title": "Safety and trust at Outvers",
+      "description": "Outvers is an adventure marketplace, so trust is the product. We do not own the rafts, the harnesses, or the trails — independent vendors do. Our job is to verify who they are, make the money rules predictable, and notify the right people when something goes wrong. Everything below is a feature that exists today, not a promise. Where Outvers does not do something — like obtaining your permits or dispatching emergency services — we say so plainly."
+    },
+    "kyc": {
+      "heading": "Every vendor climbs a three-tier verification ladder",
+      "intro": "A vendor's KYC tier decides what they are allowed to list and transact. The badge on each Experience card tells you exactly how far a vendor has been verified — verification and responsiveness are tracked separately, so the badge is about identity, not popularity.",
+      "phoneTitle": "Phone verified",
+      "phoneBody": "An OTP-confirmed phone number at signup. A Phone verified vendor can draft Experiences but cannot publish, accept bookings, or receive payouts. No badge appears on listings at this tier.",
+      "identityTitle": "Identity verified",
+      "identityBody": "Aadhaar eKYC plus a format-validated PAN, with at least one Experience reviewed by an admin. An Identity verified vendor may publish single-day Experiences up to Rs.5,000 per person and 8 participants per slot, and carries the \"Identity verified\" badge.",
+      "businessTitle": "Business verified",
+      "businessBody": "Identity verification plus a recorded video-call check of premises and equipment, a GSTIN or a below-threshold self-declaration with Udyam registration, and the category-relevant guide certifications (for example ATOAI, RMI, NIM, or APPI). A Business verified vendor has unrestricted listing rights and carries the \"Business verified\" badge."
+    },
+    "money": {
+      "heading": "The money rules are written down before you pay",
+      "cancellationTitle": "Three cancellation presets, locked at booking",
+      "cancellationBody": "Every Experience uses one of three named cancellation presets — Flexible, Moderate, or Strict. The preset is locked when you book and shown on the Experience card, the checkout page, and your confirmation. Refund math is a pure function of the preset, your cancellation time, and the booking total — no human review inside the policy window. Read the full breakdown on our cancellation policy page.",
+      "cancellationLink": "See the cancellation policy",
+      "walletTitle": "Two-bucket wallet — Outvers credit and Refund balance",
+      "walletBody": "Your Wallet shows two separate buckets. Outvers credit is promotional balance from referrals and offers — spendable on Outvers bookings only. Refund balance is real money: an inside-policy cancellation auto-credits it within minutes, and you can cash it back to your original payment method via a 5–7 working-day Razorpay round-trip. A vendor-cancelled booking is always a full refund regardless of preset.",
+      "partialPayTitle": "Partial pay — a 25% Advance now, the rest at T-24h",
+      "partialPayBody": "For eligible bookings you pay a 25% Advance at booking time, and the remaining 75% is auto-captured 24 hours before the Experience starts. You see both figures before you commit, so there is no surprise charge."
+    },
+    "onground": {
+      "heading": "On the ground: permits surfaced, safety notified",
+      "permitsTitle": "Required permits, surfaced — not brokered",
+      "permitsBody": "Some Experiences sit in permit-gated areas (for example Inner Line Permits or wildlife-area entry). Outvers surfaces each required permit in plain language with a link to the official application and a mandatory acknowledgement before you book. To be clear: Outvers does not obtain permits on your behalf — we tell you exactly what you need and where to get it.",
+      "safetyStackTitle": "The safety stack: trusted contact, SOS, and check-in pings",
+      "safetyStackBody": "Experiences that need it — treks, paragliding, scuba, rafting, and high-flagged regions — turn on the safety stack. You record a trusted contact before booking. During an active booking you can trigger an SOS event, which fans out a WhatsApp and SMS notification to your trusted contact, the vendor, and Outvers ops, with your location if we can capture it. Automated check-in pings ask \"arrived safely?\" at trip start and end.",
+      "postureTitle": "A notification tool, not an emergency service",
+      "postureBody": "Outvers SOS notifies people; it does not dispatch emergency services and does not promise a response. In a life-threatening emergency, dial 112. Routine location is visible only to you and is auto-deleted 72 hours after a trip ends — we keep no standing surveillance log."
+    },
+    "contact": {
+      "heading": "Questions about safety?",
+      "body": "Email {email} and our team will help — disputes filed inside the policy window are resolved within 48 hours.",
+      "emailAddress": "support@outvers.com"
+    }
+  },
+  "AboutPage": {
+    "metadata": {
+      "title": "About Outvers · India's adventure-activity marketplace",
+      "description": "Outvers connects adventure-seeking customers across India with KYC-verified independent vendors — rafting operators, paragliding outfits, trekking companies, and more — with transparent pricing and refunds."
+    },
+    "breadcrumb": {
+      "about": "About"
+    },
+    "hero": {
+      "title": "About Outvers",
+      "description": "Outvers is an Indian adventure-activity marketplace. We connect customers who want to raft, trek, paraglide, dive, and explore with independent vendors who run those Experiences — verified, priced transparently, and bookable in a few taps."
+    },
+    "mission": {
+      "heading": "Our mission",
+      "body": "India's adventure-activity market is enormous and fragmented — thousands of skilled local operators, most without an online storefront, and customers who struggle to tell a verified outfit from a risky one. Outvers exists to close that gap honestly: bring real operators online, verify who they are, and make the rules of money and safety predictable for everyone."
+    },
+    "howItWorks": {
+      "heading": "How Outvers works",
+      "browseTitle": "Browse real Experiences",
+      "browseBody": "Search single-day and multi-day Experiences across regions and activities. Pricing brackets, availability, and the cancellation preset are shown up front.",
+      "bookTitle": "Book with transparent money rules",
+      "bookBody": "Eligible bookings use partial pay — a 25% Advance now, the rest auto-captured 24 hours before you go. Refunds follow a fixed cancellation preset, never a case-by-case guess.",
+      "trustTitle": "Trust built on verification",
+      "trustBody": "Every vendor climbs a three-tier KYC ladder — Phone verified, Identity verified, Business verified — and the badge on each listing tells you how far they got. For higher-risk activities, a safety stack adds a trusted contact, SOS notifications, and check-in pings."
+    },
+    "honesty": {
+      "heading": "What we are — and what we are not",
+      "body": "Outvers is a marketplace. The Experiences are operated by independent third-party vendors, not by Outvers. We verify vendors, hold the money rules, and notify your contacts when you trigger SOS — but we do not run the trips ourselves, we do not obtain permits on your behalf, and our SOS is a notification tool, not an emergency response service. Being clear about this is part of the trust."
+    },
+    "contact": {
+      "heading": "Get in touch",
+      "body": "Reach us at {email}. If you operate adventure Experiences and want to list them, start with vendor onboarding.",
+      "emailAddress": "support@outvers.com",
+      "vendorCta": "List your experience"
+    }
+  },
   "Nav": {
     "home": "Outvers",
     "homeAriaLabel": "Outvers home",
@@ -468,8 +551,10 @@
       "paragliding": "Paragliding",
       "scubaDiving": "Scuba diving",
       "support": "Support",
+      "safety": "Safety & trust",
       "helpCentre": "Help centre (soon)",
       "contactUs": "Contact us (soon)",
+      "about": "About Outvers",
       "forVendors": "For Vendors",
       "listYourExperience": "List your experience",
       "vendorDashboard": "Vendor dashboard",

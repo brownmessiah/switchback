@@ -70,6 +70,11 @@ export function SiteFooter(): ReactElement {
                     {tf('blog')}
                   </Link>
                 </li>
+                <li>
+                  <Link href="/about" className="text-foreground/80 transition hover:text-foreground">
+                    {tf('about')}
+                  </Link>
+                </li>
               </ul>
             </div>
 
@@ -81,6 +86,11 @@ export function SiteFooter(): ReactElement {
                 <li>
                   <Link href="/cancellation-policy" className="text-foreground/80 transition hover:text-foreground">
                     {t('refundPolicy')}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/safety" className="text-foreground/80 transition hover:text-foreground">
+                    {tf('safety')}
                   </Link>
                 </li>
                 <li>

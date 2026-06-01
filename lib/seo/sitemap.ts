@@ -17,6 +17,7 @@ export const STATIC_PUBLIC_PATHS: readonly string[] = [
   '/search',
   '/sign-in',
   '/cancellation-policy',
+  '/blog',
 ] as const
 
 /** Returns the site's base URL from env, without trailing slash. */
@@ -63,6 +64,7 @@ const PRIORITY_MAP: Record<string, number> = {
   '/search': 0.8,
   '/sign-in': 0.3,
   '/cancellation-policy': 0.5,
+  '/blog': 0.6,
 }
 
 /** Change frequency map for different route types. */
@@ -71,6 +73,22 @@ const FREQUENCY_MAP: Record<string, SitemapEntry['changeFrequency']> = {
   '/search': 'daily',
   '/sign-in': 'monthly',
   '/cancellation-policy': 'monthly',
+  '/blog': 'daily',
+}
+
+/**
+ * Build a single sitemap entry for a dynamic (DB-sourced) route, in the given
+ * locale. Reusable by the per-locale sitemap route handler for blog posts,
+ * experiences, destinations, etc. (the dynamic families added in #03–#05/#13).
+ */
+export function buildSitemapEntry(
+  pathname: string,
+  locale: string,
+  lastModified: Date,
+  changeFrequency: SitemapEntry['changeFrequency'] = 'weekly',
+  priority = 0.6,
+): SitemapEntry {
+  return { url: absoluteUrl(pathname, locale), lastModified, changeFrequency, priority }
 }
 
 /**

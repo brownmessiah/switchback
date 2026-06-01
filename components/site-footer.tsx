@@ -65,6 +65,11 @@ export function SiteFooter(): ReactElement {
                     {tf('scubaDiving')}
                   </Link>
                 </li>
+                <li>
+                  <Link href="/blog" className="text-foreground/80 transition hover:text-foreground">
+                    {tf('blog')}
+                  </Link>
+                </li>
               </ul>
             </div>
 

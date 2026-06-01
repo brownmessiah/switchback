@@ -7,6 +7,7 @@ import { bookings } from '@/db/schema/bookings'
 import { commissionTiers } from '@/db/schema/commission-tiers'
 import { experiences } from '@/db/schema/experiences'
 import { pricingTiers } from '@/db/schema/pricing-tiers'
+import { tripGroups } from '@/db/schema/trip-groups'
 import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { _resetRedisCacheForTests } from '@/lib/redis'
@@ -218,7 +219,12 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
     })
 
     it('passes through tripGroupId when provided', async () => {
-      const tripGroupId = uuid()
+      // The bookings.trip_group_id FK (ADR-0009) requires a real group.
+      const [group] = await db
+        .insert(tripGroups)
+        .values({ hostUserId: 'u_c', name: 'Test Group', maxMembers: 6 })
+        .returning({ id: tripGroups.id })
+      const tripGroupId = group!.id
       const r = await createBooking(db, { ...defaultInput(), tripGroupId })
       const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
       expect(row?.tripGroupId).toBe(tripGroupId)

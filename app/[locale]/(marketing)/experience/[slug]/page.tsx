@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react'
 
+import { headers } from 'next/headers'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
@@ -22,9 +23,12 @@ import Image from 'next/image'
 
 import { ReviewList, type ReviewData } from '@/components/reviews/review-list'
 import { Badge } from '@/components/ui/badge'
+import { WishlistButton } from '@/components/wishlist-button'
 import { db } from '@/db/client'
 import { reviews, users } from '@/db/schema'
+import { auth } from '@/lib/auth'
 import { env } from '@/lib/env'
+import { isInWishlist } from '@/lib/wishlist/wishlist'
 import { loadExperienceDetail } from '@/lib/experiences/detail-loader'
 import { getActivityImage } from '@/lib/images'
 import { getRedis } from '@/lib/redis'
@@ -93,6 +97,14 @@ export default async function ExperienceDetailPage({
     customerName: r.customerName ?? 'Customer',
     createdAt: r.createdAt,
   }))
+
+  // Issue #08 — wishlist saved state for the heart toggle. Logged-out
+  // visitors still see the button (initialSaved=false); clicking it routes
+  // them to /sign-in (handled client-side in WishlistButton).
+  const session = await auth.api.getSession({ headers: await headers() })
+  const initialWishlisted = session?.user
+    ? await isInWishlist(db, session.user.id, detail.id)
+    : false
 
   const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
   const canonicalUrl = `${baseUrl}/experience/${detail.slug}`
@@ -307,6 +319,10 @@ export default async function ExperienceDetailPage({
                 <ShieldCheck aria-hidden="true" />
                 {kycLabel}
               </Badge>
+              <WishlistButton
+                experienceId={detail.id}
+                initialSaved={initialWishlisted}
+              />
             </div>
           </header>
 

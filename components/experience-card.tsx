@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 import { MapPin, ShieldCheck } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
+import { WishlistButton } from '@/components/wishlist-button'
 import { resolveExperienceCover } from '@/lib/media/experience-images'
 
 export interface ExperienceCardData {
@@ -21,6 +22,13 @@ export interface ExperienceCardData {
    * When absent, the card falls back to the activity stock photo.
    */
   coverImageUrl?: string | null
+  /**
+   * When provided (Issue #08), the card renders a wishlist heart toggle
+   * overlay seeded with this saved state. Public/logged-out lists that do
+   * not pass it render NO button — the card's behaviour is unchanged when
+   * the prop is absent.
+   */
+  isWishlisted?: boolean
 }
 
 interface ExperienceCardProps {
@@ -69,12 +77,26 @@ export function ExperienceCard({ experience }: ExperienceCardProps) {
   const regionLabel = REGION_LABELS[experience.regionSlug] ?? experience.regionSlug
   const imageUrl = resolveExperienceCover(experience.coverImageUrl, experience.activitySlug)
 
+  // Issue #08 — opt-in wishlist heart. Rendered as an absolutely-positioned
+  // overlay SIBLING of the Link (never nested inside the anchor, which would
+  // be invalid HTML and would navigate on heart click). Only present when the
+  // caller passes `isWishlisted` (logged-in surfaces); absent → unchanged card.
+  const showWishlist = experience.isWishlisted !== undefined
+
   return (
-    <Link
-      href={`/experience/${experience.slug}`}
-      className="group flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-border bg-card shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:hover:translate-y-0"
-    >
-      <div className="relative aspect-[3/2] w-full overflow-hidden">
+    <div className="group relative">
+      {showWishlist ? (
+        <WishlistButton
+          experienceId={experience.id}
+          initialSaved={experience.isWishlisted ?? false}
+          className="absolute right-2 top-2 z-10 px-2 py-1.5"
+        />
+      ) : null}
+      <Link
+        href={`/experience/${experience.slug}`}
+        className="flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-border bg-card shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:hover:translate-y-0"
+      >
+        <div className="relative aspect-[3/2] w-full overflow-hidden">
         <Image
           src={imageUrl}
           alt=""
@@ -112,6 +134,7 @@ export function ExperienceCard({ experience }: ExperienceCardProps) {
           <span className="ml-1 text-xs text-muted-foreground">/ person</span>
         </div>
       </div>
-    </Link>
+      </Link>
+    </div>
   )
 }

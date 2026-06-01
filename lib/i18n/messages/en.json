@@ -123,6 +123,19 @@
       "cancelSeeRefund": "Cancel — see refund"
     }
   },
+  "WishlistPage": {
+    "heading": "My wishlist",
+    "empty": {
+      "title": "No saved experiences yet",
+      "hint": "Tap the heart on any experience to save it here for later."
+    },
+    "button": {
+      "save": "Save",
+      "saved": "Saved",
+      "ariaAdd": "Save to wishlist",
+      "ariaRemove": "Remove from wishlist"
+    }
+  },
   "AdventurePage": {
     "metadata": {
       "title": "{activity} in {region} · Outvers",

@@ -28,34 +28,24 @@ import {
   computeListingCompleteness,
   type ListingCompletenessField,
 } from '@/lib/vendor/listing-completeness'
+import { listActivities } from '@/lib/activities/registry'
+import { listRegions } from '@/lib/regions/registry'
 
 // ── Shared option vocabularies (single source for both new + edit) ──────────
 
-export const ACTIVITIES = [
-  { value: 'rafting', label: 'Rafting' },
-  { value: 'paragliding', label: 'Paragliding' },
-  { value: 'trekking', label: 'Trekking' },
-  { value: 'scuba', label: 'Scuba diving' },
-  { value: 'camping', label: 'Camping' },
-  { value: 'kayaking', label: 'Kayaking' },
-  { value: 'bungee', label: 'Bungee jumping' },
-  { value: 'skiing', label: 'Skiing' },
-  { value: 'surfing', label: 'Surfing' },
-  { value: 'canyoning', label: 'Canyoning' },
-] as const
+// Sourced from the ADR-0013 controlled vocabulary (lib/activities, lib/regions)
+// so the values a Vendor picks are the SAME canonical slugs the collection pages
+// (/adventure/{activity}-in-{region}) and the search facets key on. A hardcoded,
+// divergent list here silently orphaned new listings from discovery (e.g. 'scuba'
+// vs 'scuba-diving', 'ladakh' vs 'leh-ladakh', 'sikkim'/'kerala' that don't exist).
+export const ACTIVITIES: { value: string; label: string }[] = listActivities().map(
+  (a) => ({ value: a.slug, label: a.displayName.en }),
+)
 
-export const REGIONS = [
-  { value: 'rishikesh', label: 'Rishikesh' },
-  { value: 'manali', label: 'Manali' },
-  { value: 'bir-billing', label: 'Bir Billing' },
-  { value: 'goa', label: 'Goa' },
-  { value: 'ladakh', label: 'Ladakh' },
-  { value: 'sikkim', label: 'Sikkim' },
-  { value: 'kerala', label: 'Kerala' },
-  { value: 'meghalaya', label: 'Meghalaya' },
-  { value: 'andaman', label: 'Andaman' },
-  { value: 'coorg', label: 'Coorg' },
-] as const
+export const REGIONS: { value: string; label: string }[] = listRegions().map((r) => ({
+  value: r.slug,
+  label: r.displayName.en,
+}))
 
 // Only the two SHIPPED payment modes are offered. Reserve-now-pay-later is
 // schema-named but unbuilt and must never surface here (ADR-0002 / #112).

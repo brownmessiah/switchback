@@ -21,6 +21,8 @@ import { Separator } from '@/components/ui/separator'
 import { authClient } from '@/lib/auth/client'
 import { getHeroImage } from '@/lib/images'
 
+import { resolvePostAuthPath } from './actions'
+
 type Mode = 'signin' | 'signup'
 type Step = 'email' | 'credentials'
 
@@ -74,7 +76,10 @@ export function SignInForm() {
         return
       }
 
-      router.push('/')
+      // Route to the role-appropriate dashboard (admin / vendor / customer)
+      // rather than always the marketing home (ADR-0006 role resolution).
+      const dest = await resolvePostAuthPath()
+      router.push(dest)
       router.refresh()
     } catch {
       setError(t('networkError'))

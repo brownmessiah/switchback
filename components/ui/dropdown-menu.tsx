@@ -53,17 +53,22 @@ function DropdownMenuGroup({ ...props }: MenuPrimitive.Group.Props) {
   return <MenuPrimitive.Group data-slot="dropdown-menu-group" {...props} />
 }
 
+// Rendered as a plain <div>, NOT Base UI's <Menu.GroupLabel>. GroupLabel is a
+// "menu group part" that requires a <Menu.Group> ancestor (MenuGroupContext);
+// used standalone (as every consumer here does) it throws on open and crashes
+// the whole menu. A label is non-interactive, so a styled div is correct and
+// group-independent. Wrap in <DropdownMenuGroup> only if true grouping is needed.
 function DropdownMenuLabel({
   className,
   inset,
   ...props
-}: MenuPrimitive.GroupLabel.Props & {
+}: React.ComponentProps<"div"> & {
   inset?: boolean
 }) {
   return (
-    <MenuPrimitive.GroupLabel
+    <div
       data-slot="dropdown-menu-label"
-      data-inset={inset}
+      data-inset={inset ? "" : undefined}
       className={cn(
         "px-1.5 py-1 text-xs font-medium text-muted-foreground data-inset:pl-7",
         className

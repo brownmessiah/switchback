@@ -85,7 +85,11 @@ export function IntlProvider({ locale, messages, children }: IntlProviderProps) 
   )
 
   return (
-    <NextIntlClientProvider locale={validLocale} messages={messages}>
+    <NextIntlClientProvider
+      locale={validLocale}
+      messages={messages}
+      timeZone="Asia/Kolkata"
+    >
       <IntlContext value={value}>{children}</IntlContext>
     </NextIntlClientProvider>
   )

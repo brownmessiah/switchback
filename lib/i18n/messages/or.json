@@ -112,7 +112,8 @@
       "cashoutOption": "5–7 କାର୍ଯ୍ୟ ଦିବସରେ ଆପଣଙ୍କ ମୂଳ ଦେୟ ପ୍ରଣାଳୀକୁ ନଗଦ ଉଠାନ୍ତୁ, କିମ୍ବା ପରବର୍ତ୍ତୀ ବୁକିଂରେ ବ୍ୟବହାର କରନ୍ତୁ।",
       "outversCredit": "Outvers କ୍ରେଡିଟ୍",
       "creditHint": "ପ୍ରୋମୋସନାଲ କ୍ରେଡିଟ୍ — ଯେକୌଣସି ବୁକିଂରେ ବ୍ୟବହାର କରନ୍ତୁ",
-      "creditExpiry": "{date}ରେ ସମୟ ସମାପ୍ତ ହେବ"
+      "creditExpiry": "{date}ରେ ସମୟ ସମାପ୍ତ ହେବ",
+      "viewWallet": "ୱାଲେଟ୍ ଦେଖନ୍ତୁ"
     },
     "bookings": {
       "empty": "ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ବୁକିଂ ନାହିଁ",
@@ -815,5 +816,34 @@
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
     }
+  },
+  "WalletPage": {
+    "title": "ୱାଲେଟ୍",
+    "subtitle": "ଆପଣଙ୍କ Outvers କ୍ରେଡିଟ୍ ଏବଂ ରିଫଣ୍ଡ ବାଲାନ୍ସ, ସମ୍ପୂର୍ଣ୍ଣ କାରବାର ଇତିହାସ ସହିତ।",
+    "backToDashboard": "ଡ୍ୟାସବୋର୍ଡକୁ ଫେରନ୍ତୁ",
+    "outversCredit": "Outvers କ୍ରେଡିଟ୍",
+    "outversCreditHint": "ପ୍ରୋମୋସନାଲ କ୍ରେଡିଟ୍ — ଯେକୌଣସି ବୁକିଂରେ ବ୍ୟବହାର କରନ୍ତୁ। କେବେ ନଗଦ କରାଯାଇ ପାରିବ ନାହିଁ।",
+    "refundBalance": "ରିଫଣ୍ଡ ବାଲାନ୍ସ",
+    "refundBalanceHint": "ବାତିଲ ଓ ରିଫଣ୍ଡରୁ। ଆପଣଙ୍କ ପରବର୍ତ୍ତୀ ବୁକିଂରେ ଖର୍ଚ୍ଚ କରନ୍ତୁ, କିମ୍ବା କ୍ୟାସ ଆଉଟ୍ କରନ୍ତୁ।",
+    "creditExpiry": "ନିକଟତମ କ୍ରେଡିଟ୍ {date}ରେ ସମାପ୍ତ ହୁଏ",
+    "cashOut": "କ୍ୟାସ ଆଉଟ୍",
+    "cashOutInfo": "ଆପଣଙ୍କ ମୂଳ ଦେୟ ପଦ୍ଧତିକୁ 5–7 କାର୍ଯ୍ୟ ଦିବସ ମଧ୍ୟରେ କ୍ୟାସ ଆଉଟ୍ କରନ୍ତୁ। ଏହି ବିକଳ୍ପ ଶୀଘ୍ର ଆସୁଛି — ବର୍ତ୍ତମାନ, ଆପଣଙ୍କ ରିଫଣ୍ଡ ବାଲାନ୍ସ ଚେକଆଉଟ୍‌ରେ ସ୍ୱୟଂଚାଳିତ ଭାବେ ପ୍ରଯୁଜ୍ୟ ହୁଏ।",
+    "ledgerTitle": "କାରବାର ଇତିହାସ",
+    "ledgerEmpty": "ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ୱାଲେଟ୍ କାରବାର ନାହିଁ।",
+    "colDate": "ତାରିଖ",
+    "colBucket": "ବକେଟ୍",
+    "colSource": "ଉତ୍ସ",
+    "colAmount": "ରାଶି",
+    "credit": "କ୍ରେଡିଟ୍",
+    "debit": "ଡେବିଟ୍",
+    "page": "ପୃଷ୍ଠା {page}/{totalPages}",
+    "previous": "ପୂର୍ବବର୍ତ୍ତୀ",
+    "next": "ପରବର୍ତ୍ତୀ",
+    "sourcePromo": "ପ୍ରୋମୋ",
+    "sourceReferral": "ରେଫରାଲ",
+    "sourceRefund": "ରିଫଣ୍ଡ",
+    "sourceAdmin": "ସମନ୍ୱୟ",
+    "sourceCheckoutDeduction": "ଚେକଆଉଟ୍",
+    "sourceExpiry": "ସମାପ୍ତି"
   }
 }

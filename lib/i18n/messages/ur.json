@@ -112,7 +112,8 @@
       "cashoutOption": "5–7 کاروباری دنوں میں اپنے اصل ادائیگی کے طریقے پر نقد نکالیں، یا اگلی بکنگ پر استعمال کریں۔",
       "outversCredit": "Outvers کریڈٹ",
       "creditHint": "پروموشنل کریڈٹ — کسی بھی بکنگ پر استعمال کریں",
-      "creditExpiry": "{date} کو ختم ہوگا"
+      "creditExpiry": "{date} کو ختم ہوگا",
+      "viewWallet": "والیٹ دیکھیں"
     },
     "bookings": {
       "empty": "ابھی کوئی بکنگ نہیں",
@@ -815,5 +816,34 @@
       "faqCancellationQuestion": "منسوخی کی پالیسی کیا ہے؟",
       "faqCancellationAnswer": "ہر تجربے کی اپنی منسوخی پالیسی ہوتی ہے (لچکدار / معتدل / سخت)۔ پالیسی کے اندر منسوخیوں کے ریفنڈ 24 گھنٹوں کے اندر آپ کے Outvers والیٹ میں جمع ہو جاتے ہیں۔"
     }
+  },
+  "WalletPage": {
+    "title": "والیٹ",
+    "subtitle": "آپ کا Outvers کریڈٹ اور ریفنڈ بیلنس، مکمل لین دین کی تاریخ کے ساتھ۔",
+    "backToDashboard": "ڈیش بورڈ پر واپس جائیں",
+    "outversCredit": "Outvers کریڈٹ",
+    "outversCreditHint": "پروموشنل کریڈٹ — کسی بھی بکنگ پر استعمال کریں۔ کبھی نقد نہیں کیا جا سکتا۔",
+    "refundBalance": "ریفنڈ بیلنس",
+    "refundBalanceHint": "منسوخیوں اور ریفنڈ سے۔ اپنی اگلی بکنگ پر خرچ کریں، یا کیش آؤٹ کریں۔",
+    "creditExpiry": "قریب ترین کریڈٹ {date} کو ختم ہوتا ہے",
+    "cashOut": "کیش آؤٹ",
+    "cashOutInfo": "اپنے اصل ادائیگی کے طریقے میں 5–7 کاروباری دنوں میں کیش آؤٹ کریں۔ یہ آپشن جلد آ رہا ہے — فی الحال، آپ کا ریفنڈ بیلنس چیک آؤٹ پر خود بخود لاگو ہوتا ہے۔",
+    "ledgerTitle": "لین دین کی تاریخ",
+    "ledgerEmpty": "ابھی تک کوئی والیٹ لین دین نہیں۔",
+    "colDate": "تاریخ",
+    "colBucket": "بکٹ",
+    "colSource": "ماخذ",
+    "colAmount": "رقم",
+    "credit": "کریڈٹ",
+    "debit": "ڈیبٹ",
+    "page": "صفحہ {page}/{totalPages}",
+    "previous": "پچھلا",
+    "next": "اگلا",
+    "sourcePromo": "پرومو",
+    "sourceReferral": "ریفرل",
+    "sourceRefund": "ریفنڈ",
+    "sourceAdmin": "ایڈجسٹمنٹ",
+    "sourceCheckoutDeduction": "چیک آؤٹ",
+    "sourceExpiry": "میعاد"
   }
 }

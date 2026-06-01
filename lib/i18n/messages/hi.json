@@ -112,7 +112,8 @@
       "cashoutOption": "5–7 कार्य दिवसों में अपनी मूल भुगतान विधि में नकद निकालें, या अगली बुकिंग पर उपयोग करें।",
       "outversCredit": "Outvers क्रेडिट",
       "creditHint": "प्रचारात्मक क्रेडिट — किसी भी बुकिंग पर उपयोग करें",
-      "creditExpiry": "{date} को समाप्त होगा"
+      "creditExpiry": "{date} को समाप्त होगा",
+      "viewWallet": "वॉलेट देखें"
     },
     "bookings": {
       "empty": "अभी तक कोई बुकिंग नहीं",
@@ -815,5 +816,34 @@
       "faqCancellationQuestion": "रद्दीकरण नीति क्या है?",
       "faqCancellationAnswer": "हर अनुभव की अपनी रद्दीकरण नीति होती है (लचीली / मध्यम / सख़्त)। नीति-के-भीतर रद्दीकरण के रिफ़ंड 24 घंटे के भीतर आपके Outvers वॉलेट में जमा होते हैं।"
     }
+  },
+  "WalletPage": {
+    "title": "वॉलेट",
+    "subtitle": "आपका Outvers क्रेडिट और रिफंड बैलेंस, पूरे लेन-देन इतिहास के साथ।",
+    "backToDashboard": "डैशबोर्ड पर वापस जाएँ",
+    "outversCredit": "Outvers क्रेडिट",
+    "outversCreditHint": "प्रोमोशनल क्रेडिट — किसी भी बुकिंग पर उपयोग करें। कभी कैश नहीं किया जा सकता।",
+    "refundBalance": "रिफंड बैलेंस",
+    "refundBalanceHint": "रद्दीकरण और रिफंड से। अपनी अगली बुकिंग पर खर्च करें, या कैश आउट करें।",
+    "creditExpiry": "निकटतम क्रेडिट {date} को समाप्त होता है",
+    "cashOut": "कैश आउट",
+    "cashOutInfo": "अपनी मूल भुगतान विधि में 5–7 कार्यदिवसों में कैश आउट करें। यह विकल्प जल्द आ रहा है — फिलहाल, आपका रिफंड बैलेंस चेकआउट पर स्वतः लागू हो जाता है।",
+    "ledgerTitle": "लेन-देन इतिहास",
+    "ledgerEmpty": "अभी तक कोई वॉलेट लेन-देन नहीं।",
+    "colDate": "तारीख",
+    "colBucket": "बकेट",
+    "colSource": "स्रोत",
+    "colAmount": "राशि",
+    "credit": "क्रेडिट",
+    "debit": "डेबिट",
+    "page": "पृष्ठ {page}/{totalPages}",
+    "previous": "पिछला",
+    "next": "अगला",
+    "sourcePromo": "प्रोमो",
+    "sourceReferral": "रेफरल",
+    "sourceRefund": "रिफंड",
+    "sourceAdmin": "समायोजन",
+    "sourceCheckoutDeduction": "चेकआउट",
+    "sourceExpiry": "समाप्ति"
   }
 }

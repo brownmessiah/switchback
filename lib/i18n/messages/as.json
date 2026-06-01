@@ -112,7 +112,8 @@
       "cashoutOption": "5–7 কৰ্মদিৱসত আপোনাৰ মূল পৰিশোধ পদ্ধতিলৈ নগদ উলিয়াওক, বা পৰৱৰ্তী বুকিংত ব্যৱহাৰ কৰক।",
       "outversCredit": "Outvers ক্ৰেডিট",
       "creditHint": "প্ৰম'চনেল ক্ৰেডিট — যিকোনো বুকিংত ব্যৱহাৰ কৰক",
-      "creditExpiry": "{date} তাৰিখে মেয়াদ উকলিব"
+      "creditExpiry": "{date} তাৰিখে মেয়াদ উকলিব",
+      "viewWallet": "ৱালেট চাওক"
     },
     "bookings": {
       "empty": "এতিয়ালৈকে কোনো বুকিং নাই",
@@ -815,5 +816,34 @@
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
     }
+  },
+  "WalletPage": {
+    "title": "ৱালেট",
+    "subtitle": "আপোনাৰ Outvers ক্ৰেডিট আৰু ৰিফাণ্ড বেলেন্স, সম্পূৰ্ণ লেনদেনৰ ইতিহাসৰ সৈতে।",
+    "backToDashboard": "ডেশবৰ্ডলৈ উভতি যাওক",
+    "outversCredit": "Outvers ক্ৰেডিট",
+    "outversCreditHint": "প্ৰমোচনেল ক্ৰেডিট — যিকোনো বুকিঙত ব্যৱহাৰ কৰক। কেতিয়াও নগদ কৰিব নোৱাৰি।",
+    "refundBalance": "ৰিফাণ্ড বেলেন্স",
+    "refundBalanceHint": "বাতিল আৰু ৰিফাণ্ডৰ পৰা। আপোনাৰ পৰৱৰ্তী বুকিঙত খৰচ কৰক, বা কেশ আউট কৰক।",
+    "creditExpiry": "নিকটতম ক্ৰেডিট {date} তাৰিখে শেষ হয়",
+    "cashOut": "কেশ আউট",
+    "cashOutInfo": "আপোনাৰ মূল পৰিশোধ পদ্ধতিলৈ 5–7 কৰ্মদিৱসত কেশ আউট কৰক। এই বিকল্পটো সোনকালে আহিব — এতিয়ালৈ, আপোনাৰ ৰিফাণ্ড বেলেন্স চেকআউটত স্বয়ংক্ৰিয়ভাৱে প্ৰযোজ্য হয়।",
+    "ledgerTitle": "লেনদেনৰ ইতিহাস",
+    "ledgerEmpty": "এতিয়ালৈকে কোনো ৱালেট লেনদেন নাই।",
+    "colDate": "তাৰিখ",
+    "colBucket": "বাকেট",
+    "colSource": "উৎস",
+    "colAmount": "পৰিমাণ",
+    "credit": "ক্ৰেডিট",
+    "debit": "ডেবিট",
+    "page": "পৃষ্ঠা {page}/{totalPages}",
+    "previous": "পূৰ্বৱৰ্তী",
+    "next": "পৰৱৰ্তী",
+    "sourcePromo": "প্ৰমো",
+    "sourceReferral": "ৰেফাৰেল",
+    "sourceRefund": "ৰিফাণ্ড",
+    "sourceAdmin": "সমন্বয়",
+    "sourceCheckoutDeduction": "চেকআউট",
+    "sourceExpiry": "ম্যাদ"
   }
 }

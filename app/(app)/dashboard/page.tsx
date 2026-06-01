@@ -339,6 +339,17 @@ export default async function CustomerDashboardPage() {
               ) : null}
             </CardContent>
           </Card>
+
+          {/* Deep link to the dedicated /wallet page (issue 09) — full
+              two-bucket balances + the paginated transaction ledger. */}
+          <Link
+            data-testid="dashboard-view-wallet-link"
+            href="/wallet"
+            className="inline-flex items-center gap-1 text-sm font-medium text-primary-strong underline-offset-4 hover:underline"
+          >
+            {t('wallet.viewWallet')}
+            <ArrowRight className="size-4" aria-hidden />
+          </Link>
         </aside>
       </div>
     </main>

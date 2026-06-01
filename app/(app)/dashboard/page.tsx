@@ -66,6 +66,29 @@ const FALLBACK_PRESENTATION: StatusPresentation = {
 // remaining 75% so a Customer with a reserved Booking sees what's still owed.
 const PARTIAL_PAY_ADVANCE_SHARE = 0.25
 
+// Upcoming-first ordering (Direction B): future slots ascending (soonest next),
+// then past slots descending (most recent first). Extracted to a module-scope
+// helper so the request-time read (Date.now()) lives OUTSIDE the Server
+// Component's render body — calling it inline trips react-hooks/purity, which
+// (correctly) forbids impure calls during render. In-memory on the page's own
+// rows; no change to lib/bookings or money logic.
+function sortBookingsUpcomingFirst<T extends { slotStartAt: Date | string }>(
+  rows: readonly T[],
+): Array<T & { isUpcoming: boolean }> {
+  const now = Date.now()
+  return rows
+    .map((r) => ({
+      ...r,
+      isUpcoming: new Date(r.slotStartAt).getTime() >= now,
+    }))
+    .sort((a, b) => {
+      const aStart = new Date(a.slotStartAt).getTime()
+      const bStart = new Date(b.slotStartAt).getTime()
+      if (a.isUpcoming !== b.isUpcoming) return a.isUpcoming ? -1 : 1
+      return a.isUpcoming ? aStart - bStart : bStart - aStart
+    })
+}
+
 export default async function CustomerDashboardPage() {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) redirect('/sign-in')
@@ -94,18 +117,7 @@ export default async function CustomerDashboardPage() {
     .where(eq(bookings.customerUserId, userId))
     .orderBy(bookings.createdAt)
 
-  // Upcoming-first ordering (Direction B): future slots ascending (soonest
-  // next), then past slots descending (most recent first). Done in-memory on
-  // the page's own rows — no change to lib/bookings or money logic.
-  const now = Date.now()
-  const sortedBookings = [...userBookings].sort((a, b) => {
-    const aStart = new Date(a.slotStartAt).getTime()
-    const bStart = new Date(b.slotStartAt).getTime()
-    const aUpcoming = aStart >= now
-    const bUpcoming = bStart >= now
-    if (aUpcoming !== bUpcoming) return aUpcoming ? -1 : 1
-    return aUpcoming ? aStart - bStart : bStart - aStart
-  })
+  const sortedBookings = sortBookingsUpcomingFirst(userBookings)
 
   const walletRows = await db
     .select({
@@ -175,7 +187,7 @@ export default async function CustomerDashboardPage() {
                 const StatusIcon = presentation.Icon
                 const gross = Math.floor(Number(b.gross ?? 0))
                 const isCancellable = b.state === 'confirmed'
-                const isUpcoming = new Date(b.slotStartAt).getTime() >= now
+                const isUpcoming = b.isUpcoming
                 // 75% balance still owed on a partial-pay Booking (ADR-0001).
                 const balanceDue =
                   b.paymentMode === 'partial_pay' &&

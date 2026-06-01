@@ -29,6 +29,7 @@ import { eq, inArray } from 'drizzle-orm'
 
 import { db } from './client'
 import { seedCatalog } from './seed-extras'
+import { seedTripGroups } from './seed-trip-groups'
 import {
   adminProfiles,
   availabilitySlots,
@@ -1947,6 +1948,11 @@ async function seed(): Promise<void> {
   // entities + archives the four published admin-fixtures. See db/seed-extras.ts.
   await seedCatalog(db)
   console.warn('seeded catalog enrichment (image-rich demo data)')
+
+  // ----- TRIP GROUPS (issue #20 / ADR-0009) -----
+  // Isolation-safe demo groups for /community (dedicated fixture users).
+  await seedTripGroups(db)
+  console.warn('seeded trip groups (community demo data)')
 }
 
 seed()

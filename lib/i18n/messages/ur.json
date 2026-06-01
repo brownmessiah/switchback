@@ -468,8 +468,8 @@
       "paragliding": "پیراگلائیڈنگ",
       "scubaDiving": "سکوبا ڈائیونگ",
       "support": "سپورٹ",
-      "helpCentre": "مدد مرکز (جلد)",
-      "contactUs": "ہم سے رابطہ کریں (جلد)",
+      "helpCentre": "مدد مرکز",
+      "contactUs": "ہم سے رابطہ کریں",
       "forVendors": "وینڈرز کے لیے",
       "listYourExperience": "اپنا تجربہ درج کریں",
       "vendorDashboard": "وینڈر ڈیش بورڈ",
@@ -600,6 +600,93 @@
       "body": "{email} پر ہم سے رابطہ کریں۔ اگر آپ ایڈونچر تجربات چلاتے ہیں اور انہیں فہرست میں شامل کرنا چاہتے ہیں، تو وینڈر آن بورڈنگ سے شروع کریں۔",
       "emailAddress": "support@outvers.com",
       "vendorCta": "اپنا تجربہ فہرست میں شامل کریں"
+    }
+  },
+  "HelpPage": {
+    "metadata": {
+      "title": "مدد مرکز · Outvers",
+      "description": "Outvers پر مہم جوئی کے Experiences بک کرنے کے بارے میں عام سوالات کے جوابات — Partial pay، Cancellation policy پری سیٹس، آپ کا دو-بکٹ Wallet، KYC-تصدیق شدہ Vendors، مطلوبہ اجازت نامے، اور Safety stack۔"
+    },
+    "breadcrumb": {
+      "help": "مدد مرکز"
+    },
+    "hero": {
+      "title": "ہم کیسے مدد کر سکتے ہیں؟",
+      "description": "Customers سب سے زیادہ جو سوالات پوچھتے ہیں ان کے جوابات — بکنگ، ادائیگی، رقم کی واپسی، آپ کا Wallet، Vendor کی تصدیق، اور Outvers پر حفاظت کے بارے میں۔"
+    },
+    "faq": {
+      "whatIsOutvers": {
+        "question": "Outvers کیا ہے؟",
+        "answer": "Outvers ایک بھارتی مہم جوئی-سرگرمی مارکیٹ پلیس ہے؛ یہاں آپ آزاد Vendors کے چلائے ہوئے Experiences — ریفٹنگ، پیراگلائیڈنگ، ٹریک وغیرہ — بک کرتے ہیں۔ ہر Vendor KYC-تصدیق شدہ ہوتا ہے، ہر Experience ایک واضح Cancellation policy دکھاتا ہے، اور جگہ ہونے پر ہی بک کرنے کے لیے slot کی دستیابی حقیقی وقت میں دکھائی جاتی ہے۔"
+      },
+      "howToBook": {
+        "question": "میں ایک Experience کیسے بک کروں؟",
+        "answer": "Experience کا صفحہ کھولیں، دستیاب slot اور شرکاء کی تعداد منتخب کریں، پھر checkout پر جائیں۔ آپ کی فی کس قیمت آپ کے گروپ کے Group-size bracket (1-2، 3-5، یا 6+) کے مطابق ہوتی ہے۔ آپ Razorpay کے ذریعے ادائیگی کر کے تصدیق کرتے ہیں؛ ادائیگی کیپچر ہوتے ہی آپ کی Booking پکی ہو جاتی ہے۔"
+      },
+      "partialPay": {
+        "question": "کیا پوری رقم پہلے ہی ادا کرنی پڑتی ہے؟",
+        "answer": "48 گھنٹے یا اس سے زیادہ دور اور Rs.25,000 تک کی زیادہ تر Bookings ڈیفالٹ طور پر Partial pay میں ہوتی ہیں: بکنگ کے وقت Outvers 25% Advance کیپچر کرتا ہے، باقی 75% Experience شروع ہونے سے 24 گھنٹے پہلے خود بخود کیپچر ہو جاتی ہے۔ درست Advance اور باقی رقم ادائیگی سے پہلے checkout کے صفحے پر دکھائی جاتی ہے۔"
+      },
+      "cancellation": {
+        "question": "کیا میں منسوخ کر سکتا/سکتی ہوں، کتنا واپس ملے گا؟",
+        "answer": "ہر Experience تین Cancellation policy پری سیٹس میں سے ایک استعمال کرتا ہے — Flexible، Moderate، یا Strict — Vendor منتخب کرتا ہے اور بکنگ کے وقت آپ کی Booking پر لاک ہو جاتا ہے۔ کتنا واپس ملے گا اس کا انحصار اس پر ہے کہ آپ آغاز کے وقت سے کتنا پہلے منسوخ کرتے ہیں۔ درست عدد Experience کے صفحے اور آپ کی بکنگ تصدیق میں ہوتا ہے؛ ہمارے cancellation policy کے صفحے پر موجود refund calculator سے اس کا پیش منظر دیکھ سکتے ہیں۔"
+      },
+      "refundBalance": {
+        "question": "میری رقم کی واپسی کہاں جاتی ہے، کیا نقد واپس مل سکتا ہے؟",
+        "answer": "پالیسی-اندرونی منسوخی بغیر کسی انسانی جائزے کے آپ کے Refund balance میں خود بخود جمع ہو جاتی ہے، عام طور پر 24-48 گھنٹوں میں۔ آپ کا Refund balance ڈیفالٹ طور پر ایک Wallet کریڈٹ ہے؛ اسے اگلی Booking پر خرچ کر سکتے ہیں، لیکن درخواست پر آپ کے اصل ادائیگی طریقے میں نقد واپس لے سکتے ہیں — 5-7 کاروباری دنوں کی Razorpay راؤنڈ-ٹرپ۔"
+      },
+      "walletBuckets": {
+        "question": "Outvers credit اور Refund balance میں کیا فرق ہے؟",
+        "answer": "آپ کا Wallet دو الگ بکٹ رکھتا ہے۔ Outvers credit ریفرل، تہوار پرومو، وفاداری انعامات سے آنے والی پروموشنل بیلنس ہے — صرف Outvers Bookings پر خرچ ہو سکتی ہے، کبھی نقد نہیں، جاری ہونے کے 12-18 ماہ میں ختم ہو جاتی ہے۔ Refund balance آپ کی جمع شدہ واپسیاں ہیں؛ انہیں Bookings پر خرچ کر سکتے ہیں یا اپنے بینک میں نقد نکال سکتے ہیں۔"
+      },
+      "vendorVerification": {
+        "question": "کیسے پتہ چلے کہ کوئی Vendor قابل اعتماد ہے؟",
+        "answer": "ہر Vendor لین دین سے پہلے KYC مکمل کرتا ہے۔ ایک Identity verified Vendor نے Aadhaar اور PAN جانچ مکمل کی ہے؛ ایک Business verified Vendor نے اس کے علاوہ ویڈیو کال، GSTIN یا خود-اعلان، اور زمرہ-متعلقہ گائیڈ سرٹیفکیشن مکمل کی ہے۔ ہر Vendor کا تصدیقی بیج اور Response-time SLA score اس کی پروفائل پر دکھایا جاتا ہے۔"
+      },
+      "permits": {
+        "question": "کیا کچھ Experiences کے لیے اجازت نامہ درکار ہے؟",
+        "answer": "کچھ Experiences اجازت-محدود ہوتے ہیں؛ ان کے لیے ایک Required permit درکار ہے — مثلاً Inner Line Permit یا جنگلی حیات-علاقے میں داخلہ۔ Outvers اس ضرورت کو Experience کے صفحے پر دکھاتا ہے اور سرکاری عمل سے آپ کو منسلک کرتا ہے۔ v1 میں آپ خود اجازت نامہ حاصل کرتے ہیں؛ Outvers آپ کی طرف سے اجازت نامے حاصل نہیں کرتا۔"
+      },
+      "safetyStack": {
+        "question": "Outvers کون سی حفاظتی خصوصیات دیتا ہے؟",
+        "answer": "جن کے لیے فلیگ کیا گیا ہے وہ Experiences Safety stack استعمال کرتے ہیں: بکنگ سے پہلے آپ کا درج کردہ ایک Trusted contact، سفر کے آغاز اور اختتام پر خودکار check-in پنگ، ایک SOS بٹن، اور عارضی لائیو-مقام شیئرنگ۔ SOS ٹرگر پر Outvers آپ کے Trusted contact، Vendor اور Outvers ops کو WhatsApp اور SMS کے ذریعے مطلع کرتا ہے — Outvers مطلع کرتا ہے، بھیجتا نہیں۔"
+      }
+    },
+    "stillStuck": {
+      "title": "کیا اب بھی مدد چاہیے؟",
+      "body": "اگر آپ کے سوال کا جواب یہاں نہیں ہے، تو ہمیں ایک پیغام بھیجیں، Outvers سپورٹ ٹیم آپ سے رابطہ کرے گی۔",
+      "cta": "ہم سے رابطہ کریں"
+    }
+  },
+  "ContactPage": {
+    "metadata": {
+      "title": "ہم سے رابطہ کریں · Outvers",
+      "description": "Outvers سپورٹ ٹیم سے رابطہ کریں۔ کسی Booking، ادائیگی، Experience یا کسی اور چیز کے بارے میں ہمیں ایک پیغام بھیجیں، ہم رابطہ کریں گے۔"
+    },
+    "breadcrumb": {
+      "contact": "ہم سے رابطہ کریں"
+    },
+    "hero": {
+      "title": "ہم سے رابطہ کریں",
+      "description": "کسی Booking، رقم کی واپسی یا Experience کے بارے میں سوال ہے؟ ہمیں ایک پیغام بھیجیں، Outvers سپورٹ ٹیم ای میل کے ذریعے آپ سے رابطہ کرے گی۔"
+    },
+    "helpHint": "بہت سے سوالات کے جوابات ہمارے",
+    "helpHintLink": "مدد مرکز پر موجود ہیں",
+    "form": {
+      "nameLabel": "آپ کا نام",
+      "emailLabel": "ای میل پتہ",
+      "subjectLabel": "موضوع",
+      "messageLabel": "پیغام",
+      "submit": "پیغام بھیجیں",
+      "submitting": "بھیجا جا رہا ہے…",
+      "successTitle": "شکریہ — ہم رابطہ کریں گے",
+      "successBody": "آپ کا پیغام Outvers سپورٹ ٹیم تک پہنچ گیا ہے۔ آپ نے جو ای میل پتہ دیا ہے اس پر ہم جواب دیں گے۔",
+      "errors": {
+        "name": "براہ کرم اپنا نام درج کریں۔",
+        "email": "براہ کرم ایک درست ای میل پتہ درج کریں۔",
+        "subject": "براہ کرم ایک موضوع درج کریں۔",
+        "message": "براہ کرم کم از کم 10 حروف کا پیغام درج کریں۔"
+      }
     }
   }
 }

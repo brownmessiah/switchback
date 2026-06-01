@@ -552,8 +552,8 @@
       "scubaDiving": "Scuba diving",
       "support": "Support",
       "safety": "Safety & trust",
-      "helpCentre": "Help centre (soon)",
-      "contactUs": "Contact us (soon)",
+      "helpCentre": "Help centre",
+      "contactUs": "Contact us",
       "about": "About Outvers",
       "forVendors": "For Vendors",
       "listYourExperience": "List your experience",
@@ -600,6 +600,93 @@
       "by": "By {author}",
       "defaultAuthor": "Outvers Editorial",
       "backToBlog": "← Back to the blog"
+    }
+  },
+  "HelpPage": {
+    "metadata": {
+      "title": "Help centre · Outvers",
+      "description": "Answers to common questions about booking adventure Experiences on Outvers — Partial pay, the Cancellation policy presets, your two-bucket Wallet, KYC-verified Vendors, Required permits, and the Safety stack."
+    },
+    "breadcrumb": {
+      "help": "Help centre"
+    },
+    "hero": {
+      "title": "How can we help?",
+      "description": "Answers to the questions Customers ask most — about booking, payments, refunds, your Wallet, Vendor verification, and safety on Outvers."
+    },
+    "faq": {
+      "whatIsOutvers": {
+        "question": "What is Outvers?",
+        "answer": "Outvers is an Indian adventure-activity marketplace where you book Experiences — rafting, paragliding, treks and more — run by independent Vendors. Every Vendor is KYC-verified, every Experience shows a clear Cancellation policy, and slot availability is real-time so you only ever book a slot that still has room."
+      },
+      "howToBook": {
+        "question": "How do I book an Experience?",
+        "answer": "Open the Experience page, pick an available slot and your participant count, then continue to checkout. Your per-person price follows the Group-size bracket (1-2, 3-5, or 6+) for your party. You confirm and pay with Razorpay; your Booking is confirmed the moment payment is captured."
+      },
+      "partialPay": {
+        "question": "Do I have to pay the full amount upfront?",
+        "answer": "Most Bookings 48 hours or more away and up to Rs.25,000 default to Partial pay: Outvers captures a 25% Advance when you book, and the remaining 75% is auto-captured 24 hours before the Experience starts. The exact Advance and balance are shown on the checkout page before you pay."
+      },
+      "cancellation": {
+        "question": "Can I cancel, and how much do I get back?",
+        "answer": "Each Experience uses one of three Cancellation policy presets — Flexible, Moderate, or Strict — chosen by the Vendor and locked onto your Booking when you book. How much is refundable depends on how far ahead of the start time you cancel. The exact figure is on the Experience page and in your booking confirmation, and you can preview it with the refund calculator on our cancellation policy page."
+      },
+      "refundBalance": {
+        "question": "Where does my refund go, and can I get cash back?",
+        "answer": "An inside-policy cancellation auto-credits your Refund balance with no human review, usually within 24-48 hours. Your Refund balance defaults to a Wallet credit you can spend on your next Booking, but it is cashable back to your original payment method on request — a 5-7 working-day Razorpay round-trip."
+      },
+      "walletBuckets": {
+        "question": "What is the difference between Outvers credit and Refund balance?",
+        "answer": "Your Wallet holds two separate buckets. Outvers credit is promotional balance from referrals, festive promos and loyalty rewards — spendable only on Outvers Bookings and never cashable, and it expires 12-18 months after it is issued. Refund balance is your accrued refunds, which you can spend on Bookings or cash out to your bank."
+      },
+      "vendorVerification": {
+        "question": "How do I know a Vendor is trustworthy?",
+        "answer": "Every Vendor passes KYC before they can transact. An Identity verified Vendor has cleared Aadhaar and PAN checks; a Business verified Vendor has additionally cleared a video call, GSTIN or self-declaration, and category-relevant guide certifications. Each Vendor's verification badge and Response-time SLA score are shown on their profile."
+      },
+      "permits": {
+        "question": "Do I need a permit for some Experiences?",
+        "answer": "Some Experiences are permit-gated and need a Required permit — for example an Inner Line Permit or a wildlife-area entry. Outvers surfaces the requirement on the Experience page and links you to the official process. In v1 you obtain the permit yourself; Outvers does not obtain permits on your behalf."
+      },
+      "safetyStack": {
+        "question": "What safety features does Outvers offer?",
+        "answer": "Experiences flagged for it use the Safety stack: a Trusted contact you record before booking, automated check-in pings at trip start and end, an SOS button, and ephemeral live-location sharing. On an SOS trigger, Outvers notifies your Trusted contact, the Vendor, and Outvers ops by WhatsApp and SMS — Outvers notifies, it does not dispatch."
+      }
+    },
+    "stillStuck": {
+      "title": "Still need a hand?",
+      "body": "If your question is not answered here, send us a message and the Outvers support team will get back to you.",
+      "cta": "Contact us"
+    }
+  },
+  "ContactPage": {
+    "metadata": {
+      "title": "Contact us · Outvers",
+      "description": "Get in touch with the Outvers support team. Send us a message about a Booking, a payment, an Experience, or anything else and we will be in touch."
+    },
+    "breadcrumb": {
+      "contact": "Contact us"
+    },
+    "hero": {
+      "title": "Contact us",
+      "description": "Have a question about a Booking, a refund, or an Experience? Send us a message and the Outvers support team will get back to you by email."
+    },
+    "helpHint": "Many questions are answered on our",
+    "helpHintLink": "help centre",
+    "form": {
+      "nameLabel": "Your name",
+      "emailLabel": "Email address",
+      "subjectLabel": "Subject",
+      "messageLabel": "Message",
+      "submit": "Send message",
+      "submitting": "Sending…",
+      "successTitle": "Thanks — we'll be in touch",
+      "successBody": "Your message has reached the Outvers support team. We'll reply to the email address you gave us.",
+      "errors": {
+        "name": "Please enter your name.",
+        "email": "Please enter a valid email address.",
+        "subject": "Please enter a subject.",
+        "message": "Please enter a message of at least 10 characters."
+      }
     }
   }
 }

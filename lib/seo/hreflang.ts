@@ -23,6 +23,8 @@ export const PUBLIC_ROUTES: readonly string[] = [
   '/cancellation-policy',
   '/safety',
   '/about',
+  '/help',
+  '/contact',
   '/adventure/[slug]',
   '/experience/[slug]',
   '/vendor/[slug]',

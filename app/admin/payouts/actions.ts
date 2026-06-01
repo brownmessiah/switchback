@@ -12,6 +12,11 @@ import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { auth } from '@/lib/auth'
 import { hasAdminPermission } from '@/lib/auth/permissions'
 import { writeAuditLog } from '@/lib/audit/write'
+import {
+  notifyPayoutStateChange,
+  safeNotify,
+  type PayoutNotifyState,
+} from '@/lib/notifications/booking-events'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
 // ── Result types ────────────────────────────────────────────────────
@@ -77,6 +82,35 @@ async function resolveVendorForBooking(
     .limit(1)
 
   return row ?? null
+}
+
+// ── Fire-and-forget vendor payout notification (post-commit) ───────
+//
+// Runs AFTER the payout state transition + audit row have committed.
+// Wrapped in safeNotify so a notification failure can never fail the
+// payout state change. The payout-core (state transition,
+// manualPayoutsRemaining decrement, audit) is untouched. An optional
+// already-resolved vendorUserId avoids a second lookup when the caller
+// already has it.
+async function notifyVendorPayout(
+  db: DBOrTx,
+  args: {
+    bookingId: string
+    state: PayoutNotifyState
+    vendorUserId?: string
+  },
+): Promise<void> {
+  await safeNotify(`payout_${args.state}`, async () => {
+    const vendorUserId =
+      args.vendorUserId ??
+      (await resolveVendorForBooking(db, args.bookingId))?.vendorUserId
+    if (!vendorUserId) return
+    await notifyPayoutStateChange(db, {
+      bookingId: args.bookingId,
+      vendorUserId,
+      state: args.state,
+    })
+  })
 }
 
 // ── Core testable functions ────────────────────────────────────────
@@ -158,6 +192,12 @@ export async function executeApprovePayout(
     },
   })
 
+  await notifyVendorPayout(db, {
+    bookingId,
+    state: 'approved',
+    vendorUserId: vendor?.vendorUserId,
+  })
+
   return { ok: true }
 }
 
@@ -216,6 +256,8 @@ export async function executeHoldPayout(
       reason,
     },
   })
+
+  await notifyVendorPayout(db, { bookingId, state: 'held' })
 
   return { ok: true }
 }
@@ -279,6 +321,8 @@ export async function executeRejectPayout(
       reason,
     },
   })
+
+  await notifyVendorPayout(db, { bookingId, state: 'rejected' })
 
   return { ok: true }
 }

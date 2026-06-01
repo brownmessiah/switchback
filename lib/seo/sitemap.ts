@@ -17,6 +17,7 @@ export const STATIC_PUBLIC_PATHS: readonly string[] = [
   '/search',
   '/sign-in',
   '/cancellation-policy',
+  '/trip-planner',
 ] as const
 
 /** Returns the site's base URL from env, without trailing slash. */
@@ -63,6 +64,7 @@ const PRIORITY_MAP: Record<string, number> = {
   '/search': 0.8,
   '/sign-in': 0.3,
   '/cancellation-policy': 0.5,
+  '/trip-planner': 0.7,
 }
 
 /** Change frequency map for different route types. */
@@ -71,6 +73,7 @@ const FREQUENCY_MAP: Record<string, SitemapEntry['changeFrequency']> = {
   '/search': 'daily',
   '/sign-in': 'monthly',
   '/cancellation-policy': 'monthly',
+  '/trip-planner': 'weekly',
 }
 
 /**

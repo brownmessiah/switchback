@@ -21,6 +21,7 @@ export const PUBLIC_ROUTES: readonly string[] = [
   '/search',
   '/sign-in',
   '/cancellation-policy',
+  '/trip-planner',
   '/adventure/[slug]',
   '/experience/[slug]',
   '/vendor/[slug]',

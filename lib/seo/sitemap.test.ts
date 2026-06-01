@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
+import { listRegions } from '@/lib/regions/registry'
+
 import {
+  generateDestinationSitemapUrls,
   generateSitemapUrls,
   getSiteUrl,
   STATIC_PUBLIC_PATHS,
@@ -20,11 +23,39 @@ describe('getSiteUrl', () => {
 })
 
 describe('STATIC_PUBLIC_PATHS', () => {
-  it('includes home, search, sign-in, cancellation-policy', () => {
+  it('includes home, search, destinations, sign-in, cancellation-policy', () => {
     expect(STATIC_PUBLIC_PATHS).toContain('/')
     expect(STATIC_PUBLIC_PATHS).toContain('/search')
+    expect(STATIC_PUBLIC_PATHS).toContain('/destinations')
     expect(STATIC_PUBLIC_PATHS).toContain('/sign-in')
     expect(STATIC_PUBLIC_PATHS).toContain('/cancellation-policy')
+  })
+})
+
+describe('generateDestinationSitemapUrls', () => {
+  it('emits one entry per region in the registry', () => {
+    const urls = generateDestinationSitemapUrls('en')
+    expect(urls).toHaveLength(listRegions().length)
+  })
+
+  it('includes the goa region landing without locale prefix for en', () => {
+    const urlStrings = generateDestinationSitemapUrls('en').map((u) => u.url)
+    const siteUrl = getSiteUrl()
+    expect(urlStrings).toContain(`${siteUrl}/destinations/goa`)
+  })
+
+  it('prefixes non-default locales with /{locale}/', () => {
+    const urlStrings = generateDestinationSitemapUrls('hi').map((u) => u.url)
+    const siteUrl = getSiteUrl()
+    expect(urlStrings).toContain(`${siteUrl}/hi/destinations/goa`)
+  })
+
+  it('emits absolute URLs with a lastModified date and priority', () => {
+    for (const entry of generateDestinationSitemapUrls('en')) {
+      expect(entry.url).toMatch(/^https?:\/\//)
+      expect(entry.lastModified).toBeInstanceOf(Date)
+      expect(entry.priority).toBeGreaterThan(0)
+    }
   })
 })
 

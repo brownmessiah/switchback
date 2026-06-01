@@ -13,7 +13,12 @@ import { NextResponse } from 'next/server'
 
 import { db } from '@/db/client'
 import { listPublishedBlogPostsForSitemap } from '@/lib/blog/queries'
-import { buildSitemapEntry, generateSitemapUrls, type SitemapEntry } from '@/lib/seo/sitemap'
+import {
+  buildSitemapEntry,
+  generateDestinationSitemapUrls,
+  generateSitemapUrls,
+  type SitemapEntry,
+} from '@/lib/seo/sitemap'
 
 export async function GET(
   _request: Request,
@@ -21,13 +26,18 @@ export async function GET(
 ): Promise<NextResponse> {
   const { locale } = await props.params
 
-  // Static public paths + dynamic (DB-sourced) published blog posts. Other
-  // dynamic families (experiences/destinations/activities) land in #13.
+  // Static public paths + region landings (/destinations/{slug}) + dynamic
+  // (DB-sourced) published blog posts. Other dynamic families
+  // (experiences/activities) land in #13.
   const blogPosts = await listPublishedBlogPostsForSitemap(db)
   const blogEntries: SitemapEntry[] = blogPosts.map((p) =>
     buildSitemapEntry(`/blog/${p.slug}`, locale, p.lastModified, 'weekly', 0.5),
   )
-  const entries = [...generateSitemapUrls(locale), ...blogEntries]
+  const entries = [
+    ...generateSitemapUrls(locale),
+    ...generateDestinationSitemapUrls(locale),
+    ...blogEntries,
+  ]
 
   const urls = entries
     .map(

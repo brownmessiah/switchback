@@ -19,6 +19,7 @@ import { DEFAULT_LOCALE, LAUNCH_LOCALES } from '@/lib/i18n/config'
 export const PUBLIC_ROUTES: readonly string[] = [
   '/',
   '/search',
+  '/destinations',
   '/sign-in',
   '/cancellation-policy',
   '/safety',
@@ -26,6 +27,7 @@ export const PUBLIC_ROUTES: readonly string[] = [
   '/help',
   '/contact',
   '/adventure/[slug]',
+  '/destinations/[slug]',
   '/experience/[slug]',
   '/vendor/[slug]',
 ] as const

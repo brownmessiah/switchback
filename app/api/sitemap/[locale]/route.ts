@@ -16,9 +16,12 @@ import { listPublishedBlogPostsForSitemap } from '@/lib/blog/queries'
 import {
   buildSitemapEntry,
   generateActivityLandingUrls,
+  generateAdventureSitemapUrls,
   generateCategoryLandingUrls,
   generateDestinationSitemapUrls,
+  generateExperienceSitemapUrls,
   generateSitemapUrls,
+  generateVendorSitemapUrls,
   type SitemapEntry,
 } from '@/lib/seo/sitemap'
 
@@ -28,20 +31,30 @@ export async function GET(
 ): Promise<NextResponse> {
   const { locale } = await props.params
 
-  // Static public paths + region landings (/destinations/{slug}) +
-  // cross-region activity landings (/activities/{slug}) + category rollups
-  // (/category/{slug}) + dynamic (DB-sourced) published blog posts.
-  // Remaining dynamic families (experiences) land in #13.
-  const blogPosts = await listPublishedBlogPostsForSitemap(db)
+  // The per-locale sitemap is the UNION of the static public paths, the
+  // registry-driven landings (destinations / activities / categories), and the
+  // DB-driven dynamic families (published blog posts, experiences, adventure
+  // collections, vendor storefronts).
+  const [blogPosts, experienceEntries, adventureEntries, vendorEntries] =
+    await Promise.all([
+      listPublishedBlogPostsForSitemap(db),
+      generateExperienceSitemapUrls(db, locale),
+      generateAdventureSitemapUrls(db, locale),
+      generateVendorSitemapUrls(db, locale),
+    ])
   const blogEntries: SitemapEntry[] = blogPosts.map((p) =>
     buildSitemapEntry(`/blog/${p.slug}`, locale, p.lastModified, 'weekly', 0.5),
   )
-  const entries = [
+
+  const entries: readonly SitemapEntry[] = [
     ...generateSitemapUrls(locale),
     ...generateDestinationSitemapUrls(locale),
     ...generateActivityLandingUrls(locale),
     ...generateCategoryLandingUrls(locale),
     ...blogEntries,
+    ...experienceEntries,
+    ...adventureEntries,
+    ...vendorEntries,
   ]
 
   const urls = entries

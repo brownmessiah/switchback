@@ -9,10 +9,15 @@
  * - Uses LAUNCH_LOCALES so future locales are included automatically
  */
 
-import { listActivities } from '@/lib/activities/registry'
+import { and, eq } from 'drizzle-orm'
+
+import { experiences } from '@/db/schema/experiences'
+import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { listCategories } from '@/lib/activities/queries'
+import { isActivitySlug, listActivities } from '@/lib/activities/registry'
 import { DEFAULT_LOCALE, LAUNCH_LOCALES } from '@/lib/i18n/config'
-import { listRegions } from '@/lib/regions/registry'
+import type { DBOrTx } from '@/lib/payments/commission-resolver'
+import { isRegionSlug, listRegions } from '@/lib/regions/registry'
 
 /** Static public paths that appear in every locale's sitemap. */
 export const STATIC_PUBLIC_PATHS: readonly string[] = [
@@ -107,8 +112,8 @@ export function buildSitemapEntry(
  * Generate sitemap entries for all static public routes in a given locale.
  *
  * Dynamic routes (adventure/[slug], experience/[slug], vendor/[slug]) are
- * not included here — they require DB queries and are added by the sitemap
- * route handler at build/request time.
+ * generated separately by the DB-driven helpers below and unioned in by
+ * the per-locale sitemap route handler at request time.
  *
  * @param locale - The locale code (e.g. 'en', 'hi', 'ta')
  * @returns Array of sitemap entries with absolute URLs
@@ -116,12 +121,117 @@ export function buildSitemapEntry(
 export function generateSitemapUrls(locale: string): readonly SitemapEntry[] {
   const now = new Date()
 
-  return STATIC_PUBLIC_PATHS.map((path) => ({
-    url: absoluteUrl(path, locale),
-    lastModified: now,
-    changeFrequency: FREQUENCY_MAP[path] ?? ('weekly' as const),
-    priority: PRIORITY_MAP[path] ?? 0.5,
-  }))
+  return STATIC_PUBLIC_PATHS.map((path) =>
+    buildSitemapEntry(
+      path,
+      locale,
+      now,
+      FREQUENCY_MAP[path] ?? 'weekly',
+      PRIORITY_MAP[path] ?? 0.5,
+    ),
+  )
+}
+
+/** Priority / frequency for the dynamic route families. */
+const EXPERIENCE_PRIORITY = 0.7
+const ADVENTURE_PRIORITY = 0.6
+const VENDOR_PRIORITY = 0.5
+
+/**
+ * Generate sitemap entries for every published Experience detail page
+ * (`/experience/{slug}`) in the given locale.
+ *
+ * Only `status = 'published'` experiences are emitted; lastModified is
+ * the experience's `updatedAt`.
+ */
+export async function generateExperienceSitemapUrls(
+  db: DBOrTx,
+  locale: string,
+): Promise<SitemapEntry[]> {
+  const rows = await db
+    .select({ slug: experiences.slug, updatedAt: experiences.updatedAt })
+    .from(experiences)
+    .where(eq(experiences.status, 'published'))
+
+  return rows.map((row) =>
+    buildSitemapEntry(
+      `/experience/${row.slug}`,
+      locale,
+      row.updatedAt,
+      'weekly',
+      EXPERIENCE_PRIORITY,
+    ),
+  )
+}
+
+/**
+ * Generate sitemap entries for every activity-city collection page
+ * (`/adventure/{activity}-in-{region}`) that has at least one published
+ * Experience AND whose (activitySlug, regionSlug) pair is registry-valid.
+ *
+ * Empty or off-registry collections are skipped — empty collection pages
+ * hurt SEO (per the region/activity registry comments).
+ */
+export async function generateAdventureSitemapUrls(
+  db: DBOrTx,
+  locale: string,
+): Promise<SitemapEntry[]> {
+  const rows = await db
+    .selectDistinct({
+      activitySlug: experiences.activitySlug,
+      regionSlug: experiences.regionSlug,
+    })
+    .from(experiences)
+    .where(eq(experiences.status, 'published'))
+
+  const entries: SitemapEntry[] = []
+  for (const row of rows) {
+    if (!isActivitySlug(row.activitySlug)) continue
+    if (!isRegionSlug(row.regionSlug)) continue
+    entries.push(
+      buildSitemapEntry(
+        `/adventure/${row.activitySlug}-in-${row.regionSlug}`,
+        locale,
+        new Date(),
+        'weekly',
+        ADVENTURE_PRIORITY,
+      ),
+    )
+  }
+  return entries
+}
+
+/**
+ * Generate sitemap entries for every public vendor storefront
+ * (`/vendor/{slug}`) that has at least one published Experience.
+ *
+ * Vendors with no published catalogue are skipped — their storefront is
+ * effectively empty and should not be advertised to crawlers.
+ */
+export async function generateVendorSitemapUrls(
+  db: DBOrTx,
+  locale: string,
+): Promise<SitemapEntry[]> {
+  const rows = await db
+    .selectDistinct({ slug: vendorProfiles.slug })
+    .from(vendorProfiles)
+    .innerJoin(
+      experiences,
+      and(
+        eq(experiences.vendorUserId, vendorProfiles.userId),
+        eq(experiences.status, 'published'),
+      ),
+    )
+
+  return rows.map((row) =>
+    buildSitemapEntry(
+      `/vendor/${row.slug}`,
+      locale,
+      new Date(),
+      'weekly',
+      VENDOR_PRIORITY,
+    ),
+  )
 }
 
 /**

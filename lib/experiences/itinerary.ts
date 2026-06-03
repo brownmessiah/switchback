@@ -6,6 +6,8 @@ import {
 } from '@/db/schema/experience-itinerary-steps'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
+import type { ItineraryStepInput } from './structured-schema'
+
 /**
  * Vendor-authored, per-Experience structured itinerary (ADR-0017). DISTINCT
  * from the Customer-led `trip_group_itinerary_slots` (ADR-0009) — do not
@@ -17,13 +19,13 @@ import type { DBOrTx } from '@/lib/payments/commission-resolver'
  * (same contract as the booking-create / refund-flow write helpers).
  */
 
-/** A single step to write. `stepOrder` is assigned by array index by the loader. */
-export interface ItineraryStepInput {
-  title: string
-  description?: string | null
-  dayOffset?: number | null
-  durationMinutes?: number | null
-}
+/**
+ * A single step to write. `stepOrder` is assigned by 0-based array index in
+ * `replaceItinerary`. Single source of truth is the Zod-inferred type in
+ * `structured-schema.ts` — re-exported here so callers writing the itinerary
+ * (Vendor form action, dev seed) can import it alongside the write helper.
+ */
+export type { ItineraryStepInput }
 
 /**
  * Load the steps of an Experience's itinerary, ordered by `stepOrder` ascending.

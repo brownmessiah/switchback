@@ -19,7 +19,8 @@ export const experienceItinerarySteps = pgTable(
     experienceId: uuid('experience_id')
       .references(() => experiences.id, { onDelete: 'cascade' })
       .notNull(),
-    /** 1-based position within the Experience's itinerary. Unique per Experience. */
+    /** 0-based position within the Experience's itinerary (assigned by array
+     * index in replaceItinerary). Unique per Experience. */
     stepOrder: integer('step_order').notNull(),
     title: text('title').notNull(),
     description: text('description'),

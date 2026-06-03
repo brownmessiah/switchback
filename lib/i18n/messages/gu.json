@@ -388,7 +388,43 @@
       "maxPrice": "મહત્તમ ₹",
       "anyPrice": "કોઈપણ",
       "applyFilters": "ફિલ્ટર્સ લાગુ કરો",
-      "clear": "ફિલ્ટર સાફ કરો"
+      "clear": "ફિલ્ટર સાફ કરો",
+      "difficulty": "મુશ્કેલી",
+      "allDifficulties": "કોઈપણ મુશ્કેલી",
+      "difficultyOptions": {
+        "easy": "સરળ",
+        "moderate": "મધ્યમ",
+        "challenging": "પડકારજનક",
+        "extreme": "અત્યંત"
+      },
+      "duration": "સમયગાળો",
+      "anyDuration": "કોઈપણ સમયગાળો",
+      "durationBands": {
+        "upto_3h": "3 કલાક સુધી",
+        "half_day": "અડધો દિવસ",
+        "full_day": "આખો દિવસ",
+        "multi_day": "અનેક દિવસ"
+      },
+      "durationShortLong": "સમયગાળો: ઓછાથી વધુ",
+      "durationLongShort": "સમયગાળો: વધુથી ઓછું",
+      "season": "આ મહિને ઉપલબ્ધ",
+      "anySeason": "કોઈપણ મહિનો",
+      "months": {
+        "1": "જાન્યુઆરી",
+        "2": "ફેબ્રુઆરી",
+        "3": "માર્ચ",
+        "4": "એપ્રિલ",
+        "5": "મે",
+        "6": "જૂન",
+        "7": "જુલાઈ",
+        "8": "ઓગસ્ટ",
+        "9": "સપ્ટેમ્બર",
+        "10": "ઓક્ટોબર",
+        "11": "નવેમ્બર",
+        "12": "ડિસેમ્બર"
+      },
+      "groupSize": "જૂથનું કદ",
+      "groupSizePlaceholder": "ઓછામાં ઓછા N લોકો માટે"
     },
     "activities": {
       "rafting": "રાફ્ટિંગ",

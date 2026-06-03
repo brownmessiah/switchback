@@ -346,7 +346,43 @@
       "maxPrice": "Max ₹",
       "anyPrice": "Any",
       "applyFilters": "Apply filters",
-      "clear": "Clear filters"
+      "clear": "Clear filters",
+      "difficulty": "Difficulty",
+      "allDifficulties": "Any difficulty",
+      "difficultyOptions": {
+        "easy": "Easy",
+        "moderate": "Moderate",
+        "challenging": "Challenging",
+        "extreme": "Extreme"
+      },
+      "duration": "Duration",
+      "anyDuration": "Any duration",
+      "durationBands": {
+        "upto_3h": "Up to 3 hours",
+        "half_day": "Half day",
+        "full_day": "Full day",
+        "multi_day": "Multi-day"
+      },
+      "durationShortLong": "Duration: Short to Long",
+      "durationLongShort": "Duration: Long to Short",
+      "season": "Runs in month",
+      "anySeason": "Any month",
+      "months": {
+        "1": "January",
+        "2": "February",
+        "3": "March",
+        "4": "April",
+        "5": "May",
+        "6": "June",
+        "7": "July",
+        "8": "August",
+        "9": "September",
+        "10": "October",
+        "11": "November",
+        "12": "December"
+      },
+      "groupSize": "Group size",
+      "groupSizePlaceholder": "Fits at least N people"
     },
     "activities": {
       "rafting": "Rafting",

@@ -13,8 +13,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { DURATION_BANDS } from '@/lib/search/duration-band'
 import { ACTIVITY_OPTIONS, REGION_OPTIONS } from '@/lib/search/facet-options'
 import type { SearchExperiencesParams } from '@/lib/search/search-experiences'
+
+/** ADR-0017 difficulty enum values — facet options + i18n key suffixes. */
+const DIFFICULTY_OPTIONS = ['easy', 'moderate', 'challenging', 'extreme'] as const
+/** Months 1-12 for the "runs in month" facet. */
+const MONTH_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const
 
 interface FacetFormProps {
   locale: string
@@ -53,6 +59,10 @@ export async function FacetForm({
   const sortId = `${instanceId}-sort`
   const minPriceId = `${instanceId}-minPrice`
   const maxPriceId = `${instanceId}-maxPrice`
+  const difficultyId = `${instanceId}-difficulty`
+  const durationBandId = `${instanceId}-durationBand`
+  const seasonId = `${instanceId}-season`
+  const groupSizeId = `${instanceId}-groupSize`
 
   return (
     <form method="get" action="/search" className="space-y-5">
@@ -92,6 +102,74 @@ export async function FacetForm({
         </Select>
       </div>
 
+      <div className="space-y-2" data-testid="facet-difficulty">
+        <Label htmlFor={difficultyId}>{t('filters.difficulty')}</Label>
+        <Select name="difficulty" defaultValue={parsed.difficulty ?? ''}>
+          <SelectTrigger id={difficultyId} className="w-full">
+            <SelectValue placeholder={t('filters.allDifficulties')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">{t('filters.allDifficulties')}</SelectItem>
+            {DIFFICULTY_OPTIONS.map((d) => (
+              <SelectItem key={d} value={d}>
+                {t(`filters.difficultyOptions.${d}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2" data-testid="facet-durationBand">
+        <Label htmlFor={durationBandId}>{t('filters.duration')}</Label>
+        <Select name="durationBand" defaultValue={parsed.durationBand ?? ''}>
+          <SelectTrigger id={durationBandId} className="w-full">
+            <SelectValue placeholder={t('filters.anyDuration')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">{t('filters.anyDuration')}</SelectItem>
+            {DURATION_BANDS.map((band) => (
+              <SelectItem key={band} value={band}>
+                {t(`filters.durationBands.${band}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2" data-testid="facet-season">
+        <Label htmlFor={seasonId}>{t('filters.season')}</Label>
+        <Select
+          name="season"
+          defaultValue={parsed.seasonMonth ? String(parsed.seasonMonth) : ''}
+        >
+          <SelectTrigger id={seasonId} className="w-full">
+            <SelectValue placeholder={t('filters.anySeason')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">{t('filters.anySeason')}</SelectItem>
+            {MONTH_OPTIONS.map((m) => (
+              <SelectItem key={m} value={String(m)}>
+                {t(`filters.months.${m}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2" data-testid="facet-groupSize">
+        <Label htmlFor={groupSizeId}>{t('filters.groupSize')}</Label>
+        <Input
+          id={groupSizeId}
+          type="number"
+          inputMode="numeric"
+          name="groupSize"
+          defaultValue={parsed.maxGroupSize ?? ''}
+          min={1}
+          placeholder={t('filters.groupSizePlaceholder')}
+          className="tabular-nums"
+        />
+      </div>
+
       <div className="space-y-2" data-testid="facet-sort">
         <Label htmlFor={sortId}>{t('filters.sortBy')}</Label>
         <Select name="sort" defaultValue={parsed.sort ?? 'relevance'}>
@@ -103,6 +181,8 @@ export async function FacetForm({
             <SelectItem value="price_asc">{t('filters.priceLowHigh')}</SelectItem>
             <SelectItem value="price_desc">{t('filters.priceHighLow')}</SelectItem>
             <SelectItem value="newest">{t('filters.newest')}</SelectItem>
+            <SelectItem value="duration_asc">{t('filters.durationShortLong')}</SelectItem>
+            <SelectItem value="duration_desc">{t('filters.durationLongShort')}</SelectItem>
           </SelectContent>
         </Select>
       </div>

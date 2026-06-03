@@ -24,6 +24,9 @@ import { Meilisearch } from 'meilisearch'
 import postgres from 'postgres'
 
 import { experiences, vendorProfiles } from '@/db/schema'
+// duration-band.ts is intentionally dependency-free (no lib/env), so it is
+// safe to import here even though global-setup runs before .env.local loads.
+import { durationBand } from '@/lib/search/duration-band'
 
 import { e2eDbUrl } from './config'
 
@@ -40,8 +43,17 @@ const EXPERIENCE_FILTERABLE_ATTRIBUTES = [
   'pricePerPersonRupees',
   'vendorSlug',
   'isCombo',
+  // ADR-0017 structured facets (issue 04).
+  'difficulty',
+  'durationBand',
+  'seasonMonths',
+  'maxGroupSize',
 ]
-const EXPERIENCE_SORTABLE_ATTRIBUTES = ['pricePerPersonRupees', 'publishedAtEpochMs']
+const EXPERIENCE_SORTABLE_ATTRIBUTES = [
+  'pricePerPersonRupees',
+  'publishedAtEpochMs',
+  'durationMinutes',
+]
 
 interface MeiliExperienceDoc {
   id: string
@@ -54,6 +66,13 @@ interface MeiliExperienceDoc {
   pricePerPersonRupees: number
   isCombo: boolean
   publishedAtEpochMs: number
+  // ADR-0017 structured facets (issue 04). Mirrors lib/search/indexer.ts
+  // MeiliPayload so E2E search-facet specs have something to filter.
+  difficulty: string | null
+  durationMinutes: number | null
+  durationBand: string | null
+  maxGroupSize: number | null
+  seasonMonths: number[]
 }
 
 export async function resetSearchIndex(): Promise<void> {
@@ -103,6 +122,11 @@ export async function resetSearchIndex(): Promise<void> {
         price: experiences.pricePerPerson_1_2,
         createdAt: experiences.createdAt,
         vendorSlug: vendorProfiles.slug,
+        // ADR-0017 structured facets (issue 04).
+        difficulty: experiences.difficulty,
+        durationMinutes: experiences.durationMinutes,
+        maxGroupSize: experiences.maxGroupSize,
+        seasonMonths: experiences.seasonMonths,
       })
       .from(experiences)
       .innerJoin(vendorProfiles, eq(experiences.vendorUserId, vendorProfiles.userId))
@@ -120,6 +144,11 @@ export async function resetSearchIndex(): Promise<void> {
         pricePerPersonRupees: Math.round(Number(r.price)),
         isCombo: r.isCombo,
         publishedAtEpochMs: (r.createdAt ?? new Date()).getTime(),
+        difficulty: r.difficulty,
+        durationMinutes: r.durationMinutes,
+        durationBand: durationBand(r.durationMinutes),
+        maxGroupSize: r.maxGroupSize,
+        seasonMonths: r.seasonMonths ?? [],
       }))
       const add = await client
         .index(EXPERIENCE_INDEX)

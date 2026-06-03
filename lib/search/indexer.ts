@@ -1,3 +1,4 @@
+import { durationBand } from './duration-band'
 import { getMeiliClient, type MeiliLike } from './meilisearch-client'
 
 /**
@@ -25,6 +26,15 @@ export const EXPERIENCE_FILTERABLE_ATTRIBUTES: readonly string[] = [
   'pricePerPersonRupees',
   'vendorSlug',
   'isCombo',
+  // ADR-0017 structured facets (issue 04). `durationBand` is the derived
+  // coarse bucket (see ./duration-band); `seasonMonths` is a number[] —
+  // Meilisearch treats `seasonMonths = 6` as array membership. A null
+  // difficulty / durationBand / maxGroupSize document simply won't match a
+  // filter on that attribute (bare Experiences drop out — correct).
+  'difficulty',
+  'durationBand',
+  'seasonMonths',
+  'maxGroupSize',
 ]
 
 /**
@@ -35,6 +45,8 @@ export const EXPERIENCE_FILTERABLE_ATTRIBUTES: readonly string[] = [
 export const EXPERIENCE_SORTABLE_ATTRIBUTES: readonly string[] = [
   'pricePerPersonRupees',
   'publishedAtEpochMs',
+  // ADR-0017 — sort by activity length (shortest/longest first), issue 04.
+  'durationMinutes',
 ]
 
 export interface ExperienceSearchDoc {
@@ -48,6 +60,12 @@ export interface ExperienceSearchDoc {
   pricePerPersonRupees: number
   isCombo: boolean
   publishedAt: Date
+  // ADR-0017 structured facets (issue 04). Additive — all nullable / empty
+  // for a bare Experience that hasn't filled the structured fields.
+  difficulty: string | null
+  durationMinutes: number | null
+  maxGroupSize: number | null
+  seasonMonths: number[]
 }
 
 export interface IndexerOpts {
@@ -65,6 +83,12 @@ interface MeiliPayload {
   pricePerPersonRupees: number
   isCombo: boolean
   publishedAtEpochMs: number
+  // ADR-0017 structured facets (issue 04).
+  difficulty: string | null
+  durationMinutes: number | null
+  durationBand: string | null
+  maxGroupSize: number | null
+  seasonMonths: number[]
 }
 
 function toMeiliDoc(doc: ExperienceSearchDoc): MeiliPayload {
@@ -79,6 +103,13 @@ function toMeiliDoc(doc: ExperienceSearchDoc): MeiliPayload {
     pricePerPersonRupees: doc.pricePerPersonRupees,
     isCombo: doc.isCombo,
     publishedAtEpochMs: doc.publishedAt.getTime(),
+    // ADR-0017 — pass the scalars through and derive the band at index time
+    // so the facet UI offers a handful of buckets rather than raw minutes.
+    difficulty: doc.difficulty,
+    durationMinutes: doc.durationMinutes,
+    durationBand: durationBand(doc.durationMinutes),
+    maxGroupSize: doc.maxGroupSize,
+    seasonMonths: doc.seasonMonths,
   }
 }
 

@@ -84,6 +84,12 @@ export async function executeApproveExperience(
       vendorSlug: vendorProfiles.slug,
       pricePerPerson_1_2: experiences.pricePerPerson_1_2,
       isCombo: experiences.isCombo,
+      // ADR-0017 structured facets (issue 04) — indexed so the /search rail
+      // can filter by difficulty / duration / season / group size.
+      difficulty: experiences.difficulty,
+      durationMinutes: experiences.durationMinutes,
+      maxGroupSize: experiences.maxGroupSize,
+      seasonMonths: experiences.seasonMonths,
     })
     .from(experiences)
     .innerJoin(vendorProfiles, eq(experiences.vendorUserId, vendorProfiles.userId))
@@ -150,6 +156,10 @@ export async function executeApproveExperience(
     pricePerPersonRupees: Math.round(Number(exp.pricePerPerson_1_2)),
     isCombo: exp.isCombo,
     publishedAt: now,
+    difficulty: exp.difficulty,
+    durationMinutes: exp.durationMinutes,
+    maxGroupSize: exp.maxGroupSize,
+    seasonMonths: exp.seasonMonths ?? [],
   }
   await indexExperience(searchDoc, { client: opts.searchClient })
 

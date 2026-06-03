@@ -388,7 +388,43 @@
       "maxPrice": "ਵੱਧ ਤੋਂ ਵੱਧ ₹",
       "anyPrice": "ਕੋਈ ਵੀ",
       "applyFilters": "ਫ਼ਿਲਟਰ ਲਾਗੂ ਕਰੋ",
-      "clear": "ਫਿਲਟਰ ਸਾਫ਼ ਕਰੋ"
+      "clear": "ਫਿਲਟਰ ਸਾਫ਼ ਕਰੋ",
+      "difficulty": "ਮੁਸ਼ਕਲ",
+      "allDifficulties": "ਕੋਈ ਵੀ ਮੁਸ਼ਕਲ",
+      "difficultyOptions": {
+        "easy": "ਆਸਾਨ",
+        "moderate": "ਦਰਮਿਆਨਾ",
+        "challenging": "ਚੁਣੌਤੀਪੂਰਨ",
+        "extreme": "ਅਤਿਅੰਤ"
+      },
+      "duration": "ਮਿਆਦ",
+      "anyDuration": "ਕੋਈ ਵੀ ਮਿਆਦ",
+      "durationBands": {
+        "upto_3h": "3 ਘੰਟੇ ਤੱਕ",
+        "half_day": "ਅੱਧਾ ਦਿਨ",
+        "full_day": "ਪੂਰਾ ਦਿਨ",
+        "multi_day": "ਕਈ ਦਿਨ"
+      },
+      "durationShortLong": "ਮਿਆਦ: ਘੱਟ ਤੋਂ ਵੱਧ",
+      "durationLongShort": "ਮਿਆਦ: ਵੱਧ ਤੋਂ ਘੱਟ",
+      "season": "ਇਸ ਮਹੀਨੇ ਉਪਲਬਧ",
+      "anySeason": "ਕੋਈ ਵੀ ਮਹੀਨਾ",
+      "months": {
+        "1": "ਜਨਵਰੀ",
+        "2": "ਫ਼ਰਵਰੀ",
+        "3": "ਮਾਰਚ",
+        "4": "ਅਪ੍ਰੈਲ",
+        "5": "ਮਈ",
+        "6": "ਜੂਨ",
+        "7": "ਜੁਲਾਈ",
+        "8": "ਅਗਸਤ",
+        "9": "ਸਤੰਬਰ",
+        "10": "ਅਕਤੂਬਰ",
+        "11": "ਨਵੰਬਰ",
+        "12": "ਦਸੰਬਰ"
+      },
+      "groupSize": "ਸਮੂਹ ਦਾ ਆਕਾਰ",
+      "groupSizePlaceholder": "ਘੱਟੋ-ਘੱਟ N ਲੋਕਾਂ ਲਈ"
     },
     "activities": {
       "rafting": "ਰਾਫਟਿੰਗ",

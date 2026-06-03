@@ -51,6 +51,11 @@ const sampleDoc: ExperienceSearchDoc = {
   pricePerPersonRupees: 1500,
   isCombo: false,
   publishedAt: new Date('2026-05-01T00:00:00Z'),
+  // ADR-0017 structured facets (issue 04).
+  difficulty: 'moderate',
+  durationMinutes: 240,
+  maxGroupSize: 12,
+  seasonMonths: [3, 4, 5, 6, 9, 10, 11],
 }
 
 describe('search indexer', () => {
@@ -95,6 +100,38 @@ describe('search indexer', () => {
     const doc = (addCalls[0] as Array<Record<string, unknown>>)[0]!
     expect(doc.shortDescription).toBeNull()
   })
+
+  it('maps the ADR-0017 structured facet fields onto the Meili document', async () => {
+    const { client, addCalls } = makeStub()
+    await indexExperience(sampleDoc, { client })
+    const doc = (addCalls[0] as Array<Record<string, unknown>>)[0]!
+    expect(doc.difficulty).toBe('moderate')
+    expect(doc.durationMinutes).toBe(240)
+    // 240 minutes → half_day (181..360). Derived at index time.
+    expect(doc.durationBand).toBe('half_day')
+    expect(doc.maxGroupSize).toBe(12)
+    expect(doc.seasonMonths).toEqual([3, 4, 5, 6, 9, 10, 11])
+  })
+
+  it('passes null structured fields through and derives a null durationBand', async () => {
+    const { client, addCalls } = makeStub()
+    await indexExperience(
+      {
+        ...sampleDoc,
+        difficulty: null,
+        durationMinutes: null,
+        maxGroupSize: null,
+        seasonMonths: [],
+      },
+      { client },
+    )
+    const doc = (addCalls[0] as Array<Record<string, unknown>>)[0]!
+    expect(doc.difficulty).toBeNull()
+    expect(doc.durationMinutes).toBeNull()
+    expect(doc.durationBand).toBeNull()
+    expect(doc.maxGroupSize).toBeNull()
+    expect(doc.seasonMonths).toEqual([])
+  })
 })
 
 describe('ensureExperienceIndexSettings', () => {
@@ -124,6 +161,16 @@ describe('ensureExperienceIndexSettings', () => {
     expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('pricePerPersonRupees')
     expect(EXPERIENCE_SORTABLE_ATTRIBUTES).toContain('pricePerPersonRupees')
     expect(EXPERIENCE_SORTABLE_ATTRIBUTES).toContain('publishedAtEpochMs')
+  })
+
+  it('declares the ADR-0017 structured facet attributes (issue 04)', async () => {
+    // Each facet the /search UI can emit MUST be filterable/sortable or
+    // Meilisearch 400s and the page crashes (ADR-0013).
+    expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('difficulty')
+    expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('durationBand')
+    expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('seasonMonths')
+    expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('maxGroupSize')
+    expect(EXPERIENCE_SORTABLE_ATTRIBUTES).toContain('durationMinutes')
   })
 
   it('enqueues updateSettings at most once per process across direct calls', async () => {

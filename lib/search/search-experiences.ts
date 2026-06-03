@@ -8,7 +8,13 @@ const EXPERIENCE_INDEX = 'experiences'
 // test reset from there.
 export { _resetSettingsGuardForTests } from './indexer'
 
-export type SortOption = 'relevance' | 'price_asc' | 'price_desc' | 'newest'
+export type SortOption =
+  | 'relevance'
+  | 'price_asc'
+  | 'price_desc'
+  | 'newest'
+  | 'duration_asc'
+  | 'duration_desc'
 
 export interface SearchExperiencesParams {
   q?: string
@@ -17,6 +23,13 @@ export interface SearchExperiencesParams {
   minPrice?: number
   maxPrice?: number
   sort?: SortOption
+  // ADR-0017 structured facets (issue 04).
+  difficulty?: string
+  durationBand?: string
+  /** Month (1-12) the Experience must run in — `seasonMonths` array membership. */
+  seasonMonth?: number
+  /** "Fits a group of N" — matches Experiences whose maxGroupSize >= N. */
+  maxGroupSize?: number
 }
 
 export interface SearchExperienceHit {
@@ -29,6 +42,9 @@ export interface SearchExperienceHit {
   vendorSlug: string
   pricePerPersonRupees: number
   isCombo: boolean
+  // ADR-0017 — additive; surfaced for result-card display where present.
+  difficulty?: string | null
+  durationMinutes?: number | null
 }
 
 export interface SearchExperiencesResult {
@@ -50,6 +66,21 @@ export function buildMeiliFilter(params: Omit<SearchExperiencesParams, 'q' | 'so
   if (params.maxPrice !== undefined) {
     parts.push(`pricePerPersonRupees <= ${params.maxPrice}`)
   }
+  // ADR-0017 structured facets (issue 04). String values quoted, numerics
+  // bare — matching the existing quoting style. `seasonMonths = N` is array
+  // membership; `maxGroupSize >= N` is a "fits a group of N" lower bound.
+  if (params.difficulty) {
+    parts.push(`difficulty = "${params.difficulty}"`)
+  }
+  if (params.durationBand) {
+    parts.push(`durationBand = "${params.durationBand}"`)
+  }
+  if (params.seasonMonth !== undefined) {
+    parts.push(`seasonMonths = ${params.seasonMonth}`)
+  }
+  if (params.maxGroupSize !== undefined) {
+    parts.push(`maxGroupSize >= ${params.maxGroupSize}`)
+  }
 
   return parts.join(' AND ')
 }
@@ -62,6 +93,10 @@ function meiliSort(sort: SortOption | undefined): string[] {
       return ['pricePerPersonRupees:desc']
     case 'newest':
       return ['publishedAtEpochMs:desc']
+    case 'duration_asc':
+      return ['durationMinutes:asc']
+    case 'duration_desc':
+      return ['durationMinutes:desc']
     default:
       return []
   }
@@ -73,7 +108,13 @@ export function isFilteredSearch(params: SearchExperiencesParams): boolean {
     params.region ||
     params.minPrice !== undefined ||
     params.maxPrice !== undefined ||
-    params.sort
+    params.sort ||
+    // ADR-0017 structured facets (issue 04) — a filtered variant for the
+    // noindex/canonical rules (ADR-0013) just as much as the legacy facets.
+    params.difficulty ||
+    params.durationBand ||
+    params.seasonMonth !== undefined ||
+    params.maxGroupSize !== undefined
   )
 }
 
@@ -95,7 +136,7 @@ export async function searchExperiences(
     const result = await client.index(EXPERIENCE_INDEX).search(params.q ?? '', {
       filter: filter || undefined,
       sort: sort.length > 0 ? sort : undefined,
-      facets: ['activitySlug', 'regionSlug'],
+      facets: ['activitySlug', 'regionSlug', 'difficulty', 'durationBand'],
       limit: 20,
     })
 

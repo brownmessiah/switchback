@@ -388,7 +388,43 @@
       "maxPrice": "कमाल ₹",
       "anyPrice": "कोणतीही",
       "applyFilters": "फिल्टर लागू करा",
-      "clear": "फिल्टर साफ करा"
+      "clear": "फिल्टर साफ करा",
+      "difficulty": "अडचण",
+      "allDifficulties": "कोणतीही अडचण",
+      "difficultyOptions": {
+        "easy": "सोपे",
+        "moderate": "मध्यम",
+        "challenging": "आव्हानात्मक",
+        "extreme": "अत्यंत"
+      },
+      "duration": "कालावधी",
+      "anyDuration": "कोणताही कालावधी",
+      "durationBands": {
+        "upto_3h": "3 तासांपर्यंत",
+        "half_day": "अर्धा दिवस",
+        "full_day": "पूर्ण दिवस",
+        "multi_day": "अनेक दिवस"
+      },
+      "durationShortLong": "कालावधी: कमी ते जास्त",
+      "durationLongShort": "कालावधी: जास्त ते कमी",
+      "season": "या महिन्यात उपलब्ध",
+      "anySeason": "कोणताही महिना",
+      "months": {
+        "1": "जानेवारी",
+        "2": "फेब्रुवारी",
+        "3": "मार्च",
+        "4": "एप्रिल",
+        "5": "मे",
+        "6": "जून",
+        "7": "जुलै",
+        "8": "ऑगस्ट",
+        "9": "सप्टेंबर",
+        "10": "ऑक्टोबर",
+        "11": "नोव्हेंबर",
+        "12": "डिसेंबर"
+      },
+      "groupSize": "गटाचा आकार",
+      "groupSizePlaceholder": "किमान N लोकांसाठी"
     },
     "activities": {
       "rafting": "राफ्टिंग",

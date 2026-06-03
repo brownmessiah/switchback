@@ -310,7 +310,43 @@
       "maxPrice": "ସର୍ବାଧିକ ₹",
       "anyPrice": "ଯେକୌଣସି",
       "applyFilters": "ଫିଲ୍ଟର ଲାଗୁ କରନ୍ତୁ",
-      "clear": "ଫିଲ୍ଟର ସଫା କରନ୍ତୁ"
+      "clear": "ଫିଲ୍ଟର ସଫା କରନ୍ତୁ",
+      "difficulty": "କଠିନତା",
+      "allDifficulties": "ଯେକୌଣସି କଠିନତା",
+      "difficultyOptions": {
+        "easy": "ସହଜ",
+        "moderate": "ମଧ୍ୟମ",
+        "challenging": "ଚ୍ୟାଲେଞ୍ଜିଂ",
+        "extreme": "ଅତ୍ୟଧିକ"
+      },
+      "duration": "ଅବଧି",
+      "anyDuration": "ଯେକୌଣସି ଅବଧି",
+      "durationBands": {
+        "upto_3h": "3 ଘଣ୍ଟା ପର୍ଯ୍ୟନ୍ତ",
+        "half_day": "ଅଧା ଦିନ",
+        "full_day": "ପୂର୍ଣ୍ଣ ଦିନ",
+        "multi_day": "ଏକାଧିକ ଦିନ"
+      },
+      "durationShortLong": "ଅବଧି: କମରୁ ଅଧିକ",
+      "durationLongShort": "ଅବଧି: ଅଧିକରୁ କମ",
+      "season": "ଏହି ମାସରେ ଚାଲେ",
+      "anySeason": "ଯେକୌଣସି ମାସ",
+      "months": {
+        "1": "ଜାନୁଆରୀ",
+        "2": "ଫେବ୍ରୁଆରୀ",
+        "3": "ମାର୍ଚ୍ଚ",
+        "4": "ଏପ୍ରିଲ",
+        "5": "ମେ",
+        "6": "ଜୁନ",
+        "7": "ଜୁଲାଇ",
+        "8": "ଅଗଷ୍ଟ",
+        "9": "ସେପ୍ଟେମ୍ବର",
+        "10": "ଅକ୍ଟୋବର",
+        "11": "ନଭେମ୍ବର",
+        "12": "ଡିସେମ୍ବର"
+      },
+      "groupSize": "ଗୋଷ୍ଠୀ ଆକାର",
+      "groupSizePlaceholder": "ଅତିକମରେ N ଲୋକଙ୍କ ପାଇଁ"
     },
     "activities": {
       "rafting": "ରାଫ୍ଟିଂ",

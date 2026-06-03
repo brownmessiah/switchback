@@ -29,6 +29,12 @@ function parseSearchParams(
 
   const minPrice = first(raw.minPrice)
   const maxPrice = first(raw.maxPrice)
+  // ADR-0017 structured facets (issue 04). Empty strings (the "Any" option's
+  // value) collapse to undefined so they don't mark the search as filtered.
+  const difficulty = first(raw.difficulty)
+  const durationBand = first(raw.durationBand)
+  const season = first(raw.season)
+  const groupSize = first(raw.groupSize)
 
   return {
     q: first(raw.q),
@@ -37,6 +43,10 @@ function parseSearchParams(
     minPrice: minPrice ? Number(minPrice) : undefined,
     maxPrice: maxPrice ? Number(maxPrice) : undefined,
     sort: (first(raw.sort) as SearchExperiencesParams['sort']) ?? undefined,
+    difficulty: difficulty || undefined,
+    durationBand: durationBand || undefined,
+    seasonMonth: season ? Number(season) : undefined,
+    maxGroupSize: groupSize ? Number(groupSize) : undefined,
   }
 }
 

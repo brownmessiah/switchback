@@ -614,6 +614,84 @@ test.describe('Search filtered', () => {
     // the active constraint.
     await expect(page.getByTestId('facet-region')).toContainText(/goa/i)
   })
+
+  // ADR-0017 structured facets (issue 04). The difficulty facet must ACTUALLY
+  // narrow results: a `?difficulty=moderate` query keeps only Experiences whose
+  // indexed `difficulty` is moderate and drops bare Experiences (null difficulty
+  // never matches a difficulty filter — see lib/search/indexer.ts).
+  //
+  // NOTE: this assertion currently leans on the SINGLE structured seed row
+  // `rishikesh-rafting-grade-iii` (issue 03 structured it: difficulty=moderate,
+  // durationMinutes=240 → durationBand=half_day, seasonMonths=[3,4,5,6,9,10,11]).
+  // The richer multi-row narrowing (every catalog row carrying structured
+  // fields) depends on issue 06's full E2E-catalog backfill, which is stacked
+  // AFTER this issue. This spec runs in issue 07's integrated verification once
+  // Docker + the 06 backfill are present; until then it exercises the one row.
+  test('difficulty facet constrains results: ?difficulty=moderate keeps the structured row and drops bare ones', async ({
+    page,
+  }) => {
+    // Bare search mixes structured + bare Experiences — establish that more
+    // than just the structured row is visible, so the filter has something to
+    // exclude.
+    await page.goto('/search')
+    const bareHrefs = await page
+      .locator('main a[href^="/experience/"]')
+      .evaluateAll((els) =>
+        els.map((e) => (e as HTMLAnchorElement).getAttribute('href') ?? ''),
+      )
+    expect(bareHrefs.length).toBeGreaterThan(0)
+    // At least one bare (non-moderate) Experience exists alongside the
+    // structured row, so the filter genuinely narrows.
+    expect(
+      bareHrefs.some(
+        (h) => !h.startsWith('/experience/rishikesh-rafting-grade-iii'),
+      ),
+    ).toBe(true)
+
+    // Filtered by difficulty=moderate: the structured row is present and every
+    // result is a moderate-difficulty (i.e. structured) Experience. With only
+    // one structured seed row, that is exactly the rafting row.
+    await page.goto('/search?difficulty=moderate')
+    const moderateHrefs = await page
+      .locator('main a[href^="/experience/"]')
+      .evaluateAll((els) =>
+        els.map((e) => (e as HTMLAnchorElement).getAttribute('href') ?? ''),
+      )
+    expect(moderateHrefs.length).toBeGreaterThan(0)
+    expect(
+      moderateHrefs.some((h) =>
+        h.startsWith('/experience/rishikesh-rafting-grade-iii'),
+      ),
+    ).toBe(true)
+    // No bare Experience leaks through — every result is the structured row
+    // (until issue 06 adds more structured rows, after which this asserts the
+    // broader "all results carry difficulty=moderate" invariant).
+    for (const href of moderateHrefs) {
+      expect(
+        href.startsWith('/experience/rishikesh-rafting-grade-iii'),
+        `difficulty=moderate returned a non-structured result: ${href}`,
+      ).toBe(true)
+    }
+
+    // The difficulty facet round-trips: the selected value is reflected back
+    // into the control so the user can see the active constraint, and the URL
+    // carries it.
+    expect(new URL(page.url()).searchParams.get('difficulty')).toBe('moderate')
+    await expect(page.getByTestId('facet-difficulty')).toContainText(/moderate/i)
+  })
+
+  // The new structured facet controls are present in the SSR rail (no JS) so
+  // the rail is a complete faceted surface (ADR-0013) before any narrowing.
+  test('filter rail exposes the structured facets (difficulty, duration, season, group size)', async ({
+    page,
+  }) => {
+    await page.goto('/search')
+    const rail = page.getByTestId('search-filter-rail')
+    await expect(rail.getByTestId('facet-difficulty')).toBeVisible()
+    await expect(rail.getByTestId('facet-durationBand')).toBeVisible()
+    await expect(rail.getByTestId('facet-season')).toBeVisible()
+    await expect(rail.getByTestId('facet-groupSize')).toBeVisible()
+  })
 })
 
 // ---------------------------------------------------------------------------

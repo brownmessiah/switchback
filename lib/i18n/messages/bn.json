@@ -388,7 +388,43 @@
       "maxPrice": "সর্বোচ্চ ₹",
       "anyPrice": "যেকোনো",
       "applyFilters": "ফিল্টার প্রয়োগ করুন",
-      "clear": "ফিল্টার মুছুন"
+      "clear": "ফিল্টার মুছুন",
+      "difficulty": "কাঠিন্য",
+      "allDifficulties": "যেকোনো কাঠিন্য",
+      "difficultyOptions": {
+        "easy": "সহজ",
+        "moderate": "মাঝারি",
+        "challenging": "চ্যালেঞ্জিং",
+        "extreme": "চরম"
+      },
+      "duration": "সময়কাল",
+      "anyDuration": "যেকোনো সময়কাল",
+      "durationBands": {
+        "upto_3h": "৩ ঘণ্টা পর্যন্ত",
+        "half_day": "অর্ধ দিন",
+        "full_day": "পূর্ণ দিন",
+        "multi_day": "একাধিক দিন"
+      },
+      "durationShortLong": "সময়কাল: কম থেকে বেশি",
+      "durationLongShort": "সময়কাল: বেশি থেকে কম",
+      "season": "এই মাসে চলে",
+      "anySeason": "যেকোনো মাস",
+      "months": {
+        "1": "জানুয়ারি",
+        "2": "ফেব্রুয়ারি",
+        "3": "মার্চ",
+        "4": "এপ্রিল",
+        "5": "মে",
+        "6": "জুন",
+        "7": "জুলাই",
+        "8": "আগস্ট",
+        "9": "সেপ্টেম্বর",
+        "10": "অক্টোবর",
+        "11": "নভেম্বর",
+        "12": "ডিসেম্বর"
+      },
+      "groupSize": "দলের আকার",
+      "groupSizePlaceholder": "কমপক্ষে N জনের জন্য"
     },
     "activities": {
       "rafting": "র‍্যাফটিং",

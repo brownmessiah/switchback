@@ -388,7 +388,43 @@
       "maxPrice": "अधिकतम ₹",
       "anyPrice": "कोई भी",
       "applyFilters": "फ़िल्टर लागू करें",
-      "clear": "फ़िल्टर हटाएँ"
+      "clear": "फ़िल्टर हटाएँ",
+      "difficulty": "कठिनाई",
+      "allDifficulties": "कोई भी कठिनाई",
+      "difficultyOptions": {
+        "easy": "आसान",
+        "moderate": "मध्यम",
+        "challenging": "चुनौतीपूर्ण",
+        "extreme": "अत्यधिक"
+      },
+      "duration": "अवधि",
+      "anyDuration": "कोई भी अवधि",
+      "durationBands": {
+        "upto_3h": "3 घंटे तक",
+        "half_day": "आधा दिन",
+        "full_day": "पूरा दिन",
+        "multi_day": "कई दिन"
+      },
+      "durationShortLong": "अवधि: कम से अधिक",
+      "durationLongShort": "अवधि: अधिक से कम",
+      "season": "इस महीने उपलब्ध",
+      "anySeason": "कोई भी महीना",
+      "months": {
+        "1": "जनवरी",
+        "2": "फ़रवरी",
+        "3": "मार्च",
+        "4": "अप्रैल",
+        "5": "मई",
+        "6": "जून",
+        "7": "जुलाई",
+        "8": "अगस्त",
+        "9": "सितंबर",
+        "10": "अक्टूबर",
+        "11": "नवंबर",
+        "12": "दिसंबर"
+      },
+      "groupSize": "समूह का आकार",
+      "groupSizePlaceholder": "कम से कम N लोगों के लिए"
     },
     "activities": {
       "rafting": "राफ्टिंग",

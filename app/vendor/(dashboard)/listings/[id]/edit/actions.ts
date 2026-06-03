@@ -60,6 +60,13 @@ export async function executeUpdateExperience(
       slug: experiences.slug,
       kycTier: vendorProfiles.kycTier,
       vendorSlug: vendorProfiles.slug,
+      // ADR-0017 structured facets (issue 04). The edit form does not yet
+      // touch these (issue 05), so the DB row is the source of truth — read
+      // them here to keep the search document's facet fields in sync.
+      difficulty: experiences.difficulty,
+      durationMinutes: experiences.durationMinutes,
+      maxGroupSize: experiences.maxGroupSize,
+      seasonMonths: experiences.seasonMonths,
     })
     .from(experiences)
     .innerJoin(vendorProfiles, eq(experiences.vendorUserId, vendorProfiles.userId))
@@ -156,6 +163,10 @@ export async function executeUpdateExperience(
         pricePerPersonRupees: Math.round(data.pricePerPerson_1_2),
         isCombo: data.isCombo,
         publishedAt: now,
+        difficulty: existing.difficulty,
+        durationMinutes: existing.durationMinutes,
+        maxGroupSize: existing.maxGroupSize,
+        seasonMonths: existing.seasonMonths ?? [],
       }
       await indexExperience(searchDoc, { client: opts.searchClient })
     }

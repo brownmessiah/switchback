@@ -59,6 +59,43 @@ describe('buildMeiliFilter (Task 23)', () => {
     })
     expect(filter).toBe('regionSlug = "goa"')
   })
+
+  // ADR-0017 structured facets (issue 04).
+  it('filters by difficulty', () => {
+    expect(buildMeiliFilter({ difficulty: 'moderate' })).toBe(
+      'difficulty = "moderate"',
+    )
+  })
+
+  it('filters by duration band', () => {
+    expect(buildMeiliFilter({ durationBand: 'half_day' })).toBe(
+      'durationBand = "half_day"',
+    )
+  })
+
+  it('filters by season month membership (numeric, bare)', () => {
+    expect(buildMeiliFilter({ seasonMonth: 6 })).toBe('seasonMonths = 6')
+  })
+
+  it('filters by group size as a "fits a group of N" lower-bound (maxGroupSize >= N)', () => {
+    expect(buildMeiliFilter({ maxGroupSize: 8 })).toBe('maxGroupSize >= 8')
+  })
+
+  it('combines the new facets with the existing ones in declaration order', () => {
+    const filter = buildMeiliFilter({
+      activity: 'rafting',
+      region: 'rishikesh',
+      minPrice: 1000,
+      maxPrice: 5000,
+      difficulty: 'moderate',
+      durationBand: 'half_day',
+      seasonMonth: 6,
+      maxGroupSize: 8,
+    })
+    expect(filter).toBe(
+      'activitySlug = "rafting" AND regionSlug = "rishikesh" AND pricePerPersonRupees >= 1000 AND pricePerPersonRupees <= 5000 AND difficulty = "moderate" AND durationBand = "half_day" AND seasonMonths = 6 AND maxGroupSize >= 8',
+    )
+  })
 })
 
 describe('isFilteredSearch', () => {
@@ -67,6 +104,15 @@ describe('isFilteredSearch', () => {
     expect(isFilteredSearch({ activity: 'rafting' })).toBe(true)
     expect(isFilteredSearch({ minPrice: 1000 })).toBe(true)
     expect(isFilteredSearch({ sort: 'price_asc' })).toBe(true)
+  })
+
+  it('returns true when only a new structured facet is set (ADR-0017, issue 04)', async () => {
+    const { isFilteredSearch } = await import('./search-experiences')
+    expect(isFilteredSearch({ difficulty: 'moderate' })).toBe(true)
+    expect(isFilteredSearch({ durationBand: 'half_day' })).toBe(true)
+    expect(isFilteredSearch({ seasonMonth: 6 })).toBe(true)
+    expect(isFilteredSearch({ maxGroupSize: 8 })).toBe(true)
+    expect(isFilteredSearch({ sort: 'duration_asc' })).toBe(true)
   })
 
   it('returns false when only q is set', async () => {
@@ -84,13 +130,16 @@ interface ProbeStub {
   client: MeiliLike
   settingsCalls: MeiliIndexSettings[]
   searchCalls: number
+  searchArgs: Array<{ q: string; opts: Record<string, unknown> }>
 }
 
 function makeProbeStub(searchImpl?: () => Promise<{ hits: unknown[] }>): ProbeStub {
   const settingsCalls: MeiliIndexSettings[] = []
+  const searchArgs: Array<{ q: string; opts: Record<string, unknown> }> = []
   let searchCalls = 0
   const stub: ProbeStub = {
     settingsCalls,
+    searchArgs,
     get searchCalls() {
       return searchCalls
     },
@@ -102,8 +151,9 @@ function makeProbeStub(searchImpl?: () => Promise<{ hits: unknown[] }>): ProbeSt
           settingsCalls.push(settings)
           return { taskUid: 1 }
         },
-        search: async () => {
+        search: async (q: string, opts: Record<string, unknown>) => {
           searchCalls += 1
+          searchArgs.push({ q, opts: opts ?? {} })
           return searchImpl ? searchImpl() : { hits: [] }
         },
       }),
@@ -165,5 +215,37 @@ describe('searchExperiences resilience (ADR-0013)', () => {
     const result = await searchExperiences({ q: 'rafting' }, { client: stub.client })
     expect(result.hits).toHaveLength(1)
     expect(result.hits[0]!.slug).toBe('grand-rafting')
+  })
+
+  it('maps the duration sort options onto Meili sort directives (ADR-0017)', async () => {
+    const asc = makeProbeStub()
+    await searchExperiences({ sort: 'duration_asc' }, { client: asc.client })
+    expect(asc.searchArgs[0]!.opts.sort).toEqual(['durationMinutes:asc'])
+
+    _resetSettingsGuardForTests()
+    const desc = makeProbeStub()
+    await searchExperiences({ sort: 'duration_desc' }, { client: desc.client })
+    expect(desc.searchArgs[0]!.opts.sort).toEqual(['durationMinutes:desc'])
+  })
+
+  it('requests facet counts for the structured facets the UI surfaces', async () => {
+    const stub = makeProbeStub()
+    await searchExperiences({ q: 'rafting' }, { client: stub.client })
+    const facets = stub.searchArgs[0]!.opts.facets as string[]
+    expect(facets).toContain('activitySlug')
+    expect(facets).toContain('regionSlug')
+    expect(facets).toContain('difficulty')
+    expect(facets).toContain('durationBand')
+  })
+
+  it('passes the new structured facets through to the Meili filter string', async () => {
+    const stub = makeProbeStub()
+    await searchExperiences(
+      { difficulty: 'moderate', seasonMonth: 6 },
+      { client: stub.client },
+    )
+    expect(stub.searchArgs[0]!.opts.filter).toBe(
+      'difficulty = "moderate" AND seasonMonths = 6',
+    )
   })
 })

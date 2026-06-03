@@ -1,6 +1,12 @@
 # Plan: Structured Experience model + 151-listing catalog
 
-Status: PLANNED (grilled 2026-06-03) · Awaiting go/no-go
+Status: DONE (2026-06-03) — built via /build-using-tdd as a cumulative branch stack
+(task/01→07 off main), every slice reviewer-pass. Slice 5 (content) shipped as a
+**bounded pilot (~30 new listings)** per owner decision; full-100 is a data-only
+follow-up. Slice 3 (vendor form, issue 05) is **awaiting owner sign-off** on the
+in-flight listing-form-stepper.tsx (built additive-only, not merged). Live verify:
+81 experiences / 70 structured / ≥3 published per region / Meili facets searchable.
+Fact-check report: docs/plans/structured-experiences-fact-check-report.md.
 Type: Milestone (schema + PDP + vendor form + search facets + content)
 Source: user — "seed 100 more listings; make existing data correct and enhance it"
 
@@ -188,6 +194,26 @@ UNIQUE (experience_id, step_order)
 - Translating the 151 listing **prose** into 13 locales (content stays en in v1).
 - Aadhaar eKYC, Pusher chat (unrelated deferred items).
 - Map embed for `meeting_point` (text only for now).
+
+### Follow-ups surfaced during the build (2026-06-03)
+- **Scale the demo catalog 30 → 100** — the pipeline (Workflow + `db/seed-demo-catalog.ts`)
+  is proven; remaining is data-only (author + fact-check 70 more listings into
+  `db/data/demo-catalog.ts`). Owner chose the bounded pilot for this pass.
+- **Issue 05 owner sign-off + merge** — vendor `listing-form-stepper.tsx` changes are
+  additive-only on `task/05-vendor-form-actions-admin`; review then merge. After merge,
+  run the vendor-project E2E (create→edit structured round-trip spec already written).
+- **Pre-existing repo lint debt** — `pnpm lint` is red on `main` (~21 errors / 78 warnings)
+  in files UNTOUCHED by this milestone (admin/vendor `<a href=/dashboard>`, unused vars,
+  owner stepper setState-in-effect). This milestone added zero net lint problems. Clean up
+  separately.
+- **Pre-existing E2E failures (5)** in the `unauthenticated` project — sitemap/robots 404s
+  (dev-server metadata-route artifacts), footer "Help centre" link, a wishlist control —
+  fail identically on base `main`, unrelated to this milestone.
+- **Dev reindex script** (`.scratch/reindex-search.ts`) doesn't flush stale Meili docs
+  (leftover cross-surface beacons from prior dev runs); harmless for facets but the index
+  carries junk. The E2E `meili-setup.ts` flushes correctly.
+- **difficulty=moderate E2E** (public-pages.spec.ts) proves narrowing via a single
+  bare-row-excluded check; could be strengthened to assert every result is difficulty=moderate.
 
 ## Suggested execution order
 Slices 0→1→2→4 are the schema→read→render→discover spine and can ship first as a

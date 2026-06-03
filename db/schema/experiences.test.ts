@@ -208,6 +208,172 @@ describe('experiences + availability_slots + region_closures + slug_redirects (A
       expect(row?.requiredPermits).toEqual(['ilp_sikkim', 'wildlife_corbett'])
       expect(row?.requiresSafetyStack).toBe(true)
     })
+
+    describe('structured attributes (ADR-0017)', () => {
+      it('round-trips all new structured fields', async () => {
+        await db.insert(experiences).values({
+          ...baseExperience(),
+          slug: 'structured-full',
+          durationMinutes: 240,
+          difficulty: 'moderate',
+          minAge: 12,
+          maxGroupSize: 8,
+          languages: ['en', 'hi'],
+          meetingPoint: 'Shivpuri jetty, Rishikesh',
+          seasonMonths: [6, 7, 8],
+          highlights: ['Grade IV rapids', 'Riverside lunch'],
+          inclusions: ['Safety gear', 'Guide'],
+          exclusions: ['Transport', 'Photos'],
+          whatToBring: ['Quick-dry clothes', 'Sunscreen'],
+        })
+        const [row] = await db
+          .select()
+          .from(experiences)
+          .where(eq(experiences.slug, 'structured-full'))
+        expect(row?.durationMinutes).toBe(240)
+        expect(row?.difficulty).toBe('moderate')
+        expect(row?.minAge).toBe(12)
+        expect(row?.maxGroupSize).toBe(8)
+        expect(row?.languages).toEqual(['en', 'hi'])
+        expect(row?.meetingPoint).toBe('Shivpuri jetty, Rishikesh')
+        expect(row?.seasonMonths).toEqual([6, 7, 8])
+        expect(row?.highlights).toEqual(['Grade IV rapids', 'Riverside lunch'])
+        expect(row?.inclusions).toEqual(['Safety gear', 'Guide'])
+        expect(row?.exclusions).toEqual(['Transport', 'Photos'])
+        expect(row?.whatToBring).toEqual(['Quick-dry clothes', 'Sunscreen'])
+      })
+
+      it('defaults arrays to empty and scalars to null on a minimal Experience', async () => {
+        await db.insert(experiences).values({ ...baseExperience(), slug: 'structured-min' })
+        const [row] = await db
+          .select()
+          .from(experiences)
+          .where(eq(experiences.slug, 'structured-min'))
+        expect(row?.languages).toEqual([])
+        expect(row?.seasonMonths).toEqual([])
+        expect(row?.highlights).toEqual([])
+        expect(row?.inclusions).toEqual([])
+        expect(row?.exclusions).toEqual([])
+        expect(row?.whatToBring).toEqual([])
+        expect(row?.durationMinutes).toBeNull()
+        expect(row?.difficulty).toBeNull()
+        expect(row?.minAge).toBeNull()
+        expect(row?.maxGroupSize).toBeNull()
+        expect(row?.meetingPoint).toBeNull()
+      })
+
+      it('stores every difficulty enum value', async () => {
+        const levels = ['easy', 'moderate', 'challenging', 'extreme'] as const
+        for (const level of levels) {
+          await db.insert(experiences).values({
+            ...baseExperience(),
+            slug: `difficulty-${level}`,
+            difficulty: level,
+          })
+        }
+        const rows = await db.select().from(experiences)
+        expect(rows.map((r) => r.difficulty).filter(Boolean).sort()).toEqual([
+          'challenging',
+          'easy',
+          'extreme',
+          'moderate',
+        ])
+      })
+
+      it('rejects an unknown difficulty enum value', async () => {
+        await expect(
+          db.execute(
+            sql`INSERT INTO experiences (vendor_user_id, slug, title, cancellation_preset, payment_modes_allowed, price_per_person_1_2, price_per_person_3_5, price_per_person_6_plus, region_slug, activity_slug, difficulty)
+                VALUES ('u_v', 'bad-difficulty', 'Bad', 'flexible', ARRAY['full_upfront']::payment_mode[], '100', '100', '100', 'r', 'a', 'insane')`,
+          ),
+        ).rejects.toThrow()
+      })
+
+      it('rejects duration_minutes <= 0 (CHECK)', async () => {
+        await expect(
+          db.insert(experiences).values({
+            ...baseExperience(),
+            slug: 'dur-zero',
+            durationMinutes: 0,
+          }),
+        ).rejects.toThrow()
+        await expect(
+          db.insert(experiences).values({
+            ...baseExperience(),
+            slug: 'dur-neg',
+            durationMinutes: -10,
+          }),
+        ).rejects.toThrow()
+      })
+
+      it('rejects min_age < 0 and accepts 0 (CHECK)', async () => {
+        await expect(
+          db.insert(experiences).values({
+            ...baseExperience(),
+            slug: 'age-neg',
+            minAge: -1,
+          }),
+        ).rejects.toThrow()
+        await db.insert(experiences).values({
+          ...baseExperience(),
+          slug: 'age-zero',
+          minAge: 0,
+        })
+        const [row] = await db.select().from(experiences).where(eq(experiences.slug, 'age-zero'))
+        expect(row?.minAge).toBe(0)
+      })
+
+      it('rejects max_group_size <= 0 (CHECK)', async () => {
+        await expect(
+          db.insert(experiences).values({
+            ...baseExperience(),
+            slug: 'group-zero',
+            maxGroupSize: 0,
+          }),
+        ).rejects.toThrow()
+      })
+
+      it('rejects season_months containing 0 (CHECK)', async () => {
+        await expect(
+          db.execute(
+            sql`INSERT INTO experiences (vendor_user_id, slug, title, cancellation_preset, payment_modes_allowed, price_per_person_1_2, price_per_person_3_5, price_per_person_6_plus, region_slug, activity_slug, season_months)
+                VALUES ('u_v', 'season-zero', 'S', 'flexible', ARRAY['full_upfront']::payment_mode[], '100', '100', '100', 'r', 'a', ARRAY[0]::smallint[])`,
+          ),
+        ).rejects.toThrow()
+      })
+
+      it('rejects season_months containing 13 (CHECK)', async () => {
+        await expect(
+          db.execute(
+            sql`INSERT INTO experiences (vendor_user_id, slug, title, cancellation_preset, payment_modes_allowed, price_per_person_1_2, price_per_person_3_5, price_per_person_6_plus, region_slug, activity_slug, season_months)
+                VALUES ('u_v', 'season-13', 'S', 'flexible', ARRAY['full_upfront']::payment_mode[], '100', '100', '100', 'r', 'a', ARRAY[13]::smallint[])`,
+          ),
+        ).rejects.toThrow()
+      })
+
+      it('accepts season_months {6,7,8} and empty {}', async () => {
+        await db.insert(experiences).values({
+          ...baseExperience(),
+          slug: 'season-valid',
+          seasonMonths: [6, 7, 8],
+        })
+        await db.insert(experiences).values({
+          ...baseExperience(),
+          slug: 'season-empty',
+          seasonMonths: [],
+        })
+        const [valid] = await db
+          .select()
+          .from(experiences)
+          .where(eq(experiences.slug, 'season-valid'))
+        const [empty] = await db
+          .select()
+          .from(experiences)
+          .where(eq(experiences.slug, 'season-empty'))
+        expect(valid?.seasonMonths).toEqual([6, 7, 8])
+        expect(empty?.seasonMonths).toEqual([])
+      })
+    })
   })
 
   describe('availability_slots (ADR-0011)', () => {

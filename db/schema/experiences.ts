@@ -2,9 +2,11 @@ import { sql } from 'drizzle-orm'
 import {
   boolean,
   check,
+  integer,
   numeric,
   pgEnum,
   pgTable,
+  smallint,
   text,
   uuid,
 } from 'drizzle-orm/pg-core'
@@ -49,6 +51,18 @@ export const paymentModeEnum = pgEnum('payment_mode', [
   'full_upfront',
   'partial_pay',
   'reserve_now_pay_later',
+])
+
+/**
+ * Operational difficulty rating per ADR-0017. Nullable on the Experience
+ * (additive — legacy rows pre-date the field). Intended as a Meilisearch
+ * facet (issue 04). Distinct from the safety stack (ADR-0015).
+ */
+export const experienceDifficultyEnum = pgEnum('experience_difficulty', [
+  'easy',
+  'moderate',
+  'challenging',
+  'extreme',
 ])
 
 /**
@@ -107,6 +121,24 @@ export const experiences = pgTable(
     regionSlug: text('region_slug').notNull(),
     activitySlug: text('activity_slug').notNull(),
 
+    // ADR-0017 — Structured Experience attributes. All additive-nullable /
+    // array-default-empty so the migration never breaks the seed, the PDP, or
+    // any E2E selector. The scalar quick-facts (duration, difficulty, age,
+    // group size, season) are intended Meilisearch facets (issue 04).
+    durationMinutes: integer('duration_minutes'),
+    difficulty: experienceDifficultyEnum('difficulty'),
+    minAge: integer('min_age'),
+    /** Operational per-departure cap — distinct from the pricing brackets (ADR-0011). */
+    maxGroupSize: integer('max_group_size'),
+    languages: text('languages').array().default(sql`'{}'`),
+    meetingPoint: text('meeting_point'),
+    /** Months (1-12) the Experience runs; complements region_closures (ADR-0011). */
+    seasonMonths: smallint('season_months').array().default(sql`'{}'`),
+    highlights: text('highlights').array().default(sql`'{}'`),
+    inclusions: text('inclusions').array().default(sql`'{}'`),
+    exclusions: text('exclusions').array().default(sql`'{}'`),
+    whatToBring: text('what_to_bring').array().default(sql`'{}'`),
+
     status: experienceStatusEnum('status').default('draft').notNull(),
 
     ...timestamps,
@@ -119,6 +151,15 @@ export const experiences = pgTable(
     check(
       'combo_slug_prefix',
       sql`(${t.isCombo} = true AND ${t.slug} LIKE 'combo-%') OR (${t.isCombo} = false AND ${t.slug} NOT LIKE 'combo-%')`,
+    ),
+    // ADR-0017 — structured-attribute invariants. NULL passes each CHECK
+    // (the columns are additive-nullable), so legacy rows are unaffected.
+    check('experiences_duration_minutes_positive', sql`${t.durationMinutes} > 0`),
+    check('experiences_min_age_non_negative', sql`${t.minAge} >= 0`),
+    check('experiences_max_group_size_positive', sql`${t.maxGroupSize} > 0`),
+    check(
+      'experiences_season_months_in_range',
+      sql`${t.seasonMonths} <@ ARRAY[1,2,3,4,5,6,7,8,9,10,11,12]::smallint[]`,
     ),
   ],
 )

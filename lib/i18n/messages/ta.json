@@ -268,7 +268,13 @@
       "requiredPermits": "தேவையான அனுமதிகள்",
       "permitsNotice": "பங்கேற்பதற்கு முன் பின்வரும் அனுமதிகள் தேவை. Outvers உங்கள் சார்பாக அனுமதிகளைப் பெறாது.",
       "reviews": "மதிப்புரைகள்",
-      "faq": "அடிக்கடி கேட்கப்படும் கேள்விகள்"
+      "faq": "அடிக்கடி கேட்கப்படும் கேள்விகள்",
+      "highlights": "சிறப்பம்சங்கள்",
+      "included": "என்ன அடங்கும்",
+      "excluded": "அடங்காதவை",
+      "whatToBring": "எதைக் கொண்டுவர வேண்டும்",
+      "itinerary": "பயணத் திட்டம்",
+      "meetingPoint": "சந்திப்பு இடம்"
     },
     "pricing": {
       "heading": "விலை",
@@ -318,7 +324,31 @@
       "permits": "அனுமதிச்சீட்டுகள்",
       "cancellation": "ரத்து",
       "reviews": "மதிப்புரைகள்",
-      "faq": "அடிக்கடி கேட்கப்படும் கேள்விகள்"
+      "faq": "அடிக்கடி கேட்கப்படும் கேள்விகள்",
+      "highlights": "சிறப்பம்சங்கள்",
+      "itinerary": "பயணத் திட்டம்",
+      "included": "விவரங்கள்",
+      "meetingPoint": "சந்திப்பு இடம்"
+    },
+    "quickFacts": {
+      "heading": "ஒரு பார்வையில்",
+      "duration": "கால அளவு",
+      "difficulty": "கடினம்",
+      "minAge": "குறைந்தபட்ச வயது",
+      "minAgeValue": "{age}+ ஆண்டுகள்",
+      "groupSize": "குழு அளவு",
+      "groupSizeValue": "{size} வரை",
+      "languages": "மொழிகள்",
+      "season": "சிறந்த பருவம்"
+    },
+    "difficulty": {
+      "easy": "எளிது",
+      "moderate": "மிதமான",
+      "challenging": "சவாலான",
+      "extreme": "தீவிரமான"
+    },
+    "itinerary": {
+      "day": "நாள் {day}"
     },
     "assurance": {
       "freeCancellation": "அனுபவத்திற்கு 24 மணி நேரம் முன்பு வரை இலவச ரத்து",

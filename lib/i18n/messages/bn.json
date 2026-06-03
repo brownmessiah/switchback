@@ -268,7 +268,13 @@
       "requiredPermits": "প্রয়োজনীয় পারমিট",
       "permitsNotice": "অংশগ্রহণের আগে আপনার নিম্নলিখিত পারমিট প্রয়োজন। Outvers আপনার পক্ষে পারমিট সংগ্রহ করে না।",
       "reviews": "রিভিউ",
-      "faq": "প্রায়শই জিজ্ঞাসিত প্রশ্ন"
+      "faq": "প্রায়শই জিজ্ঞাসিত প্রশ্ন",
+      "highlights": "মূল আকর্ষণ",
+      "included": "কী অন্তর্ভুক্ত",
+      "excluded": "অন্তর্ভুক্ত নয়",
+      "whatToBring": "কী সঙ্গে আনবেন",
+      "itinerary": "ভ্রমণসূচি",
+      "meetingPoint": "মিলনস্থল"
     },
     "pricing": {
       "heading": "মূল্য",
@@ -318,7 +324,31 @@
       "permits": "পারমিট",
       "cancellation": "বাতিলকরণ",
       "reviews": "পর্যালোচনা",
-      "faq": "সাধারণ প্রশ্নাবলী"
+      "faq": "সাধারণ প্রশ্নাবলী",
+      "highlights": "মূল আকর্ষণ",
+      "itinerary": "ভ্রমণসূচি",
+      "included": "বিবরণ",
+      "meetingPoint": "মিলনস্থল"
+    },
+    "quickFacts": {
+      "heading": "এক নজরে",
+      "duration": "সময়কাল",
+      "difficulty": "কাঠিন্য",
+      "minAge": "ন্যূনতম বয়স",
+      "minAgeValue": "{age}+ বছর",
+      "groupSize": "দলের আকার",
+      "groupSizeValue": "{size} পর্যন্ত",
+      "languages": "ভাষা",
+      "season": "সেরা ঋতু"
+    },
+    "difficulty": {
+      "easy": "সহজ",
+      "moderate": "মাঝারি",
+      "challenging": "চ্যালেঞ্জিং",
+      "extreme": "চরম"
+    },
+    "itinerary": {
+      "day": "দিন {day}"
     },
     "assurance": {
       "freeCancellation": "অভিজ্ঞতার 24 ঘণ্টা আগে পর্যন্ত বিনামূল্যে বাতিল",

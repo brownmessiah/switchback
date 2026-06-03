@@ -190,7 +190,13 @@
       "requiredPermits": "ଆବଶ୍ୟକ ପରମିଟ୍",
       "permitsNotice": "ଅଂଶଗ୍ରହଣ ପୂର୍ବରୁ ଆପଣଙ୍କୁ ନିମ୍ନ ପରମିଟ୍ ଆବଶ୍ୟକ। Outvers ଆପଣଙ୍କ ପକ୍ଷରୁ ପରମିଟ୍ ସଂଗ୍ରହ କରେ ନାହିଁ।",
       "reviews": "ସମୀକ୍ଷା",
-      "faq": "ବାରମ୍ବାର ପଚରାଯାଉଥିବା ପ୍ରଶ୍ନ"
+      "faq": "ବାରମ୍ବାର ପଚରାଯାଉଥିବା ପ୍ରଶ୍ନ",
+      "highlights": "ମୁଖ୍ୟ ଆକର୍ଷଣ",
+      "included": "କଣ ଅନ୍ତର୍ଭୁକ୍ତ",
+      "excluded": "ଅନ୍ତର୍ଭୁକ୍ତ ନୁହେଁ",
+      "whatToBring": "କଣ ଆଣିବେ",
+      "itinerary": "ଯାତ୍ରା କାର୍ଯ୍ୟକ୍ରମ",
+      "meetingPoint": "ମିଳନ ସ୍ଥଳ"
     },
     "pricing": {
       "heading": "ମୂଲ୍ୟ",
@@ -240,7 +246,31 @@
       "permits": "ପରମିଟ୍",
       "cancellation": "ବାତିଲ୍",
       "reviews": "ସମୀକ୍ଷାଗୁଡ଼ିକ",
-      "faq": "ବାରମ୍ବାର ପଚରାଯାଉଥିବା ପ୍ରଶ୍ନ"
+      "faq": "ବାରମ୍ବାର ପଚରାଯାଉଥିବା ପ୍ରଶ୍ନ",
+      "highlights": "ମୁଖ୍ୟ ଆକର୍ଷଣ",
+      "itinerary": "ଯାତ୍ରା କାର୍ଯ୍ୟକ୍ରମ",
+      "included": "ବିବରଣୀ",
+      "meetingPoint": "ମିଳନ ସ୍ଥଳ"
+    },
+    "quickFacts": {
+      "heading": "ଏକ ନଜରରେ",
+      "duration": "ଅବଧି",
+      "difficulty": "କଠିନତା",
+      "minAge": "ସର୍ବନିମ୍ନ ବୟସ",
+      "minAgeValue": "{age}+ ବର୍ଷ",
+      "groupSize": "ଗୋଷ୍ଠୀ ଆକାର",
+      "groupSizeValue": "{size} ପର୍ଯ୍ୟନ୍ତ",
+      "languages": "ଭାଷା",
+      "season": "ସର୍ବୋତ୍ତମ ଋତୁ"
+    },
+    "difficulty": {
+      "easy": "ସହଜ",
+      "moderate": "ମଧ୍ୟମ",
+      "challenging": "ଆହ୍ୱାନପୂର୍ଣ୍ଣ",
+      "extreme": "ଚରମ"
+    },
+    "itinerary": {
+      "day": "ଦିନ {day}"
     },
     "assurance": {
       "freeCancellation": "ଅନୁଭବର 24 ଘଣ୍ଟା ପୂର୍ବ ପର୍ଯ୍ୟନ୍ତ ମାଗଣା ବାତିଲ୍",

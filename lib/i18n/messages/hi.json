@@ -268,7 +268,13 @@
       "requiredPermits": "आवश्यक परमिट",
       "permitsNotice": "भाग लेने से पहले आपको निम्नलिखित परमिट की आवश्यकता है। Outvers आपकी ओर से परमिट प्राप्त नहीं करता।",
       "reviews": "समीक्षाएँ",
-      "faq": "अक्सर पूछे जाने वाले प्रश्न"
+      "faq": "अक्सर पूछे जाने वाले प्रश्न",
+      "highlights": "मुख्य आकर्षण",
+      "included": "क्या शामिल है",
+      "excluded": "शामिल नहीं है",
+      "whatToBring": "क्या साथ लाएँ",
+      "itinerary": "यात्रा कार्यक्रम",
+      "meetingPoint": "मिलन स्थल"
     },
     "pricing": {
       "heading": "मूल्य",
@@ -318,7 +324,31 @@
       "permits": "परमिट",
       "cancellation": "रद्दीकरण",
       "reviews": "समीक्षाएँ",
-      "faq": "सामान्य प्रश्न"
+      "faq": "सामान्य प्रश्न",
+      "highlights": "मुख्य आकर्षण",
+      "itinerary": "यात्रा कार्यक्रम",
+      "included": "विवरण",
+      "meetingPoint": "मिलन स्थल"
+    },
+    "quickFacts": {
+      "heading": "एक नज़र में",
+      "duration": "अवधि",
+      "difficulty": "कठिनाई",
+      "minAge": "न्यूनतम आयु",
+      "minAgeValue": "{age}+ वर्ष",
+      "groupSize": "समूह का आकार",
+      "groupSizeValue": "{size} तक",
+      "languages": "भाषाएँ",
+      "season": "सर्वोत्तम मौसम"
+    },
+    "difficulty": {
+      "easy": "आसान",
+      "moderate": "मध्यम",
+      "challenging": "चुनौतीपूर्ण",
+      "extreme": "अत्यधिक"
+    },
+    "itinerary": {
+      "day": "दिन {day}"
     },
     "assurance": {
       "freeCancellation": "अनुभव से 24 घंटे पहले तक मुफ़्त रद्दीकरण",

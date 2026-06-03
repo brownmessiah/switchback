@@ -268,7 +268,13 @@
       "requiredPermits": "مطلوبہ پرمٹ",
       "permitsNotice": "شرکت سے پہلے آپ کو درج ذیل پرمٹ درکار ہیں۔ Outvers آپ کی جانب سے پرمٹ حاصل نہیں کرتا۔",
       "reviews": "جائزے",
-      "faq": "اکثر پوچھے جانے والے سوالات"
+      "faq": "اکثر پوچھے جانے والے سوالات",
+      "highlights": "اہم خصوصیات",
+      "included": "کیا شامل ہے",
+      "excluded": "شامل نہیں",
+      "whatToBring": "کیا ساتھ لائیں",
+      "itinerary": "سفر نامہ",
+      "meetingPoint": "ملاقات کی جگہ"
     },
     "pricing": {
       "heading": "قیمتیں",
@@ -318,7 +324,31 @@
       "permits": "اجازت نامے",
       "cancellation": "منسوخی",
       "reviews": "جائزے",
-      "faq": "اکثر پوچھے گئے سوالات"
+      "faq": "اکثر پوچھے گئے سوالات",
+      "highlights": "اہم خصوصیات",
+      "itinerary": "سفر نامہ",
+      "included": "تفصیلات",
+      "meetingPoint": "ملاقات کی جگہ"
+    },
+    "quickFacts": {
+      "heading": "ایک نظر میں",
+      "duration": "دورانیہ",
+      "difficulty": "دشواری",
+      "minAge": "کم از کم عمر",
+      "minAgeValue": "{age}+ سال",
+      "groupSize": "گروپ کا حجم",
+      "groupSizeValue": "{size} تک",
+      "languages": "زبانیں",
+      "season": "بہترین موسم"
+    },
+    "difficulty": {
+      "easy": "آسان",
+      "moderate": "درمیانہ",
+      "challenging": "چیلنجنگ",
+      "extreme": "انتہائی"
+    },
+    "itinerary": {
+      "day": "دن {day}"
     },
     "assurance": {
       "freeCancellation": "تجربے سے 24 گھنٹے پہلے تک مفت منسوخی",

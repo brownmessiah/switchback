@@ -268,7 +268,13 @@
       "requiredPermits": "आवश्यक परवानग्या",
       "permitsNotice": "सहभागी होण्यापूर्वी तुम्हाला खालील परवानग्या आवश्यक आहेत. Outvers तुमच्या वतीने परवानग्या मिळवत नाही.",
       "reviews": "पुनरावलोकने",
-      "faq": "वारंवार विचारले जाणारे प्रश्न"
+      "faq": "वारंवार विचारले जाणारे प्रश्न",
+      "highlights": "ठळक मुद्दे",
+      "included": "काय समाविष्ट आहे",
+      "excluded": "समाविष्ट नाही",
+      "whatToBring": "काय आणावे",
+      "itinerary": "प्रवास कार्यक्रम",
+      "meetingPoint": "भेटण्याचे ठिकाण"
     },
     "pricing": {
       "heading": "किंमत",
@@ -318,7 +324,31 @@
       "permits": "परवाने",
       "cancellation": "रद्द करणे",
       "reviews": "पुनरावलोकने",
-      "faq": "नेहमी विचारले जाणारे प्रश्न"
+      "faq": "नेहमी विचारले जाणारे प्रश्न",
+      "highlights": "ठळक मुद्दे",
+      "itinerary": "प्रवास कार्यक्रम",
+      "included": "तपशील",
+      "meetingPoint": "भेटण्याचे ठिकाण"
+    },
+    "quickFacts": {
+      "heading": "एका दृष्टीक्षेपात",
+      "duration": "कालावधी",
+      "difficulty": "अवघडपणा",
+      "minAge": "किमान वय",
+      "minAgeValue": "{age}+ वर्षे",
+      "groupSize": "गटाचा आकार",
+      "groupSizeValue": "{size} पर्यंत",
+      "languages": "भाषा",
+      "season": "सर्वोत्तम हंगाम"
+    },
+    "difficulty": {
+      "easy": "सोपे",
+      "moderate": "मध्यम",
+      "challenging": "आव्हानात्मक",
+      "extreme": "अत्यंत"
+    },
+    "itinerary": {
+      "day": "दिवस {day}"
     },
     "assurance": {
       "freeCancellation": "अनुभवाच्या 24 तास आधीपर्यंत मोफत रद्द",

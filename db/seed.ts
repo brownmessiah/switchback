@@ -30,6 +30,8 @@ import { eq, inArray } from 'drizzle-orm'
 import { db } from './client'
 import { seedCatalog } from './seed-extras'
 import { seedTripGroups } from './seed-trip-groups'
+import { replaceItinerary, type ItineraryStepInput } from '@/lib/experiences/itinerary'
+import type { GuideLanguage } from '@/lib/experiences/structured-schema'
 import {
   adminProfiles,
   availabilitySlots,
@@ -58,6 +60,30 @@ interface SeededExperience {
   pricePerPerson_6_plus: string
   regionSlug: string
   activitySlug: string
+  /**
+   * Structured Experience attributes (ADR-0017). Optional and additive — only
+   * the flagship `rishikesh-rafting-grade-iii` row carries them, as the minimal
+   * fixture the PDP structured-render E2E asserts against. Every other row
+   * stays bare (all nullable columns → NULL), proving the PDP degrades cleanly.
+   * Issue 06 owns the comprehensive fact-checked backfill of the full catalog.
+   */
+  structured?: StructuredSeed
+}
+
+/** The minimal structured fixture written onto the flagship PDP E2E row. */
+interface StructuredSeed {
+  durationMinutes: number
+  difficulty: 'easy' | 'moderate' | 'challenging' | 'extreme'
+  minAge: number
+  maxGroupSize: number
+  languages: GuideLanguage[]
+  meetingPoint: string
+  seasonMonths: number[]
+  highlights: string[]
+  inclusions: string[]
+  exclusions: string[]
+  whatToBring: string[]
+  itinerary: ItineraryStepInput[]
 }
 
 const VENDORS = [
@@ -211,6 +237,48 @@ const EXPERIENCES: SeededExperience[] = [
     pricePerPerson_6_plus: '1100.00',
     regionSlug: 'rishikesh',
     activitySlug: 'rafting',
+    // ── Structured-PDP E2E fixture (ADR-0017) ──────────────────────────────
+    // The ONE row carrying full structured attributes so the PDP structured-
+    // render E2E can assert every new section. Kept deliberately small;
+    // issue 06 owns the fact-checked backfill of the whole catalog. Every
+    // other seeded Experience stays bare → proves the PDP degrades cleanly.
+    structured: {
+      durationMinutes: 240,
+      difficulty: 'moderate',
+      minAge: 14,
+      maxGroupSize: 12,
+      languages: ['en', 'hi'],
+      meetingPoint: 'Shivpuri rafting base, NH-34, Rishikesh (riverside car park)',
+      seasonMonths: [3, 4, 5, 6, 9, 10, 11],
+      highlights: [
+        'Three named Grade III rapids',
+        'ISA-certified river guides (1:6 ratio)',
+        'Riverside chai after the run',
+      ],
+      inclusions: ['Helmet, PFD and paddle', 'Dry-bag for valuables', 'Safety briefing'],
+      exclusions: ['GoPro footage', 'Transport to the put-in point'],
+      whatToBring: ['Quick-dry clothes', 'A change of dry clothes', 'Secured footwear'],
+      itinerary: [
+        {
+          title: 'Safety briefing & gear-up',
+          description: 'Meet your guide at the base, fit your PFD and helmet, and run through paddle commands.',
+          dayOffset: null,
+          durationMinutes: 30,
+        },
+        {
+          title: 'The 16 km run',
+          description: 'Tackle Three Blind Mice, Roller-Coaster and Golf Course rapids with a riverside beach stop.',
+          dayOffset: null,
+          durationMinutes: 150,
+        },
+        {
+          title: 'Debrief & chai',
+          description: 'Wind down at the base with hot chai and your run highlights.',
+          dayOffset: null,
+          durationMinutes: 30,
+        },
+      ],
+    },
   },
   {
     vendorUserId: 'u_seed_v_identity',
@@ -488,6 +556,23 @@ async function seed(): Promise<void> {
         regionSlug: e.regionSlug,
         activitySlug: e.activitySlug,
         status: 'published' as const,
+        // Structured attributes (ADR-0017) — only the flagged fixture row sets
+        // them; omitted rows fall back to the nullable/array defaults.
+        ...(e.structured
+          ? {
+              durationMinutes: e.structured.durationMinutes,
+              difficulty: e.structured.difficulty,
+              minAge: e.structured.minAge,
+              maxGroupSize: e.structured.maxGroupSize,
+              languages: e.structured.languages,
+              meetingPoint: e.structured.meetingPoint,
+              seasonMonths: e.structured.seasonMonths,
+              highlights: e.structured.highlights,
+              inclusions: e.structured.inclusions,
+              exclusions: e.structured.exclusions,
+              whatToBring: e.structured.whatToBring,
+            }
+          : {}),
       })),
     )
     .onConflictDoNothing()
@@ -501,6 +586,16 @@ async function seed(): Promise<void> {
         .select({ id: experiences.id, slug: experiences.slug })
         .from(experiences)
         .where(inArray(experiences.slug, EXPERIENCES.map((e) => e.slug)))
+
+  // ----- STRUCTURED ITINERARY (ADR-0017) — only the flagged fixture row -----
+  // Written via replaceItinerary so the dev/E2E PDP has a real itinerary
+  // accordion to render. Idempotent: replaceItinerary is delete-then-insert.
+  for (const exp of allExperiences) {
+    const seed = EXPERIENCES.find((e) => e.slug === exp.slug)
+    if (seed?.structured) {
+      await replaceItinerary(db, exp.id, seed.structured.itinerary)
+    }
+  }
 
   // ----- AVAILABILITY SLOTS — one slot T+7d per Experience, capacity 8 -----
   // Anchor the slot to a fixed morning hour (04:00 UTC = 09:30 IST) so the

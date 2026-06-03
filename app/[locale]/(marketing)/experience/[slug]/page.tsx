@@ -5,11 +5,18 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import {
+  Activity,
+  Baby,
   CircleCheck,
+  Clock,
+  Languages,
+  MapPin,
   ShieldCheck,
   Star,
   TriangleAlert,
+  Users,
   Wallet,
+  X,
 } from 'lucide-react'
 
 import {
@@ -30,6 +37,8 @@ import { auth } from '@/lib/auth'
 import { env } from '@/lib/env'
 import { isInWishlist } from '@/lib/wishlist/wishlist'
 import { loadExperienceDetail } from '@/lib/experiences/detail-loader'
+import { formatDuration } from '@/lib/experiences/structured-schema'
+import { LOCALE_NAMES, type SupportedLocale } from '@/lib/i18n/config'
 import { getActivityImage } from '@/lib/images'
 import { getRedis } from '@/lib/redis'
 import { generateAlternates } from '@/lib/seo/hreflang'
@@ -37,6 +46,7 @@ import { breadcrumbList } from '@/lib/seo/schemas/breadcrumb-list'
 import { faqPage } from '@/lib/seo/schemas/faq-page'
 import { product } from '@/lib/seo/schemas/product'
 import { reviewList } from '@/lib/seo/schemas/review'
+import { touristTrip } from '@/lib/seo/schemas/trip'
 
 import { AnchorNav, type AnchorNavItem } from './anchor-nav'
 import { BookingRail, type BookingRailClosure } from './booking-rail'
@@ -126,14 +136,37 @@ export default async function ExperienceDetailPage({
         }
       : undefined
 
+  const productDescription =
+    detail.shortDescription ?? `${activityDisplay} Experience in ${regionDisplay}`
   const productJson = product({
     name: detail.title,
     url: canonicalUrl,
-    description: detail.shortDescription ?? `${activityDisplay} Experience in ${regionDisplay}`,
+    description: productDescription,
     priceRupees: detail.pricePerPerson_1_2,
+    image: detail.gallery[0]?.url,
     ratingValue: aggregateRating?.ratingValue,
     ratingCount: aggregateRating?.ratingCount,
   })
+
+  // TouristTrip JSON-LD (ADR-0013) — a Trip-shaped view of the structured
+  // Experience: ordered itinerary steps + total duration. Emitted only when
+  // there is something structured to say (itinerary and/or duration); a bare
+  // Experience contributes no Trip node.
+  const tripJson =
+    detail.itinerary.length > 0 || detail.durationMinutes !== null
+      ? touristTrip({
+          name: detail.title,
+          description: productDescription,
+          durationMinutes: detail.durationMinutes,
+          itinerary:
+            detail.itinerary.length > 0
+              ? detail.itinerary.map((step) => ({
+                  name: step.title,
+                  description: step.description,
+                }))
+              : undefined,
+        })
+      : null
 
   // Review JSON-LD (ADR-0013) — one node per published Customer review.
   const reviewsJson = reviewList(
@@ -160,6 +193,81 @@ export default async function ExperienceDetailPage({
     moderate: t('cancellation.moderate'),
     strict: t('cancellation.strict'),
   }
+
+  /** Pre-resolved difficulty label map — no dynamic keys (mirror kycLabels). */
+  const difficultyLabels: Record<string, string> = {
+    easy: t('difficulty.easy'),
+    moderate: t('difficulty.moderate'),
+    challenging: t('difficulty.challenging'),
+    extreme: t('difficulty.extreme'),
+  }
+
+  // Quick-facts strip (ADR-0017 / DESIGN.md §4 B) — each fact rendered only when
+  // its source value is present. Built as a typed list so the render stays a
+  // simple map; if the list is empty the whole strip is omitted.
+  const languageNames = detail.languages
+    .map((code) => LOCALE_NAMES[code as SupportedLocale])
+    .filter((name): name is string => Boolean(name))
+
+  const quickFacts: Array<{
+    key: string
+    icon: typeof Clock
+    label: string
+    value: string
+  }> = [
+    ...(detail.durationMinutes !== null
+      ? [
+          {
+            key: 'duration',
+            icon: Clock,
+            label: t('quickFacts.duration'),
+            value: formatDuration(detail.durationMinutes),
+          },
+        ]
+      : []),
+    ...(detail.difficulty && difficultyLabels[detail.difficulty]
+      ? [
+          {
+            key: 'difficulty',
+            icon: Activity,
+            label: t('quickFacts.difficulty'),
+            value: difficultyLabels[detail.difficulty]!,
+          },
+        ]
+      : []),
+    ...(detail.minAge !== null
+      ? [
+          {
+            key: 'minAge',
+            icon: Baby,
+            label: t('quickFacts.minAge'),
+            value: t('quickFacts.minAgeValue', { age: detail.minAge }),
+          },
+        ]
+      : []),
+    ...(detail.maxGroupSize !== null
+      ? [
+          {
+            key: 'groupSize',
+            icon: Users,
+            label: t('quickFacts.groupSize'),
+            value: t('quickFacts.groupSizeValue', { size: detail.maxGroupSize }),
+          },
+        ]
+      : []),
+    ...(languageNames.length > 0
+      ? [
+          {
+            key: 'languages',
+            icon: Languages,
+            label: t('quickFacts.languages'),
+            value: languageNames.join(', '),
+          },
+        ]
+      : []),
+  ]
+
+  const hasIncluded = detail.inclusions.length > 0 || detail.exclusions.length > 0
 
   const faqItems = [
     {
@@ -223,6 +331,18 @@ export default async function ExperienceDetailPage({
   // this Experience get an entry, so the jump always lands somewhere.
   const anchorItems: AnchorNavItem[] = [
     { id: 'overview', label: t('nav.overview') },
+    ...(detail.highlights.length > 0
+      ? [{ id: 'highlights', label: t('nav.highlights') }]
+      : []),
+    ...(detail.itinerary.length > 0
+      ? [{ id: 'itinerary', label: t('nav.itinerary') }]
+      : []),
+    ...(hasIncluded || detail.whatToBring.length > 0
+      ? [{ id: 'details', label: t('nav.included') }]
+      : []),
+    ...(detail.meetingPoint
+      ? [{ id: 'meetingPoint', label: t('nav.meetingPoint') }]
+      : []),
     ...(detail.requiredPermits.length > 0
       ? [{ id: 'permits', label: t('nav.permits') }]
       : []),
@@ -237,6 +357,12 @@ export default async function ExperienceDetailPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productJson) }}
       />
+      {tripJson && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(tripJson) }}
+        />
+      )}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsJson) }}
@@ -344,6 +470,32 @@ export default async function ExperienceDetailPage({
             </li>
           </ul>
 
+          {/* Quick-facts strip (ADR-0017) — responsive fact row. Each fact is
+              present only when its source value is non-null/non-empty; if NONE
+              are present the whole strip is omitted (bare listings unchanged). */}
+          {quickFacts.length > 0 && (
+            <dl
+              aria-label={t('quickFacts.heading')}
+              className="mb-[var(--space-section)] grid grid-cols-2 gap-x-4 gap-y-3 rounded-[var(--radius-card)] border bg-muted/40 p-4 sm:grid-cols-3 lg:grid-cols-5"
+            >
+              {quickFacts.map((fact) => {
+                const Icon = fact.icon
+                return (
+                  <div key={fact.key} className="flex items-start gap-2">
+                    <Icon
+                      aria-hidden="true"
+                      className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                    />
+                    <div className="min-w-0">
+                      <dt className="text-xs text-muted-foreground">{fact.label}</dt>
+                      <dd className="text-sm font-medium text-foreground">{fact.value}</dd>
+                    </div>
+                  </div>
+                )
+              })}
+            </dl>
+          )}
+
           {/* Viator-grade in-page anchor nav — sticky, links to the section ids
               below. Plain <a href="#…"> (SSR-compatible, no client JS). */}
           <AnchorNav label={t('nav.label')} items={anchorItems} />
@@ -403,6 +555,155 @@ export default async function ExperienceDetailPage({
                 </div>
               )}
             </section>
+
+            {/* Highlights (anchor target #highlights) — ADR-0017. */}
+            {detail.highlights.length > 0 && (
+              <section
+                id="highlights"
+                className="scroll-mt-[calc(var(--header-offset,4rem)+3.5rem)]"
+              >
+                <h2 className="mb-3 font-heading text-h2 font-semibold tracking-tight">
+                  {t('sections.highlights')}
+                </h2>
+                <ul className="grid gap-2 sm:grid-cols-2">
+                  {detail.highlights.map((highlight) => (
+                    <li key={highlight} className="flex items-start gap-2 text-sm">
+                      <CircleCheck
+                        aria-hidden="true"
+                        className="mt-0.5 size-4 shrink-0 text-success"
+                      />
+                      <span>{highlight}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {/* Itinerary accordion (anchor target #itinerary) — ADR-0017.
+                Vendor-authored, per-Experience steps (DISTINCT from TripGroup
+                itinerary). Reuses the FAQ Accordion primitive. */}
+            {detail.itinerary.length > 0 && (
+              <section
+                id="itinerary"
+                className="scroll-mt-[calc(var(--header-offset,4rem)+3.5rem)]"
+              >
+                <h2 className="mb-4 font-heading text-h2 font-semibold tracking-tight">
+                  {t('sections.itinerary')}
+                </h2>
+                <Accordion multiple className="w-full">
+                  {detail.itinerary.map((step, i) => {
+                    const dayPrefix =
+                      step.dayOffset !== null
+                        ? `${t('itinerary.day', { day: step.dayOffset + 1 })} · `
+                        : ''
+                    return (
+                      <AccordionItem key={step.id} value={`itinerary-${i}`}>
+                        <AccordionTrigger className="text-left text-sm font-medium">
+                          {dayPrefix}
+                          {step.title}
+                        </AccordionTrigger>
+                        <AccordionContent className="space-y-2 text-sm text-muted-foreground">
+                          {step.description && <p>{step.description}</p>}
+                          {step.durationMinutes !== null && (
+                            <p className="flex items-center gap-1.5 text-xs">
+                              <Clock aria-hidden="true" className="size-3.5 shrink-0" />
+                              {formatDuration(step.durationMinutes)}
+                            </p>
+                          )}
+                        </AccordionContent>
+                      </AccordionItem>
+                    )
+                  })}
+                </Accordion>
+              </section>
+            )}
+
+            {/* Details (anchor target #details) — inclusions / exclusions
+                two-column + what-to-bring (ADR-0017). The section renders when
+                ANY of the three arrays is non-empty; each block renders only
+                when its own array is non-empty. */}
+            {(hasIncluded || detail.whatToBring.length > 0) && (
+              <section
+                id="details"
+                className="scroll-mt-[calc(var(--header-offset,4rem)+3.5rem)] space-y-6"
+              >
+                {hasIncluded && (
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    {detail.inclusions.length > 0 && (
+                      <div>
+                        <h2 className="mb-3 font-heading text-h2 font-semibold tracking-tight">
+                          {t('sections.included')}
+                        </h2>
+                        <ul className="space-y-2">
+                          {detail.inclusions.map((item) => (
+                            <li key={item} className="flex items-start gap-2 text-sm">
+                              <CircleCheck
+                                aria-hidden="true"
+                                className="mt-0.5 size-4 shrink-0 text-success"
+                              />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {detail.exclusions.length > 0 && (
+                      <div>
+                        <h2 className="mb-3 font-heading text-h2 font-semibold tracking-tight">
+                          {t('sections.excluded')}
+                        </h2>
+                        <ul className="space-y-2">
+                          {detail.exclusions.map((item) => (
+                            <li
+                              key={item}
+                              className="flex items-start gap-2 text-sm text-muted-foreground"
+                            >
+                              <X aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {detail.whatToBring.length > 0 && (
+                  <div>
+                    <h2 className="mb-3 font-heading text-h2 font-semibold tracking-tight">
+                      {t('sections.whatToBring')}
+                    </h2>
+                    <ul className="grid gap-2 sm:grid-cols-2">
+                      {detail.whatToBring.map((item) => (
+                        <li key={item} className="flex items-start gap-2 text-sm">
+                          <span className="mt-2 inline-block size-1.5 shrink-0 rounded-full bg-muted-foreground" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* Meeting point (anchor target #meetingPoint) — ADR-0017. Text
+                only, no map embed in v1. */}
+            {detail.meetingPoint && (
+              <section
+                id="meetingPoint"
+                className="scroll-mt-[calc(var(--header-offset,4rem)+3.5rem)]"
+              >
+                <h2 className="mb-3 font-heading text-h2 font-semibold tracking-tight">
+                  {t('sections.meetingPoint')}
+                </h2>
+                <p className="flex items-start gap-2 text-sm text-foreground">
+                  <MapPin
+                    aria-hidden="true"
+                    className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                  />
+                  <span>{detail.meetingPoint}</span>
+                </p>
+              </section>
+            )}
 
             {/* Required permits (anchor target #permits) — ADR-0011. */}
             {detail.requiredPermits.length > 0 && (

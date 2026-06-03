@@ -226,7 +226,13 @@
       "requiredPermits": "Required permits",
       "permitsNotice": "You need the following permits before participating. Outvers does not obtain permits on your behalf.",
       "reviews": "Reviews",
-      "faq": "Frequently asked questions"
+      "faq": "Frequently asked questions",
+      "highlights": "Highlights",
+      "included": "What's included",
+      "excluded": "Not included",
+      "whatToBring": "What to bring",
+      "itinerary": "Itinerary",
+      "meetingPoint": "Meeting point"
     },
     "pricing": {
       "heading": "Pricing",
@@ -276,7 +282,31 @@
       "permits": "Permits",
       "cancellation": "Cancellation",
       "reviews": "Reviews",
-      "faq": "FAQ"
+      "faq": "FAQ",
+      "highlights": "Highlights",
+      "itinerary": "Itinerary",
+      "included": "Details",
+      "meetingPoint": "Meeting point"
+    },
+    "quickFacts": {
+      "heading": "At a glance",
+      "duration": "Duration",
+      "difficulty": "Difficulty",
+      "minAge": "Minimum age",
+      "minAgeValue": "{age}+ years",
+      "groupSize": "Group size",
+      "groupSizeValue": "Up to {size}",
+      "languages": "Languages",
+      "season": "Best season"
+    },
+    "difficulty": {
+      "easy": "Easy",
+      "moderate": "Moderate",
+      "challenging": "Challenging",
+      "extreme": "Extreme"
+    },
+    "itinerary": {
+      "day": "Day {day}"
     },
     "assurance": {
       "freeCancellation": "Free cancellation up to 24h before",

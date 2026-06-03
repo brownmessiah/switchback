@@ -190,7 +190,13 @@
       "requiredPermits": "আৱশ্যকীয় পাৰমিট",
       "permitsNotice": "অংশগ্ৰহণৰ আগতে আপোনাক নিম্নলিখিত পাৰমিটৰ প্ৰয়োজন। Outversে আপোনাৰ হৈ পাৰমিট সংগ্ৰহ নকৰে।",
       "reviews": "সমীক্ষা",
-      "faq": "সঘনাই সোধা প্ৰশ্ন"
+      "faq": "সঘনাই সোধা প্ৰশ্ন",
+      "highlights": "মুখ্য আকৰ্ষণ",
+      "included": "কি অন্তৰ্ভুক্ত",
+      "excluded": "অন্তৰ্ভুক্ত নহয়",
+      "whatToBring": "কি লগত আনিব",
+      "itinerary": "ভ্ৰমণসূচী",
+      "meetingPoint": "মিলনস্থল"
     },
     "pricing": {
       "heading": "মূল্য",
@@ -240,7 +246,31 @@
       "permits": "অনুমতিপত্ৰ",
       "cancellation": "বাতিলকৰণ",
       "reviews": "পৰ্যালোচনাসমূহ",
-      "faq": "সঘনাই সোধা প্ৰশ্ন"
+      "faq": "সঘনাই সোধা প্ৰশ্ন",
+      "highlights": "মুখ্য আকৰ্ষণ",
+      "itinerary": "ভ্ৰমণসূচী",
+      "included": "বিৱৰণ",
+      "meetingPoint": "মিলনস্থল"
+    },
+    "quickFacts": {
+      "heading": "এক নজৰত",
+      "duration": "সময়সীমা",
+      "difficulty": "কঠিনতা",
+      "minAge": "নূন্যতম বয়স",
+      "minAgeValue": "{age}+ বছৰ",
+      "groupSize": "দলৰ আকাৰ",
+      "groupSizeValue": "{size} লৈ",
+      "languages": "ভাষা",
+      "season": "শ্ৰেষ্ঠ ঋতু"
+    },
+    "difficulty": {
+      "easy": "সহজ",
+      "moderate": "মজলীয়া",
+      "challenging": "প্ৰত্যাহ্বানমূলক",
+      "extreme": "চৰম"
+    },
+    "itinerary": {
+      "day": "দিন {day}"
     },
     "assurance": {
       "freeCancellation": "অভিজ্ঞতাৰ 24 ঘণ্টা আগলৈকে বিনামূলীয়া বাতিল",

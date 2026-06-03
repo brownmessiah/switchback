@@ -268,7 +268,13 @@
       "requiredPermits": "ਲੋੜੀਂਦੇ ਪਰਮਿਟ",
       "permitsNotice": "ਹਿੱਸਾ ਲੈਣ ਤੋਂ ਪਹਿਲਾਂ ਤੁਹਾਨੂੰ ਹੇਠ ਲਿਖੇ ਪਰਮਿਟ ਚਾਹੀਦੇ ਹਨ। Outvers ਤੁਹਾਡੀ ਤਰਫ਼ੋਂ ਪਰਮਿਟ ਨਹੀਂ ਲੈਂਦਾ।",
       "reviews": "ਸਮੀਖਿਆਵਾਂ",
-      "faq": "ਅਕਸਰ ਪੁੱਛੇ ਜਾਣ ਵਾਲੇ ਸਵਾਲ"
+      "faq": "ਅਕਸਰ ਪੁੱਛੇ ਜਾਣ ਵਾਲੇ ਸਵਾਲ",
+      "highlights": "ਮੁੱਖ ਆਕਰਸ਼ਣ",
+      "included": "ਕੀ ਸ਼ਾਮਲ ਹੈ",
+      "excluded": "ਸ਼ਾਮਲ ਨਹੀਂ",
+      "whatToBring": "ਕੀ ਨਾਲ ਲਿਆਉਣਾ ਹੈ",
+      "itinerary": "ਯਾਤਰਾ ਪ੍ਰੋਗਰਾਮ",
+      "meetingPoint": "ਮਿਲਣ ਦੀ ਥਾਂ"
     },
     "pricing": {
       "heading": "ਕੀਮਤ",
@@ -318,7 +324,31 @@
       "permits": "ਪਰਮਿਟ",
       "cancellation": "ਰੱਦ ਕਰਨਾ",
       "reviews": "ਸਮੀਖਿਆਵਾਂ",
-      "faq": "ਅਕਸਰ ਪੁੱਛੇ ਜਾਣ ਵਾਲੇ ਸਵਾਲ"
+      "faq": "ਅਕਸਰ ਪੁੱਛੇ ਜਾਣ ਵਾਲੇ ਸਵਾਲ",
+      "highlights": "ਮੁੱਖ ਆਕਰਸ਼ਣ",
+      "itinerary": "ਯਾਤਰਾ ਪ੍ਰੋਗਰਾਮ",
+      "included": "ਵੇਰਵੇ",
+      "meetingPoint": "ਮਿਲਣ ਦੀ ਥਾਂ"
+    },
+    "quickFacts": {
+      "heading": "ਇੱਕ ਨਜ਼ਰ ਵਿੱਚ",
+      "duration": "ਮਿਆਦ",
+      "difficulty": "ਔਖਿਆਈ",
+      "minAge": "ਘੱਟੋ-ਘੱਟ ਉਮਰ",
+      "minAgeValue": "{age}+ ਸਾਲ",
+      "groupSize": "ਗਰੁੱਪ ਦਾ ਆਕਾਰ",
+      "groupSizeValue": "{size} ਤੱਕ",
+      "languages": "ਭਾਸ਼ਾਵਾਂ",
+      "season": "ਸਭ ਤੋਂ ਵਧੀਆ ਮੌਸਮ"
+    },
+    "difficulty": {
+      "easy": "ਆਸਾਨ",
+      "moderate": "ਦਰਮਿਆਨਾ",
+      "challenging": "ਚੁਣੌਤੀਪੂਰਨ",
+      "extreme": "ਅਤਿਅੰਤ"
+    },
+    "itinerary": {
+      "day": "ਦਿਨ {day}"
     },
     "assurance": {
       "freeCancellation": "ਅਨੁਭਵ ਤੋਂ 24 ਘੰਟੇ ਪਹਿਲਾਂ ਤੱਕ ਮੁਫ਼ਤ ਰੱਦ",

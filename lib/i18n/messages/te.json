@@ -268,7 +268,13 @@
       "requiredPermits": "అవసరమైన పర్మిట్లు",
       "permitsNotice": "పాల్గొనడానికి ముందు మీకు ఈ క్రింది పర్మిట్లు అవసరం. Outvers మీ తరపున పర్మిట్లు పొందదు.",
       "reviews": "సమీక్షలు",
-      "faq": "తరచుగా అడిగే ప్రశ్నలు"
+      "faq": "తరచుగా అడిగే ప్రశ్నలు",
+      "highlights": "ముఖ్యాంశాలు",
+      "included": "ఏమి చేర్చబడింది",
+      "excluded": "చేర్చబడలేదు",
+      "whatToBring": "ఏమి తీసుకురావాలి",
+      "itinerary": "ప్రయాణ ప్రణాళిక",
+      "meetingPoint": "కలయిక స్థలం"
     },
     "pricing": {
       "heading": "ధరలు",
@@ -318,7 +324,31 @@
       "permits": "అనుమతులు",
       "cancellation": "రద్దు",
       "reviews": "సమీక్షలు",
-      "faq": "తరచుగా అడిగే ప్రశ్నలు"
+      "faq": "తరచుగా అడిగే ప్రశ్నలు",
+      "highlights": "ముఖ్యాంశాలు",
+      "itinerary": "ప్రయాణ ప్రణాళిక",
+      "included": "వివరాలు",
+      "meetingPoint": "కలయిక స్థలం"
+    },
+    "quickFacts": {
+      "heading": "ఒక చూపులో",
+      "duration": "వ్యవధి",
+      "difficulty": "కష్టత",
+      "minAge": "కనీస వయసు",
+      "minAgeValue": "{age}+ సంవత్సరాలు",
+      "groupSize": "గ్రూప్ పరిమాణం",
+      "groupSizeValue": "{size} వరకు",
+      "languages": "భాషలు",
+      "season": "ఉత్తమ సీజన్"
+    },
+    "difficulty": {
+      "easy": "సులభం",
+      "moderate": "మధ్యస్థం",
+      "challenging": "సవాలుతో కూడినది",
+      "extreme": "తీవ్రమైనది"
+    },
+    "itinerary": {
+      "day": "రోజు {day}"
     },
     "assurance": {
       "freeCancellation": "అనుభవానికి 24 గంటల ముందు వరకు ఉచిత రద్దు",

@@ -268,7 +268,13 @@
       "requiredPermits": "ಅಗತ್ಯ ಪರವಾನಗಿಗಳು",
       "permitsNotice": "ಭಾಗವಹಿಸುವ ಮೊದಲು ನಿಮಗೆ ಈ ಕೆಳಗಿನ ಪರವಾನಗಿಗಳು ಬೇಕು. Outvers ನಿಮ್ಮ ಪರವಾಗಿ ಪರವಾನಗಿಗಳನ್ನು ಪಡೆಯುವುದಿಲ್ಲ.",
       "reviews": "ವಿಮರ್ಶೆಗಳು",
-      "faq": "ಪದೇ ಪದೇ ಕೇಳಲಾಗುವ ಪ್ರಶ್ನೆಗಳು"
+      "faq": "ಪದೇ ಪದೇ ಕೇಳಲಾಗುವ ಪ್ರಶ್ನೆಗಳು",
+      "highlights": "ಮುಖ್ಯಾಂಶಗಳು",
+      "included": "ಏನು ಒಳಗೊಂಡಿದೆ",
+      "excluded": "ಒಳಗೊಂಡಿಲ್ಲ",
+      "whatToBring": "ಏನು ತರಬೇಕು",
+      "itinerary": "ಪ್ರಯಾಣ ಯೋಜನೆ",
+      "meetingPoint": "ಭೇಟಿ ಸ್ಥಳ"
     },
     "pricing": {
       "heading": "ಬೆಲೆ",
@@ -318,7 +324,31 @@
       "permits": "ಪರವಾನಗಿಗಳು",
       "cancellation": "ರದ್ದತಿ",
       "reviews": "ವಿಮರ್ಶೆಗಳು",
-      "faq": "ಪದೇಪದೇ ಕೇಳಲಾಗುವ ಪ್ರಶ್ನೆಗಳು"
+      "faq": "ಪದೇಪದೇ ಕೇಳಲಾಗುವ ಪ್ರಶ್ನೆಗಳು",
+      "highlights": "ಮುಖ್ಯಾಂಶಗಳು",
+      "itinerary": "ಪ್ರಯಾಣ ಯೋಜನೆ",
+      "included": "ವಿವರಗಳು",
+      "meetingPoint": "ಭೇಟಿ ಸ್ಥಳ"
+    },
+    "quickFacts": {
+      "heading": "ಒಂದು ನೋಟದಲ್ಲಿ",
+      "duration": "ಅವಧಿ",
+      "difficulty": "ಕಷ್ಟ",
+      "minAge": "ಕನಿಷ್ಠ ವಯಸ್ಸು",
+      "minAgeValue": "{age}+ ವರ್ಷಗಳು",
+      "groupSize": "ಗುಂಪಿನ ಗಾತ್ರ",
+      "groupSizeValue": "{size} ವರೆಗೆ",
+      "languages": "ಭಾಷೆಗಳು",
+      "season": "ಅತ್ಯುತ್ತಮ ಋತು"
+    },
+    "difficulty": {
+      "easy": "ಸುಲಭ",
+      "moderate": "ಮಧ್ಯಮ",
+      "challenging": "ಸವಾಲಿನ",
+      "extreme": "ತೀವ್ರ"
+    },
+    "itinerary": {
+      "day": "ದಿನ {day}"
     },
     "assurance": {
       "freeCancellation": "ಅನುಭವಕ್ಕೆ 24 ಗಂಟೆಗಳ ಮೊದಲು ವರೆಗೆ ಉಚಿತ ರದ್ದತಿ",

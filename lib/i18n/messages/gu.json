@@ -268,7 +268,13 @@
       "requiredPermits": "જરૂરી પરમિટ્સ",
       "permitsNotice": "ભાગ લેતા પહેલાં તમારે નીચેની પરમિટ્સ જરૂરી છે. Outvers તમારા વતી પરમિટ્સ મેળવતું નથી.",
       "reviews": "સમીક્ષાઓ",
-      "faq": "વારંવાર પૂછાતા પ્રશ્નો"
+      "faq": "વારંવાર પૂછાતા પ્રશ્નો",
+      "highlights": "મુખ્ય આકર્ષણો",
+      "included": "શું સામેલ છે",
+      "excluded": "સામેલ નથી",
+      "whatToBring": "શું લાવવું",
+      "itinerary": "પ્રવાસ કાર્યક્રમ",
+      "meetingPoint": "મળવાનું સ્થળ"
     },
     "pricing": {
       "heading": "ભાવ",
@@ -318,7 +324,31 @@
       "permits": "પરમિટ",
       "cancellation": "રદ કરવું",
       "reviews": "સમીક્ષાઓ",
-      "faq": "વારંવાર પૂછાતા પ્રશ્નો"
+      "faq": "વારંવાર પૂછાતા પ્રશ્નો",
+      "highlights": "મુખ્ય આકર્ષણો",
+      "itinerary": "પ્રવાસ કાર્યક્રમ",
+      "included": "વિગતો",
+      "meetingPoint": "મળવાનું સ્થળ"
+    },
+    "quickFacts": {
+      "heading": "એક નજરમાં",
+      "duration": "સમયગાળો",
+      "difficulty": "મુશ્કેલી",
+      "minAge": "ન્યૂનતમ ઉંમર",
+      "minAgeValue": "{age}+ વર્ષ",
+      "groupSize": "જૂથનું કદ",
+      "groupSizeValue": "{size} સુધી",
+      "languages": "ભાષાઓ",
+      "season": "શ્રેષ્ઠ ઋતુ"
+    },
+    "difficulty": {
+      "easy": "સરળ",
+      "moderate": "મધ્યમ",
+      "challenging": "પડકારજનક",
+      "extreme": "આત્યંતિક"
+    },
+    "itinerary": {
+      "day": "દિવસ {day}"
     },
     "assurance": {
       "freeCancellation": "અનુભવના 24 કલાક પહેલાં સુધી મફત રદ",

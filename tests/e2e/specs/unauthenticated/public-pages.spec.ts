@@ -298,6 +298,93 @@ test.describe('Experience detail', () => {
     await expect(bookNow).toBeVisible()
     await expect(bookNow).toHaveAttribute('href', /\/checkout\?experienceId=/)
   })
+
+  // ADR-0017 structured PDP: the flagship rafting fixture carries the full
+  // structured attribute set (quick-facts, highlights, inclusions/exclusions,
+  // what-to-bring, itinerary, meeting point) seeded in db/seed.ts. Every new
+  // section must render, the TouristTrip JSON-LD must be present, and the
+  // anchor nav must gain matching jump targets. axe-core runs in afterEach.
+  test('structured Experience renders every ADR-0017 section + TouristTrip JSON-LD', async ({
+    page,
+  }) => {
+    const response = await page.goto('/experience/rishikesh-rafting-grade-iii')
+    expect(response?.status()).toBe(200)
+
+    // Quick-facts strip — labelled <dl>; duration + difficulty are seeded.
+    const quickFacts = page.locator('dl[aria-label]').first()
+    await expect(quickFacts).toBeVisible()
+    await expect(quickFacts).toContainText('4 hours')
+    await expect(quickFacts).toContainText('Moderate')
+
+    // Highlights — heading + at least one seeded bullet.
+    await expect(page.locator('#highlights')).toHaveCount(1)
+    await expect(
+      page.locator('#highlights').getByText('Three named Grade III rapids'),
+    ).toBeVisible()
+
+    // Details — inclusions + exclusions + what-to-bring all in the #details
+    // section.
+    const details = page.locator('#details')
+    await expect(details).toHaveCount(1)
+    await expect(details.getByText('Helmet, PFD and paddle')).toBeVisible()
+    await expect(details.getByText('GoPro footage')).toBeVisible()
+    await expect(details.getByText('Quick-dry clothes')).toBeVisible()
+
+    // Itinerary accordion — one seeded step trigger present.
+    await expect(page.locator('#itinerary')).toHaveCount(1)
+    await expect(
+      page.locator('#itinerary').getByText('Safety briefing & gear-up'),
+    ).toBeVisible()
+
+    // Meeting point — text only.
+    await expect(page.locator('#meetingPoint')).toHaveCount(1)
+    await expect(
+      page.locator('#meetingPoint').getByText(/Shivpuri rafting base/),
+    ).toBeVisible()
+
+    // Anchor nav gained matching jump targets for the new sections.
+    const anchorNav = page.locator('nav[aria-label="Section navigation"]')
+    for (const id of ['highlights', 'itinerary', 'details', 'meetingPoint']) {
+      await expect(anchorNav.locator(`a[href="#${id}"]`)).toBeVisible()
+      await expect(page.locator(`#${id}`)).toHaveCount(1)
+    }
+
+    // TouristTrip JSON-LD is injected (ADR-0013 enrichment). Parse every
+    // ld+json block and assert exactly one TouristTrip node with an itinerary
+    // ItemList and an ISO-8601 duration (240 min → PT4H).
+    const ldBlocks = await page
+      .locator('script[type="application/ld+json"]')
+      .allTextContents()
+    const parsed = ldBlocks.map((b) => JSON.parse(b))
+    const trip = parsed.find((n) => n['@type'] === 'TouristTrip')
+    expect(trip, 'TouristTrip JSON-LD node must be present').toBeTruthy()
+    expect(trip.duration).toBe('PT4H')
+    expect(trip.itinerary['@type']).toBe('ItemList')
+    expect(trip.itinerary.itemListElement.length).toBeGreaterThanOrEqual(2)
+    expect(trip.itinerary.itemListElement[0].position).toBe(1)
+  })
+
+  // The structured sections are strictly additive: a bare Experience (no
+  // ADR-0017 fields seeded) must render cleanly with NONE of the new section
+  // shells — no empty quick-facts strip, no orphan headings. The seeded
+  // paragliding Experience carries no structured fields.
+  test('bare Experience degrades cleanly — no empty structured section shells', async ({
+    page,
+  }) => {
+    const response = await page.goto('/experience/manali-solang-paragliding-tandem')
+    expect(response?.status()).toBe(200)
+
+    // The core PDP still renders (overview + booking rail).
+    await expect(page.locator('#overview')).toHaveCount(1)
+    await expect(page.locator('a:has-text("Book now")')).toBeVisible()
+
+    // None of the structured section shells are emitted when there is no data.
+    for (const id of ['highlights', 'itinerary', 'details', 'meetingPoint']) {
+      await expect(page.locator(`#${id}`)).toHaveCount(0)
+    }
+    // No quick-facts strip either.
+    await expect(page.locator('dl[aria-label]')).toHaveCount(0)
+  })
 })
 
 // ---------------------------------------------------------------------------

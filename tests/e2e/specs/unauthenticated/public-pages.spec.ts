@@ -620,13 +620,13 @@ test.describe('Search filtered', () => {
   // indexed `difficulty` is moderate and drops bare Experiences (null difficulty
   // never matches a difficulty filter — see lib/search/indexer.ts).
   //
-  // NOTE: this assertion currently leans on the SINGLE structured seed row
-  // `rishikesh-rafting-grade-iii` (issue 03 structured it: difficulty=moderate,
-  // durationMinutes=240 → durationBand=half_day, seasonMonths=[3,4,5,6,9,10,11]).
-  // The richer multi-row narrowing (every catalog row carrying structured
-  // fields) depends on issue 06's full E2E-catalog backfill, which is stacked
-  // AFTER this issue. This spec runs in issue 07's integrated verification once
-  // Docker + the 06 backfill are present; until then it exercises the one row.
+  // Issue 06's full catalog backfill structured MULTIPLE rows as
+  // difficulty=moderate (the flagship `rishikesh-rafting-grade-iii` from issue
+  // 03, plus e.g. `manali-hampta-pass-trek-5d` and
+  // `goa-scuba-diving-fun-dive-cert`). So this no longer asserts "rafting is the
+  // ONLY moderate result"; it asserts the broader invariant: the flagship row
+  // is present, the bare degradation row (`manali-solang-paragliding-tandem`,
+  // null difficulty) is excluded, and every result is a valid /experience link.
   test('difficulty facet constrains results: ?difficulty=moderate keeps the structured row and drops bare ones', async ({
     page,
   }) => {
@@ -648,9 +648,12 @@ test.describe('Search filtered', () => {
       ),
     ).toBe(true)
 
-    // Filtered by difficulty=moderate: the structured row is present and every
-    // result is a moderate-difficulty (i.e. structured) Experience. With only
-    // one structured seed row, that is exactly the rafting row.
+    // Filtered by difficulty=moderate: every result is a moderate-difficulty
+    // (i.e. structured) Experience. Issue 06's full catalog backfill structured
+    // multiple rows as difficulty=moderate (e.g. manali-hampta-pass-trek-5d,
+    // goa-scuba-diving-fun-dive-cert) alongside the flagship rafting row, so we
+    // assert the broader invariant: the facet narrows to difficulty=moderate
+    // listings and excludes bare (null-difficulty) Experiences.
     await page.goto('/search?difficulty=moderate')
     const moderateHrefs = await page
       .locator('main a[href^="/experience/"]')
@@ -658,18 +661,26 @@ test.describe('Search filtered', () => {
         els.map((e) => (e as HTMLAnchorElement).getAttribute('href') ?? ''),
       )
     expect(moderateHrefs.length).toBeGreaterThan(0)
+    // (a) The flagship structured row is present.
     expect(
       moderateHrefs.some((h) =>
         h.startsWith('/experience/rishikesh-rafting-grade-iii'),
       ),
     ).toBe(true)
-    // No bare Experience leaks through — every result is the structured row
-    // (until issue 06 adds more structured rows, after which this asserts the
-    // broader "all results carry difficulty=moderate" invariant).
+    // (b) The bare degradation row (no difficulty) never leaks through a
+    //     difficulty filter.
+    expect(
+      moderateHrefs.some((h) =>
+        h.startsWith('/experience/manali-solang-paragliding-tandem'),
+      ),
+      'bare (null-difficulty) Experience must not appear under difficulty=moderate',
+    ).toBe(false)
+    // (c) Every result is a valid /experience/<slug> link — the facet returns
+    //     only real Experience results.
     for (const href of moderateHrefs) {
       expect(
-        href.startsWith('/experience/rishikesh-rafting-grade-iii'),
-        `difficulty=moderate returned a non-structured result: ${href}`,
+        /^\/experience\/[a-z0-9-]+$/.test(href),
+        `difficulty=moderate returned a malformed result href: ${href}`,
       ).toBe(true)
     }
 

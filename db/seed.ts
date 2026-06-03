@@ -354,25 +354,12 @@ const EXPERIENCES: SeededExperience[] = [
     pricePerPerson_6_plus: '3000.00',
     regionSlug: 'manali',
     activitySlug: 'paragliding',
-    // Structured backfill (ADR-0017, issue 06) — derived from the prose above.
-    structured: {
-      durationMinutes: 60,
-      difficulty: 'easy',
-      minAge: 12,
-      maxGroupSize: 1,
-      languages: ['en', 'hi'],
-      meetingPoint: 'Solang launch site, ~2,560 m, near Manali',
-      seasonMonths: [3, 4, 5, 6, 9, 10, 11],
-      highlights: ['15-min tandem from the 2,560 m Solang launch', 'Views of Hanuman Tibba and Friendship Peak', 'APPI-rated pilots', 'High-res GoPro reel included'],
-      inclusions: ['Certified tandem pilot and gear', 'GoPro reel', 'Pre-flight briefing'],
-      exclusions: ['Transport to Solang', 'Meals', 'Insurance'],
-      whatToBring: ['Closed shoes', 'Sunglasses', 'Light layers'],
-      itinerary: [
-        { title: 'Briefing & gear-up', description: 'Meet your pilot, fit the harness and run the take-off brief.', dayOffset: null, durationMinutes: 20 },
-        { title: 'Tandem flight', description: 'Take off from Solang and soar over the Beas valley.', dayOffset: null, durationMinutes: 15 },
-        { title: 'Landing & reel', description: 'Land, de-rig and collect your GoPro footage.', dayOffset: null, durationMinutes: 25 },
-      ],
-    },
+    // INTENTIONALLY BARE — no structured (ADR-0017) fields. This is the
+    // designated degradation fixture: the PDP must render cleanly with NONE of
+    // the structured section shells, and a difficulty facet must never match it
+    // (null difficulty). See tests/e2e/specs/unauthenticated/public-pages.spec.ts
+    // ("bare Experience degrades cleanly" + the difficulty=moderate facet test).
+    // Do NOT add a `structured` block here.
   },
   // business-tier vendor — Bir-Billing + Goa Experiences
   {

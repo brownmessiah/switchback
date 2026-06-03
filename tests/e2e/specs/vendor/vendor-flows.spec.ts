@@ -396,7 +396,11 @@ test.describe('Structured attributes authoring', () => {
       .locator('[data-slot="select-trigger"]')
       .filter({ hasText: 'Select region' })
     await regionTrigger.click()
-    await page.locator('[data-slot="select-item"]').first().click()
+    // Scope to a specific region item (mirrors the activity select above). Using
+    // .first() is fragile: Radix keeps the just-closed activity dropdown's items
+    // mounted during its exit animation, so .first() can resolve to a hidden
+    // stale option and hang. A hasText filter targets the visible region item.
+    await page.locator('[data-slot="select-item"]').filter({ hasText: 'Manali' }).click()
 
     await page.getByRole('button', { name: 'Continue' }).click() // → Pricing
     await page.fill('#price12', '3500')
@@ -431,7 +435,9 @@ test.describe('Structured attributes authoring', () => {
 
     // One highlight
     await page.getByRole('button', { name: /add highlight/i }).click()
-    await page.getByLabel('highlight 1').fill('Summit sunrise')
+    // exact:true so the input ("highlight 1") doesn't also match the row's
+    // remove button ("Remove highlight 1") — getByLabel is substring by default.
+    await page.getByLabel('highlight 1', { exact: true }).fill('Summit sunrise')
 
     // Two itinerary steps
     await page.getByRole('button', { name: /add step/i }).click()

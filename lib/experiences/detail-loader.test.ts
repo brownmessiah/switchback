@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import { availabilitySlots } from '@/db/schema/availability-slots'
+import { experienceItinerarySteps } from '@/db/schema/experience-itinerary-steps'
 import { experiences } from '@/db/schema/experiences'
 import { mediaAssets } from '@/db/schema/media-assets'
 import { regionClosures } from '@/db/schema/region-closures'
@@ -38,6 +39,7 @@ describe('Experience detail loader (ADR-0013)', () => {
     await db.execute(sql`TRUNCATE TABLE region_closures CASCADE`)
     await db.execute(sql`TRUNCATE TABLE slug_redirects CASCADE`)
     await db.execute(sql`TRUNCATE TABLE media_assets CASCADE`)
+    await db.execute(sql`TRUNCATE TABLE experience_itinerary_steps CASCADE`)
     await db.execute(sql`TRUNCATE TABLE experiences CASCADE`)
   })
 
@@ -50,6 +52,17 @@ describe('Experience detail loader (ADR-0013)', () => {
     requiredPermits: string[]
     shortDescription: string | null
     longDescription: string | null
+    durationMinutes: number | null
+    difficulty: 'easy' | 'moderate' | 'challenging' | 'extreme' | null
+    minAge: number | null
+    maxGroupSize: number | null
+    languages: string[]
+    meetingPoint: string | null
+    seasonMonths: number[]
+    highlights: string[]
+    inclusions: string[]
+    exclusions: string[]
+    whatToBring: string[]
   }> = {}): Promise<string> {
     const [exp] = await db
       .insert(experiences)
@@ -68,6 +81,17 @@ describe('Experience detail loader (ADR-0013)', () => {
         activitySlug: overrides.activitySlug ?? 'rafting',
         status: overrides.status ?? 'published',
         requiredPermits: overrides.requiredPermits ?? [],
+        durationMinutes: overrides.durationMinutes ?? null,
+        difficulty: overrides.difficulty ?? null,
+        minAge: overrides.minAge ?? null,
+        maxGroupSize: overrides.maxGroupSize ?? null,
+        languages: overrides.languages,
+        meetingPoint: overrides.meetingPoint ?? null,
+        seasonMonths: overrides.seasonMonths,
+        highlights: overrides.highlights,
+        inclusions: overrides.inclusions,
+        exclusions: overrides.exclusions,
+        whatToBring: overrides.whatToBring,
       })
       .returning({ id: experiences.id })
     return exp!.id
@@ -442,6 +466,71 @@ describe('Experience detail loader (ADR-0013)', () => {
     expect(result!.type).toBe('found')
     if (result!.type !== 'found') throw new Error('unreachable')
     expect(result!.data.activeClosure).toBeNull()
+  })
+
+  // ---- Structured attributes + itinerary (ADR-0017) ----
+  it('returns all structured fields and an ordered itinerary when present', async () => {
+    const id = await seedExperience({
+      slug: 'structured-rafting',
+      durationMinutes: 180,
+      difficulty: 'challenging',
+      minAge: 12,
+      maxGroupSize: 8,
+      languages: ['en', 'hi'],
+      meetingPoint: 'Shivpuri jetty',
+      seasonMonths: [9, 10, 11],
+      highlights: ['Grade III rapids', 'Riverside lunch'],
+      inclusions: ['Guide', 'Safety gear'],
+      exclusions: ['Transport'],
+      whatToBring: ['Towel', 'Sunscreen'],
+    })
+    // Insert out of step_order to prove the loader orders by step_order.
+    await db.insert(experienceItinerarySteps).values([
+      { experienceId: id, stepOrder: 1, title: 'Rapids' },
+      { experienceId: id, stepOrder: 0, title: 'Briefing' },
+    ])
+
+    const result = await loadExperienceDetail(db, { lng: 'en', slug: 'structured-rafting' })
+    expect(result!.type).toBe('found')
+    if (result!.type !== 'found') throw new Error('unreachable')
+    const d = result!.data
+
+    expect(d.durationMinutes).toBe(180)
+    expect(d.difficulty).toBe('challenging')
+    expect(d.minAge).toBe(12)
+    expect(d.maxGroupSize).toBe(8)
+    expect(d.languages).toEqual(['en', 'hi'])
+    expect(d.meetingPoint).toBe('Shivpuri jetty')
+    expect(d.seasonMonths).toEqual([9, 10, 11])
+    expect(d.highlights).toEqual(['Grade III rapids', 'Riverside lunch'])
+    expect(d.inclusions).toEqual(['Guide', 'Safety gear'])
+    expect(d.exclusions).toEqual(['Transport'])
+    expect(d.whatToBring).toEqual(['Towel', 'Sunscreen'])
+
+    expect(d.itinerary.map((s) => s.title)).toEqual(['Briefing', 'Rapids'])
+    expect(d.itinerary.map((s) => s.stepOrder)).toEqual([0, 1])
+  })
+
+  it('returns null scalars, empty arrays, and an empty itinerary for a bare Experience', async () => {
+    await seedExperience({ slug: 'bare-rafting' })
+
+    const result = await loadExperienceDetail(db, { lng: 'en', slug: 'bare-rafting' })
+    expect(result!.type).toBe('found')
+    if (result!.type !== 'found') throw new Error('unreachable')
+    const d = result!.data
+
+    expect(d.durationMinutes).toBeNull()
+    expect(d.difficulty).toBeNull()
+    expect(d.minAge).toBeNull()
+    expect(d.maxGroupSize).toBeNull()
+    expect(d.meetingPoint).toBeNull()
+    expect(d.languages).toEqual([])
+    expect(d.seasonMonths).toEqual([])
+    expect(d.highlights).toEqual([])
+    expect(d.inclusions).toEqual([])
+    expect(d.exclusions).toEqual([])
+    expect(d.whatToBring).toEqual([])
+    expect(d.itinerary).toEqual([])
   })
 
   // ---- Locale passthrough ----

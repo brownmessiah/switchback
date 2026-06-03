@@ -1,6 +1,7 @@
 import { and, asc, eq, gte, lte, sql } from 'drizzle-orm'
 
 import { availabilitySlots } from '@/db/schema/availability-slots'
+import type { ExperienceItineraryStep } from '@/db/schema/experience-itinerary-steps'
 import { experiences } from '@/db/schema/experiences'
 import { regionClosures } from '@/db/schema/region-closures'
 import { slugRedirects } from '@/db/schema/slug-redirects'
@@ -22,6 +23,8 @@ import {
   type RegionMeta,
   getRegion,
 } from '@/lib/regions/registry'
+
+import { loadItinerary } from './itinerary'
 
 export interface ExperienceDetailVendor {
   userId: string
@@ -86,6 +89,39 @@ export interface ExperienceDetailData {
    * `nextAvailableSlotId` points to the first slot AFTER the closure (if any).
    */
   activeClosure: ExperienceActiveClosure | null
+
+  // ADR-0017 — Structured Experience attributes. Scalars are null when unset;
+  // arrays come back as [] when empty (column default '{}'). The integer
+  // columns arrive as numbers already (unlike the numeric price columns, which
+  // are strings — no Number() conversion needed here).
+  /** Total Experience duration in minutes, or null. Format via formatDuration. */
+  durationMinutes: number | null
+  /** Operational difficulty rating, or null. One of easy/moderate/challenging/extreme. */
+  difficulty: string | null
+  /** Minimum participant age, or null. */
+  minAge: number | null
+  /** Operational per-departure cap (distinct from pricing brackets), or null. */
+  maxGroupSize: number | null
+  /** Guide language codes (subset of KNOWN_GUIDE_LANGUAGES), or [] when unset. */
+  languages: string[]
+  /** Free-text meeting point, or null. */
+  meetingPoint: string | null
+  /** Months (1-12) the Experience runs, or [] when unset. Format via formatSeason. */
+  seasonMonths: number[]
+  /** Marketing highlights (≤6), or [] when unset. */
+  highlights: string[]
+  /** What's included (≤15), or [] when unset. */
+  inclusions: string[]
+  /** What's excluded (≤15), or [] when unset. */
+  exclusions: string[]
+  /** What the Customer should bring (≤15), or [] when unset. */
+  whatToBring: string[]
+  /**
+   * Vendor-authored, per-Experience structured itinerary (ADR-0017), ordered
+   * by step_order. DISTINCT from the Customer-led TripGroup itinerary
+   * (ADR-0009). Empty when the Experience has no steps.
+   */
+  itinerary: ExperienceItineraryStep[]
 }
 
 export type ExperienceDetailResult =
@@ -118,6 +154,17 @@ export async function loadExperienceDetail(
       activitySlug: experiences.activitySlug,
       regionSlug: experiences.regionSlug,
       vendorUserId: experiences.vendorUserId,
+      durationMinutes: experiences.durationMinutes,
+      difficulty: experiences.difficulty,
+      minAge: experiences.minAge,
+      maxGroupSize: experiences.maxGroupSize,
+      languages: experiences.languages,
+      meetingPoint: experiences.meetingPoint,
+      seasonMonths: experiences.seasonMonths,
+      highlights: experiences.highlights,
+      inclusions: experiences.inclusions,
+      exclusions: experiences.exclusions,
+      whatToBring: experiences.whatToBring,
     })
     .from(experiences)
     .where(
@@ -177,6 +224,17 @@ async function hydrateDetail(
     activitySlug: string
     regionSlug: string
     vendorUserId: string
+    durationMinutes: number | null
+    difficulty: string | null
+    minAge: number | null
+    maxGroupSize: number | null
+    languages: string[] | null
+    meetingPoint: string | null
+    seasonMonths: number[] | null
+    highlights: string[] | null
+    inclusions: string[] | null
+    exclusions: string[] | null
+    whatToBring: string[] | null
   },
 ): Promise<ExperienceDetailResult> {
   const [vendor] = await db
@@ -241,6 +299,7 @@ async function hydrateDetail(
     .limit(1)
 
   const gallery = await loadExperienceGallery(db, exp.id)
+  const itinerary = await loadItinerary(db, exp.id)
 
   return {
     type: 'found',
@@ -272,6 +331,18 @@ async function hydrateDetail(
             source: closure.source,
           }
         : null,
+      durationMinutes: exp.durationMinutes,
+      difficulty: exp.difficulty,
+      minAge: exp.minAge,
+      maxGroupSize: exp.maxGroupSize,
+      languages: exp.languages ?? [],
+      meetingPoint: exp.meetingPoint,
+      seasonMonths: exp.seasonMonths ?? [],
+      highlights: exp.highlights ?? [],
+      inclusions: exp.inclusions ?? [],
+      exclusions: exp.exclusions ?? [],
+      whatToBring: exp.whatToBring ?? [],
+      itinerary,
     },
   }
 }

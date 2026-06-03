@@ -6,6 +6,7 @@ import {
   CircleDashed,
   FileText,
   IndianRupee,
+  ListChecks,
   ShieldCheck,
   Sparkles,
 } from 'lucide-react'
@@ -30,6 +31,18 @@ import {
 } from '@/lib/vendor/listing-completeness'
 import { listActivities } from '@/lib/activities/registry'
 import { listRegions } from '@/lib/regions/registry'
+import type { GuideLanguage } from '@/lib/experiences/structured-schema'
+
+import {
+  CheckboxGroup,
+  DIFFICULTY_OPTIONS,
+  ItineraryEditor,
+  LANGUAGE_OPTIONS,
+  MONTHS,
+  StringListEditor,
+  type DifficultyValue,
+  type StructuredItineraryStep,
+} from './structured-fields'
 
 // ── Shared option vocabularies (single source for both new + edit) ──────────
 
@@ -86,6 +99,22 @@ export interface ListingFormValues {
   isCombo: boolean
   requiredPermits: string[]
   requiresSafetyStack: boolean
+  // ── ADR-0017 structured attributes (issue 05) ──────────────────────────────
+  // Authored on the new "Details & itinerary" step. Scalars are kept as strings
+  // (the raw input value) and coerced to numbers/null in the submit mappers;
+  // arrays hold the live editor state (empty strings are dropped before submit).
+  difficulty: '' | DifficultyValue
+  durationMinutes: string
+  minAge: string
+  maxGroupSize: string
+  languages: string[]
+  meetingPoint: string
+  seasonMonths: number[]
+  highlights: string[]
+  inclusions: string[]
+  exclusions: string[]
+  whatToBring: string[]
+  itinerary: StructuredItineraryStep[]
 }
 
 export interface ListingSubmitResult {
@@ -111,12 +140,14 @@ interface ListingFormStepperProps {
   successText?: string
 }
 
-type SectionId = 'details' | 'pricing' | 'policy' | 'review'
+type SectionId = 'details' | 'pricing' | 'policy' | 'itinerary' | 'review'
 
 const SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'details', label: 'Details' },
   { id: 'pricing', label: 'Pricing' },
   { id: 'policy', label: 'Policy' },
+  // ADR-0017 — structured attributes + Vendor-authored itinerary (issue 05).
+  { id: 'itinerary', label: 'Itinerary & details' },
   { id: 'review', label: 'Review' },
 ]
 
@@ -136,6 +167,69 @@ const COMPLETENESS_LABELS: Record<ListingCompletenessField, string> = {
 function isPositive(value: string): boolean {
   const n = Number(value)
   return Number.isFinite(n) && n > 0
+}
+
+/**
+ * Shape of the ADR-0017 structured fields as the create/edit actions expect
+ * them: numbers/null for scalars, trimmed non-empty arrays, and an itinerary
+ * of steps with non-empty titles. Reused by BOTH submit mappers (new + edit)
+ * so the form→action coercion lives in one place.
+ */
+export interface StructuredSubmitFields {
+  difficulty: DifficultyValue | null
+  durationMinutes: number | null
+  minAge: number | null
+  maxGroupSize: number | null
+  languages: GuideLanguage[]
+  meetingPoint: string | null
+  seasonMonths: number[]
+  highlights: string[]
+  inclusions: string[]
+  exclusions: string[]
+  whatToBring: string[]
+  itinerary: StructuredItineraryStep[]
+}
+
+function numberOrNull(value: string): number | null {
+  if (value.trim() === '') return null
+  const n = Number(value)
+  return Number.isFinite(n) ? n : null
+}
+
+function nonEmptyTrimmed(values: string[]): string[] {
+  return values.map((v) => v.trim()).filter((v) => v.length > 0)
+}
+
+/**
+ * Coerce the live form state for the structured attributes into the action
+ * input contract. Empty string rows are dropped; itinerary steps without a
+ * title are dropped (a half-typed row is not persisted). The shared Zod schema
+ * on the server is the authoritative bound check.
+ */
+export function toStructuredSubmitFields(values: ListingFormValues): StructuredSubmitFields {
+  return {
+    difficulty: values.difficulty === '' ? null : values.difficulty,
+    durationMinutes: numberOrNull(values.durationMinutes),
+    minAge: numberOrNull(values.minAge),
+    maxGroupSize: numberOrNull(values.maxGroupSize),
+    // The language checkboxes are sourced from KNOWN_GUIDE_LANGUAGES, so every
+    // selected code is a valid GuideLanguage. The server Zod schema re-checks.
+    languages: values.languages as GuideLanguage[],
+    meetingPoint: values.meetingPoint.trim() === '' ? null : values.meetingPoint.trim(),
+    seasonMonths: values.seasonMonths,
+    highlights: nonEmptyTrimmed(values.highlights),
+    inclusions: nonEmptyTrimmed(values.inclusions),
+    exclusions: nonEmptyTrimmed(values.exclusions),
+    whatToBring: nonEmptyTrimmed(values.whatToBring),
+    itinerary: values.itinerary
+      .filter((s) => s.title.trim() !== '')
+      .map((s) => ({
+        title: s.title.trim(),
+        description: s.description?.trim() ? s.description.trim() : null,
+        dayOffset: s.dayOffset ?? null,
+        durationMinutes: s.durationMinutes ?? null,
+      })),
+  }
 }
 
 export function ListingFormStepper({
@@ -311,6 +405,25 @@ export function ListingFormStepper({
       values.requiredPermits.includes(permit)
         ? values.requiredPermits.filter((p) => p !== permit)
         : [...values.requiredPermits, permit],
+    )
+  }
+
+  // ADR-0017 — multi-select toggles for the structured facets.
+  function handleLanguageToggle(code: string) {
+    update(
+      'languages',
+      values.languages.includes(code)
+        ? values.languages.filter((c) => c !== code)
+        : [...values.languages, code],
+    )
+  }
+
+  function handleSeasonMonthToggle(month: number) {
+    update(
+      'seasonMonths',
+      values.seasonMonths.includes(month)
+        ? values.seasonMonths.filter((m) => m !== month)
+        : [...values.seasonMonths, month].sort((a, b) => a - b),
     )
   }
 
@@ -638,7 +751,149 @@ export function ListingFormStepper({
         </Card>
       )}
 
-      {/* ── Section 4: Review — commission + publish-readiness checklist ───── */}
+      {/* ── Section 4: Itinerary & details — ADR-0017 structured attributes ── */}
+      {currentSection === 'itinerary' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 font-[family-name:var(--font-heading)]">
+              <ListChecks aria-hidden="true" className="size-5 text-primary-strong" />
+              Itinerary &amp; details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <p className="text-sm text-muted-foreground">
+              Optional, but a richer listing converts better. All fields here can be
+              left blank and finished later.
+            </p>
+
+            {/* Quick facts (scalars) */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="durationMinutes">Duration (minutes)</Label>
+                <Input
+                  id="durationMinutes"
+                  type="number"
+                  className="tabular-nums"
+                  min={15}
+                  value={values.durationMinutes}
+                  onChange={(e) => update('durationMinutes', e.target.value)}
+                  placeholder="240"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="difficulty">Difficulty</Label>
+                <select
+                  id="difficulty"
+                  value={values.difficulty}
+                  onChange={(e) =>
+                    update('difficulty', e.target.value as '' | DifficultyValue)
+                  }
+                  className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+                >
+                  <option value="">Not specified</option>
+                  {DIFFICULTY_OPTIONS.map((d) => (
+                    <option key={d.value} value={d.value}>
+                      {d.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="minAge">Minimum age</Label>
+                <Input
+                  id="minAge"
+                  type="number"
+                  className="tabular-nums"
+                  min={0}
+                  max={99}
+                  value={values.minAge}
+                  onChange={(e) => update('minAge', e.target.value)}
+                  placeholder="12"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="maxGroupSize">Max group size</Label>
+                <Input
+                  id="maxGroupSize"
+                  type="number"
+                  className="tabular-nums"
+                  min={1}
+                  max={100}
+                  value={values.maxGroupSize}
+                  onChange={(e) => update('maxGroupSize', e.target.value)}
+                  placeholder="8"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="meetingPoint">Meeting point</Label>
+              <Input
+                id="meetingPoint"
+                value={values.meetingPoint}
+                maxLength={500}
+                onChange={(e) => update('meetingPoint', e.target.value)}
+                placeholder="e.g. Shivpuri taxi stand, Rishikesh"
+              />
+            </div>
+
+            <CheckboxGroup
+              legend="Guide languages"
+              options={LANGUAGE_OPTIONS}
+              selected={values.languages}
+              onToggle={handleLanguageToggle}
+            />
+
+            <CheckboxGroup
+              legend="Season (months the experience runs)"
+              options={MONTHS}
+              selected={values.seasonMonths}
+              onToggle={handleSeasonMonthToggle}
+            />
+
+            {/* Array editors (bounds enforced server-side by the shared Zod schema) */}
+            <StringListEditor
+              label="Highlights"
+              values={values.highlights}
+              onChange={(next) => update('highlights', next)}
+              max={6}
+              placeholder="e.g. Grade III+ rapids"
+            />
+            <StringListEditor
+              label="Inclusions"
+              values={values.inclusions}
+              onChange={(next) => update('inclusions', next)}
+              max={15}
+              placeholder="e.g. Safety gear"
+            />
+            <StringListEditor
+              label="Exclusions"
+              values={values.exclusions}
+              onChange={(next) => update('exclusions', next)}
+              max={15}
+              placeholder="e.g. Transport"
+            />
+            <StringListEditor
+              label="What to bring"
+              values={values.whatToBring}
+              onChange={(next) => update('whatToBring', next)}
+              max={15}
+              placeholder="e.g. Swimwear"
+            />
+
+            {/* Repeatable itinerary-step editor */}
+            <ItineraryEditor
+              steps={values.itinerary}
+              onChange={(next) => update('itinerary', next)}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Section 5: Review — commission + publish-readiness checklist ───── */}
       {currentSection === 'review' && (
         <Card>
           <CardHeader>

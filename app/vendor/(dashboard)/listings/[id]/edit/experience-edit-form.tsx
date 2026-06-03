@@ -5,11 +5,14 @@ import { useCallback, useState } from 'react'
 
 import { ImageUpload, type UploadedImage } from '@/components/image-upload'
 import type { Experience } from '@/db/schema/experiences'
+import type { ExperienceItineraryStep } from '@/db/schema/experience-itinerary-steps'
 
 import {
   ListingFormStepper,
+  toStructuredSubmitFields,
   type ListingFormValues,
 } from '../../listing-form-stepper'
+import type { DifficultyValue, StructuredItineraryStep } from '../../structured-fields'
 import {
   deleteExperienceImageAction,
   updateExperienceAction,
@@ -19,9 +22,14 @@ import {
 interface ExperienceEditFormProps {
   experience: Experience
   initialImages: readonly UploadedImage[]
+  initialItinerary?: readonly ExperienceItineraryStep[]
 }
 
-export function ExperienceEditForm({ experience, initialImages }: ExperienceEditFormProps) {
+export function ExperienceEditForm({
+  experience,
+  initialImages,
+  initialItinerary = [],
+}: ExperienceEditFormProps) {
   const router = useRouter()
   const [images, setImages] = useState<UploadedImage[]>([...initialImages])
 
@@ -68,9 +76,31 @@ export function ExperienceEditForm({ experience, initialImages }: ExperienceEdit
     isCombo: experience.isCombo,
     requiredPermits: [...experience.requiredPermits],
     requiresSafetyStack: experience.requiresSafetyStack,
+    // ADR-0017 structured attributes — pre-fill from the saved row so values
+    // round-trip on edit.
+    difficulty: (experience.difficulty ?? '') as '' | DifficultyValue,
+    durationMinutes: experience.durationMinutes != null ? String(experience.durationMinutes) : '',
+    minAge: experience.minAge != null ? String(experience.minAge) : '',
+    maxGroupSize: experience.maxGroupSize != null ? String(experience.maxGroupSize) : '',
+    languages: [...(experience.languages ?? [])],
+    meetingPoint: experience.meetingPoint ?? '',
+    seasonMonths: [...(experience.seasonMonths ?? [])],
+    highlights: [...(experience.highlights ?? [])],
+    inclusions: [...(experience.inclusions ?? [])],
+    exclusions: [...(experience.exclusions ?? [])],
+    whatToBring: [...(experience.whatToBring ?? [])],
+    itinerary: initialItinerary.map(
+      (s): StructuredItineraryStep => ({
+        title: s.title,
+        description: s.description,
+        dayOffset: s.dayOffset,
+        durationMinutes: s.durationMinutes,
+      }),
+    ),
   }
 
   async function handleSubmit(values: ListingFormValues) {
+    const structured = toStructuredSubmitFields(values)
     const result = await updateExperienceAction({
       id: experience.id,
       title: values.title,
@@ -90,6 +120,7 @@ export function ExperienceEditForm({ experience, initialImages }: ExperienceEdit
       isCombo: values.isCombo,
       requiredPermits: values.requiredPermits,
       requiresSafetyStack: values.requiresSafetyStack,
+      ...structured,
     })
 
     if (!result.ok) {

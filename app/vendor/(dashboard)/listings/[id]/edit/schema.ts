@@ -1,5 +1,19 @@
 import { z } from 'zod'
 
+import {
+  difficultySchema,
+  durationMinutesSchema,
+  exclusionsSchema,
+  highlightsSchema,
+  inclusionsSchema,
+  itinerarySchema,
+  languagesSchema,
+  maxGroupSizeSchema,
+  meetingPointSchema,
+  minAgeSchema,
+  seasonMonthsSchema,
+  whatToBringSchema,
+} from '@/lib/experiences/structured-schema'
 import type { MeiliLike } from '@/lib/search/meilisearch-client'
 
 /**
@@ -29,6 +43,23 @@ export const updateExperienceSchema = z.object({
   isCombo: z.boolean(),
   requiredPermits: z.array(z.string()),
   requiresSafetyStack: z.boolean(),
+
+  // ADR-0017 structured attributes (issue 05). Additive — the form now owns
+  // these. Bounds are REUSED from lib/experiences/structured-schema so the
+  // ceilings (≤6 highlights, ≤15 inclusions, season month 1-12, the
+  // difficulty enum, etc.) live in exactly one place.
+  difficulty: difficultySchema,
+  durationMinutes: durationMinutesSchema,
+  minAge: minAgeSchema,
+  maxGroupSize: maxGroupSizeSchema,
+  languages: languagesSchema.optional(),
+  meetingPoint: meetingPointSchema,
+  seasonMonths: seasonMonthsSchema.optional(),
+  highlights: highlightsSchema.optional(),
+  inclusions: inclusionsSchema.optional(),
+  exclusions: exclusionsSchema.optional(),
+  whatToBring: whatToBringSchema.optional(),
+  itinerary: itinerarySchema.optional(),
 })
 
 export type UpdateExperienceInput = z.infer<typeof updateExperienceSchema>

@@ -22,8 +22,10 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { db } from '@/db/client'
+import { experienceItinerarySteps } from '@/db/schema/experience-itinerary-steps'
 import { experiences } from '@/db/schema/experiences'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
+import { formatDuration, formatSeason } from '@/lib/experiences/structured-schema'
 
 import { AdminStatusBadge } from '../_components/admin-status-badge'
 import { formatRupees } from '../_components/money'
@@ -131,6 +133,13 @@ export default async function AdminExperiencesPage({
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined
 
   // Query: pending_review first, then by createdAt desc
+  // ADR-0017 — itinerary step count per Experience (read-only moderation
+  // signal). A correlated COUNT keeps the moderation query a single round-trip.
+  const itineraryStepCount = sql<number>`(
+    SELECT COUNT(*)::int FROM ${experienceItinerarySteps}
+    WHERE ${experienceItinerarySteps.experienceId} = ${experiences.id}
+  )`
+
   const rows = await db
     .select({
       id: experiences.id,
@@ -143,6 +152,19 @@ export default async function AdminExperiencesPage({
       vendorUserId: experiences.vendorUserId,
       vendorBusinessName: vendorProfiles.businessName,
       createdAt: experiences.createdAt,
+      // ADR-0017 structured attributes — surfaced read-only for moderation.
+      difficulty: experiences.difficulty,
+      durationMinutes: experiences.durationMinutes,
+      minAge: experiences.minAge,
+      maxGroupSize: experiences.maxGroupSize,
+      languages: experiences.languages,
+      meetingPoint: experiences.meetingPoint,
+      seasonMonths: experiences.seasonMonths,
+      highlights: experiences.highlights,
+      inclusions: experiences.inclusions,
+      exclusions: experiences.exclusions,
+      whatToBring: experiences.whatToBring,
+      itineraryStepCount,
     })
     .from(experiences)
     .innerJoin(vendorProfiles, eq(experiences.vendorUserId, vendorProfiles.userId))
@@ -306,6 +328,7 @@ export default async function AdminExperiencesPage({
                 <TableHead scope="col" className="text-right">
                   Price (1-2)
                 </TableHead>
+                <TableHead scope="col">Attributes</TableHead>
                 <TableHead scope="col">Created</TableHead>
                 <TableHead scope="col">Actions</TableHead>
               </TableRow>
@@ -313,7 +336,7 @@ export default async function AdminExperiencesPage({
             <TableBody>
               {rows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
+                  <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
                     No experiences found.
                   </TableCell>
                 </TableRow>
@@ -348,6 +371,9 @@ export default async function AdminExperiencesPage({
                   <TableCell className="text-right text-sm font-medium tabular-nums">
                     {formatRupees(exp.pricePerPerson_1_2)}
                   </TableCell>
+                  <TableCell className="max-w-[280px] text-xs text-muted-foreground">
+                    <StructuredAttributesCell exp={exp} />
+                  </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {new Date(exp.createdAt).toLocaleDateString('en-IN', {
                       day: 'numeric',
@@ -366,6 +392,74 @@ export default async function AdminExperiencesPage({
           </Table>
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+// ── ADR-0017 read-only structured-attribute summary (moderation) ─────────────
+
+interface StructuredAttributesCellProps {
+  exp: {
+    difficulty: string | null
+    durationMinutes: number | null
+    minAge: number | null
+    maxGroupSize: number | null
+    languages: string[] | null
+    meetingPoint: string | null
+    seasonMonths: number[] | null
+    highlights: string[] | null
+    inclusions: string[] | null
+    exclusions: string[] | null
+    whatToBring: string[] | null
+    itineraryStepCount: number
+  }
+}
+
+/**
+ * Compact, read-only rendering of the ADR-0017 structured attributes for the
+ * moderation queue. Additive — no mutations. Duration uses the shared
+ * formatDuration roll-up and season uses formatSeason (same helpers the PDP
+ * uses), so the admin sees exactly what a Customer would. Empty/NULL facets
+ * are simply omitted; a fully-bare Experience shows an em-dash.
+ */
+function StructuredAttributesCell({ exp }: StructuredAttributesCellProps): ReactElement {
+  const facets: string[] = []
+  if (exp.durationMinutes != null) facets.push(formatDuration(exp.durationMinutes))
+  if (exp.difficulty) facets.push(exp.difficulty)
+  if (exp.minAge != null) facets.push(`${exp.minAge}+ yrs`)
+  if (exp.maxGroupSize != null) facets.push(`max ${exp.maxGroupSize}`)
+  const season = exp.seasonMonths && exp.seasonMonths.length > 0 ? formatSeason(exp.seasonMonths) : ''
+  if (season) facets.push(season)
+
+  const languages = exp.languages ?? []
+  const highlights = exp.highlights ?? []
+  const inclusions = exp.inclusions ?? []
+  const exclusions = exp.exclusions ?? []
+  const whatToBring = exp.whatToBring ?? []
+
+  const counts: string[] = []
+  if (highlights.length > 0) counts.push(`${highlights.length} highlights`)
+  if (inclusions.length > 0) counts.push(`${inclusions.length} inclusions`)
+  if (exclusions.length > 0) counts.push(`${exclusions.length} exclusions`)
+  if (whatToBring.length > 0) counts.push(`${whatToBring.length} to bring`)
+  if (exp.itineraryStepCount > 0) counts.push(`${exp.itineraryStepCount}-step itinerary`)
+
+  const hasAnything =
+    facets.length > 0 ||
+    languages.length > 0 ||
+    counts.length > 0 ||
+    Boolean(exp.meetingPoint)
+
+  if (!hasAnything) {
+    return <span aria-label="No structured attributes">&mdash;</span>
+  }
+
+  return (
+    <div className="space-y-1">
+      {facets.length > 0 && <p className="capitalize">{facets.join(' · ')}</p>}
+      {languages.length > 0 && <p>Languages: {languages.join(', ')}</p>}
+      {exp.meetingPoint && <p className="truncate">Meets: {exp.meetingPoint}</p>}
+      {counts.length > 0 && <p>{counts.join(' · ')}</p>}
     </div>
   )
 }

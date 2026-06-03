@@ -469,6 +469,79 @@ export async function getExperienceById(
   })
 }
 
+/**
+ * ADR-0017 structured attributes + itinerary for an Experience (issue 05
+ * round-trip assertions). Returns the scalar/array facets and the itinerary
+ * step titles in stepOrder.
+ */
+export interface ExperienceStructuredRow {
+  difficulty: string | null
+  durationMinutes: number | null
+  minAge: number | null
+  maxGroupSize: number | null
+  languages: string[]
+  meetingPoint: string | null
+  seasonMonths: number[]
+  highlights: string[]
+  inclusions: string[]
+  exclusions: string[]
+  whatToBring: string[]
+  itineraryTitles: string[]
+}
+
+export async function getExperienceStructuredById(
+  experienceId: string,
+): Promise<ExperienceStructuredRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        difficulty: string | null
+        duration_minutes: number | null
+        min_age: number | null
+        max_group_size: number | null
+        languages: string[] | null
+        meeting_point: string | null
+        season_months: number[] | null
+        highlights: string[] | null
+        inclusions: string[] | null
+        exclusions: string[] | null
+        what_to_bring: string[] | null
+      }[]
+    >`
+      SELECT difficulty, duration_minutes, min_age, max_group_size,
+             languages, meeting_point, season_months,
+             highlights, inclusions, exclusions, what_to_bring
+      FROM experiences
+      WHERE id = ${experienceId}
+      LIMIT 1
+    `
+    const row = rows[0]
+    if (!row) return null
+
+    const steps = await sql<{ title: string }[]>`
+      SELECT title
+      FROM experience_itinerary_steps
+      WHERE experience_id = ${experienceId}
+      ORDER BY step_order ASC
+    `
+
+    return {
+      difficulty: row.difficulty,
+      durationMinutes: row.duration_minutes,
+      minAge: row.min_age,
+      maxGroupSize: row.max_group_size,
+      languages: row.languages ?? [],
+      meetingPoint: row.meeting_point,
+      seasonMonths: (row.season_months ?? []).map(Number),
+      highlights: row.highlights ?? [],
+      inclusions: row.inclusions ?? [],
+      exclusions: row.exclusions ?? [],
+      whatToBring: row.what_to_bring ?? [],
+      itineraryTitles: steps.map((s) => s.title),
+    }
+  })
+}
+
 /** Resolve a published Experience id + slug for a given vendor (for edit). */
 export async function getPublishedExperienceForVendor(
   vendorUserId: string,

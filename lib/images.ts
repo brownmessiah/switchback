@@ -75,7 +75,39 @@ const REGION_IMAGES: Record<string, string> = {
 const HERO_IMAGE =
   'https://images.unsplash.com/photo-1530866495561-507c9faab2ed?w=1600&h=900&fit=crop&q=80'
 
-export function getActivityImage(activitySlug: string): string {
+const px = (id: string): string =>
+  `https://images.unsplash.com/${id}?w=800&h=600&fit=crop&q=80`
+
+/**
+ * Extra verified Unsplash IDs per activity (issue 06) so the PDP fallback
+ * varies across the 151 galleries instead of repeating one photo per activity.
+ * Reuses IDs already HTTP-verified in db/seed-extras.ts. The first entry of
+ * each pool is the existing canonical photo (kept stable for callers that pass
+ * no variant). Activities without an entry fall back to the single map image.
+ */
+const ACTIVITY_IMAGE_POOL: Record<string, string[]> = {
+  rafting: [px('photo-1530866495561-507c9faab2ed'), px('photo-1599494284091-2b6f5b6c7e2c'), px('photo-1604537466158-719b1972feb8')],
+  trekking: [px('photo-1506905925346-21bda4d32df4'), px('photo-1551632811-561732d1e306'), px('photo-1454496522488-7a8e488e8606'), px('photo-1469474968028-56623f02e42e')],
+  paragliding: [px('photo-1597400473366-371a80b251eb'), px('photo-1504280390367-361c6d9f38f4'), px('photo-1502082553048-f009c37129b9')],
+  'scuba-diving': [px('photo-1583364512105-951b6f7080ae'), px('photo-1544551763-46a013bb70d5'), px('photo-1582967788606-a171c1080cb0')],
+  skiing: [px('photo-1551524559-8af4e6624178'), px('photo-1483721310020-03333e577078'), px('photo-1551698618-1dfe5d97d256')],
+  'bungee-jumping': [px('photo-1564769662533-4f00a87b4056'), px('photo-1567604528969-2f9ffd981816'), px('photo-1533227268428-f9ed0900fb3b')],
+  camping: [px('photo-1504280390367-361c6d9f38f4'), px('photo-1537565266759-34bbc16be345'), px('photo-1504851149312-7a075b496cc7')],
+  kayaking: [px('photo-1472745942893-4b9f730c7668'), px('photo-1604537466158-719b1972feb8'), px('photo-1545153996-e01b1e29c8a8')],
+  safari: [px('photo-1516426122078-c23e76319801'), px('photo-1549366021-9f761d450615'), px('photo-1547970810-dc1eac37d174')],
+  'rock-climbing': [px('photo-1522163182402-834f871fd851'), px('photo-1516592673884-4a382d1124c2'), px('photo-1518609878373-06d740f60d8b')],
+}
+
+/**
+ * The fallback image for an activity. Backward-compatible: called with no
+ * `variant` it returns the canonical photo. An optional `variant` index rotates
+ * through the verified per-activity pool so adjacent cards/galleries vary.
+ */
+export function getActivityImage(activitySlug: string, variant = 0): string {
+  const pool = ACTIVITY_IMAGE_POOL[activitySlug]
+  if (pool && pool.length > 0) {
+    return pool[((variant % pool.length) + pool.length) % pool.length]
+  }
   return ACTIVITY_IMAGES[activitySlug] ?? ACTIVITY_IMAGES.trekking
 }
 

@@ -291,6 +291,24 @@ const EXPERIENCES: SeededExperience[] = [
     pricePerPerson_6_plus: '1400.00',
     regionSlug: 'rishikesh',
     activitySlug: 'kayaking',
+    // Structured backfill (ADR-0017, issue 06) — derived from the prose above.
+    structured: {
+      durationMinutes: 120,
+      difficulty: 'easy',
+      minAge: 10,
+      maxGroupSize: 8,
+      languages: ['en', 'hi'],
+      meetingPoint: 'Ganga back-channel launch, Rishikesh (flat-water stretch)',
+      seasonMonths: [10, 11, 12, 1, 2, 3, 4, 5, 6],
+      highlights: ['Calm flat-water introduction', 'One-to-one guide for the first 30 min', 'Safety-kayak escort', 'Family-friendly for ages 10+'],
+      inclusions: ['Sit-on-top kayak and PFD', 'Basic strokes and self-rescue coaching', 'Safety-kayak escort'],
+      exclusions: ['Transport', 'Meals', 'Photos'],
+      whatToBring: ['Quick-dry clothes', 'A change of dry clothes', 'Secured footwear'],
+      itinerary: [
+        { title: 'Strokes & wet-exit brief', description: 'Learn the basic strokes and self-rescue on a sheltered channel.', dayOffset: null, durationMinutes: 30 },
+        { title: 'Guided flat-water paddle', description: 'Practise on the calm back-channel with a safety-kayak escort.', dayOffset: null, durationMinutes: 90 },
+      ],
+    },
   },
   {
     vendorUserId: 'u_seed_v_identity',
@@ -303,6 +321,27 @@ const EXPERIENCES: SeededExperience[] = [
     pricePerPerson_6_plus: '10500.00',
     regionSlug: 'manali',
     activitySlug: 'trekking',
+    // Structured backfill (ADR-0017, issue 06) — derived from the prose above.
+    structured: {
+      durationMinutes: 7200,
+      difficulty: 'moderate',
+      minAge: 12,
+      maxGroupSize: 14,
+      languages: ['en', 'hi'],
+      meetingPoint: 'Manali Mall Road taxi stand (transfer to Jobra roadhead)',
+      seasonMonths: [6, 7, 8, 9, 10],
+      highlights: ['Crossover 4,270 m Hampta Pass over 5 days', 'Kullu green valleys to Lahaul desert', 'Camps at Chika, Balu Ka Ghera and Shea Goru', 'Built-in acclimatisation day at Chika'],
+      inclusions: ['Guide and porter-cooked meals', 'Tents and sleeping bags', 'Permits', 'Full board'],
+      exclusions: ['Personal trekking gear', 'Travel insurance', 'Tips'],
+      whatToBring: ['Broken-in trekking boots', 'Warm layers and a rain shell', 'Refillable water bottle', 'Headlamp'],
+      itinerary: [
+        { title: 'Manali to Chika', description: 'Drive to Jobra and trek to the Chika camp.', dayOffset: 0, durationMinutes: 360 },
+        { title: 'Chika to Balu Ka Ghera', description: 'Walk along the Rani Nala to the base of the pass.', dayOffset: 1, durationMinutes: 420 },
+        { title: 'Cross Hampta Pass to Shea Goru', description: 'Summit the 4,270 m pass and descend into Lahaul.', dayOffset: 2, durationMinutes: 540 },
+        { title: 'Shea Goru to Chatru', description: 'Descend through the Lahaul desert valley.', dayOffset: 3, durationMinutes: 300 },
+        { title: 'Chandratal & drive out', description: 'Optional Chandratal visit, then drive back to Manali.', dayOffset: 4, durationMinutes: 240 },
+      ],
+    },
   },
   {
     vendorUserId: 'u_seed_v_identity',
@@ -315,6 +354,25 @@ const EXPERIENCES: SeededExperience[] = [
     pricePerPerson_6_plus: '3000.00',
     regionSlug: 'manali',
     activitySlug: 'paragliding',
+    // Structured backfill (ADR-0017, issue 06) — derived from the prose above.
+    structured: {
+      durationMinutes: 60,
+      difficulty: 'easy',
+      minAge: 12,
+      maxGroupSize: 1,
+      languages: ['en', 'hi'],
+      meetingPoint: 'Solang launch site, ~2,560 m, near Manali',
+      seasonMonths: [3, 4, 5, 6, 9, 10, 11],
+      highlights: ['15-min tandem from the 2,560 m Solang launch', 'Views of Hanuman Tibba and Friendship Peak', 'APPI-rated pilots', 'High-res GoPro reel included'],
+      inclusions: ['Certified tandem pilot and gear', 'GoPro reel', 'Pre-flight briefing'],
+      exclusions: ['Transport to Solang', 'Meals', 'Insurance'],
+      whatToBring: ['Closed shoes', 'Sunglasses', 'Light layers'],
+      itinerary: [
+        { title: 'Briefing & gear-up', description: 'Meet your pilot, fit the harness and run the take-off brief.', dayOffset: null, durationMinutes: 20 },
+        { title: 'Tandem flight', description: 'Take off from Solang and soar over the Beas valley.', dayOffset: null, durationMinutes: 15 },
+        { title: 'Landing & reel', description: 'Land, de-rig and collect your GoPro footage.', dayOffset: null, durationMinutes: 25 },
+      ],
+    },
   },
   // business-tier vendor — Bir-Billing + Goa Experiences
   {
@@ -328,6 +386,25 @@ const EXPERIENCES: SeededExperience[] = [
     pricePerPerson_6_plus: '2600.00',
     regionSlug: 'bir-billing',
     activitySlug: 'paragliding',
+    // Structured backfill (ADR-0017, issue 06) — derived from the prose above.
+    structured: {
+      durationMinutes: 90,
+      difficulty: 'easy',
+      minAge: 12,
+      maxGroupSize: 1,
+      languages: ['en', 'hi'],
+      meetingPoint: 'Billing take-off, ~2,400 m, ~14 km above Bir',
+      seasonMonths: [3, 4, 5, 9, 10, 11],
+      highlights: ['Launch from 2,400 m Billing, land at 1,400 m Bir', '25–40 min flight depending on thermals', "India's premier paragliding site (2015 World Cup)", 'Pilot briefing, pickup and video reel'],
+      inclusions: ['Certified pilot and gear', 'Pre-flight briefing', 'Launch-to-landing transport', 'Video reel'],
+      exclusions: ['Transport to Billing', 'Meals', 'Insurance'],
+      whatToBring: ['Warm layers at altitude', 'Closed shoes', 'Sunglasses'],
+      itinerary: [
+        { title: 'Briefing & transfer to launch', description: 'Pilot briefing and transfer up to the Billing take-off.', dayOffset: null, durationMinutes: 45 },
+        { title: 'Tandem flight to Bir', description: 'Soar the Dhauladhar thermals down to the Bir landing field.', dayOffset: null, durationMinutes: 30 },
+        { title: 'Landing & reel', description: 'Land at Bir, de-rig and collect your video reel.', dayOffset: null, durationMinutes: 15 },
+      ],
+    },
   },
   {
     vendorUserId: 'u_seed_v_business',
@@ -340,6 +417,25 @@ const EXPERIENCES: SeededExperience[] = [
     pricePerPerson_6_plus: '4000.00',
     regionSlug: 'goa',
     activitySlug: 'scuba-diving',
+    // Structured backfill (ADR-0017, issue 06) — derived from the prose above.
+    structured: {
+      durationMinutes: 240,
+      difficulty: 'easy',
+      minAge: 10,
+      maxGroupSize: 4,
+      languages: ['en', 'hi'],
+      meetingPoint: 'Vasco boat jetty, Mormugao, Goa',
+      seasonMonths: [10, 11, 12, 1, 2, 3, 4, 5],
+      highlights: ['Boat ride to Grande Island', '30-min reef dive to ~8 m', 'No prior experience needed', 'Parrotfish, butterflyfish and occasional rays'],
+      inclusions: ['Boat transfer and full gear', 'PADI-certified instructor', 'Pool/shallow briefing and reef dive'],
+      exclusions: ['Certification card', 'Transport to Vasco', 'Lunch'],
+      whatToBring: ['Swimwear', 'Towel', 'Swimming ability', 'Reef-safe sunscreen'],
+      itinerary: [
+        { title: 'Boat to Grande Island', description: 'Transfer from Vasco with a surface brief.', dayOffset: null, durationMinutes: 60 },
+        { title: 'Pool/shallow skills', description: '30-min skills brief in confined water.', dayOffset: null, durationMinutes: 60 },
+        { title: 'Guided reef dive', description: '30-min guided reef dive to ~8 m.', dayOffset: null, durationMinutes: 60 },
+      ],
+    },
   },
   {
     vendorUserId: 'u_seed_v_business',
@@ -352,6 +448,25 @@ const EXPERIENCES: SeededExperience[] = [
     pricePerPerson_6_plus: '5000.00',
     regionSlug: 'goa',
     activitySlug: 'scuba-diving',
+    // Structured backfill (ADR-0017, issue 06) — derived from the prose above.
+    structured: {
+      durationMinutes: 300,
+      difficulty: 'moderate',
+      minAge: 12,
+      maxGroupSize: 6,
+      languages: ['en', 'hi'],
+      meetingPoint: 'Vasco boat jetty, Mormugao, Goa',
+      seasonMonths: [10, 11, 12, 1, 2, 3, 4, 5],
+      highlights: ['Two guided dives at Suzy’s Wreck and Bounty Bay', '~30 min bottom time per dive', '12–18 m max depth', 'Logbook stamped on return'],
+      inclusions: ['Full dive gear', 'Two guided dives', 'Logbook stamp'],
+      exclusions: ['Certification course', 'Transport to Vasco', 'Lunch'],
+      whatToBring: ['Open Water cert card or higher', 'Swimwear', 'Towel', 'Reef-safe sunscreen'],
+      itinerary: [
+        { title: 'Check-in & boat out', description: 'Show your cert card, gear up and ride to the first site.', dayOffset: null, durationMinutes: 90 },
+        { title: 'Dive 1 — Suzy’s Wreck', description: '~30 min guided dive at the wreck.', dayOffset: null, durationMinutes: 90 },
+        { title: 'Surface interval & Dive 2', description: 'Surface interval, then the second guided dive at Bounty Bay.', dayOffset: null, durationMinutes: 120 },
+      ],
+    },
   },
   {
     vendorUserId: 'u_seed_v_business',
@@ -364,6 +479,24 @@ const EXPERIENCES: SeededExperience[] = [
     pricePerPerson_6_plus: '1300.00',
     regionSlug: 'bir-billing',
     activitySlug: 'camping',
+    // Structured backfill (ADR-0017, issue 06) — derived from the prose above.
+    structured: {
+      durationMinutes: 1080,
+      difficulty: 'easy',
+      minAge: 6,
+      maxGroupSize: 20,
+      languages: ['en', 'hi'],
+      meetingPoint: 'Bir landing field, ~1,400 m, Bir, Himachal Pradesh',
+      seasonMonths: [3, 4, 5, 6, 9, 10, 11],
+      highlights: ['Alpine tents above the Bir landing field', 'Bonfire and stargazing on clear nights', 'Hot dinner and breakfast', 'Optional walk-up to the launch site'],
+      inclusions: ['Alpine tent with mattress and sleeping bag', 'Hot dinner and breakfast', 'Bonfire'],
+      exclusions: ['Transport to Bir', 'Lunch', 'Launch-site transfer'],
+      whatToBring: ['Warm layers for the evening', 'Torch', 'Personal toiletries'],
+      itinerary: [
+        { title: 'Check-in & bonfire', description: 'Settle into your tent, then a bonfire dinner under the stars.', dayOffset: null, durationMinutes: 240 },
+        { title: 'Sunrise & breakfast', description: 'Mountain sunrise, breakfast and an optional launch-site walk.', dayOffset: null, durationMinutes: 180 },
+      ],
+    },
   },
 ]
 

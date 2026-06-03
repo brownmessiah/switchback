@@ -35,6 +35,7 @@ import {
   blogPosts,
   commissionTiers,
   customerProfiles,
+  experienceItinerarySteps,
   experiences,
   mediaAssets,
   notifications,
@@ -265,6 +266,72 @@ describe('seedCatalog — canonical seed enrichment', () => {
       const rows = await db.select({ userId: walletBalances.userId }).from(walletBalances)
       const distinct = new Set(rows.map((r) => r.userId))
       expect(distinct.size).toBeGreaterThanOrEqual(4)
+    })
+
+    it('backfills ADR-0017 structured fields (issue 06) onto a sample catalog row', async () => {
+      const [exp] = await db
+        .select({
+          difficulty: experiences.difficulty,
+          durationMinutes: experiences.durationMinutes,
+          minAge: experiences.minAge,
+          maxGroupSize: experiences.maxGroupSize,
+          languages: experiences.languages,
+          meetingPoint: experiences.meetingPoint,
+          seasonMonths: experiences.seasonMonths,
+          highlights: experiences.highlights,
+          inclusions: experiences.inclusions,
+          exclusions: experiences.exclusions,
+          whatToBring: experiences.whatToBring,
+          requiresSafetyStack: experiences.requiresSafetyStack,
+        })
+        .from(experiences)
+        .where(eq(experiences.slug, 'rishikesh-rafting-marine-drive-25km'))
+      expect(exp.difficulty).toBe('moderate')
+      expect(exp.durationMinutes ?? 0).toBeGreaterThan(0)
+      expect(exp.minAge ?? -1).toBeGreaterThanOrEqual(0)
+      expect(exp.maxGroupSize ?? 0).toBeGreaterThan(0)
+      expect((exp.languages ?? []).length).toBeGreaterThan(0)
+      expect(exp.meetingPoint ?? '').not.toBe('')
+      expect((exp.seasonMonths ?? []).length).toBeGreaterThan(0)
+      expect((exp.highlights ?? []).length).toBeGreaterThan(0)
+      expect((exp.inclusions ?? []).length).toBeGreaterThan(0)
+      expect((exp.exclusions ?? []).length).toBeGreaterThan(0)
+      expect((exp.whatToBring ?? []).length).toBeGreaterThan(0)
+      // rafting requires the safety stack (lib/activities/registry.ts).
+      expect(exp.requiresSafetyStack).toBe(true)
+    })
+
+    it('writes an ordered itinerary for a multi-day catalog row (issue 06)', async () => {
+      const [exp] = await db
+        .select({ id: experiences.id })
+        .from(experiences)
+        .where(eq(experiences.slug, 'leh-ladakh-trekking-markha-valley-6d'))
+      const steps = await db
+        .select({ stepOrder: experienceItinerarySteps.stepOrder, title: experienceItinerarySteps.title })
+        .from(experienceItinerarySteps)
+        .where(eq(experienceItinerarySteps.experienceId, exp.id))
+        .orderBy(experienceItinerarySteps.stepOrder)
+      expect(steps.length).toBeGreaterThanOrEqual(2)
+      for (let i = 0; i < steps.length; i++) expect(steps[i].stepOrder).toBe(i)
+    })
+
+    it('applies the Markha permit correction (Hemis NP, not Inner Line Permit)', async () => {
+      const [markha] = await db
+        .select({ permits: experiences.requiredPermits, long: experiences.longDescription })
+        .from(experiences)
+        .where(eq(experiences.slug, 'leh-ladakh-trekking-markha-valley-6d'))
+      expect(markha.permits).toContain('Hemis National Park / Wildlife Department entry permit')
+      expect(markha.permits).not.toContain('Inner Line Permit')
+      expect(markha.long ?? '').not.toContain('Inner Line Permit')
+    })
+
+    it('applies the Zanskar distance correction (~28 km, not ~26 km)', async () => {
+      const [zanskar] = await db
+        .select({ short: experiences.shortDescription, long: experiences.longDescription })
+        .from(experiences)
+        .where(eq(experiences.slug, 'leh-ladakh-rafting-zanskar-grade-iv'))
+      expect(`${zanskar.short} ${zanskar.long}`).toContain('28 km')
+      expect(`${zanskar.short} ${zanskar.long}`).not.toContain('26 km')
     })
   })
 

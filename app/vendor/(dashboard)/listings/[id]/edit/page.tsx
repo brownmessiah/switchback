@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import { db } from '@/db/client'
 import { experiences, mediaAssets } from '@/db/schema'
 import { auth } from '@/lib/auth'
+import { loadItinerary } from '@/lib/experiences/itinerary'
 
 import { ExperienceEditForm } from './experience-edit-form'
 
@@ -36,6 +37,10 @@ export default async function ExperienceEditPage({ params }: EditPageProps) {
     .from(mediaAssets)
     .where(eq(mediaAssets.entityId, id))
 
+  // ADR-0017 — pre-load the Vendor-authored itinerary so the edit form's
+  // itinerary editor round-trips the saved steps (ordered by stepOrder).
+  const itinerary = await loadItinerary(db, id)
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
@@ -44,7 +49,11 @@ export default async function ExperienceEditPage({ params }: EditPageProps) {
           Update &ldquo;{experience.title}&rdquo;
         </p>
       </div>
-      <ExperienceEditForm experience={experience} initialImages={images} />
+      <ExperienceEditForm
+        experience={experience}
+        initialImages={images}
+        initialItinerary={itinerary}
+      />
     </div>
   )
 }

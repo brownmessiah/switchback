@@ -9,6 +9,7 @@ import { availabilitySlots } from '@/db/schema/availability-slots'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { auth } from '@/lib/auth'
 import { writeAuditLog } from '@/lib/audit/write'
+import { replaceItinerary } from '@/lib/experiences/itinerary'
 import { assertWithinTier, type KycTier } from '@/lib/kyc/tier-caps'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 import { indexExperience, type ExperienceSearchDoc } from '@/lib/search/indexer'
@@ -60,13 +61,6 @@ export async function executeUpdateExperience(
       slug: experiences.slug,
       kycTier: vendorProfiles.kycTier,
       vendorSlug: vendorProfiles.slug,
-      // ADR-0017 structured facets (issue 04). The edit form does not yet
-      // touch these (issue 05), so the DB row is the source of truth — read
-      // them here to keep the search document's facet fields in sync.
-      difficulty: experiences.difficulty,
-      durationMinutes: experiences.durationMinutes,
-      maxGroupSize: experiences.maxGroupSize,
-      seasonMonths: experiences.seasonMonths,
     })
     .from(experiences)
     .innerJoin(vendorProfiles, eq(experiences.vendorUserId, vendorProfiles.userId))
@@ -124,33 +118,61 @@ export async function executeUpdateExperience(
 
   try {
     const now = new Date()
-    await db
-      .update(experiences)
-      .set({
-        title: data.title,
-        shortDescription: data.shortDescription ?? null,
-        longDescription: data.longDescription ?? null,
-        activitySlug: data.activitySlug,
-        regionSlug: data.regionSlug,
-        pricePerPerson_1_2: String(data.pricePerPerson_1_2),
-        pricePerPerson_3_5: String(data.pricePerPerson_3_5),
-        pricePerPerson_6_plus: String(data.pricePerPerson_6_plus),
-        cancellationPreset: data.cancellationPreset,
-        paymentModesAllowed: data.paymentModesAllowed,
-        isCombo: data.isCombo,
-        requiredPermits: data.requiredPermits,
-        requiresSafetyStack: data.requiresSafetyStack,
-        updatedAt: now,
-      })
-      .where(eq(experiences.id, data.id))
+
+    // ADR-0017 — the experiences row and its itinerary commit atomically:
+    // the scalar/array facets live on `experiences`, the steps on
+    // `experience_itinerary_steps`. `replaceItinerary` (delete-then-insert)
+    // requires the caller to own the transaction, so we wrap both writes here.
+    await db.transaction(async (tx) => {
+      await tx
+        .update(experiences)
+        .set({
+          title: data.title,
+          shortDescription: data.shortDescription ?? null,
+          longDescription: data.longDescription ?? null,
+          activitySlug: data.activitySlug,
+          regionSlug: data.regionSlug,
+          pricePerPerson_1_2: String(data.pricePerPerson_1_2),
+          pricePerPerson_3_5: String(data.pricePerPerson_3_5),
+          pricePerPerson_6_plus: String(data.pricePerPerson_6_plus),
+          cancellationPreset: data.cancellationPreset,
+          paymentModesAllowed: data.paymentModesAllowed,
+          isCombo: data.isCombo,
+          requiredPermits: data.requiredPermits,
+          requiresSafetyStack: data.requiresSafetyStack,
+          // ADR-0017 structured attributes — the form now owns these.
+          difficulty: data.difficulty ?? null,
+          durationMinutes: data.durationMinutes ?? null,
+          minAge: data.minAge ?? null,
+          maxGroupSize: data.maxGroupSize ?? null,
+          languages: data.languages ?? [],
+          meetingPoint: data.meetingPoint ?? null,
+          seasonMonths: data.seasonMonths ?? [],
+          highlights: data.highlights ?? [],
+          inclusions: data.inclusions ?? [],
+          exclusions: data.exclusions ?? [],
+          whatToBring: data.whatToBring ?? [],
+          updatedAt: now,
+        })
+        .where(eq(experiences.id, data.id))
+
+      // Only replace the itinerary when the form sent one. Omitting it (a
+      // partial edit that never opened the Itinerary step) leaves existing
+      // steps untouched; sending `[]` explicitly clears them.
+      if (data.itinerary !== undefined) {
+        await replaceItinerary(tx, data.id, data.itinerary)
+      }
+    })
 
     // ADR-0013 — a PUBLISHED Experience is the canonical search row. Keep the
     // Meilisearch document in sync with the edited facet fields (title, price,
-    // activity/region, combo). Drafts, paused, archived, and pending_review
-    // listings are not searchable (admin pause/archive deindex them), so we
-    // only re-index when the listing is currently published. The headline
-    // 1-2 Group-size bracket is the "From" facet price, matching the admin
-    // approve path (app/admin/experiences/actions.ts).
+    // activity/region, combo, and the ADR-0017 structured facets). Drafts,
+    // paused, archived, and pending_review listings are not searchable (admin
+    // pause/archive deindex them), so we only re-index when the listing is
+    // currently published. The headline 1-2 Group-size bracket is the "From"
+    // facet price, matching the admin approve path
+    // (app/admin/experiences/actions.ts). The facet fields are built from the
+    // freshly-saved `data.*`, NOT the pre-edit row — the form owns them now.
     if (existing.status === 'published') {
       const searchDoc: ExperienceSearchDoc = {
         id: data.id,
@@ -163,10 +185,10 @@ export async function executeUpdateExperience(
         pricePerPersonRupees: Math.round(data.pricePerPerson_1_2),
         isCombo: data.isCombo,
         publishedAt: now,
-        difficulty: existing.difficulty,
-        durationMinutes: existing.durationMinutes,
-        maxGroupSize: existing.maxGroupSize,
-        seasonMonths: existing.seasonMonths ?? [],
+        difficulty: data.difficulty ?? null,
+        durationMinutes: data.durationMinutes ?? null,
+        maxGroupSize: data.maxGroupSize ?? null,
+        seasonMonths: data.seasonMonths ?? [],
       }
       await indexExperience(searchDoc, { client: opts.searchClient })
     }

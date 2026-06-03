@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 
 import {
   ListingFormStepper,
+  toStructuredSubmitFields,
   type ListingFormValues,
 } from '../listing-form-stepper'
 import { createExperienceAction } from './actions'
@@ -24,21 +25,36 @@ const INITIAL_VALUES: ListingFormValues = {
   isCombo: false,
   requiredPermits: [],
   requiresSafetyStack: false,
+  // ADR-0017 structured attributes (issue 05).
+  difficulty: '',
+  durationMinutes: '',
+  minAge: '',
+  maxGroupSize: '',
+  languages: [],
+  meetingPoint: '',
+  seasonMonths: [],
+  highlights: [],
+  inclusions: [],
+  exclusions: [],
+  whatToBring: [],
+  itinerary: [],
 }
 
 export default function NewListingPage() {
   const router = useRouter()
 
   async function handleSubmit(values: ListingFormValues) {
+    const structured = toStructuredSubmitFields(values)
     const result = await createExperienceAction({
       title: values.title,
-      shortDescription: values.shortDescription,
+      shortDescription: values.shortDescription || null,
       activitySlug: values.activity,
       regionSlug: values.region,
       pricePerPerson_1_2: Number(values.price12),
-      pricePerPerson_3_5: Number(values.price35 || values.price12),
-      pricePerPerson_6_plus: Number(values.price6 || values.price35 || values.price12),
+      pricePerPerson_3_5: values.price35 ? Number(values.price35) : undefined,
+      pricePerPerson_6_plus: values.price6 ? Number(values.price6) : undefined,
       cancellationPreset: values.cancellationPreset as 'flexible' | 'moderate' | 'strict',
+      ...structured,
     })
 
     if (!result.ok) {

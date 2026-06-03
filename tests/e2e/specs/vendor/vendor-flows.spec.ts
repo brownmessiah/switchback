@@ -22,6 +22,7 @@ import { e2eDbUrl } from '../../helpers/config'
 import {
   getExperienceByTitle,
   getExperienceById,
+  getExperienceStructuredById,
   getPublishedExperienceForVendor,
   getMediaAssetsForExperience,
   getAvailabilityPatterns,
@@ -326,10 +327,17 @@ test.describe('Create listing', () => {
     await page.fill('#price12', '2500')
     await page.getByRole('button', { name: 'Continue' }).click()
 
-    // ── Section 3: Policy & payment → advance to Review ────────────────────
+    // ── Section 3: Policy & payment → advance to Itinerary & details ───────
     await page.getByRole('button', { name: 'Continue' }).click()
 
-    // ── Section 4: Review — commission (20%) is shown before the final submit ─
+    // ── Section 4: Itinerary & details (ADR-0017, issue 05) — all optional,
+    //    advance straight to Review without filling anything. ────────────────
+    await expect(
+      page.getByRole('button', { name: /add step/i }),
+    ).toBeVisible()
+    await page.getByRole('button', { name: 'Continue' }).click()
+
+    // ── Section 5: Review — commission (20%) is shown before the final submit ─
     await expect(page.getByText(/20%/).first()).toBeVisible()
     const submit = page.locator('button[type="submit"]')
     await expect(submit).toBeVisible()
@@ -359,6 +367,110 @@ test.describe('Create listing', () => {
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/vendor-create-listing.png',
+      fullPage: true,
+    })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 3b. Structured attributes + itinerary round-trip (issue 05, ADR-0017) —
+//     vendor creates a listing, fills the Itinerary & details step (scalars +
+//     two itinerary steps) on the edit form, saves, reopens edit, and the
+//     values round-trip from the DB.
+// ---------------------------------------------------------------------------
+test.describe('Structured attributes authoring', () => {
+  test('create → edit structured fields + itinerary → values round-trip', async ({
+    page,
+  }) => {
+    const title = `E2E Structured Experience — Himalayan Trek ${Date.now()}`
+
+    // ── Create a bare draft via the new-listing stepper ────────────────────
+    await page.goto('/vendor/listings/new')
+    await page.fill('#title', title)
+    const activityTrigger = page
+      .locator('[data-slot="select-trigger"]')
+      .filter({ hasText: 'Select activity' })
+    await activityTrigger.click()
+    await page.locator('[data-slot="select-item"]').filter({ hasText: 'Trekking' }).click()
+    const regionTrigger = page
+      .locator('[data-slot="select-trigger"]')
+      .filter({ hasText: 'Select region' })
+    await regionTrigger.click()
+    await page.locator('[data-slot="select-item"]').first().click()
+
+    await page.getByRole('button', { name: 'Continue' }).click() // → Pricing
+    await page.fill('#price12', '3500')
+    await page.getByRole('button', { name: 'Continue' }).click() // → Policy
+    await page.getByRole('button', { name: 'Continue' }).click() // → Itinerary
+    await page.getByRole('button', { name: 'Continue' }).click() // → Review
+    await page.locator('button[type="submit"]').click()
+    await page.waitForURL(/\/vendor\/listings$/, { timeout: 15_000 })
+
+    const created = await getExperienceByTitle(SEED_BUSINESS_VENDOR_ID, title)
+    expect(created).not.toBeNull()
+    const experienceId = created!.id
+
+    // ── Open edit, navigate to the Itinerary & details step ────────────────
+    await page.goto(`/vendor/listings/${experienceId}/edit`)
+    await expect(page.locator('h1')).toContainText('Edit experience')
+    await page.getByRole('button', { name: 'Continue' }).click() // → Pricing
+    await page.getByRole('button', { name: 'Continue' }).click() // → Policy
+    await page.getByRole('button', { name: 'Continue' }).click() // → Itinerary & details
+
+    // Scalars
+    await page.fill('#durationMinutes', '480')
+    await page.selectOption('#difficulty', 'challenging')
+    await page.fill('#minAge', '14')
+    await page.fill('#maxGroupSize', '10')
+    await page.fill('#meetingPoint', 'Base camp trailhead')
+
+    // A guide language + a couple of season months
+    await page.getByRole('checkbox', { name: 'English' }).check()
+    await page.getByRole('checkbox', { name: 'Sep' }).check()
+    await page.getByRole('checkbox', { name: 'Oct' }).check()
+
+    // One highlight
+    await page.getByRole('button', { name: /add highlight/i }).click()
+    await page.getByLabel('highlight 1').fill('Summit sunrise')
+
+    // Two itinerary steps
+    await page.getByRole('button', { name: /add step/i }).click()
+    await page.getByRole('button', { name: /add step/i }).click()
+    const stepTitles = page.getByLabel(/step title/i)
+    await stepTitles.nth(0).fill('Day 1 — Ascent')
+    await stepTitles.nth(1).fill('Day 2 — Summit & descent')
+
+    // Save from the persistent footer submit.
+    await page.locator('button[type="submit"]').click()
+    await expect(page.getByText('Experience updated.')).toBeVisible({ timeout: 15_000 })
+
+    // ── Assert the DB round-trip ───────────────────────────────────────────
+    const structured = await getExperienceStructuredById(experienceId)
+    expect(structured).not.toBeNull()
+    expect(structured!.durationMinutes).toBe(480)
+    expect(structured!.difficulty).toBe('challenging')
+    expect(structured!.minAge).toBe(14)
+    expect(structured!.maxGroupSize).toBe(10)
+    expect(structured!.meetingPoint).toBe('Base camp trailhead')
+    expect(structured!.languages).toContain('en')
+    expect(structured!.seasonMonths).toEqual([9, 10])
+    expect(structured!.highlights).toContain('Summit sunrise')
+    expect(structured!.itineraryTitles).toEqual([
+      'Day 1 — Ascent',
+      'Day 2 — Summit & descent',
+    ])
+
+    // ── Assert the values re-populate the form on reopen ───────────────────
+    await page.reload()
+    await page.getByRole('button', { name: 'Continue' }).click() // → Pricing
+    await page.getByRole('button', { name: 'Continue' }).click() // → Policy
+    await page.getByRole('button', { name: 'Continue' }).click() // → Itinerary & details
+    await expect(page.locator('#durationMinutes')).toHaveValue('480')
+    await expect(page.locator('#difficulty')).toHaveValue('challenging')
+    await expect(page.getByLabel(/step title/i).nth(0)).toHaveValue('Day 1 — Ascent')
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/vendor-structured-roundtrip.png',
       fullPage: true,
     })
   })

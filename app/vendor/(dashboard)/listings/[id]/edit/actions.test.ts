@@ -5,6 +5,7 @@ import { auditLogs } from '@/db/schema/audit-logs'
 import { experiences } from '@/db/schema/experiences'
 import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
+import { loadItinerary } from '@/lib/experiences/itinerary'
 import type { MeiliLike } from '@/lib/search/meilisearch-client'
 import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 
@@ -534,6 +535,203 @@ describe('executeUpdateExperience', () => {
 
       expect(result.ok).toBe(false)
       expect(addCalls).toHaveLength(0)
+    })
+  })
+
+  // ── ADR-0017 structured attributes + itinerary persistence (issue 05) ─
+  //
+  // The edit form now OWNS the structured scalar/array facets and the
+  // Vendor-authored itinerary. They must persist on the experiences row +
+  // experience_itinerary_steps atomically, validate through the shared Zod
+  // bounds, and feed the search document from the NEWLY-SAVED values.
+  describe('structured attributes (ADR-0017)', () => {
+    function structuredInput(
+      overrides: Partial<UpdateExperienceInput> = {},
+    ): UpdateExperienceInput {
+      return validInput({
+        difficulty: 'challenging',
+        durationMinutes: 240,
+        minAge: 12,
+        maxGroupSize: 8,
+        languages: ['en', 'hi'],
+        meetingPoint: 'Shivpuri taxi stand, Rishikesh',
+        seasonMonths: [9, 10, 11],
+        highlights: ['Grade III+ rapids', 'Riverside lunch'],
+        inclusions: ['Guide', 'Safety gear'],
+        exclusions: ['Transport', 'Tips'],
+        whatToBring: ['Swimwear', 'Towel'],
+        itinerary: [
+          { title: 'Safety briefing', description: 'Gear up', dayOffset: 0, durationMinutes: 30 },
+          { title: 'On the water', description: 'The 16km stretch', dayOffset: 0, durationMinutes: 180 },
+        ],
+        ...overrides,
+      })
+    }
+
+    it('persists all structured scalar/array fields on the experience row', async () => {
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        structuredInput(),
+      )
+      expect(result).toEqual({ ok: true })
+
+      const [updated] = await db
+        .select()
+        .from(experiences)
+        .where(eq(experiences.id, experienceId))
+
+      expect(updated.difficulty).toBe('challenging')
+      expect(updated.durationMinutes).toBe(240)
+      expect(updated.minAge).toBe(12)
+      expect(updated.maxGroupSize).toBe(8)
+      expect(updated.languages).toEqual(['en', 'hi'])
+      expect(updated.meetingPoint).toBe('Shivpuri taxi stand, Rishikesh')
+      expect(updated.seasonMonths).toEqual([9, 10, 11])
+      expect(updated.highlights).toEqual(['Grade III+ rapids', 'Riverside lunch'])
+      expect(updated.inclusions).toEqual(['Guide', 'Safety gear'])
+      expect(updated.exclusions).toEqual(['Transport', 'Tips'])
+      expect(updated.whatToBring).toEqual(['Swimwear', 'Towel'])
+    })
+
+    it('replaces the itinerary, ordered by stepOrder', async () => {
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        structuredInput(),
+      )
+      expect(result).toEqual({ ok: true })
+
+      const steps = await loadItinerary(db, experienceId)
+      expect(steps).toHaveLength(2)
+      expect(steps.map((s) => s.title)).toEqual(['Safety briefing', 'On the water'])
+      expect(steps[0]!.stepOrder).toBe(0)
+      expect(steps[1]!.stepOrder).toBe(1)
+      expect(steps[1]!.durationMinutes).toBe(180)
+    })
+
+    it('replaces the itinerary idempotently on a second edit (no orphan steps)', async () => {
+      await executeUpdateExperience(db, 'u_vendor_edit', structuredInput())
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        structuredInput({ itinerary: [{ title: 'Single step' }] }),
+      )
+      expect(result).toEqual({ ok: true })
+
+      const steps = await loadItinerary(db, experienceId)
+      expect(steps).toHaveLength(1)
+      expect(steps[0]!.title).toBe('Single step')
+    })
+
+    it('clears the itinerary when an empty array is provided', async () => {
+      await executeUpdateExperience(db, 'u_vendor_edit', structuredInput())
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        structuredInput({ itinerary: [] }),
+      )
+      expect(result).toEqual({ ok: true })
+
+      const steps = await loadItinerary(db, experienceId)
+      expect(steps).toHaveLength(0)
+    })
+
+    it('rejects too many highlights via the shared Zod schema', async () => {
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        structuredInput({
+          highlights: ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+        }),
+      )
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toBe('Validation failed.')
+        expect(result.fieldErrors?.highlights).toBeDefined()
+      }
+    })
+
+    it('rejects an out-of-range season month', async () => {
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        structuredInput({ seasonMonths: [13] }),
+      )
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.fieldErrors?.['seasonMonths.0']).toBeDefined()
+      }
+    })
+
+    it('rejects an invalid difficulty enum', async () => {
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        structuredInput({ difficulty: 'insane' as unknown as 'easy' }),
+      )
+      expect(result.ok).toBe(false)
+    })
+
+    it('rejects a duration below the minimum', async () => {
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        structuredInput({ durationMinutes: 5 }),
+      )
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.fieldErrors?.durationMinutes).toBeDefined()
+      }
+    })
+
+    it('rejects an itinerary step with an empty title', async () => {
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        structuredInput({ itinerary: [{ title: '' }] }),
+      )
+      expect(result.ok).toBe(false)
+    })
+
+    it('builds the search doc from the NEW structured values, not the existing row', async () => {
+      // Seed the existing row with stale facets so we can prove the doc is
+      // built from the edit input, not the pre-edit DB row.
+      await db
+        .update(experiences)
+        .set({
+          status: 'published',
+          difficulty: 'easy',
+          durationMinutes: 60,
+          maxGroupSize: 2,
+          seasonMonths: [1],
+        })
+        .where(eq(experiences.id, experienceId))
+      await db
+        .update(vendorProfiles)
+        .set({ kycTier: 'business' })
+        .where(eq(vendorProfiles.userId, 'u_vendor_edit'))
+
+      const { client, addCalls } = makeSearchStub()
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        structuredInput({
+          difficulty: 'extreme',
+          durationMinutes: 480,
+          maxGroupSize: 6,
+          seasonMonths: [6, 7, 8],
+        }),
+        { searchClient: client },
+      )
+
+      expect(result).toEqual({ ok: true })
+      expect(addCalls).toHaveLength(1)
+      const doc = (addCalls[0] as Array<Record<string, unknown>>)[0]!
+      expect(doc.difficulty).toBe('extreme')
+      expect(doc.durationMinutes).toBe(480)
+      expect(doc.maxGroupSize).toBe(6)
+      expect(doc.seasonMonths).toEqual([6, 7, 8])
     })
   })
 })

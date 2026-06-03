@@ -7,6 +7,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import {
   Activity,
   Baby,
+  CalendarRange,
   CircleCheck,
   Clock,
   Languages,
@@ -37,7 +38,7 @@ import { auth } from '@/lib/auth'
 import { env } from '@/lib/env'
 import { isInWishlist } from '@/lib/wishlist/wishlist'
 import { loadExperienceDetail } from '@/lib/experiences/detail-loader'
-import { formatDuration } from '@/lib/experiences/structured-schema'
+import { formatDuration, formatSeason } from '@/lib/experiences/structured-schema'
 import { LOCALE_NAMES, type SupportedLocale } from '@/lib/i18n/config'
 import { getActivityImage } from '@/lib/images'
 import { getRedis } from '@/lib/redis'
@@ -262,6 +263,16 @@ export default async function ExperienceDetailPage({
             icon: Languages,
             label: t('quickFacts.languages'),
             value: languageNames.join(', '),
+          },
+        ]
+      : []),
+    ...(detail.seasonMonths.length > 0
+      ? [
+          {
+            key: 'season',
+            icon: CalendarRange,
+            label: t('quickFacts.season'),
+            value: formatSeason(detail.seasonMonths),
           },
         ]
       : []),

@@ -7,9 +7,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { getRegion } from '@/lib/regions/registry'
 
 import { AdminStatusBadge } from '../_components/admin-status-badge'
 import { DeleteClosureButton } from './delete-closure-button'
+
+/**
+ * Resolve a region slug to its English display name via the ADR-0013 registry.
+ * Operators read "Leh-Ladakh", not the raw `leh-ladakh` URL slug; the slug
+ * stays available behind the cell's `title` for copy / debugging.
+ */
+function regionDisplayName(slug: string): string {
+  return getRegion(slug)?.displayName.en ?? slug
+}
 
 /**
  * #94 — admin Region closures as a DESIGN.md §4 A3 table:
@@ -88,7 +98,9 @@ export function ClosuresTable({ rows }: { rows: ClosureTableRow[] }) {
                 const status = closureStatus(c.startAt, c.endAt)
                 return (
                   <TableRow key={c.id} className="hover:bg-muted/50">
-                    <TableCell className="font-medium">{c.regionSlug}</TableCell>
+                    <TableCell className="font-medium" title={c.regionSlug}>
+                      {regionDisplayName(c.regionSlug)}
+                    </TableCell>
                     <TableCell className="text-sm">{formatDate(c.startAt)}</TableCell>
                     <TableCell className="text-sm">{formatDate(c.endAt)}</TableCell>
                     <TableCell className="max-w-[300px] truncate text-sm">{c.reason}</TableCell>
@@ -99,7 +111,11 @@ export function ClosuresTable({ rows }: { rows: ClosureTableRow[] }) {
                       <AdminStatusBadge status={status.key} label={status.label} />
                     </TableCell>
                     <TableCell>
-                      <DeleteClosureButton closureId={c.id} regionSlug={c.regionSlug} />
+                      <DeleteClosureButton
+                        closureId={c.id}
+                        regionSlug={c.regionSlug}
+                        regionLabel={regionDisplayName(c.regionSlug)}
+                      />
                     </TableCell>
                   </TableRow>
                 )

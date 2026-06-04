@@ -1,3 +1,4 @@
+import { eq } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -6,8 +7,10 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { db } from '@/db/client'
+import { users } from '@/db/schema/users'
 import { auth } from '@/lib/auth'
 import { requirePermission } from '@/lib/auth/permissions'
+import { shortRef } from '@/lib/admin/short-ref'
 import { loadTicketDetail } from '@/lib/admin/support-ticket-actions'
 
 import { AdminStatusBadge } from '../../_components/admin-status-badge'
@@ -64,6 +67,19 @@ export default async function TicketDetailPage({ params }: TicketDetailPageProps
   if (!data) notFound()
 
   const { ticket, messages } = data
+
+  // Resolve the assignee id → display name so the operator UI never shows a
+  // raw `u_seed_…` identifier.
+  let assigneeLabel: string | null = null
+  if (ticket.assignedToAdminId) {
+    const [assignee] = await db
+      .select({ name: users.name, email: users.email })
+      .from(users)
+      .where(eq(users.id, ticket.assignedToAdminId))
+      .limit(1)
+    assigneeLabel =
+      assignee?.name ?? assignee?.email ?? shortRef(ticket.assignedToAdminId)
+  }
 
   return (
     <div className="space-y-6">
@@ -122,8 +138,12 @@ export default async function TicketDetailPage({ params }: TicketDetailPageProps
             </div>
             <div>
               <dt className="text-muted-foreground">Assigned to</dt>
-              <dd className="font-medium" data-testid="ticket-assignee">
-                {ticket.assignedToAdminId ?? 'Unassigned'}
+              <dd
+                className="font-medium"
+                data-testid="ticket-assignee"
+                title={ticket.assignedToAdminId ?? undefined}
+              >
+                {assigneeLabel ?? 'Unassigned'}
               </dd>
             </div>
             <div>

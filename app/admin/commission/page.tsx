@@ -97,7 +97,7 @@ export default async function CommissionPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Commission Tiers</h1>
+        <h1 className="font-heading text-h1 font-semibold tracking-tight">Commission Tiers</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {tiers.length} tier{tiers.length === 1 ? '' : 's'} &middot; {activeTiers.length} active
           &middot; {upcomingTiers.length} upcoming &middot; {expiredTiers.length} expired

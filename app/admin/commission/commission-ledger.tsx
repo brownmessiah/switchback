@@ -111,13 +111,12 @@ function TierTable({
               <TableHead>Window</TableHead>
               <TableHead className="text-right">Bookings</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {tiers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
                   {emptyMessage}
                 </TableCell>
               </TableRow>
@@ -153,9 +152,6 @@ function TierTable({
                   </TableCell>
                   <TableCell>
                     <AdminStatusBadge status={tier.status} label={tier.label} />
-                  </TableCell>
-                  <TableCell>
-                    <TierActions tier={tier} variant="row" onSelect={() => onSelect(tier.id)} />
                   </TableCell>
                 </TableRow>
               ))
@@ -211,22 +207,20 @@ function TierDetail({ tier }: { tier: CommissionTierRow }) {
       <Card>
         <CardContent className="pt-4">
           <p className="mb-3 text-sm font-semibold">Action</p>
-          <TierActions tier={tier} variant="panel" />
+          <TierActions tier={tier} />
         </CardContent>
       </Card>
     </div>
   )
 }
 
-function TierActions({
-  tier,
-  variant = 'panel',
-  onSelect,
-}: {
-  tier: CommissionTierRow
-  variant?: 'row' | 'panel'
-  onSelect?: () => void
-}) {
+/**
+ * The Edit / Delete actions for a commission tier. These live ONLY in the
+ * split-view detail rail (the redundant in-row copies were removed to fix the
+ * B1 table-clipping — the Bookings column was starved off the card edge by the
+ * extra Actions column). The rate change is gated behind an exact-rate confirm.
+ */
+function TierActions({ tier }: { tier: CommissionTierRow }) {
   const [isPending, startTransition] = useTransition()
   const [editOpen, setEditOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -271,21 +265,14 @@ function TierActions({
     })
   }
 
-  const isRow = variant === 'row'
-  const btnSize = isRow ? 'sm' : 'default'
-
   return (
-    <div className={isRow ? 'flex items-center gap-2' : 'flex flex-col gap-2'}>
+    <div className="flex flex-col gap-2">
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <Button
           variant="outline"
-          size={btnSize}
           disabled={isPending}
-          onClick={() => {
-            onSelect?.()
-            setEditOpen(true)
-          }}
-          className={isRow ? undefined : 'w-full'}
+          onClick={() => setEditOpen(true)}
+          className="w-full"
         >
           Edit
         </Button>
@@ -365,14 +352,9 @@ function TierActions({
 
       <Button
         variant="outline"
-        size={btnSize}
         disabled={isPending}
         onClick={handleDelete}
-        className={
-          isRow
-            ? 'text-destructive hover:text-destructive'
-            : 'w-full text-destructive hover:text-destructive'
-        }
+        className="w-full text-destructive hover:text-destructive"
       >
         Delete
       </Button>

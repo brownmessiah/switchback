@@ -8,8 +8,21 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
+import { shortRef } from '@/lib/admin/short-ref'
+
 import { AdminStatusBadge } from '../_components/admin-status-badge'
 import { formatRupees, formatRupeesDeduction } from '../_components/money'
+
+/**
+ * A reference is opaque (a booking/loyalty UUID) when it matches the UUID
+ * shape — those get a `shortRef` (`OV-3F50`) with the full id behind a title.
+ * Human-readable refs (e.g. `catalog-refund-credit`) are shown verbatim.
+ */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+function isOpaqueRef(ref: string): boolean {
+  return UUID_RE.test(ref.trim())
+}
 
 /**
  * #96 — recent Wallet transactions as a DESIGN.md §4 A3 table. Each entry's
@@ -95,7 +108,15 @@ export function WalletTransactionsTable({ rows }: { rows: WalletTransactionRow[]
                       {t.source.replace('_', ' ')}
                     </TableCell>
                     <TableCell className="max-w-32 truncate text-sm text-muted-foreground">
-                      {t.referenceId ?? '—'}
+                      {t.referenceId == null ? (
+                        '—'
+                      ) : isOpaqueRef(t.referenceId) ? (
+                        <span className="font-mono" title={t.referenceId}>
+                          {shortRef(t.referenceId)}
+                        </span>
+                      ) : (
+                        t.referenceId
+                      )}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {new Date(t.createdAt).toLocaleDateString('en-IN', {

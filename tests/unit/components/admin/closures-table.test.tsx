@@ -12,6 +12,8 @@ afterEach(() => {
 //    upcoming → info, past → neutral), status color + icon, never color alone.
 //  - the REASON text stays in the row DOM (E2E #25 matches the row by reason).
 //  - the per-row delete control is preserved.
+//  - the Region column renders the ADR-0013 display name, not the raw slug; the
+//    slug stays available via the cell title (A1/polish: no raw slugs in the UI).
 
 const NOW = Date.now()
 const DAY = 24 * 60 * 60 * 1000
@@ -27,7 +29,7 @@ const ROWS: ClosureTableRow[] = [
   },
   {
     id: 'closure-upcoming',
-    regionSlug: 'manali',
+    regionSlug: 'leh-ladakh',
     startAt: new Date(NOW + DAY),
     endAt: new Date(NOW + 2 * DAY),
     reason: 'Planned road closure',
@@ -39,6 +41,16 @@ describe('ClosuresTable (A3)', () => {
   it('renders the closure reason text in the row (E2E row-by-reason match)', () => {
     render(<ClosuresTable rows={ROWS} />)
     expect(screen.getByText('Monsoon — rafting unsafe')).toBeInTheDocument()
+  })
+
+  it('renders the region DISPLAY NAME, not the raw slug, with the slug behind a title', () => {
+    render(<ClosuresTable rows={ROWS} />)
+    // leh-ladakh → "Leh-Ladakh" per the ADR-0013 registry.
+    const cell = screen.getByText('Leh-Ladakh')
+    expect(cell).toBeInTheDocument()
+    expect(cell.getAttribute('title')).toBe('leh-ladakh')
+    // The raw slug must NOT be the visible label.
+    expect(screen.queryByText('leh-ladakh')).toBeNull()
   })
 
   it('maps an active closure to a semantic AdminStatusBadge (color + icon)', () => {

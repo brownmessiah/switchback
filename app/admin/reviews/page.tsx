@@ -130,21 +130,34 @@ export default async function ReviewsPage({ searchParams }: ReviewsPageProps) {
                       >
                         {renderStars(r.rating)}
                       </TableCell>
-                      <TableCell className="max-w-[220px] text-sm">
-                        <div className="truncate font-medium">{r.title ?? '—'}</div>
+                      <TableCell className="max-w-[280px] text-sm">
+                        <div className="truncate font-medium" title={r.title ?? undefined}>
+                          {r.title ?? '—'}
+                        </div>
                         {r.body && (
-                          <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                          <div
+                            className="mt-0.5 line-clamp-2 text-xs whitespace-normal text-muted-foreground"
+                            title={r.body}
+                          >
                             {r.body}
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="text-sm">
+                      <TableCell className="max-w-[140px] truncate text-sm">
                         {r.customerName ?? r.customerEmail ?? '—'}
                       </TableCell>
-                      <TableCell className="max-w-[150px] truncate text-sm">
+                      <TableCell
+                        className="max-w-[150px] truncate text-sm"
+                        title={r.experienceTitle}
+                      >
                         {r.experienceTitle}
                       </TableCell>
-                      <TableCell className="text-sm">{r.vendorBusinessName}</TableCell>
+                      <TableCell
+                        className="max-w-[160px] truncate text-sm"
+                        title={r.vendorBusinessName}
+                      >
+                        {r.vendorBusinessName}
+                      </TableCell>
                       <TableCell>
                         <span data-testid="review-status-badge">
                           <AdminStatusBadge

@@ -3450,9 +3450,12 @@ test.describe('Admin support ticket lifecycle (#29)', () => {
 
     await page.getByRole('button', { name: 'Assign to Me' }).click()
 
-    // After revalidation the assignee cell shows the admin id (no longer the
-    // Unassigned placeholder), and the Assign-to-Me button is gone.
-    await expect(page.getByTestId('ticket-assignee')).toContainText(SEED_ADMIN_ID, {
+    // After revalidation the assignee cell resolves the admin's DISPLAY NAME
+    // (no raw `u_seed_…` id in the operator UI), so it is no longer the
+    // Unassigned placeholder, and the raw id is preserved behind the cell title.
+    const assigneeCell = page.getByTestId('ticket-assignee')
+    await expect(assigneeCell).not.toContainText('Unassigned', { timeout: 15_000 })
+    await expect(assigneeCell).toHaveAttribute('title', SEED_ADMIN_ID, {
       timeout: 15_000,
     })
 

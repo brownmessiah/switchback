@@ -1,3 +1,4 @@
+import { inArray } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -14,8 +15,10 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { db } from '@/db/client'
+import { users } from '@/db/schema/users'
 import { auth } from '@/lib/auth'
 import { requirePermission } from '@/lib/auth/permissions'
+import { shortRef } from '@/lib/admin/short-ref'
 import {
   loadTicketsList,
   type TicketListFilters,
@@ -74,6 +77,22 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
 
   const tickets = await loadTicketsList(db, filters)
   const isFiltered = Object.values(filters).some(Boolean)
+
+  // Resolve assignee user ids → display names in one query so the "Assigned To"
+  // column never leaks a raw `u_seed_…` identifier into the operator UI.
+  const assigneeIds = Array.from(
+    new Set(tickets.map((t) => t.assignedToAdminId).filter((id): id is string => Boolean(id))),
+  )
+  const assigneeNameById = new Map<string, string>()
+  if (assigneeIds.length > 0) {
+    const assignees = await db
+      .select({ id: users.id, name: users.name, email: users.email })
+      .from(users)
+      .where(inArray(users.id, assigneeIds))
+    for (const a of assignees) {
+      assigneeNameById.set(a.id, a.name ?? a.email ?? shortRef(a.id))
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -167,9 +186,14 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                         {t.category}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {t.assignedToAdminId
-                          ? t.assignedToAdminId.slice(0, 8) + '...'
-                          : 'Unassigned'}
+                        {t.assignedToAdminId ? (
+                          <span title={t.assignedToAdminId}>
+                            {assigneeNameById.get(t.assignedToAdminId) ??
+                              shortRef(t.assignedToAdminId)}
+                          </span>
+                        ) : (
+                          'Unassigned'
+                        )}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground tabular-nums">
                         {formatDate(t.createdAt)}

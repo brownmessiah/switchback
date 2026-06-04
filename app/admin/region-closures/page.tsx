@@ -31,7 +31,7 @@ export default async function RegionClosuresPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Region Closures</h1>
+          <h1 className="font-heading text-h1 font-semibold tracking-tight">Region Closures</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {rows.length} closure{rows.length === 1 ? '' : 's'}
           </p>

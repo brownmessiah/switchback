@@ -91,7 +91,7 @@ export default async function AdminPayoutsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Payout queue</h1>
+        <h1 className="font-heading text-h1 font-semibold tracking-tight">Payout queue</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {rows.length} booking{rows.length === 1 ? '' : 's'} in queue
           {pendingCount > 0 && <> ({pendingCount} pending approval)</>}

@@ -47,7 +47,14 @@ export default async function AdminLayout({
     <IntlProvider locale={locale} messages={messages as Record<string, unknown>}>
       <div className="flex min-h-[80vh]">
         <AdminSidebar groups={groups} badgeCounts={badgeCounts} />
-        <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8">{children}</main>
+        {/* One shared content shell for EVERY admin route: a single padding +
+            max-width container centred in the remaining space, so no route
+            renders at a different scale/width than the others (B1 shell-width
+            audit). min-w-0 lets wide tables scroll instead of stretching the
+            shell. */}
+        <main className="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-8">
+          <div className="mx-auto w-full max-w-[88rem]">{children}</div>
+        </main>
       </div>
     </IntlProvider>
   )

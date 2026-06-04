@@ -62,7 +62,7 @@ export default async function AdminRefundsPage({ searchParams }: AdminRefundsPag
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Refund requests</h1>
+        <h1 className="font-heading text-h1 font-semibold tracking-tight">Refund requests</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {rows.length} request{rows.length === 1 ? '' : 's'}
           {pendingCount > 0 && <> ({pendingCount} pending review)</>}

@@ -10,15 +10,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-
-import { AdminStatusBadge } from '../_components/admin-status-badge'
+import { kycTierBadge } from '@/lib/admin/kyc-tier-badge'
 
 /**
  * #87 — the admin vendors LIST as a rigorous DESIGN.md §4 A3 table:
- *  - KYC tier as a semantic `AdminStatusBadge` (Identity / Business → success
- *    "verified Vendor" dot; phone → neutral signup-only token) with the
- *    ADR-0007 distinct labels — status color + paired icon, never color alone
- *    (DESIGN.md §1.3 / §5)
+ *  - KYC tier as a distinct-per-tier ramp via `kycTierBadge` (Business →
+ *    success, Identity → info, Phone → warning) so the strongest tier is
+ *    visually distinct instead of all-green — status color + paired icon,
+ *    never color alone (DESIGN.md §1.3 / §5; ADR-0007 distinct labels)
  *  - numeric columns (Commission %, SLA %) right-aligned + `.tabular-nums`
  *    (DESIGN.md §1.3 / §2.2)
  *  - each row links to its `/admin/vendors/[id]` detail (B6 master → detail;
@@ -39,17 +38,6 @@ export interface VendorsTableRow {
   createdAt: Date | string
   userName: string | null
   userEmail: string | null
-}
-
-/** ADR-0007 distinct KYC-tier labels (admin is English-only — no i18n). */
-const KYC_LABEL: Record<string, string> = {
-  business: 'Business verified',
-  identity: 'Identity verified',
-  phone: 'Phone verified',
-}
-
-function kycLabel(tier: string): string {
-  return KYC_LABEL[tier] ?? tier
 }
 
 function formatDate(date: Date | string): string {
@@ -112,7 +100,16 @@ export function VendorsTable({ rows }: { rows: VendorsTableRow[] }) {
                     {v.userEmail ?? v.userName ?? '—'}
                   </TableCell>
                   <TableCell>
-                    <AdminStatusBadge status={v.kycTier} label={kycLabel(v.kycTier)} />
+                    {(() => {
+                      const kyc = kycTierBadge(v.kycTier)
+                      const KycIcon = kyc.icon
+                      return (
+                        <Badge variant={kyc.variant}>
+                          <KycIcon data-icon="inline-start" aria-hidden />
+                          {kyc.label}
+                        </Badge>
+                      )
+                    })()}
                   </TableCell>
                   <TableCell className="text-right text-sm tabular-nums">
                     {Math.floor(Number(v.commissionRate))}%

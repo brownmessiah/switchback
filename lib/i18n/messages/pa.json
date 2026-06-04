@@ -629,6 +629,7 @@
     }
   },
   "Nav": {
+    "themeToggle": "ਡਾਰਕ ਮੋਡ ਟੌਗਲ ਕਰੋ",
     "home": "Outvers",
     "homeAriaLabel": "Outvers ਹੋਮ",
     "search": "ਖੋਜੋ",

@@ -7,6 +7,7 @@ import type { ReactElement } from 'react'
 
 import { AuthStatus } from './auth-status'
 import { LanguageSelector } from './language-selector'
+import { ThemeToggle } from './theme-toggle'
 
 export function SiteHeader(): ReactElement {
   const pathname = usePathname()
@@ -61,6 +62,10 @@ export function SiteHeader(): ReactElement {
           >
             {t('refundPolicy')}
           </Link>
+          <ThemeToggle
+            label={t('themeToggle')}
+            className={isHome ? 'text-white hover:bg-white/10 hover:text-white' : ''}
+          />
           <LanguageSelector variant="compact" />
           <AuthStatus />
         </nav>
@@ -107,7 +112,8 @@ export function SiteHeader(): ReactElement {
             >
               {t('refundPolicy')}
             </Link>
-            <div className="px-1 py-1">
+            <div className="flex items-center gap-1 px-1 py-1">
+              <ThemeToggle label={t('themeToggle')} />
               <LanguageSelector variant="compact" />
             </div>
             <Link

@@ -629,6 +629,7 @@
     }
   },
   "Nav": {
+    "themeToggle": "ডার্ক মোড টগল করুন",
     "home": "Outvers",
     "homeAriaLabel": "Outvers হোম",
     "search": "খুঁজুন",

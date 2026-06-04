@@ -629,6 +629,7 @@
     }
   },
   "Nav": {
+    "themeToggle": "ડાર્ક મોડ ટૉગલ કરો",
     "home": "Outvers",
     "homeAriaLabel": "Outvers હોમ",
     "search": "શોધો",

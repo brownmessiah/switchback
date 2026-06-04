@@ -629,6 +629,7 @@
     }
   },
   "Nav": {
+    "themeToggle": "டார்க் பயன்முறையை மாற்று",
     "home": "Outvers",
     "homeAriaLabel": "Outvers முகப்பு",
     "search": "தேடு",

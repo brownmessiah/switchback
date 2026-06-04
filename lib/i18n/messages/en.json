@@ -670,6 +670,7 @@
     }
   },
   "Nav": {
+    "themeToggle": "Toggle dark mode",
     "home": "Outvers",
     "homeAriaLabel": "Outvers home",
     "search": "Search",

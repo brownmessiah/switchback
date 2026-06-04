@@ -629,6 +629,7 @@
     }
   },
   "Nav": {
+    "themeToggle": "డార్క్ మోడ్‌ను మార్చండి",
     "home": "Outvers",
     "homeAriaLabel": "Outvers హోమ్",
     "search": "శోధించండి",

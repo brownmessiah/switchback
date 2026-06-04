@@ -629,6 +629,7 @@
     }
   },
   "Nav": {
+    "themeToggle": "डार्क मोड टॉगल करा",
     "home": "Outvers",
     "homeAriaLabel": "Outvers मुखपृष्ठ",
     "search": "शोधा",

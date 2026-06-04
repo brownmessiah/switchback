@@ -629,6 +629,7 @@
     }
   },
   "Nav": {
+    "themeToggle": "ڈارک موڈ ٹوگل کریں",
     "home": "Outvers",
     "homeAriaLabel": "Outvers ہوم",
     "search": "تلاش کریں",

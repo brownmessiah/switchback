@@ -629,6 +629,7 @@
     }
   },
   "Nav": {
+    "themeToggle": "ഡാർക്ക് മോഡ് മാറ്റുക",
     "home": "Outvers",
     "homeAriaLabel": "Outvers ഹോം",
     "search": "തിരയുക",

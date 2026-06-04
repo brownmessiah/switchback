@@ -565,6 +565,7 @@
     "error": "কিবা ভুল হ'ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।"
   },
   "Nav": {
+    "themeToggle": "ডাৰ্ক মোড ট’গল কৰক",
     "home": "Outvers",
     "homeAriaLabel": "Outvers মূল পৃষ্ঠা",
     "search": "সন্ধান কৰক",

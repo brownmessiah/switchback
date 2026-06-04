@@ -629,6 +629,7 @@
     }
   },
   "Nav": {
+    "themeToggle": "ಡಾರ್ಕ್ ಮೋಡ್ ಟಾಗಲ್ ಮಾಡಿ",
     "home": "Outvers",
     "homeAriaLabel": "Outvers ಮುಖಪುಟ",
     "search": "ಹುಡುಕಿ",

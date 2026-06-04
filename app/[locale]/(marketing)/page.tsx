@@ -257,8 +257,11 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
                     <MapPin className="size-3 shrink-0" aria-hidden="true" />
                     {d.state}
                   </p>
+                  {/* Dark glass pill + white text (NOT bg-white/text-foreground,
+                      which is white-on-white in dark mode). White on a >=60%
+                      black scrim over the photo is AA-safe in both themes. */}
                   {d.experienceCount > 0 && (
-                    <p className="mt-1.5 inline-flex items-center rounded-[var(--radius-pill)] bg-white/90 px-2 py-0.5 text-xs font-medium tabular-nums text-foreground">
+                    <p className="mt-1.5 inline-flex items-center rounded-[var(--radius-pill)] bg-black/60 px-2 py-0.5 text-xs font-medium tabular-nums text-white backdrop-blur-sm">
                       {t('destinations.experienceCount', {
                         count: d.experienceCount,
                       })}

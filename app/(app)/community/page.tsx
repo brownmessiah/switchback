@@ -1,9 +1,9 @@
 import { MapPin, Users } from 'lucide-react'
 import { headers } from 'next/headers'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 
 import { Badge } from '@/components/ui/badge'
+import { buttonVariants } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { db } from '@/db/client'
 import { auth } from '@/lib/auth'
@@ -22,8 +22,9 @@ export default async function CommunityPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
+  // Public browse (parity with outvers.com Community): anyone can see open trip
+  // groups; signing in is only required to CONVENE or JOIN one.
   const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) redirect('/sign-in')
 
   const sp = await searchParams
   const str = (v: string | string[] | undefined): string | undefined =>
@@ -116,7 +117,19 @@ export default async function CommunityPage({
               <CardTitle className="text-lg">Convene a trip</CardTitle>
             </CardHeader>
             <CardContent>
-              <CreateGroupForm />
+              {session?.user ? (
+                <CreateGroupForm />
+              ) : (
+                <div className="space-y-3 text-sm text-muted-foreground">
+                  <p>
+                    Sign in to convene your own trip and invite others to book
+                    alongside you — each member still pays for their own seat.
+                  </p>
+                  <Link href="/sign-in" className={buttonVariants({ className: 'w-full' })}>
+                    Sign in to convene
+                  </Link>
+                </div>
+              )}
             </CardContent>
           </Card>
         </aside>

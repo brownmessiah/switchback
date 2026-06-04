@@ -143,3 +143,37 @@ base `db/seed.ts`/`db/seed-extras.ts`).
 Each fix should follow the repo TDD/verification norms; UI-only changes verified by re-screenshotting
 the affected route with `.scratch/screenshot-all.mjs`. This plan is intentionally a *plan* — no code
 changes were made as part of producing it.
+
+---
+
+## Status — 2026-06-04 (demo-polish pass)
+
+**Done (committed to `main`):**
+- **B0 quick wins** (`bd7c50c`): vendor revenue-chart tick formatter (TDD'd `formatAxisTick` →
+  ₹7.5K/₹10L/₹2.5Cr) + wider gutter; SLA pill no longer clipped; vendor listing-edit sticky bar no
+  longer overlaps the Photos dropzone; sign-in CTA full brand crimson; deeper hero scrim. The B0 "N
+  people" group-size leak was already fixed in a prior pass.
+- **A0 seed realism** (`bc2b360`): fixtures excluded from the customer dashboard + `/admin/bookings`
+  (shared `lib/experiences/fixture-slugs` registry); ONE coherent lifecycle badge + suppressed
+  "Upcoming" on terminal states (TDD'd `deriveBookingBadges`); demo customer reshaped to a varied
+  real-experience history; wallet ledger reconciled (refund ₹500 = +650−150, credit ₹200 = +200);
+  KYC-doc'd vendors (goa-dive-center business, himalayan-hikes-co identity).
+- **Imagery + feature C items** (`de5674f`, `f13b8ee`, `89a3a05`): the duplicate/mis-tagged hero
+  imagery (C) is fixed — 10×6 visually-verified on-subject pools + distinct per-listing galleries +
+  distinct PDP gallery tiles; plus the requested /search keyword box, grid/list toggle, and the #70
+  booking-rail date picker.
+
+**Verification note:** all of the above are unit-tested (2051 green), typecheck/lint/i18n clean, and
+DB-/visually-verified on the running demo. The **authed E2E projects (admin/customer/vendor) could not
+be run** in the local env this pass — the long-running reused dev server's session auth is broken
+(untouched specs 404/redirect too), an environmental issue, not these changes. Run the authed E2E in
+CI / a clean `pnpm dev` to close that gap.
+
+**Residual / follow-ups (not done):**
+- Some of the demo customer's `completed` bookings still sit on FUTURE slots (the review-generation
+  seed paths reuse the T+7d demo slots to attach Issue-#11 reviews). The badge contradiction is gone,
+  but a "Completed" card can still show a near-future date + sort among upcoming. Fixing needs the
+  review-generation paths to use past slots without disturbing #11 review determinism.
+- A1 (undifferentiated vendors, historical analytics dates, thin content), B1 (admin table clipping +
+  shell-width audit + review overflow), remaining C (itinerary verify, empty-state art, mobile sticky
+  Book-now), D (status-by-color a11y), E (footer `(soon)` tags) — untouched this pass.

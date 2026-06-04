@@ -29,6 +29,7 @@ import { and, eq, inArray, like } from 'drizzle-orm'
 
 import { db } from './client'
 import { seedDefaultAvailability } from './seed-availability'
+import { DEMO_PASSWORD, seedDemoPasswords } from './seed-demo-passwords'
 import { resolveDemoBookingSlotOffsetDays } from './seed-demo-bookings'
 import { IMG, seedCatalog } from './seed-extras'
 import { galleryFor } from './seed-photos'
@@ -2427,6 +2428,13 @@ async function seed(): Promise<void> {
   // Isolation-safe demo groups for /community (dedicated fixture users).
   await seedTripGroups(db)
   console.warn('seeded trip groups (community demo data)')
+
+  // ----- DEMO LOGIN PASSWORDS -----
+  // Give the role accounts (admin/sub-admin/customer/vendors) an email+password
+  // credential so the owner can sign in via the UI (the E2E path injects
+  // sessions, so they otherwise have no password). Demo-only.
+  await seedDemoPasswords(db)
+  console.warn(`seeded demo login passwords (password: ${DEMO_PASSWORD})`)
 }
 
 seed()

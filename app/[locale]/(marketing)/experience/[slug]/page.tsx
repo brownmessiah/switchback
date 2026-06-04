@@ -10,6 +10,7 @@ import {
   CalendarRange,
   CircleCheck,
   Clock,
+  Images,
   Languages,
   MapPin,
   ShieldCheck,
@@ -40,6 +41,7 @@ import { isInWishlist } from '@/lib/wishlist/wishlist'
 import { loadExperienceDetail } from '@/lib/experiences/detail-loader'
 import { formatDuration, formatSeason } from '@/lib/experiences/structured-schema'
 import { LOCALE_NAMES, type SupportedLocale } from '@/lib/i18n/config'
+import { getActivityImage } from '@/lib/images'
 import { galleryTiles } from '@/lib/media/experience-images'
 import { getRedis } from '@/lib/redis'
 import { generateAlternates } from '@/lib/seo/hreflang'
@@ -142,7 +144,19 @@ export default async function ExperienceDetailPage({
 
   // PDP overview gallery (1 large + 2 small). Real media first; missing tiles
   // fall back to DISTINCT activity photos (no crop-duplicates of one image).
+  // `galleryImages[0]` remains the canonical hero used for Product JSON-LD + OG.
   const galleryImages = galleryTiles(detail.gallery, detail.activity.slug)
+
+  // Airbnb-style hero+grid: 1 large hero + up to 4 grid tiles. Real media first,
+  // then DISTINCT activity fallbacks so a bare listing still shows five varied
+  // photos rather than one cropped five ways. The "show all" affordance is shown
+  // only when there is genuine extra media (>3 real assets) to reveal.
+  const galleryHeroTiles: string[] = Array.from({ length: 5 }, (_, i) =>
+    detail.gallery[i]?.url ?? getActivityImage(detail.activity.slug, i % 3),
+  )
+  const galleryAltFor = (i: number): string =>
+    detail.gallery[i]?.altText ?? (i === 0 ? detail.title : '')
+  const showAllPhotos = detail.gallery.length > 3
 
   const productJson = product({
     name: detail.title,
@@ -436,30 +450,79 @@ export default async function ExperienceDetailPage({
       <div className="grid gap-8 lg:grid-cols-[1fr_22rem] lg:gap-12">
         {/* Left column — content */}
         <div className="min-w-0">
-          {/* Title + rating-under-title row + Vendor attribution (DESIGN.md
-              §4 B2.1–2). */}
-          <header className="mb-6">
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <Badge variant="secondary">{activityDisplay}</Badge>
-              <Badge variant="outline">{regionDisplay}</Badge>
+          {/* Airbnb-grade hero+grid gallery (1 large hero + a 2×2 grid),
+              full content-width above the title. Rounded corners + hairline ring
+              + a subtle hover dim; a "Show all photos" affordance overlays the
+              last tile when the listing carries genuine extra media. On mobile
+              it collapses to a single full-bleed hero (the grid is hidden), so
+              the page leads with one clean, generous image. */}
+          <div className="group/gallery relative mb-[var(--space-section)] grid aspect-[3/2] grid-cols-1 gap-2 overflow-hidden rounded-[var(--radius-2xl)] ring-1 ring-foreground/10 sm:aspect-[2/1] sm:grid-cols-4 sm:grid-rows-2">
+            {/* Hero — spans both rows + half the width on ≥sm. */}
+            <div className="relative sm:col-span-2 sm:row-span-2">
+              <Image
+                src={galleryHeroTiles[0]}
+                alt={galleryAltFor(0)}
+                fill
+                className="object-cover transition-[filter] duration-[var(--duration-base)] group-hover/gallery:brightness-[0.97]"
+                preload
+                sizes="(max-width: 640px) 100vw, 50vw"
+              />
             </div>
+            {/* 2×2 grid — hidden on mobile so the hero leads cleanly. */}
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="relative hidden sm:block">
+                <Image
+                  src={galleryHeroTiles[i]}
+                  alt={galleryAltFor(i)}
+                  fill
+                  className="object-cover transition-[filter] duration-[var(--duration-base)] group-hover/gallery:brightness-[0.97]"
+                  sizes="25vw"
+                />
+              </div>
+            ))}
+            {/* "Show all photos" affordance — a language-neutral photo-count cue
+                (gallery icon + total count) bottom-right, surfaced only when there
+                is real extra media. Static in v1 (no lightbox); kept text-free so
+                it needs no new locale key while still reading as the standard
+                "more photos" affordance. */}
+            {showAllPhotos && (
+              <span className="pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-[var(--radius-control)] border border-border bg-background/95 px-3 py-1.5 text-xs font-semibold text-foreground shadow-sm backdrop-blur tabular-nums">
+                <Images aria-hidden="true" className="size-3.5 shrink-0" />
+                {detail.gallery.length}
+              </span>
+            )}
+          </div>
+
+          {/* Title + rating-under-title row + Vendor attribution (DESIGN.md
+              §4 B2.1–2). A tight Airbnb-style block: location/category eyebrow,
+              then the H1, then the rating · vendor · trust line. */}
+          <header className="mb-[var(--space-section)]">
+            <p className="mb-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground">
+              <MapPin aria-hidden="true" className="size-4 shrink-0" />
+              <span className="font-medium text-foreground">{activityDisplay}</span>
+              <span aria-hidden="true">·</span>
+              <span>{regionDisplay}</span>
+            </p>
             <h1 className="font-heading text-h1 font-bold tracking-tight text-balance">
               {detail.title}
             </h1>
-            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+            <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
               {aggregateRating && (
-                <span className="flex items-center gap-1 font-medium text-foreground">
-                  <Star
-                    aria-hidden="true"
-                    className="size-4 fill-warning text-warning"
-                  />
-                  <span className="tabular-nums">{aggregateRating.ratingValue}</span>
-                  <span className="text-muted-foreground">
-                    ·{' '}
-                    <span className="tabular-nums">{reviewCount}</span>{' '}
-                    {t('rating.reviews', { count: reviewCount })}
+                <>
+                  <span className="flex items-center gap-1 font-medium text-foreground">
+                    <Star
+                      aria-hidden="true"
+                      className="size-4 fill-warning text-warning"
+                    />
+                    <span className="tabular-nums">{aggregateRating.ratingValue}</span>
+                    <span className="text-muted-foreground">
+                      ·{' '}
+                      <span className="tabular-nums">{reviewCount}</span>{' '}
+                      {t('rating.reviews', { count: reviewCount })}
+                    </span>
                   </span>
-                </span>
+                  <span aria-hidden="true" className="text-border">|</span>
+                </>
               )}
               <Link
                 href={`/vendor/${detail.vendor.slug}`}
@@ -471,10 +534,12 @@ export default async function ExperienceDetailPage({
                 <ShieldCheck aria-hidden="true" />
                 {kycLabel}
               </Badge>
-              <WishlistButton
-                experienceId={detail.id}
-                initialSaved={initialWishlisted}
-              />
+              <span className="ml-auto">
+                <WishlistButton
+                  experienceId={detail.id}
+                  initialSaved={initialWishlisted}
+                />
+              </span>
             </div>
           </header>
 
@@ -500,23 +565,31 @@ export default async function ExperienceDetailPage({
 
           {/* Quick-facts strip (ADR-0017) — responsive fact row. Each fact is
               present only when its source value is non-null/non-empty; if NONE
-              are present the whole strip is omitted (bare listings unchanged). */}
+              are present the whole strip is omitted (bare listings unchanged).
+              Restyled as a clean hairline-separated card (vertical dividers
+              between columns) rather than a filled box — lighter, more scannable,
+              Airbnb-grade. */}
           {quickFacts.length > 0 && (
             <dl
               aria-label={t('quickFacts.heading')}
-              className="mb-[var(--space-section)] grid grid-cols-2 gap-x-4 gap-y-3 rounded-[var(--radius-card)] border bg-muted/40 p-4 sm:grid-cols-3 lg:grid-cols-5"
+              className="mb-[var(--space-section)] grid grid-cols-2 gap-y-4 rounded-[var(--radius-card)] border border-border p-5 sm:grid-cols-3 sm:divide-x sm:divide-border lg:grid-cols-5"
             >
               {quickFacts.map((fact) => {
                 const Icon = fact.icon
                 return (
-                  <div key={fact.key} className="flex items-start gap-2">
+                  <div
+                    key={fact.key}
+                    className="flex items-start gap-2.5 sm:px-4 sm:first:pl-0"
+                  >
                     <Icon
                       aria-hidden="true"
                       className="mt-0.5 size-4 shrink-0 text-muted-foreground"
                     />
                     <div className="min-w-0">
                       <dt className="text-xs text-muted-foreground">{fact.label}</dt>
-                      <dd className="text-sm font-medium text-foreground">{fact.value}</dd>
+                      <dd className="mt-0.5 text-sm font-medium text-foreground">
+                        {fact.value}
+                      </dd>
                     </div>
                   </div>
                 )
@@ -528,52 +601,19 @@ export default async function ExperienceDetailPage({
               below. Plain <a href="#…"> (SSR-compatible, no client JS). */}
           <AnchorNav label={t('nav.label')} items={anchorItems} />
 
-          <div className="space-y-[var(--space-section)]">
-            {/* Overview — gallery + description (anchor target #overview). */}
-            <section
-              id="overview"
-              className="scroll-mt-[calc(var(--header-offset,4rem)+3.5rem)]"
-            >
-              <div className="grid grid-cols-2 gap-2 overflow-hidden rounded-[var(--radius-2xl)]">
-                <div className="relative col-span-2 aspect-[16/9] sm:col-span-1 sm:aspect-[4/3]">
-                  <Image
-                    src={galleryImages[0]}
-                    alt={detail.gallery[0]?.altText ?? detail.title}
-                    fill
-                    className="object-cover"
-                    priority
-                    sizes="(max-width: 640px) 100vw, 50vw"
-                  />
-                </div>
-                <div className="hidden gap-2 sm:grid sm:grid-rows-2">
-                  <div className="relative overflow-hidden">
-                    <Image
-                      src={galleryImages[1]}
-                      alt={detail.gallery[1]?.altText ?? ''}
-                      fill
-                      className="object-cover"
-                      sizes="25vw"
-                    />
-                  </div>
-                  <div className="relative overflow-hidden">
-                    <Image
-                      src={galleryImages[2]}
-                      alt={detail.gallery[2]?.altText ?? ''}
-                      fill
-                      className="object-cover"
-                      sizes="25vw"
-                    />
-                  </div>
-                </div>
-              </div>
-
+          {/* Sections — separated by hairline dividers for Airbnb-grade rhythm.
+              Each section carries `border-t` (except the first) so the page reads
+              as cleanly delineated content blocks with generous vertical space. */}
+          <div className="[&>section]:scroll-mt-[calc(var(--header-offset,4rem)+3.5rem)] [&>section]:border-t [&>section]:border-border [&>section]:pt-[var(--space-section)] [&>section]:first:border-t-0 [&>section]:first:pt-0 [&>section:not(:last-child)]:pb-[var(--space-section)]">
+            {/* Overview — description (anchor target #overview). */}
+            <section id="overview">
               {detail.shortDescription && (
-                <p className="measure mt-6 text-lg leading-relaxed text-foreground">
+                <p className="measure text-lg leading-relaxed text-foreground">
                   {detail.shortDescription}
                 </p>
               )}
               {detail.longDescription && (
-                <div className="mt-6">
+                <div className={detail.shortDescription ? 'mt-6' : undefined}>
                   <h2 className="mb-3 font-heading text-h2 font-semibold tracking-tight">
                     {t('sections.about')}
                   </h2>
@@ -586,10 +626,7 @@ export default async function ExperienceDetailPage({
 
             {/* Highlights (anchor target #highlights) — ADR-0017. */}
             {detail.highlights.length > 0 && (
-              <section
-                id="highlights"
-                className="scroll-mt-[calc(var(--header-offset,4rem)+3.5rem)]"
-              >
+              <section id="highlights">
                 <h2 className="mb-3 font-heading text-h2 font-semibold tracking-tight">
                   {t('sections.highlights')}
                 </h2>
@@ -611,10 +648,7 @@ export default async function ExperienceDetailPage({
                 Vendor-authored, per-Experience steps (DISTINCT from TripGroup
                 itinerary). Reuses the FAQ Accordion primitive. */}
             {detail.itinerary.length > 0 && (
-              <section
-                id="itinerary"
-                className="scroll-mt-[calc(var(--header-offset,4rem)+3.5rem)]"
-              >
+              <section id="itinerary">
                 <h2 className="mb-4 font-heading text-h2 font-semibold tracking-tight">
                   {t('sections.itinerary')}
                 </h2>
@@ -651,10 +685,7 @@ export default async function ExperienceDetailPage({
                 ANY of the three arrays is non-empty; each block renders only
                 when its own array is non-empty. */}
             {(hasIncluded || detail.whatToBring.length > 0) && (
-              <section
-                id="details"
-                className="scroll-mt-[calc(var(--header-offset,4rem)+3.5rem)] space-y-6"
-              >
+              <section id="details" className="space-y-6">
                 {hasIncluded && (
                   <div className="grid gap-6 sm:grid-cols-2">
                     {detail.inclusions.length > 0 && (
@@ -716,10 +747,7 @@ export default async function ExperienceDetailPage({
             {/* Meeting point (anchor target #meetingPoint) — ADR-0017. Text
                 only, no map embed in v1. */}
             {detail.meetingPoint && (
-              <section
-                id="meetingPoint"
-                className="scroll-mt-[calc(var(--header-offset,4rem)+3.5rem)]"
-              >
+              <section id="meetingPoint">
                 <h2 className="mb-3 font-heading text-h2 font-semibold tracking-tight">
                   {t('sections.meetingPoint')}
                 </h2>
@@ -735,10 +763,7 @@ export default async function ExperienceDetailPage({
 
             {/* Required permits (anchor target #permits) — ADR-0011. */}
             {detail.requiredPermits.length > 0 && (
-              <section
-                id="permits"
-                className="scroll-mt-[calc(var(--header-offset,4rem)+3.5rem)]"
-              >
+              <section id="permits">
                 <h2 className="mb-3 font-heading text-h2 font-semibold tracking-tight">
                   {t('sections.requiredPermits')}
                 </h2>
@@ -766,10 +791,7 @@ export default async function ExperienceDetailPage({
             )}
 
             {/* Cancellation policy (anchor target #cancellation) — ADR-0005. */}
-            <section
-              id="cancellation"
-              className="scroll-mt-[calc(var(--header-offset,4rem)+3.5rem)]"
-            >
+            <section id="cancellation">
               <h2 className="mb-3 font-heading text-h2 font-semibold tracking-tight">
                 {t('sections.cancellationPolicy')}
               </h2>
@@ -786,10 +808,7 @@ export default async function ExperienceDetailPage({
             </section>
 
             {/* Reviews (anchor target #reviews). */}
-            <section
-              id="reviews"
-              className="scroll-mt-[calc(var(--header-offset,4rem)+3.5rem)]"
-            >
+            <section id="reviews">
               <h2 className="mb-4 font-heading text-h2 font-semibold tracking-tight">
                 {t('sections.reviews')}
               </h2>
@@ -797,10 +816,7 @@ export default async function ExperienceDetailPage({
             </section>
 
             {/* FAQ (anchor target #faq). */}
-            <section
-              id="faq"
-              className="scroll-mt-[calc(var(--header-offset,4rem)+3.5rem)]"
-            >
+            <section id="faq">
               <h2 className="mb-4 font-heading text-h2 font-semibold tracking-tight">
                 {t('sections.faq')}
               </h2>

@@ -96,9 +96,11 @@ export function BookingRail({
   closure,
 }: BookingRailProps): ReactElement {
   return (
-    <Card className="shadow-lg">
+    <Card className="gap-5 py-5 shadow-md ring-foreground/[0.08]">
       <CardHeader>
-        <CardTitle className="text-h3">{heading}</CardTitle>
+        <CardTitle className="font-heading text-h3 font-semibold tracking-tight">
+          {heading}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <BookingRailInteractive

@@ -25,7 +25,7 @@
  * loads real Vendor + Experience records from the legacy travel-app.
  */
 
-import { eq, inArray, like } from 'drizzle-orm'
+import { and, eq, inArray, like } from 'drizzle-orm'
 
 import { db } from './client'
 import { IMG, seedCatalog } from './seed-extras'
@@ -88,7 +88,33 @@ interface StructuredSeed {
   itinerary: ItineraryStepInput[]
 }
 
-const VENDORS = [
+/**
+ * KYC evidence the admin vendor-detail review console (/admin/vendors/[id])
+ * surfaces (A0 item 4). The page previously showed six "Not submitted" tiles +
+ * "About: Not provided" for every Vendor, so the moderation flow had nothing to
+ * demonstrate. The identity- and business-tier demo Vendors now carry their
+ * tier-appropriate SUBMITTED evidence; the phone-tier Vendor genuinely keeps a
+ * bare evidence state (correct for an un-verified Vendor).
+ */
+interface VendorKyc {
+  gstin?: string
+  udyamId?: string
+  aadhaarVerifiedAt?: Date
+  videoCallVerifiedAt?: Date
+  about?: string
+  responseTimeSlaScore?: string
+}
+
+const VENDORS: Array<{
+  userId: string
+  email: string
+  businessName: string
+  slug: string
+  kycTier: 'phone' | 'identity' | 'business'
+  pan: string | null
+  payout: { method: 'upi' | 'bank_account'; dest: Record<string, string> } | null
+  kyc?: VendorKyc
+}> = [
   {
     userId: 'u_seed_v_phone',
     email: 'phone-tier@seed.outvers.dev',
@@ -97,6 +123,8 @@ const VENDORS = [
     kycTier: 'phone' as const,
     pan: null,
     payout: null,
+    // No KYC evidence — a phone-tier Vendor is un-verified by definition; the
+    // detail page should show a genuine bare evidence state for this one.
   },
   {
     userId: 'u_seed_v_identity',
@@ -106,6 +134,14 @@ const VENDORS = [
     kycTier: 'identity' as const,
     pan: 'ABCDE1234F',
     payout: { method: 'upi' as const, dest: { vpa: 'himalayan@upi' } },
+    // Identity-tier evidence (ADR-0007): Aadhaar + PAN submitted; GSTIN / video
+    // call still pending (the next promotion's evidence). About + SLA populated.
+    kyc: {
+      aadhaarVerifiedAt: new Date('2026-02-10T09:30:00.000Z'),
+      about:
+        'A Manali-based trekking outfit running guided Himalayan crossings since 2014. Aadhaar + PAN verified; awaiting GSTIN and the video-call step for Business verification.',
+      responseTimeSlaScore: '92.50',
+    },
   },
   {
     userId: 'u_seed_v_business',
@@ -117,6 +153,17 @@ const VENDORS = [
     payout: {
       method: 'bank_account' as const,
       dest: { accountHolder: 'Goa Dive Center', ifsc: 'HDFC0000123', accountNumber: '1234567890' },
+    },
+    // Business-tier evidence (ADR-0007): the full stack submitted — PAN, GSTIN,
+    // Aadhaar + video-call verified — so the detail page demonstrates a complete,
+    // verified Vendor (the reference for the moderation console).
+    kyc: {
+      gstin: '30ABCDE5678L1Z2',
+      aadhaarVerifiedAt: new Date('2026-01-15T11:00:00.000Z'),
+      videoCallVerifiedAt: new Date('2026-01-22T06:30:00.000Z'),
+      about:
+        'A PADI-certified Goa dive operator running Grande Island boat dives and Discover-Scuba sessions year-round. Fully Business-verified with GSTIN on file.',
+      responseTimeSlaScore: '98.00',
     },
   },
 ]
@@ -599,6 +646,19 @@ async function seed(): Promise<void> {
         pan: v.pan,
         payoutMethod: v.payout?.method,
         payoutDestination: v.payout?.dest,
+        // A0 item 4 — submitted KYC evidence / trust factors so the admin
+        // vendor-detail moderation console is demonstrable (identity/business
+        // tiers only; phone-tier stays bare).
+        ...(v.kyc?.gstin ? { gstin: v.kyc.gstin } : {}),
+        ...(v.kyc?.udyamId ? { udyamId: v.kyc.udyamId } : {}),
+        ...(v.kyc?.aadhaarVerifiedAt ? { aadhaarVerifiedAt: v.kyc.aadhaarVerifiedAt } : {}),
+        ...(v.kyc?.videoCallVerifiedAt
+          ? { videoCallVerifiedAt: v.kyc.videoCallVerifiedAt }
+          : {}),
+        ...(v.kyc?.about ? { about: v.kyc.about } : {}),
+        ...(v.kyc?.responseTimeSlaScore
+          ? { responseTimeSlaScore: v.kyc.responseTimeSlaScore }
+          : {}),
       })
       .onConflictDoNothing()
   }
@@ -771,36 +831,49 @@ async function seed(): Promise<void> {
     .select({
       id: availabilitySlots.id,
       experienceId: availabilitySlots.experienceId,
+      startAt: availabilitySlots.startAt,
       slug: experiences.slug,
     })
     .from(availabilitySlots)
     .innerJoin(experiences, eq(availabilitySlots.experienceId, experiences.id))
 
-  // Stable, well-known order: completed (reviewed) Experiences first so
-  // the flagship rafting + paragliding Experiences always carry reviews.
-  const SLOT_PRIORITY = [
-    'rishikesh-rafting-grade-iii',
-    'manali-solang-paragliding-tandem',
-    'goa-scuba-diving-padi-dsd',
-    'bir-billing-paragliding-full-day',
-    'manali-hampta-pass-trek-5d',
-  ]
-  const slotRows = [...slotsBySlug].sort((a, b) => {
-    const ai = SLOT_PRIORITY.indexOf(a.slug)
-    const bi = SLOT_PRIORITY.indexOf(b.slug)
-    const aRank = ai === -1 ? Number.MAX_SAFE_INTEGER : ai
-    const bRank = bi === -1 ? Number.MAX_SAFE_INTEGER : bi
-    if (aRank !== bRank) return aRank - bRank
-    return a.slug.localeCompare(b.slug)
-  })
+  // The demo Bookings below address slots by Experience slug explicitly
+  // (DEMO_BOOKINGS), so no priority ordering is needed here.
+  const slotRows = slotsBySlug
 
-  const BOOKING_SEEDS = [
-    // First two completed → these Experiences carry published reviews.
-    { state: 'completed' as const, participants: 3 },
-    { state: 'completed' as const, participants: 2 },
-    { state: 'confirmed' as const, participants: 2 },
-    { state: 'confirmed' as const, participants: 4 },
-    { state: 'cancelled_by_customer' as const, participants: 1 },
+  // The HUMAN demo customer's (u_seed_customer) Booking history. A realistic,
+  // varied, deduplicated set against REAL catalog Experience names spanning
+  // states (A0 item 1): two completed-in-the-PAST trips that carry the published
+  // reviews (flagship rafting + paragliding — Issue #11 review determinism),
+  // two upcoming confirmed trips (cancellable → the dashboard cancel link), and
+  // one cancelled-in-the-PAST trip (the Hampta cancellation, whose Refund credit
+  // is reconciled in the wallet ledger below — A0 item 3).
+  //
+  // Each Booking carries its OWN slot dated to match its state (A0 item 2b):
+  // completed/cancelled sit on PAST slots so a "Completed" trip is never
+  // future-dated; confirmed sit on a FUTURE slot. Completed/cancelled get a
+  // dedicated 05:00-UTC past slot (disjoint from the 04:00 demo / 02:00 #19 /
+  // 06:00 #20 slot hours); confirmed reuse the existing future T+7d demo slot.
+  interface DemoBookingSeed {
+    readonly slug: string
+    readonly state: 'completed' | 'confirmed' | 'cancelled_by_customer'
+    readonly participants: number
+    /** Days from now for this Booking's slot start; negative = past. */
+    readonly dayOffset: number
+  }
+
+  const DEMO_BOOKINGS: DemoBookingSeed[] = [
+    // Completed in the PAST → these two flagship Experiences carry the reviews.
+    { slug: 'rishikesh-rafting-grade-iii', state: 'completed', participants: 3, dayOffset: -21 },
+    { slug: 'manali-solang-paragliding-tandem', state: 'completed', participants: 2, dayOffset: -35 },
+    // Upcoming confirmed (cancellable → dashboard "Cancel — see refund" link).
+    // goa-scuba-diving-padi-dsd is the inside-policy cancel target the E2E reads
+    // at runtime; bir-billing-paragliding-full-day is its read-only cancel-link
+    // target (never cancelled). Both T+7d, inside the flexible free window.
+    { slug: 'bir-billing-paragliding-full-day', state: 'confirmed', participants: 2, dayOffset: 7 },
+    { slug: 'goa-scuba-diving-padi-dsd', state: 'confirmed', participants: 2, dayOffset: 7 },
+    // Cancelled in the PAST — the Hampta cancellation (drives the wallet refund).
+    { slug: 'manali-hampta-pass-trek-5d', state: 'cancelled_by_customer', participants: 1, dayOffset: -14 },
   ]
 
   const seededBookings: { id: string; experienceId: string; state: string }[] = []
@@ -880,23 +953,84 @@ async function seed(): Promise<void> {
     }
   }
 
-  for (let i = 0; i < Math.min(BOOKING_SEEDS.length, slotRows.length); i++) {
-    const slot = slotRows[i]
-    const seed = BOOKING_SEEDS[i]
-    const exp = allExperiences.find((e) => e.id === slot.experienceId)
-    if (!exp) continue
+  // A future-slot lookup keyed by experience id (the existing T+7d demo slots),
+  // reused by the confirmed demo Bookings so their dashboard date is upcoming.
+  const futureSlotByExpId = new Map(
+    slotRows
+      .filter((s) => new Date(s.startAt).getTime() >= Date.now())
+      .map((s) => [s.experienceId, s.id]),
+  )
 
-    const expData = EXPERIENCES.find((e) => e.slug === exp.slug)
-    const price = Math.floor(Number(expData?.pricePerPerson_1_2 ?? '2000'))
+  for (const seed of DEMO_BOOKINGS) {
+    const exp = allExperiences.find((e) => e.slug === seed.slug)
+    const expData = EXPERIENCES.find((e) => e.slug === seed.slug)
+    if (!exp || !expData) continue
+
+    const price = Math.floor(Number(expData.pricePerPerson_1_2 ?? '2000'))
     const gross = price * seed.participants
+
+    // Resolve the slot for this Booking's state-appropriate date.
+    let slotId: string | undefined
+    if (seed.state === 'confirmed') {
+      // Reuse the existing future demo slot for this Experience.
+      slotId = futureSlotByExpId.get(exp.id)
+    } else {
+      // Completed / cancelled → a dedicated PAST slot at a fixed 05:00-UTC hour
+      // (disjoint from every other fixture slot hour), deterministic per offset.
+      const demoStartAt = new Date(Date.now() + seed.dayOffset * 24 * 60 * 60 * 1000)
+      demoStartAt.setUTCHours(5, 0, 0, 0)
+      const demoEndAt = new Date(demoStartAt.getTime() + 4 * 60 * 60 * 1000)
+      const [demoSlot] = await db
+        .insert(availabilitySlots)
+        .values({
+          experienceId: exp.id,
+          startAt: demoStartAt,
+          endAt: demoEndAt,
+          capacity: 8,
+          capacityTaken: seed.participants,
+        })
+        .onConflictDoNothing()
+        .returning({ id: availabilitySlots.id })
+      slotId =
+        demoSlot?.id ??
+        (
+          await db
+            .select({ id: availabilitySlots.id })
+            .from(availabilitySlots)
+            .where(
+              and(
+                eq(availabilitySlots.experienceId, exp.id),
+                eq(availabilitySlots.startAt, demoStartAt),
+              ),
+            )
+        )[0]?.id
+    }
+    if (!slotId) continue
+
+    // Lifecycle timestamps consistent with the slot date (a completed trip is
+    // confirmed before, and completed after, its PAST slot; a cancelled trip is
+    // confirmed before, cancelled before, its PAST slot).
+    const slotStart = new Date(Date.now() + seed.dayOffset * 24 * 60 * 60 * 1000)
+    const confirmedAt =
+      seed.dayOffset < 0
+        ? new Date(slotStart.getTime() - 5 * 24 * 60 * 60 * 1000)
+        : new Date()
+    const completedAt =
+      seed.state === 'completed'
+        ? new Date(slotStart.getTime() + 4 * 60 * 60 * 1000)
+        : undefined
+    const cancelledAt =
+      seed.state === 'cancelled_by_customer'
+        ? new Date(slotStart.getTime() - 24 * 60 * 60 * 1000)
+        : undefined
 
     try {
       const [row] = await db
         .insert(bookings)
         .values({
           customerUserId: 'u_seed_customer',
-          experienceId: slot.experienceId,
-          slotId: slot.id,
+          experienceId: exp.id,
+          slotId,
           participantCount: seed.participants,
           state: seed.state,
           paymentMode: 'full_upfront',
@@ -909,15 +1043,17 @@ async function seed(): Promise<void> {
           tdsAmountSnapshot: String(Math.floor(gross * 0.01)),
           cancellationPresetSnapshot: 'flexible',
           vendorIsResidentSnapshot: true,
-          confirmedAt: seed.state !== 'cancelled_by_customer' ? new Date() : undefined,
-          completedAt: seed.state === 'completed' ? new Date() : undefined,
-          cancelledAt: seed.state === 'cancelled_by_customer' ? new Date() : undefined,
+          // Every demo Booking was confirmed (a cancelled one was confirmed
+          // first, then cancelled); completed/cancelled also carry their event.
+          confirmedAt,
+          completedAt,
+          cancelledAt,
         })
         .onConflictDoNothing()
         .returning({ id: bookings.id })
 
       if (row) {
-        seededBookings.push({ id: row.id, experienceId: slot.experienceId, state: seed.state })
+        seededBookings.push({ id: row.id, experienceId: exp.id, state: seed.state })
       }
     } catch {
       // Booking may already exist — skip
@@ -1391,7 +1527,7 @@ async function seed(): Promise<void> {
   // Seed five DEDICATED pending_review Experiences owned by the identity-tier
   // Vendor (one per moderation action, plus one OVER-CAP price for the
   // ADR-0007 tier-cap guard rejection path). They are isolated from every
-  // other spec: distinct `mod-*` slugs (never in SLOT_PRIORITY, never booked
+  // other spec: distinct `mod-*` slugs (never demo-booked, never booked
   // or reviewed) and their own slots at a distinct 08:00-UTC hour (disjoint
   // from the 02:00/04:00/06:00-UTC demo + #19/#20 slots and the July-2026
   // availability window in #18). Within-cap ones (price ≤ Rs.5000, single-day
@@ -2177,6 +2313,46 @@ async function seed(): Promise<void> {
     expiresAt: creditExpiresAt,
     createdAt: creditIssuedAt,
   })
+
+  // ----- REFUND-BALANCE LEDGER — reconcile the displayed ₹500 (A0 item 3) -----
+  // The wallet page critique flagged a ₹500 Refund balance with NO ledger rows
+  // explaining it. Seed an immutable ledger that SUMS EXACTLY to the displayed
+  // refund_balance bucket (₹500): the Hampta cancellation Refund credit (+₹650)
+  // minus a later checkout deduction (−₹150) = ₹500. Signed amounts (ADR-0004:
+  // positive = credit, negative = debit) so a SUM over the bucket reconciles.
+  //
+  // Reseed-idempotent: keyed on fixed referenceIds with a delete-before-insert
+  // (wallet_transactions has no natural unique key). The runtime cancel E2Es
+  // credit the SAME bucket with their OWN referenceIds, so they never collide
+  // with — and only ever grow above — this seeded ₹500 baseline.
+  const REFUND_CREDIT_REF = 'seed-refund-credit-hampta-u_seed_customer'
+  const REFUND_DEBIT_REF = 'seed-refund-debit-checkout-u_seed_customer'
+  await db
+    .delete(walletTransactions)
+    .where(inArray(walletTransactions.referenceId, [REFUND_CREDIT_REF, REFUND_DEBIT_REF]))
+  await db.insert(walletTransactions).values([
+    {
+      // The Hampta Pass cancellation (the cancelled demo Booking above) →
+      // inside-policy Refund auto-credited to the Refund balance (ADR-0005),
+      // sized to reconcile the displayed ₹500 bucket after the debit below.
+      userId: 'u_seed_customer',
+      balanceType: 'refund_balance',
+      amount: '650.00',
+      source: 'refund',
+      referenceId: REFUND_CREDIT_REF,
+      createdAt: new Date('2026-05-22T00:00:00.000Z'),
+    },
+    {
+      // A later checkout applied part of the Refund balance toward a Booking
+      // (ADR-0004 spend order #2). Signed negative = debit.
+      userId: 'u_seed_customer',
+      balanceType: 'refund_balance',
+      amount: '-150.00',
+      source: 'checkout_deduction',
+      referenceId: REFUND_DEBIT_REF,
+      createdAt: new Date('2026-05-28T00:00:00.000Z'),
+    },
+  ])
 
   console.warn(
     `seeded ${VENDORS.length} vendors, ${EXPERIENCES.length} experiences, ${allExperiences.length} slots, ${seededBookings.length} bookings, ${completedBookings.length} reviews`,

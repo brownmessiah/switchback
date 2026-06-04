@@ -32,6 +32,7 @@
 import { and, eq, inArray, sql } from 'drizzle-orm'
 
 import { getActivity } from '@/lib/activities/registry'
+import { PUBLISHED_FIXTURE_SLUGS } from '@/lib/experiences/fixture-slugs'
 import { replaceItinerary } from '@/lib/experiences/itinerary'
 import type {
   GuideLanguage,
@@ -84,13 +85,12 @@ export type SeedDb = PgDatabase<
 
 const ADMIN_ID = 'u_seed_admin'
 
-/** Published admin-fixture experiences that must leave public surfaces. */
-const FIXTURE_SLUGS = [
-  'refund-queue-fixture-rishikesh',
-  'payout-queue-fixture-bir-billing',
-  'payout-gate-fixture-bir-billing',
-  'commission-scope-fixture-bir-billing',
-]
+/**
+ * Published admin-fixture experiences that must leave public surfaces. Sourced
+ * from the single fixture-slug registry so the seed-archive and the human-facing
+ * list-query exclusion (customer dashboard + admin bookings) never drift.
+ */
+const FIXTURE_SLUGS = PUBLISHED_FIXTURE_SLUGS
 
 /** Regions used by E2E booking flows — never seed closures here. */
 const E2E_REGIONS = new Set(['rishikesh', 'manali', 'bir-billing', 'goa'])

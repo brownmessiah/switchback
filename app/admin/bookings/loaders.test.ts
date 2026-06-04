@@ -31,13 +31,17 @@ async function seedVendor(db: TestDB): Promise<string> {
   return vendorId
 }
 
-async function seedExperience(db: TestDB, vendorId: string): Promise<string> {
+async function seedExperience(
+  db: TestDB,
+  vendorId: string,
+  overrides: { slug?: string; title?: string } = {},
+): Promise<string> {
   const expId = crypto.randomUUID()
   await db.insert(experiences).values({
     id: expId,
     vendorUserId: vendorId,
-    slug: `exp-${expId.slice(0, 8)}`,
-    title: 'White Water Rafting',
+    slug: overrides.slug ?? `exp-${expId.slice(0, 8)}`,
+    title: overrides.title ?? 'White Water Rafting',
     status: 'published',
     cancellationPreset: 'moderate',
     paymentModesAllowed: ['full_upfront'],
@@ -167,6 +171,26 @@ describe('Admin bookings loaders', () => {
       const completed = await loadBookingsList(db, { state: 'completed' })
       expect(completed).toHaveLength(1)
       expect(completed[0]!.state).toBe('completed')
+    })
+
+    it('excludes admin/E2E fixture Experiences from the human-facing list (A0)', async () => {
+      const customerId = await seedCustomer(db)
+      const vendorId = await seedVendor(db)
+      // A real catalog Experience + an admin/E2E fixture Experience.
+      const realExpId = await seedExperience(db, vendorId)
+      const fixtureExpId = await seedExperience(db, vendorId, {
+        slug: 'commission-scope-fixture-bir-billing',
+        title: 'Commission Scope Fixture — Bir Billing (admin #26)',
+      })
+      const realSlot = await seedSlot(db, realExpId)
+      const fixtureSlot = await seedSlot(db, fixtureExpId)
+      await seedBooking(db, customerId, realExpId, realSlot)
+      await seedBooking(db, customerId, fixtureExpId, fixtureSlot)
+
+      const rows = await loadBookingsList(db)
+      // Only the real Experience's Booking is listed — the fixture is hidden.
+      expect(rows).toHaveLength(1)
+      expect(rows[0]!.experienceTitle).toBe('White Water Rafting')
     })
   })
 

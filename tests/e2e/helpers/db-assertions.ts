@@ -13,6 +13,8 @@
 
 import postgres from 'postgres'
 
+import { FIXTURE_EXPERIENCE_SLUGS } from '@/lib/experiences/fixture-slugs'
+
 import { e2eDbUrl } from './config'
 
 export interface BookingRow {
@@ -3128,12 +3130,18 @@ export interface AdminBookingListRow {
  */
 export async function getBookingsByDistinctState(): Promise<AdminBookingListRow[]> {
   return withSql(async (sql) => {
+    // Mirror the human-facing /admin/bookings list, which excludes admin/E2E
+    // fixture Experiences (A0). The DISTINCT-ON representative for a state must
+    // be a row the list actually renders, or the "each state renders" assertion
+    // would look for a row that was (correctly) filtered out.
     const rows = await sql<
       { id: string; state: string; gross_total_snapshot: string }[]
     >`
-      SELECT DISTINCT ON (state) id, state, gross_total_snapshot
-      FROM bookings
-      ORDER BY state, confirmed_at DESC NULLS LAST, created_at DESC
+      SELECT DISTINCT ON (b.state) b.id, b.state, b.gross_total_snapshot
+      FROM bookings b
+      JOIN experiences e ON e.id = b.experience_id
+      WHERE e.slug <> ALL(${FIXTURE_EXPERIENCE_SLUGS})
+      ORDER BY b.state, b.confirmed_at DESC NULLS LAST, b.created_at DESC
     `
     return rows.map((r) => ({
       id: r.id,

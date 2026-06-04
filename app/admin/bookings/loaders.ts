@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, lte, type SQL } from 'drizzle-orm'
+import { and, desc, eq, gte, lte, notInArray, type SQL } from 'drizzle-orm'
 import type { ExtractTablesWithRelations } from 'drizzle-orm'
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core'
 
@@ -12,6 +12,7 @@ import {
   users,
   vendorProfiles,
 } from '@/db/schema'
+import { FIXTURE_EXPERIENCE_SLUGS } from '@/lib/experiences/fixture-slugs'
 
 type DBOrTx = PgDatabase<
   PgQueryResultHKT,
@@ -32,7 +33,12 @@ export interface BookingListFilters {
 // ── List loader ────────────────────────────────────────────────────
 
 export async function loadBookingsList(db: DBOrTx, filters: BookingListFilters = {}) {
-  const conditions: SQL[] = []
+  const conditions: SQL[] = [
+    // A0: admin/E2E fixture Experiences exist only for the test suite and must
+    // never dominate the admin demo "All bookings" list. Their Bookings stay in
+    // the DB (the E2E specs read them by slug); they are hidden from this list.
+    notInArray(experiences.slug, FIXTURE_EXPERIENCE_SLUGS),
+  ]
 
   if (filters.state) {
     conditions.push(eq(bookings.state, filters.state as typeof bookings.state.enumValues[number]))

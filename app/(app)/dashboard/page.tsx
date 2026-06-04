@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, isNotNull } from 'drizzle-orm'
+import { and, asc, eq, gt, isNotNull, notInArray } from 'drizzle-orm'
 import {
   ArrowRight,
   CircleCheck,
@@ -26,6 +26,8 @@ import {
   walletTransactions,
 } from '@/db/schema'
 import { auth } from '@/lib/auth'
+import { deriveBookingBadges } from '@/lib/bookings/booking-badges'
+import { FIXTURE_EXPERIENCE_SLUGS } from '@/lib/experiences/fixture-slugs'
 
 type BadgeVariant =
   | 'default'
@@ -118,7 +120,14 @@ export default async function CustomerDashboardPage() {
     .from(bookings)
     .innerJoin(experiences, eq(bookings.experienceId, experiences.id))
     .innerJoin(availabilitySlots, eq(bookings.slotId, availabilitySlots.id))
-    .where(eq(bookings.customerUserId, userId))
+    .where(
+      and(
+        eq(bookings.customerUserId, userId),
+        // A0 item 1: admin/E2E fixture Experiences exist ONLY for the test
+        // suite and must never surface on a human's dashboard.
+        notInArray(experiences.slug, FIXTURE_EXPERIENCE_SLUGS),
+      ),
+    )
     .orderBy(bookings.createdAt)
 
   const sortedBookings = sortBookingsUpcomingFirst(userBookings)
@@ -191,7 +200,13 @@ export default async function CustomerDashboardPage() {
                 const StatusIcon = presentation.Icon
                 const gross = Math.floor(Number(b.gross ?? 0))
                 const isCancellable = b.state === 'confirmed'
-                const isUpcoming = b.isUpcoming
+                // A0 item 2a: ONE lifecycle badge + AT MOST ONE time badge.
+                // Suppress "Upcoming" on terminal states so a card can never
+                // read "Completed + Upcoming" / "Cancelled + Upcoming".
+                const { showUpcoming } = deriveBookingBadges({
+                  state: b.state,
+                  isUpcoming: b.isUpcoming,
+                })
                 // 75% balance still owed on a partial-pay Booking (ADR-0001).
                 const balanceDue =
                   b.paymentMode === 'partial_pay' &&
@@ -222,7 +237,7 @@ export default async function CustomerDashboardPage() {
                                 <StatusIcon className="size-3" aria-hidden />
                                 {b.state.replace(/_/g, ' ')}
                               </Badge>
-                              {isUpcoming ? (
+                              {showUpcoming ? (
                                 <Badge
                                   variant="info"
                                   className="shrink-0 text-xs"

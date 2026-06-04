@@ -113,6 +113,36 @@ describe('ExperienceCard rating', () => {
   })
 })
 
+describe('ExperienceCard list layout', () => {
+  it('renders the short description in list layout', () => {
+    render(
+      <ExperienceCard
+        layout="list"
+        experience={{ ...base, shortDescription: 'A fun flat-water rafting trip' }}
+      />,
+    )
+    expect(screen.getByText('A fun flat-water rafting trip')).toBeTruthy()
+  })
+
+  it('does NOT render the short description in the default (grid) layout', () => {
+    render(
+      <ExperienceCard
+        experience={{ ...base, shortDescription: 'A fun flat-water rafting trip' }}
+      />,
+    )
+    expect(screen.queryByText('A fun flat-water rafting trip')).toBeNull()
+  })
+
+  it('still links to the experience in list layout', () => {
+    const { container } = render(
+      <ExperienceCard layout="list" experience={{ ...base }} />,
+    )
+    expect(container.querySelector('a')?.getAttribute('href')).toBe(
+      '/experience/rishikesh-rafting',
+    )
+  })
+})
+
 describe('ExperienceCard bare card (no new data)', () => {
   it('renders no difficulty, social-proof, or rating when none are passed', () => {
     const { container } = render(<ExperienceCard experience={base} />)

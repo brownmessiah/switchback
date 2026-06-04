@@ -47,6 +47,13 @@ export interface ExperienceCardData {
 
 interface ExperienceCardProps {
   experience: ExperienceCardData
+  /**
+   * Results-grid layout (search view toggle). `'grid'` (default) is the compact
+   * vertical A1 tile; `'list'` is a horizontal row (image left, content right)
+   * that additionally surfaces the short description — parity with outvers.com's
+   * list view. Any caller that omits this gets the unchanged grid card.
+   */
+  layout?: 'grid' | 'list'
 }
 
 const ACTIVITY_LABELS: Record<string, string> = {
@@ -109,11 +116,12 @@ const DIFFICULTY_BADGE: Record<
  * (status never by colour alone, §1.3). Price renders in `.tabular-nums`;
  * coral affordance uses `text-primary-strong` (AA-safe), never `text-primary`.
  */
-export function ExperienceCard({ experience }: ExperienceCardProps) {
+export function ExperienceCard({ experience, layout = 'grid' }: ExperienceCardProps) {
   const t = useTranslations('HomePage')
   const activityLabel = ACTIVITY_LABELS[experience.activitySlug] ?? experience.activitySlug
   const regionLabel = REGION_LABELS[experience.regionSlug] ?? experience.regionSlug
   const imageUrl = resolveExperienceCover(experience.coverImageUrl, experience.activitySlug)
+  const isList = layout === 'list'
 
   const difficulty = experience.difficulty ?? null
   const highlight = experience.highlight ?? null
@@ -138,16 +146,30 @@ export function ExperienceCard({ experience }: ExperienceCardProps) {
       ) : null}
       <Link
         href={`/experience/${experience.slug}`}
-        className="flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-border bg-card shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:hover:translate-y-0"
+        className={
+          isList
+            ? 'flex flex-row overflow-hidden rounded-[var(--radius-card)] border border-border bg-card shadow-[var(--shadow-sm)] transition-all duration-200 hover:shadow-[var(--shadow-md)] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+            : 'flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-border bg-card shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:hover:translate-y-0'
+        }
       >
-        <div className="relative aspect-[3/2] w-full overflow-hidden">
+        <div
+          className={
+            isList
+              ? 'relative aspect-[4/3] w-36 shrink-0 overflow-hidden sm:w-56'
+              : 'relative aspect-[3/2] w-full overflow-hidden'
+          }
+        >
         <Image
           src={imageUrl}
           alt=""
           role="presentation"
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:group-hover:scale-100"
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          sizes={
+            isList
+              ? '(max-width: 640px) 9rem, 14rem'
+              : '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw'
+          }
         />
         {/* Social-proof badge — top-left, ONLY on earned listings (sparse). */}
         {highlight ? (
@@ -212,6 +234,14 @@ export function ExperienceCard({ experience }: ExperienceCardProps) {
             </span>
           ) : null}
         </div>
+
+        {/* List layout surfaces the short description (parity with outvers
+            list view); the compact grid tile keeps it hidden. */}
+        {isList && experience.shortDescription ? (
+          <p className="line-clamp-2 text-sm text-muted-foreground">
+            {experience.shortDescription}
+          </p>
+        ) : null}
 
         <Badge variant="success" className="self-start">
           <ShieldCheck aria-hidden="true" />

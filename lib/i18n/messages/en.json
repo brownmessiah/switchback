@@ -433,6 +433,15 @@
       "andaman": "Andaman Islands",
       "lonavala": "Lonavala",
       "auli": "Auli"
+    },
+    "search": {
+      "placeholder": "Search by destination, activity, or keyword…",
+      "label": "Search experiences",
+      "submit": "Search"
+    },
+    "view": {
+      "grid": "Grid view",
+      "list": "List view"
     }
   },
   "SignInPage": {

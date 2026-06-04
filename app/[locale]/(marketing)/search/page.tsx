@@ -5,6 +5,8 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { ExperienceCard, type ExperienceCardData } from '@/components/experience-card'
 import { FacetForm } from '@/components/search/facet-form'
 import { FiltersSheet } from '@/components/search/filters-sheet'
+import { SearchBox } from '@/components/search/search-box'
+import { ViewToggle, type SearchView } from '@/components/search/view-toggle'
 import { db } from '@/db/client'
 import { enrichCardBadges } from '@/lib/experiences/card-badges'
 import { loadExperienceCoverMap } from '@/lib/media/experience-images'
@@ -69,6 +71,11 @@ export default async function SearchPage({
 
   const rawParams = await searchParams
   const parsed = parseSearchParams(rawParams)
+  // `view` is display-only URL state (grid/list results layout). It is parsed
+  // SEPARATELY from the search params so it never affects the result set or the
+  // ADR-0013 canonical/robots rules (isFilteredSearch ignores it).
+  const rawView = Array.isArray(rawParams.view) ? rawParams.view[0] : rawParams.view
+  const view: SearchView = rawView === 'list' ? 'list' : 'grid'
   const { hits } = await searchExperiences(parsed)
   const coverMap = await loadExperienceCoverMap(db, hits.map((h) => h.id))
   // Build the card data (mapping the search facet `difficulty` onto the card)
@@ -90,13 +97,18 @@ export default async function SearchPage({
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
-      <header className="mb-6 flex flex-col gap-2">
+      <header className="mb-6 flex flex-col gap-4">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
           {parsed.q ? t('heading.withQuery', { query: parsed.q }) : t('heading.default')}
         </h1>
-        <p className="text-sm text-muted-foreground tabular-nums">
-          {t('results.count', { count: hits.length })}
-        </p>
+        <div className="max-w-2xl">
+          <SearchBox
+            initialQuery={parsed.q ?? ''}
+            placeholder={t('search.placeholder')}
+            label={t('search.label')}
+            submitLabel={t('search.submit')}
+          />
+        </div>
       </header>
 
       {/* Mobile-only Filters trigger → opens the Sheet with the same controls.
@@ -125,14 +137,30 @@ export default async function SearchPage({
           </div>
         </aside>
 
-        {/* Dense A1-card results grid. */}
+        {/* Dense A1-card results grid (or list, per the view toggle). */}
         <section aria-label={t('results.sectionLabel')} className="min-w-0">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground tabular-nums">
+              {t('results.count', { count: hits.length })}
+            </p>
+            <ViewToggle
+              current={view}
+              gridLabel={t('view.grid')}
+              listLabel={t('view.list')}
+            />
+          </div>
           {hits.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-[var(--radius-card)] border border-dashed py-16 text-center">
               <p className="text-lg font-medium">{t('results.empty')}</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 {t('results.emptyHint')}
               </p>
+            </div>
+          ) : view === 'list' ? (
+            <div className="flex flex-col gap-[var(--space-grid-gap)]">
+              {cards.map((card) => (
+                <ExperienceCard key={card.id} experience={card} layout="list" />
+              ))}
             </div>
           ) : (
             <div className="grid gap-[var(--space-grid-gap)] sm:grid-cols-2 xl:grid-cols-3">

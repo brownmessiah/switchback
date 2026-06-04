@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { usePathname } from 'next/navigation'
 
+import { ThemeToggle } from '@/components/theme-toggle'
 import { cn } from '@/lib/utils'
 
 import type { AdminNavGroup } from './admin-nav'
@@ -214,6 +215,7 @@ function CloseIcon() {
 export function AdminSidebar({ groups, badgeCounts }: AdminSidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const t = useTranslations('AdminNav')
+  const tNav = useTranslations('Nav')
 
   // Close mobile sidebar on route change
   const pathname = usePathname()
@@ -263,14 +265,17 @@ export function AdminSidebar({ groups, badgeCounts }: AdminSidebarProps) {
           <div className="absolute inset-y-0 left-0 w-72 bg-background shadow-lg">
             <div className="flex items-center justify-between border-b px-4 py-3">
               <span className="text-sm font-semibold text-primary">{sidebarTitle}</span>
-              <button
-                type="button"
-                onClick={() => setMobileOpen(false)}
-                className="inline-flex items-center justify-center rounded-md p-1 text-muted-foreground hover:text-foreground"
-                aria-label="Close admin menu"
-              >
-                <CloseIcon />
-              </button>
+              <div className="flex items-center gap-1">
+                <ThemeToggle label={tNav('themeToggle')} />
+                <button
+                  type="button"
+                  onClick={() => setMobileOpen(false)}
+                  className="inline-flex items-center justify-center rounded-md p-1 text-muted-foreground hover:text-foreground"
+                  aria-label="Close admin menu"
+                >
+                  <CloseIcon />
+                </button>
+              </div>
             </div>
             <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 57px)' }}>
               <SidebarContent
@@ -286,8 +291,9 @@ export function AdminSidebar({ groups, badgeCounts }: AdminSidebarProps) {
       {/* Desktop sidebar */}
       <aside className="hidden w-60 shrink-0 border-r bg-background lg:block">
         <div className="sticky top-0 overflow-y-auto" style={{ maxHeight: '100vh' }}>
-          <div className="border-b px-4 py-3">
+          <div className="flex items-center justify-between border-b px-4 py-3">
             <span className="text-sm font-semibold text-primary">{sidebarTitle}</span>
+            <ThemeToggle label={tNav('themeToggle')} />
           </div>
           <SidebarContent groups={groups} badgeCounts={badgeCounts} />
         </div>

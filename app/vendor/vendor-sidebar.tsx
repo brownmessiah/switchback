@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { usePathname } from 'next/navigation'
 
+import { ThemeToggle } from '@/components/theme-toggle'
 import { cn } from '@/lib/utils'
 
 import { VENDOR_NAV_ITEMS } from './vendor-nav'
@@ -27,12 +28,16 @@ function SidebarContent({
 }) {
   const pathname = usePathname()
   const t = useTranslations('VendorNav')
+  const tNav = useTranslations('Nav')
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b px-6 py-5">
-        <p className="text-sm font-semibold">{t('portalTitle')}</p>
-        <p className="mt-0.5 truncate text-xs text-muted-foreground">{userName}</p>
+      <div className="flex items-start justify-between gap-2 border-b px-6 py-5">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">{t('portalTitle')}</p>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">{userName}</p>
+        </div>
+        <ThemeToggle label={tNav('themeToggle')} />
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4">
@@ -126,6 +131,7 @@ function CloseIcon() {
 export function VendorSidebar({ userName }: VendorSidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const t = useTranslations('VendorNav')
+  const tNav = useTranslations('Nav')
 
   // Close mobile sidebar on route change
   const pathname = usePathname()
@@ -160,6 +166,7 @@ export function VendorSidebar({ userName }: VendorSidebarProps) {
           <HamburgerIcon />
         </button>
         <span className="text-sm font-semibold text-primary">{portalTitle}</span>
+        <ThemeToggle label={tNav('themeToggle')} className="ml-auto" />
       </div>
 
       {/* Mobile overlay */}

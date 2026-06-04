@@ -28,9 +28,11 @@
 import { and, eq, inArray, like } from 'drizzle-orm'
 
 import { db } from './client'
+import { resolveDemoBookingSlotOffsetDays } from './seed-demo-bookings'
 import { IMG, seedCatalog } from './seed-extras'
 import { galleryFor } from './seed-photos'
 import { seedTripGroups } from './seed-trip-groups'
+import { vendorVariety } from './seed-vendor-variety'
 import { replaceItinerary, type ItineraryStepInput } from '@/lib/experiences/itinerary'
 import type { GuideLanguage } from '@/lib/experiences/structured-schema'
 import {
@@ -624,10 +626,27 @@ async function seed(): Promise<void> {
     .onConflictDoNothing()
 
   // ----- CUSTOMERS -----
+  // A1 / profile gaps — the demo customer carries a real default address AND a
+  // trusted contact (ADR-0015), so the account → profile + safety surfaces are
+  // not blank placeholders. The other (fixture-owned) customers stay bare to
+  // avoid disturbing the specs that assert on their clean state.
   await db
     .insert(customerProfiles)
     .values([
-      { userId: 'u_seed_customer' },
+      {
+        userId: 'u_seed_customer',
+        defaultAddress: {
+          line1: '14 Tapovan Lane',
+          line2: 'Laxman Jhula Road',
+          city: 'Rishikesh',
+          state: 'Uttarakhand',
+          postalCode: '249192',
+          country: 'IN',
+        },
+        trustedContactName: 'Priya Sharma',
+        trustedContactPhone: '+91 98765 43210',
+        trustedContactRelationship: 'Sister',
+      },
       { userId: BUSINESS_VENDOR_CUSTOMER.userId },
       { userId: REFUND_QUEUE_CUSTOMER.userId },
       { userId: LOYALTY_GRANT_CUSTOMER.userId },
@@ -635,7 +654,17 @@ async function seed(): Promise<void> {
     .onConflictDoNothing()
 
   // ----- VENDORS -----
-  for (const v of VENDORS) {
+  // A1 — differentiate the three seed Vendors: a varied commission base rate
+  // and a staggered historical join date (vendorVariety) so the admin vendor
+  // list + the analytics "Vendor growth" chart don't read "20% / joined today"
+  // everywhere. The SLA / trust score stays explicit where the KYC block sets
+  // one (intentional per-tier values the admin console surfaces); only the
+  // un-set (phone-tier) Vendor falls back to the varied score. None of the
+  // ladder rates is the admin-flows commission-update NEW_RATE (12.50), so the
+  // "pick a rate distinct from the seed default" precondition still holds.
+  for (let vi = 0; vi < VENDORS.length; vi++) {
+    const v = VENDORS[vi]
+    const variety = vendorVariety(vi, VENDORS.length)
     await db
       .insert(vendorProfiles)
       .values({
@@ -645,7 +674,14 @@ async function seed(): Promise<void> {
         kycTier: v.kycTier,
         pan: v.pan,
         payoutMethod: v.payout?.method,
-        payoutDestination: v.payout?.dest,
+        // A1 / A0 item 4 — bank account-holder name on the payout destination
+        // so the vendor payout-detail screen never shows a blank holder. UPI
+        // destinations also carry it for display parity (harmless extra key).
+        payoutDestination: v.payout
+          ? { accountHolder: v.businessName, ...v.payout.dest }
+          : undefined,
+        commissionRate: variety.commissionRate,
+        createdAt: variety.createdAt,
         // A0 item 4 — submitted KYC evidence / trust factors so the admin
         // vendor-detail moderation console is demonstrable (identity/business
         // tiers only; phone-tier stays bare).
@@ -656,9 +692,9 @@ async function seed(): Promise<void> {
           ? { videoCallVerifiedAt: v.kyc.videoCallVerifiedAt }
           : {}),
         ...(v.kyc?.about ? { about: v.kyc.about } : {}),
-        ...(v.kyc?.responseTimeSlaScore
-          ? { responseTimeSlaScore: v.kyc.responseTimeSlaScore }
-          : {}),
+        // Explicit SLA from the KYC block wins (the per-tier intentional value);
+        // otherwise use the varied score so even the phone-tier isn't 100%.
+        responseTimeSlaScore: v.kyc?.responseTimeSlaScore ?? variety.responseTimeSlaScore,
       })
       .onConflictDoNothing()
   }
@@ -969,6 +1005,14 @@ async function seed(): Promise<void> {
     const price = Math.floor(Number(expData.pricePerPerson_1_2 ?? '2000'))
     const gross = price * seed.participants
 
+    // Residual fix (2026-06-04): a TERMINAL booking (completed / cancelled_*)
+    // must ALWAYS sit on a PAST slot — a "Completed" card dated in the near
+    // future reads as broken on the customer dashboard. resolveDemoBooking-
+    // SlotOffsetDays coerces any terminal state to the past regardless of the
+    // requested offset, so the review-generation paths can never re-introduce a
+    // future-dated completed booking. Confirmed keeps its future offset.
+    const effectiveOffset = resolveDemoBookingSlotOffsetDays(seed.state, seed.dayOffset)
+
     // Resolve the slot for this Booking's state-appropriate date.
     let slotId: string | undefined
     if (seed.state === 'confirmed') {
@@ -977,7 +1021,7 @@ async function seed(): Promise<void> {
     } else {
       // Completed / cancelled → a dedicated PAST slot at a fixed 05:00-UTC hour
       // (disjoint from every other fixture slot hour), deterministic per offset.
-      const demoStartAt = new Date(Date.now() + seed.dayOffset * 24 * 60 * 60 * 1000)
+      const demoStartAt = new Date(Date.now() + effectiveOffset * 24 * 60 * 60 * 1000)
       demoStartAt.setUTCHours(5, 0, 0, 0)
       const demoEndAt = new Date(demoStartAt.getTime() + 4 * 60 * 60 * 1000)
       const [demoSlot] = await db
@@ -1009,10 +1053,11 @@ async function seed(): Promise<void> {
 
     // Lifecycle timestamps consistent with the slot date (a completed trip is
     // confirmed before, and completed after, its PAST slot; a cancelled trip is
-    // confirmed before, cancelled before, its PAST slot).
-    const slotStart = new Date(Date.now() + seed.dayOffset * 24 * 60 * 60 * 1000)
+    // confirmed before, cancelled before, its PAST slot). Uses the SAME
+    // effective (terminal→past) offset as the slot so the dates never diverge.
+    const slotStart = new Date(Date.now() + effectiveOffset * 24 * 60 * 60 * 1000)
     const confirmedAt =
-      seed.dayOffset < 0
+      effectiveOffset < 0
         ? new Date(slotStart.getTime() - 5 * 24 * 60 * 60 * 1000)
         : new Date()
     const completedAt =

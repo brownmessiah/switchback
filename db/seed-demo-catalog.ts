@@ -39,6 +39,7 @@ import {
 } from './schema'
 import { IMG, type SeedDb, VENDOR_LOGO_PHOTOS } from './seed-extras'
 import { galleryFor } from './seed-photos'
+import { vendorVariety } from './seed-vendor-variety'
 
 const ADMIN_ID = 'u_seed_admin'
 
@@ -87,7 +88,13 @@ export async function seedDemoCatalog(db: SeedDb): Promise<void> {
       })),
     )
     .onConflictDoNothing()
-  for (const v of DEMO_VENDORS) {
+  // A1 — differentiate every demo Vendor (commission rate, SLA/trust score, and
+  // a staggered historical join date) so the dev demo's admin vendor list +
+  // analytics charts read as a real marketplace, not "20% / 100% / joined
+  // today" everywhere.
+  for (let vi = 0; vi < DEMO_VENDORS.length; vi++) {
+    const v = DEMO_VENDORS[vi]
+    const variety = vendorVariety(vi, DEMO_VENDORS.length)
     await db
       .insert(vendorProfiles)
       .values({
@@ -97,7 +104,10 @@ export async function seedDemoCatalog(db: SeedDb): Promise<void> {
         kycTier: 'business',
         pan: v.pan,
         payoutMethod: 'upi',
-        payoutDestination: { vpa: v.vpa },
+        payoutDestination: { vpa: v.vpa, accountHolder: v.businessName },
+        commissionRate: variety.commissionRate,
+        responseTimeSlaScore: variety.responseTimeSlaScore,
+        createdAt: variety.createdAt,
         about:
           'A KYC-verified Outvers operator running certified, safety-first adventures with experienced local guides. Small groups, transparent pricing, free cancellation within policy.',
       })
@@ -223,8 +233,29 @@ export async function seedDemoCatalog(db: SeedDb): Promise<void> {
   let bankIdx = 0
   for (let ei = 0; ei < reviewTargets.length; ei++) {
     const exp = reviewTargets[ei]
-    const slotId = slotForExp.get(exp.id)
-    if (!slotId) continue
+    if (!slotForExp.has(exp.id)) continue
+    // Residual fix (2026-06-04): completed review bookings must sit on a PAST
+    // slot, not the future T+5d/T+12d availability slots (a completed booking
+    // on a future slot reads as broken + sorts among upcoming). Create ONE
+    // dedicated past slot per review target at a distinct 05:00-UTC hour,
+    // deterministic + idempotent (the (experience_id, start_at) pair is unique).
+    const pastStartAt = new Date(Date.now() - 30 * 86400 * 1000)
+    pastStartAt.setUTCHours(5, 0, 0, 0)
+    const pastEndAt = new Date(pastStartAt.getTime() + 4 * 3600 * 1000)
+    const [pastRow] = await db
+      .insert(availabilitySlots)
+      .values({ experienceId: exp.id, startAt: pastStartAt, endAt: pastEndAt, capacity: 8, capacityTaken: 2 })
+      .onConflictDoNothing()
+      .returning({ id: availabilitySlots.id })
+    const reviewSlotId =
+      pastRow?.id ??
+      (
+        await db
+          .select({ id: availabilitySlots.id })
+          .from(availabilitySlots)
+          .where(and(eq(availabilitySlots.experienceId, exp.id), eq(availabilitySlots.startAt, pastStartAt)))
+      )[0]?.id
+    if (!reviewSlotId) continue
     const reviewsForThis = ei % 2 === 0 ? 2 : 1 // 1-2 each
     for (let r = 0; r < reviewsForThis; r++) {
       const person = DEMO_PEOPLE[(ei + r) % DEMO_PEOPLE.length]
@@ -238,7 +269,7 @@ export async function seedDemoCatalog(db: SeedDb): Promise<void> {
           id: bId,
           customerUserId: person.id,
           experienceId: exp.id,
-          slotId,
+          slotId: reviewSlotId,
           participantCount: 2,
           state: 'completed',
           paymentMode: 'full_upfront',

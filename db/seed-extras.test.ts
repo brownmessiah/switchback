@@ -39,9 +39,11 @@ import {
   experiences,
   mediaAssets,
   notifications,
+  payments,
   pricingTiers,
   promoCodes,
   promoRedemptions,
+  refundRequests,
   regionClosures,
   reviews,
   siteContent,
@@ -551,6 +553,104 @@ describe('seedCatalog — canonical seed enrichment', () => {
         .from(availabilityPatterns)
       expect(rows.length).toBeGreaterThan(0)
       for (const r of rows) expect(catalogIds.has(r.experienceId)).toBe(true)
+    })
+  })
+
+  // ── A1: differentiated vendors ─────────────────────────────────────────────
+  describe('vendor differentiation (A1 — not "20% / 100% / joined today" everywhere)', () => {
+    async function catalogVendors() {
+      return db
+        .select({
+          userId: vendorProfiles.userId,
+          commissionRate: vendorProfiles.commissionRate,
+          slaScore: vendorProfiles.responseTimeSlaScore,
+          createdAt: vendorProfiles.createdAt,
+        })
+        .from(vendorProfiles)
+        .where(like(vendorProfiles.userId, 'u_cat_%'))
+    }
+
+    it('spreads commission rates across >= 3 distinct values', async () => {
+      const rows = await catalogVendors()
+      expect(rows.length).toBeGreaterThanOrEqual(3)
+      const rates = new Set(rows.map((r) => r.commissionRate))
+      expect(rates.size).toBeGreaterThanOrEqual(3)
+      // No longer a flat 20% everywhere.
+      expect([...rates].some((r) => r !== '20.00')).toBe(true)
+    })
+
+    it('spreads SLA / trust scores (not a uniform 100%)', async () => {
+      const rows = await catalogVendors()
+      const scores = new Set(rows.map((r) => r.slaScore))
+      expect(scores.size).toBeGreaterThanOrEqual(3)
+      expect([...scores].some((s) => Number(s) < 100)).toBe(true)
+    })
+
+    it('staggers join dates historically across >= 6 distinct months', async () => {
+      const rows = await catalogVendors()
+      const months = new Set(
+        rows.map((r) => {
+          const d = new Date(r.createdAt)
+          return `${d.getUTCFullYear()}-${d.getUTCMonth()}`
+        }),
+      )
+      expect(months.size).toBeGreaterThanOrEqual(6)
+      // Every catalog vendor joined in the PAST (never "joined today").
+      const now = Date.now()
+      for (const r of rows) expect(new Date(r.createdAt).getTime()).toBeLessThan(now)
+    })
+  })
+
+  // ── A1: historical analytics shape ─────────────────────────────────────────
+  describe('historical analytics dates (A1 — revenue chart is not flat-then-spike)', () => {
+    it('spreads catalog payment capture dates across >= 6 distinct months', async () => {
+      // The admin revenue trend groups payments.captured_at by month over the
+      // last 12 months. Catalog payments must span many months so the chart has
+      // a realistic curve rather than one recent spike.
+      const rows = await db
+        .select({ capturedAt: payments.capturedAt })
+        .from(payments)
+        .where(like(payments.razorpayPaymentId, 'pay_cat_%'))
+      expect(rows.length).toBeGreaterThan(0)
+      const months = new Set(
+        rows
+          .filter((r) => r.capturedAt != null)
+          .map((r) => {
+            const d = new Date(r.capturedAt as Date)
+            return `${d.getUTCFullYear()}-${d.getUTCMonth()}`
+          }),
+      )
+      expect(months.size).toBeGreaterThanOrEqual(6)
+    })
+  })
+
+  // ── Optional A1 polish: multi-state refunds + reviews for admin queue demos ─
+  describe('admin-queue variety (multi-state refunds + moderated reviews)', () => {
+    it('seeds catalog refund_requests in >= 2 non-pending states (so the queue filters demonstrate)', async () => {
+      // The admin refund QUEUE acts on PENDING requests; the #24 E2E approves /
+      // rejects every pending one. So the demo variety must use NON-pending
+      // terminal states (credited / rejected / failed) only — never `pending`.
+      const catalogIds = await catalogExperienceIds()
+      const rows = await db
+        .select({ state: refundRequests.state })
+        .from(refundRequests)
+        .innerJoin(bookings, eq(refundRequests.bookingId, bookings.id))
+        .where(inArray(bookings.experienceId, catalogIds))
+      const states = new Set(rows.map((r) => r.state))
+      expect(states.size).toBeGreaterThanOrEqual(2)
+      // CRITICAL isolation: no catalog refund is left `pending` (would pollute
+      // the #24 pending refund queue the admin E2E sweeps).
+      expect(states.has('pending')).toBe(false)
+    })
+
+    it('seeds reviews in >= 2 moderation states (flagged / removed) for the moderation queue demo', async () => {
+      const catalogIds = await catalogExperienceIds()
+      const rows = await db
+        .select({ status: reviews.status })
+        .from(reviews)
+        .where(inArray(reviews.experienceId, catalogIds))
+      const moderated = new Set(rows.map((r) => r.status).filter((s) => s !== 'published'))
+      expect(moderated.size).toBeGreaterThanOrEqual(2)
     })
   })
 })

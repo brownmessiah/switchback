@@ -9,11 +9,12 @@
  *
  * Mirrors db/seed-extras.test.ts harness setup (setupTestDb → PGlite).
  */
-import { eq, inArray, like, sql } from 'drizzle-orm'
+import { and, eq, inArray, like, sql } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import {
   availabilitySlots,
+  bookings,
   experiences,
   mediaAssets,
   reviews,
@@ -143,13 +144,34 @@ describe('seedDemoCatalog — dev-only bounded pilot', () => {
       .select({ slots: sql<number>`count(*)::int` })
       .from(availabilitySlots)
       .where(inArray(availabilitySlots.experienceId, expIds))
-    expect(slots).toBe(60) // 2 per experience
+    // 2 future slots per experience (60) + 1 dedicated PAST slot for each of the
+    // 12 review targets (so completed review bookings never sit on a future slot).
+    expect(slots).toBe(72)
 
     const [{ media }] = await db
       .select({ media: sql<number>`count(*)::int` })
       .from(mediaAssets)
       .where(like(mediaAssets.storageKey, 'seed/demo/%'))
     expect(media).toBeGreaterThanOrEqual(150) // ~6 per experience
+  })
+
+  it('places every completed booking on a PAST slot (residual fix — no future "Completed")', async () => {
+    const expIds = (
+      await db
+        .select({ id: experiences.id })
+        .from(experiences)
+        .where(inArray(experiences.slug, DEMO_LISTINGS.map((l) => l.slug)))
+    ).map((r) => r.id)
+    const rows = await db
+      .select({ startAt: availabilitySlots.startAt })
+      .from(bookings)
+      .innerJoin(availabilitySlots, eq(bookings.slotId, availabilitySlots.id))
+      .where(and(inArray(bookings.experienceId, expIds), eq(bookings.state, 'completed')))
+    expect(rows.length).toBeGreaterThan(0)
+    const now = Date.now()
+    for (const r of rows) {
+      expect(new Date(r.startAt).getTime()).toBeLessThan(now)
+    }
   })
 
   it('seeds at least some reviews on demo experiences', async () => {

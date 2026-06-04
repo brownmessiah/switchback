@@ -57,6 +57,7 @@ import {
   pricingTiers,
   promoCodes,
   promoRedemptions,
+  refundRequests,
   regionClosures,
   reviews,
   siteContent,
@@ -72,6 +73,7 @@ import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core'
 import type * as schema from './schema'
 
 import { galleryFor } from './seed-photos'
+import { vendorVariety } from './seed-vendor-variety'
 
 /**
  * Accept either the top-level postgres-js handle (production seed) or the
@@ -668,7 +670,13 @@ async function main(db: SeedDb): Promise<void> {
       })),
     )
     .onConflictDoNothing()
-  for (const v of CATALOG_VENDORS) {
+  // A1 — differentiate every catalog Vendor: commission rate, SLA/trust score,
+  // and a staggered historical join date (vendorVariety) so the admin vendor
+  // list + the analytics "Vendor growth (monthly)" chart read as a real
+  // marketplace, not "20% / 100% / joined today" everywhere.
+  for (let vi = 0; vi < CATALOG_VENDORS.length; vi++) {
+    const v = CATALOG_VENDORS[vi]
+    const variety = vendorVariety(vi, CATALOG_VENDORS.length)
     await db
       .insert(vendorProfiles)
       .values({
@@ -678,7 +686,10 @@ async function main(db: SeedDb): Promise<void> {
         kycTier: 'business',
         pan: v.pan,
         payoutMethod: 'upi',
-        payoutDestination: { vpa: v.vpa },
+        payoutDestination: { vpa: v.vpa, accountHolder: v.businessName },
+        commissionRate: variety.commissionRate,
+        responseTimeSlaScore: variety.responseTimeSlaScore,
+        createdAt: variety.createdAt,
         about:
           'A KYC-verified Outvers operator running certified, safety-first adventures with experienced local guides. Small groups, transparent pricing, free cancellation within policy.',
       })
@@ -1034,20 +1045,33 @@ async function main(db: SeedDb): Promise<void> {
   }
 
   // ── 8. payments for catalog confirmed/completed bookings ──────────────────
+  // A1 — spread capture dates HISTORICALLY across the last ~12 months so the
+  // admin revenue chart (groups payments.captured_at by month) shows a real
+  // curve instead of a flat ₹0 for 13 months then one recent spike. Each
+  // catalog payment is pinned to a deterministic month back from now, keyed by
+  // its index in the payable set (idempotent across reseeds — the booking set
+  // is stable). The most recent few stay near the present so the latest month
+  // is also populated.
   const payable = await db
     .select({ id: bookings.id, gross: bookings.grossTotalSnapshot })
     .from(bookings)
     .where(and(inArray(bookings.experienceId, catalogIds), inArray(bookings.state, ['confirmed', 'completed', 'awaiting_completion'])))
-  for (const b of payable) {
+    .orderBy(bookings.id)
+  for (let pi = 0; pi < payable.length; pi++) {
+    const b = payable[pi]
     const has = await db.select({ id: payments.id }).from(payments).where(eq(payments.bookingId, b.id)).limit(1)
     if (has.length > 0) continue
+    // Walk backwards one month at a time, cycling through the last 12 months so
+    // every month bucket gets capture rows (a populated 12-month window).
+    const monthsBack = pi % 12
+    const capturedAt = ago(monthsBack * 30 + ((pi * 7) % 25))
     await db.insert(payments).values({
       bookingId: b.id,
       razorpayPaymentId: `pay_cat_${b.id}_full`,
       razorpayOrderId: `order_cat_${b.id}_full`,
       amount: Number(b.gross).toFixed(2),
       captureTrigger: 'booking_create',
-      capturedAt: ago(30),
+      capturedAt,
     })
   }
 
@@ -1329,6 +1353,165 @@ async function main(db: SeedDb): Promise<void> {
     .update(experiences)
     .set({ status: 'archived' })
     .where(and(inArray(experiences.slug, FIXTURE_SLUGS), sql`${experiences.status} <> 'archived'`))
+
+  // ── 20. Admin-queue variety: multi-state refunds + moderated reviews ──────
+  // The admin refund queue + review-moderation surfaces looked empty/uniform on
+  // a fresh DB (refunds only "Pending", reviews all "Visible"). Seed a handful
+  // of NON-pending refund_requests and a couple of flagged/removed reviews so
+  // those queues demonstrate their filters.
+  //
+  // ISOLATION (CRITICAL): the #24 admin refund-queue E2E sweeps every PENDING
+  // refund_request, so the demo variety uses ONLY terminal, non-pending states
+  // (credited / rejected) — never `pending`. All refunds + moderated reviews
+  // attach to CATALOG bookings (u_cat_* experiences), never a seed fixture, and
+  // the moderated reviews ride on dedicated cancelled_post_experience bookings
+  // (excluded from demand counts + the published-only badge math) so they never
+  // disturb the hero badge assertions or the #27 review-moderation fixture.
+
+  // 20a. Multi-state refund_requests on two dedicated completed catalog bookings.
+  const refundTargets = catalog.slice(20, 22)
+  const REFUND_VARIETY: Array<{
+    state: 'credited' | 'rejected'
+    reason: 'inside_policy_cancellation' | 'outside_policy_dispute_resolved'
+    basis: string
+    amount: string
+  }> = [
+    { state: 'credited', reason: 'inside_policy_cancellation', basis: 'free_window', amount: '2400.00' },
+    { state: 'rejected', reason: 'outside_policy_dispute_resolved', basis: 'no_refund_window', amount: '0.00' },
+  ]
+  for (let ri = 0; ri < refundTargets.length && ri < REFUND_VARIETY.length; ri++) {
+    const exp = refundTargets[ri]
+    const slotId = slotForExp.get(exp.id)
+    if (!slotId) continue
+    const rv = REFUND_VARIETY[ri]
+    const person = PEOPLE[ri % PEOPLE.length]
+    const bId = ns('refbk', ri)
+    const exists = await db.select({ id: bookings.id }).from(bookings).where(eq(bookings.id, bId)).limit(1)
+    if (exists.length === 0) {
+      const gross = Math.round(Number(exp.price12) * 2)
+      await db.insert(bookings).values({
+        id: bId,
+        customerUserId: person.id,
+        experienceId: exp.id,
+        slotId,
+        participantCount: 2,
+        // cancelled_post_experience keeps these OUT of the demand-booking count
+        // (card-badges) so the hero/top-rated math is untouched.
+        state: 'cancelled_post_experience',
+        paymentMode: 'full_upfront',
+        grossTotalSnapshot: String(gross),
+        pricePerParticipantSnapshot: exp.price12,
+        pricingBasisSnapshot: 'tier_1_2',
+        commissionRateSnapshot: '20.00',
+        commissionBasisSnapshot: 'vendor_base',
+        cancellationPresetSnapshot: exp.preset,
+        tdsAmountSnapshot: '0.00',
+        tcsAmountSnapshot: (gross * 0.005).toFixed(2),
+        tcsRateSnapshot: '0.50',
+        gstRateOnCommissionSnapshot: '18.00',
+        vendorIsResidentSnapshot: true,
+        payoutState: 'held',
+        confirmedAt: ago(50),
+        completedAt: ago(30),
+        cancelledAt: ago(28),
+        cancellationReason: 'Post-experience refund (demo).',
+      })
+    }
+    const refExists = await db
+      .select({ id: refundRequests.id })
+      .from(refundRequests)
+      .where(eq(refundRequests.bookingId, bId))
+      .limit(1)
+    if (refExists.length === 0) {
+      await db.insert(refundRequests).values({
+        bookingId: bId,
+        requestedByUserId: person.id,
+        reason: rv.reason,
+        destination: 'refund_balance',
+        // Non-pending terminal state — invisible to the #24 pending queue sweep.
+        state: rv.state,
+        amount: rv.amount,
+        cancellationPresetSnapshot: exp.preset,
+        policyWindowBasisSnapshot: rv.basis,
+      })
+    }
+  }
+
+  // 20b. Moderated reviews (flagged + removed) on dedicated catalog bookings so
+  // the admin review-moderation queue demonstrates its status filters. These
+  // are NOT `published`, so loadExperienceRatingMap (published-only) ignores
+  // them and the hero/top-rated badge assertions stay intact.
+  const moderationReviewTargets = catalog.slice(22, 24)
+  const MODERATED_REVIEWS: Array<{
+    status: 'flagged' | 'removed'
+    rating: number
+    title: string
+    body: string
+  }> = [
+    {
+      status: 'flagged',
+      rating: 2,
+      title: 'Felt rushed and overcrowded',
+      body: 'Reported for review — the group size seemed larger than advertised and the safety brief was hurried. Awaiting moderation.',
+    },
+    {
+      status: 'removed',
+      rating: 1,
+      title: 'Off-topic promotional content',
+      body: 'This review was removed by moderation for containing spam / an external promotional link.',
+    },
+  ]
+  for (let mi = 0; mi < moderationReviewTargets.length && mi < MODERATED_REVIEWS.length; mi++) {
+    const exp = moderationReviewTargets[mi]
+    const slotId = slotForExp.get(exp.id)
+    if (!slotId) continue
+    const mr = MODERATED_REVIEWS[mi]
+    const person = PEOPLE[(mi + 3) % PEOPLE.length]
+    const bId = ns('modrev', mi)
+    const exists = await db.select({ id: bookings.id }).from(bookings).where(eq(bookings.id, bId)).limit(1)
+    if (exists.length === 0) {
+      const gross = Math.round(Number(exp.price12) * 2)
+      await db.insert(bookings).values({
+        id: bId,
+        customerUserId: person.id,
+        experienceId: exp.id,
+        slotId,
+        participantCount: 2,
+        state: 'cancelled_post_experience',
+        paymentMode: 'full_upfront',
+        grossTotalSnapshot: String(gross),
+        pricePerParticipantSnapshot: exp.price12,
+        pricingBasisSnapshot: 'tier_1_2',
+        commissionRateSnapshot: '20.00',
+        commissionBasisSnapshot: 'vendor_base',
+        cancellationPresetSnapshot: exp.preset,
+        tdsAmountSnapshot: '0.00',
+        tcsAmountSnapshot: (gross * 0.005).toFixed(2),
+        tcsRateSnapshot: '0.50',
+        gstRateOnCommissionSnapshot: '18.00',
+        vendorIsResidentSnapshot: true,
+        payoutState: 'held',
+        confirmedAt: ago(48),
+        completedAt: ago(26),
+        cancelledAt: ago(24),
+        cancellationReason: 'Post-experience cancellation (demo).',
+      })
+    }
+    const revExists = await db.select({ id: reviews.id }).from(reviews).where(eq(reviews.bookingId, bId)).limit(1)
+    if (revExists.length === 0) {
+      await db.insert(reviews).values({
+        bookingId: bId,
+        customerUserId: person.id,
+        experienceId: exp.id,
+        vendorUserId: exp.vendorUserId,
+        rating: mr.rating,
+        title: mr.title,
+        body: mr.body,
+        status: mr.status,
+        createdAt: ago(20 - mi),
+      })
+    }
+  }
 }
 
 /**

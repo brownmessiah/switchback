@@ -130,8 +130,11 @@ export default async function CustomerDashboardPage() {
     >
       <h1 className="mb-8 text-2xl font-semibold tracking-tight">{t('pageTitle')}</h1>
 
-      {/* Direction B: Trip Timeline (lead) + Wallet Action Rail (pinned aside) */}
-      <div className="grid gap-8 lg:grid-cols-[1fr_20rem] lg:items-start">
+      {/* Direction B: Trip Timeline (lead) + Wallet Action Rail (pinned aside).
+          grid-cols-1 at the base breakpoint pins the single mobile column to the
+          track width — without it the column auto-sizes to max-content and the
+          Booking cards push the page wider than the viewport (mobile h-overflow). */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_20rem] lg:items-start">
         {/* ── Trip Timeline — upcoming-first, decision-complete Booking cards ── */}
         <section className="order-2 lg:order-1">
           {sortedBookings.length === 0 ? (

@@ -231,6 +231,7 @@ export default async function VendorListingsPage({
                   </Link>
                 </div>
               ) : (
+                <div className="overflow-x-auto">
                 <Table>
                   <caption className="sr-only">
                     Your experience listings with status, activity, region,
@@ -305,6 +306,7 @@ export default async function VendorListingsPage({
                     })}
                   </TableBody>
                 </Table>
+                </div>
               )}
             </CardContent>
           </Card>

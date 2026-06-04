@@ -101,7 +101,11 @@ function TierTable({
   emptyMessage: string
 }) {
   return (
-    <Card>
+    // overflow-x-auto on the Card lets the dense tier list scroll horizontally
+    // when the split-view left pane is narrow, instead of clipping the rightmost
+    // Status column at the card edge (B1). The tier Edit/Delete actions live in
+    // the detail pane, so this only affects the read-only list scroll.
+    <Card className="overflow-x-auto">
       <CardContent className="p-0">
         <Table>
           <TableHeader>

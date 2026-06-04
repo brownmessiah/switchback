@@ -53,6 +53,7 @@ export function VendorsTable({ rows }: { rows: VendorsTableRow[] }) {
   return (
     <Card>
       <CardContent className="p-0">
+        <div className="overflow-x-auto">
         <Table>
           <caption className="sr-only">Registered Vendors</caption>
           <TableHeader>
@@ -125,6 +126,7 @@ export function VendorsTable({ rows }: { rows: VendorsTableRow[] }) {
             )}
           </TableBody>
         </Table>
+        </div>
       </CardContent>
     </Card>
   )

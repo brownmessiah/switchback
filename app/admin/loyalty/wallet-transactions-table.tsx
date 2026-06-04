@@ -60,6 +60,7 @@ export function WalletTransactionsTable({ rows }: { rows: WalletTransactionRow[]
   return (
     <Card>
       <CardContent className="p-0">
+        <div className="overflow-x-auto">
         <Table>
           <caption className="sr-only">Recent Wallet transactions</caption>
           <TableHeader>
@@ -132,6 +133,7 @@ export function WalletTransactionsTable({ rows }: { rows: WalletTransactionRow[]
             )}
           </TableBody>
         </Table>
+        </div>
       </CardContent>
     </Card>
   )

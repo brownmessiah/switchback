@@ -33,10 +33,17 @@ export default async function VendorDashboardLayout({
   // /vendor/onboarding if no vendor profile exists (per ADR-0006).
   await requireVendorProfile(db, session.user.id)
 
+  // flex-col on mobile so the sticky mobile header bar (a VendorSidebar child)
+  // stacks full-width on top instead of sitting as a row sibling that eats the
+  // horizontal space and squeezes <main> (mobile h-overflow). lg:flex-row
+  // restores the sidebar + content split on desktop.
   return (
-    <div className="flex min-h-[80vh]">
+    <div className="flex min-h-[80vh] flex-col lg:flex-row">
       <VendorSidebar userName={session.user.name ?? 'Vendor'} />
-      <main className="flex-1 px-4 py-8 sm:px-8 lg:px-12">{children}</main>
+      {/* min-w-0 lets wide tables scroll inside their own overflow-x-auto wrapper
+          instead of stretching the whole shell past the viewport (mirrors the
+          admin shell fix). */}
+      <main className="min-w-0 flex-1 px-4 py-8 sm:px-8 lg:px-12">{children}</main>
     </div>
   )
 }

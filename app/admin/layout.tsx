@@ -45,7 +45,11 @@ export default async function AdminLayout({
 
   return (
     <IntlProvider locale={locale} messages={messages as Record<string, unknown>}>
-      <div className="flex min-h-[80vh]">
+      {/* flex-col on mobile so the AdminSidebar's sticky mobile header bar stacks
+          full-width on top instead of sitting as a row sibling that eats the
+          horizontal space and squeezes <main> into a narrow column. lg:flex-row
+          restores the sidebar + content split on desktop. */}
+      <div className="flex min-h-[80vh] flex-col lg:flex-row">
         <AdminSidebar groups={groups} badgeCounts={badgeCounts} />
         {/* One shared content shell for EVERY admin route: a single padding +
             max-width container centred in the remaining space, so no route

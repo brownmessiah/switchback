@@ -80,6 +80,7 @@ export function PromoTable({ rows }: { rows: PromoTableRow[] }) {
   return (
     <Card>
       <CardContent className="p-0">
+        <div className="overflow-x-auto">
         <Table>
           <caption className="sr-only">Promo codes</caption>
           <TableHeader>
@@ -147,6 +148,7 @@ export function PromoTable({ rows }: { rows: PromoTableRow[] }) {
             )}
           </TableBody>
         </Table>
+        </div>
       </CardContent>
     </Card>
   )

@@ -71,6 +71,7 @@ export function ClosuresTable({ rows }: { rows: ClosureTableRow[] }) {
   return (
     <Card>
       <CardContent className="p-0">
+        <div className="overflow-x-auto">
         <Table>
           <caption className="sr-only">Region closures</caption>
           <TableHeader>
@@ -123,6 +124,7 @@ export function ClosuresTable({ rows }: { rows: ClosureTableRow[] }) {
             )}
           </TableBody>
         </Table>
+        </div>
       </CardContent>
     </Card>
   )

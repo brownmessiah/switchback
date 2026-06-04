@@ -69,6 +69,7 @@ export function BookingsTable({ rows }: { rows: BookingsTableRow[] }) {
   return (
     <Card>
       <CardContent className="p-0">
+        <div className="overflow-x-auto">
         <Table>
           <caption className="sr-only">All Bookings</caption>
           <TableHeader>
@@ -142,6 +143,7 @@ export function BookingsTable({ rows }: { rows: BookingsTableRow[] }) {
             )}
           </TableBody>
         </Table>
+        </div>
       </CardContent>
     </Card>
   )

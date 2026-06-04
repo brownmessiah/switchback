@@ -121,6 +121,7 @@ export default async function VendorBookingsPage() {
               </Link>
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -221,6 +222,7 @@ export default async function VendorBookingsPage() {
                 })}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

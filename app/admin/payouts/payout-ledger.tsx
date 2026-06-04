@@ -67,7 +67,11 @@ export function PayoutLedger({ rows }: { rows: PayoutLedgerRow[] }) {
   return (
     <AdminLedgerLayout
       list={
-        <Card>
+        // overflow-x-auto on the Card lets the dense payout queue (with its
+        // in-row Approve / Hold / Reject actions) scroll horizontally when the
+        // split-view starves the left pane, instead of clipping the rightmost
+        // Actions buttons at the card edge (B1). Mirrors the disputes ledger fix.
+        <Card className="overflow-x-auto">
           <CardContent className="p-0">
             {rows.length === 0 ? (
               <div className="py-12 text-center text-sm text-muted-foreground">

@@ -48,9 +48,12 @@ export default async function VendorDashboardPage() {
   const verifiedVendorLabel = verifiedVendorBadgeLabel(data.kycTier)
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
+    // grid-cols-1 at the base breakpoint pins the single mobile column to the
+    // track width — without it the column auto-sizes to max-content and the
+    // charts/insights push the page wider than the viewport (mobile h-overflow).
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
       {/* Main column */}
-      <div className="space-y-8">
+      <div className="min-w-0 space-y-8">
       <div>
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
@@ -169,6 +172,7 @@ export default async function VendorDashboardPage() {
               No upcoming bookings yet.
             </p>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -204,6 +208,7 @@ export default async function VendorDashboardPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

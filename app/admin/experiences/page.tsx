@@ -316,6 +316,7 @@ export default async function AdminExperiencesPage({
       {/* Table */}
       <Card>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table>
             <caption className="sr-only">Experience moderation queue</caption>
             <TableHeader>
@@ -390,6 +391,7 @@ export default async function AdminExperiencesPage({
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

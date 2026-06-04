@@ -308,13 +308,11 @@ export default async function ExperienceDetailPage({
   const kycTier = 'phone'
   const kycLabel = kycLabels[kycTier] ?? kycLabels.phone
 
-  // Partial-pay split (ADR-0001) — the Advance is 25% of the lead Group-size
-  // bracket price (floored, matching the money-path convention in
-  // lib/payments/partial-pay-autocapture.ts), balance is the remainder. Shown
-  // prominently in the sticky Booking rail before commit (DESIGN.md §4 B3).
+  // Partial-pay (ADR-0001): the Advance is 25% of the total, balance the
+  // remainder at T-24h. The Booking rail computes the split LIVE from the
+  // participant-count stepper (booking-rail-interactive.tsx) — the page passes
+  // the partial-pay flag + labels only (DESIGN.md §4 B3).
   const partialPayAllowed = detail.paymentModesAllowed.includes('partial_pay')
-  const advanceRupees = Math.floor(detail.pricePerPerson_1_2 * 0.25)
-  const balanceRupees = detail.pricePerPerson_1_2 - advanceRupees
 
   // Book-now deep link (unchanged contract): the dedicated checkout page does
   // identity + payment only; slot is carried through when known.
@@ -823,15 +821,16 @@ export default async function ExperienceDetailPage({
               { label: t('pricing.tier6Plus'), priceRupees: detail.pricePerPerson_6_plus },
             ]}
             perPersonLabel={t('pricing.perPerson')}
+            participantsLabel={t('pricing.participants')}
+            totalLabel={t('pricing.total')}
+            maxParticipants={detail.maxGroupSize ?? 12}
             partialPay={
               partialPayAllowed
                 ? {
                     breakdownLabel: t('pricing.breakdown'),
                     notice: t('pricing.partialPay'),
                     advanceLabel: t('pricing.advanceDue'),
-                    advanceRupees,
                     balanceLabel: t('pricing.balanceDue'),
-                    balanceRupees,
                   }
                 : undefined
             }

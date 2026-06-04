@@ -70,6 +70,8 @@ import type { ExtractTablesWithRelations } from 'drizzle-orm'
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core'
 import type * as schema from './schema'
 
+import { galleryFor } from './seed-photos'
+
 /**
  * Accept either the top-level postgres-js handle (production seed) or the
  * PGlite handle (test harness) — both extend drizzle's PgDatabase base type.
@@ -93,39 +95,18 @@ const FIXTURE_SLUGS = [
 /** Regions used by E2E booking flows — never seed closures here. */
 const E2E_REGIONS = new Set(['rishikesh', 'manali', 'bir-billing', 'goa'])
 
-// ── Curated, HTTP-200-verified Unsplash photo IDs grouped by activity ───────
-// Exported so the dev-only demo-catalog seed (db/seed-demo-catalog.ts) reuses
-// the same verified photo pools rather than duplicating the IDs.
+// ── Unsplash URL builder + non-activity photo pools ─────────────────────────
+// Per-activity experience galleries now come from the curated, visually-verified
+// pools in `lib/images.ts` (via `galleryFor` in db/seed-photos.ts) — the old
+// hand-typed ACTIVITY_PHOTOS map had mis-tagged IDs (e.g. a jigsaw puzzle under
+// "paragliding"). IMG is exported so the demo-catalog seed reuses the builder.
 export const IMG = (id: string, w = 1200): string =>
   `https://images.unsplash.com/${id}?w=${w}&q=80&auto=format&fit=crop`
 
-const ACTIVITY_PHOTOS: Record<string, string[]> = {
-  rafting: ['photo-1530866495561-507c9faab2ed', 'photo-1599494284091-2b6f5b6c7e2c', 'photo-1604537466158-719b1972feb8'],
-  trekking: ['photo-1551632811-561732d1e306', 'photo-1454496522488-7a8e488e8606', 'photo-1469474968028-56623f02e42e', 'photo-1486870591958-9b9d0d1dda99', 'photo-1508739773434-c26b3d09e071'],
-  paragliding: ['photo-1597400473366-371a80b251eb', 'photo-1504280390367-361c6d9f38f4', 'photo-1502082553048-f009c37129b9'],
-  'scuba-diving': ['photo-1583364512105-951b6f7080ae', 'photo-1544551763-46a013bb70d5', 'photo-1582967788606-a171c1080cb0', 'photo-1530053969600-caed2596d242'],
-  skiing: ['photo-1551524559-8af4e6624178', 'photo-1483721310020-03333e577078', 'photo-1551698618-1dfe5d97d256'],
-  'bungee-jumping': ['photo-1567604528969-2f9ffd981816', 'photo-1564769662533-4f00a87b4056', 'photo-1533227268428-f9ed0900fb3b'],
-  camping: ['photo-1504280390367-361c6d9f38f4', 'photo-1537565266759-34bbc16be345', 'photo-1504851149312-7a075b496cc7', 'photo-1496545672447-f699b503d270'],
-  kayaking: ['photo-1472745942893-4b9f730c7668', 'photo-1604537466158-719b1972feb8', 'photo-1545153996-e01b1e29c8a8'],
-  safari: ['photo-1516426122078-c23e76319801', 'photo-1549366021-9f761d450615', 'photo-1547970810-dc1eac37d174', 'photo-1534177616072-ef7dc120449d'],
-  'rock-climbing': ['photo-1522163182402-834f871fd851', 'photo-1516592673884-4a382d1124c2', 'photo-1518609878373-06d740f60d8b'],
-}
 const FALLBACK_PHOTOS = ['photo-1506905925346-21bda4d32df4', 'photo-1470071459604-3b5ec3a7fe05', 'photo-1426604966848-d7adac402bff', 'photo-1501785888041-af3ef285b470']
 const AVATAR_PHOTOS = ['photo-1500648767791-00dcc994a43e', 'photo-1494790108377-be9c29b29330', 'photo-1507003211169-0a1dd7228f2d', 'photo-1438761681033-6461ffad8d80', 'photo-1472099645785-5658abf4ff4e', 'photo-1544005313-94ddf0286df2', 'photo-1633332755192-727a05c4013d', 'photo-1607746882042-944635dfe10e']
 export const VENDOR_LOGO_PHOTOS = ['photo-1557804506-669a67965ba0', 'photo-1487058792275-0ad4aaf24ca7']
-const BLOG_COVER_PHOTOS = ['photo-1530866495561-507c9faab2ed', 'photo-1551632811-561732d1e306', 'photo-1597400473366-371a80b251eb', 'photo-1583364512105-951b6f7080ae', 'photo-1516426122078-c23e76319801', 'photo-1551524559-8af4e6624178', 'photo-1504280390367-361c6d9f38f4', 'photo-1522163182402-834f871fd851', 'photo-1506905925346-21bda4d32df4', 'photo-1470071459604-3b5ec3a7fe05']
-
-/** Up to 6 distinct photo IDs for an activity, padded with fallbacks. */
-export function photosFor(activitySlug: string): string[] {
-  const pool = [...(ACTIVITY_PHOTOS[activitySlug] ?? FALLBACK_PHOTOS), ...FALLBACK_PHOTOS, ...AVATAR_PHOTOS]
-  const out: string[] = []
-  for (const p of pool) {
-    if (!out.includes(p)) out.push(p)
-    if (out.length >= 6) break
-  }
-  return out
-}
+const BLOG_COVER_PHOTOS = ['photo-1530866495561-507c9faab2ed', 'photo-1551632811-561732d1e306', 'photo-1418846531910-2b7bb1043512', 'photo-1583364512105-951b6f7080ae', 'photo-1516426122078-c23e76319801', 'photo-1551524559-8af4e6624178', 'photo-1504280390367-361c6d9f38f4', 'photo-1522163182402-834f871fd851', 'photo-1506905925346-21bda4d32df4', 'photo-1470071459604-3b5ec3a7fe05']
 
 /** Deterministic uuid-shaped IDs in a private namespace (idempotent re-runs). */
 function ns(prefix: string, n: number): string {
@@ -809,7 +790,7 @@ async function main(db: SeedDb): Promise<void> {
   // Re-runnable: clear only catalog-owned rows (storage_key prefix) first.
   await db.delete(mediaAssets).where(sql`${mediaAssets.storageKey} LIKE 'seed/catalog/%'`)
   for (const exp of catalog) {
-    const photos = photosFor(exp.activitySlug)
+    const photos = galleryFor(exp.activitySlug, exp.slug)
     await db.insert(mediaAssets).values(
       photos.map((pid, i) => ({
         uploadedBy: ADMIN_ID,

@@ -8,10 +8,39 @@ import { getActivityImage } from '@/lib/images'
 import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 
 import {
+  galleryTiles,
   loadExperienceCoverMap,
   loadExperienceGallery,
   resolveExperienceCover,
 } from './experience-images'
+
+describe('galleryTiles (PDP 3-tile overview, distinct fallbacks)', () => {
+  it('uses the real gallery URLs when 3+ are present', () => {
+    const gallery = [
+      { url: 'https://cdn/a.jpg', altText: null },
+      { url: 'https://cdn/b.jpg', altText: null },
+      { url: 'https://cdn/c.jpg', altText: null },
+      { url: 'https://cdn/d.jpg', altText: null },
+    ]
+    expect(galleryTiles(gallery, 'rafting')).toEqual([
+      'https://cdn/a.jpg',
+      'https://cdn/b.jpg',
+      'https://cdn/c.jpg',
+    ])
+  })
+
+  it('fills ALL three tiles with DISTINCT activity fallbacks when gallery is empty', () => {
+    const tiles = galleryTiles([], 'paragliding')
+    expect(tiles.length).toBe(3)
+    expect(new Set(tiles).size).toBe(3) // no crop-duplicates of one photo
+  })
+
+  it('fills only the missing tiles, keeping real photos first', () => {
+    const tiles = galleryTiles([{ url: 'https://cdn/real.jpg', altText: 'x' }], 'paragliding')
+    expect(tiles[0]).toBe('https://cdn/real.jpg')
+    expect(new Set(tiles).size).toBe(3)
+  })
+})
 
 describe('resolveExperienceCover (pure fallback)', () => {
   it('returns the media URL when one is present', () => {

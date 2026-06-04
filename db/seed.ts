@@ -25,10 +25,11 @@
  * loads real Vendor + Experience records from the legacy travel-app.
  */
 
-import { eq, inArray } from 'drizzle-orm'
+import { eq, inArray, like } from 'drizzle-orm'
 
 import { db } from './client'
-import { seedCatalog } from './seed-extras'
+import { IMG, seedCatalog } from './seed-extras'
+import { galleryFor } from './seed-photos'
 import { seedTripGroups } from './seed-trip-groups'
 import { replaceItinerary, type ItineraryStepInput } from '@/lib/experiences/itinerary'
 import type { GuideLanguage } from '@/lib/experiences/structured-schema'
@@ -39,6 +40,7 @@ import {
   conversations,
   customerProfiles,
   experiences,
+  mediaAssets,
   messages,
   payments,
   refundRequests,
@@ -706,6 +708,31 @@ async function seed(): Promise<void> {
         .select({ id: experiences.id, slug: experiences.slug })
         .from(experiences)
         .where(inArray(experiences.slug, EXPERIENCES.map((e) => e.slug)))
+
+  // ----- MEDIA ASSETS (base catalog experiences) -----
+  // Distinct, on-subject per-listing galleries (db/seed-photos.ts) so the
+  // /search cards and the PDP overview gallery never repeat one stock photo —
+  // two same-activity listings get different covers. Re-runnable: clear only
+  // base-owned rows by storage-key prefix first.
+  await db.delete(mediaAssets).where(like(mediaAssets.storageKey, 'seed/base/%'))
+  for (const exp of allExperiences) {
+    const meta = EXPERIENCES.find((e) => e.slug === exp.slug)
+    if (!meta) continue
+    const photos = galleryFor(meta.activitySlug, exp.slug)
+    if (photos.length === 0) continue
+    await db.insert(mediaAssets).values(
+      photos.map((pid, i) => ({
+        uploadedBy: 'u_seed_admin',
+        storageKey: `seed/base/experience/${exp.slug}/${i}.jpg`,
+        url: IMG(pid, 1200),
+        contentType: 'image/jpeg',
+        sizeBytes: 180_000 + i * 4096,
+        altText: `${meta.title} — photo ${i + 1}`,
+        entityType: 'experience' as const,
+        entityId: exp.id,
+      })),
+    )
+  }
 
   // ----- STRUCTURED ITINERARY (ADR-0017) — only the flagged fixture row -----
   // Written via replaceItinerary so the dev/E2E PDP has a real itinerary

@@ -37,7 +37,8 @@ import {
   users,
   vendorProfiles,
 } from './schema'
-import { IMG, photosFor, type SeedDb, VENDOR_LOGO_PHOTOS } from './seed-extras'
+import { IMG, type SeedDb, VENDOR_LOGO_PHOTOS } from './seed-extras'
+import { galleryFor } from './seed-photos'
 
 const ADMIN_ID = 'u_seed_admin'
 
@@ -173,7 +174,7 @@ export async function seedDemoCatalog(db: SeedDb): Promise<void> {
   // Clear only demo-owned rows first (storage_key prefix), then re-insert.
   await db.delete(mediaAssets).where(like(mediaAssets.storageKey, 'seed/demo/%'))
   for (const exp of demo) {
-    const photos = photosFor(exp.activitySlug)
+    const photos = galleryFor(exp.activitySlug, exp.slug)
     await db.insert(mediaAssets).values(
       photos.map((pid, i) => ({
         uploadedBy: ADMIN_ID,

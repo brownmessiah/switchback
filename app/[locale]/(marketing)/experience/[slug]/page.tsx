@@ -40,7 +40,7 @@ import { isInWishlist } from '@/lib/wishlist/wishlist'
 import { loadExperienceDetail } from '@/lib/experiences/detail-loader'
 import { formatDuration, formatSeason } from '@/lib/experiences/structured-schema'
 import { LOCALE_NAMES, type SupportedLocale } from '@/lib/i18n/config'
-import { getActivityImage } from '@/lib/images'
+import { galleryTiles } from '@/lib/media/experience-images'
 import { getRedis } from '@/lib/redis'
 import { generateAlternates } from '@/lib/seo/hreflang'
 import { breadcrumbList } from '@/lib/seo/schemas/breadcrumb-list'
@@ -139,12 +139,17 @@ export default async function ExperienceDetailPage({
 
   const productDescription =
     detail.shortDescription ?? `${activityDisplay} Experience in ${regionDisplay}`
+
+  // PDP overview gallery (1 large + 2 small). Real media first; missing tiles
+  // fall back to DISTINCT activity photos (no crop-duplicates of one image).
+  const galleryImages = galleryTiles(detail.gallery, detail.activity.slug)
+
   const productJson = product({
     name: detail.title,
     url: canonicalUrl,
     description: productDescription,
     priceRupees: detail.pricePerPerson_1_2,
-    image: detail.gallery[0]?.url,
+    image: galleryImages[0],
     ratingValue: aggregateRating?.ratingValue,
     ratingCount: aggregateRating?.ratingCount,
   })
@@ -518,7 +523,7 @@ export default async function ExperienceDetailPage({
               <div className="grid grid-cols-2 gap-2 overflow-hidden rounded-[var(--radius-2xl)]">
                 <div className="relative col-span-2 aspect-[16/9] sm:col-span-1 sm:aspect-[4/3]">
                   <Image
-                    src={detail.gallery[0]?.url ?? getActivityImage(detail.activity.slug)}
+                    src={galleryImages[0]}
                     alt={detail.gallery[0]?.altText ?? detail.title}
                     fill
                     className="object-cover"
@@ -529,7 +534,7 @@ export default async function ExperienceDetailPage({
                 <div className="hidden gap-2 sm:grid sm:grid-rows-2">
                   <div className="relative overflow-hidden">
                     <Image
-                      src={detail.gallery[1]?.url ?? getActivityImage(detail.activity.slug).replace('w=800', 'w=400').replace('fit=crop', 'fit=crop&crop=top')}
+                      src={galleryImages[1]}
                       alt={detail.gallery[1]?.altText ?? ''}
                       fill
                       className="object-cover"
@@ -538,7 +543,7 @@ export default async function ExperienceDetailPage({
                   </div>
                   <div className="relative overflow-hidden">
                     <Image
-                      src={detail.gallery[2]?.url ?? getActivityImage(detail.activity.slug).replace('w=800', 'w=400').replace('fit=crop', 'fit=crop&crop=bottom')}
+                      src={galleryImages[2]}
                       alt={detail.gallery[2]?.altText ?? ''}
                       fill
                       className="object-cover"

@@ -72,6 +72,23 @@ export interface GalleryImage {
 }
 
 /**
+ * The three image URLs for the PDP "overview" gallery (1 large + 2 small). Real
+ * `media_assets` come first; any missing tile is filled with a DISTINCT activity
+ * fallback (variant 0/1/2) so a bare listing shows three different photos rather
+ * than one photo cropped three ways.
+ */
+export function galleryTiles(
+  gallery: GalleryImage[],
+  activitySlug: string,
+): [string, string, string] {
+  return [
+    gallery[0]?.url ?? getActivityImage(activitySlug, 0),
+    gallery[1]?.url ?? getActivityImage(activitySlug, 1),
+    gallery[2]?.url ?? getActivityImage(activitySlug, 2),
+  ]
+}
+
+/**
  * Load the ordered gallery (cover first) for a single Experience's
  * `media_assets`. Returns `[]` when the Experience has no uploaded media.
  */

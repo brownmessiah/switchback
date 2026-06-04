@@ -1,37 +1,133 @@
-const ACTIVITY_IMAGES: Record<string, string> = {
-  rafting:
-    'https://images.unsplash.com/photo-1530866495561-507c9faab2ed?w=800&h=600&fit=crop&q=80',
-  kayaking:
-    'https://images.unsplash.com/photo-1472745942893-4b9f730c7668?w=800&h=600&fit=crop&q=80',
-  trekking:
-    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&q=80',
-  paragliding:
-    'https://images.unsplash.com/photo-1597400473366-371a80b251eb?w=800&h=600&fit=crop&q=80',
-  scuba:
-    'https://images.unsplash.com/photo-1583364512105-951b6f7080ae?w=800&h=600&fit=crop&q=80',
-  'scuba-diving':
-    'https://images.unsplash.com/photo-1583364512105-951b6f7080ae?w=800&h=600&fit=crop&q=80',
-  camping:
-    'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800&h=600&fit=crop&q=80',
-  bungee:
-    'https://images.unsplash.com/photo-1564769662533-4f00a87b4056?w=800&h=600&fit=crop&q=80',
-  // Canonical activity-registry slug (lib/activities/registry.ts) — the map
-  // previously only had the short alias `bungee`, so every bungee-jumping
-  // Experience fell through to the trekking fallback (audit P0 fix).
-  'bungee-jumping':
-    'https://images.unsplash.com/photo-1564769662533-4f00a87b4056?w=800&h=600&fit=crop&q=80',
-  skiing:
-    'https://images.unsplash.com/photo-1551524559-8af4e6624178?w=800&h=600&fit=crop&q=80',
-  // Registry slugs that were missing → distinct, subject-appropriate photos
-  // instead of the generic trekking fallback (audit P0 fix).
-  'rock-climbing':
-    'https://images.unsplash.com/photo-1522163182402-834f871fd851?w=800&h=600&fit=crop&q=80',
-  safari:
-    'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=800&h=600&fit=crop&q=80',
-  surfing:
-    'https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=800&h=600&fit=crop&q=80',
-  canyoning:
-    'https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=800&h=600&fit=crop&q=80',
+/**
+ * Curated, on-subject stock-photo pools for adventure activities + regions.
+ *
+ * The activity pools below were each VISUALLY VERIFIED (downloaded + eyeballed)
+ * to actually depict the activity — a previous hand-typed set had silently
+ * mis-tagged IDs (e.g. "paragliding" pointed at a jigsaw puzzle). Every pool has
+ * 6 distinct landscape photos so a listing can show a varied gallery and two
+ * same-activity listings never share a cover (see `db/seed-photos.ts`).
+ *
+ * IDs are the Unsplash path segment only (`photo-…`); `px()` builds the URL.
+ */
+
+/** Build an Unsplash delivery URL from a `photo-…` path-segment id. */
+const px = (id: string, w = 800, h = 600): string =>
+  `https://images.unsplash.com/${id}?w=${w}&h=${h}&fit=crop&q=80`
+
+/**
+ * Verified per-activity photo pools, keyed by the canonical activity-registry
+ * slug (`lib/activities/registry.ts`). Short aliases (`scuba`, `bungee`) point
+ * at the same arrays so legacy callers keep working.
+ */
+const ACTIVITY_PHOTO_IDS: Record<string, string[]> = {
+  rafting: [
+    'photo-1512675628397-28288d1220ef',
+    'photo-1593107757644-25f0b23e9297',
+    'photo-1595637729374-631ef9c4da10',
+    'photo-1624646580989-9f059e25eb78',
+    'photo-1629248457649-b082812aea6c',
+    'photo-1690905765810-665a1e6f294f',
+  ],
+  paragliding: [
+    'photo-1418846531910-2b7bb1043512',
+    'photo-1546779175-a70fdbd4481d',
+    'photo-1500953925139-9d5fe7ba54f2',
+    'photo-1719949122509-74d0a1d08b44',
+    'photo-1573507712396-586c2fc99b36',
+    'photo-1551891590-eeac39130199',
+  ],
+  'scuba-diving': [
+    'photo-1759414478236-292c50016d7f',
+    'photo-1544551763-46a013bb70d5',
+    'photo-1544551763-8dd44758c2dd',
+    'photo-1583212292454-1fe6229603b7',
+    'photo-1586508577428-120d6b072945',
+    'photo-1595323397978-65433d24fc23',
+  ],
+  trekking: [
+    'photo-1526772662000-3f88f10405ff',
+    'photo-1551632811-561732d1e306',
+    'photo-1598524589996-78edc8ddba2e',
+    'photo-1629185752152-fe65698ddee4',
+    'photo-1568454537842-d933259bb258',
+    'photo-1458442310124-dde6edb43d10',
+  ],
+  'bungee-jumping': [
+    'photo-1549221360-456a9c197d5b',
+    'photo-1559677624-3c956f10d431',
+    'photo-1564797663359-624328971f55',
+    'photo-1576599372775-95a24ce93abc',
+    'photo-1595778039451-58a7c2946e7d',
+    'photo-1609750186885-453cb10e58fb',
+  ],
+  skiing: [
+    'photo-1507534192483-69914c0692d7',
+    'photo-1551698618-1dfe5d97d256',
+    'photo-1528659862616-22886eb53642',
+    'photo-1605540436563-5bca919ae766',
+    'photo-1614358606268-aa86853578b4',
+    'photo-1664436341001-b02974ae7524',
+  ],
+  kayaking: [
+    'photo-1450500392544-c2cb0fd6e3b8',
+    'photo-1480480565647-1c4385c7c0bf',
+    'photo-1558281050-4c33200099c7',
+    'photo-1588472235276-7638965471e2',
+    'photo-1653593548856-23fdff295e2d',
+    'photo-1709657179878-5c3e732a7832',
+  ],
+  'rock-climbing': [
+    'photo-1522163182402-834f871fd851',
+    'photo-1586627161720-ee2849303aee',
+    'photo-1597698063932-9450882bb1be',
+    'photo-1601025678763-e8f5835995db',
+    'photo-1601224748193-d24f166b5c77',
+    'photo-1602531734042-c565f8365a0b',
+  ],
+  safari: [
+    'photo-1498038116800-4159eb9b2a62',
+    'photo-1516426122078-c23e76319801',
+    'photo-1521651201144-634f700b36ef',
+    'photo-1527073620320-77635188c627',
+    'photo-1577971132997-c10be9372519',
+    'photo-1709402606682-400133d92ab2',
+  ],
+  camping: [
+    'photo-1475483768296-6163e08872a1',
+    'photo-1478131143081-80f7f84ca84d',
+    'photo-1504280390367-361c6d9f38f4',
+    'photo-1510312305653-8ed496efae75',
+    'photo-1532339142463-fd0a8979791a',
+    'photo-1537905569824-f89f14cceb68',
+  ],
+}
+
+// Short aliases used by some callers / older data.
+ACTIVITY_PHOTO_IDS.scuba = ACTIVITY_PHOTO_IDS['scuba-diving']
+ACTIVITY_PHOTO_IDS.bungee = ACTIVITY_PHOTO_IDS['bungee-jumping']
+
+/** Generic mountain-landscape pool for activities without a curated set. */
+const FALLBACK_PHOTO_IDS = ACTIVITY_PHOTO_IDS.trekking
+
+/**
+ * The curated photo-ID pool for an activity (path segments, not URLs). Falls
+ * back to a generic landscape pool for unknown slugs. Used by the seeds
+ * (`db/seed-photos.ts`) to build per-listing galleries via Unsplash URLs.
+ */
+export function getActivityPhotoIds(activitySlug: string): string[] {
+  return ACTIVITY_PHOTO_IDS[activitySlug] ?? FALLBACK_PHOTO_IDS
+}
+
+/**
+ * The fallback image URL for an activity. Backward-compatible: called with no
+ * `variant` it returns the first (canonical) photo. An optional `variant` index
+ * rotates through the curated pool so adjacent cards / gallery tiles vary
+ * instead of repeating one photo.
+ */
+export function getActivityImage(activitySlug: string, variant = 0): string {
+  const pool = getActivityPhotoIds(activitySlug)
+  const id = pool[((variant % pool.length) + pool.length) % pool.length]
+  return px(id)
 }
 
 const REGION_IMAGES: Record<string, string> = {
@@ -40,16 +136,12 @@ const REGION_IMAGES: Record<string, string> = {
   manali:
     'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800&h=600&fit=crop&q=80',
   'bir-billing':
-    'https://images.unsplash.com/photo-1597400473366-371a80b251eb?w=800&h=600&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1546779175-a70fdbd4481d?w=800&h=600&fit=crop&q=80',
   goa:
     'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&h=600&fit=crop&q=80',
   ladakh:
     'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&q=80',
-  // Canonical region-registry slugs (lib/regions/registry.ts). The map only
-  // had the alias `ladakh` + several regions that aren't in the registry, so
-  // every leh-ladakh / kasol / spiti / lonavala / auli destination tile fell
-  // through to the identical rishikesh fallback (audit P0 fix — restores
-  // per-region visual variety for a fair design comparison).
+  // Canonical region-registry slugs (lib/regions/registry.ts).
   'leh-ladakh':
     'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&h=600&fit=crop&q=80',
   kasol:
@@ -69,47 +161,11 @@ const REGION_IMAGES: Record<string, string> = {
   andaman:
     'https://images.unsplash.com/photo-1559494007-9f5847c49d94?w=800&h=600&fit=crop&q=80',
   coorg:
-    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1605640840605-14ac1855827b?w=800&h=600&fit=crop&q=80',
 }
 
 const HERO_IMAGE =
   'https://images.unsplash.com/photo-1530866495561-507c9faab2ed?w=1600&h=900&fit=crop&q=80'
-
-const px = (id: string): string =>
-  `https://images.unsplash.com/${id}?w=800&h=600&fit=crop&q=80`
-
-/**
- * Extra verified Unsplash IDs per activity (issue 06) so the PDP fallback
- * varies across the 151 galleries instead of repeating one photo per activity.
- * Reuses IDs already HTTP-verified in db/seed-extras.ts. The first entry of
- * each pool is the existing canonical photo (kept stable for callers that pass
- * no variant). Activities without an entry fall back to the single map image.
- */
-const ACTIVITY_IMAGE_POOL: Record<string, string[]> = {
-  rafting: [px('photo-1530866495561-507c9faab2ed'), px('photo-1599494284091-2b6f5b6c7e2c'), px('photo-1604537466158-719b1972feb8')],
-  trekking: [px('photo-1506905925346-21bda4d32df4'), px('photo-1551632811-561732d1e306'), px('photo-1454496522488-7a8e488e8606'), px('photo-1469474968028-56623f02e42e')],
-  paragliding: [px('photo-1597400473366-371a80b251eb'), px('photo-1504280390367-361c6d9f38f4'), px('photo-1502082553048-f009c37129b9')],
-  'scuba-diving': [px('photo-1583364512105-951b6f7080ae'), px('photo-1544551763-46a013bb70d5'), px('photo-1582967788606-a171c1080cb0')],
-  skiing: [px('photo-1551524559-8af4e6624178'), px('photo-1483721310020-03333e577078'), px('photo-1551698618-1dfe5d97d256')],
-  'bungee-jumping': [px('photo-1564769662533-4f00a87b4056'), px('photo-1567604528969-2f9ffd981816'), px('photo-1533227268428-f9ed0900fb3b')],
-  camping: [px('photo-1504280390367-361c6d9f38f4'), px('photo-1537565266759-34bbc16be345'), px('photo-1504851149312-7a075b496cc7')],
-  kayaking: [px('photo-1472745942893-4b9f730c7668'), px('photo-1604537466158-719b1972feb8'), px('photo-1545153996-e01b1e29c8a8')],
-  safari: [px('photo-1516426122078-c23e76319801'), px('photo-1549366021-9f761d450615'), px('photo-1547970810-dc1eac37d174')],
-  'rock-climbing': [px('photo-1522163182402-834f871fd851'), px('photo-1516592673884-4a382d1124c2'), px('photo-1518609878373-06d740f60d8b')],
-}
-
-/**
- * The fallback image for an activity. Backward-compatible: called with no
- * `variant` it returns the canonical photo. An optional `variant` index rotates
- * through the verified per-activity pool so adjacent cards/galleries vary.
- */
-export function getActivityImage(activitySlug: string, variant = 0): string {
-  const pool = ACTIVITY_IMAGE_POOL[activitySlug]
-  if (pool && pool.length > 0) {
-    return pool[((variant % pool.length) + pool.length) % pool.length]
-  }
-  return ACTIVITY_IMAGES[activitySlug] ?? ACTIVITY_IMAGES.trekking
-}
 
 export function getRegionImage(regionSlug: string): string {
   return REGION_IMAGES[regionSlug] ?? REGION_IMAGES.rishikesh

@@ -698,7 +698,11 @@
       "blog": "வலைப்பதிவு",
       "safety": "பாதுகாப்பு & நம்பிக்கை",
       "about": "Outvers பற்றி"
-    }
+    },
+    "experiences": "அனுபவங்கள்",
+    "destinations": "இடங்கள்",
+    "community": "சமூகம்",
+    "blog": "வலைப்பதிவு"
   },
   "NotFound": {
     "heading": "404",

@@ -739,7 +739,11 @@
       "vendorKyc": "Vendor KYC (soon)",
       "copyright": "All experiences are operated by third-party vendors.",
       "blog": "Blog"
-    }
+    },
+    "experiences": "Experiences",
+    "destinations": "Destinations",
+    "community": "Community",
+    "blog": "Blog"
   },
   "NotFound": {
     "heading": "404",

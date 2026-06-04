@@ -698,7 +698,11 @@
       "blog": "ब्लॉग",
       "safety": "सुरक्षा और भरोसा",
       "about": "Outvers के बारे में"
-    }
+    },
+    "experiences": "अनुभव",
+    "destinations": "डेस्टिनेशन",
+    "community": "समुदाय",
+    "blog": "ब्लॉग"
   },
   "NotFound": {
     "heading": "404",

@@ -698,7 +698,11 @@
       "blog": "బ్లాగ్",
       "safety": "భద్రత & నమ్మకం",
       "about": "Outvers గురించి"
-    }
+    },
+    "experiences": "అనుభవాలు",
+    "destinations": "గమ్యస్థానాలు",
+    "community": "సంఘం",
+    "blog": "బ్లాగ్"
   },
   "NotFound": {
     "heading": "404",

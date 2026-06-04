@@ -698,7 +698,11 @@
       "blog": "ബ്ലോഗ്",
       "safety": "സുരക്ഷയും വിശ്വാസവും",
       "about": "Outvers കുറിച്ച്"
-    }
+    },
+    "experiences": "അനുഭവങ്ങൾ",
+    "destinations": "ലക്ഷ്യസ്ഥാനങ്ങൾ",
+    "community": "കമ്മ്യൂണിറ്റി",
+    "blog": "ബ്ലോഗ്"
   },
   "NotFound": {
     "heading": "404",

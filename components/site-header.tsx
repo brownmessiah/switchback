@@ -11,6 +11,19 @@ import { AuthStatus } from './auth-status'
 import { LanguageSelector } from './language-selector'
 import { ThemeToggle } from './theme-toggle'
 
+/**
+ * Primary nav tabs (parity with outvers.com): each lands on a DISTINCT surface
+ * — Experiences (the explore/search grid), Destinations (browse by place),
+ * Community (group trips), Blog. Previously "Search" + "Adventures" both pointed
+ * at /search.
+ */
+const NAV_LINKS = [
+  { href: '/search', key: 'experiences' },
+  { href: '/destinations', key: 'destinations' },
+  { href: '/community', key: 'community' },
+  { href: '/blog', key: 'blog' },
+] as const
+
 export function SiteHeader(): ReactElement | null {
   const pathname = usePathname()
   const isHome = pathname === '/'
@@ -38,36 +51,19 @@ export function SiteHeader(): ReactElement | null {
         </Link>
 
         <nav aria-label="Primary" className="hidden items-center gap-6 sm:flex">
-          <Link
-            href="/search"
-            className={
-              isHome
-                ? 'text-sm text-white/80 hover:text-white'
-                : 'text-sm text-muted-foreground hover:text-foreground'
-            }
-          >
-            {t('search')}
-          </Link>
-          <Link
-            href="/search"
-            className={
-              isHome
-                ? 'text-sm text-white/80 hover:text-white'
-                : 'text-sm text-muted-foreground hover:text-foreground'
-            }
-          >
-            {t('adventures')}
-          </Link>
-          <Link
-            href="/cancellation-policy"
-            className={
-              isHome
-                ? 'text-sm text-white/80 hover:text-white'
-                : 'text-sm text-muted-foreground hover:text-foreground'
-            }
-          >
-            {t('refundPolicy')}
-          </Link>
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={
+                isHome
+                  ? 'text-sm text-white/80 hover:text-white'
+                  : 'text-sm text-muted-foreground hover:text-foreground'
+              }
+            >
+              {t(link.key)}
+            </Link>
+          ))}
           <ThemeToggle
             label={t('themeToggle')}
             className={isHome ? 'text-white hover:bg-white/10 hover:text-white' : ''}
@@ -100,24 +96,15 @@ export function SiteHeader(): ReactElement | null {
             aria-label="Mobile primary"
             className="absolute right-4 mt-2 flex w-48 flex-col gap-1 rounded-lg border bg-popover p-2 shadow-lg"
           >
-            <Link
-              href="/search"
-              className="rounded px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            >
-              {t('search')}
-            </Link>
-            <Link
-              href="/search"
-              className="rounded px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            >
-              {t('adventures')}
-            </Link>
-            <Link
-              href="/cancellation-policy"
-              className="rounded px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            >
-              {t('refundPolicy')}
-            </Link>
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="rounded px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              >
+                {t(link.key)}
+              </Link>
+            ))}
             <div className="flex items-center gap-1 px-1 py-1">
               <ThemeToggle label={t('themeToggle')} />
               <LanguageSelector variant="compact" />

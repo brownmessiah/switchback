@@ -634,7 +634,11 @@
       "blog": "ব্লগ",
       "safety": "সুৰক্ষা আৰু বিশ্বাস",
       "about": "Outvers বিষয়ে"
-    }
+    },
+    "experiences": "অভিজ্ঞতা",
+    "destinations": "গন্তব্য",
+    "community": "সম্প্ৰদায়",
+    "blog": "ব্লগ"
   },
   "NotFound": {
     "heading": "404",

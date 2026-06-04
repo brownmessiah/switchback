@@ -698,7 +698,11 @@
       "blog": "ਬਲੌਗ",
       "safety": "ਸੁਰੱਖਿਆ ਅਤੇ ਭਰੋਸਾ",
       "about": "Outvers ਬਾਰੇ"
-    }
+    },
+    "experiences": "ਅਨੁਭਵ",
+    "destinations": "ਟਿਕਾਣੇ",
+    "community": "ਕਮਿਊਨਿਟੀ",
+    "blog": "ਬਲੌਗ"
   },
   "NotFound": {
     "heading": "404",

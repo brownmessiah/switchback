@@ -8,7 +8,7 @@
  */
 
 import { NextIntlClientProvider } from 'next-intl'
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import {
   createContext,
   useCallback,
@@ -49,7 +49,6 @@ interface IntlProviderProps {
  * locale switching via the useIntl() hook.
  */
 export function IntlProvider({ locale, messages, children }: IntlProviderProps) {
-  const router = useRouter()
   const pathname = usePathname()
 
   const validLocale: SupportedLocale = isValidLocale(locale)
@@ -74,9 +73,17 @@ export function IntlProvider({ locale, messages, children }: IntlProviderProps) 
           ? pathWithoutLocale || '/'
           : `/${newLocale}${pathWithoutLocale || '/'}`
 
-      router.push(newPath)
+      // Full navigation (not router.push): the locale-dependent chrome — the
+      // SiteHeader nav + the Devanagari font, both gated in the PERSISTENT root
+      // layout — does not re-render on a soft client navigation, so the nav
+      // stayed in the old language and Hindi fell back to the Latin font. A
+      // hard navigation re-renders the root layout with the new locale (cookie
+      // already set above), making the switch consistent everywhere.
+      if (typeof window !== 'undefined') {
+        window.location.assign(newPath)
+      }
     },
-    [router, pathname, validLocale],
+    [pathname, validLocale],
   )
 
   const value = useMemo<IntlContextValue>(

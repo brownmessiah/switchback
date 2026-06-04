@@ -1,9 +1,11 @@
-import type { ReactElement } from 'react'
+'use client'
 
-import Link from 'next/link'
-import { getTranslations } from 'next-intl/server'
+import { useRef, type ReactElement } from 'react'
 
-import { Button, buttonVariants } from '@/components/ui/button'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -21,49 +23,57 @@ import {
   STATE_OPTIONS,
 } from '@/lib/search/facet-options'
 import type { SearchExperiencesParams } from '@/lib/search/search-experiences'
+import { cn } from '@/lib/utils'
 
 /** ADR-0017 difficulty enum values — facet options + i18n key suffixes. */
 const DIFFICULTY_OPTIONS = ['easy', 'moderate', 'challenging', 'extreme'] as const
 /** Months 1-12 for the "runs in month" facet. */
 const MONTH_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const
 
+const CHIP_BASE =
+  'flex w-full items-center rounded-[var(--radius-control)] px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+
 interface FacetFormProps {
-  locale: string
   parsed: SearchExperiencesParams
   /**
-   * Disambiguates the two instances of the form on a page (the SSR desktop
-   * rail and the mobile Sheet) so their control `id`s/testids stay unique and
-   * `<Label htmlFor>` bindings remain valid for axe.
+   * Disambiguates the two instances of the form on a page (the desktop rail and
+   * the mobile Sheet) so their control `id`s stay unique and `<Label htmlFor>`
+   * bindings remain valid for axe.
    */
   instanceId: string
 }
 
 /**
- * The faceted search filter form (DESIGN.md §4 / A1 "filter rail (desktop) /
- * filter Sheet (mobile)"). A native `<form method="get" action="/search">` so
- * filtering works without client JS and the searchParam-name contract
- * (`activity`, `region`, `sort`, `minPrice`, `maxPrice`) — which the page
- * parses and the ADR-0013 robots/canonical rules depend on — is preserved.
+ * The faceted search filter form (DESIGN.md §4 / A1 "filter rail + filter
+ * Sheet"). **Auto-filtering**: changing any control navigates immediately
+ * (`router.push`) with the updated searchParam — no Apply button. The page
+ * re-renders server-side with the new results; the searchParam-name contract
+ * (`category`, `activity`, `region`, `state`, `difficulty`, `durationBand`,
+ * `season`, `groupSize`, `sort`, `minPrice`, `maxPrice`) — which ADR-0013
+ * robots/canonical rules depend on — is preserved.
  *
- * Backend-supported facets only (the Meili index's filterable attributes):
- * Activity, Region, Sort, and Price range. The KYC-tier facet is deliberately
- * omitted — the index carries no `vendorKycTier` (see defects-log).
+ * Information hierarchy (researched filter-UX best practice — Algolia/NN-group:
+ * surface the few high-intent filters, progressively disclose the rest):
+ *   1. Sort  2. Category (one-tap chips)  3. Destination
+ *   4. "More filters" disclosure (activity + structured refinements)  5. Price
  *
- * Rendered as a Server Component so it works inside the SSR rail AND when
- * streamed as `children` into the client filter Sheet.
+ * Selects/chips navigate instantly; the free-text number inputs (price, group
+ * size) debounce so we don't navigate on every keystroke.
  */
-export async function FacetForm({
-  locale,
-  parsed,
-  instanceId,
-}: FacetFormProps): Promise<ReactElement> {
-  const t = await getTranslations({ locale, namespace: 'SearchPage' })
+export function FacetForm({ parsed, instanceId }: FacetFormProps): ReactElement {
+  const t = useTranslations('SearchPage')
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const minPriceRef = useRef<HTMLInputElement>(null)
+  const maxPriceRef = useRef<HTMLInputElement>(null)
+  const groupRef = useRef<HTMLInputElement>(null)
 
-  const categoryId = `${instanceId}-category`
+  const sortId = `${instanceId}-sort`
   const activityId = `${instanceId}-activity`
   const stateId = `${instanceId}-state`
   const regionId = `${instanceId}-region`
-  const sortId = `${instanceId}-sort`
   const minPriceId = `${instanceId}-minPrice`
   const maxPriceId = `${instanceId}-maxPrice`
   const difficultyId = `${instanceId}-difficulty`
@@ -71,51 +81,107 @@ export async function FacetForm({
   const seasonId = `${instanceId}-season`
   const groupSizeId = `${instanceId}-groupSize`
 
+  /** Merge updates into the live query and navigate (auto-filter). */
+  function navigate(updates: Record<string, string | null>): void {
+    const sp = new URLSearchParams(searchParams.toString())
+    for (const [key, value] of Object.entries(updates)) {
+      if (value === null || value === '') sp.delete(key)
+      else sp.set(key, value)
+    }
+    const qs = sp.toString()
+    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+  }
+
+  /** Debounced commit of the free-text number facets (price + group size). */
+  function commitNumbersDebounced(): void {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      navigate({
+        minPrice: minPriceRef.current?.value ?? null,
+        maxPrice: maxPriceRef.current?.value ?? null,
+        groupSize: groupRef.current?.value ?? null,
+      })
+    }, 450)
+  }
+
+  const moreActive = Boolean(
+    parsed.activity ||
+      parsed.difficulty ||
+      parsed.durationBand ||
+      parsed.seasonMonth ||
+      parsed.maxGroupSize,
+  )
+
+  const categoryChips = [
+    { value: '', label: t('filters.allCategories') },
+    ...CATEGORY_OPTIONS.map((c) => ({
+      value: c.slug,
+      label: t(`filters.categoryOptions.${c.i18nKey}`),
+    })),
+  ]
+
   return (
-    <form method="get" action="/search" className="space-y-5">
-      {parsed.q && <input type="hidden" name="q" value={parsed.q} />}
-
-      <div className="space-y-2" data-testid="facet-category">
-        <Label htmlFor={categoryId}>{t('filters.category')}</Label>
-        <Select name="category" defaultValue={parsed.category ?? ''}>
-          <SelectTrigger id={categoryId} className="w-full">
-            <SelectValue placeholder={t('filters.allCategories')} />
+    <div className="space-y-5">
+      {/* 1 — Sort (high-intent, top) */}
+      <div className="space-y-2" data-testid="facet-sort">
+        <Label htmlFor={sortId}>{t('filters.sortBy')}</Label>
+        <Select
+          value={parsed.sort ?? 'relevance'}
+          onValueChange={(v) => navigate({ sort: v === 'relevance' ? null : v })}
+        >
+          <SelectTrigger id={sortId} className="w-full">
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">{t('filters.allCategories')}</SelectItem>
-            {CATEGORY_OPTIONS.map((c) => (
-              <SelectItem key={c.slug} value={c.slug}>
-                {t(`filters.categoryOptions.${c.i18nKey}`)}
-              </SelectItem>
-            ))}
+            <SelectItem value="relevance">{t('filters.relevance')}</SelectItem>
+            <SelectItem value="price_asc">{t('filters.priceLowHigh')}</SelectItem>
+            <SelectItem value="price_desc">{t('filters.priceHighLow')}</SelectItem>
+            <SelectItem value="newest">{t('filters.newest')}</SelectItem>
+            <SelectItem value="duration_asc">{t('filters.durationShortLong')}</SelectItem>
+            <SelectItem value="duration_desc">{t('filters.durationLongShort')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <div className="space-y-2" data-testid="facet-activity">
-        <Label htmlFor={activityId}>{t('filters.activity')}</Label>
-        <Select name="activity" defaultValue={parsed.activity ?? ''}>
-          <SelectTrigger id={activityId} className="w-full">
-            <SelectValue placeholder={t('filters.allActivities')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">{t('filters.allActivities')}</SelectItem>
-            {ACTIVITY_OPTIONS.map((a) => (
-              <SelectItem key={a.slug} value={a.slug}>
-                {t(`activities.${a.i18nKey}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {/* 2 — Category (one-tap chips — the primary, easiest selector) */}
+      <fieldset className="space-y-2" data-testid="facet-category">
+        <legend className="text-2xs font-medium uppercase tracking-[var(--tracking-eyebrow)] text-muted-foreground">
+          {t('filters.category')}
+        </legend>
+        <div className="flex flex-col gap-1" role="group" aria-label={t('filters.category')}>
+          {categoryChips.map((opt) => {
+            const active = opt.value ? parsed.category === opt.value : !parsed.category
+            return (
+              <button
+                key={opt.value || 'all'}
+                type="button"
+                aria-pressed={active}
+                onClick={() => navigate({ category: opt.value || null })}
+                className={cn(
+                  CHIP_BASE,
+                  active
+                    ? 'bg-primary font-medium text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-muted',
+                )}
+              >
+                {opt.label}
+              </button>
+            )
+          })}
+        </div>
+      </fieldset>
 
+      {/* 3 — Destination (State → City) */}
       <fieldset className="space-y-3">
         <legend className="text-2xs font-medium uppercase tracking-[var(--tracking-eyebrow)] text-muted-foreground">
           {t('filters.destination')}
         </legend>
         <div className="space-y-2" data-testid="facet-state">
           <Label htmlFor={stateId}>{t('filters.state')}</Label>
-          <Select name="state" defaultValue={parsed.state ?? ''}>
+          <Select
+            value={parsed.state ?? ''}
+            onValueChange={(v) => navigate({ state: v || null })}
+          >
             <SelectTrigger id={stateId} className="w-full">
               <SelectValue placeholder={t('filters.allStates')} />
             </SelectTrigger>
@@ -129,10 +195,12 @@ export async function FacetForm({
             </SelectContent>
           </Select>
         </div>
-
         <div className="space-y-2" data-testid="facet-region">
           <Label htmlFor={regionId}>{t('filters.region')}</Label>
-          <Select name="region" defaultValue={parsed.region ?? ''}>
+          <Select
+            value={parsed.region ?? ''}
+            onValueChange={(v) => navigate({ region: v || null })}
+          >
             <SelectTrigger id={regionId} className="w-full">
               <SelectValue placeholder={t('filters.allRegions')} />
             </SelectTrigger>
@@ -148,95 +216,119 @@ export async function FacetForm({
         </div>
       </fieldset>
 
-      <div className="space-y-2" data-testid="facet-difficulty">
-        <Label htmlFor={difficultyId}>{t('filters.difficulty')}</Label>
-        <Select name="difficulty" defaultValue={parsed.difficulty ?? ''}>
-          <SelectTrigger id={difficultyId} className="w-full">
-            <SelectValue placeholder={t('filters.allDifficulties')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">{t('filters.allDifficulties')}</SelectItem>
-            {DIFFICULTY_OPTIONS.map((d) => (
-              <SelectItem key={d} value={d}>
-                {t(`filters.difficultyOptions.${d}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2" data-testid="facet-durationBand">
-        <Label htmlFor={durationBandId}>{t('filters.duration')}</Label>
-        <Select name="durationBand" defaultValue={parsed.durationBand ?? ''}>
-          <SelectTrigger id={durationBandId} className="w-full">
-            <SelectValue placeholder={t('filters.anyDuration')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">{t('filters.anyDuration')}</SelectItem>
-            {DURATION_BANDS.map((band) => (
-              <SelectItem key={band} value={band}>
-                {t(`filters.durationBands.${band}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2" data-testid="facet-season">
-        <Label htmlFor={seasonId}>{t('filters.season')}</Label>
-        <Select
-          name="season"
-          defaultValue={parsed.seasonMonth ? String(parsed.seasonMonth) : ''}
+      {/* 4 — More filters (progressive disclosure for the secondary refinements) */}
+      <details open={moreActive} className="group border-t border-border pt-3">
+        <summary
+          data-testid="facet-more-toggle"
+          className="flex cursor-pointer list-none items-center justify-between text-2xs font-medium uppercase tracking-[var(--tracking-eyebrow)] text-muted-foreground hover:text-foreground"
         >
-          <SelectTrigger id={seasonId} className="w-full">
-            <SelectValue placeholder={t('filters.anySeason')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">{t('filters.anySeason')}</SelectItem>
-            {MONTH_OPTIONS.map((m) => (
-              <SelectItem key={m} value={String(m)}>
-                {t(`filters.months.${m}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+          {t('filters.moreFilters')}
+          <span aria-hidden="true" className="transition-transform group-open:rotate-180">⌄</span>
+        </summary>
 
-      <div className="space-y-2" data-testid="facet-groupSize">
-        <Label htmlFor={groupSizeId}>{t('filters.groupSize')}</Label>
-        <Input
-          id={groupSizeId}
-          type="number"
-          inputMode="numeric"
-          name="groupSize"
-          defaultValue={parsed.maxGroupSize ?? ''}
-          min={1}
-          placeholder={t('filters.groupSizePlaceholder')}
-          aria-describedby={`${groupSizeId}-help`}
-          className="tabular-nums"
-        />
-        <p id={`${groupSizeId}-help`} className="text-2xs text-muted-foreground">
-          {t('filters.groupSizeHelp')}
-        </p>
-      </div>
+        <div className="space-y-4 pt-3">
+          <div className="space-y-2" data-testid="facet-activity">
+            <Label htmlFor={activityId}>{t('filters.activity')}</Label>
+            <Select
+              value={parsed.activity ?? ''}
+              onValueChange={(v) => navigate({ activity: v || null })}
+            >
+              <SelectTrigger id={activityId} className="w-full">
+                <SelectValue placeholder={t('filters.allActivities')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">{t('filters.allActivities')}</SelectItem>
+                {ACTIVITY_OPTIONS.map((a) => (
+                  <SelectItem key={a.slug} value={a.slug}>
+                    {t(`activities.${a.i18nKey}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      <div className="space-y-2" data-testid="facet-sort">
-        <Label htmlFor={sortId}>{t('filters.sortBy')}</Label>
-        <Select name="sort" defaultValue={parsed.sort ?? 'relevance'}>
-          <SelectTrigger id={sortId} className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="relevance">{t('filters.relevance')}</SelectItem>
-            <SelectItem value="price_asc">{t('filters.priceLowHigh')}</SelectItem>
-            <SelectItem value="price_desc">{t('filters.priceHighLow')}</SelectItem>
-            <SelectItem value="newest">{t('filters.newest')}</SelectItem>
-            <SelectItem value="duration_asc">{t('filters.durationShortLong')}</SelectItem>
-            <SelectItem value="duration_desc">{t('filters.durationLongShort')}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+          <div className="space-y-2" data-testid="facet-difficulty">
+            <Label htmlFor={difficultyId}>{t('filters.difficulty')}</Label>
+            <Select
+              value={parsed.difficulty ?? ''}
+              onValueChange={(v) => navigate({ difficulty: v || null })}
+            >
+              <SelectTrigger id={difficultyId} className="w-full">
+                <SelectValue placeholder={t('filters.allDifficulties')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">{t('filters.allDifficulties')}</SelectItem>
+                {DIFFICULTY_OPTIONS.map((d) => (
+                  <SelectItem key={d} value={d}>
+                    {t(`filters.difficultyOptions.${d}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
+          <div className="space-y-2" data-testid="facet-durationBand">
+            <Label htmlFor={durationBandId}>{t('filters.duration')}</Label>
+            <Select
+              value={parsed.durationBand ?? ''}
+              onValueChange={(v) => navigate({ durationBand: v || null })}
+            >
+              <SelectTrigger id={durationBandId} className="w-full">
+                <SelectValue placeholder={t('filters.anyDuration')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">{t('filters.anyDuration')}</SelectItem>
+                {DURATION_BANDS.map((band) => (
+                  <SelectItem key={band} value={band}>
+                    {t(`filters.durationBands.${band}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2" data-testid="facet-season">
+            <Label htmlFor={seasonId}>{t('filters.season')}</Label>
+            <Select
+              value={parsed.seasonMonth ? String(parsed.seasonMonth) : ''}
+              onValueChange={(v) => navigate({ season: v || null })}
+            >
+              <SelectTrigger id={seasonId} className="w-full">
+                <SelectValue placeholder={t('filters.anySeason')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">{t('filters.anySeason')}</SelectItem>
+                {MONTH_OPTIONS.map((m) => (
+                  <SelectItem key={m} value={String(m)}>
+                    {t(`filters.months.${m}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2" data-testid="facet-groupSize">
+            <Label htmlFor={groupSizeId}>{t('filters.groupSize')}</Label>
+            <Input
+              ref={groupRef}
+              id={groupSizeId}
+              type="number"
+              inputMode="numeric"
+              defaultValue={parsed.maxGroupSize ?? ''}
+              min={1}
+              placeholder={t('filters.groupSizePlaceholder')}
+              aria-describedby={`${groupSizeId}-help`}
+              className="tabular-nums"
+              onChange={commitNumbersDebounced}
+            />
+            <p id={`${groupSizeId}-help`} className="text-2xs text-muted-foreground">
+              {t('filters.groupSizeHelp')}
+            </p>
+          </div>
+        </div>
+      </details>
+
+      {/* 5 — Price range (debounced) */}
       <fieldset className="space-y-2">
         <legend className="text-2xs font-medium uppercase tracking-[var(--tracking-eyebrow)] text-muted-foreground">
           {t('filters.priceRange')}
@@ -245,43 +337,42 @@ export async function FacetForm({
           <div className="space-y-2" data-testid="facet-minPrice">
             <Label htmlFor={minPriceId}>{t('filters.minPrice')}</Label>
             <Input
+              ref={minPriceRef}
               id={minPriceId}
               type="number"
               inputMode="numeric"
-              name="minPrice"
               defaultValue={parsed.minPrice ?? ''}
               min={0}
               placeholder="0"
               className="tabular-nums"
+              onChange={commitNumbersDebounced}
             />
           </div>
           <div className="space-y-2" data-testid="facet-maxPrice">
             <Label htmlFor={maxPriceId}>{t('filters.maxPrice')}</Label>
             <Input
+              ref={maxPriceRef}
               id={maxPriceId}
               type="number"
               inputMode="numeric"
-              name="maxPrice"
               defaultValue={parsed.maxPrice ?? ''}
               min={0}
               placeholder={t('filters.anyPrice')}
               className="tabular-nums"
+              onChange={commitNumbersDebounced}
             />
           </div>
         </div>
       </fieldset>
 
-      <div className="flex flex-col gap-2">
-        <Button type="submit" className="w-full">
-          {t('filters.applyFilters')}
-        </Button>
-        <Link
-          href="/search"
-          className={buttonVariants({ variant: 'ghost', className: 'w-full' })}
-        >
-          {t('filters.clear')}
-        </Link>
-      </div>
-    </form>
+      <Button
+        type="button"
+        variant="ghost"
+        className="w-full"
+        onClick={() => router.push(pathname, { scroll: false })}
+      >
+        {t('filters.clear')}
+      </Button>
+    </div>
   )
 }

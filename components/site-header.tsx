@@ -43,7 +43,7 @@ export function SiteHeader(): ReactElement {
             {t('search')}
           </Link>
           <Link
-            href="/adventure/rafting-in-rishikesh"
+            href="/search"
             className={
               isHome
                 ? 'text-sm text-white/80 hover:text-white'
@@ -101,7 +101,7 @@ export function SiteHeader(): ReactElement {
               {t('search')}
             </Link>
             <Link
-              href="/adventure/rafting-in-rishikesh"
+              href="/search"
               className="rounded px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             >
               {t('adventures')}

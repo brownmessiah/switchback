@@ -374,6 +374,7 @@
       "sectionLabel": "શોધ પરિણામો"
     },
     "filters": {
+      "moreFilters": "વધુ ફિલ્ટર",
       "heading": "ફિલ્ટર",
       "sheetDescription": "પ્રવૃત્તિ, પ્રદેશ, ક્રમ અને કિંમત પ્રમાણે અનુભવોને શુદ્ધ કરો.",
       "activity": "પ્રવૃત્તિ",

@@ -332,6 +332,7 @@
       "sectionLabel": "Search results"
     },
     "filters": {
+      "moreFilters": "More filters",
       "heading": "Filters",
       "sheetDescription": "Refine experiences by activity, region, sort order, and price.",
       "activity": "Activity",

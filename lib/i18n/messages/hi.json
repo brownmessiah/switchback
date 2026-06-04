@@ -374,6 +374,7 @@
       "sectionLabel": "खोज परिणाम"
     },
     "filters": {
+      "moreFilters": "और फ़िल्टर",
       "heading": "फ़िल्टर",
       "sheetDescription": "गतिविधि, क्षेत्र, क्रम और मूल्य के अनुसार अनुभव परिष्कृत करें।",
       "activity": "गतिविधि",

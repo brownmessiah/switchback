@@ -507,14 +507,18 @@ test.describe('Search bare', () => {
     const rail = page.getByTestId('search-filter-rail')
     await expect(rail).toBeVisible()
 
-    // Every backend-supported facet is present in the rail.
+    // Primary facets are visible by default (Sort, Category chips, Destination, Price).
     await expect(rail.getByTestId('facet-category')).toBeVisible()
-    await expect(rail.getByTestId('facet-activity')).toBeVisible()
     await expect(rail.getByTestId('facet-state')).toBeVisible()
     await expect(rail.getByTestId('facet-region')).toBeVisible()
     await expect(rail.getByTestId('facet-sort')).toBeVisible()
     await expect(rail.getByTestId('facet-minPrice')).toBeVisible()
     await expect(rail.getByTestId('facet-maxPrice')).toBeVisible()
+
+    // Activity now lives in the "More filters" progressive-disclosure group;
+    // it's present once the disclosure is expanded.
+    await rail.getByTestId('facet-more-toggle').click()
+    await expect(rail.getByTestId('facet-activity')).toBeVisible()
 
     // The rail submits via a native GET form whose action is the bare /search
     // (so the searchParam-name contract and robots/canonical rules hold).
@@ -763,6 +767,8 @@ test.describe('Search filtered', () => {
   }) => {
     await page.goto('/search')
     const rail = page.getByTestId('search-filter-rail')
+    // The structured refinements live in the "More filters" disclosure — expand it.
+    await rail.getByTestId('facet-more-toggle').click()
     await expect(rail.getByTestId('facet-difficulty')).toBeVisible()
     await expect(rail.getByTestId('facet-durationBand')).toBeVisible()
     await expect(rail.getByTestId('facet-season')).toBeVisible()

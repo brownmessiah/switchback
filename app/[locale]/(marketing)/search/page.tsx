@@ -89,7 +89,7 @@ export default async function SearchPage({
           triggerLabel={t('filters.heading')}
           description={t('filters.sheetDescription')}
         >
-          <FacetForm locale={locale} parsed={parsed} instanceId="sheet" />
+          <FacetForm parsed={parsed} instanceId="sheet" />
         </FiltersSheet>
       </div>
 
@@ -104,7 +104,7 @@ export default async function SearchPage({
             <h2 className="mb-4 text-2xs font-medium uppercase tracking-[var(--tracking-eyebrow)] text-muted-foreground">
               {t('filters.heading')}
             </h2>
-            <FacetForm locale={locale} parsed={parsed} instanceId="rail" />
+            <FacetForm parsed={parsed} instanceId="rail" />
           </div>
         </aside>
 

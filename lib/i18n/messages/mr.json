@@ -374,6 +374,7 @@
       "sectionLabel": "शोध परिणाम"
     },
     "filters": {
+      "moreFilters": "अधिक फिल्टर",
       "heading": "फिल्टर",
       "sheetDescription": "क्रियाकलाप, प्रदेश, क्रम आणि किंमतीनुसार अनुभव परिष्कृत करा.",
       "activity": "कार्यक्रम",

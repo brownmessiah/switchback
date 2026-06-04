@@ -2055,7 +2055,10 @@ test.describe('Admin region-closure create/delete (#25)', () => {
       // ── Assert: booking is BLOCKED inline on the Experience page ─────────
       // (ADR-0011 — the closure is surfaced inline and Book-now is disabled.)
       await page.goto(`/experience/${DISPUTE_EXPERIENCE_SLUG}`)
-      await expect(page.getByText('Currently closed')).toBeVisible({ timeout: 15_000 })
+      // The closure is surfaced in BOTH the sticky booking rail and the mobile
+      // bottom bar (#21), so scope to the first match rather than asserting a
+      // single element.
+      await expect(page.getByText('Currently closed').first()).toBeVisible({ timeout: 15_000 })
       await expect(page.getByText(REASON)).toBeVisible()
       // The Book-now link is gone — replaced by a disabled button.
       await expect(page.getByRole('link', { name: 'Book now' })).toHaveCount(0)
@@ -2233,7 +2236,10 @@ test.describe('Admin commission-tier CRUD + scope count (#26)', () => {
     await page.getByRole('tab', { name: /Upcoming/ }).click()
     const row = page.locator(`tr[data-tier-id="${tierId}"]`)
     await expect(row).toBeVisible({ timeout: 15_000 })
-    await row.getByRole('button', { name: 'Edit' }).click()
+    // Commission tier actions live in the detail panel now (table de-cluttered,
+    // #20): select the tier row, then Edit from the panel.
+    await row.getByRole('button', { name: /^Select commission tier/ }).click()
+    await page.getByRole('button', { name: 'Edit' }).click()
 
     const dialog = page.locator('[data-slot="dialog-content"]')
     await expect(dialog.getByText('Edit Commission Tier')).toBeVisible()
@@ -2284,9 +2290,11 @@ test.describe('Admin commission-tier CRUD + scope count (#26)', () => {
     const row = page.locator(`tr[data-tier-id="${tierId}"]`)
     await expect(row).toBeVisible({ timeout: 15_000 })
 
+    // Actions live in the detail panel now (#20): select the tier row first.
+    await row.getByRole('button', { name: /^Select commission tier/ }).click()
     // The delete button confirms via window.confirm — auto-accept it.
     page.once('dialog', (dialog) => dialog.accept())
-    await row.getByRole('button', { name: 'Delete' }).click()
+    await page.getByRole('button', { name: 'Delete' }).click()
 
     // After the action + revalidation the deleted row drops out of the table.
     await expect(row).toHaveCount(0, { timeout: 15_000 })

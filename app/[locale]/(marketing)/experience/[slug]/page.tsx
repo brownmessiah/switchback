@@ -572,22 +572,27 @@ export default async function ExperienceDetailPage({
           {quickFacts.length > 0 && (
             <dl
               aria-label={t('quickFacts.heading')}
-              className="mb-[var(--space-section)] grid grid-cols-2 gap-y-4 rounded-[var(--radius-card)] border border-border p-5 sm:grid-cols-3 sm:divide-x sm:divide-border lg:grid-cols-5"
+              className="mb-[var(--space-section)] grid grid-cols-2 gap-x-5 gap-y-5 rounded-[var(--radius-card)] border border-border bg-card p-5 sm:grid-cols-3"
             >
               {quickFacts.map((fact) => {
                 const Icon = fact.icon
                 return (
-                  <div
-                    key={fact.key}
-                    className="flex items-start gap-2.5 sm:px-4 sm:first:pl-0"
-                  >
-                    <Icon
+                  // "Stat tile": a tinted icon disc + eyebrow label + a prominent
+                  // value. Each tile is self-contained (no cross-column dividers)
+                  // so a longer value wraps within its own cell without throwing
+                  // the row's baselines off.
+                  <div key={fact.key} className="flex items-center gap-3">
+                    <span
                       aria-hidden="true"
-                      className="mt-0.5 size-4 shrink-0 text-muted-foreground"
-                    />
+                      className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary-strong"
+                    >
+                      <Icon className="size-4" />
+                    </span>
                     <div className="min-w-0">
-                      <dt className="text-xs text-muted-foreground">{fact.label}</dt>
-                      <dd className="mt-0.5 text-sm font-medium text-foreground">
+                      <dt className="text-2xs font-medium uppercase tracking-[var(--tracking-eyebrow)] text-muted-foreground">
+                        {fact.label}
+                      </dt>
+                      <dd className="mt-0.5 text-sm font-semibold leading-snug text-foreground">
                         {fact.value}
                       </dd>
                     </div>

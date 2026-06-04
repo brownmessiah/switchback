@@ -2,7 +2,6 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import {
@@ -27,7 +26,6 @@ type Mode = 'signin' | 'signup'
 type Step = 'email' | 'credentials'
 
 export function SignInForm() {
-  const router = useRouter()
   const t = useTranslations('SignInPage.form')
   const tp = useTranslations('SignInPage.trustPanel')
 
@@ -79,8 +77,15 @@ export function SignInForm() {
       // Route to the role-appropriate dashboard (admin / vendor / customer)
       // rather than always the marketing home (ADR-0006 role resolution).
       const dest = await resolvePostAuthPath()
-      router.push(dest)
-      router.refresh()
+      // Hard navigation, NOT router.push()+refresh(): (1) the post-auth session
+      // UI (header AuthStatus + role-aware menu) lives in the PERSISTENT root
+      // layout, which a soft nav doesn't re-render; (2) push() followed by
+      // refresh() races — refresh re-renders the current route (/sign-in) and
+      // reverts the in-flight push, stranding the user on /sign-in (reproduced
+      // on the prod build behind the tunnel). A full nav commits the URL and
+      // re-renders the shell with the new session. Mirrors the locale-switch fix.
+      window.location.assign(dest)
+      return
     } catch {
       setError(t('networkError'))
     } finally {

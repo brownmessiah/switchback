@@ -14,6 +14,7 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { DayDataPoint } from '@/lib/vendor/dashboard-loader'
+import { formatAxisTick } from '@/lib/vendor/format-axis-tick'
 
 interface TrendChartProps {
   readonly title: string
@@ -41,8 +42,14 @@ export function TrendChart({ title, data, colorToken, formatAs, type }: TrendCha
   const color = `var(--${colorToken})`
   const gradientId = `trend-gradient-${colorToken}`
 
+  // Tooltip shows the exact value (space-unconstrained). The y-axis tick uses a
+  // compact form so it never overflows the narrow axis gutter (see
+  // formatAxisTick — fixes the clipped/garbled "0,000" / "'7,500" ticks).
   const formatter = formatAs === 'currency'
     ? (v: number) => `₹${Math.floor(v).toLocaleString('en-IN')}`
+    : (v: number) => String(v)
+  const axisTickFormatter = formatAs === 'currency'
+    ? formatAxisTick
     : (v: number) => String(v)
 
   // Show every 5th label to avoid crowding
@@ -80,8 +87,8 @@ export function TrendChart({ title, data, colorToken, formatAs, type }: TrendCha
                   className="text-muted-foreground"
                   tickLine={false}
                   axisLine={false}
-                  width={40}
-                  tickFormatter={formatter}
+                  width={52}
+                  tickFormatter={axisTickFormatter}
                 />
                 <Tooltip
                   content={({ active, payload }: { active?: boolean; payload?: ReadonlyArray<{ payload?: unknown }> }) => {
@@ -120,8 +127,8 @@ export function TrendChart({ title, data, colorToken, formatAs, type }: TrendCha
                   className="text-muted-foreground"
                   tickLine={false}
                   axisLine={false}
-                  width={40}
-                  tickFormatter={formatter}
+                  width={52}
+                  tickFormatter={axisTickFormatter}
                 />
                 <Tooltip
                   content={({ active, payload }: { active?: boolean; payload?: ReadonlyArray<{ payload?: unknown }> }) => {

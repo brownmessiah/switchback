@@ -214,11 +214,13 @@ export function SignInForm() {
           )}
 
           {step === 'email' ? (
+            // Always rendered at full brand crimson — NOT disabled-on-empty,
+            // which made the primary auth CTA read as a washed-out/disabled pale
+            // pink on first paint. handleContinue still guards the empty case.
             <Button
               type="button"
               data-testid="continue-step1"
               className="w-full"
-              disabled={!email}
               onClick={handleContinue}
             >
               {t('continue')}

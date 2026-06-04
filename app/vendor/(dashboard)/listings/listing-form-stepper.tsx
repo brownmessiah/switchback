@@ -428,7 +428,10 @@ export function ListingFormStepper({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    // Bottom padding reserves clearance equal to the sticky footer's height so
+    // the last field (the edit-mode Photos dropzone + "0/10 images" caption) can
+    // always scroll clear of the pinned action bar instead of sitting behind it.
+    <form onSubmit={handleSubmit} className="space-y-6 pb-24">
       {/* ── Persistent trust banner: 0% upfront + commission transparency ──
           (DESIGN.md B5). success-subtle tint + paired lucide icon so the
           signal is never carried by color alone (DESIGN.md §1.3 / §5). */}
@@ -986,8 +989,11 @@ export function ListingFormStepper({
         </Alert>
       )}
 
-      {/* ── Sticky footer: Back / Save draft / Continue / Submit ──────────── */}
-      <div className="sticky bottom-0 flex flex-wrap items-center gap-3 rounded-[var(--radius-card)] border bg-surface-2 p-4 shadow-[var(--shadow-lg)]">
+      {/* ── Sticky footer: Back / Save draft / Continue / Submit ──────────────
+          Solid bg-background + border so the bar never reads as floating over
+          (and never lets content show through) the Photos dropzone on the
+          longer edit form. The form's pb-24 gives the last field clearance. */}
+      <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 rounded-[var(--radius-card)] border bg-background p-4 shadow-[var(--shadow-lg)]">
         {stepIndex > 0 && (
           <Button type="button" variant="outline" onClick={goBack}>
             Back

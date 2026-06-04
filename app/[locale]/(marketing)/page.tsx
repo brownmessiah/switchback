@@ -117,8 +117,11 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
             sizes="100vw"
           />
           {/* Scrim: darker at top (keeps the overlay header's white text AA)
-              and bottom, so the display headline + chips read over imagery. */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/45 to-black/80" />
+              and bottom, so the display headline + chips read over imagery. The
+              mid-stop is deepened (was /45) because the headline + subtitle sit
+              vertically centred over the busiest, lightest part of the hero
+              photo — the prior mid value left the subtitle low-contrast. */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/60 to-black/80" />
         </div>
 
         <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center px-4 text-center">
@@ -126,7 +129,7 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
             {t('hero.title')}
           </h1>
 
-          <p className="mt-5 max-w-lg text-base text-white/90 sm:text-lg">
+          <p className="mt-5 max-w-lg text-base text-white [text-shadow:0_1px_3px_rgb(0_0_0/0.6)] sm:text-lg">
             {t('hero.subtitle')}
           </p>
 

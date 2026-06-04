@@ -119,11 +119,14 @@ export default async function VendorDashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-baseline gap-2">
+            {/* Wrap so the status pill drops below the figure at the 4-up
+                breakpoint instead of clipping mid-word ("Exc…"). The pill keeps
+                its full label and never truncates. */}
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
               <p className="text-3xl font-semibold tabular-nums">
                 {data.slaScore.toFixed(1)}%
               </p>
-              <Badge variant={slaBadge.variant}>
+              <Badge variant={slaBadge.variant} className="whitespace-nowrap">
                 <SlaIcon aria-hidden="true" />
                 {slaBadge.label}
               </Badge>

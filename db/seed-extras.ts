@@ -621,6 +621,46 @@ const REVIEW_BANK: Array<{ rating: number; title: string; body: string; resp?: s
   { rating: 4, title: 'Loved it', body: 'Great instructors and a gorgeous setting. Would book through Outvers again in a heartbeat.', resp: 'Means a lot — thank you for choosing us!' },
 ]
 
+/**
+ * Hero social-proof enrichment (card-badges P1 fix).
+ *
+ * The card badges in `lib/experiences/card-badges.ts` are data-backed:
+ *   - `bestseller`  ⇐ >= BESTSELLER_MIN_BOOKINGS (6) demand-state bookings
+ *                     (confirmed / awaiting_completion / completed).
+ *   - `top_rated`   ⇐ >= TOP_RATED_MIN_COUNT (5) published reviews whose
+ *                     average rating is >= TOP_RATED_MIN_AVG (4.6), AND
+ *                     fewer than 6 demand bookings (so bestseller wins ties).
+ *
+ * Step 6 above only gives each catalog row ~2 reviews and ~2 demand bookings,
+ * so on a fresh DB nothing earns a badge. This block deliberately enriches a
+ * handful of FLAGSHIP catalog experiences so the badges actually render.
+ *
+ * Demand bookkeeping (matters for the top_rated < 6 constraint): step 6 already
+ * attaches 2 `completed` (= demand) bookings to every catalog row at index
+ * 0..13, and step 7 attaches one booking to indices 14..19. The two top_rated
+ * targets below (marine-drive @0, paragliding @12) therefore already carry 2
+ * demand bookings each. To keep them UNDER 6 demand (so they read as top_rated,
+ * not bestseller) their 5 hero reviews ride on `cancelled_post_experience`
+ * bookings — the experience happened (a legit review) but the booking was later
+ * cancelled post-experience, so card-badges excludes it from the demand count.
+ * Net demand for each top_rated target stays at 2 (< 6) while review count
+ * reaches 7 (>= 5) at an average >= 4.6.
+ *
+ * The two bestseller targets get 7 fresh demand-state bookings (a realistic
+ * confirmed / awaiting_completion / completed mix), pushing them comfortably
+ * over the 6-booking bestseller threshold. No disputed bookings are ever added
+ * (isolation contract); all targets are catalog (u_cat_*) experiences.
+ */
+const HERO_REVIEW_BANK: Array<{ rating: number; title: string; body: string; resp?: string }> = [
+  { rating: 5, title: 'A genuine bucket-list day', body: 'From the safety brief to the final stretch, every detail was dialled in. The guides were calm, certified, and clearly loved their craft. Easily the highlight of our entire trip.', resp: 'This made our week — thank you for the kind words!' },
+  { rating: 5, title: 'Flawless from booking to finish', body: 'Transparent pricing, instant confirmation, and an experience that exceeded the photos. The verified-vendor badge turned out to be completely earned.' },
+  { rating: 5, title: 'Better than I dared hope', body: 'I was nervous as a first-timer but the crew put me at ease in minutes. Top-tier gear, real expertise, and a setting that took my breath away.' },
+  { rating: 4, title: 'Superb — and great value', body: 'Knocking a single star only because I wish a couple of photos had been included. The activity itself was a clean five out of five.' },
+  { rating: 5, title: 'Would do it again tomorrow', body: 'Professional, punctual and genuinely thrilling. You can feel the difference when an operator actually cares about safety and the guest experience.', resp: 'Come back any time — the door is always open.' },
+  { rating: 5, title: 'Worth every single rupee', body: 'A small group, a brilliant guide, and a memory we will be telling people about for years. The free-cancellation policy gave us the confidence to book early.' },
+  { rating: 5, title: 'The real deal', body: 'No upselling, no shortcuts, no surprises. Just a superbly run adventure by people who know exactly what they are doing. Highly, highly recommended.' },
+]
+
 const BLOG: Array<{ slug: string; title: string; category: string; excerpt: string }> = [
   { slug: 'rishikesh-rafting-grades-explained', title: 'Rishikesh Rafting Grades, Explained (I–V)', category: 'guides', excerpt: 'What the Grade III+ on your booking actually means — and which stretch of the Ganga is right for first-timers.' },
   { slug: 'best-time-bir-billing-paragliding', title: 'The Best Time to Fly Bir-Billing', category: 'destinations', excerpt: 'Thermals, monsoon windows, and the two paragliding seasons that make Bir the world’s second-best flying site.' },
@@ -898,6 +938,118 @@ async function main(db: SeedDb): Promise<void> {
       ...(s.state.startsWith('cancelled') ? { cancelledAt: ago(5), cancellationReason: 'Catalog demo cancellation.' } : {}),
       confirmedAt: ago(35),
     })
+  }
+
+  // ── 7b. Hero social-proof: flagship cards that earn Bestseller / Top-rated ─
+  // See HERO_REVIEW_BANK above for the full rationale + demand bookkeeping.
+  const catalogBySlug = new Map(catalog.map((c) => [c.slug, c]))
+
+  // TOP-RATED targets: 5 published reviews (avg >= 4.6) on non-demand
+  // (`cancelled_post_experience`) bookings so demand stays < 6 → top_rated.
+  const HERO_TOP_RATED = [
+    'rishikesh-rafting-marine-drive-25km',
+    'bir-billing-paragliding-acro-cross-country',
+  ]
+  const HERO_TOP_RATED_RATINGS = [5, 5, 5, 4, 5] as const // avg 4.8 (>= 4.6)
+  for (let ti = 0; ti < HERO_TOP_RATED.length; ti++) {
+    const exp = catalogBySlug.get(HERO_TOP_RATED[ti])
+    const slotId = exp ? slotForExp.get(exp.id) : undefined
+    if (!exp || !slotId) continue
+    const gross = Math.round(Number(exp.price12) * 2)
+    for (let r = 0; r < HERO_TOP_RATED_RATINGS.length; r++) {
+      const person = PEOPLE[(ti * 5 + r) % PEOPLE.length]
+      const bId = ns('hero', ti * 100 + r)
+      const bExists = await db.select({ id: bookings.id }).from(bookings).where(eq(bookings.id, bId)).limit(1)
+      if (bExists.length === 0) {
+        await db.insert(bookings).values({
+          id: bId,
+          customerUserId: person.id,
+          experienceId: exp.id,
+          slotId,
+          participantCount: 2,
+          state: 'cancelled_post_experience',
+          paymentMode: 'full_upfront',
+          grossTotalSnapshot: String(gross),
+          pricePerParticipantSnapshot: exp.price12,
+          pricingBasisSnapshot: 'tier_1_2',
+          commissionRateSnapshot: '20.00',
+          commissionBasisSnapshot: 'vendor_base',
+          cancellationPresetSnapshot: exp.preset,
+          tdsAmountSnapshot: '0.00',
+          tcsAmountSnapshot: (gross * 0.005).toFixed(2),
+          tcsRateSnapshot: '0.50',
+          gstRateOnCommissionSnapshot: '18.00',
+          vendorIsResidentSnapshot: true,
+          payoutState: 'held',
+          confirmedAt: ago(45),
+          completedAt: ago(25),
+          cancelledAt: ago(22),
+          cancellationReason: 'Post-experience cancellation (demo).',
+        })
+      }
+      const tmpl = HERO_REVIEW_BANK[(ti * 5 + r) % HERO_REVIEW_BANK.length]
+      const revExists = await db.select({ id: reviews.id }).from(reviews).where(eq(reviews.bookingId, bId)).limit(1)
+      if (revExists.length === 0) {
+        await db.insert(reviews).values({
+          bookingId: bId,
+          customerUserId: person.id,
+          experienceId: exp.id,
+          vendorUserId: exp.vendorUserId,
+          rating: HERO_TOP_RATED_RATINGS[r],
+          title: tmpl.title,
+          body: tmpl.body,
+          status: 'published',
+          ...(tmpl.resp ? { vendorResponse: tmpl.resp, vendorRespondedAt: ago(20) } : {}),
+          createdAt: ago(24 - r),
+        })
+      }
+    }
+  }
+
+  // BESTSELLER targets: 7 demand-state bookings each (confirmed /
+  // awaiting_completion / completed mix) → >= 6 demand → bestseller.
+  const HERO_BESTSELLER = [
+    'goa-scuba-diving-grande-twin-tank',
+    'manali-trekking-beas-kund-3d',
+  ]
+  const HERO_BESTSELLER_STATES: Array<'confirmed' | 'awaiting_completion' | 'completed'> = [
+    'completed', 'completed', 'completed', 'awaiting_completion', 'awaiting_completion', 'confirmed', 'confirmed',
+  ]
+  for (let bi = 0; bi < HERO_BESTSELLER.length; bi++) {
+    const exp = catalogBySlug.get(HERO_BESTSELLER[bi])
+    const slotId = exp ? slotForExp.get(exp.id) : undefined
+    if (!exp || !slotId) continue
+    const gross = Math.round(Number(exp.price12) * 2)
+    for (let k = 0; k < HERO_BESTSELLER_STATES.length; k++) {
+      const state = HERO_BESTSELLER_STATES[k]
+      const person = PEOPLE[(bi * 7 + k) % PEOPLE.length]
+      const bId = ns('hero', 1000 + bi * 100 + k)
+      const bExists = await db.select({ id: bookings.id }).from(bookings).where(eq(bookings.id, bId)).limit(1)
+      if (bExists.length > 0) continue
+      await db.insert(bookings).values({
+        id: bId,
+        customerUserId: person.id,
+        experienceId: exp.id,
+        slotId,
+        participantCount: 2,
+        state,
+        paymentMode: 'full_upfront',
+        grossTotalSnapshot: String(gross),
+        pricePerParticipantSnapshot: exp.price12,
+        pricingBasisSnapshot: 'tier_1_2',
+        commissionRateSnapshot: '20.00',
+        commissionBasisSnapshot: 'vendor_base',
+        cancellationPresetSnapshot: exp.preset,
+        tdsAmountSnapshot: '0.00',
+        tcsAmountSnapshot: (gross * 0.005).toFixed(2),
+        tcsRateSnapshot: '0.50',
+        gstRateOnCommissionSnapshot: '18.00',
+        vendorIsResidentSnapshot: true,
+        payoutState: state === 'completed' ? 'approved' : 'pending',
+        confirmedAt: ago(38 - k),
+        ...(state === 'completed' ? { completedAt: ago(12 - k) } : {}),
+      })
+    }
   }
 
   // ── 8. payments for catalog confirmed/completed bookings ──────────────────

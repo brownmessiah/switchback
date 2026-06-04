@@ -51,6 +51,14 @@ import {
   walletBalances,
 } from '@/db/schema'
 import { setupTestDb, type TestDB } from '@/tests/helpers/db'
+import {
+  BESTSELLER_MIN_BOOKINGS,
+  TOP_RATED_MIN_AVG,
+  TOP_RATED_MIN_COUNT,
+  deriveHighlight,
+  loadExperienceBookingCountMap,
+  loadExperienceRatingMap,
+} from '@/lib/experiences/card-badges'
 
 import { seedCatalog } from './seed-extras'
 
@@ -332,6 +340,98 @@ describe('seedCatalog — canonical seed enrichment', () => {
         .where(eq(experiences.slug, 'leh-ladakh-rafting-zanskar-grade-iv'))
       expect(`${zanskar.short} ${zanskar.long}`).toContain('28 km')
       expect(`${zanskar.short} ${zanskar.long}`).not.toContain('26 km')
+    })
+  })
+
+  describe('hero social-proof: flagship cards earn Bestseller / Top-rated badges', () => {
+    /** Compute the live card-badge fields for a catalog experience by slug. */
+    async function badgeFor(slug: string): Promise<{
+      ratingAvg: number | null
+      ratingCount: number
+      bookingCount: number
+      highlight: 'bestseller' | 'top_rated' | null
+    }> {
+      const [exp] = await db
+        .select({ id: experiences.id })
+        .from(experiences)
+        .where(eq(experiences.slug, slug))
+      const [ratingMap, bookingMap] = await Promise.all([
+        loadExperienceRatingMap(db, [exp.id]),
+        loadExperienceBookingCountMap(db, [exp.id]),
+      ])
+      const rating = ratingMap.get(exp.id)
+      const ratingAvg = rating?.avg ?? null
+      const ratingCount = rating?.count ?? 0
+      const bookingCount = bookingMap.get(exp.id) ?? 0
+      return {
+        ratingAvg,
+        ratingCount,
+        bookingCount,
+        highlight: deriveHighlight({ ratingAvg, ratingCount, bookingCount }),
+      }
+    }
+
+    it('makes at least one experience top_rated-qualifying (>= 5 reviews, avg >= 4.6, < 6 demand bookings)', async () => {
+      const b = await badgeFor('rishikesh-rafting-marine-drive-25km')
+      expect(b.ratingCount).toBeGreaterThanOrEqual(TOP_RATED_MIN_COUNT)
+      expect(b.ratingAvg ?? 0).toBeGreaterThanOrEqual(TOP_RATED_MIN_AVG)
+      expect(b.bookingCount).toBeLessThan(BESTSELLER_MIN_BOOKINGS)
+      expect(b.highlight).toBe('top_rated')
+    })
+
+    it('makes the second flagship slug top_rated-qualifying too', async () => {
+      const b = await badgeFor('bir-billing-paragliding-acro-cross-country')
+      expect(b.ratingCount).toBeGreaterThanOrEqual(TOP_RATED_MIN_COUNT)
+      expect(b.ratingAvg ?? 0).toBeGreaterThanOrEqual(TOP_RATED_MIN_AVG)
+      expect(b.bookingCount).toBeLessThan(BESTSELLER_MIN_BOOKINGS)
+      expect(b.highlight).toBe('top_rated')
+    })
+
+    it('makes at least one experience bestseller-qualifying (>= 6 demand-state bookings)', async () => {
+      const b = await badgeFor('goa-scuba-diving-grande-twin-tank')
+      expect(b.bookingCount).toBeGreaterThanOrEqual(BESTSELLER_MIN_BOOKINGS)
+      expect(b.highlight).toBe('bestseller')
+    })
+
+    it('makes the second flagship slug bestseller-qualifying too', async () => {
+      const b = await badgeFor('manali-trekking-beas-kund-3d')
+      expect(b.bookingCount).toBeGreaterThanOrEqual(BESTSELLER_MIN_BOOKINGS)
+      expect(b.highlight).toBe('bestseller')
+    })
+
+    it('yields >= 1 top_rated and >= 1 bestseller across the catalog', async () => {
+      const rows = await db
+        .select({ id: experiences.id })
+        .from(experiences)
+        .innerJoin(vendorProfiles, eq(experiences.vendorUserId, vendorProfiles.userId))
+        .where(like(vendorProfiles.userId, 'u_cat_%'))
+      const ids = rows.map((r) => r.id)
+      const [ratingMap, bookingMap] = await Promise.all([
+        loadExperienceRatingMap(db, ids),
+        loadExperienceBookingCountMap(db, ids),
+      ])
+      let topRated = 0
+      let bestseller = 0
+      for (const id of ids) {
+        const rating = ratingMap.get(id)
+        const highlight = deriveHighlight({
+          ratingAvg: rating?.avg ?? null,
+          ratingCount: rating?.count ?? 0,
+          bookingCount: bookingMap.get(id) ?? 0,
+        })
+        if (highlight === 'top_rated') topRated++
+        if (highlight === 'bestseller') bestseller++
+      }
+      expect(topRated).toBeGreaterThanOrEqual(1)
+      expect(bestseller).toBeGreaterThanOrEqual(1)
+    })
+
+    it('adds no disputed bookings via the hero enrichment', async () => {
+      const [{ d }] = await db
+        .select({ d: sql<number>`count(*)::int` })
+        .from(bookings)
+        .where(eq(bookings.state, 'disputed'))
+      expect(d).toBe(0)
     })
   })
 

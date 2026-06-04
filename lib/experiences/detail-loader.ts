@@ -86,7 +86,7 @@ export interface ExperienceDetailData {
    * horizon, ascending — power the Booking-rail date picker (#70). Empty when
    * nothing is bookable.
    */
-  availableSlots: { id: string; startAt: Date }[]
+  availableSlots: { id: string; startAt: Date; endAt: Date; remaining: number }[]
   /**
    * A Region closure (ADR-0011) overlapping this Experience's bookable window
    * (now → now + 90d), or null when the region is open. When set, the booking
@@ -265,7 +265,13 @@ async function hydrateDetail(
   // single-slot query). Capped to a sensible horizon.
   const now = new Date()
   const openSlots = await db
-    .select({ id: availabilitySlots.id, startAt: availabilitySlots.startAt })
+    .select({
+      id: availabilitySlots.id,
+      startAt: availabilitySlots.startAt,
+      endAt: availabilitySlots.endAt,
+      capacity: availabilitySlots.capacity,
+      capacityTaken: availabilitySlots.capacityTaken,
+    })
     .from(availabilitySlots)
     .where(
       and(
@@ -331,7 +337,12 @@ async function hydrateDetail(
       region,
       gallery,
       nextAvailableSlotId: openSlots[0]?.id ?? null,
-      availableSlots: openSlots.map((s) => ({ id: s.id, startAt: s.startAt })),
+      availableSlots: openSlots.map((s) => ({
+        id: s.id,
+        startAt: s.startAt,
+        endAt: s.endAt,
+        remaining: Math.max(0, s.capacity - s.capacityTaken),
+      })),
       activeClosure: closure
         ? {
             reason: closure.reason,

@@ -296,7 +296,11 @@
       "selected": "ବଛାଯାଇଛି",
       "prevMonth": "ପୂର୍ବ ମାସ",
       "nextMonth": "ପରବର୍ତ୍ତୀ ମାସ",
-      "noDates": "କୌଣସି ତାରିଖ ଉପଲବ୍ଧ ନାହିଁ"
+      "noDates": "କୌଣସି ତାରିଖ ଉପଲବ୍ଧ ନାହିଁ",
+      "times": "ଉପଲବ୍ଧ ସମୟ",
+      "seatsLeft": "{count}ଟି ବାକି",
+      "soldOut": "ବିକ୍ରି ହୋଇଗଲା",
+      "onlyNLeft": "ଏହି ସମୟରେ କେବଳ {count}ଟି {count, plural, one {ସ୍ଥାନ} other {ସ୍ଥାନ}} ବାକି ଅଛି"
     }
   },
   "SearchPage": {

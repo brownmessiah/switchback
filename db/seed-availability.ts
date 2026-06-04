@@ -16,13 +16,21 @@ type SeedDb = Parameters<typeof materializeSlots>[0]
  */
 export const DEFAULT_AVAILABILITY_DAYS = [1, 2, 4, 5, 6] as const
 
+/**
+ * Multiple time windows per available day (morning / midday / afternoon) so
+ * each date offers SEVERAL time slots — parity with outvers.com, where a
+ * customer picks both a date and a time. Each window materialises its own slot
+ * (one `availability_slots` row per day × window), each with its own capacity.
+ */
+export const DEFAULT_TIME_WINDOWS = [
+  { startTime: '07:00', endTime: '10:00' },
+  { startTime: '11:00', endTime: '14:00' },
+  { startTime: '15:00', endTime: '18:00' },
+] as const
+
 interface SeedAvailabilityOptions {
-  /** Per-slot capacity (default 10). */
+  /** Per-slot capacity / max attendees (default 10). */
   capacity?: number
-  /** Slot start time "HH:MM" (default "09:00"). */
-  startTime?: string
-  /** Slot end time "HH:MM" (default "12:00"). */
-  endTime?: string
   /** Days of materialisation horizon (default 90). */
   daysForward?: number
 }
@@ -46,26 +54,26 @@ export async function seedDefaultAvailability(
   options: SeedAvailabilityOptions = {},
 ): Promise<void> {
   const capacity = options.capacity ?? 10
-  const startTime = options.startTime ?? '09:00'
-  const endTime = options.endTime ?? '12:00'
 
-  const existing = await db
-    .select({ id: availabilityPatterns.id })
-    .from(availabilityPatterns)
-    .where(eq(availabilityPatterns.experienceId, experienceId))
-    .limit(1)
+  // Authoritative reset of THIS experience's default patterns so a config change
+  // (e.g. single-window → multi-window) always re-applies on reseed. Safe in the
+  // seed path (these experiences' availability is seed-owned). Slots are NOT
+  // deleted — materializeSlots is additive (ON CONFLICT DO NOTHING) and never
+  // touches existing/booked slots.
+  await db.delete(availabilityPatterns).where(eq(availabilityPatterns.experienceId, experienceId))
 
-  if (existing.length === 0) {
-    await db.insert(availabilityPatterns).values(
-      DEFAULT_AVAILABILITY_DAYS.map((dayOfWeek) => ({
+  // One pattern per (day × time window) → several time slots per date.
+  await db.insert(availabilityPatterns).values(
+    DEFAULT_AVAILABILITY_DAYS.flatMap((dayOfWeek) =>
+      DEFAULT_TIME_WINDOWS.map((w) => ({
         experienceId,
         dayOfWeek,
-        startTime,
-        endTime,
+        startTime: w.startTime,
+        endTime: w.endTime,
         capacity,
       })),
-    )
-  }
+    ),
+  )
 
   await materializeSlots(db, experienceId, options.daysForward ?? 90)
 }

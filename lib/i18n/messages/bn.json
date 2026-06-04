@@ -374,7 +374,11 @@
       "selected": "নির্বাচিত",
       "prevMonth": "পূর্ববর্তী মাস",
       "nextMonth": "পরবর্তী মাস",
-      "noDates": "কোনো তারিখ উপলব্ধ নেই"
+      "noDates": "কোনো তারিখ উপলব্ধ নেই",
+      "times": "উপলব্ধ সময়",
+      "seatsLeft": "{count}টি বাকি",
+      "soldOut": "বিক্রি হয়ে গেছে",
+      "onlyNLeft": "এই সময়ে কেবল {count}টি {count, plural, one {আসন} other {আসন}} বাকি আছে"
     }
   },
   "SearchPage": {

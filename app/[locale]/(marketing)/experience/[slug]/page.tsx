@@ -324,10 +324,12 @@ export default async function ExperienceDetailPage({
   // + payment only.
   const checkoutHref = `/checkout?experienceId=${detail.id}`
 
-  // Flatten future slots for the client date picker (Date → ISO string).
+  // Flatten future slots for the client date + time picker (Date → ISO string).
   const calendarSlots = detail.availableSlots.map((s) => ({
     id: s.id,
     startAtISO: s.startAt.toISOString(),
+    endAtISO: s.endAt.toISOString(),
+    remaining: s.remaining,
   }))
 
   const railClosure: BookingRailClosure | null = detail.activeClosure

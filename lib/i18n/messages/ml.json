@@ -374,7 +374,11 @@
       "selected": "തിരഞ്ഞെടുത്തു",
       "prevMonth": "മുൻ മാസം",
       "nextMonth": "അടുത്ത മാസം",
-      "noDates": "തീയതികളൊന്നും ലഭ്യമല്ല"
+      "noDates": "തീയതികളൊന്നും ലഭ്യമല്ല",
+      "times": "ലഭ്യമായ സമയങ്ങൾ",
+      "seatsLeft": "{count} ബാക്കി",
+      "soldOut": "വിറ്റുതീർന്നു",
+      "onlyNLeft": "ഈ സമയത്ത് {count} {count, plural, one {സ്ഥലം} other {സ്ഥലങ്ങൾ}} മാത്രമേ ബാക്കിയുള്ളൂ"
     }
   },
   "SearchPage": {

@@ -296,7 +296,11 @@
       "selected": "নিৰ্বাচিত",
       "prevMonth": "যোৱা মাহ",
       "nextMonth": "অহা মাহ",
-      "noDates": "কোনো তাৰিখ উপলব্ধ নাই"
+      "noDates": "কোনো তাৰিখ উপলব্ধ নাই",
+      "times": "উপলব্ধ সময়",
+      "seatsLeft": "{count}টা বাকী",
+      "soldOut": "বিক্ৰী হৈ গৈছে",
+      "onlyNLeft": "এই সময়ত কেৱল {count}টা {count, plural, one {ঠাই} other {ঠাই}} বাকী আছে"
     }
   },
   "SearchPage": {

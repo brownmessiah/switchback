@@ -3,6 +3,7 @@
 import { useState, type ReactElement } from 'react'
 
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { CalendarX, CircleCheck, Clock, Info, Minus, Plus, Users, Wallet } from 'lucide-react'
 
 import { buttonVariants } from '@/components/ui/button'
@@ -13,9 +14,16 @@ import {
   computeBookingPrice,
   type BracketPrices,
 } from '@/lib/experiences/booking-price'
-import type { CalendarSlot } from '@/lib/experiences/booking-calendar'
+import {
+  dateKey,
+  firstBookableSlotId,
+  maxBookableParticipants,
+  slotsByDate,
+  type CalendarSlot,
+} from '@/lib/experiences/booking-calendar'
 
 import { BookingCalendar, type BookingCalendarLabels } from './booking-calendar'
+import { TimeSlotList } from './time-slot-list'
 import type { BookingRailBracket, BookingRailClosure } from './booking-rail'
 
 export interface BookingRailInteractiveProps {
@@ -78,12 +86,29 @@ export function BookingRailInteractive({
   calendarLabels,
   closure,
 }: BookingRailInteractiveProps): ReactElement {
+  const t = useTranslations('ExperiencePage')
   const max = Math.max(1, maxParticipants)
-  const [count, setCount] = useState(1)
-  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(
-    slots[0]?.id ?? null,
+  const byDate = slotsByDate(slots)
+
+  // Date → time-slot → participants. A date is chosen on the calendar; that
+  // date's time slots appear below; the chosen slot's remaining seats (its max
+  // attendees minus what's booked) bounds the participant stepper, so a booking
+  // can never exceed a slot's capacity (booking-create enforces the same).
+  const [selectedDate, setSelectedDate] = useState<string | null>(() =>
+    slots.length ? dateKey(new Date(slots[0].startAtISO)) : null,
   )
+  const slotsForSelectedDate = (selectedDate && byDate.get(selectedDate)) || []
+  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(() =>
+    firstBookableSlotId(slotsForSelectedDate),
+  )
+  const [count, setCount] = useState(1)
   const disabled = Boolean(closure)
+
+  const selectedSlot = slots.find((s) => s.id === selectedSlotId) ?? null
+  const slotRemaining = selectedSlot?.remaining ?? max
+  const maxForSlot = Math.max(1, maxBookableParticipants(slotRemaining, max))
+  // The slot's seats are the binding limit (tighter than the group-size cap).
+  const slotLimited = selectedSlot != null && selectedSlot.remaining < max
 
   const prices: BracketPrices = {
     p12: brackets[0]?.priceRupees ?? 0,
@@ -94,8 +119,25 @@ export function BookingRailInteractive({
   const activeBracket = bracketKeyFor(count)
   const bracketKeys = ['1_2', '3_5', '6_plus'] as const
 
+  /** Cap the count to a slot's bookable ceiling when the slot/date changes. */
+  function clampCountTo(slotId: string | null): void {
+    const slot = slots.find((s) => s.id === slotId)
+    const ceiling = slot ? Math.max(1, maxBookableParticipants(slot.remaining, max)) : max
+    setCount((c) => Math.min(c, ceiling))
+  }
+  function pickDate(key: string): void {
+    setSelectedDate(key)
+    const firstId = firstBookableSlotId(byDate.get(key))
+    setSelectedSlotId(firstId)
+    clampCountTo(firstId)
+  }
+  function pickSlot(id: string): void {
+    setSelectedSlotId(id)
+    clampCountTo(id)
+  }
+
   const dec = () => setCount((c) => Math.max(1, c - 1))
-  const inc = () => setCount((c) => Math.min(max, c + 1))
+  const inc = () => setCount((c) => Math.min(maxForSlot, c + 1))
   const slotParam = selectedSlotId ? `&slotId=${selectedSlotId}` : ''
   const href = `${checkoutHref}${slotParam}&participants=${count}`
 
@@ -172,7 +214,7 @@ export function BookingRailInteractive({
           <button
             type="button"
             onClick={inc}
-            disabled={disabled || count >= max}
+            disabled={disabled || count >= maxForSlot}
             aria-label={`${participantsLabel} +`}
             className={cn(stepBtn, 'disabled:opacity-40')}
           >
@@ -181,16 +223,34 @@ export function BookingRailInteractive({
         </div>
       </div>
 
-      {/* Date picker (#70) — pick an available date; its slot id is carried into
-          Checkout. Hidden while booking is paused (the closure notice explains). */}
+      {/* Capacity note — shown when the chosen time slot's seats are the binding
+          limit (fewer than the group-size cap), so the user understands why the
+          stepper stops (e.g. "Only 3 spaces left at this time"). */}
+      {!disabled && slotLimited && selectedSlot && (
+        <p className="text-2xs text-muted-foreground" role="status">
+          {t('calendar.onlyNLeft', { count: selectedSlot.remaining })}
+        </p>
+      )}
+
+      {/* Date + time picker (#70) — pick a date, then a time slot; the chosen
+          slot is carried into Checkout. Hidden while booking is paused (the
+          closure notice explains). */}
       {!disabled && (
-        <BookingCalendar
-          slots={slots}
-          selectedSlotId={selectedSlotId}
-          onSelect={setSelectedSlotId}
-          locale={locale}
-          labels={calendarLabels}
-        />
+        <div className="space-y-3">
+          <BookingCalendar
+            slots={slots}
+            selectedDate={selectedDate}
+            onSelectDate={pickDate}
+            locale={locale}
+            labels={calendarLabels}
+          />
+          <TimeSlotList
+            slots={slotsForSelectedDate}
+            selectedSlotId={selectedSlotId}
+            onSelectSlot={pickSlot}
+            locale={locale}
+          />
+        </div>
       )}
 
       {/* Live price breakdown — Total then (when Partial pay is allowed) the

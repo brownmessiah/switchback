@@ -374,7 +374,11 @@
       "selected": "منتخب شدہ",
       "prevMonth": "پچھلا مہینہ",
       "nextMonth": "اگلا مہینہ",
-      "noDates": "کوئی تاریخ دستیاب نہیں"
+      "noDates": "کوئی تاریخ دستیاب نہیں",
+      "times": "دستیاب اوقات",
+      "seatsLeft": "{count} باقی",
+      "soldOut": "فروخت ہو چکا",
+      "onlyNLeft": "اس وقت صرف {count} {count, plural, one {جگہ} other {جگہیں}} باقی ہیں"
     }
   },
   "SearchPage": {

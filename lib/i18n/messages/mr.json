@@ -374,7 +374,11 @@
       "selected": "निवडलेले",
       "prevMonth": "मागील महिना",
       "nextMonth": "पुढील महिना",
-      "noDates": "कोणतीही तारीख उपलब्ध नाही"
+      "noDates": "कोणतीही तारीख उपलब्ध नाही",
+      "times": "उपलब्ध वेळा",
+      "seatsLeft": "{count} शिल्लक",
+      "soldOut": "विकले गेले",
+      "onlyNLeft": "या वेळी फक्त {count} {count, plural, one {जागा} other {जागा}} शिल्लक आहेत"
     }
   },
   "SearchPage": {

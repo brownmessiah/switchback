@@ -8,7 +8,11 @@ import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 
-import { DEFAULT_AVAILABILITY_DAYS, seedDefaultAvailability } from './seed-availability'
+import {
+  DEFAULT_AVAILABILITY_DAYS,
+  DEFAULT_TIME_WINDOWS,
+  seedDefaultAvailability,
+} from './seed-availability'
 
 describe('seedDefaultAvailability', () => {
   let db: TestDB
@@ -61,18 +65,38 @@ describe('seedDefaultAvailability', () => {
     return rows.length
   }
 
-  it('creates one weekly pattern per default day and materializes many future slots', async () => {
+  it('creates a pattern per (day × time window) and materializes many future slots', async () => {
     await seedDefaultAvailability(db, expId, { daysForward: 90 })
 
     const patterns = await db
       .select({ dayOfWeek: availabilityPatterns.dayOfWeek })
       .from(availabilityPatterns)
       .where(eq(availabilityPatterns.experienceId, expId))
-    expect(patterns.length).toBe(DEFAULT_AVAILABILITY_DAYS.length)
-    expect(patterns.map((p) => p.dayOfWeek).sort()).toEqual([...DEFAULT_AVAILABILITY_DAYS].sort())
+    // One pattern per available day × time window.
+    expect(patterns.length).toBe(
+      DEFAULT_AVAILABILITY_DAYS.length * DEFAULT_TIME_WINDOWS.length,
+    )
+    // The distinct weekdays covered are exactly the default availability days.
+    expect([...new Set(patterns.map((p) => p.dayOfWeek))].sort()).toEqual(
+      [...DEFAULT_AVAILABILITY_DAYS].sort(),
+    )
 
-    // 5 days/week over 90 days → comfortably more than a single sparse slot.
-    expect(await futureBookableCount()).toBeGreaterThanOrEqual(40)
+    // 5 days/week × 3 windows over 90 days → far more than a sparse slot or two.
+    expect(await futureBookableCount()).toBeGreaterThanOrEqual(100)
+  })
+
+  it('materializes MULTIPLE time slots on a single date (date + time selection)', async () => {
+    const rows = await db
+      .select({ startAt: availabilitySlots.startAt })
+      .from(availabilitySlots)
+      .where(and(eq(availabilitySlots.experienceId, expId), gte(availabilitySlots.startAt, new Date())))
+    const byDate = new Map<string, number>()
+    for (const r of rows) {
+      const key = new Date(r.startAt).toISOString().slice(0, 10)
+      byDate.set(key, (byDate.get(key) ?? 0) + 1)
+    }
+    const maxPerDay = Math.max(...byDate.values())
+    expect(maxPerDay).toBe(DEFAULT_TIME_WINDOWS.length)
   })
 
   it('is idempotent — re-running adds no duplicate patterns or slots', async () => {

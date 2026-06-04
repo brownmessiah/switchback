@@ -6,6 +6,7 @@ import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import {
+  dateIsBookable,
   dateKey,
   monthCells,
   slotsByDate,
@@ -23,12 +24,12 @@ export interface BookingCalendarLabels {
 }
 
 interface BookingCalendarProps {
-  /** Future, ascending-sorted bookable slots (one date may map to one slot). */
+  /** Future, ascending-sorted bookable slots (a date may have several). */
   slots: CalendarSlot[]
-  /** The currently chosen slot (drives the "selected" highlight). */
-  selectedSlotId: string | null
-  /** Called with the picked date's slot id. */
-  onSelect: (slotId: string) => void
+  /** The currently chosen date key (`YYYY-MM-DD`). */
+  selectedDate: string | null
+  /** Called with the picked date key — the rail then shows that date's times. */
+  onSelectDate: (dateKey: string) => void
   /** Active locale — month + weekday names are formatted via Intl. */
   locale: string
   /** Already-translated UI labels. */
@@ -40,15 +41,14 @@ function ym(d: Date): { year: number; month: number } {
 }
 
 /**
- * Month-grid date picker for the Booking rail (#70). Each date that has a
- * bookable availability slot is selectable; picking one carries its real slot id
- * into Checkout. Month + weekday names are localized via `Intl.DateTimeFormat`
- * (UTC, matching how slots are stored) so no per-month i18n keys are needed.
+ * Month-grid DATE picker for the Booking rail (#70). A date is selectable when
+ * it has at least one slot with seats remaining; picking it surfaces that date's
+ * time slots in the rail. Month + weekday names are localized via Intl (UTC).
  */
 export function BookingCalendar({
   slots,
-  selectedSlotId,
-  onSelect,
+  selectedDate,
+  onSelectDate,
   locale,
   labels,
 }: BookingCalendarProps): ReactElement {
@@ -74,7 +74,6 @@ export function BookingCalendar({
     year: 'numeric',
     timeZone: 'UTC',
   }).format(new Date(Date.UTC(view.year, view.month, 1)))
-  // Weekday short names, Sunday-first (2023-01-01 was a Sunday), localized.
   const weekdayFmt = new Intl.DateTimeFormat(locale, { weekday: 'short', timeZone: 'UTC' })
   const weekdays = Array.from({ length: 7 }, (_, i) =>
     weekdayFmt.format(new Date(Date.UTC(2023, 0, 1 + i))),
@@ -134,9 +133,8 @@ export function BookingCalendar({
           {cells.map((cell, i) => {
             if (!cell) return <div key={`blank-${i}`} aria-hidden="true" />
             const key = dateKey(cell)
-            const slotId = byDate.get(key)
-            const available = Boolean(slotId)
-            const isSelected = Boolean(slotId && slotId === selectedSlotId)
+            const available = dateIsBookable(byDate.get(key))
+            const isSelected = key === selectedDate
             const isToday = key === todayKey
             return (
               <button
@@ -146,7 +144,7 @@ export function BookingCalendar({
                 disabled={!available}
                 aria-pressed={available ? isSelected : undefined}
                 aria-label={`${dayFmt.format(cell)}${available ? '' : ` — ${labels.unavailable}`}`}
-                onClick={() => slotId && onSelect(slotId)}
+                onClick={() => available && onSelectDate(key)}
                 className={cn(
                   'flex aspect-square items-center justify-center rounded-md text-sm tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   !available && 'cursor-not-allowed text-muted-foreground/40',

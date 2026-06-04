@@ -374,7 +374,11 @@
       "selected": "ਚੁਣਿਆ ਗਿਆ",
       "prevMonth": "ਪਿਛਲਾ ਮਹੀਨਾ",
       "nextMonth": "ਅਗਲਾ ਮਹੀਨਾ",
-      "noDates": "ਕੋਈ ਤਾਰੀਖ਼ ਉਪਲਬਧ ਨਹੀਂ"
+      "noDates": "ਕੋਈ ਤਾਰੀਖ਼ ਉਪਲਬਧ ਨਹੀਂ",
+      "times": "ਉਪਲਬਧ ਸਮੇਂ",
+      "seatsLeft": "{count} ਬਾਕੀ",
+      "soldOut": "ਵਿਕ ਚੁੱਕਿਆ",
+      "onlyNLeft": "ਇਸ ਸਮੇਂ ਸਿਰਫ਼ {count} {count, plural, one {ਥਾਂ} other {ਥਾਵਾਂ}} ਬਾਕੀ ਹਨ"
     }
   },
   "SearchPage": {

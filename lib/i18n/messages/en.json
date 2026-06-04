@@ -332,7 +332,11 @@
       "selected": "Selected",
       "prevMonth": "Previous month",
       "nextMonth": "Next month",
-      "noDates": "No dates available"
+      "noDates": "No dates available",
+      "times": "Available times",
+      "seatsLeft": "{count} left",
+      "soldOut": "Sold out",
+      "onlyNLeft": "Only {count} {count, plural, one {space} other {spaces}} left at this time"
     }
   },
   "SearchPage": {

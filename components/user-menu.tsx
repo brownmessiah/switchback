@@ -16,9 +16,11 @@ import { authClient } from '@/lib/auth/client'
 
 interface UserMenuProps {
   user: { name: string; email: string; image?: string | null }
+  /** Marketplace role flags — drive the dashboard link (Admin vs Vendor). */
+  role?: { isAdmin: boolean; isVendor: boolean }
 }
 
-export function UserMenu({ user }: UserMenuProps) {
+export function UserMenu({ user, role }: UserMenuProps) {
   const router = useRouter()
 
   const initials = user.name
@@ -61,9 +63,18 @@ export function UserMenu({ user }: UserMenuProps) {
         <DropdownMenuItem>
           <Link href="/settings" className="w-full">Account settings</Link>
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Link href="/vendor/dashboard" className="w-full">Vendor dashboard</Link>
-        </DropdownMenuItem>
+        {/* Role-aware dashboard link (ADR-0006): admins → /admin, vendors →
+            /vendor; customers get none (their "My bookings" above is /dashboard).
+            Previously hardcoded "Vendor dashboard" for everyone. */}
+        {role?.isAdmin ? (
+          <DropdownMenuItem>
+            <Link href="/admin/dashboard" className="w-full">Admin dashboard</Link>
+          </DropdownMenuItem>
+        ) : role?.isVendor ? (
+          <DropdownMenuItem>
+            <Link href="/vendor/dashboard" className="w-full">Vendor dashboard</Link>
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>
           Sign out

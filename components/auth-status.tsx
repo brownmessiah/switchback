@@ -15,8 +15,14 @@ interface UserData {
   image?: string | null
 }
 
+export interface UserRole {
+  isAdmin: boolean
+  isVendor: boolean
+}
+
 export function AuthStatus() {
   const [user, setUser] = useState<UserData | null>(null)
+  const [role, setRole] = useState<UserRole>({ isAdmin: false, isVendor: false })
   const [loading, setLoading] = useState(true)
   const t = useTranslations('Nav')
 
@@ -29,6 +35,12 @@ export function AuthStatus() {
           email: res.data.user.email ?? '',
           image: res.data.user.image ?? null,
         })
+        // Resolve marketplace role (ADR-0006: from profile tables, not the
+        // better-auth user) so the account menu links to the RIGHT dashboard.
+        fetch('/api/me/role')
+          .then((r) => r.json())
+          .then((data: UserRole) => setRole(data))
+          .catch(() => {})
       }
       setLoading(false)
     }).catch(() => {
@@ -44,7 +56,7 @@ export function AuthStatus() {
     return (
       <div className="flex items-center gap-2">
         <NotificationBell userId={user.id} />
-        <UserMenu user={user} />
+        <UserMenu user={user} role={role} />
       </div>
     )
   }

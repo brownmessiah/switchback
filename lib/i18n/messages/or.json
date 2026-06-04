@@ -24,6 +24,16 @@
     "featured": {
       "heading": "ବିଶେଷ ଅନୁଭୂତି",
       "viewAll": "ସବୁ ଦେଖନ୍ତୁ"
+    },
+    "badges": {
+      "bestseller": "ବେଷ୍ଟସେଲର",
+      "topRated": "ଟପ୍ ରେଟେଡ୍"
+    },
+    "difficulty": {
+      "easy": "ସହଜ",
+      "moderate": "ମଧ୍ୟମ",
+      "challenging": "ଚ୍ୟାଲେଞ୍ଜିଂ",
+      "extreme": "ଅତ୍ୟଧିକ"
     }
   },
   "Metadata": {

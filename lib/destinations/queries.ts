@@ -1,6 +1,7 @@
 import { and, count, desc, eq } from 'drizzle-orm'
 
 import { experiences } from '@/db/schema/experiences'
+import { loadCardBadgeResolver } from '@/lib/experiences/card-badges'
 import { getRegionImage } from '@/lib/images'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 import {
@@ -32,6 +33,10 @@ export interface RegionLandingExperience {
   shortDescription: string | null
   activitySlug: string
   regionSlug: string
+  difficulty: 'easy' | 'moderate' | 'challenging' | 'extreme' | null
+  ratingAvg: number | null
+  ratingCount: number
+  highlight: 'bestseller' | 'top_rated' | null
 }
 
 export interface RegionLandingData {
@@ -77,6 +82,7 @@ export async function loadRegionLanding(
       shortDescription: experiences.shortDescription,
       activitySlug: experiences.activitySlug,
       regionSlug: experiences.regionSlug,
+      difficulty: experiences.difficulty,
     })
     .from(experiences)
     .where(
@@ -88,6 +94,11 @@ export async function loadRegionLanding(
     .orderBy(desc(experiences.createdAt))
     .limit(limit)
 
+  const resolveBadges = await loadCardBadgeResolver(
+    db,
+    rows.map((r) => r.id),
+  )
+
   return {
     region,
     experiences: rows.map((row) => ({
@@ -98,6 +109,8 @@ export async function loadRegionLanding(
       shortDescription: row.shortDescription,
       activitySlug: row.activitySlug,
       regionSlug: row.regionSlug,
+      difficulty: row.difficulty,
+      ...resolveBadges(row.id),
     })),
   }
 }

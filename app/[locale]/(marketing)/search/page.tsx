@@ -2,10 +2,11 @@ import type { ReactElement } from 'react'
 
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
-import { ExperienceCard } from '@/components/experience-card'
+import { ExperienceCard, type ExperienceCardData } from '@/components/experience-card'
 import { FacetForm } from '@/components/search/facet-form'
 import { FiltersSheet } from '@/components/search/filters-sheet'
 import { db } from '@/db/client'
+import { enrichCardBadges } from '@/lib/experiences/card-badges'
 import { loadExperienceCoverMap } from '@/lib/media/experience-images'
 import { generateAlternates } from '@/lib/seo/hreflang'
 import {
@@ -70,6 +71,22 @@ export default async function SearchPage({
   const parsed = parseSearchParams(rawParams)
   const { hits } = await searchExperiences(parsed)
   const coverMap = await loadExperienceCoverMap(db, hits.map((h) => h.id))
+  // Build the card data (mapping the search facet `difficulty` onto the card)
+  // then batch-enrich rating + social-proof from the DB for the rendered hits.
+  const cards: ExperienceCardData[] = await enrichCardBadges(
+    db,
+    hits.map((hit) => ({
+      id: hit.id,
+      slug: hit.slug,
+      title: hit.title,
+      shortDescription: hit.shortDescription,
+      pricePerParticipantRupees: hit.pricePerPersonRupees,
+      regionSlug: hit.regionSlug,
+      activitySlug: hit.activitySlug,
+      coverImageUrl: coverMap.get(hit.id) ?? null,
+      difficulty: (hit.difficulty ?? null) as ExperienceCardData['difficulty'],
+    })),
+  )
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
@@ -119,20 +136,8 @@ export default async function SearchPage({
             </div>
           ) : (
             <div className="grid gap-[var(--space-grid-gap)] sm:grid-cols-2 xl:grid-cols-3">
-              {hits.map((hit) => (
-                <ExperienceCard
-                  key={hit.id}
-                  experience={{
-                    id: hit.id,
-                    slug: hit.slug,
-                    title: hit.title,
-                    shortDescription: hit.shortDescription,
-                    pricePerParticipantRupees: hit.pricePerPersonRupees,
-                    regionSlug: hit.regionSlug,
-                    activitySlug: hit.activitySlug,
-                    coverImageUrl: coverMap.get(hit.id) ?? null,
-                  }}
-                />
+              {cards.map((card) => (
+                <ExperienceCard key={card.id} experience={card} />
               ))}
             </div>
           )}

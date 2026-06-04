@@ -242,6 +242,10 @@ export default async function ActivityCityCollectionPage({
                   regionSlug: data.region.slug,
                   activitySlug: data.activity.slug,
                   coverImageUrl: exp.coverImageUrl,
+                  difficulty: exp.difficulty,
+                  ratingAvg: exp.ratingAvg,
+                  ratingCount: exp.ratingCount,
+                  highlight: exp.highlight,
                 }}
               />
             ))}

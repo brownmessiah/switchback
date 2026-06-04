@@ -24,6 +24,16 @@
     "featured": {
       "heading": "Featured experiences",
       "viewAll": "View all"
+    },
+    "badges": {
+      "bestseller": "Bestseller",
+      "topRated": "Top rated"
+    },
+    "difficulty": {
+      "easy": "Easy",
+      "moderate": "Moderate",
+      "challenging": "Challenging",
+      "extreme": "Extreme"
     }
   },
   "Metadata": {

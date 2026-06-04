@@ -6,6 +6,7 @@ import {
   getActivity,
   isActivitySlug,
 } from '@/lib/activities/registry'
+import { loadCardBadgeResolver } from '@/lib/experiences/card-badges'
 import { loadExperienceCoverMap } from '@/lib/media/experience-images'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 import {
@@ -41,6 +42,10 @@ export interface ActivityCityCollectionExperience {
   pricePerParticipantRupees: number
   shortDescription: string | null
   coverImageUrl: string | null
+  difficulty: 'easy' | 'moderate' | 'challenging' | 'extreme' | null
+  ratingAvg: number | null
+  ratingCount: number
+  highlight: 'bestseller' | 'top_rated' | null
 }
 
 export interface ActivityCityCollectionData {
@@ -102,6 +107,7 @@ export async function loadActivityCityCollection(
       title: experiences.title,
       pricePerPerson_1_2: experiences.pricePerPerson_1_2,
       shortDescription: experiences.shortDescription,
+      difficulty: experiences.difficulty,
     })
     .from(experiences)
     .where(
@@ -114,7 +120,11 @@ export async function loadActivityCityCollection(
     .orderBy(desc(experiences.createdAt))
     .limit(limit)
 
-  const coverMap = await loadExperienceCoverMap(db, rows.map((r) => r.id))
+  const ids = rows.map((r) => r.id)
+  const [coverMap, resolveBadges] = await Promise.all([
+    loadExperienceCoverMap(db, ids),
+    loadCardBadgeResolver(db, ids),
+  ])
 
   return {
     lng: args.lng,
@@ -127,6 +137,8 @@ export async function loadActivityCityCollection(
       pricePerParticipantRupees: Math.floor(Number(row.pricePerPerson_1_2)),
       shortDescription: row.shortDescription,
       coverImageUrl: coverMap.get(row.id) ?? null,
+      difficulty: row.difficulty,
+      ...resolveBadges(row.id),
     })),
   }
 }

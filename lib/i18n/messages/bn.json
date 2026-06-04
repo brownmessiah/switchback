@@ -24,6 +24,16 @@
     "featured": {
       "heading": "বিশেষ অভিজ্ঞতা",
       "viewAll": "সব দেখুন"
+    },
+    "badges": {
+      "bestseller": "বেস্টসেলার",
+      "topRated": "টপ রেটেড"
+    },
+    "difficulty": {
+      "easy": "সহজ",
+      "moderate": "মাঝারি",
+      "challenging": "কঠিন",
+      "extreme": "চরম"
     }
   },
   "Metadata": {

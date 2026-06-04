@@ -1,6 +1,7 @@
 import { and, desc, eq, inArray } from 'drizzle-orm'
 
 import { experiences } from '@/db/schema/experiences'
+import { loadCardBadgeResolver } from '@/lib/experiences/card-badges'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
 import {
@@ -58,6 +59,10 @@ export interface LandingExperience {
   shortDescription: string | null
   regionSlug: string
   activitySlug: string
+  difficulty: 'easy' | 'moderate' | 'challenging' | 'extreme' | null
+  ratingAvg: number | null
+  ratingCount: number
+  highlight: 'bestseller' | 'top_rated' | null
 }
 
 export interface ActivityLandingData {
@@ -80,10 +85,23 @@ interface LandingQueryRow {
   shortDescription: string | null
   regionSlug: string
   activitySlug: string
+  difficulty: 'easy' | 'moderate' | 'challenging' | 'extreme' | null
 }
 
-function toLandingExperience(row: LandingQueryRow): LandingExperience {
-  return {
+/**
+ * Map query rows → card-ready `LandingExperience[]`, enriching rating +
+ * social-proof from the DB in one batch (shared by the activity + category
+ * landings so both surfaces stay DRY).
+ */
+async function toLandingExperiences(
+  db: DBOrTx,
+  rows: LandingQueryRow[],
+): Promise<LandingExperience[]> {
+  const resolveBadges = await loadCardBadgeResolver(
+    db,
+    rows.map((r) => r.id),
+  )
+  return rows.map((row) => ({
     id: row.id,
     slug: row.slug,
     title: row.title,
@@ -91,7 +109,9 @@ function toLandingExperience(row: LandingQueryRow): LandingExperience {
     shortDescription: row.shortDescription,
     regionSlug: row.regionSlug,
     activitySlug: row.activitySlug,
-  }
+    difficulty: row.difficulty,
+    ...resolveBadges(row.id),
+  }))
 }
 
 /**
@@ -118,6 +138,7 @@ export async function loadActivityLanding(
       shortDescription: experiences.shortDescription,
       regionSlug: experiences.regionSlug,
       activitySlug: experiences.activitySlug,
+      difficulty: experiences.difficulty,
     })
     .from(experiences)
     .where(
@@ -131,7 +152,7 @@ export async function loadActivityLanding(
 
   return {
     activity,
-    experiences: rows.map(toLandingExperience),
+    experiences: await toLandingExperiences(db, rows),
   }
 }
 
@@ -161,6 +182,7 @@ export async function loadCategoryLanding(
       shortDescription: experiences.shortDescription,
       regionSlug: experiences.regionSlug,
       activitySlug: experiences.activitySlug,
+      difficulty: experiences.difficulty,
     })
     .from(experiences)
     .where(
@@ -175,6 +197,6 @@ export async function loadCategoryLanding(
   return {
     category: categorySlug,
     activities,
-    experiences: rows.map(toLandingExperience),
+    experiences: await toLandingExperiences(db, rows),
   }
 }

@@ -24,6 +24,16 @@
     "featured": {
       "heading": "ફીચર્ડ અનુભવો",
       "viewAll": "બધા જુઓ"
+    },
+    "badges": {
+      "bestseller": "બેસ્ટસેલર",
+      "topRated": "ટોપ રેટેડ"
+    },
+    "difficulty": {
+      "easy": "સરળ",
+      "moderate": "મધ્યમ",
+      "challenging": "પડકારજનક",
+      "extreme": "અતિશય"
     }
   },
   "Metadata": {

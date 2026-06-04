@@ -24,6 +24,16 @@
     "featured": {
       "heading": "نمایاں تجربات",
       "viewAll": "سب دیکھیں"
+    },
+    "badges": {
+      "bestseller": "بیسٹ سیلر",
+      "topRated": "ٹاپ ریٹڈ"
+    },
+    "difficulty": {
+      "easy": "آسان",
+      "moderate": "درمیانہ",
+      "challenging": "مشکل",
+      "extreme": "انتہائی"
     }
   },
   "Metadata": {

@@ -24,6 +24,16 @@
     "featured": {
       "heading": "चुनिंदा अनुभव",
       "viewAll": "सभी देखें"
+    },
+    "badges": {
+      "bestseller": "बेस्टसेलर",
+      "topRated": "टॉप रेटेड"
+    },
+    "difficulty": {
+      "easy": "आसान",
+      "moderate": "मध्यम",
+      "challenging": "कठिन",
+      "extreme": "अत्यधिक"
     }
   },
   "Metadata": {

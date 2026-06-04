@@ -24,6 +24,16 @@
     "featured": {
       "heading": "ਫ਼ੀਚਰਡ ਅਨੁਭਵ",
       "viewAll": "ਸਭ ਦੇਖੋ"
+    },
+    "badges": {
+      "bestseller": "ਬੈਸਟਸੈਲਰ",
+      "topRated": "ਟਾਪ ਰੇਟਡ"
+    },
+    "difficulty": {
+      "easy": "ਆਸਾਨ",
+      "moderate": "ਦਰਮਿਆਨਾ",
+      "challenging": "ਚੁਣੌਤੀਪੂਰਨ",
+      "extreme": "ਅਤਿਅੰਤ"
     }
   },
   "Metadata": {

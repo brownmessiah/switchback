@@ -24,6 +24,16 @@
     "featured": {
       "heading": "ఫీచర్డ్ అనుభవాలు",
       "viewAll": "అన్నీ చూడండి"
+    },
+    "badges": {
+      "bestseller": "బెస్ట్‌సెల్లర్",
+      "topRated": "టాప్ రేటెడ్"
+    },
+    "difficulty": {
+      "easy": "సులభం",
+      "moderate": "మధ్యస్థం",
+      "challenging": "కష్టం",
+      "extreme": "తీవ్రం"
     }
   },
   "Metadata": {

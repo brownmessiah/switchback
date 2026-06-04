@@ -24,6 +24,16 @@
     "featured": {
       "heading": "சிறப்பு அனுபவங்கள்",
       "viewAll": "அனைத்தையும் காண்க"
+    },
+    "badges": {
+      "bestseller": "அதிக விற்பனை",
+      "topRated": "சிறந்த மதிப்பீடு"
+    },
+    "difficulty": {
+      "easy": "எளிதானது",
+      "moderate": "மிதமானது",
+      "challenging": "சவாலானது",
+      "extreme": "தீவிரமானது"
     }
   },
   "Metadata": {

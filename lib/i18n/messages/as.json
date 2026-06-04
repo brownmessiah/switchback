@@ -24,6 +24,16 @@
     "featured": {
       "heading": "বিশেষ অভিজ্ঞতা",
       "viewAll": "সকলো চাওক"
+    },
+    "badges": {
+      "bestseller": "বেষ্টছেলাৰ",
+      "topRated": "টপ ৰেটেড"
+    },
+    "difficulty": {
+      "easy": "সহজ",
+      "moderate": "মধ্যম",
+      "challenging": "প্ৰত্যাহ্বানমূলক",
+      "extreme": "চৰম"
     }
   },
   "Metadata": {

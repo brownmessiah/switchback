@@ -175,6 +175,12 @@ describe('wishlist pure core (Issue #08)', () => {
         pricePerParticipantRupees: 1500,
         regionSlug: 'rishikesh',
         activitySlug: 'rafting',
+        // Additive card-tag fields (difficulty + social-proof + rating). This
+        // fixture has no difficulty, reviews, or bookings → all empty.
+        difficulty: null,
+        ratingAvg: null,
+        ratingCount: 0,
+        highlight: null,
       })
     })
 

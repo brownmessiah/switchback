@@ -24,6 +24,16 @@
     "featured": {
       "heading": "वैशिष्ट्यपूर्ण अनुभव",
       "viewAll": "सर्व पहा"
+    },
+    "badges": {
+      "bestseller": "बेस्टसेलर",
+      "topRated": "टॉप रेटेड"
+    },
+    "difficulty": {
+      "easy": "सोपे",
+      "moderate": "मध्यम",
+      "challenging": "आव्हानात्मक",
+      "extreme": "अत्यंत"
     }
   },
   "Metadata": {

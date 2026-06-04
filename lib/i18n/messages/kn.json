@@ -24,6 +24,16 @@
     "featured": {
       "heading": "ವಿಶೇಷ ಅನುಭವಗಳು",
       "viewAll": "ಎಲ್ಲಾ ನೋಡಿ"
+    },
+    "badges": {
+      "bestseller": "ಬೆಸ್ಟ್‌ಸೆಲ್ಲರ್",
+      "topRated": "ಟಾಪ್ ರೇಟೆಡ್"
+    },
+    "difficulty": {
+      "easy": "ಸುಲಭ",
+      "moderate": "ಮಧ್ಯಮ",
+      "challenging": "ಸವಾಲಿನ",
+      "extreme": "ತೀವ್ರ"
     }
   },
   "Metadata": {

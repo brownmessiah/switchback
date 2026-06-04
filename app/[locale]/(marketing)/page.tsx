@@ -298,6 +298,10 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
                   regionSlug: exp.regionSlug,
                   activitySlug: exp.activitySlug,
                   coverImageUrl: exp.coverImageUrl,
+                  difficulty: exp.difficulty,
+                  ratingAvg: exp.ratingAvg,
+                  ratingCount: exp.ratingCount,
+                  highlight: exp.highlight,
                 }}
               />
             ))}

@@ -2,6 +2,7 @@ import { desc, eq, sql } from 'drizzle-orm'
 
 import { experiences } from '@/db/schema/experiences'
 
+import { loadCardBadgeResolver } from '@/lib/experiences/card-badges'
 import { loadExperienceCoverMap } from '@/lib/media/experience-images'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 import { listActivities } from '@/lib/activities/registry'
@@ -35,6 +36,10 @@ export interface FeaturedExperience {
   regionSlug: string
   activitySlug: string
   coverImageUrl: string | null
+  difficulty: 'easy' | 'moderate' | 'challenging' | 'extreme' | null
+  ratingAvg: number | null
+  ratingCount: number
+  highlight: 'bestseller' | 'top_rated' | null
 }
 
 export interface FeaturedDestination {
@@ -74,13 +79,18 @@ export async function loadHomePageData(db: DBOrTx): Promise<HomePageData> {
       pricePerPerson_1_2: experiences.pricePerPerson_1_2,
       regionSlug: experiences.regionSlug,
       activitySlug: experiences.activitySlug,
+      difficulty: experiences.difficulty,
     })
     .from(experiences)
     .where(eq(experiences.status, 'published'))
     .orderBy(desc(experiences.createdAt))
     .limit(FEATURED_EXPERIENCES_LIMIT)
 
-  const coverMap = await loadExperienceCoverMap(db, expRows.map((r) => r.id))
+  const expIds = expRows.map((r) => r.id)
+  const [coverMap, resolveBadges] = await Promise.all([
+    loadExperienceCoverMap(db, expIds),
+    loadCardBadgeResolver(db, expIds),
+  ])
   const featuredExperiences: FeaturedExperience[] = expRows.map((row) => ({
     id: row.id,
     slug: row.slug,
@@ -90,6 +100,8 @@ export async function loadHomePageData(db: DBOrTx): Promise<HomePageData> {
     regionSlug: row.regionSlug,
     activitySlug: row.activitySlug,
     coverImageUrl: coverMap.get(row.id) ?? null,
+    difficulty: row.difficulty,
+    ...resolveBadges(row.id),
   }))
 
   // Counts by region + activity over published Experiences. Two cheap

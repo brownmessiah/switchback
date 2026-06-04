@@ -3,6 +3,7 @@ import { and, eq, inArray } from 'drizzle-orm'
 import { customerProfiles } from '@/db/schema/customer-profiles'
 import { experiences } from '@/db/schema/experiences'
 
+import { loadCardBadgeResolver } from '@/lib/experiences/card-badges'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
 /**
@@ -32,6 +33,10 @@ export interface WishlistExperience {
   pricePerParticipantRupees: number
   regionSlug: string
   activitySlug: string
+  difficulty: 'easy' | 'moderate' | 'challenging' | 'extreme' | null
+  ratingAvg: number | null
+  ratingCount: number
+  highlight: 'bestseller' | 'top_rated' | null
 }
 
 export interface ToggleWishlistResult {
@@ -151,9 +156,15 @@ export async function getWishlistExperiences(
       pricePerPerson_1_2: experiences.pricePerPerson_1_2,
       regionSlug: experiences.regionSlug,
       activitySlug: experiences.activitySlug,
+      difficulty: experiences.difficulty,
     })
     .from(experiences)
     .where(and(inArray(experiences.id, ids), eq(experiences.status, 'published')))
+
+  const resolveBadges = await loadCardBadgeResolver(
+    db,
+    rows.map((r) => r.id),
+  )
 
   // Index resolved rows by id, then re-order to match the stored wishlist so
   // a saved-but-unresolvable id is simply absent (dropped).
@@ -170,5 +181,7 @@ export async function getWishlistExperiences(
       pricePerParticipantRupees: Math.floor(Number(r.pricePerPerson_1_2)),
       regionSlug: r.regionSlug,
       activitySlug: r.activitySlug,
+      difficulty: r.difficulty,
+      ...resolveBadges(r.id),
     }))
 }

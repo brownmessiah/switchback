@@ -54,6 +54,10 @@ export default async function WishlistPage() {
                 pricePerParticipantRupees: exp.pricePerParticipantRupees,
                 regionSlug: exp.regionSlug,
                 activitySlug: exp.activitySlug,
+                difficulty: exp.difficulty,
+                ratingAvg: exp.ratingAvg,
+                ratingCount: exp.ratingCount,
+                highlight: exp.highlight,
                 isWishlisted: true,
               }}
             />

@@ -12,10 +12,11 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
-import { ExperienceCard } from '@/components/experience-card'
+import { ExperienceCard, type ExperienceCardData } from '@/components/experience-card'
 import { Badge } from '@/components/ui/badge'
 import { db } from '@/db/client'
 import { experiences, vendorProfiles } from '@/db/schema'
+import { enrichCardBadges } from '@/lib/experiences/card-badges'
 import { loadExperienceCoverMap } from '@/lib/media/experience-images'
 import { generateAlternates } from '@/lib/seo/hreflang'
 
@@ -78,6 +79,7 @@ export default async function VendorProfilePage({ params }: PageProps) {
       pricePerPerson_1_2: experiences.pricePerPerson_1_2,
       regionSlug: experiences.regionSlug,
       activitySlug: experiences.activitySlug,
+      difficulty: experiences.difficulty,
     })
     .from(experiences)
     .where(eq(experiences.vendorUserId, vendor.userId))
@@ -85,6 +87,21 @@ export default async function VendorProfilePage({ params }: PageProps) {
   const vendorCoverMap = await loadExperienceCoverMap(
     db,
     vendorExperiences.map((e) => e.id),
+  )
+  const vendorCards: ExperienceCardData[] = await enrichCardBadges(
+    db,
+    vendorExperiences.map((exp) => ({
+      id: exp.id,
+      slug: exp.slug,
+      title: exp.title,
+      shortDescription: exp.shortDescription,
+      pricePerParticipantRupees: Math.floor(Number(exp.pricePerPerson_1_2)),
+      regionSlug: exp.regionSlug,
+      activitySlug: exp.activitySlug,
+      vendorName: vendor.businessName,
+      coverImageUrl: vendorCoverMap.get(exp.id) ?? null,
+      difficulty: exp.difficulty,
+    })),
   )
 
   // Pre-resolved KYC label (no dynamic keys), used for the banner badge.
@@ -282,21 +299,8 @@ export default async function VendorProfilePage({ params }: PageProps) {
               </div>
             ) : (
               <div className="grid gap-[var(--space-grid-gap)] sm:grid-cols-2">
-                {vendorExperiences.map((exp) => (
-                  <ExperienceCard
-                    key={exp.id}
-                    experience={{
-                      id: exp.id,
-                      slug: exp.slug,
-                      title: exp.title,
-                      shortDescription: exp.shortDescription,
-                      pricePerParticipantRupees: Math.floor(Number(exp.pricePerPerson_1_2)),
-                      regionSlug: exp.regionSlug,
-                      activitySlug: exp.activitySlug,
-                      vendorName: vendor.businessName,
-                      coverImageUrl: vendorCoverMap.get(exp.id) ?? null,
-                    }}
-                  />
+                {vendorCards.map((card) => (
+                  <ExperienceCard key={card.id} experience={card} />
                 ))}
               </div>
             )}

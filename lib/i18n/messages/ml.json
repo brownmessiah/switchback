@@ -24,6 +24,16 @@
     "featured": {
       "heading": "ഫീച്ചേർഡ് അനുഭവങ്ങൾ",
       "viewAll": "എല്ലാം കാണുക"
+    },
+    "badges": {
+      "bestseller": "ബെസ്റ്റ്‌സെല്ലർ",
+      "topRated": "ടോപ്പ് റേറ്റഡ്"
+    },
+    "difficulty": {
+      "easy": "എളുപ്പം",
+      "moderate": "മിതമായ",
+      "challenging": "വെല്ലുവിളി",
+      "extreme": "അതിതീവ്രം"
     }
   },
   "Metadata": {

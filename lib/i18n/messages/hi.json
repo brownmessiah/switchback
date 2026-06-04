@@ -366,6 +366,15 @@
       "freeCancellation": "अनुभव से 24 घंटे पहले तक मुफ़्त रद्दीकरण",
       "verifiedVendor": "पहचान-सत्यापित Vendor",
       "exactRefund": "पुष्टि से पहले सटीक रिफंड दिखाया जाता है"
+    },
+    "calendar": {
+      "selectDate": "तारीख़ चुनें",
+      "today": "आज",
+      "unavailable": "अनुपलब्ध",
+      "selected": "चयनित",
+      "prevMonth": "पिछला महीना",
+      "nextMonth": "अगला महीना",
+      "noDates": "कोई तारीख़ उपलब्ध नहीं"
     }
   },
   "SearchPage": {

@@ -366,6 +366,15 @@
       "freeCancellation": "ಅನುಭವಕ್ಕೆ 24 ಗಂಟೆಗಳ ಮೊದಲು ವರೆಗೆ ಉಚಿತ ರದ್ದತಿ",
       "verifiedVendor": "ಗುರುತು-ಪರಿಶೀಲಿತ Vendor",
       "exactRefund": "ಖಚಿತಪಡಿಸುವ ಮೊದಲು ನಿಖರ ಮರುಪಾವತಿ ತೋರಿಸಲಾಗುತ್ತದೆ"
+    },
+    "calendar": {
+      "selectDate": "ದಿನಾಂಕ ಆಯ್ಕೆಮಾಡಿ",
+      "today": "ಇಂದು",
+      "unavailable": "ಲಭ್ಯವಿಲ್ಲ",
+      "selected": "ಆಯ್ಕೆಮಾಡಲಾಗಿದೆ",
+      "prevMonth": "ಹಿಂದಿನ ತಿಂಗಳು",
+      "nextMonth": "ಮುಂದಿನ ತಿಂಗಳು",
+      "noDates": "ಯಾವುದೇ ದಿನಾಂಕಗಳು ಲಭ್ಯವಿಲ್ಲ"
     }
   },
   "SearchPage": {

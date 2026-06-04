@@ -366,6 +366,15 @@
       "freeCancellation": "అనుభవానికి 24 గంటల ముందు వరకు ఉచిత రద్దు",
       "verifiedVendor": "గుర్తింపు-ధృవీకరించబడిన Vendor",
       "exactRefund": "నిర్ధారించే ముందు ఖచ్చితమైన రీఫండ్ చూపబడుతుంది"
+    },
+    "calendar": {
+      "selectDate": "తేదీని ఎంచుకోండి",
+      "today": "ఈరోజు",
+      "unavailable": "అందుబాటులో లేదు",
+      "selected": "ఎంచుకోబడింది",
+      "prevMonth": "మునుపటి నెల",
+      "nextMonth": "తదుపరి నెల",
+      "noDates": "తేదీలు ఏవీ అందుబాటులో లేవు"
     }
   },
   "SearchPage": {

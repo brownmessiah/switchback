@@ -13,7 +13,9 @@ import {
   computeBookingPrice,
   type BracketPrices,
 } from '@/lib/experiences/booking-price'
+import type { CalendarSlot } from '@/lib/experiences/booking-calendar'
 
+import { BookingCalendar, type BookingCalendarLabels } from './booking-calendar'
 import type { BookingRailBracket, BookingRailClosure } from './booking-rail'
 
 export interface BookingRailInteractiveProps {
@@ -36,8 +38,14 @@ export interface BookingRailInteractiveProps {
   }
   freeCancellation: string
   bookNowLabel: string
-  /** Base checkout deep link; the selected participant count is appended. */
+  /** Base checkout deep link; the selected slot + participant count are appended. */
   checkoutHref: string
+  /** Future bookable slots powering the date picker (#70). */
+  slots: CalendarSlot[]
+  /** Active locale (Intl month/weekday names). */
+  locale: string
+  /** Already-translated calendar labels. */
+  calendarLabels: BookingCalendarLabels
   closure?: BookingRailClosure | null
 }
 
@@ -65,10 +73,16 @@ export function BookingRailInteractive({
   freeCancellation,
   bookNowLabel,
   checkoutHref,
+  slots,
+  locale,
+  calendarLabels,
   closure,
 }: BookingRailInteractiveProps): ReactElement {
   const max = Math.max(1, maxParticipants)
   const [count, setCount] = useState(1)
+  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(
+    slots[0]?.id ?? null,
+  )
   const disabled = Boolean(closure)
 
   const prices: BracketPrices = {
@@ -82,7 +96,8 @@ export function BookingRailInteractive({
 
   const dec = () => setCount((c) => Math.max(1, c - 1))
   const inc = () => setCount((c) => Math.min(max, c + 1))
-  const href = `${checkoutHref}&participants=${count}`
+  const slotParam = selectedSlotId ? `&slotId=${selectedSlotId}` : ''
+  const href = `${checkoutHref}${slotParam}&participants=${count}`
 
   const stepBtn = buttonVariants({
     variant: 'outline',
@@ -165,6 +180,18 @@ export function BookingRailInteractive({
           </button>
         </div>
       </div>
+
+      {/* Date picker (#70) — pick an available date; its slot id is carried into
+          Checkout. Hidden while booking is paused (the closure notice explains). */}
+      {!disabled && (
+        <BookingCalendar
+          slots={slots}
+          selectedSlotId={selectedSlotId}
+          onSelect={setSelectedSlotId}
+          locale={locale}
+          labels={calendarLabels}
+        />
+      )}
 
       {/* Live price breakdown — Total then (when Partial pay is allowed) the
           Advance/balance split, all reactive to the participant count. */}

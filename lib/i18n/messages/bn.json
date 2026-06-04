@@ -366,6 +366,15 @@
       "freeCancellation": "অভিজ্ঞতার 24 ঘণ্টা আগে পর্যন্ত বিনামূল্যে বাতিল",
       "verifiedVendor": "পরিচয়-যাচাইকৃত Vendor",
       "exactRefund": "নিশ্চিত করার আগে সঠিক রিফান্ড দেখানো হয়"
+    },
+    "calendar": {
+      "selectDate": "তারিখ নির্বাচন করুন",
+      "today": "আজ",
+      "unavailable": "অনুপলব্ধ",
+      "selected": "নির্বাচিত",
+      "prevMonth": "পূর্ববর্তী মাস",
+      "nextMonth": "পরবর্তী মাস",
+      "noDates": "কোনো তারিখ উপলব্ধ নেই"
     }
   },
   "SearchPage": {

@@ -319,11 +319,16 @@ export default async function ExperienceDetailPage({
   // the partial-pay flag + labels only (DESIGN.md §4 B3).
   const partialPayAllowed = detail.paymentModesAllowed.includes('partial_pay')
 
-  // Book-now deep link (unchanged contract): the dedicated checkout page does
-  // identity + payment only; slot is carried through when known.
-  const checkoutHref = detail.nextAvailableSlotId
-    ? `/checkout?experienceId=${detail.id}&slotId=${detail.nextAvailableSlotId}`
-    : `/checkout?experienceId=${detail.id}`
+  // Book-now deep link base: the booking rail appends the date-picker's selected
+  // slot id (#70) + participant count. The dedicated checkout page does identity
+  // + payment only.
+  const checkoutHref = `/checkout?experienceId=${detail.id}`
+
+  // Flatten future slots for the client date picker (Date → ISO string).
+  const calendarSlots = detail.availableSlots.map((s) => ({
+    id: s.id,
+    startAtISO: s.startAt.toISOString(),
+  }))
 
   const railClosure: BookingRailClosure | null = detail.activeClosure
     ? {
@@ -842,6 +847,17 @@ export default async function ExperienceDetailPage({
             freeCancellation={t('pricing.freeCancellation')}
             bookNowLabel={t('pricing.bookNow')}
             checkoutHref={checkoutHref}
+            slots={calendarSlots}
+            locale={locale}
+            calendarLabels={{
+              selectDate: t('calendar.selectDate'),
+              today: t('calendar.today'),
+              unavailable: t('calendar.unavailable'),
+              selected: t('calendar.selected'),
+              prevMonth: t('calendar.prevMonth'),
+              nextMonth: t('calendar.nextMonth'),
+              noDates: t('calendar.noDates'),
+            }}
             closure={railClosure}
           />
         </aside>

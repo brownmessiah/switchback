@@ -82,6 +82,12 @@ export interface ExperienceDetailData {
    */
   nextAvailableSlotId: string | null
   /**
+   * Future bookable slots (open, capacity remaining) within the booking
+   * horizon, ascending — power the Booking-rail date picker (#70). Empty when
+   * nothing is bookable.
+   */
+  availableSlots: { id: string; startAt: Date }[]
+  /**
    * A Region closure (ADR-0011) overlapping this Experience's bookable window
    * (now → now + 90d), or null when the region is open. When set, the booking
    * step surfaces the closure reason inline (e.g. "closed for monsoon —
@@ -254,20 +260,23 @@ async function hydrateDetail(
     return null as unknown as ExperienceDetailResult
   }
 
-  // Earliest open slot with capacity remaining — drives the Book-now link
-  // so Checkout gets a real slotId (Issue #13).
-  const [nextSlot] = await db
-    .select({ id: availabilitySlots.id })
+  // Future open slots with capacity remaining — power the Booking-rail date
+  // picker (#70); the first is the default Book-now slot (replaces #13's
+  // single-slot query). Capped to a sensible horizon.
+  const now = new Date()
+  const openSlots = await db
+    .select({ id: availabilitySlots.id, startAt: availabilitySlots.startAt })
     .from(availabilitySlots)
     .where(
       and(
         eq(availabilitySlots.experienceId, exp.id),
         eq(availabilitySlots.status, 'open'),
+        gte(availabilitySlots.startAt, now),
         sql`${availabilitySlots.capacityTaken} < ${availabilitySlots.capacity}`,
       ),
     )
     .orderBy(asc(availabilitySlots.startAt))
-    .limit(1)
+    .limit(120)
 
   // Region closure (ADR-0011) overlapping the bookable window for this
   // Experience's region. The slot materialiser skips every date inside an
@@ -276,7 +285,6 @@ async function hydrateDetail(
   // surface it inline ("closed for monsoon — reopens X"). The window mirrors
   // the materialiser's default 90-day horizon. Among overlapping closures we
   // take the soonest-ending so "reopens" reflects the nearest reopening.
-  const now = new Date()
   const bookingWindowEnd = new Date(now)
   bookingWindowEnd.setUTCDate(bookingWindowEnd.getUTCDate() + 90)
   const [closure] = await db
@@ -322,7 +330,8 @@ async function hydrateDetail(
       activity,
       region,
       gallery,
-      nextAvailableSlotId: nextSlot?.id ?? null,
+      nextAvailableSlotId: openSlots[0]?.id ?? null,
+      availableSlots: openSlots.map((s) => ({ id: s.id, startAt: s.startAt })),
       activeClosure: closure
         ? {
             reason: closure.reason,

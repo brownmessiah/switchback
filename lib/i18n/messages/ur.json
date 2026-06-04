@@ -366,6 +366,15 @@
       "freeCancellation": "تجربے سے 24 گھنٹے پہلے تک مفت منسوخی",
       "verifiedVendor": "شناخت-تصدیق شدہ Vendor",
       "exactRefund": "تصدیق سے پہلے درست رقم کی واپسی دکھائی جاتی ہے"
+    },
+    "calendar": {
+      "selectDate": "تاریخ منتخب کریں",
+      "today": "آج",
+      "unavailable": "دستیاب نہیں",
+      "selected": "منتخب شدہ",
+      "prevMonth": "پچھلا مہینہ",
+      "nextMonth": "اگلا مہینہ",
+      "noDates": "کوئی تاریخ دستیاب نہیں"
     }
   },
   "SearchPage": {

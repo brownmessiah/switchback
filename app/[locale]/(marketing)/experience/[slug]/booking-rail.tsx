@@ -2,7 +2,10 @@ import type { ReactElement } from 'react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
+import type { CalendarSlot } from '@/lib/experiences/booking-calendar'
+
 import { BookingRailInteractive } from './booking-rail-interactive'
+import type { BookingCalendarLabels } from './booking-calendar'
 
 /** One Group-size bracket row in the per-participant price table. */
 export interface BookingRailBracket {
@@ -53,8 +56,14 @@ interface BookingRailProps {
   freeCancellation: string
   /** Already-translated "Book now" CTA label. */
   bookNowLabel: string
-  /** Base checkout deep link; the selected participant count is appended. */
+  /** Base checkout deep link; the selected slot + participant count are appended. */
   checkoutHref: string
+  /** Future bookable slots powering the date picker (#70). */
+  slots: CalendarSlot[]
+  /** Active locale — Intl month/weekday names in the calendar. */
+  locale: string
+  /** Already-translated calendar labels. */
+  calendarLabels: BookingCalendarLabels
   /** When set, booking is paused (ADR-0011 Region closure) and the CTA disabled. */
   closure?: BookingRailClosure | null
 }
@@ -81,6 +90,9 @@ export function BookingRail({
   freeCancellation,
   bookNowLabel,
   checkoutHref,
+  slots,
+  locale,
+  calendarLabels,
   closure,
 }: BookingRailProps): ReactElement {
   return (
@@ -100,6 +112,9 @@ export function BookingRail({
           freeCancellation={freeCancellation}
           bookNowLabel={bookNowLabel}
           checkoutHref={checkoutHref}
+          slots={slots}
+          locale={locale}
+          calendarLabels={calendarLabels}
           closure={closure}
         />
       </CardContent>

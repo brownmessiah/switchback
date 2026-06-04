@@ -366,6 +366,15 @@
       "freeCancellation": "અનુભવના 24 કલાક પહેલાં સુધી મફત રદ",
       "verifiedVendor": "ઓળખ-ચકાસાયેલ Vendor",
       "exactRefund": "પુષ્ટિ કરતા પહેલાં ચોક્કસ રિફંડ બતાવાય છે"
+    },
+    "calendar": {
+      "selectDate": "તારીખ પસંદ કરો",
+      "today": "આજે",
+      "unavailable": "અનુપલબ્ધ",
+      "selected": "પસંદ કરેલ",
+      "prevMonth": "પાછલો મહિનો",
+      "nextMonth": "આગલો મહિનો",
+      "noDates": "કોઈ તારીખ ઉપલબ્ધ નથી"
     }
   },
   "SearchPage": {

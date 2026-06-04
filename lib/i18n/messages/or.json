@@ -288,6 +288,15 @@
       "freeCancellation": "ଅନୁଭବର 24 ଘଣ୍ଟା ପୂର୍ବ ପର୍ଯ୍ୟନ୍ତ ମାଗଣା ବାତିଲ୍",
       "verifiedVendor": "ପରିଚୟ-ଯାଞ୍ଚିତ Vendor",
       "exactRefund": "ନିଶ୍ଚିତ କରିବା ପୂର୍ବରୁ ସଠିକ୍ ରିଫଣ୍ଡ ଦେଖାଯାଏ"
+    },
+    "calendar": {
+      "selectDate": "ତାରିଖ ବାଛନ୍ତୁ",
+      "today": "ଆଜି",
+      "unavailable": "ଅନୁପଲବ୍ଧ",
+      "selected": "ବଛାଯାଇଛି",
+      "prevMonth": "ପୂର୍ବ ମାସ",
+      "nextMonth": "ପରବର୍ତ୍ତୀ ମାସ",
+      "noDates": "କୌଣସି ତାରିଖ ଉପଲବ୍ଧ ନାହିଁ"
     }
   },
   "SearchPage": {

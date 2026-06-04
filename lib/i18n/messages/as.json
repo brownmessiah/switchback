@@ -347,8 +347,21 @@
         "11": "নৱেম্বৰ",
         "12": "ডিচেম্বৰ"
       },
-      "groupSize": "দলৰ আকাৰ",
-      "groupSizePlaceholder": "অতি কমেও N জনৰ বাবে"
+      "groupSize": "নূন্যতম দলৰ আকাৰ",
+      "groupSizePlaceholder": "যেনে 4",
+      "category": "শ্ৰেণী",
+      "allCategories": "সকলো শ্ৰেণী",
+      "categoryOptions": {
+        "water": "ৱাটাৰ স্পৰ্টছ",
+        "aerial": "আকাশ ক্ৰীড়া",
+        "mountain": "পৰ্বত আৰু ট্ৰেকিং",
+        "wildlife": "বন্যপ্ৰাণী আৰু চাফাৰি",
+        "urban": "নগৰীয়া"
+      },
+      "destination": "গন্তব্য",
+      "state": "ৰাজ্য",
+      "allStates": "সকলো ৰাজ্য",
+      "groupSizeHelp": "কমেও ইমান লোকৰ দলৰ বাবে উপযুক্ত"
     },
     "activities": {
       "rafting": "ৰাফ্টিং",

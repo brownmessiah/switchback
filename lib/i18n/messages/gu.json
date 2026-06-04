@@ -425,8 +425,21 @@
         "11": "નવેમ્બર",
         "12": "ડિસેમ્બર"
       },
-      "groupSize": "જૂથનું કદ",
-      "groupSizePlaceholder": "ઓછામાં ઓછા N લોકો માટે"
+      "groupSize": "ન્યૂનતમ જૂથ કદ",
+      "groupSizePlaceholder": "દા.ત. 4",
+      "category": "શ્રેણી",
+      "allCategories": "બધી શ્રેણીઓ",
+      "categoryOptions": {
+        "water": "વોટર સ્પોર્ટ્સ",
+        "aerial": "હવાઈ રમતો",
+        "mountain": "પર્વત અને ટ્રેકિંગ",
+        "wildlife": "વન્યજીવ અને સફારી",
+        "urban": "શહેરી"
+      },
+      "destination": "ગંતવ્ય",
+      "state": "રાજ્ય",
+      "allStates": "બધાં રાજ્યો",
+      "groupSizeHelp": "ઓછામાં ઓછા આટલા લોકોના જૂથ માટે યોગ્ય"
     },
     "activities": {
       "rafting": "રાફ્ટિંગ",

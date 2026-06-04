@@ -425,8 +425,21 @@
         "11": "نومبر",
         "12": "دسمبر"
       },
-      "groupSize": "گروپ کا حجم",
-      "groupSizePlaceholder": "کم از کم N افراد کے لیے"
+      "groupSize": "کم از کم گروپ سائز",
+      "groupSizePlaceholder": "مثلاً 4",
+      "category": "زمرہ",
+      "allCategories": "تمام زمرے",
+      "categoryOptions": {
+        "water": "واٹر اسپورٹس",
+        "aerial": "فضائی کھیل",
+        "mountain": "پہاڑ اور ٹریکنگ",
+        "wildlife": "جنگلی حیات اور سفاری",
+        "urban": "شہری"
+      },
+      "destination": "منزل",
+      "state": "ریاست",
+      "allStates": "تمام ریاستیں",
+      "groupSizeHelp": "کم از کم اتنے افراد کے گروپ کے لیے موزوں"
     },
     "activities": {
       "rafting": "ریفٹنگ",

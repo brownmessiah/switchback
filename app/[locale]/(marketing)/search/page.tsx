@@ -35,6 +35,11 @@ function parseSearchParams(
   const durationBand = first(raw.durationBand)
   const season = first(raw.season)
   const groupSize = first(raw.groupSize)
+  // Category (activity rollup) + Destination=State facets (issue 04 follow-up).
+  // Empty strings (the "All …" option's value) collapse to undefined so they
+  // don't mark the search as filtered.
+  const category = first(raw.category)
+  const state = first(raw.state)
 
   return {
     q: first(raw.q),
@@ -47,6 +52,8 @@ function parseSearchParams(
     durationBand: durationBand || undefined,
     seasonMonth: season ? Number(season) : undefined,
     maxGroupSize: groupSize ? Number(groupSize) : undefined,
+    category: category || undefined,
+    state: state || undefined,
   }
 }
 

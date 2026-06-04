@@ -24,8 +24,11 @@ import { Meilisearch } from 'meilisearch'
 import postgres from 'postgres'
 
 import { experiences, vendorProfiles } from '@/db/schema'
-// duration-band.ts is intentionally dependency-free (no lib/env), so it is
-// safe to import here even though global-setup runs before .env.local loads.
+// The activity/region registries and duration-band.ts are intentionally
+// dependency-free (no lib/env), so they are safe to import here even though
+// global-setup runs before .env.local loads.
+import { getActivity } from '@/lib/activities/registry'
+import { getRegion } from '@/lib/regions/registry'
 import { durationBand } from '@/lib/search/duration-band'
 
 import { e2eDbUrl } from './config'
@@ -48,6 +51,9 @@ const EXPERIENCE_FILTERABLE_ATTRIBUTES = [
   'durationBand',
   'seasonMonths',
   'maxGroupSize',
+  // Category (activity rollup) + Destination=State facets (issue 04 follow-up).
+  'category',
+  'state',
 ]
 const EXPERIENCE_SORTABLE_ATTRIBUTES = [
   'pricePerPersonRupees',
@@ -73,6 +79,10 @@ interface MeiliExperienceDoc {
   durationBand: string | null
   maxGroupSize: number | null
   seasonMonths: number[]
+  // Category (activity rollup) + Destination=State (issue 04 follow-up),
+  // derived from activitySlug/regionSlug via the registries.
+  category: string | null
+  state: string | null
 }
 
 export async function resetSearchIndex(): Promise<void> {
@@ -149,6 +159,8 @@ export async function resetSearchIndex(): Promise<void> {
         durationBand: durationBand(r.durationMinutes),
         maxGroupSize: r.maxGroupSize,
         seasonMonths: r.seasonMonths ?? [],
+        category: getActivity(r.activitySlug)?.category ?? null,
+        state: getRegion(r.regionSlug)?.state ?? null,
       }))
       const add = await client
         .index(EXPERIENCE_INDEX)

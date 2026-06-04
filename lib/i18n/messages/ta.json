@@ -425,8 +425,21 @@
         "11": "நவம்பர்",
         "12": "டிசம்பர்"
       },
-      "groupSize": "குழு அளவு",
-      "groupSizePlaceholder": "குறைந்தது N நபர்களுக்கு"
+      "groupSize": "குறைந்தபட்ச குழு அளவு",
+      "groupSizePlaceholder": "எ.கா. 4",
+      "category": "வகை",
+      "allCategories": "அனைத்து வகைகள்",
+      "categoryOptions": {
+        "water": "நீர் விளையாட்டு",
+        "aerial": "வான் விளையாட்டு",
+        "mountain": "மலை & மலையேற்றம்",
+        "wildlife": "வனவிலங்கு & சஃபாரி",
+        "urban": "நகர்ப்புற"
+      },
+      "destination": "இலக்கு",
+      "state": "மாநிலம்",
+      "allStates": "அனைத்து மாநிலங்கள்",
+      "groupSizeHelp": "குறைந்தது இத்தனை பேர் கொண்ட குழுவிற்கு ஏற்றது"
     },
     "activities": {
       "rafting": "ராஃப்டிங்",

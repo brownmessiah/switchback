@@ -347,8 +347,21 @@
         "11": "ନଭେମ୍ବର",
         "12": "ଡିସେମ୍ବର"
       },
-      "groupSize": "ଗୋଷ୍ଠୀ ଆକାର",
-      "groupSizePlaceholder": "ଅତିକମରେ N ଲୋକଙ୍କ ପାଇଁ"
+      "groupSize": "ସର୍ବନିମ୍ନ ଗୋଷ୍ଠୀ ଆକାର",
+      "groupSizePlaceholder": "ଯଥା 4",
+      "category": "ବର୍ଗ",
+      "allCategories": "ସମସ୍ତ ବର୍ଗ",
+      "categoryOptions": {
+        "water": "ୱାଟର ସ୍ପୋର୍ଟସ୍",
+        "aerial": "ଆକାଶ କ୍ରୀଡ଼ା",
+        "mountain": "ପର୍ବତ ଓ ଟ୍ରେକିଂ",
+        "wildlife": "ବନ୍ୟଜନ୍ତୁ ଓ ସଫାରୀ",
+        "urban": "ସହରୀ"
+      },
+      "destination": "ଗନ୍ତବ୍ୟ",
+      "state": "ରାଜ୍ୟ",
+      "allStates": "ସମସ୍ତ ରାଜ୍ୟ",
+      "groupSizeHelp": "ଅତି କମ୍‌ରେ ଏତିକି ଲୋକଙ୍କ ଗୋଷ୍ଠୀ ପାଇଁ ଉପଯୁକ୍ତ"
     },
     "activities": {
       "rafting": "ରାଫ୍ଟିଂ",

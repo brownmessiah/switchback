@@ -1,3 +1,6 @@
+import { getActivity } from '@/lib/activities/registry'
+import { getRegion } from '@/lib/regions/registry'
+
 import { durationBand } from './duration-band'
 import { getMeiliClient, type MeiliLike } from './meilisearch-client'
 
@@ -35,6 +38,11 @@ export const EXPERIENCE_FILTERABLE_ATTRIBUTES: readonly string[] = [
   'durationBand',
   'seasonMonths',
   'maxGroupSize',
+  // Category (activity-category rollup) + Destination=State facets (issue 04
+  // follow-up). Both are DERIVED at index time from activitySlug/regionSlug via
+  // the controlled-vocabulary registries — no new call-site field is needed.
+  'category',
+  'state',
 ]
 
 /**
@@ -89,6 +97,10 @@ interface MeiliPayload {
   durationBand: string | null
   maxGroupSize: number | null
   seasonMonths: number[]
+  // Category (activity rollup) + Destination=State (issue 04 follow-up). Both
+  // DERIVED from activitySlug/regionSlug via the registries at index time.
+  category: string | null
+  state: string | null
 }
 
 function toMeiliDoc(doc: ExperienceSearchDoc): MeiliPayload {
@@ -110,6 +122,10 @@ function toMeiliDoc(doc: ExperienceSearchDoc): MeiliPayload {
     durationBand: durationBand(doc.durationMinutes),
     maxGroupSize: doc.maxGroupSize,
     seasonMonths: doc.seasonMonths,
+    // Derive the higher-level category + Destination state from the existing
+    // slugs via the registries — keeps call-sites unchanged (issue 04 follow-up).
+    category: getActivity(doc.activitySlug)?.category ?? null,
+    state: getRegion(doc.regionSlug)?.state ?? null,
   }
 }
 

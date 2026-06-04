@@ -425,8 +425,21 @@
         "11": "नवंबर",
         "12": "दिसंबर"
       },
-      "groupSize": "समूह का आकार",
-      "groupSizePlaceholder": "कम से कम N लोगों के लिए"
+      "groupSize": "न्यूनतम समूह आकार",
+      "groupSizePlaceholder": "जैसे 4",
+      "category": "श्रेणी",
+      "allCategories": "सभी श्रेणियाँ",
+      "categoryOptions": {
+        "water": "वाटर स्पोर्ट्स",
+        "aerial": "हवाई गतिविधियाँ",
+        "mountain": "पर्वत और ट्रेकिंग",
+        "wildlife": "वन्यजीव और सफारी",
+        "urban": "शहरी"
+      },
+      "destination": "गंतव्य",
+      "state": "राज्य",
+      "allStates": "सभी राज्य",
+      "groupSizeHelp": "कम से कम इतने लोगों के समूह के लिए उपयुक्त"
     },
     "activities": {
       "rafting": "राफ्टिंग",

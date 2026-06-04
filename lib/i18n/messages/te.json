@@ -425,8 +425,21 @@
         "11": "నవంబర్",
         "12": "డిసెంబర్"
       },
-      "groupSize": "సమూహ పరిమాణం",
-      "groupSizePlaceholder": "కనీసం N మందికి"
+      "groupSize": "కనీస సమూహ పరిమాణం",
+      "groupSizePlaceholder": "ఉదా. 4",
+      "category": "వర్గం",
+      "allCategories": "అన్ని వర్గాలు",
+      "categoryOptions": {
+        "water": "వాటర్ స్పోర్ట్స్",
+        "aerial": "గగన క్రీడలు",
+        "mountain": "పర్వతం & ట్రెక్కింగ్",
+        "wildlife": "వన్యప్రాణి & సఫారీ",
+        "urban": "పట్టణ"
+      },
+      "destination": "గమ్యం",
+      "state": "రాష్ట్రం",
+      "allStates": "అన్ని రాష్ట్రాలు",
+      "groupSizeHelp": "కనీసం ఇంత మంది ఉన్న సమూహానికి సరిపోతుంది"
     },
     "activities": {
       "rafting": "రాఫ్టింగ్",

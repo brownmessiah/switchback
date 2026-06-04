@@ -30,6 +30,10 @@ export interface SearchExperiencesParams {
   seasonMonth?: number
   /** "Fits a group of N" — matches Experiences whose maxGroupSize >= N. */
   maxGroupSize?: number
+  /** Activity-category rollup (water/aerial/mountain/wildlife/urban) — issue 04 follow-up. */
+  category?: string
+  /** Destination = Indian state (e.g. "Goa", "Himachal Pradesh") — issue 04 follow-up. */
+  state?: string
 }
 
 export interface SearchExperienceHit {
@@ -81,6 +85,16 @@ export function buildMeiliFilter(params: Omit<SearchExperiencesParams, 'q' | 'so
   if (params.maxGroupSize !== undefined) {
     parts.push(`maxGroupSize >= ${params.maxGroupSize}`)
   }
+  // Category (activity rollup) + Destination=State facets (issue 04 follow-up).
+  // String values quoted, matching the existing style. Both are DERIVED index
+  // attributes — a doc with an unknown activity/region slug carries null and so
+  // never matches these filters (correct).
+  if (params.category) {
+    parts.push(`category = "${params.category}"`)
+  }
+  if (params.state) {
+    parts.push(`state = "${params.state}"`)
+  }
 
   return parts.join(' AND ')
 }
@@ -114,7 +128,10 @@ export function isFilteredSearch(params: SearchExperiencesParams): boolean {
     params.difficulty ||
     params.durationBand ||
     params.seasonMonth !== undefined ||
-    params.maxGroupSize !== undefined
+    params.maxGroupSize !== undefined ||
+    // Category + Destination=State facets (issue 04 follow-up).
+    params.category ||
+    params.state
   )
 }
 
@@ -136,7 +153,7 @@ export async function searchExperiences(
     const result = await client.index(EXPERIENCE_INDEX).search(params.q ?? '', {
       filter: filter || undefined,
       sort: sort.length > 0 ? sort : undefined,
-      facets: ['activitySlug', 'regionSlug', 'difficulty', 'durationBand'],
+      facets: ['activitySlug', 'regionSlug', 'category', 'difficulty', 'durationBand'],
       limit: 20,
     })
 

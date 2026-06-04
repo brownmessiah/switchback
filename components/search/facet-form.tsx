@@ -14,7 +14,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { DURATION_BANDS } from '@/lib/search/duration-band'
-import { ACTIVITY_OPTIONS, REGION_OPTIONS } from '@/lib/search/facet-options'
+import {
+  ACTIVITY_OPTIONS,
+  CATEGORY_OPTIONS,
+  REGION_OPTIONS,
+  STATE_OPTIONS,
+} from '@/lib/search/facet-options'
 import type { SearchExperiencesParams } from '@/lib/search/search-experiences'
 
 /** ADR-0017 difficulty enum values — facet options + i18n key suffixes. */
@@ -54,7 +59,9 @@ export async function FacetForm({
 }: FacetFormProps): Promise<ReactElement> {
   const t = await getTranslations({ locale, namespace: 'SearchPage' })
 
+  const categoryId = `${instanceId}-category`
   const activityId = `${instanceId}-activity`
+  const stateId = `${instanceId}-state`
   const regionId = `${instanceId}-region`
   const sortId = `${instanceId}-sort`
   const minPriceId = `${instanceId}-minPrice`
@@ -67,6 +74,23 @@ export async function FacetForm({
   return (
     <form method="get" action="/search" className="space-y-5">
       {parsed.q && <input type="hidden" name="q" value={parsed.q} />}
+
+      <div className="space-y-2" data-testid="facet-category">
+        <Label htmlFor={categoryId}>{t('filters.category')}</Label>
+        <Select name="category" defaultValue={parsed.category ?? ''}>
+          <SelectTrigger id={categoryId} className="w-full">
+            <SelectValue placeholder={t('filters.allCategories')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">{t('filters.allCategories')}</SelectItem>
+            {CATEGORY_OPTIONS.map((c) => (
+              <SelectItem key={c.slug} value={c.slug}>
+                {t(`filters.categoryOptions.${c.i18nKey}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <div className="space-y-2" data-testid="facet-activity">
         <Label htmlFor={activityId}>{t('filters.activity')}</Label>
@@ -85,22 +109,44 @@ export async function FacetForm({
         </Select>
       </div>
 
-      <div className="space-y-2" data-testid="facet-region">
-        <Label htmlFor={regionId}>{t('filters.region')}</Label>
-        <Select name="region" defaultValue={parsed.region ?? ''}>
-          <SelectTrigger id={regionId} className="w-full">
-            <SelectValue placeholder={t('filters.allRegions')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">{t('filters.allRegions')}</SelectItem>
-            {REGION_OPTIONS.map((r) => (
-              <SelectItem key={r.slug} value={r.slug}>
-                {t(`regions.${r.i18nKey}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <fieldset className="space-y-3">
+        <legend className="text-2xs font-medium uppercase tracking-[var(--tracking-eyebrow)] text-muted-foreground">
+          {t('filters.destination')}
+        </legend>
+        <div className="space-y-2" data-testid="facet-state">
+          <Label htmlFor={stateId}>{t('filters.state')}</Label>
+          <Select name="state" defaultValue={parsed.state ?? ''}>
+            <SelectTrigger id={stateId} className="w-full">
+              <SelectValue placeholder={t('filters.allStates')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">{t('filters.allStates')}</SelectItem>
+              {STATE_OPTIONS.map((s) => (
+                <SelectItem key={s.name} value={s.name}>
+                  {s.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2" data-testid="facet-region">
+          <Label htmlFor={regionId}>{t('filters.region')}</Label>
+          <Select name="region" defaultValue={parsed.region ?? ''}>
+            <SelectTrigger id={regionId} className="w-full">
+              <SelectValue placeholder={t('filters.allRegions')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">{t('filters.allRegions')}</SelectItem>
+              {REGION_OPTIONS.map((r) => (
+                <SelectItem key={r.slug} value={r.slug}>
+                  {t(`regions.${r.i18nKey}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </fieldset>
 
       <div className="space-y-2" data-testid="facet-difficulty">
         <Label htmlFor={difficultyId}>{t('filters.difficulty')}</Label>
@@ -166,8 +212,12 @@ export async function FacetForm({
           defaultValue={parsed.maxGroupSize ?? ''}
           min={1}
           placeholder={t('filters.groupSizePlaceholder')}
+          aria-describedby={`${groupSizeId}-help`}
           className="tabular-nums"
         />
+        <p id={`${groupSizeId}-help`} className="text-2xs text-muted-foreground">
+          {t('filters.groupSizeHelp')}
+        </p>
       </div>
 
       <div className="space-y-2" data-testid="facet-sort">

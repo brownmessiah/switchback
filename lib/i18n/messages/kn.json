@@ -425,8 +425,21 @@
         "11": "ನವೆಂಬರ್",
         "12": "ಡಿಸೆಂಬರ್"
       },
-      "groupSize": "ಗುಂಪಿನ ಗಾತ್ರ",
-      "groupSizePlaceholder": "ಕನಿಷ್ಠ N ಜನರಿಗೆ"
+      "groupSize": "ಕನಿಷ್ಠ ಗುಂಪು ಗಾತ್ರ",
+      "groupSizePlaceholder": "ಉದಾ. 4",
+      "category": "ವರ್ಗ",
+      "allCategories": "ಎಲ್ಲಾ ವರ್ಗಗಳು",
+      "categoryOptions": {
+        "water": "ವಾಟರ್ ಸ್ಪೋರ್ಟ್ಸ್",
+        "aerial": "ವಾಯು ಕ್ರೀಡೆಗಳು",
+        "mountain": "ಪರ್ವತ ಮತ್ತು ಚಾರಣ",
+        "wildlife": "ವನ್ಯಜೀವಿ ಮತ್ತು ಸಫಾರಿ",
+        "urban": "ನಗರ"
+      },
+      "destination": "ಗಮ್ಯ",
+      "state": "ರಾಜ್ಯ",
+      "allStates": "ಎಲ್ಲಾ ರಾಜ್ಯಗಳು",
+      "groupSizeHelp": "ಕನಿಷ್ಠ ಇಷ್ಟು ಜನರ ಗುಂಪಿಗೆ ಸೂಕ್ತ"
     },
     "activities": {
       "rafting": "ರಾಫ್ಟಿಂಗ್",

@@ -508,7 +508,9 @@ test.describe('Search bare', () => {
     await expect(rail).toBeVisible()
 
     // Every backend-supported facet is present in the rail.
+    await expect(rail.getByTestId('facet-category')).toBeVisible()
     await expect(rail.getByTestId('facet-activity')).toBeVisible()
+    await expect(rail.getByTestId('facet-state')).toBeVisible()
     await expect(rail.getByTestId('facet-region')).toBeVisible()
     await expect(rail.getByTestId('facet-sort')).toBeVisible()
     await expect(rail.getByTestId('facet-minPrice')).toBeVisible()
@@ -689,6 +691,69 @@ test.describe('Search filtered', () => {
     // carries it.
     expect(new URL(page.url()).searchParams.get('difficulty')).toBe('moderate')
     await expect(page.getByTestId('facet-difficulty')).toContainText(/moderate/i)
+  })
+
+  // Category facet (issue 04 follow-up) — the activity-category rollup must
+  // ACTUALLY narrow results: `?category=water` keeps water-category Experiences
+  // (rafting/scuba/kayaking) and drops aerial ones (e.g. paragliding). category
+  // is DERIVED at index time from activitySlug via the registry; an unknown
+  // slug carries null and never matches.
+  test('category facet constrains results: ?category=water keeps water-sports rows and drops aerial ones', async ({
+    page,
+  }) => {
+    await page.goto('/search?category=water')
+    const waterHrefs = await page
+      .locator('main a[href^="/experience/"]')
+      .evaluateAll((els) =>
+        els.map((e) => (e as HTMLAnchorElement).getAttribute('href') ?? ''),
+      )
+    expect(waterHrefs.length).toBeGreaterThan(0)
+    // (a) The flagship rafting (water) row is present.
+    expect(
+      waterHrefs.some((h) =>
+        h.startsWith('/experience/rishikesh-rafting-grade-iii'),
+      ),
+    ).toBe(true)
+    // (b) An aerial Experience (paragliding) never leaks through a water filter.
+    expect(
+      waterHrefs.some((h) =>
+        h.startsWith('/experience/manali-solang-paragliding-tandem'),
+      ),
+      'aerial Experience must not appear under category=water',
+    ).toBe(false)
+    // (c) Every result is a valid /experience/<slug> link.
+    for (const href of waterHrefs) {
+      expect(
+        /^\/experience\/[a-z0-9-]+$/.test(href),
+        `category=water returned a malformed result href: ${href}`,
+      ).toBe(true)
+    }
+    // The category facet round-trips: URL carries it and the control reflects it.
+    expect(new URL(page.url()).searchParams.get('category')).toBe('water')
+    await expect(page.getByTestId('facet-category')).toContainText(/water/i)
+  })
+
+  // Destination=State facet (issue 04 follow-up) — `?state=Goa` keeps only
+  // Goa-state Experiences (state derived from regionSlug via the registry).
+  test('state facet constrains results: ?state=Goa yields only Goa-state experiences', async ({
+    page,
+  }) => {
+    await page.goto('/search?state=Goa')
+    const hrefs = await page
+      .locator('main a[href^="/experience/"]')
+      .evaluateAll((els) =>
+        els.map((e) => (e as HTMLAnchorElement).getAttribute('href') ?? ''),
+      )
+    // Every result is a valid Experience link (Goa-state listings only).
+    for (const href of hrefs) {
+      expect(
+        /^\/experience\/[a-z0-9-]+$/.test(href),
+        `state=Goa returned a malformed result href: ${href}`,
+      ).toBe(true)
+    }
+    // The state facet round-trips into URL + control.
+    expect(new URL(page.url()).searchParams.get('state')).toBe('Goa')
+    await expect(page.getByTestId('facet-state')).toContainText(/goa/i)
   })
 
   // The new structured facet controls are present in the SSR rail (no JS) so

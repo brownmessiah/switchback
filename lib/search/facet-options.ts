@@ -16,7 +16,10 @@
  * English in the JSX.
  */
 
-import { listActivities } from '@/lib/activities/registry'
+import {
+  type ActivityCategory,
+  listActivities,
+} from '@/lib/activities/registry'
 import { listRegions } from '@/lib/regions/registry'
 
 export interface FacetOption {
@@ -54,3 +57,44 @@ export const REGION_OPTIONS: readonly FacetOption[] = listRegions().map((r) => (
   slug: r.slug,
   i18nKey: slugToI18nKey(r.slug),
 }))
+
+/**
+ * Category facet options (issue 04 follow-up) — the activity-category rollup, a
+ * higher-level grouping above the Activity facet. The five canonical
+ * `ActivityCategory` values are the form-submitted slugs (e.g. `category=water`)
+ * and ALSO the i18n key suffixes under `SearchPage.filters.categoryOptions`.
+ * Listed explicitly (not derived from `listActivities()`) so the full category
+ * vocabulary is offered even when no current activity maps to a given category
+ * (e.g. `urban`) — they line up with the `category` index attribute derived in
+ * the indexer.
+ */
+const CATEGORY_SLUGS: readonly ActivityCategory[] = [
+  'water',
+  'aerial',
+  'mountain',
+  'wildlife',
+  'urban',
+]
+
+export const CATEGORY_OPTIONS: readonly FacetOption[] = CATEGORY_SLUGS.map(
+  (c) => ({ slug: c, i18nKey: c }),
+)
+
+/**
+ * Destination=State facet options (issue 04 follow-up). The distinct Indian
+ * states across the regions registry — Outvers is India-only, so there is no
+ * Country dropdown. The state name is BOTH the form-submitted value
+ * (`state=Goa`, matching the derived `state` index attribute) and the display
+ * label: state names are proper nouns kept as registry literals rather than
+ * translated 13× (the issue explicitly allows this). Sorted for stable order.
+ */
+export interface StateOption {
+  /** Indian state name — submitted as `state=<name>` and shown as the label. */
+  readonly name: string
+}
+
+export const STATE_OPTIONS: readonly StateOption[] = [
+  ...new Set(listRegions().map((r) => r.state)),
+]
+  .sort((a, b) => a.localeCompare(b))
+  .map((name) => ({ name }))

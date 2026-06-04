@@ -425,8 +425,21 @@
         "11": "নভেম্বর",
         "12": "ডিসেম্বর"
       },
-      "groupSize": "দলের আকার",
-      "groupSizePlaceholder": "কমপক্ষে N জনের জন্য"
+      "groupSize": "সর্বনিম্ন দলের আকার",
+      "groupSizePlaceholder": "যেমন 4",
+      "category": "বিভাগ",
+      "allCategories": "সব বিভাগ",
+      "categoryOptions": {
+        "water": "ওয়াটার স্পোর্টস",
+        "aerial": "আকাশ ক্রীড়া",
+        "mountain": "পর্বত ও ট্রেকিং",
+        "wildlife": "বন্যপ্রাণী ও সাফারি",
+        "urban": "শহুরে"
+      },
+      "destination": "গন্তব্য",
+      "state": "রাজ্য",
+      "allStates": "সব রাজ্য",
+      "groupSizeHelp": "অন্তত এত জনের দলের জন্য উপযুক্ত"
     },
     "activities": {
       "rafting": "র‍্যাফটিং",

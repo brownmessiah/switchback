@@ -425,8 +425,21 @@
         "11": "നവംബർ",
         "12": "ഡിസംബർ"
       },
-      "groupSize": "ഗ്രൂപ്പ് വലുപ്പം",
-      "groupSizePlaceholder": "കുറഞ്ഞത് N പേർക്ക്"
+      "groupSize": "ഏറ്റവും കുറഞ്ഞ ഗ്രൂപ്പ് വലുപ്പം",
+      "groupSizePlaceholder": "ഉദാ. 4",
+      "category": "വിഭാഗം",
+      "allCategories": "എല്ലാ വിഭാഗങ്ങളും",
+      "categoryOptions": {
+        "water": "വാട്ടർ സ്പോർട്സ്",
+        "aerial": "വ്യോമ കായികം",
+        "mountain": "പർവ്വതം & ട്രെക്കിംഗ്",
+        "wildlife": "വന്യജീവി & സഫാരി",
+        "urban": "നഗരം"
+      },
+      "destination": "ലക്ഷ്യസ്ഥാനം",
+      "state": "സംസ്ഥാനം",
+      "allStates": "എല്ലാ സംസ്ഥാനങ്ങളും",
+      "groupSizeHelp": "കുറഞ്ഞത് ഇത്രയും പേരുള്ള ഗ്രൂപ്പിന് അനുയോജ്യം"
     },
     "activities": {
       "rafting": "റാഫ്റ്റിംഗ്",

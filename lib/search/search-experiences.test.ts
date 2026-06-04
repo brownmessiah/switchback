@@ -81,6 +81,28 @@ describe('buildMeiliFilter (Task 23)', () => {
     expect(buildMeiliFilter({ maxGroupSize: 8 })).toBe('maxGroupSize >= 8')
   })
 
+  // Category + Destination(State) facets (issue 04 follow-up).
+  it('filters by category', () => {
+    expect(buildMeiliFilter({ category: 'water' })).toBe('category = "water"')
+  })
+
+  it('filters by state', () => {
+    expect(buildMeiliFilter({ state: 'Himachal Pradesh' })).toBe(
+      'state = "Himachal Pradesh"',
+    )
+  })
+
+  it('combines category and state with the existing facets', () => {
+    const filter = buildMeiliFilter({
+      category: 'water',
+      state: 'Himachal Pradesh',
+      activity: 'rafting',
+    })
+    expect(filter).toBe(
+      'activitySlug = "rafting" AND category = "water" AND state = "Himachal Pradesh"',
+    )
+  })
+
   it('combines the new facets with the existing ones in declaration order', () => {
     const filter = buildMeiliFilter({
       activity: 'rafting',
@@ -113,6 +135,12 @@ describe('isFilteredSearch', () => {
     expect(isFilteredSearch({ seasonMonth: 6 })).toBe(true)
     expect(isFilteredSearch({ maxGroupSize: 8 })).toBe(true)
     expect(isFilteredSearch({ sort: 'duration_asc' })).toBe(true)
+  })
+
+  it('returns true when only category or only state is set (issue 04 follow-up)', async () => {
+    const { isFilteredSearch } = await import('./search-experiences')
+    expect(isFilteredSearch({ category: 'water' })).toBe(true)
+    expect(isFilteredSearch({ state: 'Goa' })).toBe(true)
   })
 
   it('returns false when only q is set', async () => {
@@ -236,6 +264,7 @@ describe('searchExperiences resilience (ADR-0013)', () => {
     expect(facets).toContain('regionSlug')
     expect(facets).toContain('difficulty')
     expect(facets).toContain('durationBand')
+    expect(facets).toContain('category')
   })
 
   it('passes the new structured facets through to the Meili filter string', async () => {

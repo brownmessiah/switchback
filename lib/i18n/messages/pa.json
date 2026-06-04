@@ -425,8 +425,21 @@
         "11": "ਨਵੰਬਰ",
         "12": "ਦਸੰਬਰ"
       },
-      "groupSize": "ਸਮੂਹ ਦਾ ਆਕਾਰ",
-      "groupSizePlaceholder": "ਘੱਟੋ-ਘੱਟ N ਲੋਕਾਂ ਲਈ"
+      "groupSize": "ਘੱਟੋ-ਘੱਟ ਗਰੁੱਪ ਆਕਾਰ",
+      "groupSizePlaceholder": "ਜਿਵੇਂ 4",
+      "category": "ਸ਼੍ਰੇਣੀ",
+      "allCategories": "ਸਾਰੀਆਂ ਸ਼੍ਰੇਣੀਆਂ",
+      "categoryOptions": {
+        "water": "ਵਾਟਰ ਸਪੋਰਟਸ",
+        "aerial": "ਹਵਾਈ ਖੇਡਾਂ",
+        "mountain": "ਪਹਾੜ ਅਤੇ ਟ੍ਰੈਕਿੰਗ",
+        "wildlife": "ਜੰਗਲੀ ਜੀਵ ਅਤੇ ਸਫਾਰੀ",
+        "urban": "ਸ਼ਹਿਰੀ"
+      },
+      "destination": "ਮੰਜ਼ਿਲ",
+      "state": "ਰਾਜ",
+      "allStates": "ਸਾਰੇ ਰਾਜ",
+      "groupSizeHelp": "ਘੱਟੋ-ਘੱਟ ਇੰਨੇ ਲੋਕਾਂ ਦੇ ਗਰੁੱਪ ਲਈ ਢੁਕਵਾਂ"
     },
     "activities": {
       "rafting": "ਰਾਫਟਿੰਗ",

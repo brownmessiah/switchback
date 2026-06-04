@@ -425,8 +425,21 @@
         "11": "नोव्हेंबर",
         "12": "डिसेंबर"
       },
-      "groupSize": "गटाचा आकार",
-      "groupSizePlaceholder": "किमान N लोकांसाठी"
+      "groupSize": "किमान गट आकार",
+      "groupSizePlaceholder": "उदा. 4",
+      "category": "श्रेणी",
+      "allCategories": "सर्व श्रेणी",
+      "categoryOptions": {
+        "water": "वॉटर स्पोर्ट्स",
+        "aerial": "हवाई खेळ",
+        "mountain": "पर्वत व ट्रेकिंग",
+        "wildlife": "वन्यजीव व सफारी",
+        "urban": "शहरी"
+      },
+      "destination": "गंतव्य",
+      "state": "राज्य",
+      "allStates": "सर्व राज्ये",
+      "groupSizeHelp": "किमान इतक्या लोकांच्या गटासाठी योग्य"
     },
     "activities": {
       "rafting": "राफ्टिंग",

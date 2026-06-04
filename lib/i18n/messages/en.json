@@ -383,8 +383,21 @@
         "11": "November",
         "12": "December"
       },
-      "groupSize": "Group size",
-      "groupSizePlaceholder": "Fits at least N people"
+      "groupSize": "Min. group size",
+      "groupSizePlaceholder": "e.g. 4",
+      "category": "Category",
+      "allCategories": "All categories",
+      "categoryOptions": {
+        "water": "Water sports",
+        "aerial": "Air & sky",
+        "mountain": "Mountain & trekking",
+        "wildlife": "Wildlife & safari",
+        "urban": "Urban"
+      },
+      "destination": "Destination",
+      "state": "State",
+      "allStates": "All states",
+      "groupSizeHelp": "Fits a group of at least this many people"
     },
     "activities": {
       "rafting": "Rafting",

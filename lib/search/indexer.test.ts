@@ -113,6 +113,28 @@ describe('search indexer', () => {
     expect(doc.seasonMonths).toEqual([3, 4, 5, 6, 9, 10, 11])
   })
 
+  it('derives category + state from the activity/region registries (issue 04 follow-up)', async () => {
+    const { client, addCalls } = makeStub()
+    // sampleDoc: activitySlug 'rafting' (category water), regionSlug
+    // 'rishikesh' (state Uttarakhand). Both DERIVED at index time from the
+    // controlled-vocabulary registries — no call-site change needed.
+    await indexExperience(sampleDoc, { client })
+    const doc = (addCalls[0] as Array<Record<string, unknown>>)[0]!
+    expect(doc.category).toBe('water')
+    expect(doc.state).toBe('Uttarakhand')
+  })
+
+  it('derives a null category/state for an unknown activity/region slug', async () => {
+    const { client, addCalls } = makeStub()
+    await indexExperience(
+      { ...sampleDoc, activitySlug: 'no-such-activity', regionSlug: 'no-such-region' },
+      { client },
+    )
+    const doc = (addCalls[0] as Array<Record<string, unknown>>)[0]!
+    expect(doc.category).toBeNull()
+    expect(doc.state).toBeNull()
+  })
+
   it('passes null structured fields through and derives a null durationBand', async () => {
     const { client, addCalls } = makeStub()
     await indexExperience(
@@ -171,6 +193,13 @@ describe('ensureExperienceIndexSettings', () => {
     expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('seasonMonths')
     expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('maxGroupSize')
     expect(EXPERIENCE_SORTABLE_ATTRIBUTES).toContain('durationMinutes')
+  })
+
+  it('declares the category + state facet attributes (issue 04 follow-up)', async () => {
+    // Category (activity rollup) and Destination=State are filterable facets;
+    // an unconfigured attribute 400s the search page (ADR-0013).
+    expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('category')
+    expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('state')
   })
 
   it('enqueues updateSettings at most once per process across direct calls', async () => {

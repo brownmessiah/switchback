@@ -28,6 +28,7 @@
 import { and, eq, inArray, like } from 'drizzle-orm'
 
 import { db } from './client'
+import { seedDefaultAvailability } from './seed-availability'
 import { resolveDemoBookingSlotOffsetDays } from './seed-demo-bookings'
 import { IMG, seedCatalog } from './seed-extras'
 import { galleryFor } from './seed-photos'
@@ -828,6 +829,16 @@ async function seed(): Promise<void> {
         entityId: exp.id,
       })),
     )
+  }
+
+  // ----- DEFAULT AVAILABILITY (recurring patterns → materialised slots) -----
+  // Seed a realistic weekly schedule per customer-facing Experience so the PDP
+  // booking calendar shows ~90 days of selectable dates (not the 1–2 sparse
+  // slots it used to). Idempotent + additive (ON CONFLICT DO NOTHING) — the
+  // dedicated demo/E2E slots seeded elsewhere are never disturbed. Vendors can
+  // still author their own patterns via the availability manager.
+  for (const exp of allExperiences) {
+    await seedDefaultAvailability(db, exp.id)
   }
 
   // ----- STRUCTURED ITINERARY (ADR-0017) — only the flagged fixture row -----

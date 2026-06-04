@@ -38,6 +38,7 @@ import {
   vendorProfiles,
 } from './schema'
 import { IMG, type SeedDb, VENDOR_LOGO_PHOTOS } from './seed-extras'
+import { seedDefaultAvailability } from './seed-availability'
 import { galleryFor } from './seed-photos'
 import { vendorVariety } from './seed-vendor-variety'
 
@@ -221,6 +222,14 @@ export async function seedDemoCatalog(db: SeedDb): Promise<void> {
         )[0]?.id
       if (id && !slotForExp.has(exp.id)) slotForExp.set(exp.id, id)
     }
+  }
+
+  // ── 5b. Default recurring availability → ~90 days of bookable dates ───────
+  // The two explicit slots above anchor the review bookings; this fills the PDP
+  // booking calendar with a realistic weekly schedule so customers see many
+  // selectable dates (idempotent, additive — never touches the slots above).
+  for (const exp of demo) {
+    await seedDefaultAvailability(db, exp.id)
   }
 
   // ── 6. Demo customers + a subset of reviews on completed bookings ─────────

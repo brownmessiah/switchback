@@ -144,9 +144,11 @@ describe('seedDemoCatalog — dev-only bounded pilot', () => {
       .select({ slots: sql<number>`count(*)::int` })
       .from(availabilitySlots)
       .where(inArray(availabilitySlots.experienceId, expIds))
-    // 2 future slots per experience (60) + 1 dedicated PAST slot for each of the
-    // 12 review targets (so completed review bookings never sit on a future slot).
-    expect(slots).toBe(72)
+    // Anchor slots: 2 explicit per experience (60) + 1 dedicated PAST slot for
+    // each of the 12 review targets = 72. PLUS the seeded default recurring
+    // availability (~5 days/week over 90 days per experience) so the PDP booking
+    // calendar is richly populated rather than showing 1–2 dates.
+    expect(slots).toBeGreaterThanOrEqual(1500)
 
     const [{ media }] = await db
       .select({ media: sql<number>`count(*)::int` })

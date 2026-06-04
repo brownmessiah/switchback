@@ -72,6 +72,7 @@ import type { ExtractTablesWithRelations } from 'drizzle-orm'
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core'
 import type * as schema from './schema'
 
+import { seedDefaultAvailability } from './seed-availability'
 import { galleryFor } from './seed-photos'
 import { vendorVariety } from './seed-vendor-variety'
 
@@ -795,6 +796,13 @@ async function main(db: SeedDb): Promise<void> {
         )[0]?.id
       if (id && !slotForExp.has(exp.id)) slotForExp.set(exp.id, id)
     }
+  }
+
+  // ── 3b. Default recurring availability → ~90 days of bookable dates ───────
+  // Fills the PDP booking calendar for every catalog Experience (the 2 explicit
+  // slots above anchor the review/demand bookings). Idempotent + additive.
+  for (const exp of catalog) {
+    await seedDefaultAvailability(db, exp.id)
   }
 
   // ── 4. media_assets — 6 per catalog experience + vendor logo/cover ────────

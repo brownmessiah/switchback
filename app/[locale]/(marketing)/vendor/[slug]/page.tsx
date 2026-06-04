@@ -4,6 +4,7 @@ import {
   Building2,
   CircleCheck,
   Clock,
+  Compass,
   MapPin,
   MessageSquare,
   ShieldCheck,
@@ -12,6 +13,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
+import { EmptyState } from '@/components/empty-state'
 import { ExperienceCard, type ExperienceCardData } from '@/components/experience-card'
 import { Badge } from '@/components/ui/badge'
 import { db } from '@/db/client'
@@ -61,6 +63,7 @@ export default async function VendorProfilePage({ params }: PageProps) {
   setRequestLocale(locale)
 
   const t = await getTranslations({ locale, namespace: 'VendorPage' })
+  const tCommon = await getTranslations({ locale, namespace: 'Common' })
 
   const [vendor] = await db
     .select()
@@ -294,9 +297,12 @@ export default async function VendorProfilePage({ params }: PageProps) {
               {t('experiencesList.heading', { name: vendor.businessName })}
             </h2>
             {experienceCount === 0 ? (
-              <div className="rounded-[var(--radius-card)] border border-dashed border-border py-12 text-center">
-                <p className="text-muted-foreground">{t('experiencesList.empty')}</p>
-              </div>
+              <EmptyState
+                data-testid="vendor-experiences-empty"
+                icon={Compass}
+                title={t('experiencesList.empty')}
+                cta={{ href: '/search', label: tCommon('actions.search') }}
+              />
             ) : (
               <div className="grid gap-[var(--space-grid-gap)] sm:grid-cols-2">
                 {vendorCards.map((card) => (

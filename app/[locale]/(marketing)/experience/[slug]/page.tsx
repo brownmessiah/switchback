@@ -372,8 +372,13 @@ export default async function ExperienceDetailPage({
     { id: 'faq', label: t('nav.faq') },
   ]
 
+  // C (mobile): the "from" price for the sticky bottom Book-now bar — the
+  // lowest per-participant bracket, matching the rail's leading price.
+  const fromPriceRupees = detail.pricePerPerson_1_2
+  const bookingDisabled = railClosure !== null
+
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-12">
+    <main className="mx-auto max-w-6xl px-4 py-8 pb-24 sm:px-6 lg:py-12 lg:pb-12">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productJson) }}
@@ -473,20 +478,22 @@ export default async function ExperienceDetailPage({
             </div>
           </header>
 
-          {/* Assurance row (folded in from Direction A) — three trust pillars,
-              each on the semantic-status family WITH a paired lucide icon
-              (status never by colour alone, DESIGN.md §1.3 / §5). */}
-          <ul className="mb-[var(--space-section)] grid gap-3 sm:grid-cols-3">
-            <li className="flex items-start gap-2 rounded-[var(--radius-card)] border border-success/20 bg-success-subtle px-3 py-2.5 text-sm text-success">
-              <CircleCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+          {/* Assurance row — three trust signals as a COMPACT inline strip
+              (researched best practice: read-only trust signals are scannable
+              icon+label items, not large colour-filled boxes). Each pairs a
+              coloured lucide icon with a label so status is never colour-alone
+              (DESIGN.md §1.3 / WCAG 1.4.1); text stays foreground for contrast. */}
+          <ul className="mb-[var(--space-section)] flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-foreground">
+            <li className="inline-flex items-center gap-1.5">
+              <CircleCheck aria-hidden="true" className="size-4 shrink-0 text-success" />
               <span>{t('assurance.freeCancellation')}</span>
             </li>
-            <li className="flex items-start gap-2 rounded-[var(--radius-card)] border border-success/20 bg-success-subtle px-3 py-2.5 text-sm text-success">
-              <ShieldCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+            <li className="inline-flex items-center gap-1.5">
+              <ShieldCheck aria-hidden="true" className="size-4 shrink-0 text-success" />
               <span>{t('assurance.verifiedVendor')}</span>
             </li>
-            <li className="flex items-start gap-2 rounded-[var(--radius-card)] border border-info/20 bg-info-subtle px-3 py-2.5 text-sm text-info">
-              <Wallet aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+            <li className="inline-flex items-center gap-1.5">
+              <Wallet aria-hidden="true" className="size-4 shrink-0 text-info" />
               <span>{t('assurance.exactRefund')}</span>
             </li>
           </ul>
@@ -821,8 +828,9 @@ export default async function ExperienceDetailPage({
             It is rendered exactly once — no duplicate "Book now" / bracket markup
             — so the existing strict-mode E2E selectors stay unambiguous. */}
         <aside
+          id="booking"
           aria-label={t('pricing.heading')}
-          className="lg:sticky lg:top-[calc(var(--header-offset,4rem)+1rem)] lg:self-start"
+          className="scroll-mt-[calc(var(--header-offset,4rem)+1rem)] lg:sticky lg:top-[calc(var(--header-offset,4rem)+1rem)] lg:self-start"
         >
           <BookingRail
             heading={t('pricing.heading')}
@@ -863,6 +871,39 @@ export default async function ExperienceDetailPage({
             closure={railClosure}
           />
         </aside>
+      </div>
+
+      {/* C (mobile): sticky bottom booking bar — keeps the CTA reachable
+          without scrolling the whole PDP (lg:hidden; the desktop sticky rail
+          covers ≥lg). Anchors to the in-page booking rail (#booking) where the
+          date picker + participant stepper + the canonical "Book now" → checkout
+          link live; this bar is a JUMP affordance ("Select date"), deliberately
+          NOT a second "Book now" link — that would collide with the strict-mode
+          E2E `a:has-text("Book now")` revenue-spine selector. When the
+          Experience is closed (region closure) the bar de-emphasises to an
+          outline "Currently closed" cue. Pure markup — does NOT touch the rail
+          components. */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 py-3 backdrop-blur lg:hidden">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-base font-bold tabular-nums text-foreground">
+              ₹{fromPriceRupees.toLocaleString('en-IN')}
+              <span className="ml-1 text-xs font-normal text-muted-foreground">
+                {t('pricing.perPerson')}
+              </span>
+            </p>
+          </div>
+          <a
+            href="#booking"
+            className={
+              bookingDisabled
+                ? 'inline-flex h-11 shrink-0 items-center justify-center rounded-[var(--radius-control)] border border-border px-6 text-sm font-semibold text-foreground'
+                : 'inline-flex h-11 shrink-0 items-center justify-center rounded-[var(--radius-control)] bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90'
+            }
+          >
+            {bookingDisabled ? t('closure.heading') : t('calendar.selectDate')}
+          </a>
+        </div>
       </div>
     </main>
   )

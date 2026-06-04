@@ -115,6 +115,17 @@
       "settings": "सेटिंग"
     }
   },
+  "BookingStatus": {
+    "pending_payment": "भुगतान लंबित",
+    "confirmed": "पुष्ट",
+    "awaiting_completion": "पूर्ण होने की प्रतीक्षा",
+    "completed": "पूर्ण",
+    "disputed": "विवादित",
+    "cancelled_by_customer": "ग्राहक द्वारा रद्द",
+    "cancelled_by_vendor": "विक्रेता द्वारा रद्द",
+    "cancelled_post_experience": "अनुभव के बाद रद्द",
+    "no_show": "अनुपस्थित"
+  },
   "CustomerNav": {
     "pageTitle": "मेरी बुकिंग",
     "wallet": {
@@ -139,7 +150,8 @@
     "heading": "मेरी विशलिस्ट",
     "empty": {
       "title": "अभी तक कोई सहेजा गया अनुभव नहीं",
-      "hint": "किसी भी अनुभव पर दिल के निशान को दबाकर उसे यहाँ बाद के लिए सहेजें।"
+      "hint": "किसी भी अनुभव पर दिल के निशान को दबाकर उसे यहाँ बाद के लिए सहेजें।",
+      "cta": "अनुभव ब्राउज़ करें"
     },
     "button": {
       "save": "सहेजें",

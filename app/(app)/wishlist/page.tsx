@@ -1,7 +1,9 @@
+import { Heart } from 'lucide-react'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 
+import { EmptyState } from '@/components/empty-state'
 import { ExperienceCard } from '@/components/experience-card'
 import { db } from '@/db/client'
 import { auth } from '@/lib/auth'
@@ -34,10 +36,13 @@ export default async function WishlistPage() {
       </h1>
 
       {saved.length === 0 ? (
-        <div className="rounded-xl border border-dashed py-16 text-center">
-          <p className="text-lg font-medium">{t('empty.title')}</p>
-          <p className="mt-1 text-sm text-muted-foreground">{t('empty.hint')}</p>
-        </div>
+        <EmptyState
+          data-testid="wishlist-empty"
+          icon={Heart}
+          title={t('empty.title')}
+          description={t('empty.hint')}
+          cta={{ href: '/search', label: t('empty.cta') }}
+        />
       ) : (
         <div
           data-testid="wishlist-grid"

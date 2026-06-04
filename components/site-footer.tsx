@@ -1,8 +1,11 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import type { ReactElement } from 'react'
+
+import { isBackOfficePath } from '@/lib/chrome/back-office-path'
 
 import { LanguageSelector } from './language-selector'
 
@@ -14,9 +17,15 @@ import { LanguageSelector } from './language-selector'
  * both header and footer.
  */
 
-export function SiteFooter(): ReactElement {
+export function SiteFooter(): ReactElement | null {
+  const pathname = usePathname()
   const t = useTranslations('Nav')
   const tf = useTranslations('Nav.footer')
+
+  // E: this consumer footer lives in the root layout — hide it inside the
+  // /admin + /vendor back-office (which have their own portal shells).
+  if (isBackOfficePath(pathname)) return null
+
   return (
     <footer className="mt-16 border-t border-border bg-card">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
@@ -121,8 +130,15 @@ export function SiteFooter(): ReactElement {
                     {tf('vendorDashboard')}
                   </Link>
                 </li>
+                {/* E: Vendor KYC is genuinely unbuilt (no destination). Kept as
+                    a graceful, NON-INTERACTIVE "(soon)" stub — never a dead
+                    <a href> 404 — and rendered in muted/2xs so it reads as a
+                    quiet roadmap note, not an unfinished link. (The built links
+                    above had their misleading "(soon)" suffixes dropped.) */}
                 <li>
-                  <span className="text-muted-foreground">{tf('vendorKyc')}</span>
+                  <span className="text-2xs text-muted-foreground/70">
+                    {tf('vendorKyc')}
+                  </span>
                 </li>
               </ul>
             </div>

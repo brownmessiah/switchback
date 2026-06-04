@@ -1,16 +1,8 @@
 import { eq } from 'drizzle-orm'
-import {
-  Ban,
-  CheckCircle2,
-  Clock,
-  Info,
-  TriangleAlert,
-  type LucideIcon,
-} from 'lucide-react'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 
-import { Badge } from '@/components/ui/badge'
+import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -24,6 +16,7 @@ import {
 import { db } from '@/db/client'
 import { availabilitySlots, bookings, experiences, users } from '@/db/schema'
 import { auth } from '@/lib/auth'
+import { bookingStatusBadge } from '@/lib/bookings/booking-status-badge'
 import { isNoShowMarkableState } from '@/lib/bookings/state-machine'
 import { computeVendorNetPayout } from '@/lib/payments/payout-calculator'
 
@@ -34,23 +27,21 @@ import { MarkNoShowButton } from './mark-no-show-button'
 import { VendorCancelButton } from './vendor-cancel-button'
 
 /**
- * Booking-state → semantic Badge variant + paired lucide icon (DESIGN.md §3
- * A3 STATE_VARIANTS, §1.3/§5: status is NEVER conveyed by color alone — fixes
- * the as-is color-only-text defect).
+ * English labels for the vendor bookings table (the vendor portal is not yet
+ * internationalised — it renders hardcoded English elsewhere on the page).
+ * Keyed by the labelKey returned from the shared `bookingStatusBadge` helper so
+ * the colour/icon/label triple stays in lockstep with the customer surface.
  */
-const STATE_BADGE: Record<
-  string,
-  { variant: 'success' | 'warning' | 'info' | 'destructive' | 'outline'; Icon: LucideIcon }
-> = {
-  pending_payment: { variant: 'warning', Icon: Clock },
-  confirmed: { variant: 'success', Icon: CheckCircle2 },
-  awaiting_completion: { variant: 'warning', Icon: Clock },
-  completed: { variant: 'success', Icon: CheckCircle2 },
-  cancelled_by_customer: { variant: 'destructive', Icon: Ban },
-  cancelled_by_vendor: { variant: 'destructive', Icon: Ban },
-  cancelled_post_experience: { variant: 'destructive', Icon: Ban },
-  disputed: { variant: 'destructive', Icon: TriangleAlert },
-  no_show: { variant: 'destructive', Icon: Ban },
+const STATE_LABEL: Record<string, string> = {
+  pending_payment: 'Payment pending',
+  confirmed: 'Confirmed',
+  awaiting_completion: 'Awaiting completion',
+  completed: 'Completed',
+  disputed: 'Disputed',
+  cancelled_by_customer: 'Cancelled by customer',
+  cancelled_by_vendor: 'Cancelled by you',
+  cancelled_post_experience: 'Cancelled',
+  no_show: 'No-show',
 }
 
 /** States in which the vendor can cancel. */
@@ -156,11 +147,9 @@ export default async function VendorBookingsPage() {
                     tdsRupees: Math.floor(Number(row.tdsAmount ?? 0)),
                     tcsRupees: Math.floor(Number(row.tcsAmount ?? 0)),
                   })
-                  const badge = STATE_BADGE[row.state] ?? {
-                    variant: 'outline' as const,
-                    Icon: Info,
-                  }
-                  const StatusIcon = badge.Icon
+                  const statusLabel =
+                    STATE_LABEL[bookingStatusBadge(row.state).labelKey] ??
+                    row.state.replace(/_/g, ' ')
                   return (
                     <TableRow
                       key={row.bookingId}
@@ -203,10 +192,11 @@ export default async function VendorBookingsPage() {
                         {inr(breakdown.netPayoutRupees)}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={badge.variant} className="capitalize text-xs">
-                          <StatusIcon aria-hidden="true" />
-                          {row.state.replace(/_/g, ' ')}
-                        </Badge>
+                        <BookingStatusBadge
+                          state={row.state}
+                          label={statusLabel}
+                          className="text-xs"
+                        />
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">

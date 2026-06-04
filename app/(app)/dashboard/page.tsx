@@ -1,20 +1,11 @@
 import { and, asc, eq, gt, isNotNull, notInArray } from 'drizzle-orm'
-import {
-  ArrowRight,
-  CircleCheck,
-  CircleSlash,
-  Clock,
-  Info,
-  ShieldCheck,
-  Wallet,
-  XCircle,
-} from 'lucide-react'
+import { ArrowRight, Clock, ShieldCheck, Wallet } from 'lucide-react'
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
-import type { ComponentType } from 'react'
 
+import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { db } from '@/db/client'
@@ -27,45 +18,8 @@ import {
 } from '@/db/schema'
 import { auth } from '@/lib/auth'
 import { deriveBookingBadges } from '@/lib/bookings/booking-badges'
+import { bookingStatusBadge } from '@/lib/bookings/booking-status-badge'
 import { FIXTURE_EXPERIENCE_SLUGS } from '@/lib/experiences/fixture-slugs'
-
-type BadgeVariant =
-  | 'default'
-  | 'secondary'
-  | 'outline'
-  | 'destructive'
-  | 'success'
-  | 'warning'
-  | 'info'
-
-type StatusPresentation = {
-  variant: BadgeVariant
-  Icon: ComponentType<{ className?: string }>
-}
-
-// Semantic status mapping (DESIGN.md §2.1 / A3): status is conveyed by a
-// meaningful color family PAIRED WITH an icon — never coral fill, never color
-// alone (DESIGN.md §1.3, WCAG 1.4.1). `confirmed → success`,
-// `awaiting_completion → warning`, `cancelled_* → destructive`,
-// `completed → secondary` (neutral done), `disputed → info`.
-const STATE_PRESENTATION: Record<string, StatusPresentation> = {
-  // Pre-confirmation (ADR-0003 rev 2026-06-01): payment not yet captured.
-  pending_payment: { variant: 'warning', Icon: Clock },
-  confirmed: { variant: 'success', Icon: CircleCheck },
-  awaiting_completion: { variant: 'warning', Icon: Clock },
-  completed: { variant: 'secondary', Icon: CircleCheck },
-  disputed: { variant: 'info', Icon: Info },
-  cancelled_by_customer: { variant: 'destructive', Icon: XCircle },
-  cancelled_by_vendor: { variant: 'destructive', Icon: XCircle },
-  cancelled_post_experience: { variant: 'destructive', Icon: XCircle },
-  // No-show (ADR-0003 rev 2026-06-01): terminal, customer absent.
-  no_show: { variant: 'destructive', Icon: XCircle },
-}
-
-const FALLBACK_PRESENTATION: StatusPresentation = {
-  variant: 'outline',
-  Icon: CircleSlash,
-}
 
 // Partial-pay Advance share (ADR-0001). The 25% Advance is captured at create;
 // the 75% balance is auto-captured at T-24h. The balance-due chip surfaces that
@@ -101,6 +55,7 @@ export default async function CustomerDashboardPage() {
 
   const userId = session.user.id
   const t = await getTranslations('CustomerNav')
+  const tStatus = await getTranslations('BookingStatus')
 
   // The page owns its own query. Direction B leads with upcoming-first,
   // decision-complete Booking cards, so we join the booked slot and select its
@@ -195,9 +150,9 @@ export default async function CustomerDashboardPage() {
           ) : (
             <div className="space-y-3">
               {sortedBookings.map((b) => {
-                const presentation =
-                  STATE_PRESENTATION[b.state] ?? FALLBACK_PRESENTATION
-                const StatusIcon = presentation.Icon
+                const statusLabel = tStatus(
+                  bookingStatusBadge(b.state).labelKey as never,
+                )
                 const gross = Math.floor(Number(b.gross ?? 0))
                 const isCancellable = b.state === 'confirmed'
                 // A0 item 2a: ONE lifecycle badge + AT MOST ONE time badge.
@@ -229,19 +184,17 @@ export default async function CustomerDashboardPage() {
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
                               <h3 className="truncate font-medium">{b.expTitle}</h3>
-                              <Badge
-                                data-testid="booking-status"
-                                variant={presentation.variant}
-                                className="shrink-0 text-xs capitalize"
-                              >
-                                <StatusIcon className="size-3" aria-hidden />
-                                {b.state.replace(/_/g, ' ')}
-                              </Badge>
+                              <BookingStatusBadge
+                                state={b.state}
+                                label={statusLabel}
+                                className="shrink-0 text-xs"
+                              />
                               {showUpcoming ? (
                                 <Badge
                                   variant="info"
                                   className="shrink-0 text-xs"
                                 >
+                                  <Clock data-icon="inline-start" aria-hidden />
                                   {t('bookings.upcoming')}
                                 </Badge>
                               ) : null}

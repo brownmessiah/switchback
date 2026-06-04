@@ -5,14 +5,20 @@ import { useTranslations } from 'next-intl'
 import { usePathname } from 'next/navigation'
 import type { ReactElement } from 'react'
 
+import { isBackOfficePath } from '@/lib/chrome/back-office-path'
+
 import { AuthStatus } from './auth-status'
 import { LanguageSelector } from './language-selector'
 import { ThemeToggle } from './theme-toggle'
 
-export function SiteHeader(): ReactElement {
+export function SiteHeader(): ReactElement | null {
   const pathname = usePathname()
   const isHome = pathname === '/'
   const t = useTranslations('Nav')
+
+  // E: the consumer chrome lives in the root layout — hide it inside the
+  // /admin + /vendor back-office (which have their own portal shells).
+  if (isBackOfficePath(pathname)) return null
 
   return (
     <header

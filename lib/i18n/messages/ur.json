@@ -115,6 +115,17 @@
       "settings": "ترتیبات"
     }
   },
+  "BookingStatus": {
+    "pending_payment": "ادائیگی باقی ہے",
+    "confirmed": "تصدیق شدہ",
+    "awaiting_completion": "تکمیل کے منتظر",
+    "completed": "مکمل",
+    "disputed": "متنازعہ",
+    "cancelled_by_customer": "گاہک کی طرف سے منسوخ",
+    "cancelled_by_vendor": "بیچنے والے کی طرف سے منسوخ",
+    "cancelled_post_experience": "تجربے کے بعد منسوخ",
+    "no_show": "حاضر نہیں ہوئے"
+  },
   "CustomerNav": {
     "pageTitle": "میری بکنگز",
     "wallet": {
@@ -139,7 +150,8 @@
     "heading": "میری خواہش کی فہرست",
     "empty": {
       "title": "ابھی تک کوئی محفوظ کردہ تجربہ نہیں",
-      "hint": "کسی بھی تجربے پر دل کے آئیکن کو دبا کر اسے بعد کے لیے یہاں محفوظ کریں۔"
+      "hint": "کسی بھی تجربے پر دل کے آئیکن کو دبا کر اسے بعد کے لیے یہاں محفوظ کریں۔",
+      "cta": "تجربات دیکھیں"
     },
     "button": {
       "save": "محفوظ کریں",

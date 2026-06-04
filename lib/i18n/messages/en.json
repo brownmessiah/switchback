@@ -115,6 +115,17 @@
       "settings": "Settings"
     }
   },
+  "BookingStatus": {
+    "pending_payment": "Payment pending",
+    "confirmed": "Confirmed",
+    "awaiting_completion": "Awaiting completion",
+    "completed": "Completed",
+    "disputed": "Disputed",
+    "cancelled_by_customer": "Cancelled by customer",
+    "cancelled_by_vendor": "Cancelled by vendor",
+    "cancelled_post_experience": "Cancelled post-experience",
+    "no_show": "No-show"
+  },
   "CustomerNav": {
     "pageTitle": "My bookings",
     "wallet": {
@@ -139,7 +150,8 @@
     "heading": "My wishlist",
     "empty": {
       "title": "No saved experiences yet",
-      "hint": "Tap the heart on any experience to save it here for later."
+      "hint": "Tap the heart on any experience to save it here for later.",
+      "cta": "Browse experiences"
     },
     "button": {
       "save": "Save",
@@ -718,8 +730,8 @@
       "scubaDiving": "Scuba diving",
       "support": "Support",
       "safety": "Safety & trust",
-      "helpCentre": "Help centre (soon)",
-      "contactUs": "Contact us (soon)",
+      "helpCentre": "Help centre",
+      "contactUs": "Contact us",
       "about": "About Outvers",
       "forVendors": "For Vendors",
       "listYourExperience": "List your experience",

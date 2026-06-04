@@ -105,7 +105,11 @@ export default async function CancellationPolicyPage({ params }: PageProps): Pro
                 </th>
                 <th className="px-4 py-3 font-semibold text-foreground">
                   <span className="inline-flex items-center gap-1.5">
-                    <Clock className="size-4 text-warning" aria-hidden />
+                    {/* D-contrast: darker amber (L 0.50 vs the global --warning
+                        0.535) so this small-text amber clears WCAG AA with
+                        headroom on both white and the muted hover row. Same
+                        hue/chroma as the token — just a notch darker. */}
+                    <Clock className="size-4 text-[oklch(0.5_0.15_75)]" aria-hidden />
                     {t('presets.columnHalfRefund')}
                   </span>
                 </th>
@@ -126,7 +130,7 @@ export default async function CancellationPolicyPage({ params }: PageProps): Pro
                   <td className="px-4 py-3 text-success">
                     {t(`presets.${row.key}Full`)}
                   </td>
-                  <td className="px-4 py-3 text-warning">
+                  <td className="px-4 py-3 font-medium text-[oklch(0.5_0.15_75)]">
                     {t(`presets.${row.key}Half`)}
                   </td>
                   <td className="px-4 py-3 text-destructive">{t('presets.noRefund')}</td>

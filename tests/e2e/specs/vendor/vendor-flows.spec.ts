@@ -2066,7 +2066,9 @@ test.describe('Vendor review responses (#20)', () => {
 
     // The Review card is in the list (data, not the dead empty state #54).
     await expect(page.getByText('No reviews yet')).toHaveCount(0)
-    await expect(page.getByText('Best dive of the trip')).toBeVisible()
+    // Scope to the >=md ResponsiveTable; the <md card stack also carries the
+    // review text, so an unscoped getByText doubles under strict mode.
+    await expect(page.getByRole('table').getByText('Best dive of the trip')).toBeVisible()
 
     // Open the compose form for the (single) un-responded Review and submit.
     const responseText = 'Thank you so much — it was a pleasure diving with you. See you next season!'
@@ -2075,7 +2077,7 @@ test.describe('Vendor review responses (#20)', () => {
     await page.getByRole('button', { name: 'Submit Response' }).click()
 
     // The response renders inline once the action resolves.
-    await expect(page.getByText(responseText)).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByRole('table').getByText(responseText)).toBeVisible({ timeout: 15_000 })
 
     // ── Assert: the response persisted exactly once ──────────────────────
     // Poll the DB to absorb any cross-connection commit-visibility lag
@@ -2091,8 +2093,8 @@ test.describe('Vendor review responses (#20)', () => {
     // ── Reload → the stored response is shown and there is NO compose
     //     control any more (the UI enforces a single public response). ─────
     await page.reload()
-    await expect(page.getByText(responseText)).toBeVisible()
-    await expect(page.getByText('Your response')).toBeVisible()
+    await expect(page.getByRole('table').getByText(responseText)).toBeVisible()
+    await expect(page.getByRole('table').getByText('Your response')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Respond' })).toHaveCount(0)
     await expect(
       page.getByRole('button', { name: 'Submit Response' }),

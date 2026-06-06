@@ -890,8 +890,11 @@ test.describe('Admin blog CMS', () => {
     await page.reload()
     await expect(page.locator('h1')).toContainText('Blog CMS')
 
-    // Verify the post appears in the list
-    await expect(page.getByText(testTitle)).toBeVisible({ timeout: 10_000 })
+    // Verify the post appears in the list (scope to the >=md ResponsiveTable;
+    // the <md card stack also carries the title, so unscoped getByText doubles).
+    await expect(page.getByRole('table').getByText(testTitle)).toBeVisible({
+      timeout: 10_000,
+    })
 
     // Click "Edit" on the row containing the test post
     const postRow = page.locator('tr').filter({ hasText: testTitle })
@@ -918,9 +921,11 @@ test.describe('Admin blog CMS', () => {
       timeout: 10_000,
     })
 
-    // Reload to verify persistence
+    // Reload to verify persistence (scope to the >=md table — see above).
     await page.reload()
-    await expect(page.getByText(updatedTitle)).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByRole('table').getByText(updatedTitle)).toBeVisible({
+      timeout: 10_000,
+    })
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/admin-blog-crud.png',

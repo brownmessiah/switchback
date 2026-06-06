@@ -112,7 +112,7 @@ export function ContactForm() {
         </div>
       )}
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-5 md:grid-cols-2">
         <div className="flex flex-col gap-[var(--space-field)]">
           <label htmlFor={nameId} className="text-sm font-medium text-foreground">
             {t('nameLabel')}
@@ -205,7 +205,7 @@ export function ContactForm() {
           type="submit"
           disabled={isPending}
           data-testid="contact-submit"
-          className="inline-flex h-11 items-center justify-center rounded-[var(--radius-control)] bg-primary px-6 text-sm font-medium text-primary-foreground transition hover:bg-primary-strong focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+          className="min-tap inline-flex h-11 items-center justify-center rounded-[var(--radius-control)] bg-primary px-6 text-sm font-medium text-primary-foreground transition hover:bg-primary-strong focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isPending ? t('submitting') : t('submit')}
         </button>

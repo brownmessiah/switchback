@@ -1,12 +1,7 @@
-import { Card, CardContent } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  ResponsiveTable,
+  type ResponsiveTableColumn,
+} from '@/components/ui/responsive-table'
 import { getRegion } from '@/lib/regions/registry'
 
 import { AdminStatusBadge } from '../_components/admin-status-badge'
@@ -22,7 +17,9 @@ function regionDisplayName(slug: string): string {
 }
 
 /**
- * #94 — admin Region closures as a DESIGN.md §4 A3 table:
+ * #94 — admin Region closures as a DESIGN.md §4 A3 table, migrated to the shared
+ * `ResponsiveTable` (ADR-0018 / DESIGN.md §8.5): the `≥ md` Table reverses to a
+ * stacked label:value Card list `< md`.
  *  - closure status (active / upcoming / past) as a semantic `AdminStatusBadge`
  *    (status color + paired icon, never color alone — DESIGN.md §1.3 / §5)
  *  - the full closure reason kept in the row DOM (the E2E #25 flow matches the
@@ -67,65 +64,69 @@ function closureStatus(
   return { key: 'past', label: 'Past' }
 }
 
+const COLUMNS: ResponsiveTableColumn<ClosureTableRow>[] = [
+  {
+    key: 'region',
+    header: 'Region',
+    primary: true,
+    cell: (c) => (
+      <span className="font-medium" title={c.regionSlug}>
+        {regionDisplayName(c.regionSlug)}
+      </span>
+    ),
+  },
+  {
+    key: 'start',
+    header: 'Start',
+    cell: (c) => formatDate(c.startAt),
+  },
+  {
+    key: 'end',
+    header: 'End',
+    cell: (c) => formatDate(c.endAt),
+  },
+  {
+    key: 'reason',
+    header: 'Reason',
+    cell: (c) => <span className="text-sm">{c.reason}</span>,
+  },
+  {
+    key: 'source',
+    header: 'Source',
+    cell: (c) => (
+      <AdminStatusBadge status={c.source} label={c.source} className="capitalize" />
+    ),
+  },
+  {
+    key: 'status',
+    header: 'Status',
+    cell: (c) => {
+      const status = closureStatus(c.startAt, c.endAt)
+      return <AdminStatusBadge status={status.key} label={status.label} />
+    },
+  },
+  {
+    key: 'actions',
+    header: 'Actions',
+    cell: (c) => (
+      <DeleteClosureButton
+        closureId={c.id}
+        regionSlug={c.regionSlug}
+        regionLabel={regionDisplayName(c.regionSlug)}
+      />
+    ),
+  },
+]
+
 export function ClosuresTable({ rows }: { rows: ClosureTableRow[] }) {
   return (
-    <Card>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-        <Table>
-          <caption className="sr-only">Region closures</caption>
-          <TableHeader>
-            <TableRow>
-              <TableHead scope="col">Region</TableHead>
-              <TableHead scope="col">Start</TableHead>
-              <TableHead scope="col">End</TableHead>
-              <TableHead scope="col">Reason</TableHead>
-              <TableHead scope="col">Source</TableHead>
-              <TableHead scope="col">Status</TableHead>
-              <TableHead scope="col" className="w-20">
-                Actions
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
-                  No region closures found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              rows.map((c) => {
-                const status = closureStatus(c.startAt, c.endAt)
-                return (
-                  <TableRow key={c.id} className="hover:bg-muted/50">
-                    <TableCell className="font-medium" title={c.regionSlug}>
-                      {regionDisplayName(c.regionSlug)}
-                    </TableCell>
-                    <TableCell className="text-sm">{formatDate(c.startAt)}</TableCell>
-                    <TableCell className="text-sm">{formatDate(c.endAt)}</TableCell>
-                    <TableCell className="max-w-[300px] truncate text-sm">{c.reason}</TableCell>
-                    <TableCell>
-                      <AdminStatusBadge status={c.source} label={c.source} className="capitalize" />
-                    </TableCell>
-                    <TableCell>
-                      <AdminStatusBadge status={status.key} label={status.label} />
-                    </TableCell>
-                    <TableCell>
-                      <DeleteClosureButton
-                        closureId={c.id}
-                        regionSlug={c.regionSlug}
-                        regionLabel={regionDisplayName(c.regionSlug)}
-                      />
-                    </TableCell>
-                  </TableRow>
-                )
-              })
-            )}
-          </TableBody>
-        </Table>
-        </div>
-      </CardContent>
-    </Card>
+    <ResponsiveTable<ClosureTableRow>
+      columns={COLUMNS}
+      rows={rows}
+      getRowKey={(c) => c.id}
+      rowProps={(c) => ({ 'data-closure-id': c.id })}
+      caption="Region closures"
+      empty="No region closures found."
+    />
   )
 }

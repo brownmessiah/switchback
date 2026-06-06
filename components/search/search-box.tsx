@@ -68,7 +68,7 @@ export function SearchBox({
       />
       <button
         type="submit"
-        className="absolute right-1.5 inline-flex h-9 items-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="min-tap absolute right-1.5 inline-flex h-9 items-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         {submitLabel}
       </button>

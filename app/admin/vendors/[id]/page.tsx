@@ -187,7 +187,7 @@ export default async function AdminVendorDetailPage({
             <p className="text-sm text-muted-foreground">
               Review the evidence the Vendor submitted before promoting their tier.
             </p>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-2">
               <VendorEvidenceCard
                 testId="evidence-pan"
                 label="PAN"

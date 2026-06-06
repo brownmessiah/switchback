@@ -20,7 +20,7 @@ interface ListingsControlsProps {
 }
 
 const selectClassName = cn(
-  'h-9 rounded-md border border-input bg-transparent pl-8 pr-3 text-sm shadow-xs',
+  'min-tap h-9 rounded-md border border-input bg-transparent pl-8 pr-3 text-sm shadow-xs',
   'focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none',
   'appearance-none cursor-pointer',
 )

@@ -34,16 +34,18 @@ describe('CheckoutForm participant stepper (parity-catchup/12)', () => {
   it('renders the initial count + total from the 1-2 bracket', () => {
     render(<CheckoutForm {...baseProps} />)
     expect(screen.getByTestId('participant-count')).toHaveTextContent('2')
-    // total = 1500 × 2
-    expect(screen.getByText('₹3,000')).toBeInTheDocument()
+    // total = 1500 × 2 — appears in both the mobile hoist + desktop aside
+    // summaries (both in the jsdom DOM; one visible per viewport).
+    expect(screen.getAllByText('₹3,000').length).toBeGreaterThan(0)
   })
 
   it('incrementing past 2 crosses into the 3-5 bracket and re-resolves the total live', () => {
     render(<CheckoutForm {...baseProps} />)
     fireEvent.click(screen.getByRole('button', { name: /add one participant/i }))
     expect(screen.getByTestId('participant-count')).toHaveTextContent('3')
-    // bracket switched to ₹1,300/person → total 1300 × 3 = ₹3,900
-    expect(screen.getByText('₹3,900')).toBeInTheDocument()
+    // bracket switched to ₹1,300/person → total 1300 × 3 = ₹3,900 (in both
+    // the mobile hoist + desktop aside summaries under jsdom).
+    expect(screen.getAllByText('₹3,900').length).toBeGreaterThan(0)
   })
 
   it('bounds the count to the slot remaining capacity (increment disabled at max)', () => {

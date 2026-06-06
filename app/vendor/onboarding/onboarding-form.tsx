@@ -152,14 +152,17 @@ export function OnboardingForm({ userId: _userId }: OnboardingFormProps) {
         </div>
       </div>
 
-      {/* ── Calm B5 trust-ladder: numbered, labelled, revisitable steps ──── */}
+      {/* ── Calm B5 trust-ladder: numbered, labelled, revisitable steps ────
+          The ladder wraps on narrow screens (flex-wrap) so three labelled
+          steps + connectors never force a horizontal scroll at 360px; each
+          step keeps min-w-0 so its label can ellipsis rather than overflow. */}
       <nav aria-label="Onboarding progress">
-        <ol className="flex items-center gap-2">
+        <ol className="flex flex-wrap items-center gap-x-2 gap-y-3">
           {STEPS.map((s, i) => {
             const isDone = step > s.id
             const isCurrent = step === s.id
             return (
-              <li key={s.id} className="flex flex-1 items-center gap-2">
+              <li key={s.id} className="flex min-w-0 flex-1 items-center gap-2">
                 <span
                   aria-current={isCurrent ? 'step' : undefined}
                   className={[
@@ -179,7 +182,7 @@ export function OnboardingForm({ userId: _userId }: OnboardingFormProps) {
                 </span>
                 <span
                   className={[
-                    'text-sm font-medium',
+                    'min-w-0 truncate text-sm font-medium',
                     isCurrent
                       ? 'text-foreground'
                       : isDone
@@ -216,28 +219,37 @@ export function OnboardingForm({ userId: _userId }: OnboardingFormProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="businessName">Business name</Label>
-              <Input
-                id="businessName"
-                value={businessName}
-                onChange={(e) => handleBusinessNameChange(e.target.value)}
-                placeholder="e.g. Himalayan Adventures"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="slug">Profile URL</Label>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">outvers.in/vendor/</span>
+            {/* Paired fields collapse to one column on mobile and split into a
+                2-col field group at md (DESIGN.md §8 forms rule). */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="businessName">Business name</Label>
                 <Input
-                  id="slug"
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                  placeholder="himalayan-adventures"
+                  id="businessName"
+                  value={businessName}
+                  onChange={(e) => handleBusinessNameChange(e.target.value)}
+                  placeholder="e.g. Himalayan Adventures"
                   required
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="slug">Profile URL</Label>
+                {/* min-w-0 lets the input shrink inside its grid cell so the
+                    "outvers.in/vendor/" prefix never pushes past 360px. */}
+                <div className="flex items-center gap-2">
+                  <span className="shrink-0 text-sm text-muted-foreground">
+                    outvers.in/vendor/
+                  </span>
+                  <Input
+                    id="slug"
+                    className="min-w-0"
+                    value={slug}
+                    onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                    placeholder="himalayan-adventures"
+                    required
+                  />
+                </div>
               </div>
             </div>
 

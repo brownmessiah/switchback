@@ -1,28 +1,25 @@
 import Link from 'next/link'
 
-import { Card, CardContent } from '@/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { ResponsiveTable, type ResponsiveTableColumn } from '@/components/ui/responsive-table'
 
 import { AdminStatusBadge } from '../_components/admin-status-badge'
 import { formatRupees } from '../_components/money'
 
 /**
- * #89 — the admin bookings LIST as a rigorous DESIGN.md §4 A3 table:
- *  - semantic `AdminStatusBadge` per Booking state (status color + paired icon,
- *    never color alone — DESIGN.md §1.3 / §5)
- *  - amount column right-aligned in `.tabular-nums` (DESIGN.md §1.3 / §2.2)
- *  - each row links to its `/admin/bookings/[id]` detail (B6 master → detail)
+ * #89 — the admin bookings LIST as a rigorous DESIGN.md §4 A3 table, migrated to
+ * the shared `<ResponsiveTable>` (DESIGN.md §8.3/§8.5, ADR-0018):
+ *  - `≥ md`: the A3 `Table` (semantic `AdminStatusBadge` per Booking state —
+ *    status color + paired icon, never color alone — DESIGN.md §1.3 / §5; amount
+ *    + guest columns right-aligned in `.tabular-nums` — DESIGN.md §1.3 / §2.2;
+ *    each row links to its `/admin/bookings/[id]` detail — B6 master → detail).
+ *  - `< md`: one stacked label:value Card per Booking, titled by the row-link
+ *    Booking ID, so the dense 9-column table never forces page-level horizontal
+ *    scroll at 360px.
  *
- * No money mutation lives on the list (the [id] detail is task #102). The
- * presentational table is split out so it is unit-testable in isolation; the
- * page owns the data load + the `BookingFilters` toolbar.
+ * Per-row E2E hooks (`data-booking-id`, `data-booking-state`) ride through
+ * `rowProps` onto the `≥ md` `TableRow`, so the admin E2E selectors
+ * (`tr[data-booking-id]`) survive verbatim. No money mutation lives on the list
+ * (the [id] detail is task #102).
  */
 export interface BookingsTableRow {
   id: string
@@ -65,86 +62,89 @@ function formatDate(date: Date | string | null): string {
   })
 }
 
+const COLUMNS: ReadonlyArray<ResponsiveTableColumn<BookingsTableRow>> = [
+  {
+    key: 'id',
+    header: 'Booking ID',
+    primary: true,
+    cell: (row) => <span className="font-mono text-xs">{row.id.slice(0, 8)}...</span>,
+  },
+  {
+    key: 'customer',
+    header: 'Customer',
+    cell: (row) => (
+      <span className="text-sm">{row.customerName ?? row.customerEmail ?? '—'}</span>
+    ),
+  },
+  {
+    key: 'vendor',
+    header: 'Vendor',
+    cell: (row) => (
+      <Link
+        href={`/admin/vendors/${row.vendorUserId}`}
+        className="text-sm hover:underline"
+      >
+        {row.vendorBusinessName}
+      </Link>
+    ),
+  },
+  {
+    key: 'experience',
+    header: 'Experience',
+    cell: (row) => (
+      <span className="block max-w-[200px] truncate text-sm">{row.experienceTitle}</span>
+    ),
+  },
+  {
+    key: 'date',
+    header: 'Date',
+    cell: (row) => (
+      <span className="text-sm text-muted-foreground">
+        {row.slotStart ? formatDate(row.slotStart) : formatDate(row.confirmedAt)}
+      </span>
+    ),
+  },
+  {
+    key: 'guests',
+    header: 'Guests',
+    align: 'right',
+    cell: (row) => <span className="text-sm">{row.participantCount}</span>,
+  },
+  {
+    key: 'amount',
+    header: 'Amount',
+    align: 'right',
+    cell: (row) => (
+      <span className="text-sm font-medium">{formatRupees(row.grossTotalSnapshot)}</span>
+    ),
+  },
+  {
+    key: 'paymentMode',
+    header: 'Payment Mode',
+    cell: (row) => (
+      <span className="text-sm capitalize">{row.paymentMode.replace(/_/g, ' ')}</span>
+    ),
+  },
+  {
+    key: 'state',
+    header: 'State',
+    cell: (row) => <AdminStatusBadge status={row.state} label={stateLabel(row.state)} />,
+  },
+]
+
 export function BookingsTable({ rows }: { rows: BookingsTableRow[] }) {
   return (
-    <Card>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-        <Table>
-          <caption className="sr-only">All Bookings</caption>
-          <TableHeader>
-            <TableRow>
-              <TableHead scope="col">Booking ID</TableHead>
-              <TableHead scope="col">Customer</TableHead>
-              <TableHead scope="col">Vendor</TableHead>
-              <TableHead scope="col">Experience</TableHead>
-              <TableHead scope="col">Date</TableHead>
-              <TableHead scope="col" className="text-right">
-                Guests
-              </TableHead>
-              <TableHead scope="col" className="text-right">
-                Amount
-              </TableHead>
-              <TableHead scope="col">Payment Mode</TableHead>
-              <TableHead scope="col">State</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
-                  No bookings found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-booking-id={row.id}
-                  data-booking-state={row.state}
-                  className="hover:bg-muted/50"
-                >
-                  <TableCell className="font-mono text-xs">
-                    <Link href={`/admin/bookings/${row.id}`} className="hover:underline">
-                      {row.id.slice(0, 8)}...
-                    </Link>
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {row.customerName ?? row.customerEmail ?? '—'}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    <Link
-                      href={`/admin/vendors/${row.vendorUserId}`}
-                      className="hover:underline"
-                    >
-                      {row.vendorBusinessName}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="max-w-[200px] truncate text-sm">
-                    {row.experienceTitle}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {row.slotStart ? formatDate(row.slotStart) : formatDate(row.confirmedAt)}
-                  </TableCell>
-                  <TableCell className="text-right text-sm tabular-nums">
-                    {row.participantCount}
-                  </TableCell>
-                  <TableCell className="text-right text-sm font-medium tabular-nums">
-                    {formatRupees(row.grossTotalSnapshot)}
-                  </TableCell>
-                  <TableCell className="text-sm capitalize">
-                    {row.paymentMode.replace(/_/g, ' ')}
-                  </TableCell>
-                  <TableCell>
-                    <AdminStatusBadge status={row.state} label={stateLabel(row.state)} />
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-        </div>
-      </CardContent>
-    </Card>
+    <ResponsiveTable
+      columns={COLUMNS}
+      rows={rows}
+      getRowKey={(row) => row.id}
+      rowHref={(row) => `/admin/bookings/${row.id}`}
+      rowProps={(row) => ({
+        'data-booking-id': row.id,
+        'data-booking-state': row.state,
+      })}
+      caption="All Bookings"
+      empty="No bookings found."
+    />
   )
 }

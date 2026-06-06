@@ -18,6 +18,11 @@ afterEach(() => {
 //    the E2E navigates list → detail via `a[href*="/admin/vendors/"]`)
 //  - no moderation actions on the LIST (the KYC approve/reject/suspend live on
 //    the [id] detail, #101)
+//
+// ADR-0018 reversal note: the table is now a `<ResponsiveTable>`, so jsdom
+// (which doesn't evaluate media queries) renders BOTH the `≥ md` `Table` and
+// the `< md` stacked-Card list. The assertions scope to the `≥ md` `Table`
+// (`[data-slot='table']`) so they query exactly one rendering.
 
 const ROWS: VendorsTableRow[] = [
   {
@@ -58,6 +63,17 @@ const ROWS: VendorsTableRow[] = [
   },
 ]
 
+/**
+ * The `≥ md` `Table` rendering. Both renderings are in the jsdom DOM at once
+ * (the reversal is a CSS `hidden md:block` / `md:hidden` swap), so every
+ * row/value query is scoped here to target exactly one rendering.
+ */
+function table(container: HTMLElement): HTMLElement {
+  const t = container.querySelector("[data-slot='table']")
+  expect(t).not.toBeNull()
+  return t as HTMLElement
+}
+
 describe('VendorsTable (A3)', () => {
   it('links each row to its /admin/vendors/[id] detail', () => {
     render(<VendorsTable rows={ROWS} />)
@@ -67,8 +83,10 @@ describe('VendorsTable (A3)', () => {
   })
 
   it('renders the Identity-tier KYC on the INFO rung of the ramp (distinct from Business) with its ADR-0007 label', () => {
-    render(<VendorsTable rows={ROWS} />)
-    const row = screen.getByText('Sky High Paragliding').closest('tr') as HTMLElement
+    const { container } = render(<VendorsTable rows={ROWS} />)
+    const row = within(table(container))
+      .getByText('Sky High Paragliding')
+      .closest('tr') as HTMLElement
     const badge = within(row).getByText('Identity verified').closest('[data-slot="badge"]')
     expect(badge).not.toBeNull()
     expect(badge!.className).toContain('text-info')
@@ -77,16 +95,20 @@ describe('VendorsTable (A3)', () => {
   })
 
   it('renders the Business-tier KYC on the strongest (success) rung with its ADR-0007 label', () => {
-    render(<VendorsTable rows={ROWS} />)
-    const row = screen.getByText('River Adventures').closest('tr') as HTMLElement
+    const { container } = render(<VendorsTable rows={ROWS} />)
+    const row = within(table(container))
+      .getByText('River Adventures')
+      .closest('tr') as HTMLElement
     const badge = within(row).getByText('Business verified').closest('[data-slot="badge"]')
     expect(badge!.className).toContain('text-success')
     expect(badge!.querySelector('svg')).not.toBeNull()
   })
 
   it('renders the phone-tier KYC on the WARNING rung (signup-only, distinct from success)', () => {
-    render(<VendorsTable rows={ROWS} />)
-    const row = screen.getByText('New Signup Co').closest('tr') as HTMLElement
+    const { container } = render(<VendorsTable rows={ROWS} />)
+    const row = within(table(container))
+      .getByText('New Signup Co')
+      .closest('tr') as HTMLElement
     const badge = within(row).getByText('Phone verified').closest('[data-slot="badge"]')
     expect(badge!.className).toContain('text-warning')
     expect(badge!.className).not.toContain('text-success')
@@ -94,9 +116,10 @@ describe('VendorsTable (A3)', () => {
   })
 
   it('gives the three tiers three distinct badge colours (tier ramp, not all-green)', () => {
-    render(<VendorsTable rows={ROWS} />)
+    const { container } = render(<VendorsTable rows={ROWS} />)
+    const grid = within(table(container))
     const kycBadge = (label: string) =>
-      screen.getByText(label).closest('[data-slot="badge"]')!
+      grid.getByText(label).closest('[data-slot="badge"]')!
     const business = kycBadge('Business verified')
     const identity = kycBadge('Identity verified')
     const phone = kycBadge('Phone verified')
@@ -106,14 +129,16 @@ describe('VendorsTable (A3)', () => {
   })
 
   it('renders numeric commission / SLA columns in tabular-nums', () => {
-    render(<VendorsTable rows={ROWS} />)
-    const row = screen.getByText('River Adventures').closest('tr') as HTMLElement
+    const { container } = render(<VendorsTable rows={ROWS} />)
+    const row = within(table(container))
+      .getByText('River Adventures')
+      .closest('tr') as HTMLElement
     const commission = within(row).getByText('15%')
     expect(commission.className).toContain('tabular-nums')
   })
 
   it('renders an in-table empty state when there are no vendors', () => {
     render(<VendorsTable rows={[]} />)
-    expect(screen.getByText(/No vendors/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/No vendors/i).length).toBeGreaterThan(0)
   })
 })

@@ -205,7 +205,7 @@ export function ExperienceCard({ experience, layout = 'grid' }: ExperienceCardPr
         ) : null}
       </div>
 
-      <div className="flex flex-1 flex-col gap-2 p-[var(--space-card-pad)]">
+      <div className="flex min-w-0 flex-1 flex-col gap-2 p-[var(--space-card-pad)]">
         <span className="text-[0.625rem] font-semibold uppercase tracking-wider text-primary-strong">
           {activityLabel}
         </span>

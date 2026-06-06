@@ -98,8 +98,22 @@ describe('AdminSidebar i18n', () => {
       { locale: 'hi', messages: hiMessages },
     )
 
-    // The sidebar title "Admin" should be translated to Hindi
+    // The sidebar title "Admin" should be translated to Hindi. It appears in both
+    // the mobile top-bar and the persistent rail header.
     const adminTitles = screen.getAllByText('व्यवस्थापक')
     expect(adminTitles.length).toBeGreaterThan(0)
+  })
+
+  it('renders the mobile hamburger trigger labelled via translations', () => {
+    // The shared PortalNavDrawer mounts a Sheet trigger (the hamburger) labelled
+    // from Nav.openMenu — present in the DOM even though it is CSS-hidden at md+.
+    renderWithIntl(
+      <AdminSidebar groups={TEST_GROUPS} badgeCounts={{}} />,
+      { locale: 'en', messages: enMessages },
+    )
+
+    expect(
+      screen.getByRole('button', { name: 'Open menu' }),
+    ).toBeInTheDocument()
   })
 })

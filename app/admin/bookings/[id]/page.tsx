@@ -250,7 +250,7 @@ export default async function AdminBookingDetailPage({
         <CardHeader>
           <CardTitle className="text-base">Booking Overview</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-3 text-sm sm:grid-cols-2">
+        <CardContent className="grid gap-3 text-sm md:grid-cols-2">
           <InfoRow label="Experience" value={booking.experienceTitle} />
           <InfoRow
             label="Vendor"

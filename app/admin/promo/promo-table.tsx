@@ -1,19 +1,16 @@
-import { Card, CardContent } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  ResponsiveTable,
+  type ResponsiveTableColumn,
+} from '@/components/ui/responsive-table'
 
 import { AdminStatusBadge } from '../_components/admin-status-badge'
 import { formatRupees } from '../_components/money'
 import { PromoActionsCell } from './promo-actions-cell'
 
 /**
- * #95 — admin Promo codes as a DESIGN.md §4 A3 table (admin-table, direction B):
+ * #95 — admin Promo codes as a DESIGN.md §4 A3 table (admin-table, direction B),
+ * migrated to the shared `ResponsiveTable` (ADR-0018 / DESIGN.md §8.5): the
+ * `≥ md` Table reverses to a stacked label:value Card list `< md`.
  *  - status (active / inactive / scheduled / expired) as a semantic
  *    `AdminStatusBadge` (status color + paired icon, never color alone —
  *    DESIGN.md §1.3 / §5).
@@ -76,80 +73,75 @@ function promoStatus(promo: {
   return { key: 'active', label: 'Active' }
 }
 
+const COLUMNS: ResponsiveTableColumn<PromoTableRow>[] = [
+  {
+    key: 'code',
+    header: 'Code',
+    primary: true,
+    cell: (p) => <span className="font-mono">{p.code}</span>,
+  },
+  {
+    key: 'creditAmount',
+    header: 'Credit',
+    align: 'right',
+    cell: (p) => formatRupees(p.creditAmount),
+  },
+  {
+    key: 'usage',
+    header: 'Usage',
+    align: 'right',
+    cell: (p) => `${p.currentUses}${p.maxTotalUses ? ` / ${p.maxTotalUses}` : ''}`,
+  },
+  {
+    key: 'perUserLimit',
+    header: 'Per user',
+    align: 'right',
+    cell: (p) => p.perUserLimit,
+  },
+  {
+    key: 'status',
+    header: 'Status',
+    cell: (p) => {
+      const status = promoStatus(p)
+      return <AdminStatusBadge status={status.key} label={status.label} />
+    },
+  },
+  {
+    key: 'dateRange',
+    header: 'Date range',
+    cell: (p) => (
+      <span className="text-muted-foreground">
+        {formatDate(p.startsAt)} — {formatDate(p.expiresAt)}
+      </span>
+    ),
+  },
+  {
+    key: 'createdBy',
+    header: 'Created by',
+    cell: (p) => (
+      <span className="text-muted-foreground">
+        {p.adminEmail ?? p.adminName ?? '—'}
+      </span>
+    ),
+  },
+  {
+    key: 'actions',
+    header: 'Actions',
+    cell: (p) => (
+      <PromoActionsCell id={p.id} active={p.active} currentUses={p.currentUses} />
+    ),
+  },
+]
+
 export function PromoTable({ rows }: { rows: PromoTableRow[] }) {
   return (
-    <Card>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-        <Table>
-          <caption className="sr-only">Promo codes</caption>
-          <TableHeader>
-            <TableRow>
-              <TableHead scope="col">Code</TableHead>
-              <TableHead scope="col" className="text-right">
-                Credit
-              </TableHead>
-              <TableHead scope="col" className="text-right">
-                Usage
-              </TableHead>
-              <TableHead scope="col" className="text-right">
-                Per user
-              </TableHead>
-              <TableHead scope="col">Status</TableHead>
-              <TableHead scope="col">Date range</TableHead>
-              <TableHead scope="col">Created by</TableHead>
-              <TableHead scope="col" className="w-32">
-                Actions
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
-                  No promo codes yet. Create one above.
-                </TableCell>
-              </TableRow>
-            ) : (
-              rows.map((p) => {
-                const status = promoStatus(p)
-                return (
-                  <TableRow key={p.id} className="hover:bg-muted/50">
-                    <TableCell className="font-mono text-sm font-medium">{p.code}</TableCell>
-                    <TableCell className="text-right text-sm font-medium tabular-nums">
-                      {formatRupees(p.creditAmount)}
-                    </TableCell>
-                    <TableCell className="text-right text-sm tabular-nums">
-                      {p.currentUses}
-                      {p.maxTotalUses ? ` / ${p.maxTotalUses}` : ''}
-                    </TableCell>
-                    <TableCell className="text-right text-sm tabular-nums">
-                      {p.perUserLimit}
-                    </TableCell>
-                    <TableCell>
-                      <AdminStatusBadge status={status.key} label={status.label} />
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(p.startsAt)} — {formatDate(p.expiresAt)}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {p.adminEmail ?? p.adminName ?? '—'}
-                    </TableCell>
-                    <TableCell>
-                      <PromoActionsCell
-                        id={p.id}
-                        active={p.active}
-                        currentUses={p.currentUses}
-                      />
-                    </TableCell>
-                  </TableRow>
-                )
-              })
-            )}
-          </TableBody>
-        </Table>
-        </div>
-      </CardContent>
-    </Card>
+    <ResponsiveTable<PromoTableRow>
+      columns={COLUMNS}
+      rows={rows}
+      getRowKey={(p) => p.id}
+      rowProps={(p) => ({ 'data-promo-id': p.id })}
+      caption="Promo codes"
+      empty="No promo codes yet. Create one above."
+    />
   )
 }

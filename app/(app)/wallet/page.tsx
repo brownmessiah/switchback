@@ -15,16 +15,15 @@ import { getTranslations } from 'next-intl/server'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  ResponsiveTable,
+  type ResponsiveTableColumn,
+} from '@/components/ui/responsive-table'
 import { db } from '@/db/client'
 import { auth } from '@/lib/auth'
-import { loadWalletView } from '@/lib/payments/wallet-view'
+import {
+  loadWalletView,
+  type WalletViewTransaction,
+} from '@/lib/payments/wallet-view'
 
 const PAGE_SIZE = 15
 
@@ -78,6 +77,70 @@ export default async function WalletPage({ searchParams }: WalletPageProps) {
   const hasPrev = view.page > 1
   const hasNext = view.page < view.totalPages
 
+  // A3-reversal: the ledger renders as the `Table` primitive ≥ md and a stacked
+  // label:value Card list < md (ResponsiveTable; ADR-0018, DESIGN.md §8.5). The
+  // per-row `wallet-ledger-row` E2E hook flows through `rowProps` so it survives
+  // BOTH renderings; the sign is +/− TEXT + icon (never color alone, WCAG 1.4.1).
+  const ledgerColumns: ReadonlyArray<
+    ResponsiveTableColumn<WalletViewTransaction>
+  > = [
+    {
+      key: 'date',
+      header: t('colDate'),
+      primary: true,
+      cell: (txn) => (
+        <span className="text-sm text-muted-foreground">
+          {formatDate(txn.createdAt)}
+        </span>
+      ),
+    },
+    {
+      key: 'bucket',
+      header: t('colBucket'),
+      cell: (txn) => {
+        const bucket = BUCKET_BADGE[txn.balanceType]
+        return (
+          <Badge variant={bucket ? bucket.variant : 'outline'} className="text-xs">
+            {bucket ? t(bucket.key) : txn.balanceType.replace(/_/g, ' ')}
+          </Badge>
+        )
+      },
+    },
+    {
+      key: 'source',
+      header: t('colSource'),
+      cell: (txn) => {
+        const sourceKey = SOURCE_LABEL_KEY[txn.source]
+        return (
+          <span className="text-sm">
+            {sourceKey ? t(sourceKey) : txn.source.replace(/_/g, ' ')}
+          </span>
+        )
+      },
+    },
+    {
+      key: 'amount',
+      header: t('colAmount'),
+      align: 'right',
+      cell: (txn) => {
+        const isCredit = txn.amount >= 0
+        const SignIcon = isCredit ? ArrowUpRight : ArrowDownLeft
+        return (
+          <span
+            className={`inline-flex items-center justify-end gap-1 text-sm font-medium tabular-nums ${
+              isCredit ? 'text-success' : 'text-destructive'
+            }`}
+          >
+            <SignIcon className="size-3.5" aria-hidden />
+            <span className="sr-only">{isCredit ? t('credit') : t('debit')} </span>
+            {isCredit ? '+' : '−'}
+            {formatRupees(Math.abs(txn.amount))}
+          </span>
+        )
+      },
+    },
+  ]
+
   return (
     <main
       data-testid="wallet-page"
@@ -96,8 +159,9 @@ export default async function WalletPage({ searchParams }: WalletPageProps) {
         <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
       </div>
 
-      {/* ── Two SEPARATE buckets (ADR-0004) ── */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      {/* ── Two SEPARATE buckets (ADR-0004) — money cards stack (base) → 2-col
+          (md); both decision-complete with tabular-nums balances, never blended. */}
+      <div className="grid gap-4 md:grid-cols-2">
         {/* Outvers credit — closed-loop promo, never cashable, EXPIRES. */}
         <Card data-testid="wallet-bucket-outvers_credit" className="border-credit/30">
           <CardHeader className="pb-2">
@@ -171,67 +235,18 @@ export default async function WalletPage({ searchParams }: WalletPageProps) {
             {t('ledgerEmpty')}
           </div>
         ) : (
-          <Card>
-            <CardContent className="p-0">
-              <Table data-testid="wallet-ledger">
-                <caption className="sr-only">{t('ledgerTitle')}</caption>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead scope="col">{t('colDate')}</TableHead>
-                    <TableHead scope="col">{t('colBucket')}</TableHead>
-                    <TableHead scope="col">{t('colSource')}</TableHead>
-                    <TableHead scope="col" className="text-right">
-                      {t('colAmount')}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {view.transactions.map((txn) => {
-                    const isCredit = txn.amount >= 0
-                    const bucket = BUCKET_BADGE[txn.balanceType]
-                    const sourceKey = SOURCE_LABEL_KEY[txn.source]
-                    // Sign is conveyed by +/− TEXT and an icon, not color alone
-                    // (DESIGN.md §1.3 / WCAG 1.4.1).
-                    const SignIcon = isCredit ? ArrowUpRight : ArrowDownLeft
-                    return (
-                      <TableRow key={txn.id} data-testid="wallet-ledger-row">
-                        <TableCell className="text-sm text-muted-foreground">
-                          {formatDate(txn.createdAt)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={bucket ? bucket.variant : 'outline'}
-                            className="text-xs"
-                          >
-                            {bucket
-                              ? t(bucket.key)
-                              : txn.balanceType.replace(/_/g, ' ')}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {sourceKey ? t(sourceKey) : txn.source.replace(/_/g, ' ')}
-                        </TableCell>
-                        <TableCell
-                          className={`text-right text-sm font-medium tabular-nums ${
-                            isCredit ? 'text-success' : 'text-destructive'
-                          }`}
-                        >
-                          <span className="inline-flex items-center justify-end gap-1">
-                            <SignIcon className="size-3.5" aria-hidden />
-                            <span className="sr-only">
-                              {isCredit ? t('credit') : t('debit')}{' '}
-                            </span>
-                            {isCredit ? '+' : '−'}
-                            {formatRupees(Math.abs(txn.amount))}
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          // `data-testid="wallet-ledger"` lives on a plain wrapper (NOT a Card —
+          // ResponsiveTable owns its own Card>CardContent p-0 shell ≥ md) so the
+          // E2E hook survives the A3 reversal without nesting card-in-card.
+          <div data-testid="wallet-ledger">
+            <ResponsiveTable<WalletViewTransaction>
+              columns={ledgerColumns}
+              rows={view.transactions}
+              getRowKey={(txn) => txn.id}
+              rowProps={() => ({ 'data-testid': 'wallet-ledger-row' })}
+              caption={t('ledgerTitle')}
+            />
+          </div>
         )}
 
         {/* Pager — Link-based so it works without client JS. */}
@@ -239,12 +254,12 @@ export default async function WalletPage({ searchParams }: WalletPageProps) {
           <nav
             data-testid="wallet-pager"
             aria-label={t('ledgerTitle')}
-            className="mt-4 flex items-center justify-between"
+            className="mt-4 flex flex-wrap items-center justify-between gap-3"
           >
             {hasPrev ? (
               <Link
                 href={`/wallet?page=${view.page - 1}`}
-                className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium hover:bg-muted"
+                className="min-tap inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium hover:bg-muted"
               >
                 <ArrowLeft className="size-4" aria-hidden />
                 {t('previous')}
@@ -252,7 +267,7 @@ export default async function WalletPage({ searchParams }: WalletPageProps) {
             ) : (
               <span
                 aria-disabled
-                className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium text-muted-foreground opacity-50"
+                className="min-tap inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium text-muted-foreground opacity-50"
               >
                 <ArrowLeft className="size-4" aria-hidden />
                 {t('previous')}
@@ -266,7 +281,7 @@ export default async function WalletPage({ searchParams }: WalletPageProps) {
             {hasNext ? (
               <Link
                 href={`/wallet?page=${view.page + 1}`}
-                className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium hover:bg-muted"
+                className="min-tap inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium hover:bg-muted"
               >
                 {t('next')}
                 <ArrowUpRight className="size-4 rotate-45" aria-hidden />
@@ -274,7 +289,7 @@ export default async function WalletPage({ searchParams }: WalletPageProps) {
             ) : (
               <span
                 aria-disabled
-                className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium text-muted-foreground opacity-50"
+                className="min-tap inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium text-muted-foreground opacity-50"
               >
                 {t('next')}
                 <ArrowUpRight className="size-4 rotate-45" aria-hidden />

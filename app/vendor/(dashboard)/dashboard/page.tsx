@@ -3,14 +3,7 @@ import { headers } from 'next/headers'
 
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { ResponsiveTable } from '@/components/ui/responsive-table'
 import { db } from '@/db/client'
 import { auth } from '@/lib/auth'
 import {
@@ -69,8 +62,10 @@ export default async function VendorDashboardPage() {
         </p>
       </div>
 
-      {/* Enhanced stat cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Enhanced stat cards — compact single-metric KPI row: 1-col (base) →
+          2-col (md:) → 4-col (lg:). The structural flip keys off md:/lg: per
+          §8.1 (never sm:); 4-up at lg is permitted for compact KPI rows. */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -161,57 +156,63 @@ export default async function VendorDashboardPage() {
       {/* Action items */}
       <ActionItems items={data.actionItems} />
 
-      {/* Upcoming bookings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Upcoming bookings</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {data.upcomingBookings.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">
-              No upcoming bookings yet.
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Experience</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Guests</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.upcomingBookings.map((b) => (
-                  <TableRow key={b.bookingId}>
-                    <TableCell className="font-medium">{b.expTitle}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {b.slotStart
-                        ? new Date(b.slotStart).toLocaleDateString('en-IN', {
-                            day: 'numeric',
-                            month: 'short',
-                          })
-                        : '—'}
-                    </TableCell>
-                    <TableCell className="tabular-nums">{b.participantCount}</TableCell>
-                    <TableCell className="tabular-nums">
-                      ₹{b.gross.toLocaleString('en-IN')}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="capitalize text-xs">
-                        {b.state}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Upcoming bookings — A3 table migrated to ResponsiveTable (ADR-0018 /
+          DESIGN.md §8.5): Table ≥ md, stacked label:value Cards < md. The
+          heading rides above the table since ResponsiveTable owns its own
+          Card shell (no nested card-in-card). */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold tracking-tight">Upcoming bookings</h2>
+        <ResponsiveTable
+          caption="Upcoming bookings"
+          rows={data.upcomingBookings}
+          getRowKey={(b) => b.bookingId}
+          rowProps={(b) => ({ 'data-booking-id': b.bookingId })}
+          empty="No upcoming bookings yet."
+          columns={[
+            {
+              key: 'expTitle',
+              header: 'Experience',
+              primary: true,
+              cell: (b) => b.expTitle,
+            },
+            {
+              key: 'date',
+              header: 'Date',
+              cell: (b) => (
+                <span className="text-sm text-muted-foreground">
+                  {b.slotStart
+                    ? new Date(b.slotStart).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'short',
+                      })
+                    : '—'}
+                </span>
+              ),
+            },
+            {
+              key: 'guests',
+              header: 'Guests',
+              align: 'right',
+              cell: (b) => b.participantCount,
+            },
+            {
+              key: 'amount',
+              header: 'Amount',
+              align: 'right',
+              cell: (b) => `₹${b.gross.toLocaleString('en-IN')}`,
+            },
+            {
+              key: 'status',
+              header: 'Status',
+              cell: (b) => (
+                <Badge variant="outline" className="capitalize text-xs">
+                  {b.state}
+                </Badge>
+              ),
+            },
+          ]}
+        />
+      </div>
       </div>
 
       {/* Insights rail (C "Insight-First Growth Hub" — issue #74) */}

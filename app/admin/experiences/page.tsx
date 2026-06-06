@@ -7,20 +7,16 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
+  ResponsiveTable,
+  type ResponsiveTableColumn,
+} from '@/components/ui/responsive-table'
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { db } from '@/db/client'
 import { experienceItinerarySteps } from '@/db/schema/experience-itinerary-steps'
 import { experiences } from '@/db/schema/experiences'
@@ -184,6 +180,82 @@ export default async function AdminExperiencesPage({
 
   const pendingCount = rows.filter((r) => r.status === 'pending_review').length
 
+  type ExperienceRow = (typeof rows)[number]
+
+  const columns: ResponsiveTableColumn<ExperienceRow>[] = [
+    {
+      key: 'title',
+      header: 'Title',
+      primary: true,
+      cell: (exp) => <span className="font-medium">{exp.title}</span>,
+    },
+    {
+      key: 'vendor',
+      header: 'Vendor',
+      cell: (exp) => (
+        <span className="text-muted-foreground">{exp.vendorBusinessName}</span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      cell: (exp) => (
+        <AdminStatusBadge
+          status={exp.status}
+          label={STATUS_LABEL[exp.status] ?? exp.status.replaceAll('_', ' ')}
+        />
+      ),
+    },
+    {
+      key: 'category',
+      header: 'Category',
+      cell: (exp) => (
+        <span className="capitalize">{exp.activitySlug.replaceAll('_', ' ')}</span>
+      ),
+    },
+    {
+      key: 'region',
+      header: 'Region',
+      cell: (exp) => exp.regionSlug.replaceAll('-', ' '),
+    },
+    {
+      key: 'price',
+      header: 'Price (1-2)',
+      align: 'right',
+      cell: (exp) => (
+        <span className="font-medium">{formatRupees(exp.pricePerPerson_1_2)}</span>
+      ),
+    },
+    {
+      key: 'attributes',
+      header: 'Attributes',
+      cell: (exp) => (
+        <div className="max-w-[280px] text-xs text-muted-foreground">
+          <StructuredAttributesCell exp={exp} />
+        </div>
+      ),
+    },
+    {
+      key: 'created',
+      header: 'Created',
+      cell: (exp) => (
+        <span className="text-muted-foreground">
+          {new Date(exp.createdAt).toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'short',
+          })}
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      cell: (exp) => (
+        <ExperienceActionsCell experienceId={exp.id} status={exp.status} />
+      ),
+    },
+  ]
+
   return (
     <div className="space-y-6">
       <div>
@@ -314,86 +386,22 @@ export default async function AdminExperiencesPage({
       </Card>
 
       {/* Table */}
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-          <Table>
-            <caption className="sr-only">Experience moderation queue</caption>
-            <TableHeader>
-              <TableRow>
-                <TableHead scope="col">Title</TableHead>
-                <TableHead scope="col">Vendor</TableHead>
-                <TableHead scope="col">Status</TableHead>
-                <TableHead scope="col">Category</TableHead>
-                <TableHead scope="col">Region</TableHead>
-                <TableHead scope="col" className="text-right">
-                  Price (1-2)
-                </TableHead>
-                <TableHead scope="col">Attributes</TableHead>
-                <TableHead scope="col">Created</TableHead>
-                <TableHead scope="col">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
-                    No experiences found.
-                  </TableCell>
-                </TableRow>
-              )}
-              {rows.map((exp) => (
-                <TableRow
-                  key={exp.id}
-                  className={
-                    exp.status === 'pending_review'
-                      ? 'bg-amber-50 dark:bg-amber-950/20'
-                      : undefined
-                  }
-                >
-                  <TableCell className="max-w-[200px] truncate font-medium">
-                    {exp.title}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {exp.vendorBusinessName}
-                  </TableCell>
-                  <TableCell>
-                    <AdminStatusBadge
-                      status={exp.status}
-                      label={STATUS_LABEL[exp.status] ?? exp.status.replaceAll('_', ' ')}
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm capitalize">
-                    {exp.activitySlug.replaceAll('_', ' ')}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {exp.regionSlug.replaceAll('-', ' ')}
-                  </TableCell>
-                  <TableCell className="text-right text-sm font-medium tabular-nums">
-                    {formatRupees(exp.pricePerPerson_1_2)}
-                  </TableCell>
-                  <TableCell className="max-w-[280px] text-xs text-muted-foreground">
-                    <StructuredAttributesCell exp={exp} />
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {new Date(exp.createdAt).toLocaleDateString('en-IN', {
-                      day: 'numeric',
-                      month: 'short',
-                    })}
-                  </TableCell>
-                  <TableCell>
-                    <ExperienceActionsCell
-                      experienceId={exp.id}
-                      status={exp.status}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          </div>
-        </CardContent>
-      </Card>
+      <ResponsiveTable<ExperienceRow>
+        columns={columns}
+        rows={rows}
+        getRowKey={(exp) => exp.id}
+        rowProps={(exp) => ({
+          'data-experience-id': exp.id,
+          'data-experience-status': exp.status,
+          // Pending-review rows are visually flagged for the moderation queue.
+          // rowProps spreads onto BOTH the ≥md TableRow and the <md Card.
+          ...(exp.status === 'pending_review'
+            ? { className: 'bg-amber-50 dark:bg-amber-950/20' }
+            : {}),
+        })}
+        caption="Experience moderation queue"
+        empty="No experiences found."
+      />
     </div>
   )
 }

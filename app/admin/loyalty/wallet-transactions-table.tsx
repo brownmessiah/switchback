@@ -1,12 +1,7 @@
-import { Card, CardContent } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  ResponsiveTable,
+  type ResponsiveTableColumn,
+} from '@/components/ui/responsive-table'
 
 import { shortRef } from '@/lib/admin/short-ref'
 
@@ -25,11 +20,13 @@ function isOpaqueRef(ref: string): boolean {
 }
 
 /**
- * #96 — recent Wallet transactions as a DESIGN.md §4 A3 table. Each entry's
- * bucket is tagged via the shared semantic Badge (Outvers credit → `credit` +
- * wallet icon, Refund balance → `success` + check — status color + icon, never
- * color alone, DESIGN.md §1.3 / §5). Signed amounts are right-aligned +
- * `.tabular-nums` (DESIGN.md §1.3 / §2.2). Presentational + unit-testable.
+ * #96 — recent Wallet transactions as a DESIGN.md §4 A3 table, migrated to the
+ * shared `ResponsiveTable` (ADR-0018 / DESIGN.md §8.5): the `≥ md` Table reverses
+ * to a stacked label:value Card list `< md`. Each entry's bucket is tagged via
+ * the shared semantic Badge (Outvers credit → `credit` + wallet icon, Refund
+ * balance → `success` + check — status color + icon, never color alone,
+ * DESIGN.md §1.3 / §5). Signed amounts are right-aligned + `.tabular-nums`
+ * (DESIGN.md §1.3 / §2.2). Presentational + unit-testable.
  */
 export interface WalletTransactionRow {
   id: string
@@ -56,85 +53,89 @@ const BUCKET_STATUS: Record<string, string> = {
   refund_balance: 'credited',
 }
 
+function ReferenceCell({ referenceId }: { referenceId: string | null }) {
+  if (referenceId == null) return <>—</>
+  if (isOpaqueRef(referenceId)) {
+    return (
+      <span className="font-mono" title={referenceId}>
+        {shortRef(referenceId)}
+      </span>
+    )
+  }
+  return <>{referenceId}</>
+}
+
+const COLUMNS: ResponsiveTableColumn<WalletTransactionRow>[] = [
+  {
+    key: 'user',
+    header: 'User',
+    primary: true,
+    cell: (t) => t.userEmail ?? t.userName ?? t.userId,
+  },
+  {
+    key: 'bucket',
+    header: 'Bucket',
+    cell: (t) => (
+      <AdminStatusBadge
+        status={BUCKET_STATUS[t.balanceType] ?? 'neutral'}
+        label={BUCKET_LABEL[t.balanceType] ?? t.balanceType.replace('_', ' ')}
+      />
+    ),
+  },
+  {
+    key: 'amount',
+    header: 'Amount',
+    align: 'right',
+    cell: (t) => {
+      const isCredit = t.amount >= 0
+      return (
+        <span className={isCredit ? 'font-medium text-success' : 'font-medium text-destructive'}>
+          {isCredit
+            ? `+${formatRupees(t.amount)}`
+            : formatRupeesDeduction(Math.abs(t.amount))}
+        </span>
+      )
+    },
+  },
+  {
+    key: 'source',
+    header: 'Source',
+    cell: (t) => <span className="capitalize">{t.source.replace('_', ' ')}</span>,
+  },
+  {
+    key: 'reference',
+    header: 'Reference',
+    cell: (t) => (
+      <span className="text-muted-foreground">
+        <ReferenceCell referenceId={t.referenceId} />
+      </span>
+    ),
+  },
+  {
+    key: 'date',
+    header: 'Date',
+    cell: (t) => (
+      <span className="text-muted-foreground">
+        {new Date(t.createdAt).toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit',
+        })}
+      </span>
+    ),
+  },
+]
+
 export function WalletTransactionsTable({ rows }: { rows: WalletTransactionRow[] }) {
   return (
-    <Card>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-        <Table>
-          <caption className="sr-only">Recent Wallet transactions</caption>
-          <TableHeader>
-            <TableRow>
-              <TableHead scope="col">User</TableHead>
-              <TableHead scope="col">Bucket</TableHead>
-              <TableHead scope="col" className="text-right">
-                Amount
-              </TableHead>
-              <TableHead scope="col">Source</TableHead>
-              <TableHead scope="col">Reference</TableHead>
-              <TableHead scope="col">Date</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                  No transactions yet.
-                </TableCell>
-              </TableRow>
-            ) : (
-              rows.map((t) => {
-                const isCredit = t.amount >= 0
-                return (
-                  <TableRow key={t.id} className="hover:bg-muted/50">
-                    <TableCell className="text-sm">
-                      {t.userEmail ?? t.userName ?? t.userId}
-                    </TableCell>
-                    <TableCell>
-                      <AdminStatusBadge
-                        status={BUCKET_STATUS[t.balanceType] ?? 'neutral'}
-                        label={BUCKET_LABEL[t.balanceType] ?? t.balanceType.replace('_', ' ')}
-                      />
-                    </TableCell>
-                    <TableCell
-                      className={`text-right text-sm font-medium tabular-nums ${
-                        isCredit ? 'text-success' : 'text-destructive'
-                      }`}
-                    >
-                      {isCredit
-                        ? `+${formatRupees(t.amount)}`
-                        : formatRupeesDeduction(Math.abs(t.amount))}
-                    </TableCell>
-                    <TableCell className="text-sm capitalize">
-                      {t.source.replace('_', ' ')}
-                    </TableCell>
-                    <TableCell className="max-w-32 truncate text-sm text-muted-foreground">
-                      {t.referenceId == null ? (
-                        '—'
-                      ) : isOpaqueRef(t.referenceId) ? (
-                        <span className="font-mono" title={t.referenceId}>
-                          {shortRef(t.referenceId)}
-                        </span>
-                      ) : (
-                        t.referenceId
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(t.createdAt).toLocaleDateString('en-IN', {
-                        day: 'numeric',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </TableCell>
-                  </TableRow>
-                )
-              })
-            )}
-          </TableBody>
-        </Table>
-        </div>
-      </CardContent>
-    </Card>
+    <ResponsiveTable<WalletTransactionRow>
+      columns={COLUMNS}
+      rows={rows}
+      getRowKey={(t) => t.id}
+      rowProps={(t) => ({ 'data-transaction-id': t.id })}
+      caption="Recent Wallet transactions"
+      empty="No transactions yet."
+    />
   )
 }

@@ -150,7 +150,7 @@ export function BlogPostActionsCell({
               />
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor={`edit-category-${id}`}>Category</Label>
                 <Select value={editCategory} onValueChange={(v) => { if (v) setEditCategory(v) }}>

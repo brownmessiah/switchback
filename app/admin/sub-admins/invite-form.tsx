@@ -66,7 +66,7 @@ export function InviteSubAdminForm() {
         <Label className="text-sm font-medium">
           Permission subset (select at least one)
         </Label>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
           {ADMIN_PERMISSIONS.map((perm) => (
             <label
               key={perm}

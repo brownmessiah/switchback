@@ -429,7 +429,7 @@ export function AvailabilityManager({
       {message && (
         <div className="flex items-center justify-between rounded-lg border border-border bg-muted/50 p-3 text-sm">
           <span>{message}</span>
-          <button onClick={() => setMessage(null)} className="text-muted-foreground hover:text-foreground">
+          <button onClick={() => setMessage(null)} className="min-tap text-muted-foreground hover:text-foreground" aria-label="Dismiss message">
             <X className="size-4" />
           </button>
         </div>
@@ -438,7 +438,7 @@ export function AvailabilityManager({
       {/* ── CALENDAR VIEW ─────────────────────────────────────────── */}
       {view === 'calendar' && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
             {/* Heading omitted — the "Calendar" Tab labels this view (avoids a
                 duplicate "Calendar" text match). Month navigation only. */}
             <CardTitle className="text-base">Month view</CardTitle>
@@ -592,7 +592,7 @@ export function AvailabilityManager({
       {/* ── MANIFEST / ROSTER VIEW ────────────────────────────────── */}
       {view === 'manifest' && (
         <Card data-testid="manifest-view">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
             <CardTitle className="flex items-center gap-2">
               <Users className="size-5" />
               Run-of-day manifest
@@ -644,7 +644,7 @@ export function AvailabilityManager({
           calendar stays the center of gravity (folds C's rule editor). */}
       {rulesOpen && (
         <Card data-testid="rules-editor">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
             <CardTitle className="flex items-center gap-2">
               <CalendarDays className="size-5" />
               Weekly Patterns
@@ -701,7 +701,7 @@ export function AvailabilityManager({
 
             {showForm && (
               <div className="rounded-lg border border-dashed border-border p-4 space-y-4">
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="dayOfWeek">Day</Label>
                     <Select value={newDayOfWeek} onValueChange={(v) => { if (v !== null) setNewDayOfWeek(v) }}>
@@ -746,7 +746,7 @@ export function AvailabilityManager({
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label htmlFor="effectiveFrom">Effective From (optional)</Label>
                     <Input

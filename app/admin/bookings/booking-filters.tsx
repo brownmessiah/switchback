@@ -59,7 +59,7 @@ export function BookingFilters({
   return (
     <Card>
       <CardContent className="pt-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           {/* State filter */}
           <div className="space-y-1.5">
             <Label htmlFor="filter-state" className="text-xs font-medium">
@@ -67,7 +67,7 @@ export function BookingFilters({
             </Label>
             <select
               id="filter-state"
-              className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+              className="min-tap flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
               value={currentFilters.state ?? ''}
               onChange={(e) => applyFilter('state', e.target.value)}
             >
@@ -112,7 +112,7 @@ export function BookingFilters({
             </Label>
             <select
               id="filter-vendor"
-              className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+              className="min-tap flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
               value={currentFilters.vendorUserId ?? ''}
               onChange={(e) => applyFilter('vendor', e.target.value)}
             >
@@ -132,7 +132,7 @@ export function BookingFilters({
             </Label>
             <select
               id="filter-experience"
-              className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+              className="min-tap flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
               value={currentFilters.experienceId ?? ''}
               onChange={(e) => applyFilter('experience', e.target.value)}
             >

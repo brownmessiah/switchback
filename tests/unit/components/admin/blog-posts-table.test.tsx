@@ -10,13 +10,18 @@ afterEach(() => {
   cleanup()
 })
 
-// #106 blog CMS redesign to DESIGN.md §4 A3 (variant A "Operations Console"):
+// #106 blog CMS redesign to DESIGN.md §4 A3 (variant A "Operations Console"),
+// migrated to the shared ResponsiveTable (ADR-0018 / DESIGN.md §8.5):
 //  - the post status (draft / published) is a semantic AdminStatusBadge —
 //    status color PAIRED WITH an icon, never color alone (DESIGN.md §1.3 / §5).
 //  - a cover-image indicator tells the operator at a glance whether a post has
 //    a cover image, without leaking the raw URL into the dense row.
 //  - the E2E row hook `tr[data-blog-post-id="…"]` is preserved so the #27
 //    CRUD spec keeps matching rows by id.
+//
+// NOTE: ResponsiveTable renders BOTH the `≥ md` Table and the `< md` Card stack
+// at once (a CSS swap, not conditional mounting), so jsdom sees both. Assertions
+// that need a single match scope to the `≥ md` Table via `screen.getByRole`.
 
 const ROWS: BlogPostTableRow[] = [
   {
@@ -53,17 +58,22 @@ const ROWS: BlogPostTableRow[] = [
   },
 ]
 
-describe('BlogPostsTable (A3, variant A)', () => {
+/** The `≥ md` Table rendering — where the E2E `tr` selectors resolve. */
+function table(): HTMLElement {
+  return screen.getByRole('table')
+}
+
+describe('BlogPostsTable (A3, variant A, ResponsiveTable)', () => {
   it('preserves the per-row data-blog-post-id hook used by the #27 E2E', () => {
     render(<BlogPostsTable posts={ROWS} emptyMessage="No blog posts yet." />)
     expect(
-      document.querySelector('tr[data-blog-post-id="post-published"]'),
+      table().querySelector('tr[data-blog-post-id="post-published"]'),
     ).not.toBeNull()
   })
 
   it('maps a published post to a semantic status badge (success token + icon, never color alone)', () => {
     render(<BlogPostsTable posts={ROWS} emptyMessage="No blog posts yet." />)
-    const row = screen
+    const row = within(table())
       .getByText('Top 10 Rafting Spots')
       .closest('tr') as HTMLElement
     const badge = within(row)
@@ -76,7 +86,7 @@ describe('BlogPostsTable (A3, variant A)', () => {
 
   it('maps a draft post to a neutral status badge paired with an icon (not success)', () => {
     render(<BlogPostsTable posts={ROWS} emptyMessage="No blog posts yet." />)
-    const row = screen
+    const row = within(table())
       .getByText('Hidden Himalayan Treks')
       .closest('tr') as HTMLElement
     const badge = within(row).getByText('Draft').closest('[data-slot="badge"]')
@@ -88,10 +98,10 @@ describe('BlogPostsTable (A3, variant A)', () => {
 
   it('shows a cover-image indicator on a post that has a cover and a no-cover marker otherwise', () => {
     render(<BlogPostsTable posts={ROWS} emptyMessage="No blog posts yet." />)
-    const withCover = screen
+    const withCover = within(table())
       .getByText('Top 10 Rafting Spots')
       .closest('tr') as HTMLElement
-    const withoutCover = screen
+    const withoutCover = within(table())
       .getByText('Hidden Himalayan Treks')
       .closest('tr') as HTMLElement
     expect(
@@ -102,8 +112,8 @@ describe('BlogPostsTable (A3, variant A)', () => {
     ).toHaveAttribute('data-has-cover', 'false')
   })
 
-  it('renders an in-table empty state when there are no posts', () => {
+  it('renders an empty state when there are no posts', () => {
     render(<BlogPostsTable posts={[]} emptyMessage="No blog posts yet." />)
-    expect(screen.getByText('No blog posts yet.')).toBeInTheDocument()
+    expect(screen.getAllByText('No blog posts yet.').length).toBeGreaterThan(0)
   })
 })

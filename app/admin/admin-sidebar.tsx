@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { usePathname } from 'next/navigation'
 
+import { PortalNavDrawer } from '@/components/portal-nav-drawer'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { cn } from '@/lib/utils'
 
@@ -26,7 +27,7 @@ interface AdminSidebarProps {
 }
 
 // ──────────────────────────────────────────────────
-//  Sidebar content (shared between desktop & mobile)
+//  Sidebar content (shared between drawer & rail)
 // ──────────────────────────────────────────────────
 
 function SidebarContent({
@@ -90,7 +91,7 @@ function SidebarContent({
             <button
               type="button"
               onClick={() => toggleGroup(group.label)}
-              className="flex w-full items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
+              className="min-tap flex w-full items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
               aria-expanded={isOpen}
             >
               <span>{groupLabel}</span>
@@ -111,7 +112,7 @@ function SidebarContent({
                       href={item.href}
                       onClick={onNavigate}
                       className={cn(
-                        'mx-2 flex items-center justify-between rounded-md px-3 py-1.5 text-sm transition-colors',
+                        'min-tap mx-2 flex items-center justify-between rounded-md px-3 py-1.5 text-sm transition-colors',
                         isActive
                           ? 'bg-primary/10 font-medium text-primary'
                           : 'text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -160,144 +161,36 @@ function ChevronIcon({ open }: { readonly open: boolean }) {
 }
 
 // ──────────────────────────────────────────────────
-//  Hamburger icon
-// ──────────────────────────────────────────────────
-
-function HamburgerIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <line x1="4" x2="20" y1="12" y2="12" />
-      <line x1="4" x2="20" y1="6" y2="6" />
-      <line x1="4" x2="20" y1="18" y2="18" />
-    </svg>
-  )
-}
-
-// ──────────────────────────────────────────────────
-//  Close icon
-// ──────────────────────────────────────────────────
-
-function CloseIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M18 6 6 18" />
-      <path d="m6 6 12 12" />
-    </svg>
-  )
-}
-
-// ──────────────────────────────────────────────────
 //  Main exported component
 // ──────────────────────────────────────────────────
 
+/**
+ * Admin portal sidebar. Built on the shared {@link PortalNavDrawer} (Sheet-based
+ * — focus-trap / Escape / restore for free): a hamburger-opened LEFT drawer
+ * below `md`, a persistent rail at `md+`. Admin nav is grouped TEXT (no per-item
+ * icons), so the rail is a **compact text rail at `md`** (`w-52`) widening to the
+ * **full rail at `lg`** (`w-60`); the collapsible groups + badge counts ride at
+ * every tier (DESIGN.md §8.3 / §8.5, ADR-0018).
+ */
 export function AdminSidebar({ groups, badgeCounts }: AdminSidebarProps) {
-  const [mobileOpen, setMobileOpen] = useState(false)
   const t = useTranslations('AdminNav')
   const tNav = useTranslations('Nav')
-
-  // Close mobile sidebar on route change
-  const pathname = usePathname()
-  useEffect(() => {
-    setMobileOpen(false)
-  }, [pathname])
-
-  // Prevent body scroll when mobile sidebar is open
-  useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [mobileOpen])
 
   const sidebarTitle = t('sidebarTitle')
 
   return (
-    <>
-      {/* Mobile header bar */}
-      <div className="sticky top-0 z-40 flex items-center gap-3 border-b bg-background px-4 py-3 lg:hidden">
-        <button
-          type="button"
-          onClick={() => setMobileOpen(true)}
-          className="inline-flex items-center justify-center rounded-md p-1 text-muted-foreground hover:text-foreground"
-          aria-label="Open admin menu"
-        >
-          <HamburgerIcon />
-        </button>
-        <span className="text-sm font-semibold text-primary">{sidebarTitle}</span>
-      </div>
-
-      {/* Mobile overlay */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setMobileOpen(false)}
-            aria-hidden="true"
-          />
-          {/* Sidebar panel */}
-          <div className="absolute inset-y-0 left-0 w-72 bg-background shadow-lg">
-            <div className="flex items-center justify-between border-b px-4 py-3">
-              <span className="text-sm font-semibold text-primary">{sidebarTitle}</span>
-              <div className="flex items-center gap-1">
-                <ThemeToggle label={tNav('themeToggle')} />
-                <button
-                  type="button"
-                  onClick={() => setMobileOpen(false)}
-                  className="inline-flex items-center justify-center rounded-md p-1 text-muted-foreground hover:text-foreground"
-                  aria-label="Close admin menu"
-                >
-                  <CloseIcon />
-                </button>
-              </div>
-            </div>
-            <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 57px)' }}>
-              <SidebarContent
-                groups={groups}
-                badgeCounts={badgeCounts}
-                onNavigate={() => setMobileOpen(false)}
-              />
-            </div>
-          </div>
-        </div>
+    <PortalNavDrawer
+      title={sidebarTitle}
+      openMenuLabel={tNav('openMenu')}
+      menuDescription={sidebarTitle}
+      themeToggle={<ThemeToggle label={tNav('themeToggle')} />}
+      // Compact text rail at md → full at lg. No per-item icons, so width is the
+      // only tier difference; the grouped/collapsible content is identical.
+      railClassName="w-52 lg:w-60"
+    >
+      {({ onNavigate }) => (
+        <SidebarContent groups={groups} badgeCounts={badgeCounts} onNavigate={onNavigate} />
       )}
-
-      {/* Desktop sidebar */}
-      <aside className="hidden w-60 shrink-0 border-r bg-background lg:block">
-        <div className="sticky top-0 overflow-y-auto" style={{ maxHeight: '100vh' }}>
-          <div className="flex items-center justify-between border-b px-4 py-3">
-            <span className="text-sm font-semibold text-primary">{sidebarTitle}</span>
-            <ThemeToggle label={tNav('themeToggle')} />
-          </div>
-          <SidebarContent groups={groups} badgeCounts={badgeCounts} />
-        </div>
-      </aside>
-    </>
+    </PortalNavDrawer>
   )
 }

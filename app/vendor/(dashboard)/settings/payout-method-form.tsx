@@ -234,8 +234,11 @@ export function PayoutMethodForm({
           )}
 
           {method === 'bank_account' && (
-            <div className="space-y-4">
-              <div className="space-y-2">
+            // 1-col on phone, 2-col field groups at md (DESIGN.md §8.3 forms).
+            // Account-holder name spans the full row; account number + IFSC pair
+            // up on the second row at md.
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="accountHolderName">Account holder name</Label>
                 <Input
                   id="accountHolderName"

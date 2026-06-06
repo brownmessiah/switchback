@@ -125,7 +125,7 @@ export default async function HelpPage({ params }: PageProps): Promise<ReactElem
         </p>
         <Link
           href="/contact"
-          className="mt-4 inline-flex h-11 items-center justify-center rounded-[var(--radius-control)] bg-primary px-6 text-sm font-medium text-primary-foreground transition hover:bg-primary-strong focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+          className="min-tap mt-4 inline-flex h-11 items-center justify-center rounded-[var(--radius-control)] bg-primary px-6 text-sm font-medium text-primary-foreground transition hover:bg-primary-strong focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
         >
           {t('stillStuck.cta')}
         </Link>

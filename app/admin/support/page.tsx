@@ -1,19 +1,14 @@
 import { inArray } from 'drizzle-orm'
 import { headers } from 'next/headers'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { AdminStatusBadge } from '@/app/admin/_components/admin-status-badge'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  ResponsiveTable,
+  type ResponsiveTableColumn,
+} from '@/components/ui/responsive-table'
 import { db } from '@/db/client'
 import { users } from '@/db/schema/users'
 import { auth } from '@/lib/auth'
@@ -76,6 +71,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
   }
 
   const tickets = await loadTicketsList(db, filters)
+  type TicketRow = (typeof tickets)[number]
   const isFiltered = Object.values(filters).some(Boolean)
 
   // Resolve assignee user ids → display names in one query so the "Assigned To"
@@ -93,6 +89,73 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
       assigneeNameById.set(a.id, a.name ?? a.email ?? shortRef(a.id))
     }
   }
+
+  // A3-reversal columns (DESIGN.md §8.5 / ADR-0018). Subject is the primary
+  // (row-link) column; status keeps its `ticket-status-badge`-wrapped
+  // `AdminStatusBadge`; the per-row `data-ticket-id` hook is threaded through
+  // `rowProps` so the support-lifecycle E2E row selector survives both the
+  // `≥ md` table and the `< md` stacked cards.
+  const columns: ReadonlyArray<ResponsiveTableColumn<TicketRow>> = [
+    {
+      key: 'subject',
+      header: 'Subject',
+      primary: true,
+      cell: (t) => t.subject,
+    },
+    {
+      key: 'customer',
+      header: 'Customer',
+      cell: (t) => t.creatorName ?? t.creatorEmail ?? '—',
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      cell: (t) => (
+        <span data-testid="ticket-status-badge">
+          <AdminStatusBadge
+            status={t.status}
+            label={STATUS_LABELS[t.status] ?? t.status}
+          />
+        </span>
+      ),
+    },
+    {
+      key: 'priority',
+      header: 'Priority',
+      cell: (t) => (
+        <Badge
+          variant={PRIORITY_VARIANTS[t.priority] ?? 'outline'}
+          className="text-xs capitalize"
+        >
+          {t.priority}
+        </Badge>
+      ),
+    },
+    {
+      key: 'category',
+      header: 'Category',
+      cell: (t) => <span className="capitalize">{t.category}</span>,
+    },
+    {
+      key: 'assignee',
+      header: 'Assigned To',
+      cell: (t) =>
+        t.assignedToAdminId ? (
+          <span title={t.assignedToAdminId}>
+            {assigneeNameById.get(t.assignedToAdminId) ??
+              shortRef(t.assignedToAdminId)}
+          </span>
+        ) : (
+          'Unassigned'
+        ),
+    },
+    {
+      key: 'created',
+      header: 'Created',
+      align: 'right',
+      cell: (t) => formatDate(t.createdAt),
+    },
+  ]
 
   return (
     <div className="space-y-6">
@@ -118,94 +181,17 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
 
       <TicketFilters currentFilters={filters} />
 
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <caption className="sr-only">
-                Support tickets with status, priority, category and assignee
-              </caption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead scope="col">Subject</TableHead>
-                  <TableHead scope="col">Customer</TableHead>
-                  <TableHead scope="col">Status</TableHead>
-                  <TableHead scope="col">Priority</TableHead>
-                  <TableHead scope="col">Category</TableHead>
-                  <TableHead scope="col">Assigned To</TableHead>
-                  <TableHead scope="col">Created</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tickets.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      className="py-8 text-center text-muted-foreground"
-                    >
-                      {isFiltered
-                        ? 'No tickets match these filters.'
-                        : 'No tickets found.'}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  tickets.map((t) => (
-                    <TableRow
-                      key={t.id}
-                      data-ticket-id={t.id}
-                      className="hover:bg-muted/50"
-                    >
-                      <TableCell className="max-w-[250px] truncate font-medium">
-                        <Link
-                          href={`/admin/support/${t.id}`}
-                          className="hover:underline"
-                        >
-                          {t.subject}
-                        </Link>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {t.creatorName ?? t.creatorEmail ?? '—'}
-                      </TableCell>
-                      <TableCell>
-                        <span data-testid="ticket-status-badge">
-                          <AdminStatusBadge
-                            status={t.status}
-                            label={STATUS_LABELS[t.status] ?? t.status}
-                          />
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={PRIORITY_VARIANTS[t.priority] ?? 'outline'}
-                          className="text-xs capitalize"
-                        >
-                          {t.priority}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm capitalize">
-                        {t.category}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {t.assignedToAdminId ? (
-                          <span title={t.assignedToAdminId}>
-                            {assigneeNameById.get(t.assignedToAdminId) ??
-                              shortRef(t.assignedToAdminId)}
-                          </span>
-                        ) : (
-                          'Unassigned'
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground tabular-nums">
-                        {formatDate(t.createdAt)}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      <ResponsiveTable<TicketRow>
+        columns={columns}
+        rows={tickets}
+        getRowKey={(t) => t.id}
+        rowHref={(t) => `/admin/support/${t.id}`}
+        rowProps={(t) => ({ 'data-ticket-id': t.id })}
+        caption="Support tickets with status, priority, category and assignee"
+        empty={
+          isFiltered ? 'No tickets match these filters.' : 'No tickets found.'
+        }
+      />
     </div>
   )
 }

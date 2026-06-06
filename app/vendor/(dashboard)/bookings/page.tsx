@@ -4,20 +4,15 @@ import { headers } from 'next/headers'
 
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  ResponsiveTable,
+  type ResponsiveTableColumn,
+} from '@/components/ui/responsive-table'
 import { db } from '@/db/client'
 import { availabilitySlots, bookings, experiences, users } from '@/db/schema'
 import { auth } from '@/lib/auth'
 import { bookingStatusBadge } from '@/lib/bookings/booking-status-badge'
-import { isNoShowMarkableState } from '@/lib/bookings/state-machine'
+import { type BookingState, isNoShowMarkableState } from '@/lib/bookings/state-machine'
 import { computeVendorNetPayout } from '@/lib/payments/payout-calculator'
 
 import { VendorTableTabs } from '../vendor-table-tabs'
@@ -65,11 +60,41 @@ function withSlotEnded<T extends { slotEnd: Date | null }>(
 
 const inr = (n: number) => `₹${Math.floor(n).toLocaleString('en-IN')}`
 
+/**
+ * One fully-resolved bookings-table row: the raw query fields plus the
+ * per-Booking deduction trail (re-derived via the EXISTING payout calculator,
+ * ADR-0016 — never re-implements the math) and the human status label. Built
+ * once on the server so the `<ResponsiveTable>` column `cell()` closures stay
+ * pure presentation.
+ */
+interface BookingTableRow {
+  bookingId: string
+  state: BookingState
+  customerName: string | null
+  expTitle: string
+  slotStart: Date | null
+  slotEnded: boolean
+  participantCount: number
+  grossRupees: number
+  commissionRupees: number
+  netPayoutRupees: number
+  statusLabel: string
+}
+
+const formatBookingDate = (slotStart: Date | null) =>
+  slotStart
+    ? new Date(slotStart).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      })
+    : '—'
+
 export default async function VendorBookingsPage() {
   const session = await auth.api.getSession({ headers: await headers() })
   const userId = session!.user.id
 
-  const rows = withSlotEnded(
+  const rawRows = withSlotEnded(
     await db
     .select({
       bookingId: bookings.id,
@@ -95,6 +120,125 @@ export default async function VendorBookingsPage() {
     .orderBy(bookings.createdAt),
   )
 
+  // Resolve every row's deduction trail + status label on the server (ADR-0016
+  // via the shared calculator) so the table config below is pure presentation.
+  const rows: BookingTableRow[] = rawRows.map((row) => {
+    const breakdown = computeVendorNetPayout({
+      grossRupees: Math.floor(Number(row.gross ?? 0)),
+      commissionRatePercent: String(row.commissionRate ?? '20.00'),
+      gstRateOnCommissionPercent: String(row.gstRate ?? '18.00'),
+      tdsRupees: Math.floor(Number(row.tdsAmount ?? 0)),
+      tcsRupees: Math.floor(Number(row.tcsAmount ?? 0)),
+    })
+    return {
+      bookingId: row.bookingId,
+      state: row.state,
+      customerName: row.customerName,
+      expTitle: row.expTitle,
+      slotStart: row.slotStart,
+      slotEnded: row.slotEnded,
+      participantCount: row.participantCount,
+      grossRupees: breakdown.grossRupees,
+      commissionRupees: breakdown.commissionRupees,
+      netPayoutRupees: breakdown.netPayoutRupees,
+      statusLabel:
+        STATE_LABEL[bookingStatusBadge(row.state).labelKey] ??
+        row.state.replace(/_/g, ' '),
+    }
+  })
+
+  const columns: ReadonlyArray<ResponsiveTableColumn<BookingTableRow>> = [
+    {
+      key: 'customer',
+      header: 'Customer',
+      primary: true,
+      cell: (row) => row.customerName ?? 'Customer',
+    },
+    {
+      key: 'experience',
+      header: 'Experience',
+      cell: (row) => row.expTitle,
+    },
+    {
+      key: 'date',
+      header: 'Date',
+      cell: (row) => formatBookingDate(row.slotStart),
+    },
+    {
+      key: 'guests',
+      header: 'Guests',
+      align: 'right',
+      cell: (row) => row.participantCount,
+    },
+    {
+      key: 'gross',
+      header: 'Gross',
+      align: 'right',
+      cell: (row) => (
+        <span data-testid="booking-gross">{inr(row.grossRupees)}</span>
+      ),
+    },
+    {
+      key: 'commission',
+      header: 'Commission',
+      align: 'right',
+      cell: (row) => (
+        <span
+          data-testid="booking-commission"
+          className="text-muted-foreground"
+        >
+          -{inr(row.commissionRupees)}
+        </span>
+      ),
+    },
+    {
+      key: 'net',
+      header: 'Net',
+      align: 'right',
+      cell: (row) => (
+        <span
+          data-testid="booking-net"
+          className="font-medium tabular-nums"
+        >
+          {inr(row.netPayoutRupees)}
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      cell: (row) => (
+        <BookingStatusBadge
+          state={row.state}
+          label={row.statusLabel}
+          className="text-xs"
+        />
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      cell: (row) => (
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href={`/vendor/bookings/${row.bookingId}`}>
+            <Button variant="outline" size="sm">
+              View
+            </Button>
+          </Link>
+          {row.state === 'awaiting_completion' && (
+            <MarkCompleteButton bookingId={row.bookingId} />
+          )}
+          {VENDOR_CANCELLABLE_STATES.has(row.state) && (
+            <VendorCancelButton bookingId={row.bookingId} />
+          )}
+          {isNoShowMarkableState(row.state) && row.slotEnded && (
+            <MarkNoShowButton bookingId={row.bookingId} />
+          )}
+        </div>
+      ),
+    },
+  ]
+
   return (
     <div className="space-y-6">
       <div>
@@ -106,126 +250,32 @@ export default async function VendorBookingsPage() {
 
       <VendorTableTabs active="bookings" />
 
-      <Card>
-        <CardContent className="p-0">
-          {rows.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <p className="text-lg font-medium">No bookings yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Bookings will appear here once customers start booking your experiences.
-              </p>
-              <Link href="/vendor/listings" className="mt-4">
-                <Button variant="outline" size="sm">
-                  Manage your listings
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Experience</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Guests</TableHead>
-                  <TableHead className="text-right">Gross</TableHead>
-                  <TableHead className="text-right">Commission</TableHead>
-                  <TableHead className="text-right">Net</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((row) => {
-                  // Per-Booking deduction trail via the EXISTING payout
-                  // calculator (ADR-0016) — re-derives Commission from the
-                  // snapshot rate; never re-implements the math.
-                  const breakdown = computeVendorNetPayout({
-                    grossRupees: Math.floor(Number(row.gross ?? 0)),
-                    commissionRatePercent: String(row.commissionRate ?? '20.00'),
-                    gstRateOnCommissionPercent: String(row.gstRate ?? '18.00'),
-                    tdsRupees: Math.floor(Number(row.tdsAmount ?? 0)),
-                    tcsRupees: Math.floor(Number(row.tcsAmount ?? 0)),
-                  })
-                  const statusLabel =
-                    STATE_LABEL[bookingStatusBadge(row.state).labelKey] ??
-                    row.state.replace(/_/g, ' ')
-                  return (
-                    <TableRow
-                      key={row.bookingId}
-                      data-testid="booking-row"
-                      data-booking-id={row.bookingId}
-                      data-booking-state={row.state}
-                    >
-                      <TableCell className="font-medium">
-                        {row.customerName ?? 'Customer'}
-                      </TableCell>
-                      <TableCell className="text-sm">{row.expTitle}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {row.slotStart
-                          ? new Date(row.slotStart).toLocaleDateString('en-IN', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                            })
-                          : '—'}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {row.participantCount}
-                      </TableCell>
-                      <TableCell
-                        data-testid="booking-gross"
-                        className="text-right tabular-nums"
-                      >
-                        {inr(breakdown.grossRupees)}
-                      </TableCell>
-                      <TableCell
-                        data-testid="booking-commission"
-                        className="text-right tabular-nums text-muted-foreground"
-                      >
-                        -{inr(breakdown.commissionRupees)}
-                      </TableCell>
-                      <TableCell
-                        data-testid="booking-net"
-                        className="text-right font-medium tabular-nums"
-                      >
-                        {inr(breakdown.netPayoutRupees)}
-                      </TableCell>
-                      <TableCell>
-                        <BookingStatusBadge
-                          state={row.state}
-                          label={statusLabel}
-                          className="text-xs"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Link href={`/vendor/bookings/${row.bookingId}`}>
-                            <Button variant="outline" size="sm">
-                              View
-                            </Button>
-                          </Link>
-                          {row.state === 'awaiting_completion' && (
-                            <MarkCompleteButton bookingId={row.bookingId} />
-                          )}
-                          {VENDOR_CANCELLABLE_STATES.has(row.state) && (
-                            <VendorCancelButton bookingId={row.bookingId} />
-                          )}
-                          {isNoShowMarkableState(row.state) && row.slotEnded && (
-                            <MarkNoShowButton bookingId={row.bookingId} />
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <ResponsiveTable<BookingTableRow>
+        caption="Your bookings"
+        columns={columns}
+        rows={rows}
+        getRowKey={(row) => row.bookingId}
+        rowHref={(row) => `/vendor/bookings/${row.bookingId}`}
+        rowProps={(row) => ({
+          'data-testid': 'booking-row',
+          'data-booking-id': row.bookingId,
+          'data-booking-state': row.state,
+        })}
+        empty={
+          <div className="flex flex-col items-center justify-center text-center">
+            <p className="text-lg font-medium">No bookings yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Bookings will appear here once customers start booking your
+              experiences.
+            </p>
+            <Link href="/vendor/listings" className="mt-4">
+              <Button variant="outline" size="sm">
+                Manage your listings
+              </Button>
+            </Link>
+          </div>
+        }
+      />
     </div>
   )
 }

@@ -61,7 +61,7 @@ export function UserFilters({ currentFilters }: UserFiltersProps) {
   return (
     <Card>
       <CardContent className="pt-6">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           {/* Search */}
           <form
             className="space-y-1.5"
@@ -94,7 +94,7 @@ export function UserFilters({ currentFilters }: UserFiltersProps) {
             </Label>
             <select
               id="filter-role"
-              className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+              className="min-tap flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
               value={currentFilters.role ?? ''}
               onChange={(e) => applyFilter('role', e.target.value)}
             >

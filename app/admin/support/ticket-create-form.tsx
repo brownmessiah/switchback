@@ -59,7 +59,7 @@ export function TicketCreateForm() {
       data-testid="ticket-create-form"
       className="space-y-4"
     >
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="subject">Subject</Label>
           <Input

@@ -126,7 +126,7 @@ export function ProfileForm({ initial }: ProfileFormProps) {
               placeholder={t('address.line1Placeholder')}
             />
           </div>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-1.5">
               <Label htmlFor="city">{t('address.city')}</Label>
               <Input id="city" name="city" value={city} onChange={(e) => setCity(e.target.value)} />
@@ -160,7 +160,7 @@ export function ProfileForm({ initial }: ProfileFormProps) {
           <CardTitle className="text-lg">{t('trustedContact.heading')}</CardTitle>
           <p className="text-sm text-muted-foreground">{t('trustedContact.description')}</p>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-3">
+        <CardContent className="grid gap-4 md:grid-cols-3">
           <div className="space-y-1.5">
             <Label htmlFor="contactName">{t('trustedContact.name')}</Label>
             <Input

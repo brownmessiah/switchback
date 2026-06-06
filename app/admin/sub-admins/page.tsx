@@ -6,13 +6,9 @@ import { AdminStatusBadge } from '@/app/admin/_components/admin-status-badge'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  ResponsiveTable,
+  type ResponsiveTableColumn,
+} from '@/components/ui/responsive-table'
 import { db } from '@/db/client'
 import { adminProfiles } from '@/db/schema/admin-profiles'
 import { users } from '@/db/schema/users'
@@ -65,6 +61,97 @@ export default async function SubAdminsPage() {
   const fullAdmins = admins.filter((a) => isFullAdmin(a.permissions))
   const subAdmins = admins.filter((a) => !isFullAdmin(a.permissions))
 
+  // Decorate each row with the per-row flags the A3 cells need, so the
+  // `<ResponsiveTable>` column renderers stay pure functions of the row.
+  const adminRows = admins.map((admin) => ({
+    ...admin,
+    isFull: isFullAdmin(admin.permissions),
+    isSelf: admin.userId === session.user.id,
+  }))
+
+  type AdminRow = (typeof adminRows)[number]
+
+  const columns: ResponsiveTableColumn<AdminRow>[] = [
+    {
+      key: 'user',
+      header: 'User',
+      primary: true,
+      cell: (admin) => (
+        <div>
+          <p className="text-sm font-medium">
+            {admin.name ?? admin.email ?? admin.userId}
+          </p>
+          {admin.email && admin.name && (
+            <p className="text-xs text-muted-foreground">{admin.email}</p>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      cell: (admin) => (
+        <div className="flex flex-wrap items-center justify-end gap-1 md:justify-start">
+          <span data-testid="subadmin-status-badge">
+            <AdminStatusBadge
+              status={admin.isFull ? 'active' : 'restricted'}
+              label={admin.isFull ? 'Full Admin' : 'Sub-Admin'}
+            />
+          </span>
+          {admin.isSelf && (
+            <Badge variant="outline" className="text-2xs">
+              You
+            </Badge>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'permissions',
+      header: 'Permission subset',
+      cell: (admin) =>
+        admin.isFull ? (
+          <span className="text-sm text-muted-foreground">
+            All {ADMIN_PERMISSIONS.length} permissions
+          </span>
+        ) : (
+          <div className="flex flex-wrap justify-end gap-1 md:justify-start">
+            {admin.permissions.map((p) => (
+              <Badge key={p} variant="outline" className="text-2xs">
+                {permissionLabel(p)}
+              </Badge>
+            ))}
+          </div>
+        ),
+    },
+    {
+      key: 'since',
+      header: 'Since',
+      align: 'right',
+      cell: (admin) => (
+        <span className="text-sm text-muted-foreground tabular-nums">
+          {formatDate(admin.createdAt)}
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      align: 'right',
+      cell: (admin) =>
+        admin.isSelf ? (
+          <span className="text-xs text-muted-foreground">—</span>
+        ) : (
+          <SubAdminActionsCell
+            userId={admin.userId}
+            email={admin.email}
+            name={admin.name}
+            permissions={admin.permissions}
+          />
+        ),
+    },
+  ]
+
   return (
     <div className="space-y-6">
       <div>
@@ -87,109 +174,16 @@ export default async function SubAdminsPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-heading text-h3">Current Admins</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <caption className="sr-only">
-                Admins and sub-admins with their permission subset and status
-              </caption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead scope="col">User</TableHead>
-                  <TableHead scope="col">Status</TableHead>
-                  <TableHead scope="col">Permission subset</TableHead>
-                  <TableHead scope="col">Since</TableHead>
-                  <TableHead scope="col" className="text-right">
-                    Actions
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {admins.length === 0 && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="py-8 text-center text-muted-foreground"
-                    >
-                      No admins found.
-                    </TableCell>
-                  </TableRow>
-                )}
-                {admins.map((admin) => {
-                  const isFull = isFullAdmin(admin.permissions)
-                  const isSelf = admin.userId === session.user.id
-
-                  return (
-                    <TableRow key={admin.userId} className="hover:bg-muted/50">
-                      <TableCell>
-                        <div>
-                          <p className="text-sm font-medium">
-                            {admin.name ?? admin.email ?? admin.userId}
-                          </p>
-                          {admin.email && admin.name && (
-                            <p className="text-xs text-muted-foreground">
-                              {admin.email}
-                            </p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap items-center gap-1">
-                          <span data-testid="subadmin-status-badge">
-                            <AdminStatusBadge
-                              status={isFull ? 'active' : 'restricted'}
-                              label={isFull ? 'Full Admin' : 'Sub-Admin'}
-                            />
-                          </span>
-                          {isSelf && (
-                            <Badge variant="outline" className="text-2xs">
-                              You
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-w-[320px]">
-                        {isFull ? (
-                          <span className="text-sm text-muted-foreground">
-                            All {ADMIN_PERMISSIONS.length} permissions
-                          </span>
-                        ) : (
-                          <div className="flex flex-wrap gap-1">
-                            {admin.permissions.map((p) => (
-                              <Badge key={p} variant="outline" className="text-2xs">
-                                {permissionLabel(p)}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground tabular-nums">
-                        {formatDate(admin.createdAt)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {isSelf ? (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        ) : (
-                          <SubAdminActionsCell
-                            userId={admin.userId}
-                            email={admin.email}
-                            name={admin.name}
-                            permissions={admin.permissions}
-                          />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      <section className="space-y-3" aria-label="Current Admins">
+        <h2 className="font-heading text-h3">Current Admins</h2>
+        <ResponsiveTable<AdminRow>
+          columns={columns}
+          rows={adminRows}
+          getRowKey={(admin) => admin.userId}
+          caption="Admins and sub-admins with their permission subset and status"
+          empty="No admins found."
+        />
+      </section>
     </div>
   )
 }

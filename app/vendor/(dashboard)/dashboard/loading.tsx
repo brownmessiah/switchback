@@ -4,8 +4,8 @@ export default function VendorDashboardLoading() {
   return (
     <div className="space-y-8">
       <Skeleton className="h-8 w-48" />
-      {/* Stat cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Stat cards — mirror the page's 1 → 2 (md:) → 4 (lg:) KPI grid. */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }, (_, i) => (
           <Skeleton key={i} className="h-28 rounded-xl" />
         ))}

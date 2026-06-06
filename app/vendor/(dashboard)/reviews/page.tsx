@@ -6,15 +6,11 @@ import { headers } from 'next/headers'
 import { ReviewStars } from '@/components/reviews/review-stars'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  ResponsiveTable,
+  type ResponsiveTableColumn,
+} from '@/components/ui/responsive-table'
+import { Separator } from '@/components/ui/separator'
 import { db } from '@/db/client'
 import { experiences, reviews, users } from '@/db/schema'
 import { auth } from '@/lib/auth'
@@ -48,6 +44,86 @@ export default async function VendorReviewsPage() {
 
   const avgRating = await computeAverageRating(rows.map((r) => r.rating))
   const totalReviews = rows.length
+
+  type ReviewRow = (typeof rows)[number]
+
+  const formatReviewDate = (value: Date | string) =>
+    new Date(value).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+
+  // A3 reviews table — one addressable row per Review (DESIGN.md §4 A3),
+  // collapsing to stacked label:value Cards below md (DESIGN.md §8.5).
+  const columns: ReadonlyArray<ResponsiveTableColumn<ReviewRow>> = [
+    {
+      key: 'review',
+      header: 'Review',
+      primary: true,
+      cell: (review) => (
+        <div className="space-y-1">
+          {review.title && (
+            <p className="text-sm font-medium">{review.title}</p>
+          )}
+          {review.body && (
+            <p className="text-sm text-muted-foreground">{review.body}</p>
+          )}
+          {review.experienceTitle && (
+            <p className="text-xs text-muted-foreground">
+              {review.experienceTitle}
+            </p>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'rating',
+      header: 'Rating',
+      cell: (review) => (
+        <span data-testid="review-rating">
+          <ReviewStars rating={review.rating} />
+        </span>
+      ),
+    },
+    {
+      key: 'customer',
+      header: 'Customer',
+      cell: (review) => review.customerName ?? 'Customer',
+    },
+    {
+      key: 'date',
+      header: 'Date',
+      cell: (review) => (
+        <span className="text-xs text-muted-foreground">
+          {formatReviewDate(review.createdAt)}
+        </span>
+      ),
+    },
+    {
+      key: 'response',
+      header: 'Response',
+      cell: (review) =>
+        // Vendor response display or the (preserved #20) respond flow —
+        // exactly one public response per Review.
+        review.vendorResponse ? (
+          <div className="rounded-md border border-border bg-muted/50 px-3 py-2 text-left">
+            <p className="text-xs font-medium text-muted-foreground">
+              Your response
+              {review.vendorRespondedAt && (
+                <>
+                  {' '}
+                  &middot; {formatReviewDate(review.vendorRespondedAt)}
+                </>
+              )}
+            </p>
+            <p className="mt-1 text-sm">{review.vendorResponse}</p>
+          </div>
+        ) : (
+          <VendorResponseForm reviewId={review.id} />
+        ),
+    },
+  ]
 
   return (
     <div className="space-y-6">
@@ -103,89 +179,16 @@ export default async function VendorReviewsPage() {
             </CardContent>
           </Card>
 
-          {/* A3 reviews table — one addressable row per Review (DESIGN.md §4 A3). */}
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Rating</TableHead>
-                    <TableHead>Review</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Response</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rows.map((review) => (
-                    <TableRow
-                      key={review.id}
-                      data-testid="review-row"
-                      data-review-id={review.id}
-                    >
-                      <TableCell className="align-top">
-                        <span data-testid="review-rating">
-                          <ReviewStars rating={review.rating} />
-                        </span>
-                      </TableCell>
-                      <TableCell className="max-w-md align-top">
-                        {review.title && (
-                          <p className="text-sm font-medium">{review.title}</p>
-                        )}
-                        {review.body && (
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            {review.body}
-                          </p>
-                        )}
-                        {review.experienceTitle && (
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {review.experienceTitle}
-                          </p>
-                        )}
-                      </TableCell>
-                      <TableCell className="align-top text-sm">
-                        {review.customerName ?? 'Customer'}
-                      </TableCell>
-                      <TableCell className="align-top text-xs text-muted-foreground">
-                        {new Date(review.createdAt).toLocaleDateString('en-IN', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </TableCell>
-                      <TableCell className="min-w-[16rem] align-top">
-                        {/* Vendor response display or the (preserved #20) respond
-                            flow — exactly one public response per Review. */}
-                        {review.vendorResponse ? (
-                          <div className="rounded-md border border-border bg-muted/50 px-3 py-2">
-                            <p className="text-xs font-medium text-muted-foreground">
-                              Your response
-                              {review.vendorRespondedAt && (
-                                <>
-                                  {' '}
-                                  &middot;{' '}
-                                  {new Date(
-                                    review.vendorRespondedAt,
-                                  ).toLocaleDateString('en-IN', {
-                                    day: 'numeric',
-                                    month: 'short',
-                                    year: 'numeric',
-                                  })}
-                                </>
-                              )}
-                            </p>
-                            <p className="mt-1 text-sm">{review.vendorResponse}</p>
-                          </div>
-                        ) : (
-                          <VendorResponseForm reviewId={review.id} />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <ResponsiveTable<ReviewRow>
+            caption="Customer reviews"
+            columns={columns}
+            rows={rows}
+            getRowKey={(review) => review.id}
+            rowProps={(review) => ({
+              'data-testid': 'review-row',
+              'data-review-id': review.id,
+            })}
+          />
         </>
       )}
     </div>

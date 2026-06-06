@@ -108,7 +108,7 @@ export function CancelForm({ bookingId, cancellationPreset }: CancelFormProps) {
         </div>
       )}
 
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-3 md:flex-row">
         <Button
           variant="destructive"
           className="flex-1"
@@ -120,7 +120,7 @@ export function CancelForm({ bookingId, cancellationPreset }: CancelFormProps) {
         </Button>
         <a
           href={`/bookings/${bookingId}/confirmation`}
-          className="flex-1 rounded-md border px-4 py-2 text-center text-sm font-medium hover:bg-muted"
+          className="min-tap flex flex-1 items-center justify-center rounded-md border px-4 py-2 text-center text-sm font-medium hover:bg-muted"
         >
           Keep my booking
         </a>

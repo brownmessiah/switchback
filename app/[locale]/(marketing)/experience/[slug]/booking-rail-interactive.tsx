@@ -141,10 +141,12 @@ export function BookingRailInteractive({
   const slotParam = selectedSlotId ? `&slotId=${selectedSlotId}` : ''
   const href = `${checkoutHref}${slotParam}&participants=${count}`
 
+  // `.min-tap` (Foundation A) raises the hit area to the 44px coarse-pointer
+  // floor (DESIGN.md §8.2) on touch, leaving the fine-pointer 36px paint intact.
   const stepBtn = buttonVariants({
     variant: 'outline',
     size: 'icon',
-    className: 'size-9 rounded-full',
+    className: 'min-tap size-9 rounded-full',
   })
 
   return (

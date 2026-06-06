@@ -84,8 +84,31 @@ describe('VendorSidebar i18n', () => {
       { locale: 'hi', messages: hiMessages },
     )
 
-    // Multiple CTA elements (desktop + mobile sidebar content)
+    // The CTA label is present in the rail (icons+labels at lg; the md icon-rail
+    // shows a compact affordance but the label span is still in the DOM).
     const ctaElements = screen.getAllByText('सेटअप पूरा करें')
     expect(ctaElements.length).toBeGreaterThan(0)
+  })
+
+  it('renders the mobile hamburger trigger labelled via translations', () => {
+    // The shared PortalNavDrawer mounts a Sheet trigger (the hamburger) labelled
+    // from Nav.openMenu — present in the DOM even though it is CSS-hidden at md+.
+    renderWithIntl(
+      <VendorSidebar userName="Test Vendor" />,
+      { locale: 'en', messages: enMessages },
+    )
+
+    expect(
+      screen.getByRole('button', { name: 'Open menu' }),
+    ).toBeInTheDocument()
+  })
+
+  it('renders the vendor display name in the rail header', () => {
+    renderWithIntl(
+      <VendorSidebar userName="Acme Adventures" />,
+      { locale: 'en', messages: enMessages },
+    )
+
+    expect(screen.getByText('Acme Adventures')).toBeInTheDocument()
   })
 })

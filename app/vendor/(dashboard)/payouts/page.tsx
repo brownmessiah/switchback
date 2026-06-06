@@ -11,23 +11,97 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  ResponsiveTable,
+  type ResponsiveTableColumn,
+} from '@/components/ui/responsive-table'
 import { db } from '@/db/client'
 import { availabilitySlots, bookings, experiences, vendorProfiles } from '@/db/schema'
 import { auth } from '@/lib/auth'
 import { computeVendorNetPayout } from '@/lib/payments/payout-calculator'
-import { groupBookingsIntoPayoutCycles } from '@/lib/payments/payout-cycles'
+import {
+  groupBookingsIntoPayoutCycles,
+  type PayoutCycleBooking,
+} from '@/lib/payments/payout-cycles'
 
 import { VendorTableTabs } from '../vendor-table-tabs'
 
 const inr = (n: number) => `₹${Math.floor(n).toLocaleString('en-IN')}`
+
+/**
+ * Per-cycle constituent-Booking columns for the Earnings Ledger A3 table. Drives
+ * the `<ResponsiveTable>` so each cycle's full ADR-0016 deduction trail (Gross →
+ * Commission → GST → TDS → TCS → Net) renders as a table at `≥ md` and as a
+ * stacked label:value Card list below `md` (DESIGN.md §8.5) — the 7-column tax
+ * trail never forces a 360px h-scroll. Every per-row E2E hook (`cycle-gross`,
+ * `cycle-commission`, …) flows through the column `cell()` + the table's
+ * `rowProps`, so the vendor payouts spec selectors survive the reversal.
+ */
+const PAYOUT_CYCLE_COLUMNS: ReadonlyArray<
+  ResponsiveTableColumn<PayoutCycleBooking>
+> = [
+  {
+    key: 'experience',
+    header: 'Experience',
+    primary: true,
+    cell: (row) => row.experienceTitle,
+  },
+  {
+    key: 'gross',
+    header: 'Gross',
+    align: 'right',
+    cell: (row) => <span data-testid="cycle-gross">{inr(row.grossRupees)}</span>,
+  },
+  {
+    key: 'commission',
+    header: 'Commission',
+    align: 'right',
+    cell: (row) => (
+      <span data-testid="cycle-commission" className="text-muted-foreground">
+        -{inr(row.commissionRupees)}
+      </span>
+    ),
+  },
+  {
+    key: 'gst',
+    header: 'GST (18%)',
+    align: 'right',
+    cell: (row) => (
+      <span data-testid="cycle-gst" className="text-muted-foreground">
+        -{inr(row.gstOnCommissionRupees)}
+      </span>
+    ),
+  },
+  {
+    key: 'tds',
+    header: 'TDS',
+    align: 'right',
+    cell: (row) => (
+      <span data-testid="cycle-tds" className="text-muted-foreground">
+        -{inr(row.tdsRupees)}
+      </span>
+    ),
+  },
+  {
+    key: 'tcs',
+    header: 'TCS',
+    align: 'right',
+    cell: (row) => (
+      <span data-testid="cycle-tcs" className="text-muted-foreground">
+        -{inr(row.tcsRupees)}
+      </span>
+    ),
+  },
+  {
+    key: 'net',
+    header: 'Net',
+    align: 'right',
+    cell: (row) => (
+      <span data-testid="cycle-net" className="font-medium">
+        {inr(row.netPayoutRupees)}
+      </span>
+    ),
+  },
+]
 
 export default async function VendorPayoutsPage() {
   const session = await auth.api.getSession({ headers: await headers() })
@@ -141,8 +215,9 @@ export default async function VendorPayoutsPage() {
 
       <VendorTableTabs active="payouts" />
 
-      {/* Headline cards — gross in, net out */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      {/* Headline cards — gross in, net out. Money cards stack on phone, 2-col
+          at md (DESIGN.md §8.3 Wallet/money-cards row; never flip off sm:). */}
+      <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -173,152 +248,110 @@ export default async function VendorPayoutsPage() {
       {/* Earnings Ledger — payout is the spine. Each cycle (T+7 from completion,
           T+30 for permit-required / multi-day per ADR-0016) is an accordion;
           expanding it reveals its constituent Bookings with the full
-          Gross → Commission → GST → TDS → TCS → Net trail per row. */}
-      <Card data-testid="earnings-ledger">
-        <CardHeader>
-          <CardTitle className="text-lg">Earnings ledger</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {cycles.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">
+          Gross → Commission → GST → TDS → TCS → Net trail per row.
+          `data-testid="earnings-ledger"` lives on a plain section wrapper (NOT a
+          Card — each cycle's `<ResponsiveTable>` owns its own Card>CardContent
+          p-0 shell ≥ md, so a page-level Card here would nest card-in-card per
+          cycle, the bug §8.5 guards against). */}
+      <section data-testid="earnings-ledger" className="space-y-3">
+        <h2 className="font-heading text-lg font-semibold">Earnings ledger</h2>
+        {cycles.length === 0 ? (
+          <Card>
+            <CardContent className="py-6 text-center text-sm text-muted-foreground">
               No payout cycles yet. A cycle opens once a booking is completed —
               payouts release T+7 days after completion.
-            </p>
-          ) : (
-            <Accordion multiple className="w-full">
-              {cycles.map((cycle) => {
-                const key = cycle.releaseDate.toISOString().slice(0, 10)
-                const releaseLabel = cycle.releaseDate.toLocaleDateString('en-IN', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric',
-                })
-                const StatusIcon = cycle.status === 'paid' ? CheckCircle2 : Clock
-                return (
-                  <AccordionItem
-                    key={key}
-                    value={key}
-                    data-testid="payout-cycle"
-                    className="border-b last:border-b-0"
+            </CardContent>
+          </Card>
+        ) : (
+          <Accordion multiple className="w-full">
+            {cycles.map((cycle) => {
+              const key = cycle.releaseDate.toISOString().slice(0, 10)
+              const releaseLabel = cycle.releaseDate.toLocaleDateString('en-IN', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              })
+              const StatusIcon = cycle.status === 'paid' ? CheckCircle2 : Clock
+              return (
+                <AccordionItem
+                  key={key}
+                  value={key}
+                  data-testid="payout-cycle"
+                  className="border-b last:border-b-0"
+                >
+                  <AccordionTrigger
+                    data-testid="payout-cycle-trigger"
+                    className="items-center"
                   >
-                    <AccordionTrigger
-                      data-testid="payout-cycle-trigger"
-                      className="items-center"
-                    >
-                      <span className="flex flex-1 flex-wrap items-center gap-3">
-                        <span className="font-medium">Payout · {releaseLabel}</span>
-                        <Badge
-                          variant={cycle.status === 'paid' ? 'success' : 'warning'}
-                          className="text-xs capitalize"
-                        >
-                          <StatusIcon aria-hidden="true" />
-                          {cycle.status}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {cycle.bookings.length} booking
-                          {cycle.bookings.length === 1 ? '' : 's'}
-                        </span>
-                        <span className="ml-auto pr-3 font-medium tabular-nums">
-                          {inr(cycle.totals.netPayoutRupees)}
-                        </span>
+                    <span className="flex flex-1 flex-wrap items-center gap-3">
+                      <span className="font-medium">Payout · {releaseLabel}</span>
+                      <Badge
+                        variant={cycle.status === 'paid' ? 'success' : 'warning'}
+                        className="text-xs capitalize"
+                      >
+                        <StatusIcon aria-hidden="true" />
+                        {cycle.status}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {cycle.bookings.length} booking
+                        {cycle.bookings.length === 1 ? '' : 's'}
                       </span>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Experience</TableHead>
-                              <TableHead className="text-right">Gross</TableHead>
-                              <TableHead className="text-right">Commission</TableHead>
-                              <TableHead className="text-right">GST (18%)</TableHead>
-                              <TableHead className="text-right">TDS</TableHead>
-                              <TableHead className="text-right">TCS</TableHead>
-                              <TableHead className="text-right">Net</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {cycle.bookings.map((row) => (
-                              <TableRow
-                                key={row.bookingId}
-                                data-testid="payout-cycle-booking"
-                                data-booking-id={row.bookingId}
-                              >
-                                <TableCell className="text-sm">
-                                  {row.experienceTitle}
-                                </TableCell>
-                                <TableCell
-                                  data-testid="cycle-gross"
-                                  className="text-right tabular-nums"
-                                >
-                                  {inr(row.grossRupees)}
-                                </TableCell>
-                                <TableCell
-                                  data-testid="cycle-commission"
-                                  className="text-right tabular-nums text-muted-foreground"
-                                >
-                                  -{inr(row.commissionRupees)}
-                                </TableCell>
-                                <TableCell
-                                  data-testid="cycle-gst"
-                                  className="text-right tabular-nums text-muted-foreground"
-                                >
-                                  -{inr(row.gstOnCommissionRupees)}
-                                </TableCell>
-                                <TableCell
-                                  data-testid="cycle-tds"
-                                  className="text-right tabular-nums text-muted-foreground"
-                                >
-                                  -{inr(row.tdsRupees)}
-                                </TableCell>
-                                <TableCell
-                                  data-testid="cycle-tcs"
-                                  className="text-right tabular-nums text-muted-foreground"
-                                >
-                                  -{inr(row.tcsRupees)}
-                                </TableCell>
-                                <TableCell
-                                  data-testid="cycle-net"
-                                  className="text-right font-medium tabular-nums"
-                                >
-                                  {inr(row.netPayoutRupees)}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                          <TableFooter>
-                            <TableRow>
-                              <TableCell className="font-medium">Total</TableCell>
-                              <TableCell className="text-right tabular-nums">
-                                {inr(cycle.totals.grossRupees)}
-                              </TableCell>
-                              <TableCell className="text-right tabular-nums">
-                                -{inr(cycle.totals.commissionRupees)}
-                              </TableCell>
-                              <TableCell className="text-right tabular-nums">
-                                -{inr(cycle.totals.gstOnCommissionRupees)}
-                              </TableCell>
-                              <TableCell className="text-right tabular-nums">
-                                -{inr(cycle.totals.tdsRupees)}
-                              </TableCell>
-                              <TableCell className="text-right tabular-nums">
-                                -{inr(cycle.totals.tcsRupees)}
-                              </TableCell>
-                              <TableCell className="text-right font-semibold tabular-nums">
-                                {inr(cycle.totals.netPayoutRupees)}
-                              </TableCell>
-                            </TableRow>
-                          </TableFooter>
-                        </Table>
+                      <span className="ml-auto pr-3 font-medium tabular-nums">
+                        {inr(cycle.totals.netPayoutRupees)}
+                      </span>
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-3 pt-1">
+                      {/* A3 constituent-Booking trail — table ≥ md, stacked
+                          label:value Cards < md (DESIGN.md §8.5). */}
+                      <ResponsiveTable<PayoutCycleBooking>
+                        caption={`Bookings in the payout cycle releasing ${releaseLabel}`}
+                        columns={PAYOUT_CYCLE_COLUMNS}
+                        rows={cycle.bookings}
+                        getRowKey={(row) => row.bookingId}
+                        rowProps={(row) => ({
+                          'data-testid': 'payout-cycle-booking',
+                          'data-booking-id': row.bookingId,
+                        })}
+                      />
+                      {/* Cycle totals (replaces the as-is TableFooter, which the
+                          ResponsiveTable has no slot for) — a label:value strip
+                          that reflows on phone and aligns under the columns at
+                          md+ via a matching 7-col grid. */}
+                      <div className="rounded-[var(--radius-card)] border border-border bg-muted/30 px-4 py-3 text-sm md:grid md:grid-cols-7 md:items-center md:gap-3 md:px-3">
+                        <p className="mb-1 font-medium md:mb-0">Total</p>
+                        <TotalCell label="Gross" value={inr(cycle.totals.grossRupees)} />
+                        <TotalCell
+                          label="Commission"
+                          value={`-${inr(cycle.totals.commissionRupees)}`}
+                        />
+                        <TotalCell
+                          label="GST (18%)"
+                          value={`-${inr(cycle.totals.gstOnCommissionRupees)}`}
+                        />
+                        <TotalCell
+                          label="TDS"
+                          value={`-${inr(cycle.totals.tdsRupees)}`}
+                        />
+                        <TotalCell
+                          label="TCS"
+                          value={`-${inr(cycle.totals.tcsRupees)}`}
+                        />
+                        <TotalCell
+                          label="Net"
+                          value={inr(cycle.totals.netPayoutRupees)}
+                          emphasis
+                        />
                       </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                )
-              })}
-            </Accordion>
-          )}
-        </CardContent>
-      </Card>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )
+            })}
+          </Accordion>
+        )}
+      </section>
 
       {/* Payout breakdown — the full ADR-0016 deduction waterfall across ALL
           earning Bookings. gross − Commission − GST(18%) − TDS(0.1%) − TCS(0.5%) = net */}
@@ -394,6 +427,33 @@ export default async function VendorPayoutsPage() {
           </ul>
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+/**
+ * One cycle-totals figure. On phone it reads as a `label: value` row; at `md`+
+ * it becomes a right-aligned grid cell that lines up under the matching A3
+ * numeric column (the totals strip is a 7-col grid mirroring the table). The
+ * label is `sr-only` at `md`+ because the column header already names it.
+ */
+function TotalCell({
+  label,
+  value,
+  emphasis,
+}: {
+  label: string
+  value: string
+  emphasis?: boolean
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 md:block md:text-right">
+      <span className="text-muted-foreground md:sr-only">{label}</span>
+      <span
+        className={`tabular-nums ${emphasis ? 'font-semibold' : 'font-medium'}`}
+      >
+        {value}
+      </span>
     </div>
   )
 }

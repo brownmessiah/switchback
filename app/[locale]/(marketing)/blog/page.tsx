@@ -85,7 +85,7 @@ export default async function BlogIndexPage({
           <p className="text-lg font-medium">{t('empty')}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-[var(--space-grid-gap)] sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-[var(--space-grid-gap)] md:grid-cols-2 lg:grid-cols-3">
           {posts.map((post) => (
             <Link
               key={post.slug}
@@ -128,7 +128,7 @@ export default async function BlogIndexPage({
           {page > 1 && (
             <Link
               href={page === 2 ? '/blog' : `/blog?page=${page - 1}`}
-              className="text-sm font-medium text-primary-strong hover:underline"
+              className="min-tap inline-flex items-center text-sm font-medium text-primary-strong hover:underline"
             >
               {t('pagination.prev')}
             </Link>
@@ -139,7 +139,7 @@ export default async function BlogIndexPage({
           {page < totalPages && (
             <Link
               href={`/blog?page=${page + 1}`}
-              className="text-sm font-medium text-primary-strong hover:underline"
+              className="min-tap inline-flex items-center text-sm font-medium text-primary-strong hover:underline"
             >
               {t('pagination.next')}
             </Link>

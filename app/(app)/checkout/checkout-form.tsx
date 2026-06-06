@@ -190,13 +190,54 @@ export function CheckoutForm({
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_22rem] lg:items-start">
+    <div className="grid gap-6 md:grid-cols-[1fr_22rem] md:items-start">
       {/* Razorpay checkout.js — loaded eagerly so window.Razorpay exists by the
           time the customer reaches the Pay button on step 2 (#15). */}
       <Script
         src="https://checkout.razorpay.com/v1/checkout.js"
         strategy="afterInteractive"
       />
+      {/* ── Mobile order-summary hoist (DESIGN.md §8.5 item 5) ───────────────
+          Below `md` the layout is a single column, so the full sticky aside
+          (which renders AFTER the stepper in DOM order) would sit below the
+          Pay button. This condensed summary is hoisted ABOVE the stepper on
+          mobile only (`md:hidden`); it reads the SAME live `count` / `quote`
+          state as the desktop aside — no duplicated state. Its label copy is
+          deliberately distinct from the desktop aside ("Order summary",
+          "Total", "Participants", …) so the checkout E2E's strict-mode
+          `getByText(…, { exact: true })` assertions still resolve to a single
+          (desktop) node. The Pay button is NOT duplicated here. */}
+      <aside
+        aria-label="Booking total"
+        className="md:hidden"
+        data-summary="mobile"
+      >
+        <Card>
+          <CardContent className="space-y-2 pt-6">
+            <div className="flex items-baseline justify-between gap-4">
+              <span className="text-sm text-muted-foreground">Total due</span>
+              <span className="text-xl font-semibold tabular-nums">
+                {formatRupees(grossTotal)}
+              </span>
+            </div>
+            {supportsPartialPay && (
+              <div className="flex justify-between gap-4 text-sm">
+                <span className="text-muted-foreground">Due now (25%)</span>
+                <span className="font-medium tabular-nums">
+                  {formatRupees(advanceAmount)}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center gap-2 pt-1">
+              <Badge variant="success">
+                <CheckCircle2 aria-hidden="true" />
+                Free cancellation
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      </aside>
+
       {/* ── Main column: the guided stepper ─────────────────────────────── */}
       <div className="space-y-6">
         {/* Stepper header — step 1 "Your details" → step 2 "Payment" */}
@@ -256,6 +297,7 @@ export function CheckoutForm({
                       type="button"
                       variant="outline"
                       size="icon"
+                      className="min-tap"
                       aria-label="Remove one participant"
                       onClick={() => setCount((c) => Math.max(1, c - 1))}
                       disabled={!canDecrement}
@@ -273,6 +315,7 @@ export function CheckoutForm({
                       type="button"
                       variant="outline"
                       size="icon"
+                      className="min-tap"
                       aria-label="Add one participant"
                       onClick={() => setCount((c) => Math.min(maxParticipants, c + 1))}
                       disabled={!canIncrement}
@@ -413,8 +456,16 @@ export function CheckoutForm({
         </p>
       </div>
 
-      {/* ── Persistent order-summary rail (sticky, visible on BOTH steps) ── */}
-      <aside aria-label="Order summary" className="lg:sticky lg:top-6">
+      {/* ── Persistent order-summary rail (sticky, visible on BOTH steps) ──
+          The full summary. Hidden below `md` (the condensed hoisted summary
+          above takes over on mobile, avoiding a double summary); at `md`+ it
+          returns as the right aside of the `[1fr_22rem]` grid and sticks. The
+          2-col flip + sticky are lowered from `lg` to `md` per ADR-0018 /
+          DESIGN.md §8.3 — the tablet width carries the 2-col layout. */}
+      <aside
+        aria-label="Order summary"
+        className="hidden md:block md:sticky md:top-6"
+      >
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Order summary</CardTitle>

@@ -93,7 +93,7 @@ export default async function TicketDetailPage({ params }: TicketDetailPageProps
 
       {/* Header — subject + status (AdminStatusBadge: colour + icon) + actions.
           DESIGN.md B6: detail header = title + status Badge → action panel. */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <h1 className="font-heading text-2xl font-semibold tracking-tight">
             {ticket.subject}
@@ -131,7 +131,7 @@ export default async function TicketDetailPage({ params }: TicketDetailPageProps
       {/* Parties + lifecycle facts */}
       <Card>
         <CardContent className="p-4">
-          <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
+          <dl className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
             <div>
               <dt className="text-muted-foreground">Created by</dt>
               <dd className="font-medium">{ticket.creatorName ?? ticket.creatorEmail ?? '—'}</dd>

@@ -273,7 +273,7 @@ export function ItineraryEditor({ steps, onChange }: ItineraryEditorProps) {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor={`itinerary-day-${index}`}>Day (0 = same day)</Label>
                 <Input

@@ -7,12 +7,21 @@ afterEach(() => {
   cleanup()
 })
 
-// #89 bookings list redesign to DESIGN.md §4 A3:
+// #89 bookings list redesign to DESIGN.md §4 A3, migrated to <ResponsiveTable>
+// (DESIGN.md §8.3/§8.5, ADR-0018):
 //  - semantic AdminStatusBadge per Booking state (status color + icon, never
 //    color alone — DESIGN.md §1.3 / §5)
-//  - money right-aligned in `.tabular-nums` (DESIGN.md §1.3 / §2.2)
+//  - money right-aligned in `.tabular-nums` (DESIGN.md §1.3 / §2.2) — the
+//    alignment lives on the `≥ md` `TableCell`
 //  - per-row link to `/admin/bookings/[id]` (B6 master → detail)
-//  - preserved E2E hooks: data-booking-id + data-booking-state
+//  - preserved E2E hooks on the `≥ md` `TableRow`: data-booking-id +
+//    data-booking-state
+//
+// `<ResponsiveTable>` renders BOTH the `≥ md` `Table` and the `< md` stacked
+// label:value Cards in the DOM at once (the CSS `hidden md:block` / `md:hidden`
+// switch is layout-only, so jsdom mounts both). Assertions that must be
+// unambiguous therefore scope to the `≥ md` `tr[data-booking-id]` row rather
+// than the document.
 
 const ROWS: BookingsTableRow[] = [
   {
@@ -81,11 +90,16 @@ describe('BookingsTable (A3)', () => {
     expect(disputedBadge!.querySelector('svg')).not.toBeNull()
   })
 
-  it('renders money right-aligned in tabular-nums', () => {
+  it('renders money right-aligned in tabular-nums on the table row cell', () => {
     render(<BookingsTable rows={ROWS} />)
-    const amount = screen.getByText('₹5,000')
-    expect(amount.className).toContain('tabular-nums')
-    expect(amount.className).toContain('text-right')
+    const confirmedRow = document.querySelector(
+      'tr[data-booking-id="11111111-1111-1111-1111-111111111111"]',
+    ) as HTMLElement
+    // The amount value lives in the `≥ md` row; the right-alignment +
+    // tabular-nums move to its `TableCell` (<ResponsiveTable> `align: 'right'`).
+    const amountCell = within(confirmedRow).getByText('₹5,000').closest('td') as HTMLElement
+    expect(amountCell.className).toContain('tabular-nums')
+    expect(amountCell.className).toContain('text-right')
   })
 
   it('links each row to its /admin/bookings/[id] detail', () => {
@@ -96,8 +110,10 @@ describe('BookingsTable (A3)', () => {
     expect(link).not.toBeNull()
   })
 
-  it('renders an in-table empty state when there are no bookings', () => {
+  it('renders an empty state when there are no bookings', () => {
     render(<BookingsTable rows={[]} />)
-    expect(screen.getByText(/No bookings/i)).toBeInTheDocument()
+    // <ResponsiveTable> renders the empty copy in both the `≥ md` colSpan cell
+    // and the `< md` empty Card, so both are present in jsdom.
+    expect(screen.getAllByText(/No bookings/i).length).toBeGreaterThan(0)
   })
 })

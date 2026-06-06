@@ -80,5 +80,41 @@ export default defineConfig({
       name: 'i18n',
       testDir: './tests/e2e/specs/i18n',
     },
+
+    // ── Responsive (ADR-0018 §8.6): phone (375) + tablet (768) projects.
+    //    hasTouch/isMobile emulate a COARSE pointer so the @media(pointer:coarse)
+    //    44px touch-target floor (DESIGN.md §8.2) actually activates. Public
+    //    surfaces need no auth; the admin set injects the admin session to
+    //    exercise the back-office drawer + ResponsiveTable card-collapse. ──
+    {
+      name: 'responsive-phone-public',
+      testDir: './tests/e2e/specs/responsive/public',
+      use: { viewport: { width: 375, height: 667 }, hasTouch: true, isMobile: true },
+    },
+    {
+      name: 'responsive-tablet-public',
+      testDir: './tests/e2e/specs/responsive/public',
+      use: { viewport: { width: 768, height: 1024 }, hasTouch: true, isMobile: true },
+    },
+    {
+      name: 'responsive-phone-admin',
+      testDir: './tests/e2e/specs/responsive/admin',
+      use: {
+        viewport: { width: 375, height: 667 },
+        hasTouch: true,
+        isMobile: true,
+        storageState: path.join(AUTH_DIR, 'admin-demo-storage.json'),
+      },
+    },
+    {
+      name: 'responsive-tablet-admin',
+      testDir: './tests/e2e/specs/responsive/admin',
+      use: {
+        viewport: { width: 768, height: 1024 },
+        hasTouch: true,
+        isMobile: true,
+        storageState: path.join(AUTH_DIR, 'admin-demo-storage.json'),
+      },
+    },
   ],
 })

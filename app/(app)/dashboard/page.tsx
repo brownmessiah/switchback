@@ -259,6 +259,10 @@ export default async function CustomerDashboardPage() {
 
         {/* ── Wallet — pinned action rail, two SEPARATE buckets (ADR-0004) ── */}
         <aside className="order-1 space-y-4 lg:sticky lg:top-8 lg:order-2">
+          {/* Money/summary cards: stacked (base) → 2-col (md, when the aside is
+              full-width above the timeline) → back to a stacked 20rem rail (lg).
+              Both buckets stay decision-complete and are never blended. */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-1">
           {/* Refund balance — success/info tone; cashable to original method */}
           <Card data-testid="wallet-bucket-refund_balance" className="border-success/30">
             <CardHeader className="pb-2">
@@ -326,6 +330,7 @@ export default async function CustomerDashboardPage() {
               ) : null}
             </CardContent>
           </Card>
+          </div>
 
           {/* Deep link to the dedicated /wallet page (issue 09) — full
               two-bucket balances + the paginated transaction ledger. */}

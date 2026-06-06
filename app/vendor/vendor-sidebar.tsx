@@ -1,11 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { usePathname } from 'next/navigation'
 
+import {
+  PortalNavDrawer,
+  type PortalNavVariant,
+} from '@/components/portal-nav-drawer'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { cn } from '@/lib/utils'
 
@@ -16,30 +18,27 @@ interface VendorSidebarProps {
 }
 
 // ──────────────────────────────────────────────────
-//  Sidebar content (shared between desktop & mobile)
+//  Sidebar content (shared between drawer & rail)
 // ──────────────────────────────────────────────────
 
 function SidebarContent({
-  userName,
+  variant,
   onNavigate,
 }: {
-  readonly userName: string
+  readonly variant: PortalNavVariant
   readonly onNavigate?: () => void
 }) {
   const pathname = usePathname()
   const t = useTranslations('VendorNav')
-  const tNav = useTranslations('Nav')
+
+  // The rail is an ICON-RAIL at `md` (icons only) widening to icons+labels at
+  // `lg`; the drawer always shows icons+labels. So in the rail the label is
+  // `hidden lg:inline` and the link centres until `lg`, while the drawer keeps
+  // the full icon+label row at every width.
+  const isRail = variant === 'rail'
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-start justify-between gap-2 border-b px-6 py-5">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold">{t('portalTitle')}</p>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">{userName}</p>
-        </div>
-        <ThemeToggle label={tNav('themeToggle')} />
-      </div>
-
       <nav className="flex-1 space-y-1 px-3 py-4">
         {VENDOR_NAV_ITEMS.map((item) => {
           const active = pathname.startsWith(item.href)
@@ -48,27 +47,48 @@ function SidebarContent({
               key={item.href}
               href={item.href}
               onClick={onNavigate}
+              title={isRail ? t(`items.${item.labelKey}`) : undefined}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition',
+                'min-tap flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition',
+                isRail && 'justify-center lg:justify-start',
                 active
                   ? 'bg-primary/10 font-medium text-primary'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',
               )}
             >
-              <span className="w-5 text-center text-xs">{item.icon}</span>
-              {t(`items.${item.labelKey}`)}
+              <span className="w-5 text-center text-xs" aria-hidden="true">
+                {item.icon}
+              </span>
+              <span className={cn(isRail && 'hidden lg:inline')}>
+                {t(`items.${item.labelKey}`)}
+              </span>
             </Link>
           )
         })}
       </nav>
 
-      <div className="border-t px-6 py-4">
+      <div className={cn('border-t py-4', isRail ? 'px-3 lg:px-6' : 'px-6')}>
         <Link
           href="/vendor/onboarding"
           onClick={onNavigate}
-          className="block rounded-lg bg-primary px-4 py-2 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          title={isRail ? t('completeSetup') : undefined}
+          className={cn(
+            'block rounded-lg bg-primary px-4 py-2 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90',
+            isRail && 'truncate',
+          )}
         >
-          {t('completeSetup')}
+          {/* Icon-rail (md): a compact "+" affordance; labelled at lg and in the
+              drawer. */}
+          {isRail ? (
+            <>
+              <span className="lg:hidden" aria-hidden="true">
+                ＋
+              </span>
+              <span className="hidden lg:inline">{t('completeSetup')}</span>
+            </>
+          ) : (
+            t('completeSetup')
+          )}
         </Link>
       </div>
     </div>
@@ -76,134 +96,49 @@ function SidebarContent({
 }
 
 // ──────────────────────────────────────────────────
-//  Hamburger icon
-// ──────────────────────────────────────────────────
-
-function HamburgerIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <line x1="4" x2="20" y1="12" y2="12" />
-      <line x1="4" x2="20" y1="6" y2="6" />
-      <line x1="4" x2="20" y1="18" y2="18" />
-    </svg>
-  )
-}
-
-// ──────────────────────────────────────────────────
-//  Close icon
-// ──────────────────────────────────────────────────
-
-function CloseIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M18 6 6 18" />
-      <path d="m6 6 12 12" />
-    </svg>
-  )
-}
-
-// ──────────────────────────────────────────────────
 //  Main exported component
 // ──────────────────────────────────────────────────
 
+/**
+ * Vendor portal sidebar. Built on the shared {@link PortalNavDrawer} (Sheet-based
+ * — focus-trap / Escape / restore for free): a hamburger-opened LEFT drawer
+ * below `md`, a persistent rail at `md+`. Vendor nav has per-item icons, so the
+ * rail is an **icon-rail at `md`** (icons only, `w-16`) widening to
+ * **icons+labels at `lg`** (`w-64`); the drawer always shows icons+labels
+ * (DESIGN.md §8.3 / §8.5, ADR-0018).
+ */
 export function VendorSidebar({ userName }: VendorSidebarProps) {
-  const [mobileOpen, setMobileOpen] = useState(false)
   const t = useTranslations('VendorNav')
   const tNav = useTranslations('Nav')
-
-  // Close mobile sidebar on route change
-  const pathname = usePathname()
-  useEffect(() => {
-    setMobileOpen(false)
-  }, [pathname])
-
-  // Prevent body scroll when mobile sidebar is open
-  useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [mobileOpen])
 
   const portalTitle = t('portalTitle')
 
   return (
-    <>
-      {/* Mobile header bar */}
-      <div className="sticky top-0 z-40 flex items-center gap-3 border-b bg-background px-4 py-3 lg:hidden">
-        <button
-          type="button"
-          onClick={() => setMobileOpen(true)}
-          className="inline-flex items-center justify-center rounded-md p-1 text-muted-foreground hover:text-foreground"
-          aria-label="Open vendor menu"
-        >
-          <HamburgerIcon />
-        </button>
-        <span className="text-sm font-semibold text-primary">{portalTitle}</span>
-        <ThemeToggle label={tNav('themeToggle')} className="ml-auto" />
-      </div>
-
-      {/* Mobile overlay */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setMobileOpen(false)}
-            aria-hidden="true"
-          />
-          {/* Sidebar panel */}
-          <div className="absolute inset-y-0 left-0 w-72 bg-background shadow-lg">
-            <div className="flex items-center justify-between border-b px-4 py-3">
-              <span className="text-sm font-semibold text-primary">{portalTitle}</span>
-              <button
-                type="button"
-                onClick={() => setMobileOpen(false)}
-                className="inline-flex items-center justify-center rounded-md p-1 text-muted-foreground hover:text-foreground"
-                aria-label="Close vendor menu"
-              >
-                <CloseIcon />
-              </button>
-            </div>
-            <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 57px)' }}>
-              <SidebarContent userName={userName} onNavigate={() => setMobileOpen(false)} />
-            </div>
+    <PortalNavDrawer
+      title={portalTitle}
+      openMenuLabel={tNav('openMenu')}
+      menuDescription={portalTitle}
+      themeToggle={<ThemeToggle label={tNav('themeToggle')} />}
+      // Icon-rail at md (w-16) → icons+labels at lg (w-64). bg-muted/30 preserves
+      // the prior vendor rail surface.
+      railClassName="w-16 bg-muted/30 lg:w-64"
+      // The icon-rail (w-16) can't show the title text inline, so the rail header
+      // is responsive: a centred theme toggle at md; title + name + toggle at lg.
+      renderRailHeader={() => (
+        <div className="flex items-center justify-between gap-2 border-b px-3 py-3 lg:px-6 lg:py-5">
+          <div className="hidden min-w-0 lg:block">
+            <p className="text-sm font-semibold">{portalTitle}</p>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">{userName}</p>
+          </div>
+          <div className="mx-auto lg:mx-0">
+            <ThemeToggle label={tNav('themeToggle')} />
           </div>
         </div>
       )}
-
-      {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 border-r bg-muted/30 lg:block">
-        <div className="sticky top-0 overflow-y-auto" style={{ maxHeight: '100vh' }}>
-          <SidebarContent userName={userName} />
-        </div>
-      </aside>
-    </>
+    >
+      {({ variant, onNavigate }) => (
+        <SidebarContent variant={variant} onNavigate={onNavigate} />
+      )}
+    </PortalNavDrawer>
   )
 }

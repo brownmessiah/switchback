@@ -1,15 +1,10 @@
 import { ImageIcon, ImageOffIcon } from 'lucide-react'
 
 import { AdminStatusBadge } from '@/app/admin/_components/admin-status-badge'
-import { Card, CardContent } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  ResponsiveTable,
+  type ResponsiveTableColumn,
+} from '@/components/ui/responsive-table'
 
 import { BlogPostActionsCell } from './blog-post-actions-cell'
 
@@ -88,99 +83,103 @@ interface BlogPostsTableProps {
   emptyMessage: string
 }
 
+const COLUMNS: ResponsiveTableColumn<BlogPostTableRow>[] = [
+  {
+    key: 'title',
+    header: 'Title',
+    primary: true,
+    cell: (p) => <span className="font-medium">{p.title}</span>,
+  },
+  {
+    key: 'slug',
+    header: 'Slug',
+    cell: (p) => (
+      <span className="font-mono text-sm text-muted-foreground">{p.slug}</span>
+    ),
+  },
+  {
+    key: 'category',
+    header: 'Category',
+    cell: (p) => (
+      <span className="text-muted-foreground">{capitalize(p.category)}</span>
+    ),
+  },
+  {
+    key: 'cover',
+    header: 'Cover',
+    cell: (p) => <CoverIndicator url={p.coverImageUrl} />,
+  },
+  {
+    key: 'status',
+    header: 'Status',
+    cell: (p) => (
+      <AdminStatusBadge
+        status={p.status}
+        label={STATUS_LABELS[p.status] ?? capitalize(p.status)}
+      />
+    ),
+  },
+  {
+    key: 'published',
+    header: 'Published',
+    cell: (p) => (
+      <span className="tabular-nums text-muted-foreground">
+        {formatDate(p.publishedAt)}
+      </span>
+    ),
+  },
+  {
+    key: 'author',
+    header: 'Author',
+    cell: (p) => (
+      <span className="text-muted-foreground">
+        {p.authorEmail ?? p.authorName ?? '—'}
+      </span>
+    ),
+  },
+  {
+    key: 'created',
+    header: 'Created',
+    cell: (p) => (
+      <span className="tabular-nums text-muted-foreground">
+        {formatDate(p.createdAt)}
+      </span>
+    ),
+  },
+  {
+    key: 'actions',
+    header: 'Actions',
+    align: 'right',
+    cell: (p) => (
+      <BlogPostActionsCell
+        id={p.id}
+        title={p.title}
+        content={p.content}
+        excerpt={p.excerpt}
+        category={p.category}
+        coverImageUrl={p.coverImageUrl}
+        status={p.status}
+      />
+    ),
+  },
+]
+
 /**
- * Blog posts as a DESIGN.md §4 A3 data table (variant A "Operations Console"):
- * `Card > CardContent p-0 > Table` in a horizontal-scroll region, an
- * sr-only caption, `scope="col"` heads, hover rows, and a semantic
- * `AdminStatusBadge` for the draft/published status (color + icon, never color
- * alone). The per-row `data-blog-post-id` hook is preserved for the #27 E2E.
+ * Blog posts as a DESIGN.md §4 A3 data table (variant A "Operations Console"),
+ * migrated to the shared `ResponsiveTable` (ADR-0018 / DESIGN.md §8.5): the
+ * `≥ md` Table reverses to a stacked label:value Card list `< md`. Status is a
+ * semantic `AdminStatusBadge` (color + icon, never color alone). The per-row
+ * `data-blog-post-id` hook is preserved for the #27 E2E.
  */
 export function BlogPostsTable({ posts, emptyMessage }: BlogPostsTableProps) {
   return (
-    <Card>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <Table>
-            <caption className="sr-only">
-              Blog posts with status, cover image, author and CRUD actions
-            </caption>
-            <TableHeader>
-              <TableRow>
-                <TableHead scope="col">Title</TableHead>
-                <TableHead scope="col">Slug</TableHead>
-                <TableHead scope="col">Category</TableHead>
-                <TableHead scope="col">Cover</TableHead>
-                <TableHead scope="col">Status</TableHead>
-                <TableHead scope="col">Published</TableHead>
-                <TableHead scope="col">Author</TableHead>
-                <TableHead scope="col">Created</TableHead>
-                <TableHead scope="col" className="text-right">
-                  Actions
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {posts.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={9}
-                    className="py-8 text-center text-muted-foreground"
-                  >
-                    {emptyMessage}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                posts.map((p) => (
-                  <TableRow
-                    key={p.id}
-                    data-blog-post-id={p.id}
-                    className="hover:bg-muted/50"
-                  >
-                    <TableCell className="max-w-[200px] truncate text-sm font-medium">
-                      {p.title}
-                    </TableCell>
-                    <TableCell className="max-w-[150px] truncate font-mono text-sm text-muted-foreground">
-                      {p.slug}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {capitalize(p.category)}
-                    </TableCell>
-                    <TableCell>
-                      <CoverIndicator url={p.coverImageUrl} />
-                    </TableCell>
-                    <TableCell>
-                      <AdminStatusBadge
-                        status={p.status}
-                        label={STATUS_LABELS[p.status] ?? capitalize(p.status)}
-                      />
-                    </TableCell>
-                    <TableCell className="text-sm tabular-nums text-muted-foreground">
-                      {formatDate(p.publishedAt)}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {p.authorEmail ?? p.authorName ?? '—'}
-                    </TableCell>
-                    <TableCell className="text-sm tabular-nums text-muted-foreground">
-                      {formatDate(p.createdAt)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <BlogPostActionsCell
-                        id={p.id}
-                        title={p.title}
-                        content={p.content}
-                        excerpt={p.excerpt}
-                        category={p.category}
-                        coverImageUrl={p.coverImageUrl}
-                        status={p.status}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+    <ResponsiveTable<BlogPostTableRow>
+      columns={COLUMNS}
+      rows={posts}
+      getRowKey={(p) => p.id}
+      rowProps={(p) => ({ 'data-blog-post-id': p.id })}
+      caption="Blog posts with status, cover image, author and CRUD actions"
+      empty={emptyMessage}
+    />
   )
 }

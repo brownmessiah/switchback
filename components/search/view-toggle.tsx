@@ -44,7 +44,7 @@ export function ViewToggle({
 
   const buttonClass = (active: boolean): string =>
     cn(
-      'flex size-9 items-center justify-center rounded-[var(--radius-control)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+      'min-tap flex size-9 items-center justify-center rounded-[var(--radius-control)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
       active
         ? 'bg-primary text-primary-foreground'
         : 'text-muted-foreground hover:bg-muted hover:text-foreground',

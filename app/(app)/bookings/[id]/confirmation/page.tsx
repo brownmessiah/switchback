@@ -240,19 +240,19 @@ export default async function BookingConfirmationPage({
       </Card>
 
       {/* Actions — primary CTA vs demoted (ghost) Cancel affordance. */}
-      <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
+      <div className="flex flex-col items-center gap-3 md:flex-row md:justify-between">
         <Link
           href={`/bookings/${data.bookingId}/cancel`}
           className={buttonVariants({
             variant: 'ghost',
-            className: 'text-muted-foreground hover:text-foreground',
+            className: 'w-full text-muted-foreground hover:text-foreground md:w-auto',
           })}
         >
           Cancel booking
         </Link>
         <Link
           href="/"
-          className={buttonVariants({ className: 'w-full sm:w-auto' })}
+          className={buttonVariants({ className: 'w-full md:w-auto' })}
         >
           Browse more experiences
         </Link>

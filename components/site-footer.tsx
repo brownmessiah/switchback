@@ -29,9 +29,9 @@ export function SiteFooter(): ReactElement | null {
   return (
     <footer className="mt-16 border-t border-border bg-card">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:gap-12">
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:gap-12">
           {/* Brand column */}
-          <div className="col-span-2 sm:col-span-1">
+          <div className="col-span-2 md:col-span-1">
             <Link
               href="/"
               className="text-lg font-semibold tracking-tight"
@@ -47,7 +47,7 @@ export function SiteFooter(): ReactElement | null {
             </div>
           </div>
 
-          <nav aria-label="Footer navigation" className="col-span-2 grid grid-cols-2 gap-8 sm:col-span-3 sm:grid-cols-3">
+          <nav aria-label="Footer navigation" className="col-span-2 grid grid-cols-2 gap-8 md:col-span-3 md:grid-cols-3">
             {/* Explore */}
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">

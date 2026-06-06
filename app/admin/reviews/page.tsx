@@ -2,15 +2,10 @@ import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 
 import { AdminStatusBadge } from '@/app/admin/_components/admin-status-badge'
-import { Card, CardContent } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  ResponsiveTable,
+  type ResponsiveTableColumn,
+} from '@/components/ui/responsive-table'
 import { db } from '@/db/client'
 import { auth } from '@/lib/auth'
 import { requirePermission } from '@/lib/auth/permissions'
@@ -69,6 +64,93 @@ export default async function ReviewsPage({ searchParams }: ReviewsPageProps) {
   const reviews = await loadReviewsList(db, filters)
   const isFiltered = Object.values(filters).some((v) => v !== undefined)
 
+  type ReviewRow = (typeof reviews)[number]
+
+  const columns: ResponsiveTableColumn<ReviewRow>[] = [
+    {
+      key: 'review',
+      header: 'Review',
+      primary: true,
+      cell: (r) => (
+        <div>
+          <div className="font-medium" title={r.title ?? undefined}>
+            {r.title ?? '—'}
+          </div>
+          {r.body && (
+            <div
+              className="mt-0.5 line-clamp-2 text-xs whitespace-normal text-muted-foreground"
+              title={r.body}
+            >
+              {r.body}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'rating',
+      header: 'Rating',
+      cell: (r) => (
+        <span
+          className="font-medium tabular-nums text-warning"
+          aria-label={`${r.rating} out of 5`}
+        >
+          {renderStars(r.rating)}
+        </span>
+      ),
+    },
+    {
+      key: 'customer',
+      header: 'Customer',
+      cell: (r) => r.customerName ?? r.customerEmail ?? '—',
+    },
+    {
+      key: 'experience',
+      header: 'Experience',
+      cell: (r) => (
+        <span className="block max-w-[200px] truncate" title={r.experienceTitle}>
+          {r.experienceTitle}
+        </span>
+      ),
+    },
+    {
+      key: 'vendor',
+      header: 'Vendor',
+      cell: (r) => (
+        <span className="block max-w-[200px] truncate" title={r.vendorBusinessName}>
+          {r.vendorBusinessName}
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      cell: (r) => (
+        <span data-testid="review-status-badge">
+          <AdminStatusBadge
+            status={r.status}
+            label={STATUS_LABELS[r.status] ?? r.status}
+          />
+        </span>
+      ),
+    },
+    {
+      key: 'date',
+      header: 'Date',
+      cell: (r) => (
+        <span className="tabular-nums text-muted-foreground">
+          {formatDate(r.createdAt)}
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      align: 'right',
+      cell: (r) => <ReviewActionsCell reviewId={r.id} status={r.status} />,
+    },
+  ]
+
   return (
     <div className="space-y-6">
       <div>
@@ -84,102 +166,16 @@ export default async function ReviewsPage({ searchParams }: ReviewsPageProps) {
 
       <ReviewFilters currentFilters={filters} />
 
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <caption className="sr-only">
-                Customer reviews with rating, status and moderation actions
-              </caption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead scope="col">Rating</TableHead>
-                  <TableHead scope="col">Review</TableHead>
-                  <TableHead scope="col">Customer</TableHead>
-                  <TableHead scope="col">Experience</TableHead>
-                  <TableHead scope="col">Vendor</TableHead>
-                  <TableHead scope="col">Status</TableHead>
-                  <TableHead scope="col">Date</TableHead>
-                  <TableHead scope="col" className="text-right">
-                    Actions
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {reviews.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={8}
-                      className="py-8 text-center text-muted-foreground"
-                    >
-                      {isFiltered
-                        ? 'No reviews match these filters.'
-                        : 'No reviews found.'}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  reviews.map((r) => (
-                    <TableRow
-                      key={r.id}
-                      data-review-id={r.id}
-                      className="hover:bg-muted/50"
-                    >
-                      <TableCell
-                        className="text-sm font-medium tabular-nums text-warning"
-                        aria-label={`${r.rating} out of 5`}
-                      >
-                        {renderStars(r.rating)}
-                      </TableCell>
-                      <TableCell className="max-w-[280px] text-sm">
-                        <div className="truncate font-medium" title={r.title ?? undefined}>
-                          {r.title ?? '—'}
-                        </div>
-                        {r.body && (
-                          <div
-                            className="mt-0.5 line-clamp-2 text-xs whitespace-normal text-muted-foreground"
-                            title={r.body}
-                          >
-                            {r.body}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="max-w-[140px] truncate text-sm">
-                        {r.customerName ?? r.customerEmail ?? '—'}
-                      </TableCell>
-                      <TableCell
-                        className="max-w-[150px] truncate text-sm"
-                        title={r.experienceTitle}
-                      >
-                        {r.experienceTitle}
-                      </TableCell>
-                      <TableCell
-                        className="max-w-[160px] truncate text-sm"
-                        title={r.vendorBusinessName}
-                      >
-                        {r.vendorBusinessName}
-                      </TableCell>
-                      <TableCell>
-                        <span data-testid="review-status-badge">
-                          <AdminStatusBadge
-                            status={r.status}
-                            label={STATUS_LABELS[r.status] ?? r.status}
-                          />
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground tabular-nums">
-                        {formatDate(r.createdAt)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <ReviewActionsCell reviewId={r.id} status={r.status} />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      <ResponsiveTable<ReviewRow>
+        columns={columns}
+        rows={reviews}
+        getRowKey={(r) => r.id}
+        rowProps={(r) => ({ 'data-review-id': r.id })}
+        caption="Customer reviews with rating, status and moderation actions"
+        empty={
+          isFiltered ? 'No reviews match these filters.' : 'No reviews found.'
+        }
+      />
     </div>
   )
 }

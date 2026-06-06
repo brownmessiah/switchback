@@ -52,7 +52,7 @@ export function AuditFilters({
   return (
     <Card>
       <CardContent className="pt-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           {/* Entity type filter */}
           <div className="space-y-1.5">
             <Label htmlFor="filter-entity-type" className="text-xs font-medium">

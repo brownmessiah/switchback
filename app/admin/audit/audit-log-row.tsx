@@ -109,7 +109,7 @@ export function AuditLogRow({
         <TableRow>
           <TableCell colSpan={6} className="bg-muted/30 p-4">
             <div className="space-y-2">
-              <div className="grid gap-2 text-xs sm:grid-cols-2">
+              <div className="grid gap-2 text-xs md:grid-cols-2">
                 <div>
                   <span className="font-medium text-muted-foreground">Log ID:</span>{' '}
                   <span className="font-mono">{id}</span>

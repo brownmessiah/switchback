@@ -1,19 +1,14 @@
-import Link from 'next/link'
-
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  ResponsiveTable,
+  type ResponsiveTableColumn,
+} from '@/components/ui/responsive-table'
 import { kycTierBadge } from '@/lib/admin/kyc-tier-badge'
 
 /**
- * #87 — the admin vendors LIST as a rigorous DESIGN.md §4 A3 table:
+ * #87 — the admin vendors LIST as a rigorous DESIGN.md §4 A3 table, now via the
+ * shared `<ResponsiveTable>` so it reverses to a stacked label:value Card list
+ * below `md` (the A3 reversal — DESIGN.md §8.3/§8.5; ADR-0018):
  *  - KYC tier as a distinct-per-tier ramp via `kycTierBadge` (Business →
  *    success, Identity → info, Phone → warning) so the strongest tier is
  *    visually distinct instead of all-green — status color + paired icon,
@@ -22,6 +17,8 @@ import { kycTierBadge } from '@/lib/admin/kyc-tier-badge'
  *    (DESIGN.md §1.3 / §2.2)
  *  - each row links to its `/admin/vendors/[id]` detail (B6 master → detail;
  *    the E2E navigates list → detail via `a[href*="/admin/vendors/"]`)
+ *  - `data-vendor-id` is preserved per row via `rowProps` so the admin E2E
+ *    selectors survive the reversal
  *
  * No KYC approve/reject/suspend ACTIONS live on the LIST — those are on the
  * [id] detail (#101). The presentational table is split out so it is
@@ -49,85 +46,82 @@ function formatDate(date: Date | string): string {
   })
 }
 
+const COLUMNS: ResponsiveTableColumn<VendorsTableRow>[] = [
+  {
+    key: 'business',
+    header: 'Business',
+    primary: true,
+    cell: (v) => (
+      <span className="inline-flex items-center gap-2">
+        {v.businessName}
+        {v.suspended && <Badge variant="destructive">Suspended</Badge>}
+      </span>
+    ),
+  },
+  {
+    key: 'contact',
+    header: 'Contact',
+    cell: (v) => (
+      <span className="text-sm text-muted-foreground">
+        {v.userEmail ?? v.userName ?? '—'}
+      </span>
+    ),
+  },
+  {
+    key: 'kyc',
+    header: 'KYC',
+    cell: (v) => {
+      const kyc = kycTierBadge(v.kycTier)
+      const KycIcon = kyc.icon
+      return (
+        <Badge variant={kyc.variant}>
+          <KycIcon data-icon="inline-start" aria-hidden />
+          {kyc.label}
+        </Badge>
+      )
+    },
+  },
+  {
+    key: 'commission',
+    header: 'Commission',
+    align: 'right',
+    cell: (v) => (
+      <span className="text-sm tabular-nums">
+        {Math.floor(Number(v.commissionRate))}%
+      </span>
+    ),
+  },
+  {
+    key: 'sla',
+    header: 'SLA',
+    align: 'right',
+    cell: (v) => (
+      <span className="text-sm tabular-nums">
+        {Math.floor(Number(v.responseTimeSlaScore))}%
+      </span>
+    ),
+  },
+  {
+    key: 'joined',
+    header: 'Joined',
+    cell: (v) => (
+      <span className="text-sm text-muted-foreground">
+        {formatDate(v.createdAt)}
+      </span>
+    ),
+  },
+]
+
 export function VendorsTable({ rows }: { rows: VendorsTableRow[] }) {
   return (
-    <Card>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-        <Table>
-          <caption className="sr-only">Registered Vendors</caption>
-          <TableHeader>
-            <TableRow>
-              <TableHead scope="col">Business</TableHead>
-              <TableHead scope="col">Contact</TableHead>
-              <TableHead scope="col">KYC</TableHead>
-              <TableHead scope="col" className="text-right">
-                Commission
-              </TableHead>
-              <TableHead scope="col" className="text-right">
-                SLA
-              </TableHead>
-              <TableHead scope="col">Joined</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                  No vendors found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              rows.map((v) => (
-                <TableRow
-                  key={v.userId}
-                  data-vendor-id={v.userId}
-                  className="hover:bg-muted/50"
-                >
-                  <TableCell className="font-medium">
-                    <Link
-                      href={`/admin/vendors/${v.userId}`}
-                      className="hover:underline"
-                    >
-                      {v.businessName}
-                    </Link>
-                    {v.suspended && (
-                      <Badge variant="destructive" className="ml-2">
-                        Suspended
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {v.userEmail ?? v.userName ?? '—'}
-                  </TableCell>
-                  <TableCell>
-                    {(() => {
-                      const kyc = kycTierBadge(v.kycTier)
-                      const KycIcon = kyc.icon
-                      return (
-                        <Badge variant={kyc.variant}>
-                          <KycIcon data-icon="inline-start" aria-hidden />
-                          {kyc.label}
-                        </Badge>
-                      )
-                    })()}
-                  </TableCell>
-                  <TableCell className="text-right text-sm tabular-nums">
-                    {Math.floor(Number(v.commissionRate))}%
-                  </TableCell>
-                  <TableCell className="text-right text-sm tabular-nums">
-                    {Math.floor(Number(v.responseTimeSlaScore))}%
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(v.createdAt)}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-        </div>
-      </CardContent>
-    </Card>
+    <ResponsiveTable<VendorsTableRow>
+      columns={COLUMNS}
+      rows={rows}
+      getRowKey={(v) => v.userId}
+      rowHref={(v) => `/admin/vendors/${v.userId}`}
+      rowProps={(v) => ({ 'data-vendor-id': v.userId })}
+      caption="Registered Vendors"
+      empty="No vendors found."
+    />
   )
 }

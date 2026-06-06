@@ -107,7 +107,7 @@ export default async function AnalyticsPage() {
 
       {/* KPI band */}
       <section aria-label="Platform KPIs">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {kpis.map((k) => (
             <KpiCard key={k.testId} {...k} />
           ))}

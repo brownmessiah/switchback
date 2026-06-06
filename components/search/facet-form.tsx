@@ -31,7 +31,7 @@ const DIFFICULTY_OPTIONS = ['easy', 'moderate', 'challenging', 'extreme'] as con
 const MONTH_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const
 
 const CHIP_BASE =
-  'flex w-full items-center rounded-[var(--radius-control)] px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+  'min-tap flex w-full items-center rounded-[var(--radius-control)] px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 
 interface FacetFormProps {
   parsed: SearchExperiencesParams

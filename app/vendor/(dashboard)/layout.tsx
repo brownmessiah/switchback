@@ -35,10 +35,11 @@ export default async function VendorDashboardLayout({
 
   // flex-col on mobile so the sticky mobile header bar (a VendorSidebar child)
   // stacks full-width on top instead of sitting as a row sibling that eats the
-  // horizontal space and squeezes <main> (mobile h-overflow). lg:flex-row
-  // restores the sidebar + content split on desktop.
+  // horizontal space and squeezes <main> (mobile h-overflow). md:flex-row docks
+  // the rail beside <main> from the tablet tier (where the rail becomes visible
+  // via md:block).
   return (
-    <div className="flex min-h-[80vh] flex-col lg:flex-row">
+    <div className="flex min-h-[80vh] flex-col md:flex-row">
       <VendorSidebar userName={session.user.name ?? 'Vendor'} />
       {/* min-w-0 lets wide tables scroll inside their own overflow-x-auto wrapper
           instead of stretching the whole shell past the viewport (mirrors the

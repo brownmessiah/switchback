@@ -53,6 +53,7 @@ import { touristTrip } from '@/lib/seo/schemas/trip'
 
 import { AnchorNav, type AnchorNavItem } from './anchor-nav'
 import { BookingRail, type BookingRailClosure } from './booking-rail'
+import { BookingRailMobile } from './booking-rail-mobile'
 
 export const revalidate = 60
 
@@ -386,10 +387,46 @@ export default async function ExperienceDetailPage({
     { id: 'faq', label: t('nav.faq') },
   ]
 
-  // C (mobile): the "from" price for the sticky bottom Book-now bar — the
-  // lowest per-participant bracket, matching the rail's leading price.
-  const fromPriceRupees = detail.pricePerPerson_1_2
-  const bookingDisabled = railClosure !== null
+  // The single, already-computed Booking prop set — consumed verbatim by BOTH
+  // the desktop sticky side-rail (`hidden lg:block`) and the mobile bottom-bar
+  // → bottom-Sheet (`lg:hidden`). One source of truth: the rail's data is never
+  // re-derived per tier (ADR-0018 / DESIGN.md §8.4 PDP-booking lg-only exception).
+  const bookingProps = {
+    heading: t('pricing.heading'),
+    priceTableLabel: t('pricing.priceTable'),
+    brackets: [
+      { label: t('pricing.tier1_2'), priceRupees: detail.pricePerPerson_1_2 },
+      { label: t('pricing.tier3_5'), priceRupees: detail.pricePerPerson_3_5 },
+      { label: t('pricing.tier6Plus'), priceRupees: detail.pricePerPerson_6_plus },
+    ],
+    perPersonLabel: t('pricing.perPerson'),
+    participantsLabel: t('pricing.participants'),
+    totalLabel: t('pricing.total'),
+    maxParticipants: detail.maxGroupSize ?? 12,
+    partialPay: partialPayAllowed
+      ? {
+          breakdownLabel: t('pricing.breakdown'),
+          notice: t('pricing.partialPay'),
+          advanceLabel: t('pricing.advanceDue'),
+          balanceLabel: t('pricing.balanceDue'),
+        }
+      : undefined,
+    freeCancellation: t('pricing.freeCancellation'),
+    bookNowLabel: t('pricing.bookNow'),
+    checkoutHref,
+    slots: calendarSlots,
+    locale,
+    calendarLabels: {
+      selectDate: t('calendar.selectDate'),
+      today: t('calendar.today'),
+      unavailable: t('calendar.unavailable'),
+      selected: t('calendar.selected'),
+      prevMonth: t('calendar.prevMonth'),
+      nextMonth: t('calendar.nextMonth'),
+      noDates: t('calendar.noDates'),
+    },
+    closure: railClosure,
+  }
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 pb-24 sm:px-6 lg:py-12 lg:pb-12">
@@ -456,21 +493,21 @@ export default async function ExperienceDetailPage({
               last tile when the listing carries genuine extra media. On mobile
               it collapses to a single full-bleed hero (the grid is hidden), so
               the page leads with one clean, generous image. */}
-          <div className="group/gallery relative mb-[var(--space-section)] grid aspect-[3/2] grid-cols-1 gap-2 overflow-hidden rounded-[var(--radius-2xl)] ring-1 ring-foreground/10 sm:aspect-[2/1] sm:grid-cols-4 sm:grid-rows-2">
-            {/* Hero — spans both rows + half the width on ≥sm. */}
-            <div className="relative sm:col-span-2 sm:row-span-2">
+          <div className="group/gallery relative mb-[var(--space-section)] grid aspect-[3/2] grid-cols-1 gap-2 overflow-hidden rounded-[var(--radius-2xl)] ring-1 ring-foreground/10 md:aspect-[2/1] md:grid-cols-4 md:grid-rows-2">
+            {/* Hero — spans both rows + half the width on ≥md. */}
+            <div className="relative md:col-span-2 md:row-span-2">
               <Image
                 src={galleryHeroTiles[0]}
                 alt={galleryAltFor(0)}
                 fill
                 className="object-cover transition-[filter] duration-[var(--duration-base)] group-hover/gallery:brightness-[0.97]"
                 preload
-                sizes="(max-width: 640px) 100vw, 50vw"
+                sizes="(max-width: 768px) 100vw, 50vw"
               />
             </div>
             {/* 2×2 grid — hidden on mobile so the hero leads cleanly. */}
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="relative hidden sm:block">
+              <div key={i} className="relative hidden md:block">
                 <Image
                   src={galleryHeroTiles[i]}
                   alt={galleryAltFor(i)}
@@ -572,7 +609,7 @@ export default async function ExperienceDetailPage({
           {quickFacts.length > 0 && (
             <dl
               aria-label={t('quickFacts.heading')}
-              className="mb-[var(--space-section)] grid grid-cols-2 gap-x-5 gap-y-5 rounded-[var(--radius-card)] border border-border bg-card p-5 sm:grid-cols-3"
+              className="mb-[var(--space-section)] grid grid-cols-2 gap-x-5 gap-y-5 rounded-[var(--radius-card)] border border-border bg-card p-5 md:grid-cols-3"
             >
               {quickFacts.map((fact) => {
                 const Icon = fact.icon
@@ -635,7 +672,7 @@ export default async function ExperienceDetailPage({
                 <h2 className="mb-3 font-heading text-h2 font-semibold tracking-tight">
                   {t('sections.highlights')}
                 </h2>
-                <ul className="grid gap-2 sm:grid-cols-2">
+                <ul className="grid gap-2 md:grid-cols-2">
                   {detail.highlights.map((highlight) => (
                     <li key={highlight} className="flex items-start gap-2 text-sm">
                       <CircleCheck
@@ -692,7 +729,7 @@ export default async function ExperienceDetailPage({
             {(hasIncluded || detail.whatToBring.length > 0) && (
               <section id="details" className="space-y-6">
                 {hasIncluded && (
-                  <div className="grid gap-6 sm:grid-cols-2">
+                  <div className="grid gap-6 md:grid-cols-2">
                     {detail.inclusions.length > 0 && (
                       <div>
                         <h2 className="mb-3 font-heading text-h2 font-semibold tracking-tight">
@@ -736,7 +773,7 @@ export default async function ExperienceDetailPage({
                     <h2 className="mb-3 font-heading text-h2 font-semibold tracking-tight">
                       {t('sections.whatToBring')}
                     </h2>
-                    <ul className="grid gap-2 sm:grid-cols-2">
+                    <ul className="grid gap-2 md:grid-cols-2">
                       {detail.whatToBring.map((item) => (
                         <li key={item} className="flex items-start gap-2 text-sm">
                           <span className="mt-2 inline-block size-1.5 shrink-0 rounded-full bg-muted-foreground" />
@@ -842,90 +879,28 @@ export default async function ExperienceDetailPage({
           </div>
         </div>
 
-        {/* Right column — the single persistent Booking rail. Desktop: sticky,
-            kept permanently in view beside the scrolling content (Direction B).
-            Mobile: the two-column grid collapses to one column, so the rail
-            stacks inline below the content (reachable, never trapping the page).
-            It is rendered exactly once — no duplicate "Book now" / bracket markup
-            — so the existing strict-mode E2E selectors stay unambiguous. */}
+        {/* Right column — the persistent desktop Booking side-rail. Sticky, kept
+            permanently in view beside the scrolling content (Direction B). This
+            is the `lg`-only side-rail exception (ADR-0018 / DESIGN.md §8.4): the
+            ~22rem decision-complete Card does not dock beside the gallery at
+            tablet width, so it is `hidden lg:block` and the mobile/tablet tier
+            is served by the bottom-bar → bottom-Sheet below (`lg:hidden`). The
+            canonical "Book now" link therefore renders exactly once per tier. */}
         <aside
           id="booking"
-          aria-label={t('pricing.heading')}
-          className="scroll-mt-[calc(var(--header-offset,4rem)+1rem)] lg:sticky lg:top-[calc(var(--header-offset,4rem)+1rem)] lg:self-start"
+          aria-label={bookingProps.heading}
+          className="hidden scroll-mt-[calc(var(--header-offset,4rem)+1rem)] lg:block lg:sticky lg:top-[calc(var(--header-offset,4rem)+1rem)] lg:self-start"
         >
-          <BookingRail
-            heading={t('pricing.heading')}
-            priceTableLabel={t('pricing.priceTable')}
-            brackets={[
-              { label: t('pricing.tier1_2'), priceRupees: detail.pricePerPerson_1_2 },
-              { label: t('pricing.tier3_5'), priceRupees: detail.pricePerPerson_3_5 },
-              { label: t('pricing.tier6Plus'), priceRupees: detail.pricePerPerson_6_plus },
-            ]}
-            perPersonLabel={t('pricing.perPerson')}
-            participantsLabel={t('pricing.participants')}
-            totalLabel={t('pricing.total')}
-            maxParticipants={detail.maxGroupSize ?? 12}
-            partialPay={
-              partialPayAllowed
-                ? {
-                    breakdownLabel: t('pricing.breakdown'),
-                    notice: t('pricing.partialPay'),
-                    advanceLabel: t('pricing.advanceDue'),
-                    balanceLabel: t('pricing.balanceDue'),
-                  }
-                : undefined
-            }
-            freeCancellation={t('pricing.freeCancellation')}
-            bookNowLabel={t('pricing.bookNow')}
-            checkoutHref={checkoutHref}
-            slots={calendarSlots}
-            locale={locale}
-            calendarLabels={{
-              selectDate: t('calendar.selectDate'),
-              today: t('calendar.today'),
-              unavailable: t('calendar.unavailable'),
-              selected: t('calendar.selected'),
-              prevMonth: t('calendar.prevMonth'),
-              nextMonth: t('calendar.nextMonth'),
-              noDates: t('calendar.noDates'),
-            }}
-            closure={railClosure}
-          />
+          <BookingRail {...bookingProps} />
         </aside>
       </div>
 
-      {/* C (mobile): sticky bottom booking bar — keeps the CTA reachable
-          without scrolling the whole PDP (lg:hidden; the desktop sticky rail
-          covers ≥lg). Anchors to the in-page booking rail (#booking) where the
-          date picker + participant stepper + the canonical "Book now" → checkout
-          link live; this bar is a JUMP affordance ("Select date"), deliberately
-          NOT a second "Book now" link — that would collide with the strict-mode
-          E2E `a:has-text("Book now")` revenue-spine selector. When the
-          Experience is closed (region closure) the bar de-emphasises to an
-          outline "Currently closed" cue. Pure markup — does NOT touch the rail
-          components. */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 py-3 backdrop-blur lg:hidden">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="truncate text-base font-bold tabular-nums text-foreground">
-              ₹{fromPriceRupees.toLocaleString('en-IN')}
-              <span className="ml-1 text-xs font-normal text-muted-foreground">
-                {t('pricing.perPerson')}
-              </span>
-            </p>
-          </div>
-          <a
-            href="#booking"
-            className={
-              bookingDisabled
-                ? 'inline-flex h-11 shrink-0 items-center justify-center rounded-[var(--radius-control)] border border-border px-6 text-sm font-semibold text-foreground'
-                : 'inline-flex h-11 shrink-0 items-center justify-center rounded-[var(--radius-control)] bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90'
-            }
-          >
-            {bookingDisabled ? t('closure.heading') : t('calendar.selectDate')}
-          </a>
-        </div>
-      </div>
+      {/* base + tablet (`< lg`): the sticky booking bottom-bar → bottom-Sheet
+          (Foundation D; DESIGN.md §8.5 item 4 / §8.4). The bar shows the
+          from-price (lowest bracket) + a CTA opening a bottom Sheet that wraps
+          the SAME BookingRailInteractive island — identical `bookingProps`, no
+          data refork. `lg:hidden`; the desktop side-rail above covers ≥ lg. */}
+      <BookingRailMobile {...bookingProps} />
     </main>
   )
 }

@@ -98,7 +98,7 @@ export function ItineraryResult({ itinerary }: ItineraryResultProps) {
             <Backpack aria-hidden="true" className="size-4" />
             {t('result.packingHeading')}
           </h3>
-          <ul className="grid gap-2 sm:grid-cols-2">
+          <ul className="grid gap-2 md:grid-cols-2">
             {itinerary.packingList.map((entry) => (
               <li key={entry} className="flex items-center gap-2 text-sm">
                 <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />

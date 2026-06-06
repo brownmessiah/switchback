@@ -387,7 +387,7 @@ text-xs text-destructive>` + `aria-describedby`, sets `aria-invalid`); **form-le
 ### A3. Data table
 
 **Use** for admin/vendor list surfaces with many homogeneous rows (**not** marketplace discovery —
-that's the Card grid). `Card > CardContent p-0 > Table`, horizontal-scroll; page header `--text-h1`
+that's the Card grid). `Card > CardContent p-0 > <ResponsiveTable>` — the `Table` primitive at `≥ md`, **collapsing to a stacked label:value Card list below `md`** (each row → one card titled by the per-table primary column; status cells keep their mapped `Badge`, numeric fields keep `.tabular-nums`); horizontal-scroll is the `md`-tablet/desktop fallback only, never the phone default (§8.3/§8.5, ADR-0018); page header `--text-h1`
 + `--text-xs muted` count subtitle; `TableHead` left-aligned + **sortable heads** (chevron +
 `aria-sort`); rows hover `bg-muted/50`. **Status cells = one mapped `Badge`** via `STATE_VARIANTS`
 re-pointed to the new tokens: `confirmed → success`, `awaiting_completion → warning`, `cancelled_*
@@ -441,7 +441,7 @@ suppressed under reduced-motion (global rule). **A11y:** `aria-busy="true"` + vi
 ### B1. Search → Filter → Results
 
 **Use** for `search-results` and `collection` surfaces. **Search hero** (one prominent autocomplete
-`Input` + rotating hints). **Filter rail (desktop) / filter Sheet (mobile):** Klook-grade facets —
+`Input` + rotating hints). **Filter rail (desktop) / filter Sheet (mobile):** _(Sheet through tablet; rail at `lg` — §8.3.)_ Klook-grade facets —
 result-type tabs (Experience type / Combo Experience), price-range, Dates (Today/Tomorrow/All),
 **Instant confirmation** toggle, Availability (region-closure-aware), location, **KYC-tier facet
 (Identity / Business verified Vendor)**, active-filter count + Clear. **Sort `Select`:** Recommended
@@ -494,7 +494,8 @@ the dedicated checkout page is **identity + payment only**. Funnel (each step ga
 4. **Pay** — checkout ≤2 screens, **email-first, guest-allowed** (never gate Booking behind an
    account). Screen 1 = Customer info (+ Trusted contact if safety-stack Experience); Screen 2 =
    payment (Razorpay). **Persistent order-summary rail** (slot, participants, price split,
-   cancellation terms) on every screen.
+   cancellation terms) on every screen — on mobile the booking module is a sticky bottom bar → bottom
+   Sheet and the order-summary is hoisted above the stepper (§8.3/§8.5, ADR-0018).
 **Cross-cutting:** cancellation/refund clarity lives **inside checkout**; Partial-pay eligibility
 shown up front (Booking ≥48h out and ≤Rs.25,000 per CONTEXT.md) with a graceful explained-ineligible
 case; multi-item cart is an optional differentiator (TripGroups / Combo). **States:** slot-unselected
@@ -541,7 +542,7 @@ submitted · published.
 
 **Use** for every admin queue and Vendor extranet list↔detail pair. **Master = Data table (A3)**
 (filterable, sortable, status-mapped Badge, right-aligned tabular figures, toolbar, bulk actions,
-numeric pagination; rows link to `…/[id]`). **Detail = the `[id]` route:** page header (title +
+numeric pagination; rows link to `…/[id]`). **Detail = the `[id]` route:** _(on `< lg` the detail pane renders as a Sheet and the master table collapses via `<ResponsiveTable>` — §8.4, ADR-0018.)_ page header (title +
 status Badge) → summary Card cluster (A1, money `.tabular-nums`) → action panel (Server-Action
 buttons; destructive / money-moving actions confirm via **Dialog (A4)** with the exact figure shown
 before commit — approve payout, resolve Dispute, process Refund) → related-records sub-tables /
@@ -730,3 +731,174 @@ with tabular numerics**, and **named elevation + motion** — are now foundation
 best-practice principle and a cited competitor/domain finding, all implementable as additive tokens
 and CVA variants on the existing Tailwind v4 + Base UI/shadcn stack. No framework, font-loader,
 OKLCH, or primitive-API change.
+
+---
+
+## 8. Responsive & breakpoint contract
+
+Every surface — marketing, customer app, Vendor extranet, admin — must be **excellent**, not merely
+unbroken, at phone, tablet, and desktop. This section is the responsive companion to the §4 patterns and
+the design-side contract of **ADR-0018** (the *why*); it codifies the tiers, the coarse-pointer
+touch-target rule (a new convention — §2 has no breakpoint or touch-target token), the per-surface flip
+table, the two `lg`-only exceptions, the six responsive primitives, and the verification model.
+
+### 8.1 The three-tier breakpoint contract
+
+A bespoke **three-tier** system (most marketplaces ship only mobile|desktop; the iPad-portrait middle tier
+earns its own treatment). **Tailwind v4 defaults are kept** — no breakpoint overrides in `app/globals.css`,
+no `--breakpoint-*` token. Structural flips are *lowered to `md`* wherever the tablet viewport can carry
+the richer layout.
+
+| Tier | Range | Prefix | Posture |
+|---|---|---|---|
+| **base** | `< 768px` | (none) | Mobile. **Hard floor 360px** — nothing clips, no page-level h-scroll at 360. Single-column, Sheet-driven overlays, sticky action bars. |
+| **tablet** | `768–1023px` | `md:` | iPad portrait. 2-col where it helps; inline nav; tables return; sidebar = slim icon-rail. |
+| **desktop** | `≥ 1024px` | `lg:` | Full rails, side-by-side split-views, 3–4-col dashboards. |
+
+- **360 is a test gate, not a token.** Layouts are fluid below `md`; 360px is the narrowest viewport the
+  screenshot audit asserts (§8.6). Intentional inner-scroll strips that already use `.scrollbar-none`
+  (e.g. the PDP anchor nav) are exempt — only *page-level* h-scroll is the failure.
+- **`sm` (640px) stays cosmetic for structure** — the single exception is the marketing **site header**,
+  whose four-link nav flips from a hamburger disclosure to inline at `sm` (the link set is narrow enough
+  to fit 640px, §8.3). No *other* structural flip keys off `sm`; the real breaks are `md` (tablet
+  treatment, table return, grid 1→2) and `lg` (full rails, grid 2→3, split-views). This matches the bumps
+  already in the globals.css base layer: `--space-section` widens `2.5rem→4rem` at `md`, `--space-grid-gap`
+  `1rem→1.5rem` at `lg` (§2.3).
+- **Sticky datums (verbatim from code — do not blanket-bind):** the PDP anchor-nav strips use
+  `top-[var(--header-offset)]` (4rem); the **PDP booking side-rail** uses
+  `lg:top-[calc(var(--header-offset,4rem)+1rem)]`; the **checkout summary rail** and **admin ledger detail**
+  use `lg:top-6` (1.5rem). New sticky side-rails should derive `top` from `--header-offset`; the existing
+  three are listed so they are not "corrected" to a single value.
+
+### 8.2 Touch-target convention (new — coarse pointers)
+
+The as-is ships **`h-8` (32px) controls and `size-9` (36px) steppers** globally — below the 44px floor §5
+mandates ("44px min touch targets (India mobile-first)") but which no token enforced. This introduces the
+convention (no `--touch-target` token; a hit-area rule, not a new sized box).
+
+**Rule.** On coarse pointers, every interactive control (button, icon-button, participant stepper, slot
+chip, tab, select/menu item, Sheet/Dialog close, table row-link, pagination control) presents a
+**≥ 44 × 44px** target.
+
+**Canonical mechanism (one, not a menu):** a single base-layer rule in `app/globals.css`, gated on
+**`@media (pointer: coarse)`**, applies `min-height: 44px; min-width: 44px` to interactive controls keyed
+off their existing `data-slot` (§3) plus the bespoke stepper/slot-chip controls. On a coarse pointer the
+control box grows to 44px (the desired touch size); on a fine pointer (desktop/mouse) the dense
+`h-8`/`size-9` paint is untouched — `@media (pointer: coarse)`, **not** a width breakpoint, is the source of
+truth, so a fine-pointer desktop at a narrow window keeps the compact controls. Dense clusters stay
+separated because each control grows symmetrically within its existing `gap` (the B3 stepper's `size-9` +
+`gap-2` → 44 + 8 + 44 = 96px). The pseudo-element / negative-margin variant is **not** used (it risks
+overlapping hit areas on dense clusters). Focus rings and reduced-motion (§2.6, §5) are inherited.
+
+*(Edge case — a coarse-pointer touchscreen laptop ≥ 1024px gets 44px targets; that is correct, not a
+regression: the "no desktop visual change" promise is about fine-pointer mice, and a touch laptop genuinely
+wants 44px.)*
+
+### 8.3 Per-surface flip contract (base `< 768` | tablet `md` | desktop `lg`)
+
+Each row reads left→right as the layout *gains* structure. Referenced tokens/patterns are the real §2/§4 ones.
+
+| Surface | base `< 768` | tablet `md` (768–1023) | desktop `lg` (≥1024) |
+|---|---|---|---|
+| **Site header** (marketing) | Hamburger `<details>` disclosure (kept — SSR/zero-JS; flips at `sm`, *not* the §8.5 back-office Sheet drawer) | Inline nav | Inline nav |
+| **Card grids** (home / search / collection / storefront — A1, B1, B8) | 1-col | 2-col | 3-col, gutter `--space-grid-gap` (1.5rem @ lg) |
+| **PDP booking** (B2/B3) | Sticky bottom bar → **bottom Sheet** (§8.5) | Same (bar → Sheet) | Sticky **side rail** — *lg-only exception, §8.4* |
+| **Search filters** (B1) | Sheet (existing `filters-sheet.tsx`, `side="left"`) | Sheet | Filter rail |
+| **Checkout** (B3) | 1-col, **order-summary hoisted ABOVE the stepper** (§8.5) | 2-col `[1fr_22rem]` *(change-from-as-is: lowered from the current `lg:grid-cols-[1fr_22rem]`)* | 2-col, sticky summary rail |
+| **Wallet / money cards** (B4) | Stacked | 2-col | 2-col *(no third column at `lg`)* |
+| **Back-office sidebar** (admin / Vendor) | Drawer (Sheet-based, §8.5) | Slim **icon-rail** | Full **label rail** |
+| **Data tables** (~24 surfaces — A3) | **Stacked label:value Cards** (`<ResponsiveTable>`, §8.5) | Table (h-scroll fallback) | Full table |
+| **Ledger split-view** (B6) | List + **detail-as-Sheet** (§8.5) | List + detail-Sheet | Side-by-side `[minmax(0,1fr)_24rem]` — *lg-only exception, §8.4* |
+| **Forms / wizards** (A2, B5) | 1-col, sticky footer | 2-col field groups | 2-col *(same structure as `md`; `lg` widens spacing only)* |
+| **Dashboards** (B6) | 1-col metrics | 2-col | 3-col default; **4-col only for compact single-metric KPI rows** (e.g. admin analytics) |
+
+- **Bottom Sheet vs side rail.** The *new* PDP booking Sheet opens from the **bottom** (A4 "bottom on
+  mobile") on base **and** tablet; the existing filter Sheet stays `side="left"` — "bottom on mobile" is
+  scoped to the new booking Sheet, not retrofitted to filters.
+- **Tables** reverse A3's "horizontal-scroll" default *below* `md` (§8.7); h-scroll survives only as the
+  `md`+ fallback.
+
+### 8.4 Two deliberate `lg`-only exceptions
+
+Two panels are too wide to sit beside content at 768px, so their side-by-side form is **`lg`-only by
+design** — tablet deliberately uses the mobile overlay/bottom treatment rather than a cramped two-up.
+Intentional, not gaps. (Checkout's 2-col rail is *not* a third exception — the contract lowers it to `md`,
+§8.3.)
+
+| Surface | Why `lg`-only | `< lg` treatment | `lg` treatment |
+|---|---|---|---|
+| **Admin ledger detail** (B6) | Fixed `24rem` detail column (`admin-ledger-layout.tsx`: `lg:grid-cols-[minmax(0,1fr)_24rem]`) leaves ≈ 768 − 384 = ~360px for the list at 768px | List + **detail-as-Sheet** | Side-by-side, detail `lg:sticky lg:top-6` |
+| **PDP booking side-rail** (B2/B3) | The decision-complete booking Card (calendar + stepper + breakdown + assurances) needs ~22rem; at 768px that leaves the gallery + long-scroll description under ~26rem | **Sticky bottom bar → bottom Sheet** wrapping `BookingRailInteractive` | Sticky side rail (`lg:top-[calc(var(--header-offset,4rem)+1rem)]`) |
+
+### 8.5 Foundations & new primitives (six)
+
+Additive compositions of the existing 20 primitives (§3) + §2 tokens — no framework/token swap (§1.4).
+
+1. **`@media (pointer: coarse)` touch-target floor** (§8.2) — the global hit-area rule.
+2. **`<ResponsiveTable>`** — the shared table wrapper. Renders the existing `Table` primitive at **`≥ md`**
+   and a **stacked label:value Card list `< md`**. Config shape:
+   `columns: { key, header, primary?, align?, cell?(row) }[]`, `rows`, optional `rowHref(row)`. The
+   **`primary`** column titles each card and carries the row-link; remaining columns render as
+   `header: value` rows inside the card (status cells keep their mapped `Badge` per A3 `STATE_VARIANTS`;
+   `align: 'right'` numerics keep `.tabular-nums`); sortable-head + bulk-select semantics live on the
+   `≥ md` table only. **Reverses A3's "horizontal-scroll"** as the phone default (§8.7). Used by every
+   A3/B6 surface (~24 tables).
+3. **Shared Sheet-based portal nav drawer** — replaces the two hand-rolled near-duplicate back-office
+   drawers (`admin-sidebar.tsx`, `vendor-sidebar.tsx`: overlay + `w-72` panel + body-scroll lock, *not* on
+   the Sheet primitive). Rebuilt on the **`Sheet` primitive** it gains the focus-trap / Escape / restore
+   parity the filter Sheet already has (`filters-sheet.tsx`, axe-clean). Drawer `< md`; icon-rail at `md`;
+   label rail at `lg`. (The *marketing* header is **not** migrated — it keeps its `<details>` disclosure,
+   §8.3.)
+4. **PDP booking bottom-Sheet** — a sticky bottom **bar** (price + primary CTA) opening a **bottom Sheet**
+   wrapping the existing self-contained `BookingRailInteractive` island (unchanged). Active `< lg`;
+   `--shadow-lg` + `--surface-3` (A4 / §2.5).
+5. **Checkout order-summary hoist** — on mobile the condensed order-summary `<aside>` (today rendered
+   **below** the Pay button in `checkout-form.tsx`; already `lg:sticky lg:top-6`) is **hoisted above the
+   stepper** (a DOM reorder on the 1-col layout, *not* new sticky). At `md`+ it returns to the `[1fr_22rem]`
+   2-col aside.
+6. **Admin ledger detail-Sheet** — `< lg`, the `24rem` detail pane (`data-testid="ledger-detail-pane"`)
+   renders as a **Sheet** instead of the side column (§8.4).
+
+All new overlays reuse the A4 overlay contract (`--surface-2/3` + `ring-1` hairline + `--shadow-lg`/
+`--shadow-popout`, slide+fade `--duration-slow` / `--ease-emphasized`, focus trap + restore + Escape).
+Wrapping an existing island (PDP booking) inherits the island's behaviour, but each new Sheet's
+trap/restore/Escape is still asserted in the §8.6 specs — "inherited, never re-implemented" is not
+"untested."
+
+### 8.6 Verification model
+
+Full — the contract is gated, not aspirational.
+
+- **Two new Playwright viewport projects** in `playwright.config.ts` (today only `devices['Desktop Chrome']`):
+  **phone — 375px** and **tablet — 768px**, each re-running the suite under the same per-page axe gate
+  (`wcag2a + wcag2aa`, `tests/e2e/fixtures/devtools.ts`, §5.1) — so restructured surfaces are AA-clean at
+  phone and tablet, not just desktop.
+- **Viewport-aware specs** for the restructured surfaces, with the tier boundary made explicit: the
+  **375px phone** project asserts the `<ResponsiveTable>` **card-collapse**, the PDP **booking
+  bottom-Sheet**, the **sidebar drawer**, the **checkout hoist**, and the **ledger detail-Sheet**; the
+  **768px tablet** project asserts the **table** form (768 = `md` min, so the table renders), the filter
+  Sheet, the icon-rail sidebar, and the 2-col checkout. Each new Sheet asserts focus-trap / Escape / restore.
+- **Coarse-pointer touch-target check** — the phone/tablet specs assert the ≥44px hit area under
+  `pointer: coarse` on the high-frequency controls (B3 steppers/slot chips, pagination, Sheet close, table
+  row-links), the painted control unchanged.
+- **Scripted screenshot audit at 360 / 768 / 1280** across **all 45 routes** → a triaged defect list: the
+  **Phase 0 baseline** before changes, **re-run after each surface sweep**. 360 asserts the no-clip / no
+  page-h-scroll floor (the strictest width, screenshot-gated since the phone axe project runs at 375); 768
+  asserts the tablet treatment; 1280 confirms no desktop regression.
+
+### 8.7 Pattern amendments driven by this section
+
+- **A3 (Data table)** — phone default flips from "horizontal-scroll" to **`<ResponsiveTable>` card-collapse
+  below `md`**; h-scroll retained only as the `md`+ fallback (amended inline in A3).
+- **A4 (Dialog vs Sheet)** — the "Sheet … bottom on mobile" rule now has three concrete consumers: the PDP
+  booking bottom-Sheet, the admin-ledger detail Sheet, and the back-office nav drawer (all `< lg`); the
+  existing filter Sheet stays `side="left"`.
+- **B1 (Search → Filter → Results)** — the "filter rail (desktop) / filter Sheet (mobile)" split is tiered:
+  **Sheet through tablet, rail at `lg`**.
+- **B3 (Booking funnel)** — PDP booking module is a **bottom-Sheet `< lg`** (bar → Sheet); checkout
+  order-summary is **hoisted above the stepper** on mobile.
+- **B6 (Admin/Vendor table+detail)** — master table via `<ResponsiveTable>`; ledger **detail-as-Sheet
+  `< lg`** (§8.4).
+
+Decision record: **ADR-0018**. This section is the design source of truth for responsive behaviour;
+ADR-0018 records the *why*.

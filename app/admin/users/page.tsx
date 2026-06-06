@@ -78,20 +78,20 @@ export default async function AdminUsersPage({
       <UsersTable rows={result.users} />
 
       {result.totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground tabular-nums">
             Page {result.page} of {result.totalPages}
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {result.page > 1 && (
-              <a href={pageUrl(result.page - 1)}>
+              <a href={pageUrl(result.page - 1)} className="min-tap">
                 <Button variant="outline" size="sm">
                   Previous
                 </Button>
               </a>
             )}
             {result.page < result.totalPages && (
-              <a href={pageUrl(result.page + 1)}>
+              <a href={pageUrl(result.page + 1)} className="min-tap">
                 <Button variant="outline" size="sm">
                   Next
                 </Button>

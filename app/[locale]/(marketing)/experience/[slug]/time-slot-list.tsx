@@ -49,7 +49,10 @@ export function TimeSlotList({
               aria-pressed={soldOut ? undefined : selected}
               onClick={() => !soldOut && onSelectSlot(s.id)}
               className={cn(
-                'flex flex-col items-start rounded-[var(--radius-control)] border px-3 py-1.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                // `.min-tap` (Foundation A) lifts the chip to the 44px
+                // coarse-pointer touch floor (DESIGN.md §8.2) without changing
+                // the fine-pointer paint.
+                'min-tap flex flex-col items-start rounded-[var(--radius-control)] border px-3 py-1.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 soldOut && 'cursor-not-allowed border-border text-muted-foreground/50',
                 !soldOut && !selected && 'border-border hover:border-primary/60 hover:bg-muted',
                 selected && 'border-primary bg-primary/10 text-foreground',

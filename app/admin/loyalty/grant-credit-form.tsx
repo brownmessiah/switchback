@@ -66,7 +66,7 @@ export function GrantCreditForm() {
   return (
     <>
       <form ref={formRef} action={handleOpenConfirm} className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1.5">
             <Label htmlFor="userId">User ID</Label>
             <Input id="userId" name="userId" placeholder="user_abc123" required />

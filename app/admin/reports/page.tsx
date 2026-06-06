@@ -51,7 +51,7 @@ export default async function ReportsPage() {
           </p>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2">
             {CSV_EXPORTS.map(({ entity, label, desc }) => (
               <div
                 key={entity}

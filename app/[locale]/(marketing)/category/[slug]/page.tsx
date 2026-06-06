@@ -226,7 +226,7 @@ export default async function CategoryLandingPage({
             </p>
           </div>
         ) : (
-          <div className="grid gap-[var(--space-grid-gap)] sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-[var(--space-grid-gap)] md:grid-cols-2 lg:grid-cols-3">
             {data.experiences.map((exp) => (
               <ExperienceCard
                 key={exp.id}

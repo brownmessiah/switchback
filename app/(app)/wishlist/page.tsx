@@ -46,7 +46,7 @@ export default async function WishlistPage() {
       ) : (
         <div
           data-testid="wishlist-grid"
-          className="grid grid-cols-1 gap-[var(--space-card-gap,1rem)] sm:grid-cols-2 lg:grid-cols-3"
+          className="grid grid-cols-1 gap-[var(--space-card-gap,1rem)] md:grid-cols-2 lg:grid-cols-3"
         >
           {saved.map((exp) => (
             <ExperienceCard

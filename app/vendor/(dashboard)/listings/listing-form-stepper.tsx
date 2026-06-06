@@ -462,7 +462,7 @@ export function ListingFormStepper({
                   aria-current={isCurrent ? 'step' : undefined}
                   onClick={() => goToStep(i)}
                   className={[
-                    'flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-medium tabular-nums transition-colors',
+                    'min-tap flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-medium tabular-nums transition-colors',
                     isDone
                       ? 'bg-success text-success-foreground'
                       : isCurrent
@@ -547,7 +547,7 @@ export function ListingFormStepper({
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Activity</Label>
                 <Select value={values.activity} onValueChange={(v) => update('activity', v ?? '')}>
@@ -604,7 +604,7 @@ export function ListingFormStepper({
             <p className="text-sm text-muted-foreground">
               Price per person for each Group-size bracket.
             </p>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="price12">1-2 guests (₹)</Label>
                 <Input
@@ -770,7 +770,7 @@ export function ListingFormStepper({
             </p>
 
             {/* Quick facts (scalars) */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="durationMinutes">Duration (minutes)</Label>
                 <Input
@@ -792,7 +792,7 @@ export function ListingFormStepper({
                   onChange={(e) =>
                     update('difficulty', e.target.value as '' | DifficultyValue)
                   }
-                  className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+                  className="min-tap h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
                 >
                   <option value="">Not specified</option>
                   {DIFFICULTY_OPTIONS.map((d) => (
@@ -1000,7 +1000,7 @@ export function ListingFormStepper({
           </Button>
         )}
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex flex-wrap items-center gap-3">
           {/* Save-draft: the create action persists with status:'draft', so an
               ordinary submit IS the draft save. We surface it explicitly on the
               non-final create steps so a Vendor can save without paging to

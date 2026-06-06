@@ -26,7 +26,7 @@ export function CommissionTierCreateForm() {
 
   return (
     <form ref={formRef} action={handleSubmit} className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <div className="space-y-1.5">
           <Label htmlFor="name">Name (slug)</Label>
           <Input
@@ -95,7 +95,7 @@ export function CommissionTierCreateForm() {
             Leave empty for all experiences
           </p>
         </div>
-        <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
+        <div className="space-y-1.5 md:col-span-2 lg:col-span-3">
           <Label htmlFor="reason">Reason</Label>
           <Textarea
             id="reason"

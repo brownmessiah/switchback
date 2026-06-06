@@ -76,7 +76,7 @@ export default async function DestinationsIndexPage({
         <h2 className="mb-4 font-heading text-h3 font-semibold tracking-tight">
           {t('index.regionsHeading')}
         </h2>
-        <ul className="grid gap-[var(--space-grid-gap)] sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid gap-[var(--space-grid-gap)] md:grid-cols-2 lg:grid-cols-3">
           {regions.map(({ region, experienceCount, imageUrl }) => (
             <li key={region.slug}>
               <Link

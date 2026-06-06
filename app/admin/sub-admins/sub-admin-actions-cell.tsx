@@ -108,7 +108,7 @@ export function SubAdminActionsCell({
           <form ref={formRef} action={handleEdit} className="space-y-4">
             <div className="space-y-2">
               <Label className="text-sm font-medium">Permissions</Label>
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className="grid gap-2 md:grid-cols-2">
                 {ADMIN_PERMISSIONS.map((perm) => (
                   <label
                     key={perm}

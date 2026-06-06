@@ -159,7 +159,7 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
             </div>
             <button
               type="submit"
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-[var(--radius-control)] bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors duration-150 hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="min-tap inline-flex h-11 items-center justify-center gap-2 rounded-[var(--radius-control)] bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors duration-150 hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
             >
               <Search className="size-4" aria-hidden="true" />
               {t('hero.searchButton')}
@@ -193,7 +193,7 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
                     <li key={a.slug} className="snap-start">
                       <Link
                         href={`/search?activity=${a.slug}`}
-                        className="inline-flex items-center gap-2 whitespace-nowrap rounded-[var(--radius-pill)] bg-surface-0 px-4 py-2 text-sm font-medium text-foreground shadow-[var(--shadow-sm)] ring-1 ring-foreground/10 transition-colors duration-150 hover:bg-surface-1 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                        className="min-tap inline-flex items-center gap-2 whitespace-nowrap rounded-[var(--radius-pill)] bg-surface-0 px-4 py-2 text-sm font-medium text-foreground shadow-[var(--shadow-sm)] ring-1 ring-foreground/10 transition-colors duration-150 hover:bg-surface-1 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                       >
                         <Icon
                           className="size-4 text-primary-strong"
@@ -231,7 +231,7 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
             {t('destinations.browseAll')}
           </Link>
         </header>
-        <ul className="grid grid-cols-2 gap-[var(--space-grid-gap)] sm:grid-cols-3 lg:grid-cols-4">
+        <ul className="grid grid-cols-2 gap-[var(--space-grid-gap)] md:grid-cols-3 lg:grid-cols-4">
           {data.featuredDestinations.map((d) => (
             <li key={d.slug}>
               <Link
@@ -291,7 +291,7 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
               {t('featured.viewAll')}
             </Link>
           </header>
-          <div className="grid grid-cols-1 gap-[var(--space-grid-gap)] sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-[var(--space-grid-gap)] md:grid-cols-2 lg:grid-cols-3">
             {data.featuredExperiences.map((exp) => (
               <ExperienceCard
                 key={exp.id}

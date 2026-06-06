@@ -25,7 +25,7 @@ export function PromoCreateForm() {
 
   return (
     <form ref={formRef} action={handleSubmit} className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <div className="space-y-1.5">
           <Label htmlFor="code">Code</Label>
           <Input id="code" name="code" placeholder="WELCOME500" required />

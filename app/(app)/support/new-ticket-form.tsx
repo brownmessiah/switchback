@@ -69,7 +69,7 @@ export function NewTicketForm() {
       data-testid="new-ticket-form"
       className="space-y-4"
     >
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="subject">{t('form.subjectLabel')}</Label>
           <Input

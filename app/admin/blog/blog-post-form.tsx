@@ -79,8 +79,8 @@ export function BlogPostCreateForm() {
       </CardHeader>
       <CardContent>
         <form ref={formRef} action={handleSubmit} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5 sm:col-span-2">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-1.5 md:col-span-2">
               <Label htmlFor="title">Title</Label>
               <Input
                 id="title"
@@ -129,7 +129,7 @@ export function BlogPostCreateForm() {
               )}
             </div>
 
-            <div className="space-y-1.5 sm:col-span-2">
+            <div className="space-y-1.5 md:col-span-2">
               <Label htmlFor="excerpt">Excerpt</Label>
               <Textarea
                 id="excerpt"
@@ -140,7 +140,7 @@ export function BlogPostCreateForm() {
               />
             </div>
 
-            <div className="space-y-1.5 sm:col-span-2">
+            <div className="space-y-1.5 md:col-span-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="content">Content (Markdown)</Label>
                 <Button

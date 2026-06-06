@@ -13,13 +13,9 @@ import { Badge } from '@/components/ui/badge'
 import { buttonVariants } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  ResponsiveTable,
+  type ResponsiveTableColumn,
+} from '@/components/ui/responsive-table'
 import { db } from '@/db/client'
 import { experiences, mediaAssets } from '@/db/schema'
 import { auth } from '@/lib/auth'
@@ -178,6 +174,71 @@ export default async function VendorListingsPage({
 
   const totalCount = decorated.length
 
+  type ListingRow = (typeof listings)[number]
+
+  const columns: ResponsiveTableColumn<ListingRow>[] = [
+    {
+      key: 'title',
+      header: 'Experience',
+      primary: true,
+      cell: (listing) => listing.title,
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      cell: (listing) => {
+        const meta = STATUS_META[listing.status] ?? STATUS_META.draft
+        const StatusIcon = meta.Icon
+        return (
+          <Badge
+            variant={meta.variant}
+            className="text-xs"
+            data-testid="listing-status"
+          >
+            <StatusIcon aria-hidden="true" />
+            {meta.label}
+          </Badge>
+        )
+      },
+    },
+    {
+      key: 'taxonomy',
+      header: 'Activity / Region',
+      cell: (listing) => (
+        <span
+          className="text-sm text-muted-foreground"
+          data-testid="listing-taxonomy"
+        >
+          {listing.activitySlug} · {listing.regionSlug}
+        </span>
+      ),
+    },
+    {
+      key: 'price',
+      header: 'From',
+      align: 'right',
+      cell: (listing) => (
+        <span data-testid="listing-price">
+          ₹
+          {Math.floor(Number(listing.pricePerPerson_1_2)).toLocaleString(
+            'en-IN',
+          )}
+        </span>
+      ),
+    },
+    {
+      key: 'completeness',
+      header: 'Completeness',
+      cell: (listing) => (
+        <CompletenessRing
+          percent={listing.completeness.percent}
+          filled={listing.completeness.filled}
+          total={listing.completeness.total}
+        />
+      ),
+    },
+  ]
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -211,105 +272,39 @@ export default async function VendorListingsPage({
         <div className="space-y-4">
           <ListingsControls status={statusFilter} sort={sort} />
 
-          <Card>
-            <CardContent className="p-0">
-              {listings.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <p className="text-lg font-medium">No matching listings</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    No listings match the current filter. Clear the filter to see
-                    all {totalCount} experience{totalCount === 1 ? '' : 's'}.
-                  </p>
-                  <Link
-                    href="/vendor/listings"
-                    className={buttonVariants({
-                      variant: 'outline',
-                      className: 'mt-4',
-                    })}
-                  >
-                    Clear filter
-                  </Link>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                <Table>
-                  <caption className="sr-only">
-                    Your experience listings with status, activity, region,
-                    starting price, and completeness.
-                  </caption>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead scope="col">Experience</TableHead>
-                      <TableHead scope="col">Status</TableHead>
-                      <TableHead scope="col">Activity / Region</TableHead>
-                      <TableHead scope="col" className="text-right">
-                        From
-                      </TableHead>
-                      <TableHead scope="col">Completeness</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {listings.map((listing) => {
-                      const meta =
-                        STATUS_META[listing.status] ?? STATUS_META.draft
-                      const StatusIcon = meta.Icon
-                      return (
-                        <TableRow
-                          key={listing.id}
-                          data-testid="listing-row"
-                          data-listing-id={listing.id}
-                          data-listing-status={listing.status}
-                          className="hover:bg-muted/50"
-                        >
-                          <TableCell className="font-medium">
-                            <Link
-                              href={`/vendor/listings/${listing.id}/edit`}
-                              className="hover:underline"
-                            >
-                              {listing.title}
-                            </Link>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={meta.variant}
-                              className="text-xs"
-                              data-testid="listing-status"
-                            >
-                              <StatusIcon aria-hidden="true" />
-                              {meta.label}
-                            </Badge>
-                          </TableCell>
-                          <TableCell
-                            className="text-sm text-muted-foreground"
-                            data-testid="listing-taxonomy"
-                          >
-                            {listing.activitySlug} · {listing.regionSlug}
-                          </TableCell>
-                          <TableCell
-                            className="text-right tabular-nums"
-                            data-testid="listing-price"
-                          >
-                            ₹
-                            {Math.floor(
-                              Number(listing.pricePerPerson_1_2),
-                            ).toLocaleString('en-IN')}
-                          </TableCell>
-                          <TableCell>
-                            <CompletenessRing
-                              percent={listing.completeness.percent}
-                              filled={listing.completeness.filled}
-                              total={listing.completeness.total}
-                            />
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {listings.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                <p className="text-lg font-medium">No matching listings</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  No listings match the current filter. Clear the filter to see
+                  all {totalCount} experience{totalCount === 1 ? '' : 's'}.
+                </p>
+                <Link
+                  href="/vendor/listings"
+                  className={buttonVariants({
+                    variant: 'outline',
+                    className: 'mt-4',
+                  })}
+                >
+                  Clear filter
+                </Link>
+              </CardContent>
+            </Card>
+          ) : (
+            <ResponsiveTable<ListingRow>
+              columns={columns}
+              rows={listings}
+              getRowKey={(listing) => listing.id}
+              rowHref={(listing) => `/vendor/listings/${listing.id}/edit`}
+              rowProps={(listing) => ({
+                'data-testid': 'listing-row',
+                'data-listing-id': listing.id,
+                'data-listing-status': listing.status,
+              })}
+              caption="Your experience listings with status, activity, region, starting price, and completeness."
+            />
+          )}
         </div>
       )}
     </div>

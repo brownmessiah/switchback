@@ -67,7 +67,7 @@ export function CreateGroupForm() {
         <Label htmlFor="interests">Interests</Label>
         <Input id="interests" name="interests" placeholder="rafting, trekking" />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3 md:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="maxMembers">Group size</Label>
           <Input id="maxMembers" name="maxMembers" type="number" min={2} max={12} defaultValue={6} />
@@ -77,7 +77,7 @@ export function CreateGroupForm() {
           <select
             id="membershipRule"
             name="membershipRule"
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+            className="min-tap flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
             defaultValue="auto_accept"
           >
             <option value="auto_accept">Anyone can join</option>
@@ -90,7 +90,7 @@ export function CreateGroupForm() {
         <select
           id="visibility"
           name="visibility"
-          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+          className="min-tap flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
           defaultValue="public_all"
         >
           <option value="public_all">Public</option>

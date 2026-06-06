@@ -41,7 +41,7 @@ export function TripPlannerForm({ regions, activities }: TripPlannerFormProps) {
     <div className="space-y-8">
       <form
         action={onSubmit}
-        className="grid gap-5 rounded-[var(--radius-card)] border bg-card p-6 shadow-[var(--shadow-sm)] sm:grid-cols-2"
+        className="grid gap-5 rounded-[var(--radius-card)] border bg-card p-6 shadow-[var(--shadow-sm)] md:grid-cols-2"
       >
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="tp-region">{t('form.region')}</Label>
@@ -136,8 +136,8 @@ export function TripPlannerForm({ regions, activities }: TripPlannerFormProps) {
           </select>
         </div>
 
-        <div className="sm:col-span-2">
-          <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
+        <div className="md:col-span-2">
+          <Button type="submit" disabled={isPending} className="w-full md:w-auto">
             <Sparkles aria-hidden="true" />
             {isPending ? t('form.submitting') : t('form.submit')}
           </Button>

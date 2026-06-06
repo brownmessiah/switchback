@@ -223,7 +223,7 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
   return (
     <div className="space-y-6">
       {/* Header with back link + actions */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <Link
             href="/vendor/bookings"
@@ -236,7 +236,7 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">{booking.expTitle}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Badge
             variant={STATE_VARIANTS[booking.state] ?? 'outline'}
             className="text-2xs capitalize"
@@ -331,7 +331,7 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
         <CardHeader>
           <CardTitle className="text-lg">Booking Overview</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-3 text-sm sm:grid-cols-2">
+        <CardContent className="grid gap-3 text-sm md:grid-cols-2">
           <InfoRow label="Experience" value={booking.expTitle} />
           <InfoRow label="Customer" value={booking.customerName ?? 'Customer'} />
           <InfoRow label="Customer Email" value={booking.customerEmail ?? '—'} />

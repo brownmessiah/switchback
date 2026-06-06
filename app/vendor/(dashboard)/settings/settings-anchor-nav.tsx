@@ -40,7 +40,7 @@ export function SettingsAnchorNav({
           <li key={item.id} className="shrink-0 lg:shrink">
             <a
               href={`#${item.id}`}
-              className="inline-flex w-full items-center rounded-[var(--radius-control)] px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-primary-strong focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="min-tap inline-flex w-full items-center rounded-[var(--radius-control)] px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-primary-strong focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
             >
               {item.label}
             </a>

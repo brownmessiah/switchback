@@ -207,7 +207,7 @@ test.describe('Vendor listings', () => {
     // ── #75 variant A: a dense A3 table, one row per listing, addressed by a
     //    stable data-testid (the title is now a table-cell link, not an
     //    <a><h3>). At least one row for the seeded experiences.
-    const rows = page.getByTestId('listing-row')
+    const rows = page.locator('[data-slot="responsive-table"] table').getByTestId('listing-row')
     const rowCount = await rows.count()
     expect(rowCount).toBeGreaterThanOrEqual(1)
 
@@ -247,7 +247,7 @@ test.describe('Vendor listings', () => {
     await page.goto('/vendor/listings')
     await expect(page.locator('h1')).toContainText('Listings')
 
-    const allCount = await page.getByTestId('listing-row').count()
+    const allCount = await page.locator('[data-slot="responsive-table"] table').getByTestId('listing-row').count()
     expect(allCount).toBeGreaterThanOrEqual(1)
 
     // Narrow to published only via the URL-driven filter (SSR-safe; no
@@ -255,7 +255,7 @@ test.describe('Vendor listings', () => {
     await page.goto('/vendor/listings?status=published')
     await expect(page.locator('h1')).toContainText('Listings')
 
-    const publishedRows = page.getByTestId('listing-row')
+    const publishedRows = page.locator('[data-slot="responsive-table"] table').getByTestId('listing-row')
     const publishedCount = await publishedRows.count()
     expect(publishedCount).toBeGreaterThanOrEqual(1)
     // Every visible row in the published view shows a "published" status.
@@ -361,7 +361,7 @@ test.describe('Create listing', () => {
     // The new listing's row carries the draft status badge (#75 A3 table:
     // the row is addressed by its stable testid and filtered by the title).
     const row = page
-      .getByTestId('listing-row')
+      .locator('[data-slot="responsive-table"] table').getByTestId('listing-row')
       .filter({ has: page.getByText(title) })
     await expect(row.getByTestId('listing-status')).toContainText(/draft/i)
 
@@ -1087,7 +1087,7 @@ test.describe('Availability management', () => {
     // Click the first listing's edit link to go to its edit page (#75 A3
     // table: the title is a row-cell link addressed via the row testid).
     const listingLink = page
-      .getByTestId('listing-row')
+      .locator('[data-slot="responsive-table"] table').getByTestId('listing-row')
       .first()
       .locator('a[href*="/vendor/listings/"]')
       .first()

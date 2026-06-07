@@ -698,6 +698,15 @@
       "blog": "బ్లాగ్",
       "safety": "భద్రత & నమ్మకం",
       "about": "Outvers గురించి",
+      "contactHeading": "సంప్రదించండి",
+      "emailUs": "మాకు ఇమెయిల్ చేయండి",
+      "followUs": "మమ్మల్ని అనుసరించండి",
+      "social": {
+        "instagram": "Instagramలో Outvers",
+        "youtube": "YouTubeలో Outvers",
+        "facebook": "Facebookలో Outvers",
+        "x": "Xలో Outvers"
+      },
       "newsletter": {
         "heading": "సంబంధంలో ఉండండి",
         "description": "కొత్త అనుభవాలు మరియు ఆఫర్లు, అప్పుడప్పుడు.",

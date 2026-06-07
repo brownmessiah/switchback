@@ -698,6 +698,15 @@
       "blog": "வலைப்பதிவு",
       "safety": "பாதுகாப்பு & நம்பிக்கை",
       "about": "Outvers பற்றி",
+      "contactHeading": "தொடர்பு",
+      "emailUs": "எங்களுக்கு மின்னஞ்சல் அனுப்புங்கள்",
+      "followUs": "எங்களைப் பின்தொடருங்கள்",
+      "social": {
+        "instagram": "Instagram-இல் Outvers",
+        "youtube": "YouTube-இல் Outvers",
+        "facebook": "Facebook-இல் Outvers",
+        "x": "X-இல் Outvers"
+      },
       "newsletter": {
         "heading": "தொடர்பில் இருங்கள்",
         "description": "புதிய அனுபவங்களும் சலுகைகளும், அவ்வப்போது.",

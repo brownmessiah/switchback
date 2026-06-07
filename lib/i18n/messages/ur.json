@@ -698,6 +698,15 @@
       "blog": "بلاگ",
       "safety": "حفاظت اور بھروسہ",
       "about": "Outvers کے بارے میں",
+      "contactHeading": "رابطہ",
+      "emailUs": "ہمیں ای میل کریں",
+      "followUs": "ہمیں فالو کریں",
+      "social": {
+        "instagram": "Instagram پر Outvers",
+        "youtube": "YouTube پر Outvers",
+        "facebook": "Facebook پر Outvers",
+        "x": "X پر Outvers"
+      },
       "newsletter": {
         "heading": "رابطے میں رہیں",
         "description": "نئے تجربات اور آفرز، وقتاً فوقتاً۔",

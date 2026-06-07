@@ -698,6 +698,15 @@
       "blog": "ब्लॉग",
       "safety": "सुरक्षा आणि विश्वास",
       "about": "Outvers विषयी",
+      "contactHeading": "संपर्क",
+      "emailUs": "आम्हाला ईमेल करा",
+      "followUs": "आम्हाला फॉलो करा",
+      "social": {
+        "instagram": "Instagram वर Outvers",
+        "youtube": "YouTube वर Outvers",
+        "facebook": "Facebook वर Outvers",
+        "x": "X वर Outvers"
+      },
       "newsletter": {
         "heading": "संपर्कात राहा",
         "description": "नवीन अनुभव आणि ऑफर, वेळोवेळी.",

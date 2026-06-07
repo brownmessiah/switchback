@@ -634,6 +634,15 @@
       "blog": "ବ୍ଲଗ୍",
       "safety": "ସୁରକ୍ଷା ଓ ବିଶ୍ୱାସ",
       "about": "Outvers ବିଷୟରେ",
+      "contactHeading": "ଯୋଗାଯୋଗ",
+      "emailUs": "ଆମକୁ ଇମେଲ୍ କରନ୍ତୁ",
+      "followUs": "ଆମକୁ ଅନୁସରଣ କରନ୍ତୁ",
+      "social": {
+        "instagram": "Instagramରେ Outvers",
+        "youtube": "YouTubeରେ Outvers",
+        "facebook": "Facebookରେ Outvers",
+        "x": "Xରେ Outvers"
+      },
       "newsletter": {
         "heading": "ସମ୍ପର୍କରେ ରୁହନ୍ତୁ",
         "description": "ନୂତନ ଅନୁଭୂତି ଏବଂ ଅଫର, ବେଳେବେଳେ।",

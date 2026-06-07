@@ -71,4 +71,27 @@ test.describe('responsive · public surfaces (< lg)', () => {
     await page.getByTestId('newsletter-submit').click()
     await expect(page.getByTestId('newsletter-success')).toBeVisible()
   })
+
+  test('footer: Contact block links to /contact and exposes the support email', async ({
+    page,
+  }) => {
+    await page.goto('/', { waitUntil: 'networkidle' })
+    const footer = page.locator('footer')
+    await footer.scrollIntoViewIfNeeded()
+    // Contact us → /contact. The footer legitimately renders two such links
+    // (Support column + the new Contact block), so assert at least one exists
+    // and that every one points at /contact (tolerant of the duplicate).
+    const contactLinks = footer.getByRole('link', { name: /contact us/i })
+    expect(await contactLinks.count()).toBeGreaterThan(0)
+    for (const link of await contactLinks.all()) {
+      await expect(link).toHaveAttribute('href', /\/contact/)
+    }
+    // support@outvers.com mailto present
+    await expect(footer.locator('a[href="mailto:support@outvers.com"]')).toBeVisible()
+    // 4 social links rendered (placeholder #) — aria-labels carry the network name
+    await expect(footer.getByRole('link', { name: /Instagram/i })).toBeVisible()
+    await expect(footer.getByRole('link', { name: /YouTube/i })).toBeVisible()
+    await expect(footer.getByRole('link', { name: /Facebook/i })).toBeVisible()
+    await expect(footer.getByRole('link', { name: /on X$/i })).toBeVisible()
+  })
 })

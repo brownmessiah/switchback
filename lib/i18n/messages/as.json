@@ -634,6 +634,15 @@
       "blog": "ব্লগ",
       "safety": "সুৰক্ষা আৰু বিশ্বাস",
       "about": "Outvers বিষয়ে",
+      "contactHeading": "যোগাযোগ",
+      "emailUs": "আমাক ইমেইল কৰক",
+      "followUs": "আমাক অনুসৰণ কৰক",
+      "social": {
+        "instagram": "Instagramত Outvers",
+        "youtube": "YouTubeত Outvers",
+        "facebook": "Facebookত Outvers",
+        "x": "Xত Outvers"
+      },
       "newsletter": {
         "heading": "যোগাযোগত থাকক",
         "description": "নতুন অভিজ্ঞতা আৰু অফাৰ, সময়ে সময়ে।",

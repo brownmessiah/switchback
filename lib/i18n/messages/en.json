@@ -739,6 +739,15 @@
       "vendorKyc": "Vendor KYC (soon)",
       "copyright": "All experiences are operated by third-party vendors.",
       "blog": "Blog",
+      "contactHeading": "Contact",
+      "emailUs": "Email us",
+      "followUs": "Follow us",
+      "social": {
+        "instagram": "Outvers on Instagram",
+        "youtube": "Outvers on YouTube",
+        "facebook": "Outvers on Facebook",
+        "x": "Outvers on X"
+      },
       "newsletter": {
         "heading": "Stay in the loop",
         "description": "New experiences and deals, now and then.",

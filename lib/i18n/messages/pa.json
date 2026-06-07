@@ -698,6 +698,15 @@
       "blog": "ਬਲੌਗ",
       "safety": "ਸੁਰੱਖਿਆ ਅਤੇ ਭਰੋਸਾ",
       "about": "Outvers ਬਾਰੇ",
+      "contactHeading": "ਸੰਪਰਕ",
+      "emailUs": "ਸਾਨੂੰ ਈਮੇਲ ਕਰੋ",
+      "followUs": "ਸਾਨੂੰ ਫਾਲੋ ਕਰੋ",
+      "social": {
+        "instagram": "Instagram 'ਤੇ Outvers",
+        "youtube": "YouTube 'ਤੇ Outvers",
+        "facebook": "Facebook 'ਤੇ Outvers",
+        "x": "X 'ਤੇ Outvers"
+      },
       "newsletter": {
         "heading": "ਜੁੜੇ ਰਹੋ",
         "description": "ਨਵੇਂ ਅਨੁਭਵ ਅਤੇ ਆਫਰ, ਸਮੇਂ-ਸਮੇਂ ਤੇ।",

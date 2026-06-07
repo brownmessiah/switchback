@@ -698,6 +698,15 @@
       "blog": "ബ്ലോഗ്",
       "safety": "സുരക്ഷയും വിശ്വാസവും",
       "about": "Outvers കുറിച്ച്",
+      "contactHeading": "ബന്ധപ്പെടുക",
+      "emailUs": "ഞങ്ങൾക്ക് ഇമെയിൽ അയയ്ക്കുക",
+      "followUs": "ഞങ്ങളെ പിന്തുടരുക",
+      "social": {
+        "instagram": "Instagram-ൽ Outvers",
+        "youtube": "YouTube-ൽ Outvers",
+        "facebook": "Facebook-ൽ Outvers",
+        "x": "X-ൽ Outvers"
+      },
       "newsletter": {
         "heading": "ബന്ധം നിലനിർത്തുക",
         "description": "പുതിയ അനുഭവങ്ങളും ഓഫറുകളും, ഇടയ്ക്കിടെ.",

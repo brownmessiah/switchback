@@ -697,7 +697,19 @@
       "copyright": "تمام تجربات تھرڈ پارٹی وینڈرز کے ذریعے چلائے جاتے ہیں۔",
       "blog": "بلاگ",
       "safety": "حفاظت اور بھروسہ",
-      "about": "Outvers کے بارے میں"
+      "about": "Outvers کے بارے میں",
+      "newsletter": {
+        "heading": "رابطے میں رہیں",
+        "description": "نئے تجربات اور آفرز، وقتاً فوقتاً۔",
+        "label": "ای میل پتہ",
+        "placeholder": "you@example.com",
+        "button": "سبسکرائب کریں",
+        "submitting": "سبسکرائب ہو رہا ہے…",
+        "success": "شکریہ — آپ سبسکرائب ہو گئے ہیں۔",
+        "alreadySubscribed": "آپ پہلے ہی فہرست میں ہیں۔",
+        "errorInvalid": "براہ کرم ایک درست ای میل پتہ درج کریں۔",
+        "errorGeneric": "کچھ غلط ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔"
+      }
     },
     "experiences": "تجربات",
     "destinations": "مقامات",

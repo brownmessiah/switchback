@@ -738,7 +738,19 @@
       "vendorDashboard": "Vendor dashboard",
       "vendorKyc": "Vendor KYC (soon)",
       "copyright": "All experiences are operated by third-party vendors.",
-      "blog": "Blog"
+      "blog": "Blog",
+      "newsletter": {
+        "heading": "Stay in the loop",
+        "description": "New experiences and deals, now and then.",
+        "label": "Email address",
+        "placeholder": "you@example.com",
+        "button": "Subscribe",
+        "submitting": "Subscribing…",
+        "success": "Thanks — you're subscribed.",
+        "alreadySubscribed": "You're already on the list.",
+        "errorInvalid": "Please enter a valid email address.",
+        "errorGeneric": "Something went wrong. Please try again."
+      }
     },
     "experiences": "Experiences",
     "destinations": "Destinations",

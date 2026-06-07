@@ -60,4 +60,15 @@ test.describe('responsive · public surfaces (< lg)', () => {
       'horizontal overflow on the PDP',
     ).toBeLessThanOrEqual(2)
   })
+
+  test('footer newsletter: fill email at phone width → submit → success state', async ({
+    page,
+  }) => {
+    await page.goto('/', { waitUntil: 'networkidle' })
+    const form = page.getByTestId('newsletter-form')
+    await form.scrollIntoViewIfNeeded()
+    await page.getByTestId('newsletter-email').fill('e2e-subscriber@example.com')
+    await page.getByTestId('newsletter-submit').click()
+    await expect(page.getByTestId('newsletter-success')).toBeVisible()
+  })
 })

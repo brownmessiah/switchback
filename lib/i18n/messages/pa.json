@@ -697,7 +697,19 @@
       "copyright": "ਸਾਰੇ ਅਨੁਭਵ ਥਰਡ-ਪਾਰਟੀ ਵਿਕਰੇਤਾਵਾਂ ਦੁਆਰਾ ਚਲਾਏ ਜਾਂਦੇ ਹਨ।",
       "blog": "ਬਲੌਗ",
       "safety": "ਸੁਰੱਖਿਆ ਅਤੇ ਭਰੋਸਾ",
-      "about": "Outvers ਬਾਰੇ"
+      "about": "Outvers ਬਾਰੇ",
+      "newsletter": {
+        "heading": "ਜੁੜੇ ਰਹੋ",
+        "description": "ਨਵੇਂ ਅਨੁਭਵ ਅਤੇ ਆਫਰ, ਸਮੇਂ-ਸਮੇਂ ਤੇ।",
+        "label": "ਈਮੇਲ ਪਤਾ",
+        "placeholder": "you@example.com",
+        "button": "ਸਬਸਕ੍ਰਾਈਬ ਕਰੋ",
+        "submitting": "ਸਬਸਕ੍ਰਾਈਬ ਹੋ ਰਿਹਾ ਹੈ…",
+        "success": "ਧੰਨਵਾਦ — ਤੁਸੀਂ ਸਬਸਕ੍ਰਾਈਬ ਹੋ ਗਏ ਹੋ।",
+        "alreadySubscribed": "ਤੁਸੀਂ ਪਹਿਲਾਂ ਹੀ ਸੂਚੀ ਵਿੱਚ ਹੋ।",
+        "errorInvalid": "ਕਿਰਪਾ ਕਰਕੇ ਇੱਕ ਵੈਧ ਈਮੇਲ ਪਤਾ ਦਰਜ ਕਰੋ।",
+        "errorGeneric": "ਕੁਝ ਗਲਤ ਹੋ ਗਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
+      }
     },
     "experiences": "ਅਨੁਭਵ",
     "destinations": "ਟਿਕਾਣੇ",

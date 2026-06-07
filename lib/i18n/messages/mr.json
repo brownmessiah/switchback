@@ -697,7 +697,19 @@
       "copyright": "सर्व अनुभव तृतीय-पक्ष विक्रेत्यांद्वारे चालवले जातात.",
       "blog": "ब्लॉग",
       "safety": "सुरक्षा आणि विश्वास",
-      "about": "Outvers विषयी"
+      "about": "Outvers विषयी",
+      "newsletter": {
+        "heading": "संपर्कात राहा",
+        "description": "नवीन अनुभव आणि ऑफर, वेळोवेळी.",
+        "label": "ईमेल पत्ता",
+        "placeholder": "you@example.com",
+        "button": "सबस्क्राइब करा",
+        "submitting": "सबस्क्राइब होत आहे…",
+        "success": "धन्यवाद — तुम्ही सबस्क्राइब झाला आहात.",
+        "alreadySubscribed": "तुम्ही आधीच यादीत आहात.",
+        "errorInvalid": "कृपया वैध ईमेल पत्ता टाका.",
+        "errorGeneric": "काहीतरी चूक झाली. कृपया पुन्हा प्रयत्न करा."
+      }
     },
     "experiences": "अनुभव",
     "destinations": "ठिकाणे",

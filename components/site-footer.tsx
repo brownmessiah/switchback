@@ -8,6 +8,7 @@ import type { ReactElement } from 'react'
 import { isBackOfficePath } from '@/lib/chrome/back-office-path'
 
 import { LanguageSelector } from './language-selector'
+import { NewsletterForm } from './newsletter-form'
 
 /**
  * Bottom-of-page footer present on every public route. v2 with
@@ -44,6 +45,11 @@ export function SiteFooter(): ReactElement | null {
             </p>
             <div className="mt-4">
               <LanguageSelector variant="full" />
+            </div>
+            {/* Issue 01: minimal newsletter capture mount. Issue 02 builds the
+                full brand band around it — keep this non-disruptive. */}
+            <div className="mt-6 max-w-xs">
+              <NewsletterForm />
             </div>
           </div>
 

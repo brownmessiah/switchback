@@ -14,7 +14,8 @@
       "transparentPricing": "પારદર્શક ભાવ"
     },
     "activities": {
-      "heading": "પ્રવૃત્તિ પ્રમાણે બ્રાઉઝ કરો"
+      "heading": "પ્રવૃત્તિ પ્રમાણે બ્રાઉઝ કરો",
+      "more": "+{count} વધુ"
     },
     "destinations": {
       "heading": "લોકપ્રિય સ્થળો",

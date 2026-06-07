@@ -14,7 +14,8 @@
       "transparentPricing": "Transparent pricing"
     },
     "activities": {
-      "heading": "Browse by activity"
+      "heading": "Browse by activity",
+      "more": "+{count} more"
     },
     "destinations": {
       "heading": "Popular destinations",

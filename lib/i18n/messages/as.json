@@ -14,7 +14,8 @@
       "transparentPricing": "স্বচ্ছ মূল্য"
     },
     "activities": {
-      "heading": "কাৰ্যকলাপ অনুসৰি ব্ৰাউজ কৰক"
+      "heading": "কাৰ্যকলাপ অনুসৰি ব্ৰাউজ কৰক",
+      "more": "আৰু +{count}টা"
     },
     "destinations": {
       "heading": "জনপ্ৰিয় গন্তব্যস্থান",

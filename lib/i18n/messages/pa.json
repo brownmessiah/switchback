@@ -14,7 +14,8 @@
       "transparentPricing": "ਪਾਰਦਰਸ਼ੀ ਕੀਮਤ"
     },
     "activities": {
-      "heading": "ਗਤੀਵਿਧੀ ਅਨੁਸਾਰ ਬ੍ਰਾਊਜ਼ ਕਰੋ"
+      "heading": "ਗਤੀਵਿਧੀ ਅਨੁਸਾਰ ਬ੍ਰਾਊਜ਼ ਕਰੋ",
+      "more": "+{count} ਹੋਰ"
     },
     "destinations": {
       "heading": "ਪ੍ਰਸਿੱਧ ਮੰਜ਼ਿਲਾਂ",

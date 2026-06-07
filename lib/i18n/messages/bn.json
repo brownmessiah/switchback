@@ -14,7 +14,8 @@
       "transparentPricing": "স্বচ্ছ মূল্য নির্ধারণ"
     },
     "activities": {
-      "heading": "কার্যকলাপ অনুযায়ী ব্রাউজ করুন"
+      "heading": "কার্যকলাপ অনুযায়ী ব্রাউজ করুন",
+      "more": "আরও +{count}টি"
     },
     "destinations": {
       "heading": "জনপ্রিয় গন্তব্য",

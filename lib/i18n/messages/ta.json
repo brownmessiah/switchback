@@ -14,7 +14,8 @@
       "transparentPricing": "வெளிப்படையான விலை"
     },
     "activities": {
-      "heading": "செயல்பாடு வாரியாக உலாவுங்கள்"
+      "heading": "செயல்பாடு வாரியாக உலாவுங்கள்",
+      "more": "+{count} மேலும்"
     },
     "destinations": {
       "heading": "பிரபலமான இடங்கள்",

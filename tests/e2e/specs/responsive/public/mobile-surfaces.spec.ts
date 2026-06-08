@@ -28,6 +28,24 @@ test.describe('responsive · public surfaces (< lg)', () => {
     }
   })
 
+  test('home activity chips: no h-scroll strip; +N more only on phones', async ({
+    page,
+  }) => {
+    await page.goto('/', { waitUntil: 'networkidle' })
+    const more = page.getByTestId('activities-more')
+    const width = page.viewportSize()?.width ?? 0
+    if (width < 768) {
+      // phone: when the seed exceeds the cap, +N more is visible and points at /search
+      if (await more.count()) {
+        await expect(more.first()).toBeVisible()
+        await expect(more.first()).toHaveAttribute('href', /\/search/)
+      }
+    } else {
+      // tablet/desktop: the +N more affordance is not shown (all chips render)
+      await expect(more).toBeHidden()
+    }
+  })
+
   test('search: the desktop filter rail is hidden and the Filters Sheet opens the facets', async ({
     page,
   }) => {

@@ -23,6 +23,12 @@ import { generateAlternates } from '@/lib/seo/hreflang'
 
 export const revalidate = 60
 
+/**
+ * Max activity chips shown on phones before collapsing the rest behind a
+ * "+N more" link. Sized for ~2 rows at 375px; md+ shows every chip.
+ */
+const MOBILE_CHIP_CAP = 6
+
 type Props = {
   readonly params: Promise<{ locale: string }>
 }
@@ -180,17 +186,22 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
             ))}
           </div>
 
-          {/* Activity-category chip scroll — pill Badges with lucide icons. */}
+          {/* Activity-category chips — pill Badges with lucide icons. Wrap at all
+              widths (no h-scroll). Phones cap at MOBILE_CHIP_CAP with a "+N more"
+              link to /search; tablet/desktop (md+) show every chip. */}
           {data.featuredActivities.length > 0 && (
             <nav
               aria-label={t('activities.heading')}
               className="mt-8 w-full max-w-xl"
             >
-              <ul className="flex snap-x flex-nowrap gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:justify-center sm:overflow-visible">
-                {data.featuredActivities.map((a) => {
+              <ul className="flex flex-wrap justify-center gap-2">
+                {data.featuredActivities.map((a, index) => {
                   const Icon = getActivityIcon(a.slug)
                   return (
-                    <li key={a.slug} className="snap-start">
+                    <li
+                      key={a.slug}
+                      className={index >= MOBILE_CHIP_CAP ? 'hidden md:block' : ''}
+                    >
                       <Link
                         href={`/search?activity=${a.slug}`}
                         className="min-tap inline-flex items-center gap-2 whitespace-nowrap rounded-[var(--radius-pill)] bg-surface-0 px-4 py-2 text-sm font-medium text-foreground shadow-[var(--shadow-sm)] ring-1 ring-foreground/10 transition-colors duration-150 hover:bg-surface-1 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
@@ -204,6 +215,19 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
                     </li>
                   )
                 })}
+                {data.featuredActivities.length > MOBILE_CHIP_CAP && (
+                  <li className="md:hidden">
+                    <Link
+                      href="/search"
+                      data-testid="activities-more"
+                      className="min-tap inline-flex items-center gap-2 whitespace-nowrap rounded-[var(--radius-pill)] bg-surface-0 px-4 py-2 text-sm font-medium text-foreground shadow-[var(--shadow-sm)] ring-1 ring-foreground/10 transition-colors duration-150 hover:bg-surface-1 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                    >
+                      {t('activities.more', {
+                        count: data.featuredActivities.length - MOBILE_CHIP_CAP,
+                      })}
+                    </Link>
+                  </li>
+                )}
               </ul>
             </nav>
           )}

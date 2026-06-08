@@ -14,7 +14,8 @@
       "transparentPricing": "పారదర్శక ధరలు"
     },
     "activities": {
-      "heading": "కార్యకలాపం ద్వారా బ్రౌజ్ చేయండి"
+      "heading": "కార్యకలాపం ద్వారా బ్రౌజ్ చేయండి",
+      "more": "+{count} మరిన్ని"
     },
     "destinations": {
       "heading": "ప్రముఖ గమ్యస్థానాలు",

@@ -14,7 +14,8 @@
       "transparentPricing": "पारदर्शी मूल्य निर्धारण"
     },
     "activities": {
-      "heading": "गतिविधि के अनुसार ब्राउज़ करें"
+      "heading": "गतिविधि के अनुसार ब्राउज़ करें",
+      "more": "+{count} और"
     },
     "destinations": {
       "heading": "लोकप्रिय गंतव्य",

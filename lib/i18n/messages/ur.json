@@ -14,7 +14,8 @@
       "transparentPricing": "شفاف قیمتیں"
     },
     "activities": {
-      "heading": "سرگرمی کے مطابق براؤز کریں"
+      "heading": "سرگرمی کے مطابق براؤز کریں",
+      "more": "+{count} مزید"
     },
     "destinations": {
       "heading": "مقبول مقامات",

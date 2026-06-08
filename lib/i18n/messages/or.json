@@ -14,7 +14,8 @@
       "transparentPricing": "ସ୍ୱଚ୍ଛ ମୂଲ୍ୟ"
     },
     "activities": {
-      "heading": "କାର୍ଯ୍ୟକଳାପ ଅନୁସାରେ ବ୍ରାଉଜ୍ କରନ୍ତୁ"
+      "heading": "କାର୍ଯ୍ୟକଳାପ ଅନୁସାରେ ବ୍ରାଉଜ୍ କରନ୍ତୁ",
+      "more": "+{count} ଅଧିକ"
     },
     "destinations": {
       "heading": "ଲୋକପ୍ରିୟ ଗନ୍ତବ୍ୟସ୍ଥଳ",

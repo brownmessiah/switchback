@@ -14,7 +14,8 @@
       "transparentPricing": "ಪಾರದರ್ಶಕ ಬೆಲೆ ನಿಗದಿ"
     },
     "activities": {
-      "heading": "ಚಟುವಟಿಕೆಯ ಮೂಲಕ ಬ್ರೌಸ್ ಮಾಡಿ"
+      "heading": "ಚಟುವಟಿಕೆಯ ಮೂಲಕ ಬ್ರೌಸ್ ಮಾಡಿ",
+      "more": "+{count} ಇನ್ನಷ್ಟು"
     },
     "destinations": {
       "heading": "ಜನಪ್ರಿಯ ತಾಣಗಳು",

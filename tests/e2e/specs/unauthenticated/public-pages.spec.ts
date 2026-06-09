@@ -69,6 +69,51 @@ test.describe('Home page', () => {
     expect(new URL(page.url()).searchParams.get('activity')).toBe('rafting')
   })
 
+  // Home JSON-LD (ADR-0013 / issue 21): exactly ONE WebSite node carrying the
+  // sitelinks SearchAction, plus one Organization node. There must be NO
+  // duplicate WebSite/SearchAction (the previous inline WebSite was
+  // consolidated into the single generator-produced node).
+  test('emits one Organization + one WebSite(SearchAction) JSON-LD, no duplicates', async ({
+    page,
+  }) => {
+    await page.goto('/')
+
+    const jsonLdScripts = page.locator('script[type="application/ld+json"]')
+    const count = await jsonLdScripts.count()
+    expect(count).toBeGreaterThanOrEqual(2)
+
+    let websiteCount = 0
+    let organizationCount = 0
+    let searchActionCount = 0
+    for (let i = 0; i < count; i++) {
+      const content = await jsonLdScripts.nth(i).textContent()
+      if (!content) continue
+      const parsed = JSON.parse(content) as Record<string, unknown>
+      expect(parsed['@context']).toBe('https://schema.org')
+
+      if (parsed['@type'] === 'WebSite') {
+        websiteCount += 1
+        expect(parsed.name).toBe('Outvers')
+        const action = parsed.potentialAction as {
+          '@type': string
+          target: string
+        }
+        expect(action['@type']).toBe('SearchAction')
+        expect(action.target).toContain('{search_term_string}')
+        searchActionCount += 1
+      }
+      if (parsed['@type'] === 'Organization') {
+        organizationCount += 1
+        expect(parsed.name).toBe('Outvers')
+      }
+    }
+
+    // Exactly one of each — no duplicate WebSite/SearchAction.
+    expect(websiteCount).toBe(1)
+    expect(searchActionCount).toBe(1)
+    expect(organizationCount).toBe(1)
+  })
+
   test('destination tile links to /search?region= and resolves 200', async ({
     page,
   }) => {
@@ -672,6 +717,70 @@ test.describe('Vendor profile', () => {
     await expect(messageBtn).toHaveAttribute('aria-disabled', 'true')
     // An accessible "coming soon" caption explains why it is disabled.
     await expect(page.getByTestId('message-vendor-note')).toBeVisible()
+  })
+
+  // Vendor JSON-LD (ADR-0013 / issue 21): a Business-verified Vendor (KYC tier
+  // 3, goa-dive-center) emits a LocalBusiness node + a BreadcrumbList. The
+  // Vendor is never an "operator" in schema.
+  test('Business-verified Vendor emits LocalBusiness + BreadcrumbList JSON-LD', async ({
+    page,
+  }) => {
+    const response = await page.goto('/vendor/goa-dive-center')
+    expect(response?.status()).toBe(200)
+
+    const jsonLdScripts = page.locator('script[type="application/ld+json"]')
+    const count = await jsonLdScripts.count()
+    expect(count).toBeGreaterThanOrEqual(2)
+
+    let localBusinessCount = 0
+    let organizationCount = 0
+    let breadcrumbCount = 0
+    for (let i = 0; i < count; i++) {
+      const content = await jsonLdScripts.nth(i).textContent()
+      if (!content) continue
+      const parsed = JSON.parse(content) as Record<string, unknown>
+      expect(parsed['@context']).toBe('https://schema.org')
+      // A Vendor is never typed as an "operator".
+      expect(parsed['@type']).not.toBe('operator')
+
+      if (parsed['@type'] === 'LocalBusiness') {
+        localBusinessCount += 1
+        expect(parsed.name).toContain('Goa Dive Center')
+        expect(String(parsed.url)).toContain('/vendor/goa-dive-center')
+      }
+      if (parsed['@type'] === 'Organization') organizationCount += 1
+      if (parsed['@type'] === 'BreadcrumbList') breadcrumbCount += 1
+    }
+
+    expect(localBusinessCount).toBe(1)
+    // A Business-verified Vendor is a LocalBusiness, never the lower-tier
+    // Organization.
+    expect(organizationCount).toBe(0)
+    expect(breadcrumbCount).toBe(1)
+  })
+
+  // A lower-tier Vendor (identity tier, himalayan-hikes-co) emits Organization
+  // — NOT LocalBusiness (LocalBusiness is gated by Business verification).
+  test('identity-tier Vendor emits Organization JSON-LD, never LocalBusiness', async ({
+    page,
+  }) => {
+    await page.goto('/vendor/himalayan-hikes-co')
+
+    const jsonLdScripts = page.locator('script[type="application/ld+json"]')
+    const count = await jsonLdScripts.count()
+
+    let organizationCount = 0
+    let localBusinessCount = 0
+    for (let i = 0; i < count; i++) {
+      const content = await jsonLdScripts.nth(i).textContent()
+      if (!content) continue
+      const parsed = JSON.parse(content) as Record<string, unknown>
+      if (parsed['@type'] === 'Organization') organizationCount += 1
+      if (parsed['@type'] === 'LocalBusiness') localBusinessCount += 1
+    }
+
+    expect(organizationCount).toBe(1)
+    expect(localBusinessCount).toBe(0)
   })
 
   test('404 for invalid vendor slug', async ({ page }) => {

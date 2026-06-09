@@ -73,6 +73,7 @@ test.describe('Destinations', () => {
 
     let foundItemList = false
     let foundBreadcrumb = false
+    let touristDestinationCount = 0
     for (let i = 0; i < count; i++) {
       const content = await jsonLdScripts.nth(i).textContent()
       if (!content) continue
@@ -88,9 +89,24 @@ test.describe('Destinations', () => {
         const items = parsed.itemListElement as Array<{ position: number }>
         expect(items.length).toBeGreaterThanOrEqual(3)
       }
+      // TouristDestination (ADR-0013 / issue 21): exactly one node, with the
+      // Indian state as containedInPlace and a real centroid geo block (goa
+      // has a known centroid in lib/maps/region-coords.ts — D0).
+      if (parsed['@type'] === 'TouristDestination') {
+        touristDestinationCount += 1
+        expect(parsed['@context']).toBe('https://schema.org')
+        expect(parsed.name).toContain('Goa')
+        const place = parsed.containedInPlace as { '@type': string; name: string }
+        expect(place['@type']).toBe('AdministrativeArea')
+        expect(place.name).toBe('Goa')
+        const geo = parsed.geo as { '@type': string; latitude: number }
+        expect(geo['@type']).toBe('GeoCoordinates')
+        expect(typeof geo.latitude).toBe('number')
+      }
     }
     expect(foundItemList).toBe(true)
     expect(foundBreadcrumb).toBe(true)
+    expect(touristDestinationCount).toBe(1)
   })
 
   test('404 for an invalid region slug', async ({ page }) => {

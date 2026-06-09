@@ -19,12 +19,14 @@ import { db } from '@/db/client'
 import { env } from '@/lib/env'
 import { loadRegionLanding } from '@/lib/destinations/queries'
 import { toMapPins } from '@/lib/maps/pins'
+import { getRegionCoords } from '@/lib/maps/region-coords'
 import { getRegionImage } from '@/lib/images'
 import { listRegions } from '@/lib/regions/registry'
 import { generateAlternates } from '@/lib/seo/hreflang'
 import { breadcrumbList } from '@/lib/seo/schemas/breadcrumb-list'
 import { faqPage } from '@/lib/seo/schemas/faq-page'
 import { itemList } from '@/lib/seo/schemas/item-list'
+import { touristDestination } from '@/lib/seo/schemas/tourist-destination'
 
 export const revalidate = 60
 
@@ -106,8 +108,23 @@ export default async function RegionLandingPage({
   ]
   const faqJson = faqPage(faqItems)
 
+  // TouristDestination JSON-LD (ADR-0013). Geo comes from the REAL region
+  // centroid (issue 11); when a region has no known centroid the geo block is
+  // omitted rather than fabricated (D0). containedInPlace = the Indian state.
+  const touristDestinationJson = touristDestination({
+    name: regionName,
+    description: t('detail.description', { region: regionName, state: stateName }),
+    url: canonicalUrl,
+    state: stateName,
+    geo: getRegionCoords(slug),
+  })
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(touristDestinationJson) }}
+      />
       {itemListJson && (
         <script
           type="application/ld+json"

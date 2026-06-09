@@ -28,6 +28,8 @@ import { loadPopularSearchChips } from '@/lib/home/popular-chips'
 import { loadHomePageData } from '@/lib/home/queries'
 import { getHeroImage, getRegionImage } from '@/lib/images'
 import { generateAlternates } from '@/lib/seo/hreflang'
+import { organization } from '@/lib/seo/schemas/organization'
+import { website } from '@/lib/seo/schemas/website'
 
 export const revalidate = 60
 
@@ -90,26 +92,24 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
       nameEn: tFacet(`activities.${slugToFacetKey(a.slug)}`),
     }))
 
-  const websiteJson = {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'Outvers',
+  // Home JSON-LD (ADR-0013): exactly ONE WebSite node (with the sitelinks
+  // SearchAction) + one Organization node. The SearchAction target deep-links
+  // into the existing /search?q= query. `logo` points at the real served
+  // favicon asset; `contactPoint` uses the real support address. `sameAs` is
+  // intentionally OMITTED — the footer's social links are still placeholders,
+  // so we never invent profile URLs (D0).
+  const websiteJson = website({
     url: baseUrl,
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: `${baseUrl}/search?q={search_term_string}`,
-      'query-input': 'required name=search_term_string',
-    },
-  }
+    searchUrlTemplate: `${baseUrl}/search?q={search_term_string}`,
+  })
 
-  const organizationJson = {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: 'Outvers',
+  const organizationJson = organization({
     url: baseUrl,
+    logo: `${baseUrl}/favicon.ico`,
+    contactEmail: 'support@outvers.com',
     description:
       'Indian adventure-activity marketplace — rafting, paragliding, scuba, trekking from KYC-verified vendors.',
-  }
+  })
 
   // Trust band — opaque chips on an opaque strip (Direction B). Each pairs a
   // semantic-status colour with a lucide icon (status never by colour alone,

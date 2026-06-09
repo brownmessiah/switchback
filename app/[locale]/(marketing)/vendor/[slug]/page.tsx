@@ -18,10 +18,14 @@ import { ExperienceCard, type ExperienceCardData } from '@/components/experience
 import { Badge } from '@/components/ui/badge'
 import { db } from '@/db/client'
 import { vendorProfiles } from '@/db/schema'
+import { env } from '@/lib/env'
 import { enrichCardBadges } from '@/lib/experiences/card-badges'
 import { loadExperienceCoverMap } from '@/lib/media/experience-images'
 import { generateAlternates } from '@/lib/seo/hreflang'
+import { breadcrumbList } from '@/lib/seo/schemas/breadcrumb-list'
+import { vendorEntity } from '@/lib/seo/schemas/local-business'
 import { loadVendorPublicExperiences } from '@/lib/vendor/public-profile'
+import { loadVendorRatingAggregate } from '@/lib/vendor/rating-aggregate'
 
 interface PageProps {
   params: Promise<{ locale: string; slug: string }>
@@ -113,8 +117,37 @@ export default async function VendorProfilePage({ params }: PageProps) {
   const experienceCount = vendorExperiences.length
   const regionCount = new Set(vendorExperiences.map((e) => e.regionSlug)).size
 
+  // Vendor JSON-LD (ADR-0013): LocalBusiness when Business-verified (KYC tier
+  // 3), else Organization (lower tier). A Vendor is never an "operator" in
+  // schema. aggregateRating is attached ONLY when real published reviews exist
+  // (D0) — `loadVendorRatingAggregate` returns null otherwise so the block is
+  // omitted (no fabricated rating).
+  const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
+  const vendorUrl = `${baseUrl}/vendor/${slug}`
+  const ratingAggregate = await loadVendorRatingAggregate(db, vendor.userId)
+  const vendorEntityJson = vendorEntity({
+    name: vendor.businessName,
+    url: vendorUrl,
+    kycTier: vendor.kycTier,
+    ratingValue: ratingAggregate?.ratingValue,
+    ratingCount: ratingAggregate?.ratingCount,
+  })
+  const breadcrumbsJson = breadcrumbList([
+    { name: tCommon('breadcrumb.home'), url: `${baseUrl}/` },
+    { name: vendor.businessName, url: vendorUrl },
+  ])
+
   return (
     <main className="bg-surface-0">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(vendorEntityJson) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsJson) }}
+      />
+
       {/* ── Branded banner / hero ──────────────────────────────────────
           A warm coral-grey gradient band (token surface ramp, hue 30) with
           the business name as H1 + a verified-Vendor badge. */}

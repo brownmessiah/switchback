@@ -474,6 +474,21 @@
       "approximateNote": "ફક્ત અંદાજિત વિસ્તાર — ચોક્કસ મળવાનું સ્થળ બુકિંગ પછી શેર કરવામાં આવે છે અને નીચે દર્શાવેલ છે.",
       "openInMaps": "નકશામાં ખોલો",
       "mapAriaLabel": "{region}માં અંદાજિત વિસ્તાર દર્શાવતો નકશો"
+    },
+    "askQuestion": {
+      "cta": "પ્રશ્ન પૂછો",
+      "dialogTitle": "પ્રશ્ન પૂછો",
+      "dialogDescription": "આ Experience વિશે તમારો પ્રશ્ન Outvers સહાય ટીમને મોકલો. અમે ક્યારેય Vendor ની સંપર્ક વિગતો શેર કરતા નથી.",
+      "messageLabel": "તમારો પ્રશ્ન",
+      "messagePlaceholder": "આ Experience વિશે તમે શું જાણવા માંગો છો?",
+      "submit": "પ્રશ્ન મોકલો",
+      "submitting": "મોકલી રહ્યું છે…",
+      "success": "આભાર! અમારી સહાય ટીમ ટૂંક સમયમાં તમને જવાબ આપશે.",
+      "signedOutPrompt": "આ Experience વિશે પ્રશ્ન પૂછવા માટે કૃપા કરીને સાઇન ઇન કરો.",
+      "signIn": "સાઇન ઇન",
+      "cancel": "રદ કરો",
+      "validationError": "કૃપા કરીને પહેલા તમારો પ્રશ્ન લખો.",
+      "genericError": "કંઈક ખોટું થયું. કૃપા કરીને ફરી પ્રયાસ કરો."
     }
   },
   "SearchPage": {

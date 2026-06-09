@@ -15,8 +15,18 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 
+import { AskQuestion, type AskQuestionLabels } from './ask-question'
 import { BookingRailInteractive } from './booking-rail-interactive'
 import type { BookingRailInteractiveProps } from './booking-rail-interactive'
+
+/** Experience-enquiry context + labels for the mobile-bar "Ask a Question" CTA. */
+export interface AskQuestionContext {
+  experienceSlug: string
+  experienceTitle: string
+  isSignedIn: boolean
+  signInHref: string
+  labels: AskQuestionLabels
+}
 
 /**
  * Props mirror the BookingRail shell: every field is forwarded verbatim to the
@@ -27,6 +37,8 @@ import type { BookingRailInteractiveProps } from './booking-rail-interactive'
 export interface BookingRailMobileProps extends BookingRailInteractiveProps {
   /** Already-translated module heading (`pricing.heading`) — titles the Sheet. */
   heading: string
+  /** "Ask a Question" enquiry CTA (issue 17) — rendered in the bar beside the Book CTA. */
+  askQuestion?: AskQuestionContext
 }
 
 function formatRupees(amount: number): string {
@@ -57,6 +69,7 @@ function formatRupees(amount: number): string {
  */
 export function BookingRailMobile({
   heading,
+  askQuestion,
   ...railProps
 }: BookingRailMobileProps): ReactElement {
   const t = useTranslations('ExperiencePage')
@@ -87,21 +100,35 @@ export function BookingRailMobile({
           )}
         </div>
 
-        {disabled ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            disabled
-            aria-disabled="true"
-            data-testid="booking-rail-mobile-trigger"
-            className="shrink-0 cursor-not-allowed px-6 opacity-70"
-          >
-            <CalendarX aria-hidden="true" />
-            {closure?.heading ?? t('closure.heading')}
-          </Button>
-        ) : (
-          <Sheet>
+        <div className="flex shrink-0 items-center gap-2">
+          {/* "Ask a Question" (issue 17) — a compact enquiry CTA in the mobile
+              sticky bar, available whether or not booking is paused. */}
+          {askQuestion && (
+            <AskQuestion
+              experienceSlug={askQuestion.experienceSlug}
+              experienceTitle={askQuestion.experienceTitle}
+              isSignedIn={askQuestion.isSignedIn}
+              signInHref={askQuestion.signInHref}
+              labels={askQuestion.labels}
+              compact
+              className="shrink-0"
+            />
+          )}
+          {disabled ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              disabled
+              aria-disabled="true"
+              data-testid="booking-rail-mobile-trigger"
+              className="shrink-0 cursor-not-allowed px-6 opacity-70"
+            >
+              <CalendarX aria-hidden="true" />
+              {closure?.heading ?? t('closure.heading')}
+            </Button>
+          ) : (
+            <Sheet>
             <SheetTrigger
               data-testid="booking-rail-mobile-trigger"
               render={<Button size="lg" className="shrink-0 px-6" />}
@@ -123,7 +150,8 @@ export function BookingRailMobile({
               <BookingRailInteractive {...railProps} />
             </SheetContent>
           </Sheet>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )

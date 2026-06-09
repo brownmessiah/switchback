@@ -474,6 +474,21 @@
       "approximateNote": "ਸਿਰਫ਼ ਅਨੁਮਾਨਿਤ ਖੇਤਰ — ਸਹੀ ਮਿਲਣ ਸਥਾਨ ਬੁਕਿੰਗ ਤੋਂ ਬਾਅਦ ਸਾਂਝਾ ਕੀਤਾ ਜਾਂਦਾ ਹੈ ਅਤੇ ਹੇਠਾਂ ਦਿੱਤਾ ਗਿਆ ਹੈ।",
       "openInMaps": "ਨਕਸ਼ੇ ਵਿੱਚ ਖੋਲ੍ਹੋ",
       "mapAriaLabel": "{region} ਵਿੱਚ ਅਨੁਮਾਨਿਤ ਖੇਤਰ ਦਿਖਾਉਂਦਾ ਨਕਸ਼ਾ"
+    },
+    "askQuestion": {
+      "cta": "ਸਵਾਲ ਪੁੱਛੋ",
+      "dialogTitle": "ਸਵਾਲ ਪੁੱਛੋ",
+      "dialogDescription": "ਇਸ Experience ਬਾਰੇ ਆਪਣਾ ਸਵਾਲ Outvers ਸਹਾਇਤਾ ਟੀਮ ਨੂੰ ਭੇਜੋ। ਅਸੀਂ ਕਦੇ ਵੀ Vendor ਦੇ ਸੰਪਰਕ ਵੇਰਵੇ ਸਾਂਝੇ ਨਹੀਂ ਕਰਦੇ।",
+      "messageLabel": "ਤੁਹਾਡਾ ਸਵਾਲ",
+      "messagePlaceholder": "ਇਸ Experience ਬਾਰੇ ਤੁਸੀਂ ਕੀ ਜਾਣਨਾ ਚਾਹੁੰਦੇ ਹੋ?",
+      "submit": "ਸਵਾਲ ਭੇਜੋ",
+      "submitting": "ਭੇਜਿਆ ਜਾ ਰਿਹਾ ਹੈ…",
+      "success": "ਧੰਨਵਾਦ! ਸਾਡੀ ਸਹਾਇਤਾ ਟੀਮ ਜਲਦੀ ਹੀ ਤੁਹਾਨੂੰ ਜਵਾਬ ਦੇਵੇਗੀ।",
+      "signedOutPrompt": "ਇਸ Experience ਬਾਰੇ ਸਵਾਲ ਪੁੱਛਣ ਲਈ ਕਿਰਪਾ ਕਰਕੇ ਸਾਈਨ ਇਨ ਕਰੋ।",
+      "signIn": "ਸਾਈਨ ਇਨ",
+      "cancel": "ਰੱਦ ਕਰੋ",
+      "validationError": "ਕਿਰਪਾ ਕਰਕੇ ਪਹਿਲਾਂ ਆਪਣਾ ਸਵਾਲ ਲਿਖੋ।",
+      "genericError": "ਕੁਝ ਗਲਤ ਹੋ ਗਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
     }
   },
   "SearchPage": {

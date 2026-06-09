@@ -65,6 +65,7 @@ import { reviewList } from '@/lib/seo/schemas/review'
 import { touristTrip } from '@/lib/seo/schemas/trip'
 
 import { AnchorNav, type AnchorNavItem } from './anchor-nav'
+import { AskQuestion, type AskQuestionLabels } from './ask-question'
 import { BookingRail, type BookingRailClosure } from './booking-rail'
 import { BookingRailMobile } from './booking-rail-mobile'
 import { Gallery, type GalleryImage as GalleryTile } from './gallery'
@@ -497,6 +498,36 @@ export default async function ExperienceDetailPage({
       noDates: t('calendar.noDates'),
     },
     closure: railClosure,
+  }
+
+  // "Ask a Question" → Support Ticket (issue 17, DECISION D6). A login-gated
+  // enquiry CTA near the Booking box (desktop rail) + in the mobile sticky bar.
+  // The Experience is referenced by slug + title ONLY (no Vendor PII); the
+  // signed-out prompt links to /sign-in with this PDP preserved as the return
+  // target so context survives the round-trip. Submits → an `experience`-category
+  // Support Ticket in the existing admin support queue.
+  const askQuestionLabels: AskQuestionLabels = {
+    cta: t('askQuestion.cta'),
+    dialogTitle: t('askQuestion.dialogTitle'),
+    dialogDescription: t('askQuestion.dialogDescription'),
+    messageLabel: t('askQuestion.messageLabel'),
+    messagePlaceholder: t('askQuestion.messagePlaceholder'),
+    submit: t('askQuestion.submit'),
+    submitting: t('askQuestion.submitting'),
+    success: t('askQuestion.success'),
+    signedOutPrompt: t('askQuestion.signedOutPrompt'),
+    signIn: t('askQuestion.signIn'),
+    cancel: t('askQuestion.cancel'),
+    validationError: t('askQuestion.validationError'),
+    genericError: t('askQuestion.genericError'),
+  }
+  const askQuestionContext = {
+    experienceSlug: detail.slug,
+    experienceTitle: detail.title,
+    isSignedIn: Boolean(session?.user),
+    // Return target preserves the PDP context across the sign-in round-trip.
+    signInHref: `/sign-in?next=${encodeURIComponent(`/experience/${detail.slug}`)}`,
+    labels: askQuestionLabels,
   }
 
   return (
@@ -994,6 +1025,13 @@ export default async function ExperienceDetailPage({
           className="hidden scroll-mt-[calc(var(--header-offset,4rem)+1rem)] lg:block lg:sticky lg:top-[calc(var(--header-offset,4rem)+1rem)] lg:self-start"
         >
           <BookingRail {...bookingProps} />
+          {/* "Ask a Question" CTA near the Booking box (issue 17) — opens a
+              login-gated enquiry Dialog → an experience-category Support Ticket
+              in the admin queue, referencing the Experience by slug + title only
+              (no Vendor PII). */}
+          <div className="mt-3">
+            <AskQuestion {...askQuestionContext} />
+          </div>
         </aside>
       </div>
 
@@ -1002,7 +1040,7 @@ export default async function ExperienceDetailPage({
           from-price (lowest bracket) + a CTA opening a bottom Sheet that wraps
           the SAME BookingRailInteractive island — identical `bookingProps`, no
           data refork. `lg:hidden`; the desktop side-rail above covers ≥ lg. */}
-      <BookingRailMobile {...bookingProps} />
+      <BookingRailMobile {...bookingProps} askQuestion={askQuestionContext} />
 
       {/* SIMILAR EXPERIENCES (issue 16) — three blended intents (same activity
           in same-state/nearby regions + different activities here + popular

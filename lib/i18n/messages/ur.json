@@ -474,6 +474,21 @@
       "approximateNote": "صرف تخمینی علاقہ — درست ملاقات کا مقام بکنگ کے بعد بتایا جاتا ہے اور نیچے درج ہے۔",
       "openInMaps": "نقشے میں کھولیں",
       "mapAriaLabel": "{region} میں تخمینی علاقہ دکھانے والا نقشہ"
+    },
+    "askQuestion": {
+      "cta": "سوال پوچھیں",
+      "dialogTitle": "سوال پوچھیں",
+      "dialogDescription": "اس Experience کے بارے میں اپنا سوال Outvers سپورٹ ٹیم کو بھیجیں۔ ہم کبھی بھی Vendor کی رابطہ تفصیلات شیئر نہیں کرتے۔",
+      "messageLabel": "آپ کا سوال",
+      "messagePlaceholder": "اس Experience کے بارے میں آپ کیا جاننا چاہتے ہیں؟",
+      "submit": "سوال بھیجیں",
+      "submitting": "بھیجا جا رہا ہے…",
+      "success": "شکریہ! ہماری سپورٹ ٹیم جلد ہی آپ کو جواب دے گی۔",
+      "signedOutPrompt": "اس Experience کے بارے میں سوال پوچھنے کے لیے براہ کرم سائن ان کریں۔",
+      "signIn": "سائن ان",
+      "cancel": "منسوخ کریں",
+      "validationError": "براہ کرم پہلے اپنا سوال لکھیں۔",
+      "genericError": "کچھ غلط ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔"
     }
   },
   "SearchPage": {

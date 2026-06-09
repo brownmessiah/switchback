@@ -466,6 +466,21 @@
         "receive": "You receive the meeting point and Vendor details.",
         "conduct": "The Vendor conducts the Experience as per the listed terms."
       }
+    },
+    "askQuestion": {
+      "cta": "Ask a Question",
+      "dialogTitle": "Ask a Question",
+      "dialogDescription": "Send your question about this Experience to the Outvers support team. We never share Vendor contact details.",
+      "messageLabel": "Your question",
+      "messagePlaceholder": "What would you like to know about this Experience?",
+      "submit": "Send question",
+      "submitting": "Sending…",
+      "success": "Thanks! Our support team will reply to you shortly.",
+      "signedOutPrompt": "Please sign in to ask a question about this Experience.",
+      "signIn": "Sign in",
+      "cancel": "Cancel",
+      "validationError": "Please write your question first.",
+      "genericError": "Something went wrong. Please try again."
     }
   },
   "Gallery": {

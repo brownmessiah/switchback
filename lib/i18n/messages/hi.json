@@ -474,6 +474,21 @@
       "approximateNote": "केवल अनुमानित क्षेत्र — सटीक मिलन स्थल बुकिंग के बाद साझा किया जाता है और नीचे दिया गया है।",
       "openInMaps": "मैप में खोलें",
       "mapAriaLabel": "{region} में अनुमानित क्षेत्र दिखाने वाला मैप"
+    },
+    "askQuestion": {
+      "cta": "सवाल पूछें",
+      "dialogTitle": "सवाल पूछें",
+      "dialogDescription": "इस Experience के बारे में अपना सवाल Outvers सहायता टीम को भेजें। हम Vendor की संपर्क जानकारी कभी साझा नहीं करते।",
+      "messageLabel": "आपका सवाल",
+      "messagePlaceholder": "इस Experience के बारे में आप क्या जानना चाहते हैं?",
+      "submit": "सवाल भेजें",
+      "submitting": "भेजा जा रहा है…",
+      "success": "धन्यवाद! हमारी सहायता टीम जल्द ही आपको जवाब देगी।",
+      "signedOutPrompt": "इस Experience के बारे में सवाल पूछने के लिए कृपया साइन इन करें।",
+      "signIn": "साइन इन",
+      "cancel": "रद्द करें",
+      "validationError": "कृपया पहले अपना सवाल लिखें।",
+      "genericError": "कुछ गलत हो गया। कृपया फिर से प्रयास करें।"
     }
   },
   "SearchPage": {

@@ -364,7 +364,9 @@
       "priceTable": "Per-participant price table",
       "breakdown": "Live price breakdown",
       "advanceDue": "Advance due now (25%)",
-      "balanceDue": "Balance at T-24h"
+      "balanceDue": "Balance at T-24h",
+      "refundablePointer": "Refundable amount follows the {preset} cancellation policy — see the cancellation policy above.",
+      "fullUpfront": "Charged in full now (within 48 hours of the start, or above ₹25,000)."
     },
     "closure": {
       "heading": "Currently closed",
@@ -404,7 +406,8 @@
       "highlights": "Highlights",
       "itinerary": "Itinerary",
       "included": "Details",
-      "meetingPoint": "Meeting point"
+      "meetingPoint": "Meeting point",
+      "afterBooking": "What happens next"
     },
     "quickFacts": {
       "heading": "At a glance",
@@ -443,6 +446,20 @@
       "seatsLeft": "{count} left",
       "soldOut": "Sold out",
       "onlyNLeft": "Only {count} {count, plural, one {space} other {spaces}} left at this time"
+    },
+    "disclosure": {
+      "heading": "How Outvers works with Vendors",
+      "body": "All Experiences are operated by independent third-party Vendors. Outvers verifies vendor information, booking rules, and payment flow where applicable."
+    },
+    "afterBooking": {
+      "heading": "What happens after booking?",
+      "steps": {
+        "select": "Select your date and participants.",
+        "payAdvance": "Pay the 25% Advance securely (Partial pay).",
+        "confirm": "Outvers confirms your Booking instantly.",
+        "receive": "You receive the meeting point and Vendor details.",
+        "conduct": "The Vendor conducts the Experience as per the listed terms."
+      }
     }
   },
   "SearchPage": {

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { bracketKeyFor, computeBookingPrice } from './booking-price'
+import {
+  bracketKeyFor,
+  computeBookingPrice,
+  resolveDisplaySplit,
+} from './booking-price'
 
 const PRICES = { p12: 8500, p35: 7800, p6: 7200 }
 
@@ -65,5 +69,74 @@ describe('computeBookingPrice', () => {
   it('clamps a count below 1 up to 1', () => {
     const r = computeBookingPrice(0, PRICES)
     expect(r.total).toBe(8500)
+  })
+})
+
+describe('resolveDisplaySplit (ADR-0001 carve-outs — DISPLAY only, issue 13)', () => {
+  it('keeps the 25% Advance split for the default partial-pay case: ≥48h out AND ≤Rs.25,000', () => {
+    const r = resolveDisplaySplit({
+      total: 10000,
+      allowsPartialPay: true,
+      hoursToStart: 168, // T+7d
+    })
+    expect(r.fullUpfront).toBe(false)
+    expect(r.advanceRupees).toBe(2500) // floor(10000 * 0.25)
+    expect(r.balanceRupees).toBe(7500)
+  })
+
+  it('coerces to 100% upfront when the slot starts <48h away (the partial-pay UX value is gone)', () => {
+    const r = resolveDisplaySplit({
+      total: 10000,
+      allowsPartialPay: true,
+      hoursToStart: 24,
+    })
+    expect(r.fullUpfront).toBe(true)
+    expect(r.advanceRupees).toBe(10000) // whole amount captured now
+    expect(r.balanceRupees).toBe(0)
+  })
+
+  it('coerces to 100% upfront (escrow) when the total exceeds Rs.25,000', () => {
+    const r = resolveDisplaySplit({
+      total: 26000,
+      allowsPartialPay: true,
+      hoursToStart: 168,
+    })
+    expect(r.fullUpfront).toBe(true)
+    expect(r.advanceRupees).toBe(26000)
+    expect(r.balanceRupees).toBe(0)
+  })
+
+  it('treats exactly Rs.25,000 as still partial-pay (threshold is strictly greater-than)', () => {
+    const r = resolveDisplaySplit({
+      total: 25000,
+      allowsPartialPay: true,
+      hoursToStart: 168,
+    })
+    expect(r.fullUpfront).toBe(false)
+    expect(r.advanceRupees).toBe(6250)
+  })
+
+  it('is always full-upfront when the Experience does not allow partial pay', () => {
+    const r = resolveDisplaySplit({
+      total: 10000,
+      allowsPartialPay: false,
+      hoursToStart: 168,
+    })
+    expect(r.fullUpfront).toBe(true)
+    expect(r.advanceRupees).toBe(10000)
+    expect(r.balanceRupees).toBe(0)
+  })
+
+  it('is full-upfront when no slot is selected (hoursToStart unknown) — never under-collect', () => {
+    const r = resolveDisplaySplit({
+      total: 10000,
+      allowsPartialPay: true,
+      hoursToStart: null,
+    })
+    expect(r.fullUpfront).toBe(false)
+    // Unknown start defaults to the standard 25% preview (a date must be
+    // chosen before checkout; booking-create re-derives the authoritative
+    // split server-side against the real slot).
+    expect(r.advanceRupees).toBe(2500)
   })
 })

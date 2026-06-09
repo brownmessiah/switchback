@@ -372,7 +372,9 @@
       "priceTable": "ಪ್ರತಿ-ಭಾಗವಹಿಸುವವರ ಬೆಲೆ ಕೋಷ್ಟಕ",
       "breakdown": "ನೇರ ಬೆಲೆ ವಿವರ",
       "advanceDue": "ಈಗ ಪಾವತಿಸಬೇಕಾದ Advance (25%)",
-      "balanceDue": "T-24h ನಲ್ಲಿ ಉಳಿದ ಮೊತ್ತ"
+      "balanceDue": "T-24h ನಲ್ಲಿ ಉಳಿದ ಮೊತ್ತ",
+      "fullUpfront": "ಈಗಲೇ ಪೂರ್ಣ ಮೊತ್ತವನ್ನು ವಿಧಿಸಲಾಗುತ್ತದೆ (ಆರಂಭದ 48 ಗಂಟೆಗಳ ಒಳಗೆ, ಅಥವಾ ₹25,000 ಕ್ಕಿಂತ ಹೆಚ್ಚಿದ್ದರೆ).",
+      "refundablePointer": "ಮರುಪಾವತಿ ಮೊತ್ತವು {preset} ರದ್ದತಿ ನೀತಿಯನ್ನು ಅನುಸರಿಸುತ್ತದೆ — ಮೇಲಿನ ರದ್ದತಿ ನೀತಿಯನ್ನು ನೋಡಿ."
     },
     "closure": {
       "heading": "ಪ್ರಸ್ತುತ ಮುಚ್ಚಲಾಗಿದೆ",
@@ -412,7 +414,8 @@
       "highlights": "ಮುಖ್ಯಾಂಶಗಳು",
       "itinerary": "ಪ್ರಯಾಣ ಯೋಜನೆ",
       "included": "ವಿವರಗಳು",
-      "meetingPoint": "ಭೇಟಿ ಸ್ಥಳ"
+      "meetingPoint": "ಭೇಟಿ ಸ್ಥಳ",
+      "afterBooking": "ಮುಂದೆ ಏನಾಗುತ್ತದೆ"
     },
     "quickFacts": {
       "heading": "ಒಂದು ನೋಟದಲ್ಲಿ",
@@ -451,6 +454,20 @@
       "seatsLeft": "{count} ಬಾಕಿ",
       "soldOut": "ಮಾರಾಟವಾಗಿದೆ",
       "onlyNLeft": "ಈ ಸಮಯದಲ್ಲಿ ಕೇವಲ {count} {count, plural, one {ಸ್ಥಳ} other {ಸ್ಥಳಗಳು}} ಬಾಕಿ ಇವೆ"
+    },
+    "afterBooking": {
+      "heading": "ಬುಕಿಂಗ್ ನಂತರ ಏನಾಗುತ್ತದೆ?",
+      "steps": {
+        "conduct": "Vendor ಪಟ್ಟಿ ಮಾಡಲಾದ ನಿಯಮಗಳ ಪ್ರಕಾರ Experience ಅನ್ನು ನಡೆಸುತ್ತಾರೆ.",
+        "confirm": "Outvers ತಕ್ಷಣವೇ ನಿಮ್ಮ Booking ಅನ್ನು ದೃಢೀಕರಿಸುತ್ತದೆ.",
+        "payAdvance": "25% Advance ಅನ್ನು ಸುರಕ್ಷಿತವಾಗಿ ಪಾವತಿಸಿ (Partial pay).",
+        "receive": "ನೀವು ಸಭೆಯ ಸ್ಥಳ ಮತ್ತು Vendor ವಿವರಗಳನ್ನು ಪಡೆಯುತ್ತೀರಿ.",
+        "select": "ನಿಮ್ಮ ದಿನಾಂಕ ಮತ್ತು ಭಾಗವಹಿಸುವವರನ್ನು ಆಯ್ಕೆಮಾಡಿ."
+      }
+    },
+    "disclosure": {
+      "body": "ಎಲ್ಲಾ Experience ಗಳನ್ನು ಸ್ವತಂತ್ರ ಮೂರನೇ-ಪಕ್ಷದ Vendor ನಡೆಸುತ್ತಾರೆ. ಅನ್ವಯಿಸುವ ಕಡೆ Outvers vendor ಮಾಹಿತಿ, ಬುಕಿಂಗ್ ನಿಯಮಗಳು ಮತ್ತು ಪಾವತಿ ಹರಿವನ್ನು ಪರಿಶೀಲಿಸುತ್ತದೆ.",
+      "heading": "Outvers Vendor ಜೊತೆ ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ"
     }
   },
   "SearchPage": {

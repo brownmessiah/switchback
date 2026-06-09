@@ -372,7 +372,9 @@
       "priceTable": "ਪ੍ਰਤੀ-ਭਾਗੀਦਾਰ ਕੀਮਤ ਸਾਰਣੀ",
       "breakdown": "ਲਾਈਵ ਕੀਮਤ ਵੇਰਵਾ",
       "advanceDue": "ਹੁਣ ਦੇਣਯੋਗ Advance (25%)",
-      "balanceDue": "T-24h 'ਤੇ ਬਾਕੀ ਰਕਮ"
+      "balanceDue": "T-24h 'ਤੇ ਬਾਕੀ ਰਕਮ",
+      "fullUpfront": "ਹੁਣੇ ਪੂਰੀ ਰਕਮ ਲਈ ਜਾਵੇਗੀ (ਸ਼ੁਰੂਆਤ ਦੇ 48 ਘੰਟਿਆਂ ਦੇ ਅੰਦਰ, ਜਾਂ ₹25,000 ਤੋਂ ਵੱਧ ਹੋਣ ’ਤੇ)।",
+      "refundablePointer": "ਵਾਪਸੀਯੋਗ ਰਕਮ {preset} ਰੱਦ ਕਰਨ ਦੀ ਨੀਤੀ ਦੀ ਪਾਲਣਾ ਕਰਦੀ ਹੈ — ਉੱਪਰ ਦਿੱਤੀ ਰੱਦ ਕਰਨ ਦੀ ਨੀਤੀ ਵੇਖੋ।"
     },
     "closure": {
       "heading": "ਇਸ ਵੇਲੇ ਬੰਦ ਹੈ",
@@ -412,7 +414,8 @@
       "highlights": "ਮੁੱਖ ਆਕਰਸ਼ਣ",
       "itinerary": "ਯਾਤਰਾ ਪ੍ਰੋਗਰਾਮ",
       "included": "ਵੇਰਵੇ",
-      "meetingPoint": "ਮਿਲਣ ਦੀ ਥਾਂ"
+      "meetingPoint": "ਮਿਲਣ ਦੀ ਥਾਂ",
+      "afterBooking": "ਅੱਗੇ ਕੀ ਹੁੰਦਾ ਹੈ"
     },
     "quickFacts": {
       "heading": "ਇੱਕ ਨਜ਼ਰ ਵਿੱਚ",
@@ -451,6 +454,20 @@
       "seatsLeft": "{count} ਬਾਕੀ",
       "soldOut": "ਵਿਕ ਚੁੱਕਿਆ",
       "onlyNLeft": "ਇਸ ਸਮੇਂ ਸਿਰਫ਼ {count} {count, plural, one {ਥਾਂ} other {ਥਾਵਾਂ}} ਬਾਕੀ ਹਨ"
+    },
+    "afterBooking": {
+      "heading": "ਬੁਕਿੰਗ ਤੋਂ ਬਾਅਦ ਕੀ ਹੁੰਦਾ ਹੈ?",
+      "steps": {
+        "conduct": "Vendor ਸੂਚੀਬੱਧ ਸ਼ਰਤਾਂ ਅਨੁਸਾਰ Experience ਚਲਾਉਂਦਾ ਹੈ।",
+        "confirm": "Outvers ਤੁਰੰਤ ਤੁਹਾਡੀ Booking ਦੀ ਪੁਸ਼ਟੀ ਕਰਦਾ ਹੈ।",
+        "payAdvance": "25% Advance ਸੁਰੱਖਿਅਤ ਢੰਗ ਨਾਲ ਅਦਾ ਕਰੋ (Partial pay)।",
+        "receive": "ਤੁਹਾਨੂੰ ਮੀਟਿੰਗ ਪੁਆਇੰਟ ਅਤੇ Vendor ਦੇ ਵੇਰਵੇ ਮਿਲਦੇ ਹਨ।",
+        "select": "ਆਪਣੀ ਤਾਰੀਖ ਅਤੇ ਭਾਗੀਦਾਰ ਚੁਣੋ।"
+      }
+    },
+    "disclosure": {
+      "body": "ਸਾਰੀਆਂ Experience ਸੁਤੰਤਰ ਤੀਜੀ-ਧਿਰ Vendor ਦੁਆਰਾ ਚਲਾਈਆਂ ਜਾਂਦੀਆਂ ਹਨ। ਲਾਗੂ ਹੋਣ ਵਾਲੀ ਥਾਂ ਉੱਤੇ Outvers vendor ਜਾਣਕਾਰੀ, ਬੁਕਿੰਗ ਨਿਯਮ ਅਤੇ ਪੇਮੈਂਟ ਪ੍ਰਵਾਹ ਦੀ ਪੁਸ਼ਟੀ ਕਰਦਾ ਹੈ।",
+      "heading": "Outvers, Vendor ਨਾਲ ਕਿਵੇਂ ਕੰਮ ਕਰਦਾ ਹੈ"
     }
   },
   "SearchPage": {

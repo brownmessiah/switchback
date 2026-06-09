@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils'
 import {
   bracketKeyFor,
   computeBookingPrice,
+  resolveDisplaySplit,
   type BracketPrices,
 } from '@/lib/experiences/booking-price'
 import {
@@ -43,6 +44,13 @@ export interface BookingRailInteractiveProps {
     notice: string
     advanceLabel: string
     balanceLabel: string
+    /** Already-translated refundable/cancellation pointer (no fabricated number). */
+    refundablePointer: string
+    /**
+     * Already-translated "Charged in full now" notice shown under the ADR-0001
+     * carve-outs (slot <48h away, or total > Rs.25,000).
+     */
+    fullUpfrontNotice: string
   }
   freeCancellation: string
   bookNowLabel: string
@@ -118,6 +126,21 @@ export function BookingRailInteractive({
   const price = computeBookingPrice(count, prices)
   const activeBracket = bracketKeyFor(count)
   const bracketKeys = ['1_2', '3_5', '6_plus'] as const
+
+  // DISPLAY-only payment split (issue 13). Mirrors the ADR-0001 carve-outs the
+  // money path applies server-side so the transparency block never promises a
+  // 25% Advance that booking-create would coerce to 100% (slot <48h away, or
+  // total > Rs.25,000). `hoursToStart` is null until a date is chosen — then the
+  // standard 25% preview shows; the authoritative split is still re-derived at
+  // Booking-create against the real slot.
+  const hoursToStart = selectedSlot
+    ? (new Date(selectedSlot.startAtISO).getTime() - Date.now()) / 3_600_000
+    : null
+  const split = resolveDisplaySplit({
+    total: price.total,
+    allowsPartialPay: Boolean(partialPay),
+    hoursToStart,
+  })
 
   /** Cap the count to a slot's bookable ceiling when the slot/date changes. */
   function clampCountTo(slotId: string | null): void {
@@ -281,25 +304,39 @@ export function BookingRailInteractive({
                   {partialPay.advanceLabel}
                 </dt>
                 <dd className="text-sm font-semibold tabular-nums">
-                  ₹{formatRupees(price.advanceRupees)}
+                  ₹{formatRupees(split.advanceRupees)}
                 </dd>
               </div>
-              <div className="flex items-baseline justify-between">
-                <dt className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Clock aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
-                  {partialPay.balanceLabel}
-                </dt>
-                <dd className="text-sm font-semibold tabular-nums">
-                  ₹{formatRupees(price.balanceRupees)}
-                </dd>
-              </div>
+              {/* Balance row only when an Advance/balance split actually applies.
+                  Under the ADR-0001 carve-outs (slot <48h, or total > Rs.25,000)
+                  the whole amount is captured now, so there is no balance line. */}
+              {!split.fullUpfront && (
+                <div className="flex items-baseline justify-between">
+                  <dt className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <Clock aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+                    {partialPay.balanceLabel}
+                  </dt>
+                  <dd className="text-sm font-semibold tabular-nums">
+                    ₹{formatRupees(split.balanceRupees)}
+                  </dd>
+                </div>
+              )}
             </>
           )}
         </dl>
         {partialPay && (
           <p className="flex items-start gap-2 rounded-[var(--radius-md)] bg-info-subtle px-3 py-2 text-xs text-info">
             <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-            <span>{partialPay.notice}</span>
+            <span>{split.fullUpfront ? partialPay.fullUpfrontNotice : partialPay.notice}</span>
+          </p>
+        )}
+        {/* Refundable/cancellation pointer (ADR-0005). We do NOT fabricate a
+            refundable rupee number — it is a pure function of (preset,
+            cancellation timestamp, booking total) — we point to the active
+            preset's policy so the breakdown stays accurate and honest. */}
+        {partialPay && (
+          <p className="text-2xs leading-relaxed text-muted-foreground">
+            {partialPay.refundablePointer}
           </p>
         )}
       </div>

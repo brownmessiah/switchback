@@ -294,7 +294,9 @@
       "priceTable": "ପ୍ରତି-ଅଂଶଗ୍ରହଣକାରୀ ମୂଲ୍ୟ ତାଲିକା",
       "breakdown": "ଲାଇଭ୍ ମୂଲ୍ୟ ବିବରଣୀ",
       "advanceDue": "ବର୍ତ୍ତମାନ ଦେୟ Advance (25%)",
-      "balanceDue": "T-24h ରେ ଅବଶିଷ୍ଟ ରାଶି"
+      "balanceDue": "T-24h ରେ ଅବଶିଷ୍ଟ ରାଶି",
+      "fullUpfront": "ବର୍ତ୍ତମାନ ସମ୍ପୂର୍ଣ୍ଣ ରାଶି ନିଆଯିବ (ଆରମ୍ଭର 48 ଘଣ୍ଟା ମଧ୍ୟରେ, କିମ୍ବା ₹25,000 ରୁ ଅଧିକ ହେଲେ)।",
+      "refundablePointer": "ଫେରସ୍ତଯୋଗ୍ୟ ରାଶି {preset} ବାତିଲ ନୀତି ଅନୁସରଣ କରେ — ଉପରେ ଥିବା ବାତିଲ ନୀତି ଦେଖନ୍ତୁ।"
     },
     "closure": {
       "heading": "ବର୍ତ୍ତମାନ ବନ୍ଦ ଅଛି",
@@ -334,7 +336,8 @@
       "highlights": "ମୁଖ୍ୟ ଆକର୍ଷଣ",
       "itinerary": "ଯାତ୍ରା କାର୍ଯ୍ୟକ୍ରମ",
       "included": "ବିବରଣୀ",
-      "meetingPoint": "ମିଳନ ସ୍ଥଳ"
+      "meetingPoint": "ମିଳନ ସ୍ଥଳ",
+      "afterBooking": "ଏହାପରେ କଣ ହୁଏ"
     },
     "quickFacts": {
       "heading": "ଏକ ନଜରରେ",
@@ -373,6 +376,20 @@
       "seatsLeft": "{count}ଟି ବାକି",
       "soldOut": "ବିକ୍ରି ହୋଇଗଲା",
       "onlyNLeft": "ଏହି ସମୟରେ କେବଳ {count}ଟି {count, plural, one {ସ୍ଥାନ} other {ସ୍ଥାନ}} ବାକି ଅଛି"
+    },
+    "afterBooking": {
+      "heading": "ବୁକିଂ ପରେ କଣ ହୁଏ?",
+      "steps": {
+        "conduct": "Vendor ତାଲିକାଭୁକ୍ତ ସର୍ତ୍ତ ଅନୁଯାୟୀ Experience ପରିଚାଳନା କରନ୍ତି।",
+        "confirm": "Outvers ତୁରନ୍ତ ଆପଣଙ୍କ Booking ନିଶ୍ଚିତ କରେ।",
+        "payAdvance": "25% Advance ସୁରକ୍ଷିତ ଭାବେ ଦେୟ କରନ୍ତୁ (Partial pay)।",
+        "receive": "ଆପଣ ମିଟିଂ ପଏଣ୍ଟ ଏବଂ Vendor ବିବରଣୀ ପାଆନ୍ତି।",
+        "select": "ଆପଣଙ୍କ ତାରିଖ ଏବଂ ଅଂଶଗ୍ରହଣକାରୀ ବାଛନ୍ତୁ।"
+      }
+    },
+    "disclosure": {
+      "body": "ସମସ୍ତ Experience ସ୍ୱାଧୀନ ତୃତୀୟ-ପକ୍ଷ Vendor ଦ୍ୱାରା ପରିଚାଳିତ ହୁଏ। ପ୍ରଯୋଜ୍ୟ ସ୍ଥାନରେ Outvers vendor ସୂଚନା, ବୁକିଂ ନିୟମ ଏବଂ ପେମେଣ୍ଟ ପ୍ରବାହ ଯାଞ୍ଚ କରେ।",
+      "heading": "Outvers କିପରି Vendor ସହିତ କାମ କରେ"
     }
   },
   "SearchPage": {

@@ -372,7 +372,9 @@
       "priceTable": "فی شریک قیمت جدول",
       "breakdown": "لائیو قیمت کی تفصیل",
       "advanceDue": "ابھی واجب الادا Advance (25%)",
-      "balanceDue": "T-24h پر بقیہ رقم"
+      "balanceDue": "T-24h پر بقیہ رقم",
+      "fullUpfront": "ابھی پوری رقم وصول کی جائے گی (آغاز کے 48 گھنٹوں کے اندر، یا ₹25,000 سے زیادہ ہونے پر)۔",
+      "refundablePointer": "قابل واپسی رقم {preset} منسوخی پالیسی کی پیروی کرتی ہے — اوپر دی گئی منسوخی پالیسی دیکھیں۔"
     },
     "closure": {
       "heading": "فی الحال بند ہے",
@@ -412,7 +414,8 @@
       "highlights": "اہم خصوصیات",
       "itinerary": "سفر نامہ",
       "included": "تفصیلات",
-      "meetingPoint": "ملاقات کی جگہ"
+      "meetingPoint": "ملاقات کی جگہ",
+      "afterBooking": "آگے کیا ہوتا ہے"
     },
     "quickFacts": {
       "heading": "ایک نظر میں",
@@ -451,6 +454,20 @@
       "seatsLeft": "{count} باقی",
       "soldOut": "فروخت ہو چکا",
       "onlyNLeft": "اس وقت صرف {count} {count, plural, one {جگہ} other {جگہیں}} باقی ہیں"
+    },
+    "afterBooking": {
+      "heading": "بکنگ کے بعد کیا ہوتا ہے؟",
+      "steps": {
+        "conduct": "Vendor درج شدہ شرائط کے مطابق Experience کا انعقاد کرتا ہے۔",
+        "confirm": "Outvers فوری طور پر آپ کی Booking کی تصدیق کرتا ہے۔",
+        "payAdvance": "25% Advance محفوظ طریقے سے ادا کریں (Partial pay)۔",
+        "receive": "آپ کو میٹنگ پوائنٹ اور Vendor کی تفصیلات ملتی ہیں۔",
+        "select": "اپنی تاریخ اور شرکاء منتخب کریں۔"
+      }
+    },
+    "disclosure": {
+      "body": "تمام Experience خودمختار فریق ثالث Vendor چلاتے ہیں۔ جہاں لاگو ہو وہاں Outvers، vendor معلومات، بکنگ قواعد اور ادائیگی کے بہاؤ کی تصدیق کرتا ہے۔",
+      "heading": "Outvers، Vendor کے ساتھ کیسے کام کرتا ہے"
     }
   },
   "SearchPage": {

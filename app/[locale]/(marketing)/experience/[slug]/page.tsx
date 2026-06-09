@@ -65,6 +65,10 @@ import { touristTrip } from '@/lib/seo/schemas/trip'
 import { AnchorNav, type AnchorNavItem } from './anchor-nav'
 import { BookingRail, type BookingRailClosure } from './booking-rail'
 import { BookingRailMobile } from './booking-rail-mobile'
+import {
+  ExperienceAfterBooking,
+  ExperienceDisclosure,
+} from './experience-trust-blocks'
 
 export const revalidate = 60
 
@@ -401,8 +405,22 @@ export default async function ExperienceDetailPage({
       ? [{ id: 'permits', label: t('nav.permits') }]
       : []),
     { id: 'cancellation', label: t('nav.cancellation') },
+    { id: 'afterBooking', label: t('nav.afterBooking') },
     { id: 'reviews', label: t('nav.reviews') },
     { id: 'faq', label: t('nav.faq') },
+  ]
+
+  // "What happens after booking?" (issue 13) — the 5-step post-booking journey,
+  // pre-resolved as an ordered list (string-literal keys; no dynamic keys). The
+  // copy carries the load-bearing vocabulary: 25% Advance / Partial pay
+  // (ADR-0001), Instant Confirmation (ADR-0003), meeting-point + Vendor-details
+  // handover (ADR-0009).
+  const afterBookingSteps = [
+    t('afterBooking.steps.select'),
+    t('afterBooking.steps.payAdvance'),
+    t('afterBooking.steps.confirm'),
+    t('afterBooking.steps.receive'),
+    t('afterBooking.steps.conduct'),
   ]
 
   // The single, already-computed Booking prop set — consumed verbatim by BOTH
@@ -427,6 +445,13 @@ export default async function ExperienceDetailPage({
           notice: t('pricing.partialPay'),
           advanceLabel: t('pricing.advanceDue'),
           balanceLabel: t('pricing.balanceDue'),
+          // Issue 13 — point to the active cancellation preset (ADR-0005)
+          // rather than fabricate a refundable rupee figure (which depends on
+          // the cancellation timestamp). Plus the ADR-0001 carve-out notice.
+          refundablePointer: t('pricing.refundablePointer', {
+            preset: detail.cancellationPreset,
+          }),
+          fullUpfrontNotice: t('pricing.fullUpfront'),
         }
       : undefined,
     freeCancellation: t('pricing.freeCancellation'),
@@ -867,6 +892,30 @@ export default async function ExperienceDetailPage({
                 </p>
               </div>
             </section>
+
+            {/* Third-party Vendor disclosure (issue 13) — a trust note placed in
+                the content flow adjacent to the Booking box (the desktop sticky
+                rail sits beside this column; the mobile bottom-bar follows). It
+                states, in plain language, that Experiences are operated by
+                independent third-party Vendors and what Outvers verifies. The
+                NOUN is always "Vendor" (CONTEXT.md). Server-rendered → crawlable
+                on every Experience. */}
+            <section id="vendorDisclosure">
+              <ExperienceDisclosure
+                heading={t('disclosure.heading')}
+                body={t('disclosure.body')}
+              />
+            </section>
+
+            {/* "What happens after booking?" (issue 13) — the 5-step journey,
+                placed AFTER the booking context (DECISION D11). The component
+                owns its own <section id="afterBooking"> so it picks up the
+                hairline-divider rhythm + anchor target. Server-rendered <ol> →
+                crawlable. */}
+            <ExperienceAfterBooking
+              heading={t('afterBooking.heading')}
+              steps={afterBookingSteps}
+            />
 
             {/* Reviews (anchor target #reviews). */}
             <section id="reviews">

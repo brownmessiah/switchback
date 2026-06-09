@@ -372,7 +372,9 @@
       "priceTable": "प्रति-प्रतिभागी मूल्य तालिका",
       "breakdown": "लाइव मूल्य विवरण",
       "advanceDue": "अभी देय Advance (25%)",
-      "balanceDue": "शेष राशि T-24h पर"
+      "balanceDue": "शेष राशि T-24h पर",
+      "fullUpfront": "अभी पूरी राशि ली जाएगी (शुरुआत के 48 घंटे के भीतर, या ₹25,000 से अधिक होने पर)।",
+      "refundablePointer": "रिफंड-योग्य राशि {preset} रद्दीकरण नीति का पालन करती है — ऊपर दी गई रद्दीकरण नीति देखें।"
     },
     "closure": {
       "heading": "अभी बंद है",
@@ -412,7 +414,8 @@
       "highlights": "मुख्य आकर्षण",
       "itinerary": "यात्रा कार्यक्रम",
       "included": "विवरण",
-      "meetingPoint": "मिलन स्थल"
+      "meetingPoint": "मिलन स्थल",
+      "afterBooking": "आगे क्या होता है"
     },
     "quickFacts": {
       "heading": "एक नज़र में",
@@ -451,6 +454,20 @@
       "seatsLeft": "{count} शेष",
       "soldOut": "बिक चुका",
       "onlyNLeft": "इस समय केवल {count} {count, plural, one {स्थान} other {स्थान}} शेष हैं"
+    },
+    "afterBooking": {
+      "heading": "बुकिंग के बाद क्या होता है?",
+      "steps": {
+        "conduct": "Vendor सूचीबद्ध शर्तों के अनुसार Experience संचालित करता है।",
+        "confirm": "Outvers तुरंत आपकी Booking की पुष्टि करता है।",
+        "payAdvance": "25% Advance सुरक्षित रूप से चुकाएँ (Partial pay)।",
+        "receive": "आपको मीटिंग पॉइंट और Vendor का विवरण मिलता है।",
+        "select": "अपनी तारीख और प्रतिभागी चुनें।"
+      }
+    },
+    "disclosure": {
+      "body": "सभी Experience स्वतंत्र तृतीय-पक्ष Vendor द्वारा संचालित होती हैं। Outvers जहाँ लागू हो वहाँ vendor जानकारी, बुकिंग नियम और भुगतान प्रवाह सत्यापित करता है।",
+      "heading": "Outvers, Vendor के साथ कैसे काम करता है"
     }
   },
   "SearchPage": {

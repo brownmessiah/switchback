@@ -294,7 +294,9 @@
       "priceTable": "প্ৰতি-অংশগ্ৰহণকাৰী মূল্য তালিকা",
       "breakdown": "লাইভ মূল্য বিৱৰণ",
       "advanceDue": "এতিয়া দিবলগীয়া Advance (25%)",
-      "balanceDue": "T-24h ত বাকী ৰাশি"
+      "balanceDue": "T-24h ত বাকী ৰাশি",
+      "fullUpfront": "এতিয়াই সম্পূৰ্ণ ধন লোৱা হ'ব (আৰম্ভৰ 48 ঘণ্টাৰ ভিতৰত, বা ₹25,000-ৰ অধিক হ'লে)।",
+      "refundablePointer": "ঘূৰাই দিব পৰা পৰিমাণ {preset} বাতিলকৰণ নীতি অনুসৰি — ওপৰৰ বাতিলকৰণ নীতি চাওক।"
     },
     "closure": {
       "heading": "বৰ্তমানে বন্ধ",
@@ -334,7 +336,8 @@
       "highlights": "মুখ্য আকৰ্ষণ",
       "itinerary": "ভ্ৰমণসূচী",
       "included": "বিৱৰণ",
-      "meetingPoint": "মিলনস্থল"
+      "meetingPoint": "মিলনস্থল",
+      "afterBooking": "পিছত কি হয়"
     },
     "quickFacts": {
       "heading": "এক নজৰত",
@@ -373,6 +376,20 @@
       "seatsLeft": "{count}টা বাকী",
       "soldOut": "বিক্ৰী হৈ গৈছে",
       "onlyNLeft": "এই সময়ত কেৱল {count}টা {count, plural, one {ঠাই} other {ঠাই}} বাকী আছে"
+    },
+    "afterBooking": {
+      "heading": "বুকিঙৰ পিছত কি হয়?",
+      "steps": {
+        "conduct": "Vendor-এ তালিকাভুক্ত চৰ্তানুসৰি Experience পৰিচালনা কৰে।",
+        "confirm": "Outvers-এ তৎক্ষণাত আপোনাৰ Booking নিশ্চিত কৰে।",
+        "payAdvance": "25% Advance সুৰক্ষিতভাৱে পৰিশোধ কৰক (Partial pay)।",
+        "receive": "আপুনি মিটিং পইণ্ট আৰু Vendor-ৰ বিৱৰণ লাভ কৰে।",
+        "select": "আপোনাৰ তাৰিখ আৰু অংশগ্ৰহণকাৰী বাছনি কৰক।"
+      }
+    },
+    "disclosure": {
+      "body": "সকলো Experience স্বতন্ত্ৰ তৃতীয়-পক্ষৰ Vendor-এ পৰিচালনা কৰে। Outvers-এ প্ৰযোজ্য স্থানত vendor-ৰ তথ্য, বুকিং নিয়ম আৰু পেমেণ্ট প্ৰৱাহ সত্যাপন কৰে।",
+      "heading": "Outvers কেনেদৰে Vendor-ৰ সৈতে কাম কৰে"
     }
   },
   "SearchPage": {

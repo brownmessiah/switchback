@@ -51,6 +51,10 @@ interface BookingRailProps {
     advanceLabel: string
     /** Already-translated "Balance at T-24h" label. */
     balanceLabel: string
+    /** Already-translated refundable/cancellation pointer (issue 13). */
+    refundablePointer: string
+    /** Already-translated "charged in full now" carve-out notice (issue 13). */
+    fullUpfrontNotice: string
   }
   /** Already-translated "Free cancellation · 24h refund SLA" line. */
   freeCancellation: string

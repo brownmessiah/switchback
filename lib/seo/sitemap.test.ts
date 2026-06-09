@@ -30,6 +30,10 @@ describe('STATIC_PUBLIC_PATHS', () => {
     expect(STATIC_PUBLIC_PATHS).toContain('/sign-in')
     expect(STATIC_PUBLIC_PATHS).toContain('/cancellation-policy')
   })
+
+  it('includes the public /vendor-partner landing page (issue 06)', () => {
+    expect(STATIC_PUBLIC_PATHS).toContain('/vendor-partner')
+  })
 })
 
 describe('generateDestinationSitemapUrls', () => {
@@ -84,6 +88,7 @@ describe('generateSitemapUrls', () => {
       expect(urlStrings).toContain(`${siteUrl}/search`)
       expect(urlStrings).toContain(`${siteUrl}/sign-in`)
       expect(urlStrings).toContain(`${siteUrl}/cancellation-policy`)
+      expect(urlStrings).toContain(`${siteUrl}/vendor-partner`)
     })
 
     it('each entry has a lastModified date', () => {

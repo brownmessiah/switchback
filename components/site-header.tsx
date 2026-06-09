@@ -35,11 +35,11 @@ const NAV_LINKS = [
 ] as const
 
 /**
- * Supply-side CTA. TODO(#06): re-point to /vendor-partner once issue #06 builds
- * that route — /vendor/onboarding is the interim destination (same target +
- * TODO as the home hero CTA from issue 02).
+ * Supply-side CTA → the public /vendor-partner landing page (issue 06), which
+ * funnels into the auth-gated /vendor/onboarding. The nav points at the
+ * crawlable partner page, not the onboarding route itself.
  */
-const VENDOR_CTA_HREF = '/vendor/onboarding'
+const VENDOR_CTA_HREF = '/vendor-partner'
 
 export function SiteHeader(): ReactElement | null {
   const pathname = usePathname()

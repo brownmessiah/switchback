@@ -83,12 +83,12 @@ describe('SiteHeader — discovery-forward primary nav (issue 03)', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('renders a right-side "List your experience" CTA → /vendor/onboarding', () => {
+  it('renders a right-side "List your experience" CTA → /vendor-partner (issue 06)', () => {
     render(<SiteHeader />)
     const nav = getPrimaryNav()
     expect(
       within(nav).getByRole('link', { name: 'listYourExperience' }),
-    ).toHaveAttribute('href', '/vendor/onboarding')
+    ).toHaveAttribute('href', '/vendor-partner')
   })
 
   it('keeps the AuthStatus (Sign in) control on the desktop bar', () => {
@@ -134,12 +134,12 @@ describe('SiteHeader — mobile drawer mirrors the discovery nav (issue 03)', ()
     )
   })
 
-  it('mirrors the right-side CTAs: List your experience + Sign in', () => {
+  it('mirrors the right-side CTAs: List your experience (→ /vendor-partner) + Sign in', () => {
     render(<SiteHeader />)
     const nav = getMobileNav()
     expect(
       within(nav).getByRole('link', { name: 'listYourExperience' }),
-    ).toHaveAttribute('href', '/vendor/onboarding')
+    ).toHaveAttribute('href', '/vendor-partner')
     expect(within(nav).getByRole('link', { name: 'signIn' })).toHaveAttribute(
       'href',
       '/sign-in',

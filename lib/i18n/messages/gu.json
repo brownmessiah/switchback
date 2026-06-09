@@ -1169,5 +1169,84 @@
     "partialPay": "આંશિક ચુકવણી ઉપલબ્ધ",
     "flexibleCancellation": "લવચીક રદ કરણ",
     "beginnerFriendly": "શરૂઆતકર્તાઓ માટે અનુકૂળ"
+  },
+  "VendorPartnerPage": {
+    "metadata": {
+      "title": "Outvers પર તમારો સાહસ વ્યવસાય સૂચિબદ્ધ કરો · Vendor બનો",
+      "description": "Outvers પર તમારો સાહસ-પ્રવૃત્તિ વ્યવસાય સૂચિબદ્ધ કરો — ચકાસાયેલ Experiences માટે ભારતનું માર્કેટપ્લેસ. ઑનલાઇન Bookings લો, Verified Vendor બેજ મેળવો, Payouts ટ્રૅક કરો, અને સાહસ શોધતા customers સુધી પહોંચો. Vendor onboarding શરૂ કરો."
+    },
+    "breadcrumb": {
+      "label": "Vendor બનો"
+    },
+    "hero": {
+      "eyebrow": "Vendors માટે",
+      "title": "Outvers પર તમારો સાહસ વ્યવસાય સૂચિબદ્ધ કરો",
+      "description": "Outvers એ ચકાસાયેલ સાહસ Experiences માટે ભારતનું માર્કેટપ્લેસ છે. તમારો રાફ્ટિંગ, ટ્રેકિંગ, પેરાગ્લાઇડિંગ અથવા ડાઇવિંગ વ્યવસાય ઑનલાઇન લાવો, દેશભરના customers પાસેથી Bookings લો, અને વિશ્વસનીય રીતે ચૂકવણી મેળવો — દરેક સૂચિ પાછળ ચકાસાયેલ Vendor પ્રોફાઇલના વિશ્વાસ સાથે.",
+      "cta": "Start Vendor Onboarding"
+    },
+    "benefits": {
+      "heading": "Outvers પર શા માટે સૂચિબદ્ધ કરવું",
+      "onlineBookingsTitle": "ઑનલાઇન Bookings લો",
+      "onlineBookingsBody": "Customers તમારી Experiences ને Outvers પર શોધે છે, બુક કરે છે અને ચૂકવણી કરે છે — partial pay (હવે 25% Advance, બાકીનું પ્રવૃત્તિના 24 કલાક પહેલાં આપમેળે કૅપ્ચર) તમારા માટે સંભાળવામાં આવે છે.",
+      "verifiedBadgeTitle": "Verified Vendor બેજ મેળવો",
+      "verifiedBadgeBody": "KYC સીડી ચઢો અને દરેક Experience કાર્ડ પર \"Identity verified\" અથવા \"Business verified\" બેજ બતાવો — જે વિશ્વાસનો સંકેત જોનારાઓને બુકિંગમાં ફેરવે છે.",
+      "dashboardTitle": "એક જ ડેશબોર્ડથી ચલાવો",
+      "dashboardBody": "સાહસ વ્યવસાયો માટે બનાવેલ એક જ Vendor ડેશબોર્ડથી સૂચિઓ, ઉપલબ્ધતા, Bookings અને customer સંદેશા સંચાલિત કરો.",
+      "payoutTrackingTitle": "દરેક Payout ટ્રૅક કરો",
+      "payoutTrackingBody": "તમે કેટલું કમાયા અને દરેક Payout ક્યારે પહોંચે છે તે ચોક્કસ જુઓ. Outvers તમારા વતી GST અને TDS સંભાળે છે જેથી ગણિત ક્યારેય અનુમાન ન રહે.",
+      "visibilityTitle": "સમગ્ર ભારતમાં શોધાઓ",
+      "visibilityBody": "તમે જે આપો છો તે પહેલેથી જ શોધી રહેલા customers માટે ઑપ્ટિમાઇઝ કરેલ ગંતવ્ય, પ્રવૃત્તિ અને શોધ પૃષ્ઠો પર તમારી Experiences દેખાય છે."
+    },
+    "whoCanJoin": {
+      "heading": "કોણ જોડાઈ શકે",
+      "intro": "Outvers એ ભારતમાં વાસ્તવિક Experiences ચલાવતા સ્વતંત્ર સાહસ-પ્રવૃત્તિ Vendors માટે છે:",
+      "raftingTitle": "રાફ્ટિંગ સંસ્થાઓ",
+      "raftingBody": "પ્રમાણિત માર્ગદર્શકો અને તેમના વિસ્તાર માટે જરૂરી પરમિટ સાથે રિવર-રાફ્ટિંગ Vendors.",
+      "trekkingTitle": "ટ્રેકિંગ કંપનીઓ",
+      "trekkingBody": "એક-દિવસ અને બહુ-દિવસીય ટ્રેક Vendors, એક દિવસની ચઢાઈથી ઊંચાઈ વાળા અભિયાનો સુધી.",
+      "paraglidingTitle": "પેરાગ્લાઇડિંગ શાળાઓ",
+      "paraglidingBody": "APPI-રેટેડ પાઇલટ સાથે ટેન્ડમ અને સોલો પેરાગ્લાઇડિંગ Vendors.",
+      "divingTitle": "ડાઇવિંગ અને જળ રમતો",
+      "divingBody": "ભારતના દરિયાકાંઠાના ગંતવ્યો પર સ્કૂબા, સ્નોર્કલિંગ અને જળ-રમત Vendors."
+    },
+    "documents": {
+      "heading": "ચકાસણી સ્તર મુજબ જરૂરી દસ્તાવેજો",
+      "intro": "Outvers Vendors ને ત્રણ-સ્તરની KYC સીડી પર (ADR-0007) ચકાસે છે. તમે Tier 1 પર સૂચિબદ્ધ કરવાનું શરૂ કરો છો અને ચકાસણી સાથે વધુ અનલૉક કરો છો. ઉપરાંત, કમાણી કરી શકાય તેવા દરેક સ્તરે Payouts માટે બેંક વિગતો જરૂરી છે.",
+      "phoneTitle": "Tier 1 — Phone verified",
+      "phoneDocs": "સાઇનઅપ પર OTP દ્વારા પુષ્ટિ કરેલ ફોન નંબર. બસ એટલું જ — નોંધણી કરતાં જ આપમેળે.",
+      "phoneCan": "તમારી Vendor પ્રોફાઇલ બનાવો અને Experiences નો મુસદ્દો બનાવો (અપ્રકાશિત તરીકે સાચવાય છે).",
+      "phoneCannot": "હજુ પ્રકાશિત કરી શકાતું નથી, Bookings સ્વીકારી શકાતી નથી, અથવા Payouts મેળવી શકાતા નથી. કોઈ બેજ નથી.",
+      "identityTitle": "Tier 2 — Identity verified",
+      "identityBadge": "Identity verified",
+      "identityDocs": "OTP (UIDAI eKYC) દ્વારા ચકાસાયેલ Aadhaar, સબમિટ કરેલ અને માન્ય કરેલ PAN, વહીવટી સમીક્ષા માટે સબમિટ કરેલ ઓછામાં ઓછું એક Experience, અને Payouts માટે બેંક વિગતો.",
+      "identityCan": "મર્યાદાઓની અંદર પ્રકાશિત કરો (એક-દિવસ Experiences, વ્યક્તિ દીઠ ₹5,000 સુધી, સ્લોટ દીઠ 8 સહભાગીઓ સુધી), Bookings સ્વીકારો અને Payouts મેળવો.",
+      "identityCannot": "Tier 3 સુધી કોઈ Combo Experiences નથી અને બહુ-દિવસીય ટ્રેક નથી.",
+      "businessTitle": "Tier 3 — Business verified",
+      "businessBadge": "Business verified",
+      "businessDocs": "Tier 2 ની બધી બાબતો, ઉપરાંત એક GSTIN (જો તમારું જાહેર કરેલ ટર્નઓવર ₹20L અથવા વધુ હોય) અથવા Udyam Aadhaar નોંધણી સાથે મર્યાદા-નીચે સ્વ-ઘોષણા, અને જરૂરી હોય તેવી કોઈપણ સાહસ શ્રેણી માટે ઓછામાં ઓછું એક માર્ગદર્શક-પ્રમાણન દસ્તાવેજ (ATOAI / RMI / NIM).",
+      "businessCan": "નિયંત્રણ-મુક્ત સૂચિ — બહુ-દિવસીય Experiences, Combos, કોઈપણ ટિકિટ કદ, કોઈપણ સહભાગી સંખ્યા.",
+      "businessCannot": "અમારી ટીમ સાથે 30-મિનિટની રેકોર્ડ કરેલ વિડિયો-કૉલ ચકાસણી પછી અનલૉક થાય છે."
+    },
+    "verification": {
+      "heading": "ચકાસણી કેવી રીતે કાર્ય કરે છે",
+      "intro": "દરેક સ્તરનો એક સ્પષ્ટ ગેટ છે. આગળ શું છે તેનો અંદાજ તમારે ક્યારેય લગાવવો પડતો નથી.",
+      "phoneStep": "સાઇનઅપ કરો અને OTP થી તમારો ફોન પુષ્ટિ કરો. તમે તરત જ તમારી Vendor પ્રોફાઇલ બનાવી શકો છો અને Experiences નો મુસદ્દો બનાવી શકો છો.",
+      "identityStep": "Aadhaar OTP અને માન્ય PAN થી તમારી ઓળખ ચકાસો, પછી પ્રકાશિત કરવા અને કમાણી શરૂ કરવા તમારી પ્રથમ Experience વહીવટી સમીક્ષા માટે સબમિટ કરો.",
+      "businessStep": "અમારી ટીમ સાથે 30-મિનિટનો રેકોર્ડ કરેલ વિડિયો કૉલ પૂર્ણ કરો, GSTIN અથવા Udyam નોંધણી સબમિટ કરો, અને નિયંત્રણ-મુક્ત સૂચિ અનલૉક કરવા કોઈપણ જરૂરી માર્ગદર્શક પ્રમાણન અપલોડ કરો."
+    },
+    "bookingPayout": {
+      "heading": "Bookings અને Payouts કેવી રીતે કાર્ય કરે છે",
+      "bookingTitle": "Customers Outvers પર બુક કરે છે અને ચૂકવણી કરે છે",
+      "bookingBody": "Customers તમારી Experiences બ્રાઉઝ કરે છે, એક સ્લોટ પસંદ કરે છે અને સુરક્ષિત રીતે ચૂકવણી કરે છે. તમે તમારા ડેશબોર્ડથી Booking ની પુષ્ટિ કરો છો.",
+      "partialPayTitle": "Partial pay, તમારા માટે સંભાળાયેલ",
+      "partialPayBody": "પાત્ર Bookings પહેલા 25% Advance એકત્રિત કરે છે; બાકીના 75% પ્રવૃત્તિના 24 કલાક પહેલાં આપમેળે કૅપ્ચર થાય છે — બાકી રકમ પાછળ દોડવાની જરૂર નથી.",
+      "payoutTitle": "તમારી બેંકમાં વિશ્વસનીય Payouts",
+      "payoutBody": "એકવાર એક Experience પૂરી થઈ જાય, તમારી કમાણી તમારા નોંધાયેલ બેંક ખાતામાં Payout કરવામાં આવે છે. Outvers GST અને TDS સંભાળે છે જેથી Payout રકમ હંમેશા સ્પષ્ટ રહે."
+    },
+    "finalCta": {
+      "heading": "તમારો સાહસ વ્યવસાય સૂચિબદ્ધ કરવા તૈયાર છો?",
+      "body": "મિનિટોમાં તમારી Vendor પ્રોફાઇલ બનાવો અને આજે જ Experiences નો મુસદ્દો બનાવવાનું શરૂ કરો.",
+      "cta": "Start Vendor Onboarding"
+    }
   }
 }

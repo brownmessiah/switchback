@@ -1169,5 +1169,84 @@
       "title": "We could not build that itinerary",
       "body": "Something went wrong. Please adjust your inputs and try again."
     }
+  },
+  "VendorPartnerPage": {
+    "metadata": {
+      "title": "List your adventure business on Outvers · Become a Vendor",
+      "description": "List your adventure-activity business on Outvers — India's marketplace for verified Experiences. Take online Bookings, earn a Verified Vendor badge, track Payouts, and reach adventure-seeking customers. Start Vendor onboarding."
+    },
+    "breadcrumb": {
+      "label": "Become a Vendor"
+    },
+    "hero": {
+      "eyebrow": "For Vendors",
+      "title": "List your adventure business on Outvers",
+      "description": "Outvers is India's marketplace for verified adventure Experiences. Bring your rafting, trekking, paragliding, or diving business online, take Bookings from customers across the country, and get paid reliably — with the trust of a verified Vendor profile behind every listing.",
+      "cta": "Start Vendor Onboarding"
+    },
+    "benefits": {
+      "heading": "Why list on Outvers",
+      "onlineBookingsTitle": "Take Bookings online",
+      "onlineBookingsBody": "Customers discover, book, and pay for your Experiences on Outvers — with partial pay (a 25% Advance now, the rest auto-captured 24 hours before the activity) handled for you.",
+      "verifiedBadgeTitle": "Earn a Verified Vendor badge",
+      "verifiedBadgeBody": "Climb the KYC ladder and display an \"Identity verified\" or \"Business verified\" badge on every Experience card — the trust signal that converts browsers into bookings.",
+      "dashboardTitle": "Run it from one dashboard",
+      "dashboardBody": "Manage listings, availability, Bookings, and customer messages from a single Vendor dashboard built for adventure businesses.",
+      "payoutTrackingTitle": "Track every Payout",
+      "payoutTrackingBody": "See exactly what you've earned and when each Payout lands. Outvers handles GST and TDS on your behalf so the math is never a guess.",
+      "visibilityTitle": "Get found across India",
+      "visibilityBody": "Your Experiences surface in destination, activity, and search pages optimised for the customers already looking for what you offer."
+    },
+    "whoCanJoin": {
+      "heading": "Who can join",
+      "intro": "Outvers is for independent adventure-activity Vendors running real Experiences in India:",
+      "raftingTitle": "Rafting outfits",
+      "raftingBody": "River-rafting Vendors with certified guides and the permits their stretch requires.",
+      "trekkingTitle": "Trekking companies",
+      "trekkingBody": "Single-day and multi-day trek Vendors, from day hikes to high-altitude expeditions.",
+      "paraglidingTitle": "Paragliding schools",
+      "paraglidingBody": "Tandem and solo paragliding Vendors with APPI-rated pilots.",
+      "divingTitle": "Diving & water sports",
+      "divingBody": "Scuba, snorkelling, and water-sports Vendors at India's coastal destinations."
+    },
+    "documents": {
+      "heading": "Documents required, by verification tier",
+      "intro": "Outvers verifies Vendors on a three-tier KYC ladder (ADR-0007). You start listing at Tier 1 and unlock more as you verify. Plus, bank details are required for Payouts at every tier that can earn.",
+      "phoneTitle": "Tier 1 — Phone verified",
+      "phoneDocs": "A phone number confirmed by OTP at signup. That's it — automatic when you register.",
+      "phoneCan": "Create your Vendor profile and draft Experiences (saved unpublished).",
+      "phoneCannot": "Cannot publish, accept Bookings, or receive Payouts yet. No badge.",
+      "identityTitle": "Tier 2 — Identity verified",
+      "identityBadge": "Identity verified",
+      "identityDocs": "Aadhaar verified by OTP (UIDAI eKYC), PAN submitted and validated, at least one Experience submitted for admin review, and bank details for Payouts.",
+      "identityCan": "Publish within caps (single-day Experiences, up to ₹5,000 per person, up to 8 participants per slot), accept Bookings, and receive Payouts.",
+      "identityCannot": "No Combo Experiences and no multi-day treks until Tier 3.",
+      "businessTitle": "Tier 3 — Business verified",
+      "businessBadge": "Business verified",
+      "businessDocs": "Everything in Tier 2, plus a GSTIN (if your declared turnover is ₹20L or more) or a below-threshold self-declaration with Udyam Aadhaar registration, plus at least one guide-certification document (ATOAI / RMI / NIM) for any adventure category that requires it.",
+      "businessCan": "Unrestricted listing — multi-day Experiences, Combos, any ticket size, any participant count.",
+      "businessCannot": "Unlocked after a 30-minute recorded video-call verification with our team."
+    },
+    "verification": {
+      "heading": "How verification works",
+      "intro": "Each tier has one clear gate. You're never left guessing what's next.",
+      "phoneStep": "Sign up and confirm your phone by OTP. You can immediately create your Vendor profile and draft Experiences.",
+      "identityStep": "Verify your identity with Aadhaar OTP and a validated PAN, then submit your first Experience for admin review to publish and start earning.",
+      "businessStep": "Complete a 30-minute recorded video call with our team, submit GSTIN or Udyam registration, and upload any required guide certifications to unlock unrestricted listing."
+    },
+    "bookingPayout": {
+      "heading": "How Bookings and Payouts work",
+      "bookingTitle": "Customers book and pay on Outvers",
+      "bookingBody": "Customers browse your Experiences, choose a slot, and pay securely. You confirm the Booking from your dashboard.",
+      "partialPayTitle": "Partial pay, handled for you",
+      "partialPayBody": "Eligible Bookings collect a 25% Advance up front; the remaining 75% is auto-captured 24 hours before the activity — no chasing balances.",
+      "payoutTitle": "Reliable Payouts to your bank",
+      "payoutBody": "Once an Experience is delivered, your earnings are paid out to your registered bank account. Outvers handles GST and TDS so the Payout amount is always clear."
+    },
+    "finalCta": {
+      "heading": "Ready to list your adventure business?",
+      "body": "Create your Vendor profile in minutes and start drafting Experiences today.",
+      "cta": "Start Vendor Onboarding"
+    }
   }
 }

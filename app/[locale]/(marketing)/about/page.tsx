@@ -133,7 +133,7 @@ export default async function AboutPage({ params }: PageProps): Promise<ReactEle
         </p>
         <p className="mt-4">
           <Link
-            href="/vendor/onboarding"
+            href="/vendor-partner"
             className="inline-flex items-center font-medium text-primary-strong underline underline-offset-2"
           >
             {t('contact.vendorCta')}

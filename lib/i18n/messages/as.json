@@ -1169,5 +1169,84 @@
     "partialPay": "আংশিক পৰিশোধ উপলব্ধ",
     "flexibleCancellation": "নমনীয় বাতিলকৰণ",
     "beginnerFriendly": "নবীনৰ বাবে উপযোগী"
+  },
+  "VendorPartnerPage": {
+    "metadata": {
+      "title": "Outvers ত আপোনাৰ এডভেঞ্চাৰ ব্যৱসায় তালিকাভুক্ত কৰক · Vendor হওক",
+      "description": "Outvers ত আপোনাৰ এডভেঞ্চাৰ-কাৰ্যকলাপ ব্যৱসায় তালিকাভুক্ত কৰক — সত্যাপিত Experiences ৰ বাবে ভাৰতৰ মাৰ্কেটপ্লেচ। অনলাইন Bookings লওক, Verified Vendor বেজ অৰ্জন কৰক, Payouts ট্ৰেক কৰক, আৰু এডভেঞ্চাৰ বিচৰা customers ৰ ওচৰ পাওক। Vendor onboarding আৰম্ভ কৰক।"
+    },
+    "breadcrumb": {
+      "label": "Vendor হওক"
+    },
+    "hero": {
+      "eyebrow": "Vendors ৰ বাবে",
+      "title": "Outvers ত আপোনাৰ এডভেঞ্চাৰ ব্যৱসায় তালিকাভুক্ত কৰক",
+      "description": "Outvers হৈছে সত্যাপিত এডভেঞ্চাৰ Experiences ৰ বাবে ভাৰতৰ মাৰ্কেটপ্লেচ। আপোনাৰ ৰাফটিং, ট্ৰেকিং, পেৰাগ্লাইডিং বা ডাইভিং ব্যৱসায় অনলাইনলৈ আনক, দেশজুৰি customers ৰ পৰা Bookings লওক, আৰু নিৰ্ভৰযোগ্যভাৱে দিতীয়া পাওক — প্ৰতিটো তালিকাৰ আঁৰত এটা সত্যাপিত Vendor প্ৰ'ফাইলৰ বিশ্বাসৰ সৈতে।",
+      "cta": "Start Vendor Onboarding"
+    },
+    "benefits": {
+      "heading": "Outvers ত কিয় তালিকাভুক্ত কৰিব",
+      "onlineBookingsTitle": "অনলাইন Bookings লওক",
+      "onlineBookingsBody": "Customers এ আপোনাৰ Experiences Outvers ত বিচাৰি পায়, বুক কৰে আৰু দিতীয়া দিয়ে — partial pay (এতিয়া 25% Advance, বাকীখিনি কাৰ্যকলাপৰ 24 ঘণ্টা আগতে স্বয়ংক্ৰিয়ভাৱে কেপচাৰ) আপোনাৰ বাবে চম্ভালা হয়।",
+      "verifiedBadgeTitle": "Verified Vendor বেজ অৰ্জন কৰক",
+      "verifiedBadgeBody": "KYC জখলা বগাই প্ৰতিটো Experience কাৰ্ডত \"Identity verified\" বা \"Business verified\" বেজ দেখুৱাওক — যি বিশ্বাসৰ সংকেতে চোৱাসকলক বুকিংলৈ ৰূপান্তৰিত কৰে।",
+      "dashboardTitle": "এটাই ডেছব'ৰ্ডৰ পৰা চলাওক",
+      "dashboardBody": "এডভেঞ্চাৰ ব্যৱসায়ৰ বাবে নিৰ্মিত এটা Vendor ডেছব'ৰ্ডৰ পৰা তালিকা, উপলব্ধতা, Bookings আৰু customer বাৰ্তা পৰিচালনা কৰক।",
+      "payoutTrackingTitle": "প্ৰতিটো Payout ট্ৰেক কৰক",
+      "payoutTrackingBody": "আপুনি কিমান উপাৰ্জন কৰিলে আৰু প্ৰতিটো Payout কেতিয়া আহি পায় সঠিকভাৱে চাওক। Outvers এ আপোনাৰ হৈ GST আৰু TDS চম্ভালে যাতে হিচাপ কেতিয়াও অনুমান নহয়।",
+      "visibilityTitle": "সমগ্ৰ ভাৰতত বিচাৰি পোৱা হওক",
+      "visibilityBody": "আপুনি যি আগবঢ়ায় সেয়া ইতিমধ্যে বিচাৰি থকা customers ৰ বাবে অনুকূলিত গন্তব্য, কাৰ্যকলাপ আৰু সন্ধান পৃষ্ঠাত আপোনাৰ Experiences দেখা যায়।"
+    },
+    "whoCanJoin": {
+      "heading": "কোনে যোগ দিব পাৰে",
+      "intro": "Outvers হৈছে ভাৰতত প্ৰকৃত Experiences চলোৱা স্বতন্ত্ৰ এডভেঞ্চাৰ-কাৰ্যকলাপ Vendors ৰ বাবে:",
+      "raftingTitle": "ৰাফটিং প্ৰতিষ্ঠান",
+      "raftingBody": "প্ৰমাণিত গাইড আৰু সিহঁতৰ অঞ্চলৰ বাবে প্ৰয়োজনীয় অনুমতিৰ সৈতে ৰিভাৰ-ৰাফটিং Vendors।",
+      "trekkingTitle": "ট্ৰেকিং কোম্পানী",
+      "trekkingBody": "এদিনীয়া আৰু বহু-দিনীয়া ট্ৰেক Vendors, এদিনীয়া হাইকৰ পৰা উচ্চ-উচ্চতাৰ অভিযানলৈকে।",
+      "paraglidingTitle": "পেৰাগ্লাইডিং বিদ্যালয়",
+      "paraglidingBody": "APPI-ৰেটেড পাইলটৰ সৈতে টেণ্ডেম আৰু চ'লো পেৰাগ্লাইডিং Vendors।",
+      "divingTitle": "ডাইভিং আৰু জলক্ৰীড়া",
+      "divingBody": "ভাৰতৰ উপকূলীয় গন্তব্যত স্কুবা, স্নৰ্কেলিং আৰু জল-ক্ৰীড়া Vendors।"
+    },
+    "documents": {
+      "heading": "সত্যাপন স্তৰ অনুসৰি প্ৰয়োজনীয় নথি",
+      "intro": "Outvers এ Vendors ক তিনি-স্তৰীয় KYC জখলাত (ADR-0007) সত্যাপন কৰে। আপুনি Tier 1 ত তালিকাভুক্ত কৰা আৰম্ভ কৰে আৰু সত্যাপনৰ সৈতে অধিক আনলক কৰে। লগতে, উপাৰ্জন কৰিব পৰা প্ৰতিটো স্তৰত Payouts ৰ বাবে বেংক বিৱৰণ প্ৰয়োজন।",
+      "phoneTitle": "Tier 1 — Phone verified",
+      "phoneDocs": "ছাইনআপত OTP দ্বাৰা নিশ্চিত কৰা এটা ফোন নম্বৰ। সেইটোৱেই — পঞ্জীয়ন কৰাৰ লগে লগে স্বয়ংক্ৰিয়।",
+      "phoneCan": "আপোনাৰ Vendor প্ৰ'ফাইল সৃষ্টি কৰক আৰু Experiences ৰ খচৰা প্ৰস্তুত কৰক (অপ্ৰকাশিতভাৱে সংৰক্ষিত)।",
+      "phoneCannot": "এতিয়ালৈকে প্ৰকাশ কৰিব নোৱাৰে, Bookings গ্ৰহণ কৰিব নোৱাৰে, বা Payouts লাভ কৰিব নোৱাৰে। কোনো বেজ নাই।",
+      "identityTitle": "Tier 2 — Identity verified",
+      "identityBadge": "Identity verified",
+      "identityDocs": "OTP (UIDAI eKYC) দ্বাৰা সত্যাপিত Aadhaar, দাখিল আৰু বৈধ কৰা PAN, প্ৰশাসনিক পৰ্যালোচনাৰ বাবে দাখিল কৰা কমেও এটা Experience, আৰু Payouts ৰ বাবে বেংক বিৱৰণ।",
+      "identityCan": "সীমাৰ ভিতৰত প্ৰকাশ কৰক (এদিনীয়া Experiences, প্ৰতি ব্যক্তি ₹5,000 লৈ, প্ৰতি স্লটত 8 জন অংশগ্ৰহণকাৰীলৈ), Bookings গ্ৰহণ কৰক আৰু Payouts লাভ কৰক।",
+      "identityCannot": "Tier 3 লৈকে কোনো Combo Experiences নাই আৰু বহু-দিনীয়া ট্ৰেক নাই।",
+      "businessTitle": "Tier 3 — Business verified",
+      "businessBadge": "Business verified",
+      "businessDocs": "Tier 2 ৰ সকলো, লগতে এটা GSTIN (যদি আপোনাৰ ঘোষিত আয় ₹20L বা তাতকৈ অধিক) বা Udyam Aadhaar পঞ্জীয়নৰ সৈতে সীমা-তলৰ স্ব-ঘোষণা, আৰু প্ৰয়োজনীয় যিকোনো এডভেঞ্চাৰ শ্ৰেণীৰ বাবে কমেও এটা গাইড-প্ৰমাণপত্ৰ নথি (ATOAI / RMI / NIM)।",
+      "businessCan": "অসীমিত তালিকা — বহু-দিনীয়া Experiences, Combos, যিকোনো টিকটৰ আকাৰ, যিকোনো অংশগ্ৰহণকাৰীৰ সংখ্যা।",
+      "businessCannot": "আমাৰ দলৰ সৈতে 30-মিনিটৰ ৰেকৰ্ড কৰা ভিডিঅ'-কলৰ সত্যাপনৰ পিছত আনলক হয়।"
+    },
+    "verification": {
+      "heading": "সত্যাপন কেনেকৈ কাম কৰে",
+      "intro": "প্ৰতিটো স্তৰৰ এটা স্পষ্ট গেট আছে। পৰৱৰ্তী কি, সেয়া আপুনি কেতিয়াও অনুমান কৰিব নালাগে।",
+      "phoneStep": "ছাইনআপ কৰক আৰু OTP ৰে আপোনাৰ ফোন নিশ্চিত কৰক। আপুনি তৎক্ষণাৎ আপোনাৰ Vendor প্ৰ'ফাইল সৃষ্টি কৰিব পাৰে আৰু Experiences ৰ খচৰা প্ৰস্তুত কৰিব পাৰে।",
+      "identityStep": "Aadhaar OTP আৰু বৈধ PAN ৰে আপোনাৰ পৰিচয় সত্যাপন কৰক, তাৰ পিছত প্ৰকাশ কৰিবলৈ আৰু উপাৰ্জন আৰম্ভ কৰিবলৈ আপোনাৰ প্ৰথম Experience প্ৰশাসনিক পৰ্যালোচনাৰ বাবে দাখিল কৰক।",
+      "businessStep": "আমাৰ দলৰ সৈতে 30-মিনিটৰ ৰেকৰ্ড কৰা ভিডিঅ' কল সম্পূৰ্ণ কৰক, GSTIN বা Udyam পঞ্জীয়ন দাখিল কৰক, আৰু অসীমিত তালিকা আনলক কৰিবলৈ প্ৰয়োজনীয় যিকোনো গাইড প্ৰমাণপত্ৰ আপলোড কৰক।"
+    },
+    "bookingPayout": {
+      "heading": "Bookings আৰু Payouts কেনেকৈ কাম কৰে",
+      "bookingTitle": "Customers এ Outvers ত বুক কৰে আৰু দিতীয়া দিয়ে",
+      "bookingBody": "Customers এ আপোনাৰ Experiences ব্ৰাউজ কৰে, এটা স্লট বাছনি কৰে আৰু সুৰক্ষিতভাৱে দিতীয়া দিয়ে। আপুনি আপোনাৰ ডেছব'ৰ্ডৰ পৰা Booking নিশ্চিত কৰে।",
+      "partialPayTitle": "Partial pay, আপোনাৰ বাবে চম্ভালা",
+      "partialPayBody": "যোগ্য Bookings এ প্ৰথমে 25% Advance সংগ্ৰহ কৰে; বাকী 75% কাৰ্যকলাপৰ 24 ঘণ্টা আগতে স্বয়ংক্ৰিয়ভাৱে কেপচাৰ হয় — বাকীৰ পিছত দৌৰিব নালাগে।",
+      "payoutTitle": "আপোনাৰ বেংকলৈ নিৰ্ভৰযোগ্য Payouts",
+      "payoutBody": "এবাৰ এটা Experience প্ৰদান হোৱাৰ পিছত, আপোনাৰ উপাৰ্জন আপোনাৰ পঞ্জীকৃত বেংক একাউণ্টলৈ Payout কৰা হয়। Outvers এ GST আৰু TDS চম্ভালে যাতে Payout পৰিমাণ সদায় স্পষ্ট থাকে।"
+    },
+    "finalCta": {
+      "heading": "আপোনাৰ এডভেঞ্চাৰ ব্যৱসায় তালিকাভুক্ত কৰিবলৈ সাজু নেকি?",
+      "body": "মিনিটৰ ভিতৰত আপোনাৰ Vendor প্ৰ'ফাইল সৃষ্টি কৰক আৰু আজিয়েই Experiences ৰ খচৰা প্ৰস্তুত কৰা আৰম্ভ কৰক।",
+      "cta": "Start Vendor Onboarding"
+    }
   }
 }

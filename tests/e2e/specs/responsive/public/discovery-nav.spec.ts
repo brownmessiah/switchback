@@ -44,7 +44,7 @@ test.describe('mobile drawer · discovery nav (< sm)', () => {
     )
     await expect(
       nav.getByRole('link', { name: 'List your experience' }),
-    ).toHaveAttribute('href', '/vendor/onboarding')
+    ).toHaveAttribute('href', '/vendor-partner')
     await expect(nav.getByRole('link', { name: 'Sign in' })).toHaveAttribute(
       'href',
       '/sign-in',

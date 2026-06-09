@@ -90,7 +90,7 @@ test.describe('Home page', () => {
 
   // Hero rework (issue 02 / DECISION D1): the H1 is the keyword line, the
   // brand line is secondary (NOT an h1), and the two explicit CTAs route to
-  // /search and the interim /vendor/onboarding.
+  // /search and (since #06) the public /vendor-partner partner page.
   test('H1 is the keyword line and is the only h1 on the page', async ({
     page,
   }) => {
@@ -126,15 +126,15 @@ test.describe('Home page', () => {
     expect(new URL(page.url()).pathname).toBe('/search')
   })
 
-  test('secondary CTA "List Your Experience" routes to /vendor/onboarding', async ({
+  test('secondary CTA "List Your Experience" routes to /vendor-partner (issue 06)', async ({
     page,
   }) => {
     await page.goto('/')
 
     const cta = page.getByRole('link', { name: 'List Your Experience' })
     await expect(cta).toBeVisible()
-    // TODO(#06): destination becomes /vendor-partner once issue #06 ships.
-    await expect(cta).toHaveAttribute('href', '/vendor/onboarding')
+    // Re-pointed in #06: the hero now funnels to the public partner page.
+    await expect(cta).toHaveAttribute('href', '/vendor-partner')
   })
 
   test('both hero CTAs are keyboard-focusable and meet the 44px min-tap target', async ({

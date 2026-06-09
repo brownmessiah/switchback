@@ -196,7 +196,7 @@ export function SiteFooter(): ReactElement | null {
               </h3>
               <ul className="mt-3 space-y-2 text-sm">
                 <li>
-                  <Link href="/vendor/onboarding" className="text-foreground/80 transition hover:text-foreground">
+                  <Link href="/vendor-partner" className="text-foreground/80 transition hover:text-foreground">
                     {tf('listYourExperience')}
                   </Link>
                 </li>

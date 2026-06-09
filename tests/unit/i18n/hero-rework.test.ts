@@ -125,13 +125,12 @@ describe('hero rework route wiring (page.tsx)', () => {
     expect(source).toMatch(/href="\/search"/)
   })
 
-  it('secondary CTA "List Your Experience" routes to interim /vendor/onboarding', () => {
+  it('secondary CTA "List Your Experience" routes to /vendor-partner (re-pointed, issue 06)', () => {
     expect(source).toContain("t('hero.listCta')")
-    expect(source).toMatch(/href="\/vendor\/onboarding"/)
-  })
-
-  it('leaves a TODO(#06) marker to re-point the secondary CTA to /vendor-partner', () => {
-    expect(source).toMatch(/TODO\(#06\)[\s\S]*?\/vendor-partner/)
+    expect(source).toMatch(/href="\/vendor-partner"/)
+    // The interim /vendor/onboarding target is gone — the hero now points at
+    // the public partner page, which funnels into onboarding.
+    expect(source).not.toMatch(/href="\/vendor\/onboarding"/)
   })
 
   it('both CTAs carry the .min-tap utility for mobile tap targets', () => {
@@ -139,7 +138,7 @@ describe('hero rework route wiring (page.tsx)', () => {
     // CTA destinations and the min-tap class near them.
     const exploreCta = source.match(/href="\/search"[\s\S]*?min-tap|min-tap[\s\S]*?href="\/search"/)
     const listCta = source.match(
-      /href="\/vendor\/onboarding"[\s\S]*?min-tap|min-tap[\s\S]*?href="\/vendor\/onboarding"/,
+      /href="\/vendor-partner"[\s\S]*?min-tap|min-tap[\s\S]*?href="\/vendor-partner"/,
     )
     expect(exploreCta).not.toBeNull()
     expect(listCta).not.toBeNull()

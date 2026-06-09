@@ -152,10 +152,10 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
             >
               {t('hero.exploreCta')}
             </Link>
-            {/* TODO(#06): re-point to /vendor-partner once issue #06 builds
-                that route. /vendor/onboarding is the interim destination. */}
+            {/* Supply-side CTA → public /vendor-partner landing (issue 06),
+                which funnels into the auth-gated /vendor/onboarding. */}
             <Link
-              href="/vendor/onboarding"
+              href="/vendor-partner"
               className="min-tap inline-flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-control)] bg-surface-0/95 px-6 text-sm font-semibold text-foreground shadow-[var(--shadow-md)] ring-1 ring-foreground/10 transition-colors duration-150 hover:bg-surface-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:w-auto"
             >
               {t('hero.listCta')}

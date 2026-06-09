@@ -3,6 +3,10 @@ import { desc, sql } from 'drizzle-orm'
 import { experiences } from '@/db/schema/experiences'
 
 import { loadCardBadgeResolver } from '@/lib/experiences/card-badges'
+import {
+  type CardTrustFields,
+  loadTrustBadgeFieldResolver,
+} from '@/lib/trust-badges/card-trust-fields'
 import { publiclyVisibleExperienceCondition } from '@/lib/experiences/public-filter'
 import { loadExperienceCoverMap } from '@/lib/media/experience-images'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
@@ -28,7 +32,7 @@ import { listRegions } from '@/lib/regions/registry'
  * presentation — no DB types leak into the JSX.
  */
 
-export interface FeaturedExperience {
+export interface FeaturedExperience extends CardTrustFields {
   id: string
   slug: string
   title: string
@@ -88,9 +92,10 @@ export async function loadHomePageData(db: DBOrTx): Promise<HomePageData> {
     .limit(FEATURED_EXPERIENCES_LIMIT)
 
   const expIds = expRows.map((r) => r.id)
-  const [coverMap, resolveBadges] = await Promise.all([
+  const [coverMap, resolveBadges, resolveTrust] = await Promise.all([
     loadExperienceCoverMap(db, expIds),
     loadCardBadgeResolver(db, expIds),
+    loadTrustBadgeFieldResolver(db, expIds),
   ])
   const featuredExperiences: FeaturedExperience[] = expRows.map((row) => ({
     id: row.id,
@@ -103,6 +108,7 @@ export async function loadHomePageData(db: DBOrTx): Promise<HomePageData> {
     coverImageUrl: coverMap.get(row.id) ?? null,
     difficulty: row.difficulty,
     ...resolveBadges(row.id),
+    ...resolveTrust(row.id),
   }))
 
   // Counts by region + activity over published Experiences. Two cheap

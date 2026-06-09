@@ -2,6 +2,10 @@ import { and, count, desc, eq } from 'drizzle-orm'
 
 import { experiences } from '@/db/schema/experiences'
 import { loadCardBadgeResolver } from '@/lib/experiences/card-badges'
+import {
+  type CardTrustFields,
+  loadTrustBadgeFieldResolver,
+} from '@/lib/trust-badges/card-trust-fields'
 import { publiclyVisibleExperienceCondition } from '@/lib/experiences/public-filter'
 import { getRegionImage } from '@/lib/images'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
@@ -26,7 +30,7 @@ import {
  * recency placeholder until Meilisearch ranking lands.
  */
 
-export interface RegionLandingExperience {
+export interface RegionLandingExperience extends CardTrustFields {
   id: string
   slug: string
   title: string
@@ -95,10 +99,11 @@ export async function loadRegionLanding(
     .orderBy(desc(experiences.createdAt))
     .limit(limit)
 
-  const resolveBadges = await loadCardBadgeResolver(
-    db,
-    rows.map((r) => r.id),
-  )
+  const ids = rows.map((r) => r.id)
+  const [resolveBadges, resolveTrust] = await Promise.all([
+    loadCardBadgeResolver(db, ids),
+    loadTrustBadgeFieldResolver(db, ids),
+  ])
 
   return {
     region,
@@ -112,6 +117,7 @@ export async function loadRegionLanding(
       regionSlug: row.regionSlug,
       difficulty: row.difficulty,
       ...resolveBadges(row.id),
+      ...resolveTrust(row.id),
     })),
   }
 }

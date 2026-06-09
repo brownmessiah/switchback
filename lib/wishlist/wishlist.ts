@@ -4,6 +4,10 @@ import { customerProfiles } from '@/db/schema/customer-profiles'
 import { experiences } from '@/db/schema/experiences'
 
 import { loadCardBadgeResolver } from '@/lib/experiences/card-badges'
+import {
+  type CardTrustFields,
+  loadTrustBadgeFieldResolver,
+} from '@/lib/trust-badges/card-trust-fields'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
 /**
@@ -25,7 +29,7 @@ import type { DBOrTx } from '@/lib/payments/commission-resolver'
  */
 
 /** ExperienceCardData-shaped subset returned for wishlist tiles. */
-export interface WishlistExperience {
+export interface WishlistExperience extends CardTrustFields {
   id: string
   slug: string
   title: string
@@ -161,10 +165,10 @@ export async function getWishlistExperiences(
     .from(experiences)
     .where(and(inArray(experiences.id, ids), eq(experiences.status, 'published')))
 
-  const resolveBadges = await loadCardBadgeResolver(
-    db,
-    rows.map((r) => r.id),
-  )
+  const [resolveBadges, resolveTrust] = await Promise.all([
+    loadCardBadgeResolver(db, rows.map((r) => r.id)),
+    loadTrustBadgeFieldResolver(db, rows.map((r) => r.id)),
+  ])
 
   // Index resolved rows by id, then re-order to match the stored wishlist so
   // a saved-but-unresolvable id is simply absent (dropped).
@@ -183,5 +187,6 @@ export async function getWishlistExperiences(
       activitySlug: r.activitySlug,
       difficulty: r.difficulty,
       ...resolveBadges(r.id),
+      ...resolveTrust(r.id),
     }))
 }

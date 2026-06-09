@@ -1158,5 +1158,16 @@
       "title": "हम वह यात्रा योजना नहीं बना सके",
       "body": "कुछ गलत हो गया। कृपया अपने इनपुट समायोजित करें और फिर से प्रयास करें।"
     }
+  },
+  "TrustBadges": {
+    "verifiedVendor": {
+      "identity": "पहचान सत्यापित",
+      "business": "व्यवसाय सत्यापित"
+    },
+    "safetyChecked": "सुरक्षा जाँचित",
+    "instantConfirmation": "तत्काल पुष्टि",
+    "partialPay": "आंशिक भुगतान उपलब्ध",
+    "flexibleCancellation": "लचीला रद्दीकरण",
+    "beginnerFriendly": "शुरुआती-अनुकूल"
   }
 }

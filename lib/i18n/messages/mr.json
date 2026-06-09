@@ -1158,5 +1158,16 @@
       "title": "We could not build that itinerary",
       "body": "Something went wrong. Please adjust your inputs and try again."
     }
+  },
+  "TrustBadges": {
+    "verifiedVendor": {
+      "identity": "ओळख सत्यापित",
+      "business": "व्यवसाय सत्यापित"
+    },
+    "safetyChecked": "सुरक्षा तपासली",
+    "instantConfirmation": "त्वरित पुष्टी",
+    "partialPay": "आंशिक देयक उपलब्ध",
+    "flexibleCancellation": "लवचिक रद्दीकरण",
+    "beginnerFriendly": "नवशिक्यांसाठी अनुकूल"
   }
 }

@@ -181,6 +181,13 @@ describe('wishlist pure core (Issue #08)', () => {
         ratingAvg: null,
         ratingCount: 0,
         highlight: null,
+        // Trust-badge backing fields (issue 05) — from the seeded experience
+        // (flexible preset, full_upfront only, no safety stack) + phone-tier
+        // vendor (no kycTier set → default 'phone').
+        cancellationPreset: 'flexible',
+        requiresSafetyStack: false,
+        paymentModesAllowed: ['full_upfront'],
+        vendorKycTier: 'phone',
       })
     })
 

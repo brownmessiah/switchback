@@ -3,6 +3,7 @@ import { and, eq, inArray, sql } from 'drizzle-orm'
 import { bookings } from '@/db/schema/bookings'
 import { reviews } from '@/db/schema/reviews'
 import type { DBOrTx } from '@/lib/media/experience-images'
+import { loadTrustBadgeFieldResolver } from '@/lib/trust-badges/card-trust-fields'
 import type { ExperienceCardData } from '@/components/experience-card'
 
 /**
@@ -165,11 +166,13 @@ export async function loadCardBadgeResolver(
 }
 
 /**
- * Enrich a list of cards with `ratingAvg` / `ratingCount` / `highlight`,
- * loading both batch maps in parallel for the page's ids. `difficulty` is left
- * untouched — callers set it from their own `experiences.difficulty` select.
- * Returns NEW card objects (immutable); cards with no rating/demand are
- * returned unchanged in those fields (bare cards render as before).
+ * Enrich a list of cards with `ratingAvg` / `ratingCount` / `highlight` PLUS
+ * the issue-05 trust-badge backing fields (cancellationPreset,
+ * requiresSafetyStack, paymentModesAllowed, vendorKycTier), loading the batch
+ * maps in parallel for the page's ids. `difficulty` is left untouched — callers
+ * set it from their own `experiences.difficulty` select. Returns NEW card
+ * objects (immutable); cards with no rating/demand are returned unchanged in
+ * those fields (bare cards render as before).
  */
 export async function enrichCardBadges(
   db: DBOrTx,
@@ -177,13 +180,15 @@ export async function enrichCardBadges(
 ): Promise<ExperienceCardData[]> {
   if (cards.length === 0) return cards
 
-  const resolve = await loadCardBadgeResolver(
-    db,
-    cards.map((c) => c.id),
-  )
+  const ids = cards.map((c) => c.id)
+  const [resolve, resolveTrust] = await Promise.all([
+    loadCardBadgeResolver(db, ids),
+    loadTrustBadgeFieldResolver(db, ids),
+  ])
 
   return cards.map((card) => ({
     ...card,
     ...resolve(card.id),
+    ...resolveTrust(card.id),
   }))
 }

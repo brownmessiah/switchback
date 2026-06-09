@@ -13,7 +13,6 @@ import {
   Images,
   Languages,
   MapPin,
-  ShieldCheck,
   Star,
   TriangleAlert,
   Users,
@@ -40,6 +39,15 @@ import { env } from '@/lib/env'
 import { isInWishlist } from '@/lib/wishlist/wishlist'
 import { loadExperienceDetail } from '@/lib/experiences/detail-loader'
 import { formatDuration, formatSeason } from '@/lib/experiences/structured-schema'
+import { TrustBadge } from '@/components/trust-badge'
+import {
+  deriveTrustBadges,
+  type CancellationPreset,
+  type Difficulty,
+  type KycTier,
+  type PaymentMode,
+} from '@/lib/trust-badges/derive'
+import { trustBadgeLabel } from '@/lib/trust-badges/labels'
 import { LOCALE_NAMES, type SupportedLocale } from '@/lib/i18n/config'
 import { getActivityImage } from '@/lib/images'
 import { galleryTiles } from '@/lib/media/experience-images'
@@ -69,6 +77,9 @@ export default async function ExperienceDetailPage({
 
   const t = await getTranslations({ locale, namespace: 'ExperiencePage' })
   const tCommon = await getTranslations({ locale, namespace: 'Common' })
+  // Root translator for the shared TrustBadges namespace (labels helper passes
+  // fully-qualified `TrustBadges.*` keys, shared with the experience card).
+  const tRoot = await getTranslations({ locale })
 
   const cacheKey = `slug-redirect:experience:${slug}`
   const redis = getRedis()
@@ -318,15 +329,19 @@ export default async function ExperienceDetailPage({
   ]
   const faqJson = faqPage(faqItems)
 
-  /** Pre-resolved KYC label map — no dynamic keys. */
-  const kycLabels: Record<string, string> = {
-    business: t('kyc.business'),
-    identity: t('kyc.identity'),
-    phone: t('kyc.phone'),
-  }
-
-  const kycTier = 'phone'
-  const kycLabel = kycLabels[kycTier] ?? kycLabels.phone
+  // Data-honest trust badges (issue 05) — derived purely from this listing's
+  // real data and rendered via the shared TrustBadge, identical to the cards.
+  // Replaces the former hardcoded KYC stub (`kycTier = 'phone'`) and the
+  // ad-hoc assurance row. Each badge appears ONLY when its backing data is
+  // present — a listing WITHOUT safety data shows NO "Safety Checked" badge.
+  const trustBadges = deriveTrustBadges({
+    vendorKycTier: detail.vendorKycTier as KycTier,
+    requiresSafetyStack: detail.requiresSafetyStack,
+    cancellationPreset: detail.cancellationPreset as CancellationPreset,
+    difficulty: detail.difficulty as Difficulty | null,
+    paymentModesAllowed: detail.paymentModesAllowed as PaymentMode[],
+    basePriceRupees: detail.pricePerPerson_1_2,
+  })
 
   // Partial-pay (ADR-0001): the Advance is 25% of the total, balance the
   // remainder at T-24h. The Booking rail computes the split LIVE from the
@@ -567,10 +582,6 @@ export default async function ExperienceDetailPage({
               >
                 {t('vendor.by', { name: detail.vendor.businessName })}
               </Link>
-              <Badge variant="success">
-                <ShieldCheck aria-hidden="true" />
-                {kycLabel}
-              </Badge>
               <span className="ml-auto">
                 <WishlistButton
                   experienceId={detail.id}
@@ -580,20 +591,22 @@ export default async function ExperienceDetailPage({
             </div>
           </header>
 
-          {/* Assurance row — three trust signals as a COMPACT inline strip
-              (researched best practice: read-only trust signals are scannable
-              icon+label items, not large colour-filled boxes). Each pairs a
-              coloured lucide icon with a label so status is never colour-alone
-              (DESIGN.md §1.3 / WCAG 1.4.1); text stays foreground for contrast. */}
+          {/* Trust badges (issue 05) — the single, data-honest badge row,
+              rendered through the SHARED TrustBadge component (identical to the
+              experience cards). Each badge appears ONLY when this listing's real
+              data backs it (D0); no hardcoded/decorative badge remains. The
+              refund-transparency assurance stays as a plain, non-badge signal
+              below since it is not a per-listing eligibility badge. */}
+          {trustBadges.length > 0 && (
+            <ul className="mb-4 flex flex-wrap items-center gap-2">
+              {trustBadges.map((badge) => (
+                <li key={badge.id}>
+                  <TrustBadge id={badge.id} label={trustBadgeLabel(tRoot, badge)} />
+                </li>
+              ))}
+            </ul>
+          )}
           <ul className="mb-[var(--space-section)] flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-foreground">
-            <li className="inline-flex items-center gap-1.5">
-              <CircleCheck aria-hidden="true" className="size-4 shrink-0 text-success" />
-              <span>{t('assurance.freeCancellation')}</span>
-            </li>
-            <li className="inline-flex items-center gap-1.5">
-              <ShieldCheck aria-hidden="true" className="size-4 shrink-0 text-success" />
-              <span>{t('assurance.verifiedVendor')}</span>
-            </li>
             <li className="inline-flex items-center gap-1.5">
               <Wallet aria-hidden="true" className="size-4 shrink-0 text-info" />
               <span>{t('assurance.exactRefund')}</span>

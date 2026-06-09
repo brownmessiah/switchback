@@ -2,6 +2,10 @@ import { and, desc, eq, inArray } from 'drizzle-orm'
 
 import { experiences } from '@/db/schema/experiences'
 import { loadCardBadgeResolver } from '@/lib/experiences/card-badges'
+import {
+  type CardTrustFields,
+  loadTrustBadgeFieldResolver,
+} from '@/lib/trust-badges/card-trust-fields'
 import { publiclyVisibleExperienceCondition } from '@/lib/experiences/public-filter'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
@@ -52,7 +56,7 @@ export function isCategorySlug(value: unknown): value is ActivityCategory {
   return (listCategories() as readonly string[]).includes(value)
 }
 
-export interface LandingExperience {
+export interface LandingExperience extends CardTrustFields {
   id: string
   slug: string
   title: string
@@ -98,10 +102,11 @@ async function toLandingExperiences(
   db: DBOrTx,
   rows: LandingQueryRow[],
 ): Promise<LandingExperience[]> {
-  const resolveBadges = await loadCardBadgeResolver(
-    db,
-    rows.map((r) => r.id),
-  )
+  const ids = rows.map((r) => r.id)
+  const [resolveBadges, resolveTrust] = await Promise.all([
+    loadCardBadgeResolver(db, ids),
+    loadTrustBadgeFieldResolver(db, ids),
+  ])
   return rows.map((row) => ({
     id: row.id,
     slug: row.slug,
@@ -112,6 +117,7 @@ async function toLandingExperiences(
     activitySlug: row.activitySlug,
     difficulty: row.difficulty,
     ...resolveBadges(row.id),
+    ...resolveTrust(row.id),
   }))
 }
 

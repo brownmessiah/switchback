@@ -7,6 +7,10 @@ import {
   isActivitySlug,
 } from '@/lib/activities/registry'
 import { loadCardBadgeResolver } from '@/lib/experiences/card-badges'
+import {
+  type CardTrustFields,
+  loadTrustBadgeFieldResolver,
+} from '@/lib/trust-badges/card-trust-fields'
 import { publiclyVisibleExperienceCondition } from '@/lib/experiences/public-filter'
 import { loadExperienceCoverMap } from '@/lib/media/experience-images'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
@@ -36,7 +40,7 @@ import {
  * recency until that lands.
  */
 
-export interface ActivityCityCollectionExperience {
+export interface ActivityCityCollectionExperience extends CardTrustFields {
   id: string
   slug: string
   title: string
@@ -122,9 +126,10 @@ export async function loadActivityCityCollection(
     .limit(limit)
 
   const ids = rows.map((r) => r.id)
-  const [coverMap, resolveBadges] = await Promise.all([
+  const [coverMap, resolveBadges, resolveTrust] = await Promise.all([
     loadExperienceCoverMap(db, ids),
     loadCardBadgeResolver(db, ids),
+    loadTrustBadgeFieldResolver(db, ids),
   ])
 
   return {
@@ -140,6 +145,7 @@ export async function loadActivityCityCollection(
       coverImageUrl: coverMap.get(row.id) ?? null,
       difficulty: row.difficulty,
       ...resolveBadges(row.id),
+      ...resolveTrust(row.id),
     })),
   }
 }

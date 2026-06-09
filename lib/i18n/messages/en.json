@@ -40,6 +40,17 @@
       "extreme": "Extreme"
     }
   },
+  "TrustBadges": {
+    "verifiedVendor": {
+      "identity": "Identity verified",
+      "business": "Business verified"
+    },
+    "safetyChecked": "Safety Checked",
+    "instantConfirmation": "Instant Confirmation",
+    "partialPay": "Partial Payment Available",
+    "flexibleCancellation": "Flexible cancellation",
+    "beginnerFriendly": "Beginner Friendly"
+  },
   "Metadata": {
     "title": "Outvers — adventure activities in India",
     "description": "Book rafting, paragliding, scuba, trekking and more across India. Vendor-verified Experiences with transparent refund policy and a 24-hour refund SLA."

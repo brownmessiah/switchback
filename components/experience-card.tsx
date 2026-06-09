@@ -1,11 +1,19 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { Award, Flame, MapPin, ShieldCheck, Star } from 'lucide-react'
+import { Award, Flame, MapPin, Star } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
+import { TrustBadge } from '@/components/trust-badge'
 import { WishlistButton } from '@/components/wishlist-button'
 import { resolveExperienceCover } from '@/lib/media/experience-images'
+import {
+  deriveTrustBadges,
+  type CancellationPreset,
+  type KycTier,
+  type PaymentMode,
+} from '@/lib/trust-badges/derive'
+import { trustBadgeLabel } from '@/lib/trust-badges/labels'
 
 export interface ExperienceCardData {
   id: string
@@ -43,6 +51,20 @@ export interface ExperienceCardData {
   ratingAvg?: number | null
   ratingCount?: number | null
   highlight?: 'bestseller' | 'top_rated' | null
+  /**
+   * Trust-badge backing data (issue 05). All additive / optional — a card that
+   * passes none renders only the universally-eligible Instant Confirmation
+   * badge (ADR-0003). Each badge is data-honest: it appears ONLY when its
+   * backing field is present (see lib/trust-badges/derive.ts). The card carries
+   * its OWN vendorKycTier (already declared above) into the derivation.
+   *
+   *  - `cancellationPreset` — drives the Flexible-cancellation badge (ADR-0005).
+   *  - `requiresSafetyStack` — drives the Safety Checked badge (ADR-0015).
+   *  - `paymentModesAllowed` — drives the Partial Payment badge (ADR-0001).
+   */
+  cancellationPreset?: CancellationPreset | null
+  requiresSafetyStack?: boolean | null
+  paymentModesAllowed?: PaymentMode[] | null
 }
 
 interface ExperienceCardProps {
@@ -118,6 +140,9 @@ const DIFFICULTY_BADGE: Record<
  */
 export function ExperienceCard({ experience, layout = 'grid' }: ExperienceCardProps) {
   const t = useTranslations('HomePage')
+  // Root translator for the shared TrustBadges namespace (the labels helper
+  // passes fully-qualified `TrustBadges.*` keys so card + PDP share one source).
+  const tRoot = useTranslations()
   const activityLabel = ACTIVITY_LABELS[experience.activitySlug] ?? experience.activitySlug
   const regionLabel = REGION_LABELS[experience.regionSlug] ?? experience.regionSlug
   const imageUrl = resolveExperienceCover(experience.coverImageUrl, experience.activitySlug)
@@ -128,6 +153,18 @@ export function ExperienceCard({ experience, layout = 'grid' }: ExperienceCardPr
   const ratingCount = experience.ratingCount ?? 0
   const showRating = ratingCount > 0
   const difficultyConfig = difficulty ? DIFFICULTY_BADGE[difficulty] : null
+
+  // Data-honest trust badges (issue 05) — derived purely from this listing's
+  // real data; a field that is absent simply omits its badge. "Popular Choice"
+  // is NOT here — it is the social-proof `highlight` overlay above.
+  const trustBadges = deriveTrustBadges({
+    vendorKycTier: (experience.vendorKycTier ?? 'phone') as KycTier,
+    requiresSafetyStack: experience.requiresSafetyStack ?? false,
+    cancellationPreset: (experience.cancellationPreset ?? 'moderate') as CancellationPreset,
+    difficulty,
+    paymentModesAllowed: (experience.paymentModesAllowed ?? []) as PaymentMode[],
+    basePriceRupees: experience.pricePerParticipantRupees,
+  })
 
   // Issue #08 — opt-in wishlist heart. Rendered as an absolutely-positioned
   // overlay SIBLING of the Link (never nested inside the anchor, which would
@@ -243,10 +280,20 @@ export function ExperienceCard({ experience, layout = 'grid' }: ExperienceCardPr
           </p>
         ) : null}
 
-        <Badge variant="success" className="self-start">
-          <ShieldCheck aria-hidden="true" />
-          {t('trustBadges.freeCancellation')}
-        </Badge>
+        {/* Data-honest trust badges (issue 05) — rendered via the shared
+            TrustBadge component. Each appears ONLY when this listing's real
+            data backs it; no hardcoded/decorative badge remains. */}
+        {trustBadges.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5">
+            {trustBadges.map((badge) => (
+              <TrustBadge
+                key={badge.id}
+                id={badge.id}
+                label={trustBadgeLabel(tRoot, badge)}
+              />
+            ))}
+          </div>
+        ) : null}
 
         <div className="mt-auto pt-1">
           <span className="text-sm font-bold tabular-nums text-foreground">

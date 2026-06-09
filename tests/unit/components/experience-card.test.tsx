@@ -143,15 +143,78 @@ describe('ExperienceCard list layout', () => {
   })
 })
 
+describe('ExperienceCard trust badges (data-honest, issue 05)', () => {
+  // The mocked t() returns the i18n key verbatim, so we assert on the
+  // TrustBadges.* label keys produced by deriveTrustBadges → TrustBadge.
+
+  it('renders Flexible cancellation ONLY when the preset is flexible', () => {
+    render(
+      <ExperienceCard
+        experience={{ ...base, cancellationPreset: 'flexible' }}
+      />,
+    )
+    expect(screen.getByText('TrustBadges.flexibleCancellation')).toBeTruthy()
+  })
+
+  it('renders NO Flexible cancellation badge for a moderate preset', () => {
+    render(
+      <ExperienceCard
+        experience={{ ...base, cancellationPreset: 'moderate' }}
+      />,
+    )
+    expect(screen.queryByText('TrustBadges.flexibleCancellation')).toBeNull()
+  })
+
+  it('renders NO Safety Checked badge when the listing has no safety data', () => {
+    render(
+      <ExperienceCard
+        experience={{ ...base, requiresSafetyStack: false }}
+      />,
+    )
+    expect(screen.queryByText('TrustBadges.safetyChecked')).toBeNull()
+  })
+
+  it('renders the Safety Checked badge when requiresSafetyStack is true', () => {
+    render(
+      <ExperienceCard
+        experience={{ ...base, requiresSafetyStack: true }}
+      />,
+    )
+    expect(screen.getByText('TrustBadges.safetyChecked')).toBeTruthy()
+  })
+
+  it('renders the tier-specific Verified Vendor label for an identity-verified vendor', () => {
+    render(
+      <ExperienceCard
+        experience={{ ...base, vendorKycTier: 'identity' }}
+      />,
+    )
+    expect(screen.getByText('TrustBadges.verifiedVendor.identity')).toBeTruthy()
+  })
+
+  it('renders NO Verified Vendor badge for a phone-only vendor', () => {
+    render(
+      <ExperienceCard experience={{ ...base, vendorKycTier: 'phone' }} />,
+    )
+    expect(screen.queryByText('TrustBadges.verifiedVendor.identity')).toBeNull()
+    expect(screen.queryByText('TrustBadges.verifiedVendor.business')).toBeNull()
+  })
+
+  it('no longer renders any hardcoded freeCancellation badge', () => {
+    render(<ExperienceCard experience={base} />)
+    // The old unconditional HomePage.trustBadges.freeCancellation badge is gone.
+    expect(screen.queryByText('trustBadges.freeCancellation')).toBeNull()
+  })
+})
+
 describe('ExperienceCard bare card (no new data)', () => {
   it('renders no difficulty, social-proof, or rating when none are passed', () => {
     const { container } = render(<ExperienceCard experience={base} />)
     expect(screen.queryByText(/^difficulty\./)).toBeNull()
     expect(screen.queryByText('badges.bestseller')).toBeNull()
     expect(screen.queryByText('badges.topRated')).toBeNull()
-    // Price + free-cancellation must still be intact.
+    // Price must still be intact.
     expect(screen.getByText('/ person')).toBeTruthy()
-    expect(screen.getByText('trustBadges.freeCancellation')).toBeTruthy()
     // No stray empty rating number (tabular-nums only appears on price here,
     // which lives in a span without that class — assert no rating star block).
     expect(container.textContent).not.toContain('(0)')

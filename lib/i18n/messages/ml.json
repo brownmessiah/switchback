@@ -1158,5 +1158,16 @@
       "title": "We could not build that itinerary",
       "body": "Something went wrong. Please adjust your inputs and try again."
     }
+  },
+  "TrustBadges": {
+    "verifiedVendor": {
+      "identity": "ഐഡന്റിറ്റി സ്ഥിരീകരിച്ചു",
+      "business": "ബിസിനസ് സ്ഥിരീകരിച്ചു"
+    },
+    "safetyChecked": "സുരക്ഷ പരിശോധിച്ചു",
+    "instantConfirmation": "തൽക്ഷണ സ്ഥിരീകരണം",
+    "partialPay": "ഭാഗിക പേയ്‌മെന്റ് ലഭ്യം",
+    "flexibleCancellation": "ഫ്ലെക്സിബിൾ റദ്ദാക്കൽ",
+    "beginnerFriendly": "തുടക്കക്കാർക്ക് അനുയോജ്യം"
   }
 }

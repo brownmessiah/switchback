@@ -32,6 +32,8 @@ export interface ExperienceDetailVendor {
   slug: string
 }
 
+export type ExperienceDetailKycTier = 'phone' | 'identity' | 'business'
+
 /**
  * A Region closure (ADR-0011) overlapping the Experience's bookable window.
  * Surfaced inline at the booking step so customers see e.g.
@@ -56,6 +58,14 @@ export interface ExperienceDetailData {
   pricePerPerson_1_2: number
   pricePerPerson_3_5: number
   pricePerPerson_6_plus: number
+  /**
+   * Whether the activity triggers the Safety stack (ADR-0015) — drives the
+   * shared "Safety Checked" TrustBadge (issue 05). A listing WITHOUT safety
+   * data renders NO Safety Checked badge.
+   */
+  requiresSafetyStack: boolean
+  /** Vendor KYC tier (ADR-0007) — drives the tier-specific Verified Vendor badge. */
+  vendorKycTier: ExperienceDetailKycTier
   /** Raw permit slugs as stored on the Experience. */
   requiredPermits: string[]
   /**
@@ -156,6 +166,7 @@ export async function loadExperienceDetail(
       pricePerPerson_1_2: experiences.pricePerPerson_1_2,
       pricePerPerson_3_5: experiences.pricePerPerson_3_5,
       pricePerPerson_6_plus: experiences.pricePerPerson_6_plus,
+      requiresSafetyStack: experiences.requiresSafetyStack,
       requiredPermits: experiences.requiredPermits,
       activitySlug: experiences.activitySlug,
       regionSlug: experiences.regionSlug,
@@ -226,6 +237,7 @@ async function hydrateDetail(
     pricePerPerson_1_2: string
     pricePerPerson_3_5: string
     pricePerPerson_6_plus: string
+    requiresSafetyStack: boolean
     requiredPermits: string[]
     activitySlug: string
     regionSlug: string
@@ -248,6 +260,7 @@ async function hydrateDetail(
       userId: vendorProfiles.userId,
       businessName: vendorProfiles.businessName,
       slug: vendorProfiles.slug,
+      kycTier: vendorProfiles.kycTier,
     })
     .from(vendorProfiles)
     .where(eq(vendorProfiles.userId, exp.vendorUserId))
@@ -330,9 +343,15 @@ async function hydrateDetail(
       pricePerPerson_1_2: Math.floor(Number(exp.pricePerPerson_1_2)),
       pricePerPerson_3_5: Math.floor(Number(exp.pricePerPerson_3_5)),
       pricePerPerson_6_plus: Math.floor(Number(exp.pricePerPerson_6_plus)),
+      requiresSafetyStack: exp.requiresSafetyStack,
+      vendorKycTier: vendor.kycTier as ExperienceDetailKycTier,
       requiredPermits: exp.requiredPermits,
       permits: resolvePermits(exp.requiredPermits).resolved,
-      vendor,
+      vendor: {
+        userId: vendor.userId,
+        businessName: vendor.businessName,
+        slug: vendor.slug,
+      },
       activity,
       region,
       gallery,

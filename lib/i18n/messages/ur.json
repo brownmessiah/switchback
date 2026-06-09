@@ -1553,5 +1553,8 @@
       "heading": "مقبول تلاشیں",
       "chip": "{destination} {activity}"
     }
+  },
+  "RecentlyViewed": {
+    "heading": "حال ہی میں دیکھے گئے"
   }
 }

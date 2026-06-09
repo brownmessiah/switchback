@@ -29,6 +29,9 @@ import {
 import { and, eq } from 'drizzle-orm'
 import Image from 'next/image'
 
+import { loadRecentlyViewedCardsAction } from '@/components/recently-viewed/actions'
+import { RecentlyViewedRail } from '@/components/recently-viewed/rail'
+import { RecentlyViewedRecorder } from '@/components/recently-viewed/recorder'
 import { ReviewList, type ReviewData } from '@/components/reviews/review-list'
 import { Badge } from '@/components/ui/badge'
 import { WishlistButton } from '@/components/wishlist-button'
@@ -445,6 +448,9 @@ export default async function ExperienceDetailPage({
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 pb-24 sm:px-6 lg:py-12 lg:pb-12">
+      {/* Records this PDP into the visitor's recently-viewed list (issue 12) on
+          mount — guest-friendly, slug only, no auth / DB write. Renders null. */}
+      <RecentlyViewedRecorder slug={detail.slug} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productJson) }}
@@ -914,6 +920,12 @@ export default async function ExperienceDetailPage({
           the SAME BookingRailInteractive island — identical `bookingProps`, no
           data refork. `lg:hidden`; the desktop side-rail above covers ≥ lg. */}
       <BookingRailMobile {...bookingProps} />
+
+      {/* RECENTLY VIEWED (issue 12) — the visitor's other recently-viewed
+          Experiences, gated through lib/experiences/public-filter and hidden
+          when empty. The current PDP self-includes (it was just recorded); that
+          is acceptable parity behaviour for a recently-viewed rail. */}
+      <RecentlyViewedRail fetchCards={loadRecentlyViewedCardsAction} />
     </main>
   )
 }

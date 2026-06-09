@@ -12,6 +12,8 @@ import {
 } from 'lucide-react'
 
 import { ExperienceCard } from '@/components/experience-card'
+import { loadRecentlyViewedCardsAction } from '@/components/recently-viewed/actions'
+import { RecentlyViewedRail } from '@/components/recently-viewed/rail'
 import { HomeHowItWorks } from '@/components/home/how-it-works'
 import {
   HomeStructuredSearch,
@@ -416,6 +418,12 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
           </div>
         </section>
       )}
+
+      {/* RECENTLY VIEWED (issue 12) — guest-friendly localStorage rail. Reads
+          the visitor's recently-viewed slugs client-side, re-fetches + re-gates
+          them through lib/experiences/public-filter (no fixture/unpublished
+          leak), and renders newest-first. Hidden entirely when empty. */}
+      <RecentlyViewedRail fetchCards={loadRecentlyViewedCardsAction} />
 
       {/* HOW OUTVERS WORKS — five sequential steps (issue 08). Crawlable HTML,
           stacks on mobile, no horizontal scroll. */}

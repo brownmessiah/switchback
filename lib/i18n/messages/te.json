@@ -1553,5 +1553,8 @@
       "heading": "ప్రసిద్ధ శోధనలు",
       "chip": "{destination} {activity}"
     }
+  },
+  "RecentlyViewed": {
+    "heading": "ఇటీవల చూసినవి"
   }
 }

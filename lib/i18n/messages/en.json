@@ -116,6 +116,9 @@
       "chip": "{destination} {activity}"
     }
   },
+  "RecentlyViewed": {
+    "heading": "Recently viewed"
+  },
   "TrustBadges": {
     "verifiedVendor": {
       "identity": "Identity verified",

@@ -1553,5 +1553,8 @@
       "heading": "ജനപ്രിയ തിരയലുകൾ",
       "chip": "{destination} {activity}"
     }
+  },
+  "RecentlyViewed": {
+    "heading": "അടുത്തിടെ കണ്ടവ"
   }
 }

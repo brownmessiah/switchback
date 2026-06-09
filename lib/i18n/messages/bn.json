@@ -1553,5 +1553,8 @@
       "heading": "জনপ্রিয় অনুসন্ধান",
       "chip": "{destination} {activity}"
     }
+  },
+  "RecentlyViewed": {
+    "heading": "সম্প্রতি দেখা"
   }
 }

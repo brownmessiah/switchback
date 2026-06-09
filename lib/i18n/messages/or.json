@@ -1553,5 +1553,8 @@
       "heading": "ଲୋକପ୍ରିୟ ସନ୍ଧାନ",
       "chip": "{destination} {activity}"
     }
+  },
+  "RecentlyViewed": {
+    "heading": "ସମ୍ପ୍ରତି ଦେଖାଯାଇଥିବା"
   }
 }

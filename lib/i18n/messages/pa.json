@@ -1553,5 +1553,8 @@
       "heading": "ਪ੍ਰਸਿੱਧ ਖੋਜਾਂ",
       "chip": "{destination} {activity}"
     }
+  },
+  "RecentlyViewed": {
+    "heading": "ਹਾਲ ਹੀ ਵਿੱਚ ਵੇਖੇ ਗਏ"
   }
 }

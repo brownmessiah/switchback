@@ -1553,5 +1553,8 @@
       "heading": "लोकप्रिय खोजें",
       "chip": "{destination} {activity}"
     }
+  },
+  "RecentlyViewed": {
+    "heading": "हाल ही में देखे गए"
   }
 }

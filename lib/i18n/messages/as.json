@@ -1553,5 +1553,8 @@
       "heading": "জনপ্ৰিয় সন্ধান",
       "chip": "{destination} {activity}"
     }
+  },
+  "RecentlyViewed": {
+    "heading": "শেহতীয়াকৈ চোৱা"
   }
 }

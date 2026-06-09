@@ -1553,5 +1553,8 @@
       "heading": "લોકપ્રિય શોધ",
       "chip": "{destination} {activity}"
     }
+  },
+  "RecentlyViewed": {
+    "heading": "તાજેતરમાં જોયેલ"
   }
 }

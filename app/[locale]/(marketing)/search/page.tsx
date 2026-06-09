@@ -3,6 +3,8 @@ import type { ReactElement } from 'react'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 import { ExperienceCard, type ExperienceCardData } from '@/components/experience-card'
+import { loadRecentlyViewedCardsAction } from '@/components/recently-viewed/actions'
+import { RecentlyViewedRail } from '@/components/recently-viewed/rail'
 import { ResultsView } from '@/components/maps/results-view'
 import { ActiveFilterChips } from '@/components/search/active-filter-chips'
 import { FacetForm } from '@/components/search/facet-form'
@@ -217,6 +219,10 @@ export default async function SearchPage({
           </ResultsView>
         </section>
       </div>
+
+      {/* RECENTLY VIEWED (issue 12) — guest-friendly localStorage rail, gated
+          through lib/experiences/public-filter and hidden when empty. */}
+      <RecentlyViewedRail fetchCards={loadRecentlyViewedCardsAction} />
     </main>
   )
 }

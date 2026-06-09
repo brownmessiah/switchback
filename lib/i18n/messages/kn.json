@@ -1553,5 +1553,8 @@
       "heading": "ಜನಪ್ರಿಯ ಹುಡುಕಾಟಗಳು",
       "chip": "{destination} {activity}"
     }
+  },
+  "RecentlyViewed": {
+    "heading": "ಇತ್ತೀಚೆಗೆ ನೋಡಿದವು"
   }
 }

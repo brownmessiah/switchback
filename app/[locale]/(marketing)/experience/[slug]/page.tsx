@@ -39,7 +39,9 @@ import { auth } from '@/lib/auth'
 import { env } from '@/lib/env'
 import { isInWishlist } from '@/lib/wishlist/wishlist'
 import { loadExperienceDetail } from '@/lib/experiences/detail-loader'
+import { loadSimilarExperiences } from '@/lib/experiences/similar'
 import { formatDuration, formatSeason } from '@/lib/experiences/structured-schema'
+import { ExperienceCard } from '@/components/experience-card'
 import { TrustBadge } from '@/components/trust-badge'
 import {
   deriveTrustBadges,
@@ -130,6 +132,19 @@ export default async function ExperienceDetailPage({
     customerName: r.customerName ?? 'Customer',
     createdAt: r.createdAt,
   }))
+
+  // "Similar experiences" (issue 16) — three blended intents (same activity in
+  // nearby/same-state regions + different activities in this region + popular
+  // beginner-friendly alternatives), EVERY group gated through
+  // lib/experiences/public-filter (no fixture/unpublished leak), the current
+  // Experience excluded, deduped + capped. Empty-safe: the section is omitted
+  // entirely when no candidate qualifies.
+  const similarExperiences = await loadSimilarExperiences(db, {
+    id: detail.id,
+    slug: detail.slug,
+    regionSlug: detail.region.slug,
+    activitySlug: detail.activity.slug,
+  })
 
   // Issue #08 — wishlist saved state for the heart toggle. Logged-out
   // visitors still see the button (initialSaved=false); clicking it routes
@@ -988,6 +1003,34 @@ export default async function ExperienceDetailPage({
           the SAME BookingRailInteractive island — identical `bookingProps`, no
           data refork. `lg:hidden`; the desktop side-rail above covers ≥ lg. */}
       <BookingRailMobile {...bookingProps} />
+
+      {/* SIMILAR EXPERIENCES (issue 16) — three blended intents (same activity
+          in same-state/nearby regions + different activities here + popular
+          beginner-friendly alternatives), all gated through
+          lib/experiences/public-filter and with the current Experience
+          excluded. Rendered as the shared A1 ExperienceCard. Empty-safe:
+          omitted entirely when the loader returns no candidates. */}
+      {similarExperiences.length > 0 && (
+        <section
+          data-testid="similar-experiences"
+          aria-labelledby="similar-experiences-heading"
+          className="mt-[var(--space-section)] border-t border-border pt-[var(--space-section)]"
+        >
+          <h2
+            id="similar-experiences-heading"
+            className="mb-4 font-heading text-h2 font-semibold tracking-tight"
+          >
+            {t('sections.similar')}
+          </h2>
+          <ul className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            {similarExperiences.map((card) => (
+              <li key={card.id}>
+                <ExperienceCard experience={card} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* RECENTLY VIEWED (issue 12) — the visitor's other recently-viewed
           Experiences, gated through lib/experiences/public-filter and hidden

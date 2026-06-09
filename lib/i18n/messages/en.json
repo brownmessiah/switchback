@@ -348,7 +348,8 @@
       "excluded": "Not included",
       "whatToBring": "What to bring",
       "itinerary": "Itinerary",
-      "meetingPoint": "Meeting point"
+      "meetingPoint": "Meeting point",
+      "similar": "Similar experiences"
     },
     "meetingPoint": {
       "approximateNote": "Approximate area only — the exact meeting point is shared after booking and listed below.",

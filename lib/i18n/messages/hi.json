@@ -551,7 +551,10 @@
       "count": "{count} अनुभव मिले",
       "empty": "कोई अनुभव नहीं मिला",
       "emptyHint": "अपने फ़िल्टर समायोजित करें या कुछ और खोजें।",
-      "sectionLabel": "खोज परिणाम"
+      "sectionLabel": "खोज परिणाम",
+      "clearFilters": "फ़िल्टर हटाएँ",
+      "popularLabel": "लोकप्रिय खोजें",
+      "alternativeChip": "{destination} {activity}"
     },
     "filters": {
       "moreFilters": "और फ़िल्टर",
@@ -906,7 +909,8 @@
   "NotFound": {
     "heading": "404",
     "message": "यह पृष्ठ मौजूद नहीं है या स्थानांतरित कर दिया गया है।",
-    "backToHome": "होम पर वापस जाएँ"
+    "exploreCta": "अनुभव खोजें",
+    "homeCta": "होम पर जाएँ"
   },
   "CheckoutPage": {
     "title": "चेकआउट",

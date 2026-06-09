@@ -551,7 +551,10 @@
       "count": "{count} ਅਨੁਭਵ ਮਿਲ{count, plural, one {ਿਆ} other {ੇ}}",
       "empty": "ਕੋਈ ਅਨੁਭਵ ਨਹੀਂ ਮਿਲੇ",
       "emptyHint": "ਆਪਣੇ ਫ਼ਿਲਟਰ ਠੀਕ ਕਰੋ ਜਾਂ ਕੁਝ ਹੋਰ ਖੋਜੋ।",
-      "sectionLabel": "ਖੋਜ ਨਤੀਜੇ"
+      "sectionLabel": "ਖੋਜ ਨਤੀਜੇ",
+      "clearFilters": "ਫਿਲਟਰ ਹਟਾਓ",
+      "popularLabel": "ਪ੍ਰਸਿੱਧ ਖੋਜਾਂ",
+      "alternativeChip": "{destination} {activity}"
     },
     "filters": {
       "moreFilters": "ਹੋਰ ਫਿਲਟਰ",
@@ -906,7 +909,8 @@
   "NotFound": {
     "heading": "404",
     "message": "ਇਹ ਪੇਜ ਮੌਜੂਦ ਨਹੀਂ ਹੈ ਜਾਂ ਮੂਵ ਕਰ ਦਿੱਤਾ ਗਿਆ ਹੈ।",
-    "backToHome": "ਹੋਮ 'ਤੇ ਵਾਪਸ ਜਾਓ"
+    "exploreCta": "ਅਨੁਭਵ ਲੱਭੋ",
+    "homeCta": "ਹੋਮ 'ਤੇ ਜਾਓ"
   },
   "CheckoutPage": {
     "title": "ਚੈੱਕਆਊਟ",

@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 
 import { BookingStatusBadge } from '@/components/booking-status-badge'
+import { DashboardBookingsEmpty } from '@/components/dashboard-bookings-empty'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { db } from '@/db/client'
@@ -138,18 +139,13 @@ export default async function CustomerDashboardPage() {
         {/* ── Trip Timeline — upcoming-first, decision-complete Booking cards ── */}
         <section className="order-2 lg:order-1">
           {sortedBookings.length === 0 ? (
-            <div className="rounded-xl border border-dashed py-16 text-center">
-              <p className="text-lg font-medium">{t('bookings.empty')}</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t('bookings.emptyHint')}
-              </p>
-              <Link
-                href="/en/search"
-                className="mt-4 inline-block rounded-lg bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-              >
-                {t('bookings.explore')}
-              </Link>
-            </div>
+            <DashboardBookingsEmpty
+              labels={{
+                title: t('bookings.empty'),
+                hint: t('bookings.emptyHint'),
+                cta: t('bookings.explore'),
+              }}
+            />
           ) : (
             <div className="space-y-3">
               {sortedBookings.map((b) => {

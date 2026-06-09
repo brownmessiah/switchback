@@ -551,7 +551,10 @@
       "count": "{count} અનુભવ{count, plural, one {} other {ો}} મળ્યા",
       "empty": "કોઈ અનુભવ મળ્યા નથી",
       "emptyHint": "તમારા ફિલ્ટર્સ બદલો અથવા કંઈક બીજું શોધો.",
-      "sectionLabel": "શોધ પરિણામો"
+      "sectionLabel": "શોધ પરિણામો",
+      "clearFilters": "ફિલ્ટર સાફ કરો",
+      "popularLabel": "લોકપ્રિય શોધ",
+      "alternativeChip": "{destination} {activity}"
     },
     "filters": {
       "moreFilters": "વધુ ફિલ્ટર",
@@ -906,7 +909,8 @@
   "NotFound": {
     "heading": "404",
     "message": "આ પેજ અસ્તિત્વમાં નથી અથવા ખસેડવામાં આવ્યું છે.",
-    "backToHome": "હોમ પર પાછા જાઓ"
+    "exploreCta": "અનુભવો શોધો",
+    "homeCta": "હોમ પર જાઓ"
   },
   "CheckoutPage": {
     "title": "ચેકઆઉટ",

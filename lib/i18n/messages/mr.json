@@ -551,7 +551,10 @@
       "count": "{count} अनुभव सापडले",
       "empty": "कोणतेही अनुभव सापडले नाहीत",
       "emptyHint": "तुमचे फिल्टर समायोजित करा किंवा काहीतरी वेगळे शोधा.",
-      "sectionLabel": "शोध परिणाम"
+      "sectionLabel": "शोध परिणाम",
+      "clearFilters": "फिल्टर साफ करा",
+      "popularLabel": "लोकप्रिय शोध",
+      "alternativeChip": "{destination} {activity}"
     },
     "filters": {
       "moreFilters": "अधिक फिल्टर",
@@ -906,7 +909,8 @@
   "NotFound": {
     "heading": "404",
     "message": "हे पृष्ठ अस्तित्वात नाही किंवा हलवले गेले आहे.",
-    "backToHome": "मुखपृष्ठावर परत जा"
+    "exploreCta": "अनुभव शोधा",
+    "homeCta": "मुख्यपृष्ठावर जा"
   },
   "CheckoutPage": {
     "title": "चेकआउट",

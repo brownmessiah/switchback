@@ -551,7 +551,10 @@
       "count": "{count} ಅನುಭವ{count, plural, one {} other {ಗಳು}} ಕಂಡುಬಂದವು",
       "empty": "ಯಾವುದೇ ಅನುಭವಗಳು ಕಂಡುಬಂದಿಲ್ಲ",
       "emptyHint": "ನಿಮ್ಮ ಫಿಲ್ಟರ್‌ಗಳನ್ನು ಹೊಂದಿಸಿ ಅಥವಾ ಬೇರೆ ಏನಾದರೂ ಹುಡುಕಿ.",
-      "sectionLabel": "ಹುಡುಕಾಟ ಫಲಿತಾಂಶಗಳು"
+      "sectionLabel": "ಹುಡುಕಾಟ ಫಲಿತಾಂಶಗಳು",
+      "clearFilters": "ಫಿಲ್ಟರ್‌ಗಳನ್ನು ತೆರವುಗೊಳಿಸಿ",
+      "popularLabel": "ಜನಪ್ರಿಯ ಹುಡುಕಾಟಗಳು",
+      "alternativeChip": "{destination} {activity}"
     },
     "filters": {
       "moreFilters": "ಇನ್ನಷ್ಟು ಫಿಲ್ಟರ್‌ಗಳು",
@@ -906,7 +909,8 @@
   "NotFound": {
     "heading": "404",
     "message": "ಈ ಪುಟ ಅಸ್ತಿತ್ವದಲ್ಲಿಲ್ಲ ಅಥವಾ ಸ್ಥಳಾಂತರಿಸಲಾಗಿದೆ.",
-    "backToHome": "ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ"
+    "exploreCta": "ಅನುಭವಗಳನ್ನು ಅನ್ವೇಷಿಸಿ",
+    "homeCta": "ಮುಖಪುಟಕ್ಕೆ ಹೋಗಿ"
   },
   "CheckoutPage": {
     "title": "ಚೆಕ್‌ಔಟ್",

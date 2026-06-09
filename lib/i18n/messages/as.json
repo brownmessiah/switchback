@@ -465,7 +465,10 @@
       "count": "{count, plural, one {# অভিজ্ঞতা পোৱা গ'ল} other {# অভিজ্ঞতা পোৱা গ'ল}}",
       "empty": "কোনো অভিজ্ঞতা পোৱা নগ'ল",
       "emptyHint": "আপোনাৰ ফিল্টাৰ সলনি কৰক বা আন কিবা সন্ধান কৰক।",
-      "sectionLabel": "সন্ধান ফলাফল"
+      "sectionLabel": "সন্ধান ফলাফল",
+      "clearFilters": "ফিল্টাৰ আঁতৰাওক",
+      "popularLabel": "জনপ্ৰিয় সন্ধান",
+      "alternativeChip": "{destination} {activity}"
     },
     "filters": {
       "moreFilters": "অধিক ফিল্টাৰ",
@@ -834,7 +837,8 @@
   "NotFound": {
     "heading": "404",
     "message": "এই পৃষ্ঠা অস্তিত্ব নাই বা স্থানান্তৰিত হৈছে।",
-    "backToHome": "মূল পৃষ্ঠালৈ উভতি যাওক"
+    "exploreCta": "অভিজ্ঞতা অন্বেষণ কৰক",
+    "homeCta": "ঘৰলৈ যাওক"
   },
   "BlogPage": {
     "metadata": {

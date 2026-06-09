@@ -10,9 +10,14 @@ import { ActiveFilterChips } from '@/components/search/active-filter-chips'
 import { FacetForm } from '@/components/search/facet-form'
 import { FiltersSheet } from '@/components/search/filters-sheet'
 import { SearchBox } from '@/components/search/search-box'
+import {
+  SearchEmptyState,
+  type SearchEmptyAlternative,
+} from '@/components/search/search-empty-state'
 import { ViewToggle, type SearchView } from '@/components/search/view-toggle'
 import { db } from '@/db/client'
 import { enrichCardBadges } from '@/lib/experiences/card-badges'
+import { loadPopularSearchChips } from '@/lib/home/popular-chips'
 import { toMapPins } from '@/lib/maps/pins'
 import { loadExperienceCoverMap } from '@/lib/media/experience-images'
 import { generateAlternates } from '@/lib/seo/hreflang'
@@ -121,6 +126,24 @@ export default async function SearchPage({
     })),
   )
 
+  // Zero-results state (issue 25). Only when the result set is empty do we load
+  // the inventory-backed popular alternatives — high-intent Destination×Activity
+  // shortcuts that are GUARANTEED to have live published inventory (D0), so the
+  // empty state never offers a dead 0-result link. Localised against the SAME
+  // facet namespaces the home chips + facet rail use (all 13 locales).
+  const filtered = isFilteredSearch(parsed)
+  const emptyAlternatives: SearchEmptyAlternative[] =
+    hits.length === 0
+      ? (await loadPopularSearchChips(db)).map((chip) => ({
+          key: `${chip.regionSlug}:${chip.activitySlug}`,
+          href: chip.href,
+          label: t('results.alternativeChip', {
+            destination: t(`regions.${chip.regionI18nKey}`),
+            activity: t(`activities.${chip.activityI18nKey}`),
+          }),
+        }))
+      : []
+
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
       <header className="mb-6 flex flex-col gap-4">
@@ -197,12 +220,16 @@ export default async function SearchPage({
             }}
           >
             {hits.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-[var(--radius-card)] border border-dashed py-16 text-center">
-                <p className="text-lg font-medium">{t('results.empty')}</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {t('results.emptyHint')}
-                </p>
-              </div>
+              <SearchEmptyState
+                isFiltered={filtered}
+                alternatives={emptyAlternatives}
+                labels={{
+                  title: t('results.empty'),
+                  hint: t('results.emptyHint'),
+                  clearFilters: t('results.clearFilters'),
+                  alternativesLabel: t('results.popularLabel'),
+                }}
+              />
             ) : view === 'list' ? (
               <div className="flex flex-col gap-[var(--space-grid-gap)]">
                 {cards.map((card) => (

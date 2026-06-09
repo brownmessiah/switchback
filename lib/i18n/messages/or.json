@@ -465,7 +465,10 @@
       "count": "{count, plural, one {# ଅନୁଭୂତି ମିଳିଲା} other {# ଅନୁଭୂତି ମିଳିଲା}}",
       "empty": "କୌଣସି ଅନୁଭୂତି ମିଳିଲା ନାହିଁ",
       "emptyHint": "ଆପଣଙ୍କ ଫିଲ୍ଟର ବଦଳାନ୍ତୁ କିମ୍ବା ଅନ୍ୟ କିଛି ଖୋଜନ୍ତୁ।",
-      "sectionLabel": "ସନ୍ଧାନ ଫଳାଫଳ"
+      "sectionLabel": "ସନ୍ଧାନ ଫଳାଫଳ",
+      "clearFilters": "ଫିଲ୍ଟର ସଫା କରନ୍ତୁ",
+      "popularLabel": "ଲୋକପ୍ରିୟ ସନ୍ଧାନ",
+      "alternativeChip": "{destination} {activity}"
     },
     "filters": {
       "moreFilters": "ଅଧିକ ଫିଲ୍ଟର",
@@ -834,7 +837,8 @@
   "NotFound": {
     "heading": "404",
     "message": "ଏହି ପୃଷ୍ଠା ଅସ୍ତିତ୍ୱରେ ନାହିଁ କିମ୍ବା ସ୍ଥାନାନ୍ତରିତ ହୋଇଛି।",
-    "backToHome": "ମୂଳ ପୃଷ୍ଠାକୁ ଫେରନ୍ତୁ"
+    "exploreCta": "ଅନୁଭବ ଅନ୍ୱେଷଣ କରନ୍ତୁ",
+    "homeCta": "ହୋମକୁ ଯାଆନ୍ତୁ"
   },
   "BlogPage": {
     "metadata": {

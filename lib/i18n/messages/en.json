@@ -613,7 +613,10 @@
       "count": "{count} experience{count, plural, one {} other {s}} found",
       "empty": "No experiences found",
       "emptyHint": "Try adjusting your filters or search for something else.",
-      "sectionLabel": "Search results"
+      "sectionLabel": "Search results",
+      "clearFilters": "Clear filters",
+      "popularLabel": "Popular searches",
+      "alternativeChip": "{destination} {activity}"
     },
     "filters": {
       "moreFilters": "More filters",
@@ -1049,9 +1052,10 @@
     "listYourExperience": "List your experience"
   },
   "NotFound": {
-    "heading": "404",
-    "message": "This page doesn't exist or has been moved.",
-    "backToHome": "Back to home"
+    "heading": "This trail leads nowhere",
+    "message": "The page you're looking for doesn't exist or has moved. Let's get you back to the adventure.",
+    "exploreCta": "Explore Experiences",
+    "homeCta": "Go Home"
   },
   "CheckoutPage": {
     "title": "Checkout",

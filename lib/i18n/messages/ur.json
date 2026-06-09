@@ -551,7 +551,10 @@
       "count": "{count} تجرب{count, plural, one {ہ} other {ات}} مل{count, plural, one {ا} other {ے}}",
       "empty": "کوئی تجربات نہیں ملے",
       "emptyHint": "اپنے فلٹرز میں تبدیلی کریں یا کچھ اور تلاش کریں۔",
-      "sectionLabel": "تلاش کے نتائج"
+      "sectionLabel": "تلاش کے نتائج",
+      "clearFilters": "فلٹرز صاف کریں",
+      "popularLabel": "مقبول تلاشیں",
+      "alternativeChip": "{destination} {activity}"
     },
     "filters": {
       "moreFilters": "مزید فلٹرز",
@@ -906,7 +909,8 @@
   "NotFound": {
     "heading": "404",
     "message": "یہ صفحہ موجود نہیں ہے یا منتقل ہو گیا ہے۔",
-    "backToHome": "ہوم پر واپس جائیں"
+    "exploreCta": "تجربات دریافت کریں",
+    "homeCta": "ہوم پر جائیں"
   },
   "CheckoutPage": {
     "title": "چیک آؤٹ",

@@ -551,7 +551,10 @@
       "count": "{count} അനുഭവ{count, plural, one {ം} other {ങ്ങൾ}} കണ്ടെത്തി",
       "empty": "അനുഭവങ്ങൾ കണ്ടെത്തിയില്ല",
       "emptyHint": "നിങ്ങളുടെ ഫിൽട്ടറുകൾ ക്രമീകരിക്കുകയോ മറ്റെന്തെങ്കിലും തിരയുകയോ ചെയ്യുക.",
-      "sectionLabel": "തിരയൽ ഫലങ്ങൾ"
+      "sectionLabel": "തിരയൽ ഫലങ്ങൾ",
+      "clearFilters": "ഫിൽട്ടറുകൾ മായ്ക്കുക",
+      "popularLabel": "ജനപ്രിയ തിരയലുകൾ",
+      "alternativeChip": "{destination} {activity}"
     },
     "filters": {
       "moreFilters": "കൂടുതൽ ഫിൽട്ടറുകൾ",
@@ -906,7 +909,8 @@
   "NotFound": {
     "heading": "404",
     "message": "ഈ പേജ് നിലവിലില്ല അല്ലെങ്കിൽ നീക്കം ചെയ്യപ്പെട്ടിരിക്കുന്നു.",
-    "backToHome": "ഹോമിലേക്ക് മടങ്ങുക"
+    "exploreCta": "അനുഭവങ്ങൾ പര്യവേക്ഷണം ചെയ്യുക",
+    "homeCta": "ഹോമിലേക്ക് പോകുക"
   },
   "CheckoutPage": {
     "title": "ചെക്കൗട്ട്",

@@ -551,7 +551,10 @@
       "count": "{count, plural, one {# அனுபவம்} other {# அனுபவங்கள்}} கிடைத்தன",
       "empty": "அனுபவங்கள் எதுவும் கிடைக்கவில்லை",
       "emptyHint": "உங்கள் வடிகட்டிகளை மாற்றி முயற்சிக்கவும் அல்லது வேறு ஏதாவது தேடுங்கள்.",
-      "sectionLabel": "தேடல் முடிவுகள்"
+      "sectionLabel": "தேடல் முடிவுகள்",
+      "clearFilters": "வடிப்பான்களை அழி",
+      "popularLabel": "பிரபலமான தேடல்கள்",
+      "alternativeChip": "{destination} {activity}"
     },
     "filters": {
       "moreFilters": "மேலும் வடிப்பான்கள்",
@@ -906,7 +909,8 @@
   "NotFound": {
     "heading": "404",
     "message": "இந்தப் பக்கம் இல்லை அல்லது நகர்த்தப்பட்டுள்ளது.",
-    "backToHome": "முகப்புக்குத் திரும்பு"
+    "exploreCta": "அனுபவங்களை ஆராயுங்கள்",
+    "homeCta": "முகப்புக்குச் செல்"
   },
   "CheckoutPage": {
     "title": "செக்அவுட்",

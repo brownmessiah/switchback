@@ -551,7 +551,10 @@
       "count": "{count} টি অভিজ্ঞতা পাওয়া গেছে",
       "empty": "কোনো অভিজ্ঞতা পাওয়া যায়নি",
       "emptyHint": "আপনার ফিল্টার সামঞ্জস্য করুন বা অন্য কিছু খুঁজুন।",
-      "sectionLabel": "অনুসন্ধানের ফলাফল"
+      "sectionLabel": "অনুসন্ধানের ফলাফল",
+      "clearFilters": "ফিল্টার মুছুন",
+      "popularLabel": "জনপ্রিয় অনুসন্ধান",
+      "alternativeChip": "{destination} {activity}"
     },
     "filters": {
       "moreFilters": "আরও ফিল্টার",
@@ -906,7 +909,8 @@
   "NotFound": {
     "heading": "404",
     "message": "এই পৃষ্ঠাটি নেই বা সরানো হয়েছে।",
-    "backToHome": "হোমে ফিরে যান"
+    "exploreCta": "অভিজ্ঞতা অন্বেষণ করুন",
+    "homeCta": "হোমে যান"
   },
   "CheckoutPage": {
     "title": "চেকআউট",

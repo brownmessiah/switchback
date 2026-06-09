@@ -551,7 +551,10 @@
       "count": "{count} అనుభవ{count, plural, one {ం} other {ాలు}} కనుగొనబడ{count, plural, one {ింది} other {్డాయి}}",
       "empty": "అనుభవాలు కనుగొనబడలేదు",
       "emptyHint": "మీ ఫిల్టర్‌లను సర్దుబాటు చేయండి లేదా వేరేదైనా శోధించండి.",
-      "sectionLabel": "శోధన ఫలితాలు"
+      "sectionLabel": "శోధన ఫలితాలు",
+      "clearFilters": "ఫిల్టర్‌లను తొలగించండి",
+      "popularLabel": "ప్రసిద్ధ శోధనలు",
+      "alternativeChip": "{destination} {activity}"
     },
     "filters": {
       "moreFilters": "మరిన్ని ఫిల్టర్లు",
@@ -906,7 +909,8 @@
   "NotFound": {
     "heading": "404",
     "message": "ఈ పేజీ ఉనికిలో లేదు లేదా తరలించబడింది.",
-    "backToHome": "హోమ్‌కు తిరిగి వెళ్ళండి"
+    "exploreCta": "అనుభవాలను అన్వేషించండి",
+    "homeCta": "హోమ్‌కు వెళ్లండి"
   },
   "CheckoutPage": {
     "title": "చెక్‌ఔట్",

@@ -64,12 +64,15 @@ test.describe('PDP fullscreen gallery modal (issue 14)', () => {
 
   test('closes on Escape and restores focus to the page', async ({ page }) => {
     await page.goto(PDP)
-    await page.getByRole('button', { name: /open photo gallery/i }).first().click()
+    const opener = page.getByRole('button', { name: /open photo gallery/i }).first()
+    await opener.click()
 
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
 
     await page.keyboard.press('Escape')
     await expect(page.getByRole('dialog')).toHaveCount(0)
+    // Dialog owns focus-restore: focus returns to the opener trigger.
+    await expect(opener).toBeFocused()
   })
 })

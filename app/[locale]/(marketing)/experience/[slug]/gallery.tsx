@@ -10,7 +10,6 @@ import { useTranslations } from 'next-intl'
 import { Dialog, DialogPortal } from '@/components/ui/dialog'
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 import { nextIndex, prevIndex } from '@/lib/media/gallery-nav'
 
 export interface GalleryImage {
@@ -127,7 +126,7 @@ export function Gallery({ images, title, totalReal }: GalleryProps): ReactElemen
             alt={images[0]!.alt}
             fill
             className="object-cover transition-[filter] duration-[var(--duration-base)] group-hover/gallery:brightness-[0.97]"
-            priority
+            preload
             sizes="(max-width: 768px) 100vw, 50vw"
           />
         </button>
@@ -172,18 +171,24 @@ export function Gallery({ images, title, totalReal }: GalleryProps): ReactElemen
           />
           <DialogPrimitive.Popup
             data-slot="gallery-content"
-            aria-label={title}
             className="fixed inset-0 z-50 flex flex-col bg-transparent text-white outline-none duration-100 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0"
             onKeyDown={onKeyDown}
           >
+            {/* The dialog's accessible name is the Experience title (auto-wired
+                via aria-labelledby). The visible "Image n of N" counter is the
+                Description (aria-describedby) so it stays announced + on-screen
+                without competing to be the sole accessible name. */}
+            <DialogPrimitive.Title data-slot="gallery-title" className="sr-only">
+              {title}
+            </DialogPrimitive.Title>
             {/* Top bar — counter (left) + close (right). */}
             <div className="flex shrink-0 items-center justify-between gap-3 p-4">
-              <DialogPrimitive.Title
-                data-slot="gallery-title"
+              <DialogPrimitive.Description
+                data-slot="gallery-counter"
                 className="text-sm font-medium tabular-nums"
               >
                 {t('imageOf', { current: index + 1, total })}
-              </DialogPrimitive.Title>
+              </DialogPrimitive.Description>
               <DialogPrimitive.Close
                 data-slot="gallery-close"
                 render={
@@ -213,7 +218,7 @@ export function Gallery({ images, title, totalReal }: GalleryProps): ReactElemen
                     fill
                     className="object-contain"
                     sizes="100vw"
-                    priority
+                    preload
                   />
                 </div>
               )}
@@ -224,9 +229,7 @@ export function Gallery({ images, title, totalReal }: GalleryProps): ReactElemen
                     type="button"
                     onClick={goPrev}
                     aria-label={t('previousImage')}
-                    className={cn(
-                      'absolute left-2 top-1/2 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition-colors hover:bg-white/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:left-3 sm:size-11',
-                    )}
+                    className="absolute left-2 top-1/2 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition-colors hover:bg-white/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:left-3 sm:size-11"
                   >
                     <ChevronLeft aria-hidden="true" className="size-6" />
                   </button>
@@ -234,9 +237,7 @@ export function Gallery({ images, title, totalReal }: GalleryProps): ReactElemen
                     type="button"
                     onClick={goNext}
                     aria-label={t('nextImage')}
-                    className={cn(
-                      'absolute right-2 top-1/2 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition-colors hover:bg-white/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:right-3 sm:size-11',
-                    )}
+                    className="absolute right-2 top-1/2 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition-colors hover:bg-white/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:right-3 sm:size-11"
                   >
                     <ChevronRight aria-hidden="true" className="size-6" />
                   </button>

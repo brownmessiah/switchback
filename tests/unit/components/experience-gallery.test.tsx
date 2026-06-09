@@ -69,6 +69,17 @@ describe('Gallery — opening the modal', () => {
       within(dialog).getByText('imageOf:{"current":3,"total":5}'),
     ).toBeTruthy()
   })
+
+  it('names the dialog by the Experience title (Title), not the counter', () => {
+    renderGallery()
+    fireEvent.click(screen.getByAltText('Sunrise over the valley'))
+    // The dialog's accessible name is the Experience title — not the counter,
+    // which is now the (described-by) description. This avoids an ambiguous /
+    // redundant accessible name.
+    expect(
+      screen.getByRole('dialog', { name: 'Bir Billing camping' }),
+    ).toBeTruthy()
+  })
 })
 
 describe('Gallery — navigation (buttons + keyboard, with wrap)', () => {

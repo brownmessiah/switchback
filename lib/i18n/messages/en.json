@@ -1,8 +1,11 @@
 {
   "HomePage": {
     "hero": {
-      "title": "Book the scene you\nwant to live.",
-      "subtitle": "Rafting in Rishikesh. Paragliding in Bir Billing. Scuba in Goa. Verified vendors, transparent pricing.",
+      "title": "Book Verified Adventure Experiences Across India",
+      "subtitle": "Rafting, paragliding, scuba, and trekking from verified Vendors — with transparent pricing and real-time availability.",
+      "brandLine": "Book the scene you want to live.",
+      "exploreCta": "Explore Experiences",
+      "listCta": "List Your Experience",
       "searchLabel": "Search experiences",
       "searchPlaceholder": "Try \"rafting Rishikesh\" or \"scuba Goa\"",
       "searchButton": "Search"

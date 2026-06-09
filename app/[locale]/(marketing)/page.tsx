@@ -131,12 +131,42 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
         </div>
 
         <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center px-4 text-center">
-          <h1 className="max-w-3xl whitespace-pre-line text-h1 font-heading font-bold text-white sm:text-display">
+          {/* Keyword-forward H1 (issue 02 / DECISION D1) — the single page
+              heading, optimised for marketplace credibility + SEO. */}
+          <h1 className="max-w-3xl text-balance text-h1 font-heading font-bold text-white sm:text-display">
             {t('hero.title')}
           </h1>
 
           <p className="mt-5 max-w-lg text-base text-white [text-shadow:0_1px_3px_rgb(0_0_0/0.6)] sm:text-lg">
             {t('hero.subtitle')}
+          </p>
+
+          {/* Explicit marketplace CTAs. Primary -> /search (Customers).
+              Secondary -> Vendor onboarding (supply side). Both carry .min-tap
+              for >=44px mobile tap targets (ADR-0018) and visible focus rings
+              for keyboard users. */}
+          <div className="mt-7 flex w-full max-w-md flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link
+              href="/search"
+              className="min-tap inline-flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-control)] bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-md)] transition-colors duration-150 hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:w-auto"
+            >
+              {t('hero.exploreCta')}
+            </Link>
+            {/* TODO(#06): re-point to /vendor-partner once issue #06 builds
+                that route. /vendor/onboarding is the interim destination. */}
+            <Link
+              href="/vendor/onboarding"
+              className="min-tap inline-flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-control)] bg-surface-0/95 px-6 text-sm font-semibold text-foreground shadow-[var(--shadow-md)] ring-1 ring-foreground/10 transition-colors duration-150 hover:bg-surface-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:w-auto"
+            >
+              {t('hero.listCta')}
+            </Link>
+          </div>
+
+          {/* Secondary emotional brand line — kept from the original hero, now
+              a smaller line below the keyword heading (a paragraph, not the
+              page heading). */}
+          <p className="mt-4 text-sm font-medium text-white/80 [text-shadow:0_1px_2px_rgb(0_0_0/0.6)] sm:text-base">
+            {t('hero.brandLine')}
           </p>
 
           {/* Opaque search card — bg-surface-0, --shadow-lg lifts it off the

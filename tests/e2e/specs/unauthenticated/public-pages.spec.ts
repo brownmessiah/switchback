@@ -87,6 +87,72 @@ test.describe('Home page', () => {
     expect(response?.status()).toBe(200)
     expect(new URL(page.url()).searchParams.get('region')).toBeTruthy()
   })
+
+  // Hero rework (issue 02 / DECISION D1): the H1 is the keyword line, the
+  // brand line is secondary (NOT an h1), and the two explicit CTAs route to
+  // /search and the interim /vendor/onboarding.
+  test('H1 is the keyword line and is the only h1 on the page', async ({
+    page,
+  }) => {
+    await page.goto('/')
+
+    const h1 = page.locator('h1')
+    await expect(h1).toHaveCount(1)
+    await expect(h1).toHaveText('Book Verified Adventure Experiences Across India')
+  })
+
+  test('secondary brand line is present but not the H1', async ({ page }) => {
+    await page.goto('/')
+
+    const brandLine = page.getByText('Book the scene you want to live.', {
+      exact: false,
+    })
+    await expect(brandLine.first()).toBeVisible()
+    // The brand line must not be wrapped in (or equal to) the page H1.
+    await expect(page.locator('h1', { hasText: 'Book the scene' })).toHaveCount(0)
+  })
+
+  test('primary CTA "Explore Experiences" routes to /search', async ({
+    page,
+  }) => {
+    await page.goto('/')
+
+    const cta = page.getByRole('link', { name: 'Explore Experiences' })
+    await expect(cta).toBeVisible()
+    await expect(cta).toHaveAttribute('href', '/search')
+
+    await cta.click()
+    await page.waitForURL('**/search')
+    expect(new URL(page.url()).pathname).toBe('/search')
+  })
+
+  test('secondary CTA "List Your Experience" routes to /vendor/onboarding', async ({
+    page,
+  }) => {
+    await page.goto('/')
+
+    const cta = page.getByRole('link', { name: 'List Your Experience' })
+    await expect(cta).toBeVisible()
+    // TODO(#06): destination becomes /vendor-partner once issue #06 ships.
+    await expect(cta).toHaveAttribute('href', '/vendor/onboarding')
+  })
+
+  test('both hero CTAs are keyboard-focusable and meet the 44px min-tap target', async ({
+    page,
+  }) => {
+    await page.goto('/')
+
+    for (const name of ['Explore Experiences', 'List Your Experience']) {
+      const cta = page.getByRole('link', { name })
+      await cta.focus()
+      await expect(cta).toBeFocused()
+
+      const box = await cta.boundingBox()
+      expect(box).not.toBeNull()
+      // .min-tap guarantees a >=44px tap target (ADR-0018).
+      expect(box!.height).toBeGreaterThanOrEqual(44)
+    }
+  })
 })
 
 // ---------------------------------------------------------------------------

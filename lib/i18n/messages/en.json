@@ -29,6 +29,62 @@
       "heading": "Featured experiences",
       "viewAll": "View all"
     },
+    "trust": {
+      "heading": "Adventure you can trust",
+      "subheading": "Every Experience on Outvers is run by a Vendor we verify, priced transparently, and booked through a secure checkout.",
+      "cards": {
+        "verifiedVendors": {
+          "title": "Verified adventure Vendors",
+          "body": "We check each Vendor's identity and business details before they can list, so you know who you are booking with."
+        },
+        "transparentPricing": {
+          "title": "Transparent pricing",
+          "body": "See the full per-person price up front, including the Advance and balance split when you choose to pay partially."
+        },
+        "safetyFirst": {
+          "title": "Safety-first Experiences",
+          "body": "Vendors share the safety briefing and gear details for each Experience, and you can add a trusted contact who is notified about your trip."
+        },
+        "bookingSupport": {
+          "title": "Easy booking support",
+          "body": "Questions before or after you book? Reach our team at support@outvers.com and we will help you sort it out."
+        },
+        "instantConfirmation": {
+          "title": "Instant confirmation",
+          "body": "Once your payment goes through, your Booking is confirmed straight away — no waiting for a Vendor to accept."
+        },
+        "secureCheckout": {
+          "title": "Secure checkout",
+          "body": "Payments are processed through Razorpay, so your card and UPI details are never stored on Outvers."
+        }
+      }
+    },
+    "howItWorks": {
+      "heading": "How Outvers works",
+      "subheading": "From search to confirmation in five simple steps.",
+      "steps": {
+        "search": {
+          "title": "Search",
+          "body": "Tell us the activity or place you have in mind, like rafting in Rishikesh or scuba in Goa."
+        },
+        "compare": {
+          "title": "Compare verified Experiences",
+          "body": "Browse Experiences from verified Vendors and compare ratings, inclusions, and transparent pricing."
+        },
+        "selectSlot": {
+          "title": "Select your date and time slot",
+          "body": "Pick an available date and time slot that suits your group."
+        },
+        "paySecurely": {
+          "title": "Pay securely",
+          "body": "Check out through Razorpay — pay in full, or pay an Advance now and the balance later when partial pay is offered."
+        },
+        "confirmation": {
+          "title": "Get confirmation and safety details",
+          "body": "Receive your instant confirmation along with the meeting point and safety details for the day."
+        }
+      }
+    },
     "badges": {
       "bestseller": "Bestseller",
       "topRated": "Top rated"

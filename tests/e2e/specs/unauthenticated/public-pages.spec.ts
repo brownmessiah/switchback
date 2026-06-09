@@ -112,6 +112,93 @@ test.describe('Home page', () => {
     await expect(page.locator('h1', { hasText: 'Book the scene' })).toHaveCount(0)
   })
 
+  // Issue 08: two new trust sections render as crawlable, labelled <section>
+  // landmarks below the hero — each with its own <h2>, keeping the single H1.
+  test('renders the "Adventure you can trust" + "How Outvers works" sections', async ({
+    page,
+  }) => {
+    await page.goto('/')
+
+    // Both sections are real region landmarks (aria-labelledby → <h2>).
+    const trust = page.getByRole('region', { name: 'Adventure you can trust' })
+    await expect(trust).toBeVisible()
+    const howItWorks = page.getByRole('region', {
+      name: 'How Outvers works',
+    })
+    await expect(howItWorks).toBeVisible()
+
+    // The H1 count is unchanged — the new sections use <h2> headings.
+    await expect(page.locator('h1')).toHaveCount(1)
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'Adventure you can trust' }),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'How Outvers works' }),
+    ).toBeVisible()
+  })
+
+  test('trust section renders the six named cards (Vendor vocabulary, no operators)', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    const trust = page.getByRole('region', { name: 'Adventure you can trust' })
+
+    for (const title of [
+      'Verified adventure Vendors',
+      'Transparent pricing',
+      'Safety-first Experiences',
+      'Easy booking support',
+      'Instant confirmation',
+      'Secure checkout',
+    ]) {
+      await expect(trust.getByText(title, { exact: true })).toBeVisible()
+    }
+    await expect(trust.getByTestId('trust-card')).toHaveCount(6)
+  })
+
+  test('how-it-works section renders the five ordered steps', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    const how = page.getByRole('region', { name: 'How Outvers works' })
+
+    await expect(how.getByTestId('how-step')).toHaveCount(5)
+    for (const title of [
+      'Search',
+      'Compare verified Experiences',
+      'Select your date and time slot',
+      'Pay securely',
+      'Get confirmation and safety details',
+    ]) {
+      await expect(how.getByText(title, { exact: true })).toBeVisible()
+    }
+  })
+
+  // DECISION D0 (data honesty): the new sections must carry NO fabricated
+  // metrics and NO over-promising safety language.
+  test('trust + how-it-works carry no fabricated metrics or "guaranteed" claims', async ({
+    page,
+  }) => {
+    await page.goto('/')
+
+    for (const name of ['Adventure you can trust', 'How Outvers works']) {
+      const region = page.getByRole('region', { name })
+      const text = ((await region.textContent()) ?? '').toLowerCase()
+      for (const forbidden of [
+        'guaranteed',
+        'fully insured',
+        '40,000',
+        '500+',
+        'operator',
+      ]) {
+        expect(
+          text.includes(forbidden),
+          `forbidden phrase "${forbidden}" found in "${name}"`,
+        ).toBe(false)
+      }
+    }
+  })
+
   test('primary CTA "Explore Experiences" routes to /search', async ({
     page,
   }) => {

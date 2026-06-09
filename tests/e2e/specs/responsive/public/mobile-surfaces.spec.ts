@@ -28,6 +28,24 @@ test.describe('responsive · public surfaces (< lg)', () => {
     }
   })
 
+  test('home trust + how-it-works sections render with no horizontal overflow (issue 08)', async ({
+    page,
+  }) => {
+    await page.goto('/', { waitUntil: 'networkidle' })
+
+    // Both new sections are present at the mobile/tablet viewport (they wrap /
+    // stack rather than scroll horizontally).
+    await expect(
+      page.getByRole('region', { name: 'Adventure you can trust' }),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('region', { name: 'How Outvers works' }),
+    ).toBeVisible()
+
+    // No page-level horizontal overflow (re-asserted after the sections render).
+    expect(await pageHorizontalOverflow(page)).toBeLessThanOrEqual(2)
+  })
+
   test('home activity chips: no h-scroll strip; +N more only on phones', async ({
     page,
   }) => {

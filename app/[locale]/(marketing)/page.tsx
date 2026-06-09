@@ -13,6 +13,8 @@ import {
 } from 'lucide-react'
 
 import { ExperienceCard } from '@/components/experience-card'
+import { HomeHowItWorks } from '@/components/home/how-it-works'
+import { HomeTrust } from '@/components/home/trust'
 import { Badge } from '@/components/ui/badge'
 import { db } from '@/db/client'
 import { env } from '@/lib/env'
@@ -328,6 +330,10 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
         </ul>
       </section>
 
+      {/* ADVENTURE YOU CAN TRUST — six descriptive trust cards (issue 08).
+          No fabricated metrics; each card maps to real product behaviour. */}
+      <HomeTrust />
+
       {/* FEATURED EXPERIENCES — A1 decision-complete card grid */}
       {data.featuredExperiences.length > 0 && (
         <section
@@ -368,6 +374,10 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
           </div>
         </section>
       )}
+
+      {/* HOW OUTVERS WORKS — five sequential steps (issue 08). Crawlable HTML,
+          stacks on mobile, no horizontal scroll. */}
+      <HomeHowItWorks />
     </main>
   )
 }

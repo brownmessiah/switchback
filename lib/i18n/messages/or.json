@@ -390,6 +390,11 @@
     "disclosure": {
       "body": "ସମସ୍ତ Experience ସ୍ୱାଧୀନ ତୃତୀୟ-ପକ୍ଷ Vendor ଦ୍ୱାରା ପରିଚାଳିତ ହୁଏ। ପ୍ରଯୋଜ୍ୟ ସ୍ଥାନରେ Outvers vendor ସୂଚନା, ବୁକିଂ ନିୟମ ଏବଂ ପେମେଣ୍ଟ ପ୍ରବାହ ଯାଞ୍ଚ କରେ।",
       "heading": "Outvers କିପରି Vendor ସହିତ କାମ କରେ"
+    },
+    "meetingPoint": {
+      "approximateNote": "କେବଳ ଆନୁମାନିକ ଅଞ୍ଚଳ — ସଠିକ ମିଳନ ସ୍ଥଳ ବୁକିଂ ପରେ ସେୟାର କରାଯାଏ ଏବଂ ତଳେ ଦିଆଯାଇଛି।",
+      "openInMaps": "ମାନଚିତ୍ରରେ ଖୋଲନ୍ତୁ",
+      "mapAriaLabel": "{region}ର ଆନୁମାନିକ ଅଞ୍ଚଳ ଦେଖାଉଥିବା ମାନଚିତ୍ର"
     }
   },
   "SearchPage": {

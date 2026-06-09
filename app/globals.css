@@ -486,3 +486,20 @@
   background: var(--primary);
   box-shadow: var(--shadow-sm, 0 1px 2px rgb(0 0 0 / 0.2));
 }
+
+/* ── PDP meeting-point approximate-area pin (Issue 15, Leaflet divIcon). A soft
+   dot marks the REGION centroid (city-level area), not a precise meeting point
+   (coordinate honesty, D0). ── */
+.meeting-point-pin {
+  background: transparent;
+  border: none;
+}
+.meeting-point-pin__dot {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: var(--primary);
+  border: 3px solid var(--primary-foreground, #fff);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgb(0 0 0 / 0.3));
+}

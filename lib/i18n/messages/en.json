@@ -350,6 +350,11 @@
       "itinerary": "Itinerary",
       "meetingPoint": "Meeting point"
     },
+    "meetingPoint": {
+      "approximateNote": "Approximate area only — the exact meeting point is shared after booking and listed below.",
+      "openInMaps": "Open in Maps",
+      "mapAriaLabel": "Map showing the approximate area in {region}"
+    },
     "pricing": {
       "heading": "Pricing",
       "tier1_2": "1-2 participants",

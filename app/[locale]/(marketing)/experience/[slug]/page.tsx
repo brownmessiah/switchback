@@ -51,6 +51,8 @@ import {
 import { trustBadgeLabel } from '@/lib/trust-badges/labels'
 import { LOCALE_NAMES, type SupportedLocale } from '@/lib/i18n/config'
 import { getActivityImage } from '@/lib/images'
+import { SinglePinMapLoader } from '@/components/maps/single-pin-map-loader'
+import { resolveMeetingPointMap } from '@/lib/maps/meeting-point'
 import { galleryTiles } from '@/lib/media/experience-images'
 import { getRedis } from '@/lib/redis'
 import { generateAlternates } from '@/lib/seo/hreflang'
@@ -141,6 +143,16 @@ export default async function ExperienceDetailPage({
   const canonicalUrl = `${baseUrl}/experience/${detail.slug}`
   const activityDisplay = detail.activity.displayName.en
   const regionDisplay = detail.region.displayName.en
+
+  // Meeting-point map (issue 15, D0 — coordinate honesty). The pin is the
+  // REGION centroid (approximate city-level area), never a fabricated precise
+  // meeting-point coordinate; the "Open in Maps" deep link SEARCHES the real
+  // named place. Falls back to text-only when the region has no known centroid.
+  const meetingPointMap = resolveMeetingPointMap({
+    meetingPoint: detail.meetingPoint,
+    regionSlug: detail.region.slug,
+    regionName: regionDisplay,
+  })
 
   // AggregateRating (ADR-0013) — only when at least one published Review exists.
   const reviewCount = experienceReviews.length
@@ -399,7 +411,7 @@ export default async function ExperienceDetailPage({
     ...(hasIncluded || detail.whatToBring.length > 0
       ? [{ id: 'details', label: t('nav.included') }]
       : []),
-    ...(detail.meetingPoint
+    ...(detail.meetingPoint || meetingPointMap.hasPin || meetingPointMap.mapsHref
       ? [{ id: 'meetingPoint', label: t('nav.meetingPoint') }]
       : []),
     ...(detail.requiredPermits.length > 0
@@ -801,20 +813,56 @@ export default async function ExperienceDetailPage({
               </section>
             )}
 
-            {/* Meeting point (anchor target #meetingPoint) — ADR-0017. Text
-                only, no map embed in v1. */}
-            {detail.meetingPoint && (
+            {/* Meeting point (anchor target #meetingPoint) — ADR-0017 + issue 15.
+                Approximate-area Leaflet pin at the REGION centroid (coordinate
+                honesty, D0 — NOT a precise meeting-point pin) plus an "Open in
+                Maps" deep link that SEARCHES the real named place. Graceful
+                fallback to text-only when the region has no known centroid. */}
+            {(detail.meetingPoint ||
+              meetingPointMap.hasPin ||
+              meetingPointMap.mapsHref) && (
               <section id="meetingPoint">
                 <h2 className="mb-3 font-heading text-h2 font-semibold tracking-tight">
                   {t('sections.meetingPoint')}
                 </h2>
-                <p className="flex items-start gap-2 text-sm text-foreground">
-                  <MapPin
-                    aria-hidden="true"
-                    className="mt-0.5 size-4 shrink-0 text-muted-foreground"
-                  />
-                  <span>{detail.meetingPoint}</span>
-                </p>
+                {meetingPointMap.pin && (
+                  <div className="mb-3">
+                    <SinglePinMapLoader
+                      lat={meetingPointMap.pin.lat}
+                      lng={meetingPointMap.pin.lng}
+                      ariaLabel={t('meetingPoint.mapAriaLabel', {
+                        region: regionDisplay,
+                      })}
+                    />
+                    <p
+                      data-testid="meeting-point-approximate-note"
+                      className="mt-2 text-xs text-muted-foreground"
+                    >
+                      {t('meetingPoint.approximateNote')}
+                    </p>
+                  </div>
+                )}
+                {detail.meetingPoint && (
+                  <p className="flex items-start gap-2 text-sm text-foreground">
+                    <MapPin
+                      aria-hidden="true"
+                      className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                    />
+                    <span>{detail.meetingPoint}</span>
+                  </p>
+                )}
+                {meetingPointMap.mapsHref && (
+                  <a
+                    href={meetingPointMap.mapsHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-testid="meeting-point-open-maps"
+                    className="min-tap mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary-strong hover:underline"
+                  >
+                    <MapPin aria-hidden="true" className="size-4" />
+                    {t('meetingPoint.openInMaps')}
+                  </a>
+                )}
               </section>
             )}
 

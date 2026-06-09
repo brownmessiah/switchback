@@ -468,6 +468,11 @@
     "disclosure": {
       "body": "تمام Experience خودمختار فریق ثالث Vendor چلاتے ہیں۔ جہاں لاگو ہو وہاں Outvers، vendor معلومات، بکنگ قواعد اور ادائیگی کے بہاؤ کی تصدیق کرتا ہے۔",
       "heading": "Outvers، Vendor کے ساتھ کیسے کام کرتا ہے"
+    },
+    "meetingPoint": {
+      "approximateNote": "صرف تخمینی علاقہ — درست ملاقات کا مقام بکنگ کے بعد بتایا جاتا ہے اور نیچے درج ہے۔",
+      "openInMaps": "نقشے میں کھولیں",
+      "mapAriaLabel": "{region} میں تخمینی علاقہ دکھانے والا نقشہ"
     }
   },
   "SearchPage": {

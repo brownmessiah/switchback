@@ -390,6 +390,11 @@
     "disclosure": {
       "body": "সকলো Experience স্বতন্ত্ৰ তৃতীয়-পক্ষৰ Vendor-এ পৰিচালনা কৰে। Outvers-এ প্ৰযোজ্য স্থানত vendor-ৰ তথ্য, বুকিং নিয়ম আৰু পেমেণ্ট প্ৰৱাহ সত্যাপন কৰে।",
       "heading": "Outvers কেনেদৰে Vendor-ৰ সৈতে কাম কৰে"
+    },
+    "meetingPoint": {
+      "approximateNote": "কেৱল আনুমানিক এলেকা — সঠিক মিলনস্থল বুকিঙৰ পিছত শ্বেয়াৰ কৰা হয় আৰু তলত দিয়া হৈছে।",
+      "openInMaps": "মেপত খোলক",
+      "mapAriaLabel": "{region}ৰ আনুমানিক এলেকা দেখুৱা মেপ"
     }
   },
   "SearchPage": {

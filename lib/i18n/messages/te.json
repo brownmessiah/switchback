@@ -1508,5 +1508,25 @@
       "body": "విక్రేత నిబంధనల గురించి ప్రశ్నలా? support@outvers.com కు ఇమెయిల్ చేయండి.",
       "email": "support@outvers.com"
     }
+  },
+  "HomeSearch": {
+    "fields": {
+      "destination": "గమ్యం",
+      "activity": "కార్యకలాపం",
+      "date": "తేదీ",
+      "groupSize": "సమూహ పరిమాణం"
+    },
+    "placeholders": {
+      "destination": "ఏదైనా గమ్యం",
+      "activity": "ఏదైనా కార్యకలాపం",
+      "groupSize": "ఎంత మంది?"
+    },
+    "submit": "వెతుకు",
+    "mobileTrigger": "అనుభవాలను వెతకండి",
+    "overlayTitle": "మీ సాహసాన్ని కనుగొనండి",
+    "popular": {
+      "heading": "ప్రసిద్ధ శోధనలు",
+      "chip": "{destination} {activity}"
+    }
   }
 }

@@ -1508,5 +1508,25 @@
       "body": "വെണ്ടർ നിബന്ധനകളെക്കുറിച്ച് ചോദ്യങ്ങളുണ്ടോ? support@outvers.com-ലേക്ക് ഇമെയിൽ ചെയ്യുക.",
       "email": "support@outvers.com"
     }
+  },
+  "HomeSearch": {
+    "fields": {
+      "destination": "ലക്ഷ്യസ്ഥാനം",
+      "activity": "പ്രവർത്തനം",
+      "date": "തീയതി",
+      "groupSize": "ഗ്രൂപ്പ് വലുപ്പം"
+    },
+    "placeholders": {
+      "destination": "ഏതെങ്കിലും ലക്ഷ്യസ്ഥാനം",
+      "activity": "ഏതെങ്കിലും പ്രവർത്തനം",
+      "groupSize": "എത്ര പേർ?"
+    },
+    "submit": "തിരയുക",
+    "mobileTrigger": "അനുഭവങ്ങൾ തിരയുക",
+    "overlayTitle": "നിങ്ങളുടെ സാഹസികത കണ്ടെത്തുക",
+    "popular": {
+      "heading": "ജനപ്രിയ തിരയലുകൾ",
+      "chip": "{destination} {activity}"
+    }
   }
 }

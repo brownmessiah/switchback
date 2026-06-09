@@ -96,6 +96,26 @@
       "extreme": "Extreme"
     }
   },
+  "HomeSearch": {
+    "fields": {
+      "destination": "Destination",
+      "activity": "Activity",
+      "date": "Date",
+      "groupSize": "Group size"
+    },
+    "placeholders": {
+      "destination": "Any destination",
+      "activity": "Any activity",
+      "groupSize": "How many?"
+    },
+    "submit": "Search",
+    "mobileTrigger": "Search experiences",
+    "overlayTitle": "Find your adventure",
+    "popular": {
+      "heading": "Popular searches",
+      "chip": "{destination} {activity}"
+    }
+  },
   "TrustBadges": {
     "verifiedVendor": {
       "identity": "Identity verified",

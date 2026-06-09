@@ -1508,5 +1508,25 @@
       "body": "ಮಾರಾಟಗಾರ ನಿಯಮಗಳ ಬಗ್ಗೆ ಪ್ರಶ್ನೆಗಳಿವೆಯೇ? support@outvers.com ಗೆ ಇಮೇಲ್ ಮಾಡಿ.",
       "email": "support@outvers.com"
     }
+  },
+  "HomeSearch": {
+    "fields": {
+      "destination": "ಗಮ್ಯ",
+      "activity": "ಚಟುವಟಿಕೆ",
+      "date": "ದಿನಾಂಕ",
+      "groupSize": "ಗುಂಪಿನ ಗಾತ್ರ"
+    },
+    "placeholders": {
+      "destination": "ಯಾವುದೇ ಗಮ್ಯ",
+      "activity": "ಯಾವುದೇ ಚಟುವಟಿಕೆ",
+      "groupSize": "ಎಷ್ಟು ಜನ?"
+    },
+    "submit": "ಹುಡುಕಿ",
+    "mobileTrigger": "ಅನುಭವಗಳನ್ನು ಹುಡುಕಿ",
+    "overlayTitle": "ನಿಮ್ಮ ಸಾಹಸವನ್ನು ಹುಡುಕಿ",
+    "popular": {
+      "heading": "ಜನಪ್ರಿಯ ಹುಡುಕಾಟಗಳು",
+      "chip": "{destination} {activity}"
+    }
   }
 }

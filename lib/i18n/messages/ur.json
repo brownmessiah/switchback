@@ -1508,5 +1508,25 @@
       "body": "وینڈر شرائط کے بارے میں سوالات؟ support@outvers.com پر ای میل کریں۔",
       "email": "support@outvers.com"
     }
+  },
+  "HomeSearch": {
+    "fields": {
+      "destination": "منزل",
+      "activity": "سرگرمی",
+      "date": "تاریخ",
+      "groupSize": "گروپ کا حجم"
+    },
+    "placeholders": {
+      "destination": "کوئی بھی منزل",
+      "activity": "کوئی بھی سرگرمی",
+      "groupSize": "کتنے لوگ؟"
+    },
+    "submit": "تلاش کریں",
+    "mobileTrigger": "تجربات تلاش کریں",
+    "overlayTitle": "اپنی مہم جوئی تلاش کریں",
+    "popular": {
+      "heading": "مقبول تلاشیں",
+      "chip": "{destination} {activity}"
+    }
   }
 }

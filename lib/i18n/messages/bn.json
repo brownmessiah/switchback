@@ -1508,5 +1508,25 @@
       "body": "বিক্রেতার শর্তাবলী সম্পর্কে প্রশ্ন আছে? support@outvers.com-এ ইমেল করুন।",
       "email": "support@outvers.com"
     }
+  },
+  "HomeSearch": {
+    "fields": {
+      "destination": "গন্তব্য",
+      "activity": "কার্যকলাপ",
+      "date": "তারিখ",
+      "groupSize": "দলের আকার"
+    },
+    "placeholders": {
+      "destination": "যেকোনো গন্তব্য",
+      "activity": "যেকোনো কার্যকলাপ",
+      "groupSize": "কতজন?"
+    },
+    "submit": "খুঁজুন",
+    "mobileTrigger": "অভিজ্ঞতা খুঁজুন",
+    "overlayTitle": "আপনার অ্যাডভেঞ্চার খুঁজুন",
+    "popular": {
+      "heading": "জনপ্রিয় অনুসন্ধান",
+      "chip": "{destination} {activity}"
+    }
   }
 }

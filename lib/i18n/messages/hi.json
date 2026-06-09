@@ -1508,5 +1508,25 @@
       "body": "विक्रेता शर्तों के बारे में प्रश्न? support@outvers.com पर ईमेल करें।",
       "email": "support@outvers.com"
     }
+  },
+  "HomeSearch": {
+    "fields": {
+      "destination": "गंतव्य",
+      "activity": "गतिविधि",
+      "date": "तारीख",
+      "groupSize": "समूह का आकार"
+    },
+    "placeholders": {
+      "destination": "कोई भी गंतव्य",
+      "activity": "कोई भी गतिविधि",
+      "groupSize": "कितने लोग?"
+    },
+    "submit": "खोजें",
+    "mobileTrigger": "अनुभव खोजें",
+    "overlayTitle": "अपना रोमांच खोजें",
+    "popular": {
+      "heading": "लोकप्रिय खोजें",
+      "chip": "{destination} {activity}"
+    }
   }
 }

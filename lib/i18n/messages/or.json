@@ -1508,5 +1508,25 @@
       "body": "ବିକ୍ରେତା ସର୍ତ୍ତାବଳୀ ବିଷୟରେ ପ୍ରଶ୍ନ? support@outvers.com କୁ ଇମେଲ୍ କରନ୍ତୁ।",
       "email": "support@outvers.com"
     }
+  },
+  "HomeSearch": {
+    "fields": {
+      "destination": "ଗନ୍ତବ୍ୟ",
+      "activity": "କାର୍ଯ୍ୟକଳାପ",
+      "date": "ତାରିଖ",
+      "groupSize": "ଗୋଷ୍ଠୀ ଆକାର"
+    },
+    "placeholders": {
+      "destination": "ଯେକୌଣସି ଗନ୍ତବ୍ୟ",
+      "activity": "ଯେକୌଣସି କାର୍ଯ୍ୟକଳାପ",
+      "groupSize": "କେତେ ଜଣ?"
+    },
+    "submit": "ଖୋଜନ୍ତୁ",
+    "mobileTrigger": "ଅଭିଜ୍ଞତା ଖୋଜନ୍ତୁ",
+    "overlayTitle": "ଆପଣଙ୍କ ଦୁ:ସାହସିକ କାର୍ଯ୍ୟ ଖୋଜନ୍ତୁ",
+    "popular": {
+      "heading": "ଲୋକପ୍ରିୟ ସନ୍ଧାନ",
+      "chip": "{destination} {activity}"
+    }
   }
 }

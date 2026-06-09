@@ -7,18 +7,22 @@ import {
   ChevronDown,
   CreditCard,
   MapPin,
-  Search,
   ShieldCheck,
   XCircle,
 } from 'lucide-react'
 
 import { ExperienceCard } from '@/components/experience-card'
 import { HomeHowItWorks } from '@/components/home/how-it-works'
+import {
+  HomeStructuredSearch,
+  type StructuredSearchOption,
+} from '@/components/home/structured-search'
 import { HomeTrust } from '@/components/home/trust'
 import { Badge } from '@/components/ui/badge'
 import { db } from '@/db/client'
 import { env } from '@/lib/env'
 import { getActivityIcon } from '@/lib/home/activity-icons'
+import { loadPopularSearchChips } from '@/lib/home/popular-chips'
 import { loadHomePageData } from '@/lib/home/queries'
 import { getHeroImage, getRegionImage } from '@/lib/images'
 import { generateAlternates } from '@/lib/seo/hreflang'
@@ -51,8 +55,38 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
   setRequestLocale(locale)
 
   const t = await getTranslations({ locale, namespace: 'HomePage' })
-  const data = await loadHomePageData(db)
+  // `SearchPage` carries the localised region/activity display names (the same
+  // ones the /search facet rail uses) so the structured-search selects + the
+  // popular chips read in the active locale.
+  const tFacet = await getTranslations({ locale, namespace: 'SearchPage' })
+  const tHomeSearch = await getTranslations({ locale, namespace: 'HomeSearch' })
+  const [data, popularChips] = await Promise.all([
+    loadHomePageData(db),
+    loadPopularSearchChips(db),
+  ])
   const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
+
+  // Structured-search options — only inventory-backed (count > 0) regions /
+  // activities (DECISION D0). `displayNameHi` etc. live in the registry, but we
+  // resolve the LABEL via the SearchPage.regions/activities namespace so the
+  // selects localise across all 13 locales (the registry only ships en + hi).
+  function slugToFacetKey(slug: string): string {
+    return slug.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase())
+  }
+  const destinationOptions: StructuredSearchOption[] = data.featuredDestinations
+    .filter((d) => d.experienceCount > 0)
+    .map((d) => ({
+      slug: d.slug,
+      i18nKey: slugToFacetKey(d.slug),
+      nameEn: tFacet(`regions.${slugToFacetKey(d.slug)}`),
+    }))
+  const activityOptions: StructuredSearchOption[] = data.featuredActivities
+    .filter((a) => a.experienceCount > 0)
+    .map((a) => ({
+      slug: a.slug,
+      i18nKey: slugToFacetKey(a.slug),
+      nameEn: tFacet(`activities.${slugToFacetKey(a.slug)}`),
+    }))
 
   const websiteJson = {
     '@context': 'https://schema.org',
@@ -171,38 +205,46 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
             {t('hero.brandLine')}
           </p>
 
-          {/* Opaque search card — bg-surface-0, --shadow-lg lifts it off the
-              photo. The field + button are full-contrast (fixes the as-is
-              translucent low-contrast overlay). */}
-          <form
-            action="/search"
-            method="get"
-            className="mt-8 flex w-full max-w-xl flex-col gap-2 rounded-[var(--radius-card)] bg-surface-0 p-2 shadow-[var(--shadow-lg)] ring-1 ring-foreground/10 sm:flex-row sm:items-center"
-          >
-            <label htmlFor="home-search" className="sr-only">
-              {t('hero.searchLabel')}
-            </label>
-            <div className="flex flex-1 items-center gap-2 rounded-[var(--radius-control)] bg-surface-1 px-4 focus-within:ring-2 focus-within:ring-ring">
-              <Search
-                className="size-4 shrink-0 text-muted-foreground"
-                aria-hidden="true"
-              />
-              <input
-                id="home-search"
-                name="q"
-                type="search"
-                placeholder={t('hero.searchPlaceholder')}
-                className="h-11 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
-              />
-            </div>
-            <button
-              type="submit"
-              className="min-tap inline-flex h-11 items-center justify-center gap-2 rounded-[var(--radius-control)] bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors duration-150 hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          {/* Structured 4-field search (issue 09) — Destination / Activity /
+              Date / Group size, mapped onto the EXISTING /search facets via
+              lib/search/home-query (no new query infra). Replaces the single
+              keyword field while keeping the H1 + CTAs above intact. Options are
+              inventory-backed (DECISION D0). Desktop = inline bar; phone = a
+              full-screen overlay (ADR-0018 large touch targets). */}
+          <HomeStructuredSearch
+            destinations={destinationOptions}
+            activities={activityOptions}
+          />
+
+          {/* Popular search chips (issue 09 / D0) — high-intent Destination ×
+              Activity shortcuts; only pairs with REAL published inventory
+              render, each deep-linking into a pre-filtered /search. */}
+          {popularChips.length > 0 && (
+            <nav
+              aria-label={tHomeSearch('popular.heading')}
+              className="mt-5 w-full max-w-xl"
             >
-              <Search className="size-4" aria-hidden="true" />
-              {t('hero.searchButton')}
-            </button>
-          </form>
+              <p className="mb-2 text-xs font-medium uppercase tracking-[var(--tracking-eyebrow)] text-white/80 [text-shadow:0_1px_2px_rgb(0_0_0/0.6)]">
+                {tHomeSearch('popular.heading')}
+              </p>
+              <ul className="flex flex-wrap justify-center gap-2">
+                {popularChips.map((chip) => (
+                  <li key={`${chip.regionSlug}:${chip.activitySlug}`}>
+                    <Link
+                      href={chip.href}
+                      data-testid="home-popular-chip"
+                      className="min-tap inline-flex items-center gap-2 whitespace-nowrap rounded-[var(--radius-pill)] bg-surface-0/95 px-4 py-2 text-sm font-medium text-foreground shadow-[var(--shadow-sm)] ring-1 ring-foreground/10 transition-colors duration-150 hover:bg-surface-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                    >
+                      {tHomeSearch('popular.chip', {
+                        destination: tFacet(`regions.${chip.regionI18nKey}`),
+                        activity: tFacet(`activities.${chip.activityI18nKey}`),
+                      })}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
 
           {/* Opaque trust strip — semantic-status chips with paired icons. */}
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2">

@@ -1508,5 +1508,25 @@
       "body": "Vendor ਸ਼ਰਤਾਂ ਬਾਰੇ ਸਵਾਲ? support@outvers.com 'ਤੇ ਈਮੇਲ ਕਰੋ।",
       "email": "support@outvers.com"
     }
+  },
+  "HomeSearch": {
+    "fields": {
+      "destination": "ਮੰਜ਼ਿਲ",
+      "activity": "ਗਤੀਵਿਧੀ",
+      "date": "ਤਾਰੀਖ਼",
+      "groupSize": "ਸਮੂਹ ਦਾ ਆਕਾਰ"
+    },
+    "placeholders": {
+      "destination": "ਕੋਈ ਵੀ ਮੰਜ਼ਿਲ",
+      "activity": "ਕੋਈ ਵੀ ਗਤੀਵਿਧੀ",
+      "groupSize": "ਕਿੰਨੇ ਲੋਕ?"
+    },
+    "submit": "ਖੋਜੋ",
+    "mobileTrigger": "ਅਨੁਭਵ ਖੋਜੋ",
+    "overlayTitle": "ਆਪਣਾ ਸਾਹਸ ਲੱਭੋ",
+    "popular": {
+      "heading": "ਪ੍ਰਸਿੱਧ ਖੋਜਾਂ",
+      "chip": "{destination} {activity}"
+    }
   }
 }

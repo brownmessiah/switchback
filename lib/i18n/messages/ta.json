@@ -1508,5 +1508,25 @@
       "body": "விற்பனையாளர் விதிமுறைகள் குறித்து கேள்விகளா? support@outvers.com க்கு மின்னஞ்சல் அனுப்புங்கள்.",
       "email": "support@outvers.com"
     }
+  },
+  "HomeSearch": {
+    "fields": {
+      "destination": "இலக்கு",
+      "activity": "செயல்பாடு",
+      "date": "தேதி",
+      "groupSize": "குழு அளவு"
+    },
+    "placeholders": {
+      "destination": "எந்த இலக்கும்",
+      "activity": "எந்த செயல்பாடும்",
+      "groupSize": "எத்தனை பேர்?"
+    },
+    "submit": "தேடு",
+    "mobileTrigger": "அனுபவங்களைத் தேடு",
+    "overlayTitle": "உங்கள் சாகசத்தைக் கண்டறியுங்கள்",
+    "popular": {
+      "heading": "பிரபலமான தேடல்கள்",
+      "chip": "{destination} {activity}"
+    }
   }
 }

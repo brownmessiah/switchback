@@ -1508,5 +1508,25 @@
       "body": "বিক্ৰেতাৰ চৰ্তাৱলীৰ বিষয়ে প্ৰশ্ন আছেনে? support@outvers.com লৈ ইমেইল কৰক।",
       "email": "support@outvers.com"
     }
+  },
+  "HomeSearch": {
+    "fields": {
+      "destination": "গন্তব্য",
+      "activity": "কাৰ্যকলাপ",
+      "date": "তাৰিখ",
+      "groupSize": "দলৰ আকাৰ"
+    },
+    "placeholders": {
+      "destination": "যিকোনো গন্তব্য",
+      "activity": "যিকোনো কাৰ্যকলাপ",
+      "groupSize": "কিমান জন?"
+    },
+    "submit": "বিচাৰক",
+    "mobileTrigger": "অভিজ্ঞতা বিচাৰক",
+    "overlayTitle": "আপোনাৰ দুঃসাহসিক অভিযান বিচাৰক",
+    "popular": {
+      "heading": "জনপ্ৰিয় সন্ধান",
+      "chip": "{destination} {activity}"
+    }
   }
 }

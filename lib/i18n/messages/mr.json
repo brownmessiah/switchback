@@ -1508,5 +1508,25 @@
       "body": "विक्रेता अटींबद्दल प्रश्न आहेत? support@outvers.com वर ईमेल करा.",
       "email": "support@outvers.com"
     }
+  },
+  "HomeSearch": {
+    "fields": {
+      "destination": "गंतव्य",
+      "activity": "कार्यक्रम",
+      "date": "तारीख",
+      "groupSize": "गटाचा आकार"
+    },
+    "placeholders": {
+      "destination": "कोणतेही गंतव्य",
+      "activity": "कोणताही कार्यक्रम",
+      "groupSize": "किती जण?"
+    },
+    "submit": "शोधा",
+    "mobileTrigger": "अनुभव शोधा",
+    "overlayTitle": "तुमचे साहस शोधा",
+    "popular": {
+      "heading": "लोकप्रिय शोध",
+      "chip": "{destination} {activity}"
+    }
   }
 }

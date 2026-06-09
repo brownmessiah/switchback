@@ -2,9 +2,12 @@
  * E2E spot-checks for the empty / error / 404 consistency sweep (issue 25).
  *
  * Two unauthenticated flows the issue calls out explicitly:
- *   1. An empty search (a query guaranteed to return zero Experiences) renders
- *      the shared EmptyState with a "Clear filters" action and inventory-backed
- *      popular alternatives — never a blank dashed box.
+ *   1. An empty search renders the shared EmptyState with inventory-backed
+ *      popular alternatives — never a blank dashed box. The "Clear filters"
+ *      action is FILTER-specific (ADR-0013 `isFilteredSearch`): it renders only
+ *      for a genuinely filtered zero-result search, NOT for a query-only one
+ *      (where `isFilteredSearch` deliberately excludes `q`). Both paths are
+ *      asserted below to pin the certified `SearchEmptyState` contract.
  *   2. A non-existent route renders the premium 404 with BOTH CTAs:
  *      "Explore Experiences" (→ /search) and "Go Home" (→ /).
  *
@@ -25,11 +28,20 @@ async function gotoWarm(page: Page, path: string): Promise<number | undefined> {
 }
 
 test.describe('Empty search renders the polished EmptyState', () => {
-  test('a no-results query shows the EmptyState + Clear filters + popular alternatives', async ({
+  test('a filtered no-results search shows the EmptyState + Clear filters + popular alternatives', async ({
     page,
   }) => {
-    // A nonsense token that cannot match any seeded Experience → zero hits.
-    const status = await gotoWarm(page, '/search?q=zzqqxxnoresultszzqqxx')
+    // A genuinely FILTERED zero-result search. `isFilteredSearch` deliberately
+    // excludes `q` (lib/search/search-experiences.ts:148-170 — the ADR-0013
+    // narrowing set is region/activity/price/facets, NOT the free-text query),
+    // so the "Clear filters" CTA only renders for a real filter. region=goa +
+    // activity=scuba-diving are seeded slugs, and minPrice=99999999 (₹) is an
+    // impossible price floor → `buildMeiliFilter` emits a valid 3-clause filter
+    // that matches zero docs. So `isFiltered=true` AND `hits.length === 0`.
+    const status = await gotoWarm(
+      page,
+      '/search?region=goa&activity=scuba-diving&minPrice=99999999',
+    )
     expect(status).toBeLessThan(400)
 
     const empty = page.getByTestId('search-empty')
@@ -54,6 +66,31 @@ test.describe('Empty search renders the polished EmptyState', () => {
     // Clicking "Clear filters" returns to the bare (unfiltered) search.
     await clear.click()
     await expect(page).toHaveURL(/\/search$/)
+  })
+
+  test('a query-only no-results search shows the EmptyState + alternatives but NO Clear filters', async ({
+    page,
+  }) => {
+    // A nonsense token that cannot match any seeded Experience → zero hits, but
+    // a QUERY-ONLY search. Per ADR-0013, `isFilteredSearch({ q })` is FALSE
+    // (search-experiences.ts:148 excludes `q`; unit-asserted at
+    // search-experiences.test.ts:200), so `search/page.tsx:134` passes
+    // `isFiltered={false}` and `SearchEmptyState` renders NO Clear-filters CTA
+    // (component contract: search-empty-state.tsx:68; unit-asserted at the
+    // "does NOT render a Clear filters link" case). The EmptyState shell and the
+    // inventory-backed alternatives still render — the page is never a blank box.
+    const status = await gotoWarm(page, '/search?q=zzqqxxnoresultszzqqxx')
+    expect(status).toBeLessThan(400)
+
+    const empty = page.getByTestId('search-empty')
+    await expect(empty).toBeVisible()
+
+    // The Clear-filters CTA is filter-specific and MUST be absent here.
+    await expect(empty.getByRole('link', { name: /clear filters/i })).toHaveCount(0)
+
+    // The inventory-backed popular alternatives still render (live seed inventory).
+    const alternatives = empty.getByTestId('search-empty-alternative')
+    await expect(alternatives.first()).toBeVisible()
   })
 })
 

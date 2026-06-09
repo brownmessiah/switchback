@@ -18,6 +18,7 @@ function review(over: Partial<EnrichedReview>): EnrichedReview {
     status: 'published',
     travelMonth: null,
     groupType: null,
+    photos: [],
     ...over,
   }
 }
@@ -55,6 +56,7 @@ const labels: Omit<ReviewSectionProps, 'reviews'> = {
   },
   emptyLabel: 'No reviews yet.',
   summaryLabel: '{avg} out of 5 ({count} reviews)',
+  withPhotosLabel: 'With photos',
 }
 
 describe('ReviewSection', () => {
@@ -124,5 +126,53 @@ describe('ReviewSection', () => {
     render(<ReviewSection reviews={[]} {...labels} />)
     expect(screen.getByText('No reviews yet.')).toBeTruthy()
     expect(screen.queryByTestId('review-sort-highest')).toBeNull()
+  })
+
+  it('renders approved photos attached to a review', () => {
+    render(
+      <ReviewSection
+        reviews={[
+          review({
+            id: 'a',
+            title: 'photos',
+            photos: [
+              { id: 'p1', url: '/uploads/reviews/p1.jpg', altText: 'a beach' },
+            ],
+          }),
+        ]}
+        {...labels}
+      />,
+    )
+    const item = screen.getByTestId('review-item')
+    expect(within(item).getByTestId('review-photo')).toBeTruthy()
+  })
+
+  it('the With photos filter shows only reviews carrying >=1 approved photo', () => {
+    const reviews = [
+      review({
+        id: 'with',
+        title: 'with',
+        photos: [{ id: 'p1', url: '/uploads/reviews/p1.jpg', altText: null }],
+      }),
+      review({ id: 'without', title: 'without', photos: [] }),
+    ]
+    render(<ReviewSection reviews={reviews} {...labels} />)
+
+    // Both visible by default.
+    expect(screen.getAllByTestId('review-item')).toHaveLength(2)
+
+    // Toggle "With photos" → only the review with a photo remains.
+    fireEvent.click(screen.getByTestId('review-filter-with-photos'))
+    const titles = screen
+      .getAllByTestId('review-item')
+      .map((el) => within(el).getByTestId('review-title').textContent)
+    expect(titles).toEqual(['with'])
+  })
+
+  it('hides the With photos filter when no review has a photo', () => {
+    render(
+      <ReviewSection reviews={[review({ id: 'a', photos: [] })]} {...labels} />,
+    )
+    expect(screen.queryByTestId('review-filter-with-photos')).toBeNull()
   })
 })

@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useMemo, useState } from 'react'
 
 import { BadgeCheck } from 'lucide-react'
@@ -9,6 +10,8 @@ import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import {
   REVIEW_SORTS,
+  filterWithPhotos,
+  hasApprovedPhotos,
   sortReviews,
   type EnrichedReview,
   type ReviewGroupType,
@@ -31,6 +34,8 @@ export interface ReviewSectionProps {
   emptyLabel: string
   /** Template carrying `{avg}` and `{count}` placeholders. */
   summaryLabel: string
+  /** Label for the "With photos" filter toggle (issue #19). */
+  withPhotosLabel: string
 }
 
 export function ReviewSection({
@@ -44,10 +49,18 @@ export function ReviewSection({
   sortLabels,
   emptyLabel,
   summaryLabel,
+  withPhotosLabel,
 }: ReviewSectionProps) {
   const [sort, setSort] = useState<ReviewSort>('recent')
+  const [withPhotosOnly, setWithPhotosOnly] = useState(false)
 
-  const sorted = useMemo(() => sortReviews(reviews, sort), [reviews, sort])
+  // At least one review carrying an approved photo enables the filter toggle.
+  const anyWithPhotos = useMemo(() => reviews.some(hasApprovedPhotos), [reviews])
+
+  const visible = useMemo(() => {
+    const filtered = withPhotosOnly ? filterWithPhotos(reviews) : reviews
+    return sortReviews(filtered, sort)
+  }, [reviews, sort, withPhotosOnly])
 
   if (reviews.length === 0) {
     return <p className="py-4 text-sm text-muted-foreground">{emptyLabel}</p>
@@ -67,7 +80,7 @@ export function ReviewSection({
           <span className="text-sm text-muted-foreground">{summary}</span>
         </div>
         <div
-          className="flex items-center gap-1"
+          className="flex flex-wrap items-center gap-1"
           role="group"
           aria-label={sortLabel}
         >
@@ -88,6 +101,24 @@ export function ReviewSection({
               {sortLabels[mode]}
             </button>
           ))}
+          {/* With-photos filter (issue #19) — only shown when some review has
+              an approved photo. */}
+          {anyWithPhotos && (
+            <button
+              type="button"
+              data-testid="review-filter-with-photos"
+              aria-pressed={withPhotosOnly}
+              onClick={() => setWithPhotosOnly((on) => !on)}
+              className={cn(
+                'min-tap rounded-[var(--radius-pill)] border px-3 py-1 text-xs font-medium transition-colors',
+                withPhotosOnly
+                  ? 'border-transparent bg-primary text-primary-foreground'
+                  : 'border-border text-muted-foreground hover:bg-muted',
+              )}
+            >
+              {withPhotosLabel}
+            </button>
+          )}
         </div>
       </div>
 
@@ -95,7 +126,7 @@ export function ReviewSection({
 
       {/* Individual reviews */}
       <div className="space-y-4">
-        {sorted.map((rev) => {
+        {visible.map((rev) => {
           const monthName =
             rev.travelMonth != null ? monthNames[rev.travelMonth - 1] : null
           const groupLabel = rev.groupType ? groupTypeLabels[rev.groupType] : null
@@ -133,6 +164,27 @@ export function ReviewSection({
               )}
               {rev.body && (
                 <p className="text-sm text-muted-foreground">{rev.body}</p>
+              )}
+              {/* Approved Customer photos (issue #19) — only approved photos
+                  reach this array (the loader filters by status='approved'). */}
+              {rev.photos.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {rev.photos.map((photo) => (
+                    <div
+                      key={photo.id}
+                      data-testid="review-photo"
+                      className="relative h-20 w-20 overflow-hidden rounded-md border"
+                    >
+                      <Image
+                        src={photo.url}
+                        alt={photo.altText ?? ''}
+                        fill
+                        className="object-cover"
+                        sizes="80px"
+                      />
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           )

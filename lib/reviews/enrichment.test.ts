@@ -4,6 +4,8 @@ import {
   REVIEW_GROUP_TYPES,
   REVIEW_SORTS,
   deriveTravelMonth,
+  filterWithPhotos,
+  hasApprovedPhotos,
   isPublished,
   sortReviews,
   type EnrichedReview,
@@ -22,6 +24,7 @@ function makeReview(over: Partial<EnrichedReview>): EnrichedReview {
     status: 'published',
     travelMonth: null,
     groupType: null,
+    photos: [],
     ...over,
   }
 }
@@ -122,6 +125,32 @@ describe('sortReviews', () => {
       createdAt: new Date('2026-05-01T00:00:00Z'),
     })
     expect(sortReviews([a, b], 'highest').map((r) => r.id)).toEqual(['b', 'a'])
+  })
+})
+
+describe('with-photos filter', () => {
+  const withPhoto = makeReview({
+    id: 'with',
+    photos: [{ id: 'p1', url: '/uploads/reviews/p1.jpg', altText: null }],
+  })
+  const without = makeReview({ id: 'without', photos: [] })
+
+  it('hasApprovedPhotos is true only when a review has >=1 photo', () => {
+    expect(hasApprovedPhotos(withPhoto)).toBe(true)
+    expect(hasApprovedPhotos(without)).toBe(false)
+  })
+
+  it('filterWithPhotos returns only reviews with >=1 photo', () => {
+    expect(filterWithPhotos([withPhoto, without]).map((r) => r.id)).toEqual([
+      'with',
+    ])
+  })
+
+  it('filterWithPhotos does not mutate the input array', () => {
+    const input = [withPhoto, without]
+    const copy = [...input]
+    filterWithPhotos(input)
+    expect(input).toEqual(copy)
   })
 })
 

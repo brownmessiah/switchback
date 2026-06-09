@@ -30,6 +30,7 @@ export * from './promo-redemptions'
 export * from './audit-logs'
 export * from './ai-generations'
 export * from './reviews'
+export * from './review-photos'
 
 export * from './notifications'
 export * from './notification-outbox'

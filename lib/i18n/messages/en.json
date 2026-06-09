@@ -419,6 +419,14 @@
         "recent": "Most recent",
         "highest": "Highest rated",
         "lowest": "Lowest rated"
+      },
+      "withPhotos": "With photos",
+      "photos": {
+        "addTitle": "Add photos to your review",
+        "addHint": "Photos are reviewed before they appear publicly.",
+        "pendingNote": "Thanks! Your photos are awaiting moderation and will appear once approved.",
+        "uploadError": "We could not upload that photo. Please try again.",
+        "photoAlt": "Customer review photo"
       }
     },
     "nav": {

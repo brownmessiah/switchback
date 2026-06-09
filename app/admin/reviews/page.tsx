@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 
@@ -13,9 +14,11 @@ import {
   loadReviewsList,
   type ReviewListFilters,
 } from '@/lib/admin/review-moderation-actions'
+import { loadPendingReviewPhotos } from '@/lib/admin/review-photo-moderation-actions'
 
 import { ReviewActionsCell } from './review-actions-cell'
 import { ReviewFilters } from './review-filters'
+import { ReviewPhotoActionsCell } from './review-photo-actions-cell'
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
@@ -63,6 +66,10 @@ export default async function ReviewsPage({ searchParams }: ReviewsPageProps) {
 
   const reviews = await loadReviewsList(db, filters)
   const isFiltered = Object.values(filters).some((v) => v !== undefined)
+
+  // Pending Customer review photos awaiting moderation (issue 19). Only
+  // approved photos ever render publicly (DECISION D0/D5).
+  const pendingPhotos = await loadPendingReviewPhotos(db)
 
   type ReviewRow = (typeof reviews)[number]
 
@@ -163,6 +170,59 @@ export default async function ReviewsPage({ searchParams }: ReviewsPageProps) {
           {isFiltered ? ' (filtered)' : ''}
         </p>
       </div>
+
+      {/* Pending review-photo moderation queue (issue 19). Only approved
+          photos render publicly — these await an approve/reject decision. */}
+      {pendingPhotos.length > 0 && (
+        <section
+          data-testid="review-photo-queue"
+          className="rounded-lg border bg-card p-4"
+        >
+          <h2 className="font-heading text-h3 font-semibold tracking-tight">
+            Pending review photos
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            <span className="tabular-nums">{pendingPhotos.length}</span> photo
+            {pendingPhotos.length === 1 ? '' : 's'} awaiting moderation. Approve
+            to make them visible on the public Experience page; reject to
+            withhold them.
+          </p>
+          <ul className="mt-4 space-y-3">
+            {pendingPhotos.map((photo) => (
+              <li
+                key={photo.id}
+                data-testid="review-photo-queue-item"
+                data-photo-id={photo.id}
+                className="flex items-center justify-between gap-3"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border">
+                    <Image
+                      src={photo.url}
+                      alt={photo.altText ?? 'Review photo'}
+                      fill
+                      className="object-cover"
+                      sizes="64px"
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <div
+                      className="truncate text-sm font-medium"
+                      title={photo.experienceTitle}
+                    >
+                      {photo.experienceTitle}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {photo.uploaderName ?? 'Customer'} · {formatDate(photo.createdAt)}
+                    </div>
+                  </div>
+                </div>
+                <ReviewPhotoActionsCell photoId={photo.id} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <ReviewFilters currentFilters={filters} />
 

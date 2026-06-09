@@ -998,6 +998,7 @@ export default async function ExperienceDetailPage({
                 }}
                 emptyLabel={t('reviews.empty')}
                 summaryLabel={t('reviews.summary')}
+                withPhotosLabel={t('reviews.withPhotos')}
               />
             </section>
 

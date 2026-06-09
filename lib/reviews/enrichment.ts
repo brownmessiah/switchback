@@ -8,7 +8,8 @@
  * can be unit-tested directly and reused by the loader and the client
  * sort/filter control.
  *
- * Review photos and the with-photos filter land in issue #19.
+ * Issue #19 adds approved Review photos (`photos`) and the pure with-photos
+ * filter (a review qualifies when it carries >=1 approved photo).
  */
 
 import type { Review } from '@/db/schema/reviews'
@@ -28,7 +29,18 @@ export const REVIEW_GROUP_TYPES = [
 
 export type ReviewGroupType = (typeof REVIEW_GROUP_TYPES)[number]
 
-/** Sort modes surfaced on the PDP. with-photos comes in #19. */
+/**
+ * An approved Review photo as rendered on the public PDP (issue #19). Only
+ * status='approved' photos ever reach this shape — moderation happens before
+ * the loader attaches them.
+ */
+export interface ReviewPhotoSummary {
+  id: string
+  url: string
+  altText: string | null
+}
+
+/** Sort modes surfaced on the PDP. with-photos is a separate filter toggle. */
 export const REVIEW_SORTS = ['recent', 'highest', 'lowest'] as const
 
 export type ReviewSort = (typeof REVIEW_SORTS)[number]
@@ -53,6 +65,8 @@ export interface EnrichedReview {
   /** 1 (January) … 12 (December), or null when no slot date is available. */
   travelMonth: number | null
   groupType: ReviewGroupType | null
+  /** Approved Review photos only (issue #19); empty when none are public. */
+  photos: ReviewPhotoSummary[]
 }
 
 /**
@@ -119,4 +133,23 @@ export function sortReviews<T extends EnrichedReview>(
     default:
       return copy.sort(recencyTieBreak)
   }
+}
+
+/**
+ * The with-photos filter (issue #19): a Review qualifies when it carries at
+ * least one approved photo. The loader only ever attaches approved photos, so
+ * a non-empty `photos` array is sufficient.
+ */
+export function hasApprovedPhotos(review: { photos: ReviewPhotoSummary[] }): boolean {
+  return review.photos.length > 0
+}
+
+/**
+ * Return a NEW array containing only reviews with >=1 approved photo (input is
+ * never mutated). Powers the "With photos" PDP filter toggle.
+ */
+export function filterWithPhotos<T extends { photos: ReviewPhotoSummary[] }>(
+  reviews: readonly T[],
+): T[] {
+  return reviews.filter(hasApprovedPhotos)
 }

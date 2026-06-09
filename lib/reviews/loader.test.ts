@@ -4,6 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { availabilitySlots } from '@/db/schema/availability-slots'
 import { bookings } from '@/db/schema/bookings'
 import { experiences } from '@/db/schema/experiences'
+import { reviewPhotos } from '@/db/schema/review-photos'
 import { reviews } from '@/db/schema/reviews'
 import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
@@ -211,5 +212,71 @@ describe('loadPublishedReviews + reviews.group_type (0024)', () => {
     })
     const loaded = await loadPublishedReviews(db, experienceId)
     expect(loaded.map((r) => r.title)).toEqual(['newer', 'older'])
+  })
+
+  it('attaches ONLY approved photos to each review (issue 19)', async () => {
+    const experienceId = await seedExperience()
+    const bookingId = await seedBooking(experienceId, new Date('2026-06-15T09:00:00Z'))
+    const [review] = await db
+      .insert(reviews)
+      .values({
+        bookingId,
+        customerUserId: 'u_c',
+        experienceId,
+        vendorUserId: 'u_v',
+        rating: 5,
+        title: 'photos',
+        status: 'published',
+      })
+      .returning({ id: reviews.id })
+
+    await db.insert(reviewPhotos).values([
+      {
+        reviewId: review!.id,
+        uploadedByUserId: 'u_c',
+        storageKey: 'reviews/ok.jpg',
+        url: '/uploads/reviews/ok.jpg',
+        status: 'approved',
+        altText: 'approved one',
+      },
+      {
+        reviewId: review!.id,
+        uploadedByUserId: 'u_c',
+        storageKey: 'reviews/pending.jpg',
+        url: '/uploads/reviews/pending.jpg',
+        status: 'pending',
+      },
+      {
+        reviewId: review!.id,
+        uploadedByUserId: 'u_c',
+        storageKey: 'reviews/rejected.jpg',
+        url: '/uploads/reviews/rejected.jpg',
+        status: 'rejected',
+      },
+    ])
+
+    const loaded = await loadPublishedReviews(db, experienceId)
+    expect(loaded).toHaveLength(1)
+    expect(loaded[0]!.photos).toHaveLength(1)
+    expect(loaded[0]!.photos[0]).toMatchObject({
+      url: '/uploads/reviews/ok.jpg',
+      altText: 'approved one',
+    })
+  })
+
+  it('returns an empty photos array for a review with no approved photos', async () => {
+    const experienceId = await seedExperience()
+    const bookingId = await seedBooking(experienceId, new Date('2026-06-15T09:00:00Z'))
+    await db.insert(reviews).values({
+      bookingId,
+      customerUserId: 'u_c',
+      experienceId,
+      vendorUserId: 'u_v',
+      rating: 4,
+      status: 'published',
+    })
+    const loaded = await loadPublishedReviews(db, experienceId)
+    expect(loaded).toHaveLength(1)
+    expect(loaded[0]!.photos).toEqual([])
   })
 })

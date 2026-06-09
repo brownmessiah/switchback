@@ -34,8 +34,9 @@ test.describe('PDP meeting-point map (issue 15)', () => {
     await expect(note).toBeVisible()
     await expect(note).toContainText(/approximate area/i)
 
-    // The original free-text meeting point is preserved.
-    await expect(section).toContainText('Bir Landing Site office')
+    // The original free-text meeting point is preserved (matches the E2E seed
+    // db/seed.ts: 'Bir landing field, ~1,400 m, Bir, Himachal Pradesh').
+    await expect(section).toContainText('Bir landing field')
   })
 
   test('the "Open in Maps" link builds a valid Google Maps search deep link for the real place', async ({
@@ -56,7 +57,8 @@ test.describe('PDP meeting-point map (issue 15)', () => {
     expect(url.hostname).toBe('www.google.com')
     expect(url.pathname).toBe('/maps/search/')
     expect(url.searchParams.get('api')).toBe('1')
-    // The deep link SEARCHES the real named place, not a bare centroid.
-    expect(url.searchParams.get('query')).toContain('Bir Landing Site office')
+    // The deep link SEARCHES the real named place, not a bare centroid
+    // (seed meeting point + localized region name "Bir Billing").
+    expect(url.searchParams.get('query')).toContain('Bir landing field')
   })
 })

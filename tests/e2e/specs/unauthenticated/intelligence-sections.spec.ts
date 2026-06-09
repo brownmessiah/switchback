@@ -5,12 +5,29 @@ import { FIXTURE_EXPERIENCE_SLUGS } from '@/lib/experiences/fixture-slugs'
 /**
  * Data-derived intelligence sections (issue 22, DATA half only).
  *
- * Relies on the global-setup seed:
- *   - `bir-billing` (Himachal Pradesh) has published Experiences, AND `manali`
- *     (also Himachal Pradesh) has published Experiences → bir-billing's
- *     "Nearby destinations" surfaces manali (nearby = same-state, no distance).
- *   - `leh-ladakh` is a registered region with NO published inventory → its
- *     derived sections must be HIDDEN (empty-safe).
+ * Relies on the global-setup seed (`db/seed.ts` → `seedCatalog`):
+ *   - `bir-billing` (Himachal Pradesh) has 3 published catalog Experiences
+ *     (db/seed-extras.ts:205-207), AND `manali` (also Himachal Pradesh) has 3
+ *     published catalog Experiences (db/seed-extras.ts:198-200) → bir-billing's
+ *     "Nearby destinations" surfaces manali (nearby = same-state, no distance —
+ *     lib/content/intelligence.ts:280-314).
+ *   - `leh-ladakh` is the SOLE registered region in the state "Ladakh"
+ *     (lib/regions/registry.ts:51-55 — no other region has state 'Ladakh'). It
+ *     DOES carry published inventory (4 catalog Experiences,
+ *     db/seed-extras.ts:218-221, status 'published' at :728), so its price-range
+ *     and top-activities sections DO render — but its "Nearby destinations"
+ *     section is genuinely EMPTY, because `deriveNearbyRegions` filters to OTHER
+ *     same-state regions and Ladakh has none (intelligence.ts:289-292). That is
+ *     the real, seed-accurate "empty section is hidden" assertion.
+ *
+ * The fully-empty empty-safe path (a region with NO inventory at all hides
+ * EVERY section) is the binding proof at the unit/component level — see
+ * tests/unit/components/intelligence-sections.test.tsx ("renders NOTHING when
+ * the region has no derived data" and "hides only the empty sections, keeping
+ * the populated ones"). All 10 registered regions are seeded with published
+ * inventory, so there is no genuinely-empty registered region to exercise that
+ * path end-to-end without perturbing the registry (which feeds sitemap /
+ * region-count tests).
  *
  * The prose half (best-time, weather, FAQ generation) is issue #23 and is NOT
  * asserted here.
@@ -45,19 +62,27 @@ test.describe('Destination intelligence sections', () => {
     }
   })
 
-  test('a destination WITHOUT inventory hides the empty derived sections', async ({
+  test('a destination hides a derived section that has no data (empty nearby)', async ({
     page,
   }) => {
+    // `leh-ladakh` is the SOLE registered region in state "Ladakh", so its
+    // "Nearby destinations" (same-state) section is genuinely empty and must be
+    // hidden — even though the region itself carries published inventory.
     const response = await page.goto('/destinations/leh-ladakh')
     expect(response?.status()).toBe(200)
 
-    // The page itself renders (registry region), but every derived section
-    // is hidden because there is no published inventory.
-    await expect(page.locator('[data-testid="intelligence-price-range"]')).toHaveCount(0)
-    await expect(page.locator('[data-testid="intelligence-top-activities"]')).toHaveCount(0)
+    // The inventory-backed sections DO render (4 published catalog Experiences).
+    const priceRange = page.locator('[data-testid="intelligence-price-range"]')
+    await expect(priceRange).toBeVisible()
+    await expect(priceRange).toContainText(/From ₹[\d,]+ to ₹[\d,]+/)
+
+    const topActivities = page.locator('[data-testid="intelligence-top-activities"]')
+    await expect(topActivities).toBeVisible()
+    expect(await topActivities.locator('a[href^="/activities/"]').count()).toBeGreaterThanOrEqual(1)
+
+    // The "Nearby destinations" section is HIDDEN because Ladakh has no other
+    // inventory-bearing region — the empty-safe, seed-accurate assertion.
     await expect(page.locator('[data-testid="intelligence-nearby"]')).toHaveCount(0)
-    await expect(page.locator('[data-testid="intelligence-difficulty"]')).toHaveCount(0)
-    await expect(page.locator('[data-testid="intelligence-featured"]')).toHaveCount(0)
   })
 })
 

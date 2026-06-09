@@ -1,7 +1,7 @@
 /**
  * Organization JSON-LD per ADR-0013.
  *
- * Describes Outvers itself (the marketplace operator — Organization = Outvers,
+ * Describes Outvers itself (the marketplace platform — Organization = Outvers,
  * never a Vendor). Emitted on the home page alongside the WebSite node, and on
  * lower-tier Vendor profiles via the `vendorEntity` generator.
  *

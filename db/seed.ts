@@ -1341,6 +1341,117 @@ async function seed(): Promise<void> {
       .onConflictDoNothing()
   }
 
+  // ----- SECOND RAFTING REVIEW — distinct rating for the sort E2E (#18) -----
+  // Issue #18 acceptance criterion 4: the reviews-section sort control must
+  // REORDER the list, which is only observable when the flagship Experience
+  // carries >= 2 published reviews with DISTINCT ratings (highest-first and
+  // lowest-first then surface different leading cards). The demo loop above
+  // gives rishikesh-rafting-grade-iii exactly ONE review (rating 5, friends).
+  // Seed ONE more completed Booking + published Review here so the rafting PDP
+  // carries two distinct-rating reviews (5/friends + 3/couple), satisfying
+  // public-pages.spec.ts's `itemCount >= 2` + `highestFirst !== lowestFirst`.
+  //
+  // Isolation: owned by BUSINESS_VENDOR_CUSTOMER (u_seed_customer_biz), NOT
+  // u_seed_customer — so this never disturbs the #13–#15 wallet determinism on
+  // u_seed_customer. It sits on its OWN dedicated PAST slot (T-28d, 05:00 UTC),
+  // a distinct (experienceId, startAt) pair from the T-21d demo rafting slot,
+  // so the slot's unique constraint never collides. state='completed' →
+  // review-eligible per ADR-0003 Completion. The existing rating-5 review is
+  // left fully intact; this only ADDS a second, lower-rated card.
+  const RAFTING_SECOND_REVIEW_SLUG = 'rishikesh-rafting-grade-iii'
+  const raftingExp = allExperiences.find((e) => e.slug === RAFTING_SECOND_REVIEW_SLUG)
+  const raftingExpData = EXPERIENCES.find((e) => e.slug === RAFTING_SECOND_REVIEW_SLUG)
+  if (raftingExp && raftingExpData) {
+    const raftingReviewStartAt = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000)
+    raftingReviewStartAt.setUTCHours(5, 0, 0, 0)
+    const raftingReviewEndAt = new Date(raftingReviewStartAt.getTime() + 4 * 60 * 60 * 1000)
+
+    const raftingParticipants = 2
+    const [raftingSlot] = await db
+      .insert(availabilitySlots)
+      .values({
+        experienceId: raftingExp.id,
+        startAt: raftingReviewStartAt,
+        endAt: raftingReviewEndAt,
+        capacity: 8,
+        capacityTaken: raftingParticipants,
+      })
+      .onConflictDoNothing()
+      .returning({ id: availabilitySlots.id })
+
+    const raftingSlotId =
+      raftingSlot?.id ??
+      (
+        await db
+          .select({ id: availabilitySlots.id })
+          .from(availabilitySlots)
+          .where(
+            and(
+              eq(availabilitySlots.experienceId, raftingExp.id),
+              eq(availabilitySlots.startAt, raftingReviewStartAt),
+            ),
+          )
+      )[0]?.id
+
+    if (raftingSlotId) {
+      const raftingPrice = Math.floor(Number(raftingExpData.pricePerPerson_1_2 ?? '1500'))
+      const raftingGross = raftingPrice * raftingParticipants
+      const raftingConfirmedAt = new Date(
+        raftingReviewStartAt.getTime() - 5 * 24 * 60 * 60 * 1000,
+      )
+      const raftingCompletedAt = new Date(
+        raftingReviewStartAt.getTime() + 4 * 60 * 60 * 1000,
+      )
+
+      const [raftingBookingRow] = await db
+        .insert(bookings)
+        .values({
+          customerUserId: BUSINESS_VENDOR_CUSTOMER.userId,
+          experienceId: raftingExp.id,
+          slotId: raftingSlotId,
+          participantCount: raftingParticipants,
+          state: 'completed',
+          paymentMode: 'full_upfront',
+          grossTotalSnapshot: String(raftingGross),
+          pricePerParticipantSnapshot: String(raftingPrice),
+          pricingBasisSnapshot: 'base_price',
+          commissionRateSnapshot: '20.00',
+          commissionBasisSnapshot: 'platform_default',
+          gstRateOnCommissionSnapshot: '18.00',
+          tdsAmountSnapshot: String(Math.floor(raftingGross * 0.01)),
+          cancellationPresetSnapshot: 'flexible',
+          vendorIsResidentSnapshot: true,
+          confirmedAt: raftingConfirmedAt,
+          completedAt: raftingCompletedAt,
+        })
+        .onConflictDoNothing()
+        .returning({ id: bookings.id })
+
+      if (raftingBookingRow) {
+        seededBookings.push({
+          id: raftingBookingRow.id,
+          experienceId: raftingExp.id,
+          state: 'completed',
+        })
+
+        await db
+          .insert(reviews)
+          .values({
+            bookingId: raftingBookingRow.id,
+            customerUserId: BUSINESS_VENDOR_CUSTOMER.userId,
+            experienceId: raftingExp.id,
+            vendorUserId: raftingExpData.vendorUserId,
+            rating: 3,
+            title: 'Solid run, gear felt a little worn',
+            body: 'The rapids were genuinely fun and the guide kept us safe throughout. Knocking off a couple of stars because some of the rented gear looked past its prime and the safety brief felt rushed.',
+            groupType: 'couple',
+            status: 'published',
+          })
+          .onConflictDoNothing()
+      }
+    }
+  }
+
   // ===================================================================
   // BUSINESS-VENDOR SECONDARY SURFACES (Issue #20)
   // ===================================================================

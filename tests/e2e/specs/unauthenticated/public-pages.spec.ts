@@ -488,7 +488,8 @@ test.describe('Experience detail', () => {
     const lowestFirst = await firstTitle()
 
     // Highest-first and lowest-first must surface different leading reviews
-    // (the seed has a 4-star and 5-star review on this Experience).
+    // (the seed gives this Experience two published, booking-backed reviews
+    // with DISTINCT ratings — a 5-star and a 3-star — so the sort reorders).
     expect(highestFirst).not.toEqual(lowestFirst)
 
     // Recent restores the default newest-first ordering without error.

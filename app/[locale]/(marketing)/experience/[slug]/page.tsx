@@ -25,16 +25,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import { and, eq } from 'drizzle-orm'
 
 import { loadRecentlyViewedCardsAction } from '@/components/recently-viewed/actions'
 import { RecentlyViewedRail } from '@/components/recently-viewed/rail'
 import { RecentlyViewedRecorder } from '@/components/recently-viewed/recorder'
-import { ReviewList, type ReviewData } from '@/components/reviews/review-list'
+import { ReviewSection } from '@/components/reviews/review-section'
 import { Badge } from '@/components/ui/badge'
 import { WishlistButton } from '@/components/wishlist-button'
 import { db } from '@/db/client'
-import { reviews, users } from '@/db/schema'
+import { loadPublishedReviews } from '@/lib/reviews/loader'
 import { auth } from '@/lib/auth'
 import { env } from '@/lib/env'
 import { isInWishlist } from '@/lib/wishlist/wishlist'
@@ -110,29 +109,18 @@ export default async function ExperienceDetailPage({
 
   const detail = result.data
 
-  const reviewRows = await db
-    .select({
-      id: reviews.id,
-      rating: reviews.rating,
-      title: reviews.title,
-      body: reviews.body,
-      customerName: users.name,
-      createdAt: reviews.createdAt,
-    })
-    .from(reviews)
-    .innerJoin(users, eq(reviews.customerUserId, users.id))
-    .where(and(eq(reviews.experienceId, detail.id), eq(reviews.status, 'published')))
-    .orderBy(reviews.createdAt)
-    .limit(20)
+  // Published reviews enriched with the derived travel month (Review →
+  // Booking → Availability slot, DECISION D5) + the capture-time group type
+  // (issue 18). Only status='published' reviews are loaded.
+  const experienceReviews = await loadPublishedReviews(db, detail.id)
 
-  const experienceReviews: ReviewData[] = reviewRows.map((r) => ({
-    id: r.id,
-    rating: r.rating,
-    title: r.title,
-    body: r.body,
-    customerName: r.customerName ?? 'Customer',
-    createdAt: r.createdAt,
-  }))
+  // Localized month names (January … December) for the "Travelled in {month}"
+  // line — resolved via Intl so the travel month reads correctly in every
+  // locale without 12 extra translation keys.
+  const reviewMonthFormatter = new Intl.DateTimeFormat(locale, { month: 'long' })
+  const reviewMonthNames = Array.from({ length: 12 }, (_, i) =>
+    reviewMonthFormatter.format(new Date(Date.UTC(2026, i, 15))),
+  )
 
   // "Similar experiences" (issue 16) — three blended intents (same activity in
   // nearby/same-state regions + different activities in this region + popular
@@ -982,12 +970,35 @@ export default async function ExperienceDetailPage({
               steps={afterBookingSteps}
             />
 
-            {/* Reviews (anchor target #reviews). */}
+            {/* Reviews (anchor target #reviews). Enriched per issue 18:
+                derived travel month + capture-time group type + verified
+                badge + recent/highest/lowest sort. */}
             <section id="reviews">
               <h2 className="mb-4 font-heading text-h2 font-semibold tracking-tight">
                 {t('sections.reviews')}
               </h2>
-              <ReviewList reviews={experienceReviews} />
+              <ReviewSection
+                reviews={experienceReviews}
+                locale={locale}
+                monthNames={reviewMonthNames}
+                travelledInLabel={t('reviews.travelledIn')}
+                verifiedLabel={t('reviews.verified')}
+                groupTypeLabels={{
+                  solo: t('reviews.groupType.solo'),
+                  couple: t('reviews.groupType.couple'),
+                  friends: t('reviews.groupType.friends'),
+                  family: t('reviews.groupType.family'),
+                  corporate: t('reviews.groupType.corporate'),
+                }}
+                sortLabel={t('reviews.sort.label')}
+                sortLabels={{
+                  recent: t('reviews.sort.recent'),
+                  highest: t('reviews.sort.highest'),
+                  lowest: t('reviews.sort.lowest'),
+                }}
+                emptyLabel={t('reviews.empty')}
+                summaryLabel={t('reviews.summary')}
+              />
             </section>
 
             {/* FAQ (anchor target #faq). */}

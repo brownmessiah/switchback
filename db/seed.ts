@@ -1313,9 +1313,9 @@ async function seed(): Promise<void> {
 
   // ----- REVIEWS — on completed bookings -----
   const REVIEW_TEXTS = [
-    { rating: 5, title: 'Best adventure experience ever!', body: 'The guides were fantastic and safety protocols were top-notch. Beautiful views and perfect weather. Would recommend to anyone visiting.' },
-    { rating: 4, title: 'Great experience, minor logistics issues', body: 'The activity itself was amazing. Only downside was the pickup was 20 minutes late. But once we got there, everything was perfect.' },
-    { rating: 5, title: 'Incredible guides and scenery', body: 'Our guide was extremely knowledgeable and made the experience both safe and fun. The scenery was breathtaking. Already planning our next trip.' },
+    { rating: 5, title: 'Best adventure experience ever!', body: 'The guides were fantastic and safety protocols were top-notch. Beautiful views and perfect weather. Would recommend to anyone visiting.', groupType: 'friends' as const },
+    { rating: 4, title: 'Great experience, minor logistics issues', body: 'The activity itself was amazing. Only downside was the pickup was 20 minutes late. But once we got there, everything was perfect.', groupType: 'couple' as const },
+    { rating: 5, title: 'Incredible guides and scenery', body: 'Our guide was extremely knowledgeable and made the experience both safe and fun. The scenery was breathtaking. Already planning our next trip.', groupType: 'family' as const },
   ]
 
   const completedBookings = seededBookings.filter((b) => b.state === 'completed')
@@ -1335,6 +1335,7 @@ async function seed(): Promise<void> {
         rating: review.rating,
         title: review.title,
         body: review.body,
+        groupType: review.groupType,
         status: 'published',
       })
       .onConflictDoNothing()

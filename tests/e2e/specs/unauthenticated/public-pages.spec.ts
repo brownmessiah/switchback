@@ -448,6 +448,59 @@ test.describe('Experience detail', () => {
     }
   })
 
+  // Issue 18 — Reviews enrichment. The seeded rafting Experience carries
+  // published, booking-backed reviews with group types. The reviews section
+  // must show the verified-booking badge + group type, and the
+  // recent/highest/lowest sort controls must reorder the list.
+  test('reviews section shows verified badge + group type and sorts highest/lowest/recent', async ({
+    page,
+  }) => {
+    await page.goto('/experience/rishikesh-rafting-grade-iii')
+
+    const section = page.locator('#reviews')
+    await section.scrollIntoViewIfNeeded()
+
+    // Verified-booking badge is shown for the booking-backed reviews.
+    await expect(section.getByText('Verified booking').first()).toBeVisible()
+
+    // Capture-time group type surfaces on at least one card.
+    await expect(
+      section
+        .getByText(/^(Solo|Couple|Friends|Family|Corporate)$/)
+        .first(),
+    ).toBeVisible()
+
+    // Sort controls exist.
+    const items = section.locator('[data-testid="review-item"]')
+    const itemCount = await items.count()
+    expect(itemCount).toBeGreaterThanOrEqual(2)
+
+    // Helper: read the visible rating of each card by counting filled stars is
+    // brittle; instead assert the order changes between highest and lowest by
+    // comparing the first card's title across the two sorts.
+    const firstTitle = async () =>
+      (await items.first().locator('[data-testid="review-title"]').textContent())?.trim()
+
+    await section.getByTestId('review-sort-highest').click()
+    const highestFirst = await firstTitle()
+
+    await section.getByTestId('review-sort-lowest').click()
+    const lowestFirst = await firstTitle()
+
+    // Highest-first and lowest-first must surface different leading reviews
+    // (the seed has a 4-star and 5-star review on this Experience).
+    expect(highestFirst).not.toEqual(lowestFirst)
+
+    // Recent restores the default newest-first ordering without error.
+    await section.getByTestId('review-sort-recent').click()
+    await expect(items.first()).toBeVisible()
+
+    await page.screenshot({
+      path: 'tests/e2e/screenshots/experience-reviews-enriched.png',
+      fullPage: true,
+    })
+  })
+
   // Direction B: the Booking rail keeps the Partial-pay Advance/balance split
   // permanently in view before commit. The seeded rafting Experience allows
   // partial pay, so both the 25% Advance line and the T-24h balance line must

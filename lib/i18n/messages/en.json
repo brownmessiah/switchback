@@ -402,6 +402,25 @@
     "rating": {
       "reviews": "{count, plural, one {review} other {reviews}}"
     },
+    "reviews": {
+      "travelledIn": "Travelled in {month}",
+      "verified": "Verified booking",
+      "empty": "No reviews yet. Be the first to share your experience.",
+      "summary": "{avg} out of 5 ({count} reviews)",
+      "groupType": {
+        "solo": "Solo",
+        "couple": "Couple",
+        "friends": "Friends",
+        "family": "Family",
+        "corporate": "Corporate"
+      },
+      "sort": {
+        "label": "Sort reviews",
+        "recent": "Most recent",
+        "highest": "Highest rated",
+        "lowest": "Lowest rated"
+      }
+    },
     "nav": {
       "label": "Section navigation",
       "overview": "Overview",

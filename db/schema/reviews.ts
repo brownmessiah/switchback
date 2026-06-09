@@ -20,6 +20,20 @@ export const reviewStatusEnum = pgEnum('review_status', [
   'removed',
 ])
 
+/**
+ * Capture-time group type per issue #18 / DECISION D5. Nullable — existing
+ * Reviews authored before this feature carry no group type. The .sql DDL in
+ * db/migrations/0024_review_group_type.sql is the source of truth; this enum
+ * must agree with it.
+ */
+export const reviewGroupTypeEnum = pgEnum('review_group_type', [
+  'solo',
+  'couple',
+  'friends',
+  'family',
+  'corporate',
+])
+
 export const reviews = pgTable('reviews', {
   id: uuid('id').primaryKey().defaultRandom(),
   bookingId: uuid('booking_id')
@@ -39,6 +53,10 @@ export const reviews = pgTable('reviews', {
   rating: integer('rating').notNull(),
   title: text('title'),
   body: text('body'),
+
+  // Capture-time group type (issue #18). Nullable — derived travel month
+  // comes from the Booking's Availability slot, not stored here.
+  groupType: reviewGroupTypeEnum('group_type'),
 
   status: reviewStatusEnum('status').default('published').notNull(),
 

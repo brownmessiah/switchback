@@ -49,6 +49,11 @@ async function openMenu(): Promise<void> {
   const trigger = screen.getByRole('button')
   await user.click(trigger)
   await user.keyboard('{Enter}')
+  // Base UI mounts the popup items asynchronously after activation. Await a
+  // known item so the popup is fully mounted BEFORE the tests' synchronous
+  // getByRole queries run — otherwise, under parallel-suite CPU pressure, a
+  // sync query can race the mount and intermittently fail (cross-file flake).
+  await screen.findByRole('link', { name: 'Trip Groups' })
 }
 
 describe('UserMenu — Trip Groups entry (issue 03)', () => {

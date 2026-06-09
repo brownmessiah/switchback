@@ -564,6 +564,15 @@
       "grid": "Grid view",
       "list": "List view"
     },
+    "map": {
+      "list": "List",
+      "map": "Map",
+      "toggleGroup": "List or map view",
+      "viewExperience": "View Experience",
+      "openInMaps": "Open in Maps",
+      "fromPrice": "from ₹",
+      "cityLevelNote": "Pins show each experience's city. Exact meeting points are confirmed after booking."
+    },
     "activeFilters": {
       "label": "Active filters",
       "remove": "Remove {filter} filter",

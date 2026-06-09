@@ -3,6 +3,7 @@ import type { ReactElement } from 'react'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 import { ExperienceCard, type ExperienceCardData } from '@/components/experience-card'
+import { ResultsView } from '@/components/maps/results-view'
 import { ActiveFilterChips } from '@/components/search/active-filter-chips'
 import { FacetForm } from '@/components/search/facet-form'
 import { FiltersSheet } from '@/components/search/filters-sheet'
@@ -10,6 +11,7 @@ import { SearchBox } from '@/components/search/search-box'
 import { ViewToggle, type SearchView } from '@/components/search/view-toggle'
 import { db } from '@/db/client'
 import { enrichCardBadges } from '@/lib/experiences/card-badges'
+import { toMapPins } from '@/lib/maps/pins'
 import { loadExperienceCoverMap } from '@/lib/media/experience-images'
 import { generateAlternates } from '@/lib/seo/hreflang'
 import {
@@ -90,7 +92,15 @@ export default async function SearchPage({
   // ADR-0013 canonical/robots rules (isFilteredSearch ignores it).
   const rawView = Array.isArray(rawParams.view) ? rawParams.view[0] : rawParams.view
   const view: SearchView = rawView === 'list' ? 'list' : 'grid'
+  // `map` is display-only URL state (list/map results toggle, issue 11). Parsed
+  // SEPARATELY from the search params so it never affects the result set or the
+  // ADR-0013 canonical/robots rules (isFilteredSearch ignores it). The map
+  // pins are derived from the SAME filtered hits — list and map are one set.
+  const rawMap = Array.isArray(rawParams.map) ? rawParams.map[0] : rawParams.map
+  const mapActive = rawMap === '1'
   const { hits } = await searchExperiences(parsed)
+  // Pins from the SAME filtered hits (region centroids; coordinate honesty D0).
+  const pins = toMapPins(hits)
   const coverMap = await loadExperienceCoverMap(db, hits.map((h) => h.id))
   // Build the card data (mapping the search facet `difficulty` onto the card)
   // then batch-enrich rating + social-proof from the DB for the rendered hits.
@@ -161,32 +171,50 @@ export default async function SearchPage({
             <p className="text-sm text-muted-foreground tabular-nums">
               {t('results.count', { count: hits.length })}
             </p>
-            <ViewToggle
-              current={view}
-              gridLabel={t('view.grid')}
-              listLabel={t('view.list')}
-            />
+            {/* Grid/list LAYOUT toggle — only meaningful for the list view, so
+                it is hidden when the map is active. */}
+            {!mapActive && (
+              <ViewToggle
+                current={view}
+                gridLabel={t('view.grid')}
+                listLabel={t('view.list')}
+              />
+            )}
           </div>
-          {hits.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-[var(--radius-card)] border border-dashed py-16 text-center">
-              <p className="text-lg font-medium">{t('results.empty')}</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t('results.emptyHint')}
-              </p>
-            </div>
-          ) : view === 'list' ? (
-            <div className="flex flex-col gap-[var(--space-grid-gap)]">
-              {cards.map((card) => (
-                <ExperienceCard key={card.id} experience={card} layout="list" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid gap-[var(--space-grid-gap)] md:grid-cols-2 lg:grid-cols-3">
-              {cards.map((card) => (
-                <ExperienceCard key={card.id} experience={card} />
-              ))}
-            </div>
-          )}
+          <ResultsView
+            pins={pins}
+            mapActive={mapActive}
+            labels={{
+              list: t('map.list'),
+              map: t('map.map'),
+              groupLabel: t('map.toggleGroup'),
+              viewExperience: t('map.viewExperience'),
+              openInMaps: t('map.openInMaps'),
+              fromPrice: t('map.fromPrice'),
+              cityLevelNote: t('map.cityLevelNote'),
+            }}
+          >
+            {hits.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-[var(--radius-card)] border border-dashed py-16 text-center">
+                <p className="text-lg font-medium">{t('results.empty')}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {t('results.emptyHint')}
+                </p>
+              </div>
+            ) : view === 'list' ? (
+              <div className="flex flex-col gap-[var(--space-grid-gap)]">
+                {cards.map((card) => (
+                  <ExperienceCard key={card.id} experience={card} layout="list" />
+                ))}
+              </div>
+            ) : (
+              <div className="grid gap-[var(--space-grid-gap)] md:grid-cols-2 lg:grid-cols-3">
+                {cards.map((card) => (
+                  <ExperienceCard key={card.id} experience={card} />
+                ))}
+              </div>
+            )}
+          </ResultsView>
         </section>
       </div>
     </main>

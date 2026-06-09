@@ -463,3 +463,26 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ── Experience map price pins (Issue 11, Leaflet divIcon). The pin is a small
+   rounded price chip placed at a region centroid — a city-level discovery map,
+   not a precise meeting-point pin (coordinate honesty, D0). ── */
+.experience-price-pin {
+  background: transparent;
+  border: none;
+}
+.experience-price-pin__label {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  transform: translate(-50%, -100%);
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  color: var(--primary-foreground);
+  background: var(--primary);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgb(0 0 0 / 0.2));
+}

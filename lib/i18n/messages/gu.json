@@ -585,6 +585,15 @@
       "rating": "{rating}★ અને વધુ",
       "safety": "સલામતી ચકાસાયેલ",
       "cancellation": "લવચીક રદ કરવાની નીતિ"
+    },
+    "map": {
+      "list": "યાદી",
+      "map": "નકશો",
+      "toggleGroup": "યાદી અથવા નકશા દૃશ્ય",
+      "viewExperience": "અનુભવ જુઓ",
+      "openInMaps": "નકશામાં ખોલો",
+      "fromPrice": "₹ થી ",
+      "cityLevelNote": "પિન દરેક અનુભવનું શહેર બતાવે છે. ચોક્કસ મળવાનું સ્થળ બુકિંગ પછી નક્કી થાય છે."
     }
   },
   "SignInPage": {

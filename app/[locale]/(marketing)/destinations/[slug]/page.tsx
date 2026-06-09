@@ -14,9 +14,11 @@ import {
 } from '@/components/ui/accordion'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ExperienceCard } from '@/components/experience-card'
+import { ResultsView } from '@/components/maps/results-view'
 import { db } from '@/db/client'
 import { env } from '@/lib/env'
 import { loadRegionLanding } from '@/lib/destinations/queries'
+import { toMapPins } from '@/lib/maps/pins'
 import { getRegionImage } from '@/lib/images'
 import { listRegions } from '@/lib/regions/registry'
 import { generateAlternates } from '@/lib/seo/hreflang'
@@ -28,6 +30,7 @@ export const revalidate = 60
 
 interface PageProps {
   params: Promise<{ locale: string; slug: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
 export function generateStaticParams(): Array<{ slug: string }> {
@@ -36,15 +39,33 @@ export function generateStaticParams(): Array<{ slug: string }> {
 
 export default async function RegionLandingPage({
   params,
+  searchParams,
 }: PageProps): Promise<ReactElement> {
   const { locale, slug } = await params
   setRequestLocale(locale)
 
   const t = await getTranslations({ locale, namespace: 'DestinationsPage' })
   const tCommon = await getTranslations({ locale, namespace: 'Common' })
+  const tSearch = await getTranslations({ locale, namespace: 'SearchPage' })
 
   const data = await loadRegionLanding(db, slug)
   if (!data) notFound()
+
+  // `map` is display-only URL state (list/map results toggle, issue 11) — it
+  // never affects which Experiences load. Pins are derived from the SAME
+  // Experiences shown in the list (region centroid; coordinate honesty D0).
+  const rawParams = await searchParams
+  const rawMap = Array.isArray(rawParams.map) ? rawParams.map[0] : rawParams.map
+  const mapActive = rawMap === '1'
+  const pins = toMapPins(
+    data.experiences.map((exp) => ({
+      slug: exp.slug,
+      title: exp.title,
+      regionSlug: exp.regionSlug,
+      activitySlug: exp.activitySlug,
+      pricePerPersonRupees: exp.pricePerParticipantRupees,
+    })),
+  )
 
   const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
   const canonicalUrl = `${baseUrl}/destinations/${slug}`
@@ -198,26 +219,40 @@ export default async function RegionLandingPage({
             </p>
           </div>
         ) : (
-          <div className="grid gap-[var(--space-grid-gap)] md:grid-cols-2 lg:grid-cols-3">
-            {data.experiences.map((exp) => (
-              <ExperienceCard
-                key={exp.id}
-                experience={{
-                  id: exp.id,
-                  slug: exp.slug,
-                  title: exp.title,
-                  shortDescription: exp.shortDescription,
-                  pricePerParticipantRupees: exp.pricePerParticipantRupees,
-                  regionSlug: exp.regionSlug,
-                  activitySlug: exp.activitySlug,
-                  difficulty: exp.difficulty,
-                  ratingAvg: exp.ratingAvg,
-                  ratingCount: exp.ratingCount,
-                  highlight: exp.highlight,
-                }}
-              />
-            ))}
-          </div>
+          <ResultsView
+            pins={pins}
+            mapActive={mapActive}
+            labels={{
+              list: tSearch('map.list'),
+              map: tSearch('map.map'),
+              groupLabel: tSearch('map.toggleGroup'),
+              viewExperience: tSearch('map.viewExperience'),
+              openInMaps: tSearch('map.openInMaps'),
+              fromPrice: tSearch('map.fromPrice'),
+              cityLevelNote: tSearch('map.cityLevelNote'),
+            }}
+          >
+            <div className="grid gap-[var(--space-grid-gap)] md:grid-cols-2 lg:grid-cols-3">
+              {data.experiences.map((exp) => (
+                <ExperienceCard
+                  key={exp.id}
+                  experience={{
+                    id: exp.id,
+                    slug: exp.slug,
+                    title: exp.title,
+                    shortDescription: exp.shortDescription,
+                    pricePerParticipantRupees: exp.pricePerParticipantRupees,
+                    regionSlug: exp.regionSlug,
+                    activitySlug: exp.activitySlug,
+                    difficulty: exp.difficulty,
+                    ratingAvg: exp.ratingAvg,
+                    ratingCount: exp.ratingCount,
+                    highlight: exp.highlight,
+                  }}
+                />
+              ))}
+            </div>
+          </ResultsView>
         )}
       </section>
 

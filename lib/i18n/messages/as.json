@@ -1047,7 +1047,16 @@
       "faqBestTimeQuestion": "{region} ভ্ৰমণৰ সৰ্বোত্তম সময় কেতিয়া?",
       "faqBestTimeAnswer": "প্ৰতিটো অভিজ্ঞতা অনুসৰি ঋতু সলনি হয়। প্ৰতিটো তালিকাই ইয়াৰ নিজা ঋতু আৰু অঞ্চল-বন্ধৰ সময় দেখুৱায়, আৰু বতৰ-বন্ধ বুকিং পৰ্যায়ত দেখুওৱা হয়।",
       "faqCancellationQuestion": "বাতিলকৰণ নীতি কি?",
-      "faqCancellationAnswer": "প্ৰতিটো অভিজ্ঞতাৰ নিজা বাতিলকৰণ নীতি আছে (নমনীয় / মধ্যম / কঠোৰ)। নীতি-ভিতৰৰ বাতিলকৰণৰ ৰিফাণ্ড 24 ঘণ্টাৰ ভিতৰত আপোনাৰ Outvers ৱালেটত জমা হয়।"
+      "faqCancellationAnswer": "প্ৰতিটো অভিজ্ঞতাৰ নিজা বাতিলকৰণ নীতি আছে (নমনীয় / মধ্যম / কঠোৰ)। নীতি-ভিতৰৰ বাতিলকৰণৰ ৰিফাণ্ড 24 ঘণ্টাৰ ভিতৰত আপোনাৰ Outvers ৱালেটত জমা হয়।",
+      "intelligence": {
+        "priceRangeHeading": "মূল্যৰ পৰিসৰ",
+        "priceRangeValue": "₹{min} ৰ পৰা ₹{max} লৈ",
+        "topActivitiesHeading": "শীৰ্ষ কাৰ্যকলাপ",
+        "nearbyHeading": "ওচৰৰ গন্তব্য",
+        "difficultyHeading": "কঠিনতা",
+        "featuredHeading": "বিশেষ অভিজ্ঞতা",
+        "countChip": "{label} ({count})"
+      }
     }
   },
   "ActivitiesPage": {
@@ -1084,6 +1093,14 @@
       "freeCancellation": "Free cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
+    },
+    "intelligence": {
+      "priceRangeHeading": "মূল্যৰ পৰিসৰ",
+      "priceRangeValue": "₹{min} ৰ পৰা ₹{max} লৈ",
+      "topDestinationsHeading": "শীৰ্ষ গন্তব্য",
+      "difficultyHeading": "কঠিনতা",
+      "featuredHeading": "বিশেষ অভিজ্ঞতা",
+      "countChip": "{label} ({count})"
     }
   },
   "CategoryPage": {

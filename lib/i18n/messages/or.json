@@ -1047,7 +1047,16 @@
       "faqBestTimeQuestion": "{region} ଯିବାର ସର୍ବୋତ୍ତମ ସମୟ କେବେ?",
       "faqBestTimeAnswer": "ପ୍ରତ୍ୟେକ ଅନୁଭବ ଅନୁଯାୟୀ ଋତୁ ଭିନ୍ନ ହୁଏ। ପ୍ରତ୍ୟେକ ତାଲିକା ତାହାର ନିଜସ୍ୱ ଋତୁ ଏବଂ ଅଞ୍ଚଳ-ବନ୍ଦ ଅବଧି ଦେଖାଏ, ଏବଂ ପାଗ-ବନ୍ଦ ବୁକିଂ ପର୍ଯ୍ୟାୟରେ ଦେଖାଯାଏ।",
       "faqCancellationQuestion": "ବାତିଲ ନୀତି କଣ?",
-      "faqCancellationAnswer": "ପ୍ରତ୍ୟେକ ଅନୁଭବର ନିଜସ୍ୱ ବାତିଲ ନୀତି ଅଛି (ନମନୀୟ / ମଧ୍ୟମ / କଠୋର)। ନୀତି-ଭିତର ବାତିଲ ପାଇଁ ରିଫଣ୍ଡ 24 ଘଣ୍ଟା ମଧ୍ୟରେ ଆପଣଙ୍କ Outvers ୱାଲେଟରେ ଜମା ହୁଏ।"
+      "faqCancellationAnswer": "ପ୍ରତ୍ୟେକ ଅନୁଭବର ନିଜସ୍ୱ ବାତିଲ ନୀତି ଅଛି (ନମନୀୟ / ମଧ୍ୟମ / କଠୋର)। ନୀତି-ଭିତର ବାତିଲ ପାଇଁ ରିଫଣ୍ଡ 24 ଘଣ୍ଟା ମଧ୍ୟରେ ଆପଣଙ୍କ Outvers ୱାଲେଟରେ ଜମା ହୁଏ।",
+      "intelligence": {
+        "priceRangeHeading": "ମୂଲ୍ୟ ପରିସର",
+        "priceRangeValue": "₹{min} ରୁ ₹{max} ପର୍ଯ୍ୟନ୍ତ",
+        "topActivitiesHeading": "ଶୀର୍ଷ କାର୍ଯ୍ୟକଳାପ",
+        "nearbyHeading": "ନିକଟସ୍ଥ ଗନ୍ତବ୍ୟ",
+        "difficultyHeading": "କଠିନତା",
+        "featuredHeading": "ବିଶେଷ ଅନୁଭବ",
+        "countChip": "{label} ({count})"
+      }
     }
   },
   "ActivitiesPage": {
@@ -1084,6 +1093,14 @@
       "freeCancellation": "Free cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
+    },
+    "intelligence": {
+      "priceRangeHeading": "ମୂଲ୍ୟ ପରିସର",
+      "priceRangeValue": "₹{min} ରୁ ₹{max} ପର୍ଯ୍ୟନ୍ତ",
+      "topDestinationsHeading": "ଶୀର୍ଷ ଗନ୍ତବ୍ୟ",
+      "difficultyHeading": "କଠିନତା",
+      "featuredHeading": "ବିଶେଷ ଅନୁଭବ",
+      "countChip": "{label} ({count})"
     }
   },
   "CategoryPage": {

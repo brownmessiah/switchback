@@ -386,7 +386,16 @@
       "faqBestTimeQuestion": "When is the best time to visit {region}?",
       "faqBestTimeAnswer": "Seasonality varies by Experience. Each listing surfaces its own season and region-closure windows, and weather closures are shown inline at the booking step.",
       "faqCancellationQuestion": "What is the cancellation policy?",
-      "faqCancellationAnswer": "Each Experience carries its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
+      "faqCancellationAnswer": "Each Experience carries its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours.",
+      "intelligence": {
+        "priceRangeHeading": "Price range",
+        "priceRangeValue": "From ₹{min} to ₹{max}",
+        "topActivitiesHeading": "Top activities",
+        "nearbyHeading": "Nearby destinations",
+        "difficultyHeading": "Difficulty",
+        "featuredHeading": "Featured experiences",
+        "countChip": "{label} ({count})"
+      }
     }
   },
   "ExperiencePage": {
@@ -1187,6 +1196,14 @@
       "freeCancellation": "Free cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
+    },
+    "intelligence": {
+      "priceRangeHeading": "Price range",
+      "priceRangeValue": "From ₹{min} to ₹{max}",
+      "topDestinationsHeading": "Top destinations",
+      "difficultyHeading": "Difficulty",
+      "featuredHeading": "Featured experiences",
+      "countChip": "{label} ({count})"
     }
   },
   "CategoryPage": {

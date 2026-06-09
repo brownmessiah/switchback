@@ -292,6 +292,14 @@
       "freeCancellation": "Free cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
+    },
+    "intelligence": {
+      "priceRangeHeading": "ಬೆಲೆ ಶ್ರೇಣಿ",
+      "priceRangeValue": "₹{min} ರಿಂದ ₹{max} ವರೆಗೆ",
+      "topDestinationsHeading": "ಪ್ರಮುಖ ತಾಣಗಳು",
+      "difficultyHeading": "ಕಷ್ಟ",
+      "featuredHeading": "ವಿಶೇಷ ಅನುಭವಗಳು",
+      "countChip": "{label} ({count})"
     }
   },
   "CategoryPage": {
@@ -1125,7 +1133,16 @@
       "faqBestTimeQuestion": "{region} ಗೆ ಭೇಟಿ ನೀಡಲು ಉತ್ತಮ ಸಮಯ ಯಾವುದು?",
       "faqBestTimeAnswer": "ಋತುಮಾನವು ಪ್ರತಿ ಅನುಭವಕ್ಕೆ ಭಿನ್ನವಾಗಿರುತ್ತದೆ. ಪ್ರತಿ ಪಟ್ಟಿಯೂ ತನ್ನದೇ ಆದ ಋತು ಮತ್ತು ಪ್ರದೇಶ-ಮುಚ್ಚುವಿಕೆಯ ಅವಧಿಗಳನ್ನು ತೋರಿಸುತ್ತದೆ, ಮತ್ತು ಹವಾಮಾನ-ಮುಚ್ಚುವಿಕೆಗಳು ಬುಕಿಂಗ್ ಹಂತದಲ್ಲಿ ತೋರಿಸಲಾಗುತ್ತದೆ.",
       "faqCancellationQuestion": "ರದ್ದತಿ ನೀತಿ ಏನು?",
-      "faqCancellationAnswer": "ಪ್ರತಿ ಅನುಭವಕ್ಕೂ ತನ್ನದೇ ಆದ ರದ್ದತಿ ನೀತಿ ಇದೆ (ಹೊಂದಿಕೊಳ್ಳುವ / ಮಧ್ಯಮ / ಕಠಿಣ). ನೀತಿ-ಒಳಗಿನ ರದ್ದತಿಗಳ ಮರುಪಾವತಿಗಳು 24 ಗಂಟೆಗಳೊಳಗೆ ನಿಮ್ಮ Outvers ವಾಲೆಟ್‌ಗೆ ಜಮಾ ಆಗುತ್ತವೆ."
+      "faqCancellationAnswer": "ಪ್ರತಿ ಅನುಭವಕ್ಕೂ ತನ್ನದೇ ಆದ ರದ್ದತಿ ನೀತಿ ಇದೆ (ಹೊಂದಿಕೊಳ್ಳುವ / ಮಧ್ಯಮ / ಕಠಿಣ). ನೀತಿ-ಒಳಗಿನ ರದ್ದತಿಗಳ ಮರುಪಾವತಿಗಳು 24 ಗಂಟೆಗಳೊಳಗೆ ನಿಮ್ಮ Outvers ವಾಲೆಟ್‌ಗೆ ಜಮಾ ಆಗುತ್ತವೆ.",
+      "intelligence": {
+        "priceRangeHeading": "ಬೆಲೆ ಶ್ರೇಣಿ",
+        "priceRangeValue": "₹{min} ರಿಂದ ₹{max} ವರೆಗೆ",
+        "topActivitiesHeading": "ಪ್ರಮುಖ ಚಟುವಟಿಕೆಗಳು",
+        "nearbyHeading": "ಹತ್ತಿರದ ತಾಣಗಳು",
+        "difficultyHeading": "ಕಷ್ಟ",
+        "featuredHeading": "ವಿಶೇಷ ಅನುಭವಗಳು",
+        "countChip": "{label} ({count})"
+      }
     }
   },
   "WalletPage": {

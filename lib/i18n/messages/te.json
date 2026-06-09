@@ -292,6 +292,14 @@
       "freeCancellation": "Free cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
+    },
+    "intelligence": {
+      "priceRangeHeading": "ధర పరిధి",
+      "priceRangeValue": "₹{min} నుండి ₹{max} వరకు",
+      "topDestinationsHeading": "అగ్ర గమ్యస్థానాలు",
+      "difficultyHeading": "కష్టత",
+      "featuredHeading": "ప్రత్యేక అనుభవాలు",
+      "countChip": "{label} ({count})"
     }
   },
   "CategoryPage": {
@@ -1125,7 +1133,16 @@
       "faqBestTimeQuestion": "{region} సందర్శించడానికి ఉత్తమ సమయం ఎప్పుడు?",
       "faqBestTimeAnswer": "కాలానుగుణత ప్రతి అనుభవం ప్రకారం మారుతుంది. ప్రతి జాబితా దాని స్వంత సీజన్ మరియు ప్రాంత-మూసివేత కాలాలను చూపుతుంది, మరియు వాతావరణ-మూసివేతలు బుకింగ్ దశలో చూపబడతాయి.",
       "faqCancellationQuestion": "రద్దు విధానం ఏమిటి?",
-      "faqCancellationAnswer": "ప్రతి అనుభవానికి దాని స్వంత రద్దు విధానం ఉంటుంది (సౌకర్యవంతమైన / మధ్యస్థ / కఠినమైన). విధానం-లోపల రద్దుల కోసం రీఫండ్‌లు 24 గంటల్లో మీ Outvers వాలెట్‌కు జమ చేయబడతాయి."
+      "faqCancellationAnswer": "ప్రతి అనుభవానికి దాని స్వంత రద్దు విధానం ఉంటుంది (సౌకర్యవంతమైన / మధ్యస్థ / కఠినమైన). విధానం-లోపల రద్దుల కోసం రీఫండ్‌లు 24 గంటల్లో మీ Outvers వాలెట్‌కు జమ చేయబడతాయి.",
+      "intelligence": {
+        "priceRangeHeading": "ధర పరిధి",
+        "priceRangeValue": "₹{min} నుండి ₹{max} వరకు",
+        "topActivitiesHeading": "అగ్ర కార్యకలాపాలు",
+        "nearbyHeading": "సమీప గమ్యస్థానాలు",
+        "difficultyHeading": "కష్టత",
+        "featuredHeading": "ప్రత్యేక అనుభవాలు",
+        "countChip": "{label} ({count})"
+      }
     }
   },
   "WalletPage": {

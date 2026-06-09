@@ -292,6 +292,14 @@
       "freeCancellation": "Free cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
+    },
+    "intelligence": {
+      "priceRangeHeading": "വില പരിധി",
+      "priceRangeValue": "₹{min} മുതൽ ₹{max} വരെ",
+      "topDestinationsHeading": "പ്രധാന സ്ഥലങ്ങൾ",
+      "difficultyHeading": "വൈഷമ്യം",
+      "featuredHeading": "പ്രത്യേക അനുഭവങ്ങൾ",
+      "countChip": "{label} ({count})"
     }
   },
   "CategoryPage": {
@@ -1125,7 +1133,16 @@
       "faqBestTimeQuestion": "{region} സന്ദർശിക്കാൻ ഏറ്റവും നല്ല സമയം എപ്പോഴാണ്?",
       "faqBestTimeAnswer": "ഓരോ അനുഭവത്തിനും അനുസരിച്ച് സീസൺ വ്യത്യാസപ്പെടുന്നു. ഓരോ ലിസ്റ്റിംഗും അതിന്റെ സ്വന്തം സീസണും പ്രദേശ-അടച്ചിടൽ കാലയളവുകളും കാണിക്കുന്നു, കാലാവസ്ഥ-അടച്ചിടലുകൾ ബുക്കിംഗ് ഘട്ടത്തിൽ കാണിക്കുന്നു.",
       "faqCancellationQuestion": "റദ്ദാക്കൽ നയം എന്താണ്?",
-      "faqCancellationAnswer": "ഓരോ അനുഭവത്തിനും അതിന്റേതായ റദ്ദാക്കൽ നയമുണ്ട് (ഫ്ലെക്സിബിൾ / മിതമായ / കർശനമായ). നയത്തിനുള്ളിലെ റദ്ദാക്കലുകൾക്കുള്ള റീഫണ്ടുകൾ 24 മണിക്കൂറിനുള്ളിൽ നിങ്ങളുടെ Outvers വാലറ്റിലേക്ക് ക്രെഡിറ്റ് ചെയ്യുന്നു."
+      "faqCancellationAnswer": "ഓരോ അനുഭവത്തിനും അതിന്റേതായ റദ്ദാക്കൽ നയമുണ്ട് (ഫ്ലെക്സിബിൾ / മിതമായ / കർശനമായ). നയത്തിനുള്ളിലെ റദ്ദാക്കലുകൾക്കുള്ള റീഫണ്ടുകൾ 24 മണിക്കൂറിനുള്ളിൽ നിങ്ങളുടെ Outvers വാലറ്റിലേക്ക് ക്രെഡിറ്റ് ചെയ്യുന്നു.",
+      "intelligence": {
+        "priceRangeHeading": "വില പരിധി",
+        "priceRangeValue": "₹{min} മുതൽ ₹{max} വരെ",
+        "topActivitiesHeading": "പ്രധാന പ്രവർത്തനങ്ങൾ",
+        "nearbyHeading": "സമീപ സ്ഥലങ്ങൾ",
+        "difficultyHeading": "വൈഷമ്യം",
+        "featuredHeading": "പ്രത്യേക അനുഭവങ്ങൾ",
+        "countChip": "{label} ({count})"
+      }
     }
   },
   "WalletPage": {

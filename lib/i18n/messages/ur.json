@@ -292,6 +292,14 @@
       "freeCancellation": "Free cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
+    },
+    "intelligence": {
+      "priceRangeHeading": "قیمت کی حد",
+      "priceRangeValue": "₹{min} سے ₹{max} تک",
+      "topDestinationsHeading": "سرفہرست مقامات",
+      "difficultyHeading": "دشواری",
+      "featuredHeading": "نمایاں تجربات",
+      "countChip": "{label} ({count})"
     }
   },
   "CategoryPage": {
@@ -1125,7 +1133,16 @@
       "faqBestTimeQuestion": "{region} جانے کا بہترین وقت کب ہے؟",
       "faqBestTimeAnswer": "موسم ہر تجربے کے مطابق مختلف ہوتا ہے۔ ہر فہرست اپنا موسم اور علاقہ-بندش کے اوقات دکھاتی ہے، اور موسمی بندش بکنگ مرحلے پر دکھائی جاتی ہے۔",
       "faqCancellationQuestion": "منسوخی کی پالیسی کیا ہے؟",
-      "faqCancellationAnswer": "ہر تجربے کی اپنی منسوخی پالیسی ہوتی ہے (لچکدار / معتدل / سخت)۔ پالیسی کے اندر منسوخیوں کے ریفنڈ 24 گھنٹوں کے اندر آپ کے Outvers والیٹ میں جمع ہو جاتے ہیں۔"
+      "faqCancellationAnswer": "ہر تجربے کی اپنی منسوخی پالیسی ہوتی ہے (لچکدار / معتدل / سخت)۔ پالیسی کے اندر منسوخیوں کے ریفنڈ 24 گھنٹوں کے اندر آپ کے Outvers والیٹ میں جمع ہو جاتے ہیں۔",
+      "intelligence": {
+        "priceRangeHeading": "قیمت کی حد",
+        "priceRangeValue": "₹{min} سے ₹{max} تک",
+        "topActivitiesHeading": "سرفہرست سرگرمیاں",
+        "nearbyHeading": "قریبی مقامات",
+        "difficultyHeading": "دشواری",
+        "featuredHeading": "نمایاں تجربات",
+        "countChip": "{label} ({count})"
+      }
     }
   },
   "WalletPage": {

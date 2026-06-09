@@ -292,6 +292,14 @@
       "freeCancellation": "Free cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
+    },
+    "intelligence": {
+      "priceRangeHeading": "মূল্যের পরিসর",
+      "priceRangeValue": "₹{min} থেকে ₹{max} পর্যন্ত",
+      "topDestinationsHeading": "শীর্ষ গন্তব্য",
+      "difficultyHeading": "কঠিনতা",
+      "featuredHeading": "বিশেষ অভিজ্ঞতা",
+      "countChip": "{label} ({count})"
     }
   },
   "CategoryPage": {
@@ -1125,7 +1133,16 @@
       "faqBestTimeQuestion": "{region} ভ্রমণের সেরা সময় কখন?",
       "faqBestTimeAnswer": "ঋতু প্রতিটি অভিজ্ঞতা অনুসারে পরিবর্তিত হয়। প্রতিটি তালিকা তার নিজস্ব মৌসুম এবং অঞ্চল-বন্ধের সময়কাল দেখায়, এবং আবহাওয়া-বন্ধ বুকিং ধাপে দেখানো হয়।",
       "faqCancellationQuestion": "বাতিলকরণ নীতি কী?",
-      "faqCancellationAnswer": "প্রতিটি অভিজ্ঞতার নিজস্ব বাতিলকরণ নীতি রয়েছে (নমনীয় / মাঝারি / কঠোর)। নীতির-মধ্যে বাতিলকরণের রিফান্ড 24 ঘণ্টার মধ্যে আপনার Outvers ওয়ালেটে জমা হয়।"
+      "faqCancellationAnswer": "প্রতিটি অভিজ্ঞতার নিজস্ব বাতিলকরণ নীতি রয়েছে (নমনীয় / মাঝারি / কঠোর)। নীতির-মধ্যে বাতিলকরণের রিফান্ড 24 ঘণ্টার মধ্যে আপনার Outvers ওয়ালেটে জমা হয়।",
+      "intelligence": {
+        "priceRangeHeading": "মূল্যের পরিসর",
+        "priceRangeValue": "₹{min} থেকে ₹{max} পর্যন্ত",
+        "topActivitiesHeading": "শীর্ষ কার্যকলাপ",
+        "nearbyHeading": "নিকটবর্তী গন্তব্য",
+        "difficultyHeading": "কঠিনতা",
+        "featuredHeading": "বিশেষ অভিজ্ঞতা",
+        "countChip": "{label} ({count})"
+      }
     }
   },
   "WalletPage": {

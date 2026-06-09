@@ -14,14 +14,17 @@ import {
 } from '@/components/ui/accordion'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ExperienceCard } from '@/components/experience-card'
+import { RegionIntelligenceSections } from '@/components/content/intelligence-sections'
 import { ResultsView } from '@/components/maps/results-view'
 import { db } from '@/db/client'
 import { env } from '@/lib/env'
+import { getActivity } from '@/lib/activities/registry'
+import { deriveRegionIntelligence } from '@/lib/content/intelligence'
 import { loadRegionLanding } from '@/lib/destinations/queries'
 import { toMapPins } from '@/lib/maps/pins'
 import { getRegionCoords } from '@/lib/maps/region-coords'
 import { getRegionImage } from '@/lib/images'
-import { listRegions } from '@/lib/regions/registry'
+import { getRegion, listRegions } from '@/lib/regions/registry'
 import { generateAlternates } from '@/lib/seo/hreflang'
 import { breadcrumbList } from '@/lib/seo/schemas/breadcrumb-list'
 import { faqPage } from '@/lib/seo/schemas/faq-page'
@@ -49,9 +52,18 @@ export default async function RegionLandingPage({
   const t = await getTranslations({ locale, namespace: 'DestinationsPage' })
   const tCommon = await getTranslations({ locale, namespace: 'Common' })
   const tSearch = await getTranslations({ locale, namespace: 'SearchPage' })
+  const tDifficulty = await getTranslations({
+    locale,
+    namespace: 'ExperiencePage.difficulty',
+  })
 
   const data = await loadRegionLanding(db, slug)
   if (!data) notFound()
+
+  // Issue 22 — data-derived intelligence sections (price range, top activities,
+  // nearby same-state destinations, difficulty spread, featured). Empty-safe:
+  // sections with no data render nothing.
+  const intelligence = await deriveRegionIntelligence(db, slug)
 
   // `map` is display-only URL state (list/map results toggle, issue 11) — it
   // never affects which Experiences load. Pins are derived from the SAME
@@ -272,6 +284,30 @@ export default async function RegionLandingPage({
           </ResultsView>
         )}
       </section>
+
+      {/* Data-derived intelligence (issue 22) — empty-safe. */}
+      {intelligence && (
+        <RegionIntelligenceSections
+          data={intelligence}
+          labels={{
+            priceRangeHeading: t('detail.intelligence.priceRangeHeading'),
+            priceRangeValue: ({ minRupees, maxRupees }) =>
+              t('detail.intelligence.priceRangeValue', {
+                min: minRupees.toLocaleString('en-IN'),
+                max: maxRupees.toLocaleString('en-IN'),
+              }),
+            topActivitiesHeading: t('detail.intelligence.topActivitiesHeading'),
+            nearbyHeading: t('detail.intelligence.nearbyHeading'),
+            difficultyHeading: t('detail.intelligence.difficultyHeading'),
+            featuredHeading: t('detail.intelligence.featuredHeading'),
+            difficultyLabel: (difficulty) => tDifficulty(difficulty),
+            countChip: (label, count) =>
+              t('detail.intelligence.countChip', { label, count }),
+            activityName: (s) => getActivity(s)?.displayName.en ?? s,
+            regionName: (s) => getRegion(s)?.displayName.en ?? s,
+          }}
+        />
+      )}
 
       {/* FAQ */}
       <section>

@@ -292,6 +292,14 @@
       "freeCancellation": "Free cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
+    },
+    "intelligence": {
+      "priceRangeHeading": "કિંમત શ્રેણી",
+      "priceRangeValue": "₹{min} થી ₹{max} સુધી",
+      "topDestinationsHeading": "ટોચના સ્થળો",
+      "difficultyHeading": "મુશ્કેલી",
+      "featuredHeading": "વિશેષ અનુભવો",
+      "countChip": "{label} ({count})"
     }
   },
   "CategoryPage": {
@@ -1125,7 +1133,16 @@
       "faqBestTimeQuestion": "{region}ની મુલાકાત લેવાનો શ્રેષ્ઠ સમય ક્યારે છે?",
       "faqBestTimeAnswer": "મોસમ દરેક અનુભવ પ્રમાણે બદલાય છે. દરેક યાદી તેની પોતાની મોસમ અને પ્રદેશ-બંધના સમયગાળા દર્શાવે છે, અને હવામાન-બંધ બુકિંગ તબક્કે દર્શાવવામાં આવે છે.",
       "faqCancellationQuestion": "રદ કરવાની નીતિ શું છે?",
-      "faqCancellationAnswer": "દરેક અનુભવની પોતાની રદ કરવાની નીતિ હોય છે (લવચીક / મધ્યમ / કડક). નીતિ-અંતર્ગત રદ માટેના રિફંડ 24 કલાકની અંદર તમારા Outvers વોલેટમાં જમા થાય છે."
+      "faqCancellationAnswer": "દરેક અનુભવની પોતાની રદ કરવાની નીતિ હોય છે (લવચીક / મધ્યમ / કડક). નીતિ-અંતર્ગત રદ માટેના રિફંડ 24 કલાકની અંદર તમારા Outvers વોલેટમાં જમા થાય છે.",
+      "intelligence": {
+        "priceRangeHeading": "કિંમત શ્રેણી",
+        "priceRangeValue": "₹{min} થી ₹{max} સુધી",
+        "topActivitiesHeading": "ટોચની પ્રવૃત્તિઓ",
+        "nearbyHeading": "નજીકના સ્થળો",
+        "difficultyHeading": "મુશ્કેલી",
+        "featuredHeading": "વિશેષ અનુભવો",
+        "countChip": "{label} ({count})"
+      }
     }
   },
   "WalletPage": {

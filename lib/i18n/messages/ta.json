@@ -292,6 +292,14 @@
       "freeCancellation": "Free cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
+    },
+    "intelligence": {
+      "priceRangeHeading": "விலை வரம்பு",
+      "priceRangeValue": "₹{min} முதல் ₹{max} வரை",
+      "topDestinationsHeading": "சிறந்த இடங்கள்",
+      "difficultyHeading": "சிரமம்",
+      "featuredHeading": "சிறப்பு அனுபவங்கள்",
+      "countChip": "{label} ({count})"
     }
   },
   "CategoryPage": {
@@ -1125,7 +1133,16 @@
       "faqBestTimeQuestion": "{region} ஐப் பார்வையிட சிறந்த நேரம் எது?",
       "faqBestTimeAnswer": "பருவம் ஒவ்வொரு அனுபவத்திற்கும் மாறுபடும். ஒவ்வொரு பட்டியலும் அதன் சொந்த பருவம் மற்றும் பகுதி-மூடல் காலங்களைக் காட்டுகிறது, மேலும் வானிலை-மூடல்கள் பதிவு படிநிலையில் காட்டப்படுகின்றன.",
       "faqCancellationQuestion": "ரத்து கொள்கை என்ன?",
-      "faqCancellationAnswer": "ஒவ்வொரு அனுபவத்திற்கும் அதன் சொந்த ரத்து கொள்கை உள்ளது (நெகிழ்வான / மிதமான / கடுமையான). கொள்கைக்கு-உட்பட்ட ரத்துகளுக்கான பணத்திரும்பம் 24 மணி நேரத்திற்குள் உங்கள் Outvers வாலட்டில் வரவு வைக்கப்படும்."
+      "faqCancellationAnswer": "ஒவ்வொரு அனுபவத்திற்கும் அதன் சொந்த ரத்து கொள்கை உள்ளது (நெகிழ்வான / மிதமான / கடுமையான). கொள்கைக்கு-உட்பட்ட ரத்துகளுக்கான பணத்திரும்பம் 24 மணி நேரத்திற்குள் உங்கள் Outvers வாலட்டில் வரவு வைக்கப்படும்.",
+      "intelligence": {
+        "priceRangeHeading": "விலை வரம்பு",
+        "priceRangeValue": "₹{min} முதல் ₹{max} வரை",
+        "topActivitiesHeading": "சிறந்த செயல்பாடுகள்",
+        "nearbyHeading": "அருகிலுள்ள இடங்கள்",
+        "difficultyHeading": "சிரமம்",
+        "featuredHeading": "சிறப்பு அனுபவங்கள்",
+        "countChip": "{label} ({count})"
+      }
     }
   },
   "WalletPage": {

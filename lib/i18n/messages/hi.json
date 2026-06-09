@@ -292,6 +292,14 @@
       "freeCancellation": "24 घंटे तक मुफ़्त रद्दीकरण",
       "verifiedVendor": "पहचान-सत्यापित Vendors",
       "refundSla": "24-घंटे रिफंड SLA"
+    },
+    "intelligence": {
+      "priceRangeHeading": "मूल्य सीमा",
+      "priceRangeValue": "₹{min} से ₹{max} तक",
+      "topDestinationsHeading": "शीर्ष गंतव्य",
+      "difficultyHeading": "कठिनाई",
+      "featuredHeading": "विशेष अनुभव",
+      "countChip": "{label} ({count})"
     }
   },
   "CategoryPage": {
@@ -1125,7 +1133,16 @@
       "faqBestTimeQuestion": "{region} घूमने का सबसे अच्छा समय कब है?",
       "faqBestTimeAnswer": "मौसम हर अनुभव के अनुसार अलग होता है। हर लिस्टिंग अपनी सीज़न और क्षेत्र-बंदी की अवधि दिखाती है, और मौसम-बंदी बुकिंग चरण पर इनलाइन दिखाई जाती है।",
       "faqCancellationQuestion": "रद्दीकरण नीति क्या है?",
-      "faqCancellationAnswer": "हर अनुभव की अपनी रद्दीकरण नीति होती है (लचीली / मध्यम / सख़्त)। नीति-के-भीतर रद्दीकरण के रिफ़ंड 24 घंटे के भीतर आपके Outvers वॉलेट में जमा होते हैं।"
+      "faqCancellationAnswer": "हर अनुभव की अपनी रद्दीकरण नीति होती है (लचीली / मध्यम / सख़्त)। नीति-के-भीतर रद्दीकरण के रिफ़ंड 24 घंटे के भीतर आपके Outvers वॉलेट में जमा होते हैं।",
+      "intelligence": {
+        "priceRangeHeading": "मूल्य सीमा",
+        "priceRangeValue": "₹{min} से ₹{max} तक",
+        "topActivitiesHeading": "शीर्ष गतिविधियाँ",
+        "nearbyHeading": "आस-पास के गंतव्य",
+        "difficultyHeading": "कठिनाई",
+        "featuredHeading": "विशेष अनुभव",
+        "countChip": "{label} ({count})"
+      }
     }
   },
   "WalletPage": {

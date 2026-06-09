@@ -292,6 +292,14 @@
       "freeCancellation": "Free cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
+    },
+    "intelligence": {
+      "priceRangeHeading": "ਕੀਮਤ ਸੀਮਾ",
+      "priceRangeValue": "₹{min} ਤੋਂ ₹{max} ਤੱਕ",
+      "topDestinationsHeading": "ਪ੍ਰਮੁੱਖ ਟਿਕਾਣੇ",
+      "difficultyHeading": "ਮੁਸ਼ਕਲ",
+      "featuredHeading": "ਵਿਸ਼ੇਸ਼ ਅਨੁਭਵ",
+      "countChip": "{label} ({count})"
     }
   },
   "CategoryPage": {
@@ -1125,7 +1133,16 @@
       "faqBestTimeQuestion": "{region} ਜਾਣ ਦਾ ਸਭ ਤੋਂ ਵਧੀਆ ਸਮਾਂ ਕਦੋਂ ਹੈ?",
       "faqBestTimeAnswer": "ਮੌਸਮ ਹਰ ਅਨੁਭਵ ਦੇ ਅਨੁਸਾਰ ਬਦਲਦਾ ਹੈ। ਹਰ ਸੂਚੀ ਆਪਣਾ ਮੌਸਮ ਅਤੇ ਖੇਤਰ-ਬੰਦੀ ਦੇ ਸਮੇਂ ਦਿਖਾਉਂਦੀ ਹੈ, ਅਤੇ ਮੌਸਮ-ਬੰਦੀ ਬੁਕਿੰਗ ਪੜਾਅ ਉੱਤੇ ਦਿਖਾਈ ਜਾਂਦੀ ਹੈ।",
       "faqCancellationQuestion": "ਰੱਦ ਕਰਨ ਦੀ ਨੀਤੀ ਕੀ ਹੈ?",
-      "faqCancellationAnswer": "ਹਰ ਅਨੁਭਵ ਦੀ ਆਪਣੀ ਰੱਦ ਕਰਨ ਦੀ ਨੀਤੀ ਹੁੰਦੀ ਹੈ (ਲਚਕੀਲੀ / ਦਰਮਿਆਨੀ / ਸਖ਼ਤ)। ਨੀਤੀ-ਅੰਦਰ ਰੱਦ ਕਰਨ ਦੇ ਰਿਫੰਡ 24 ਘੰਟਿਆਂ ਦੇ ਅੰਦਰ ਤੁਹਾਡੇ Outvers ਵਾਲਿਟ ਵਿੱਚ ਜਮ੍ਹਾਂ ਹੁੰਦੇ ਹਨ।"
+      "faqCancellationAnswer": "ਹਰ ਅਨੁਭਵ ਦੀ ਆਪਣੀ ਰੱਦ ਕਰਨ ਦੀ ਨੀਤੀ ਹੁੰਦੀ ਹੈ (ਲਚਕੀਲੀ / ਦਰਮਿਆਨੀ / ਸਖ਼ਤ)। ਨੀਤੀ-ਅੰਦਰ ਰੱਦ ਕਰਨ ਦੇ ਰਿਫੰਡ 24 ਘੰਟਿਆਂ ਦੇ ਅੰਦਰ ਤੁਹਾਡੇ Outvers ਵਾਲਿਟ ਵਿੱਚ ਜਮ੍ਹਾਂ ਹੁੰਦੇ ਹਨ।",
+      "intelligence": {
+        "priceRangeHeading": "ਕੀਮਤ ਸੀਮਾ",
+        "priceRangeValue": "₹{min} ਤੋਂ ₹{max} ਤੱਕ",
+        "topActivitiesHeading": "ਪ੍ਰਮੁੱਖ ਗਤੀਵਿਧੀਆਂ",
+        "nearbyHeading": "ਨੇੜਲੇ ਟਿਕਾਣੇ",
+        "difficultyHeading": "ਮੁਸ਼ਕਲ",
+        "featuredHeading": "ਵਿਸ਼ੇਸ਼ ਅਨੁਭਵ",
+        "countChip": "{label} ({count})"
+      }
     }
   },
   "WalletPage": {

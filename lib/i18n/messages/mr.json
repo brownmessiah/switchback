@@ -292,6 +292,14 @@
       "freeCancellation": "Free cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
+    },
+    "intelligence": {
+      "priceRangeHeading": "किंमत श्रेणी",
+      "priceRangeValue": "₹{min} ते ₹{max} पर्यंत",
+      "topDestinationsHeading": "शीर्ष ठिकाणे",
+      "difficultyHeading": "अडचण",
+      "featuredHeading": "वैशिष्ट्यपूर्ण अनुभव",
+      "countChip": "{label} ({count})"
     }
   },
   "CategoryPage": {
@@ -1125,7 +1133,16 @@
       "faqBestTimeQuestion": "{region} ला भेट देण्याची सर्वोत्तम वेळ कधी आहे?",
       "faqBestTimeAnswer": "हंगाम प्रत्येक अनुभवानुसार बदलतो. प्रत्येक सूची तिचा स्वतःचा हंगाम आणि प्रदेश-बंदीचे कालावधी दर्शवते, आणि हवामान-बंदी बुकिंग टप्प्यावर दर्शविली जाते.",
       "faqCancellationQuestion": "रद्द करण्याचे धोरण काय आहे?",
-      "faqCancellationAnswer": "प्रत्येक अनुभवाचे स्वतःचे रद्द करण्याचे धोरण असते (लवचिक / मध्यम / कठोर). धोरण-अंतर्गत रद्दीकरणाचे रिफंड 24 तासांच्या आत तुमच्या Outvers वॉलेटमध्ये जमा होतात."
+      "faqCancellationAnswer": "प्रत्येक अनुभवाचे स्वतःचे रद्द करण्याचे धोरण असते (लवचिक / मध्यम / कठोर). धोरण-अंतर्गत रद्दीकरणाचे रिफंड 24 तासांच्या आत तुमच्या Outvers वॉलेटमध्ये जमा होतात.",
+      "intelligence": {
+        "priceRangeHeading": "किंमत श्रेणी",
+        "priceRangeValue": "₹{min} ते ₹{max} पर्यंत",
+        "topActivitiesHeading": "शीर्ष क्रियाकलाप",
+        "nearbyHeading": "जवळची ठिकाणे",
+        "difficultyHeading": "अडचण",
+        "featuredHeading": "वैशिष्ट्यपूर्ण अनुभव",
+        "countChip": "{label} ({count})"
+      }
     }
   },
   "WalletPage": {

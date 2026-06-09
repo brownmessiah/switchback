@@ -15,9 +15,12 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { ExperienceCard } from '@/components/experience-card'
+import { ActivityIntelligenceSections } from '@/components/content/intelligence-sections'
 import { db } from '@/db/client'
 import { listActivities } from '@/lib/activities/registry'
 import { loadActivityLanding } from '@/lib/activities/queries'
+import { deriveActivityIntelligence } from '@/lib/content/intelligence'
+import { getRegion } from '@/lib/regions/registry'
 import { getActivityImage } from '@/lib/images'
 import { env } from '@/lib/env'
 import { generateAlternates } from '@/lib/seo/hreflang'
@@ -51,9 +54,17 @@ export default async function ActivityLandingPage({
 
   const t = await getTranslations({ locale, namespace: 'ActivitiesPage' })
   const tCommon = await getTranslations({ locale, namespace: 'Common' })
+  const tDifficulty = await getTranslations({
+    locale,
+    namespace: 'ExperiencePage.difficulty',
+  })
 
   const data = await loadActivityLanding(db, slug)
   if (!data) notFound()
+
+  // Issue 22 — data-derived intelligence sections (price range, top
+  // destinations, difficulty spread, featured). Empty-safe.
+  const intelligence = await deriveActivityIntelligence(db, slug)
 
   const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
   const canonicalUrl = `${baseUrl}/activities/${slug}`
@@ -251,6 +262,29 @@ export default async function ActivityLandingPage({
           {t('regionHint', { activity: activityDisplay.toLowerCase() })}
         </p>
       </section>
+
+      {/* Data-derived intelligence (issue 22) — empty-safe. */}
+      {intelligence && (
+        <ActivityIntelligenceSections
+          data={intelligence}
+          labels={{
+            priceRangeHeading: t('intelligence.priceRangeHeading'),
+            priceRangeValue: ({ minRupees, maxRupees }) =>
+              t('intelligence.priceRangeValue', {
+                min: minRupees.toLocaleString('en-IN'),
+                max: maxRupees.toLocaleString('en-IN'),
+              }),
+            topDestinationsHeading: t('intelligence.topDestinationsHeading'),
+            difficultyHeading: t('intelligence.difficultyHeading'),
+            featuredHeading: t('intelligence.featuredHeading'),
+            difficultyLabel: (difficulty) => tDifficulty(difficulty),
+            countChip: (label, count) =>
+              t('intelligence.countChip', { label, count }),
+            activityName: (s) => s,
+            regionName: (s) => getRegion(s)?.displayName.en ?? s,
+          }}
+        />
+      )}
 
       {/* FAQ */}
       <section>

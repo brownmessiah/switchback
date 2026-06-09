@@ -535,7 +535,12 @@
       "destination": "منزل",
       "state": "ریاست",
       "allStates": "تمام ریاستیں",
-      "groupSizeHelp": "کم از کم اتنے افراد کے گروپ کے لیے موزوں"
+      "groupSizeHelp": "کم از کم اتنے افراد کے گروپ کے لیے موزوں",
+      "trust": "اعتماد اور لچک",
+      "rating": "درجہ بندی",
+      "ratingOption": "{rating}★ اور اس سے زیادہ",
+      "safetyVerified": "حفاظت کی جانچ شدہ",
+      "flexibleCancellation": "لچکدار منسوخی"
     },
     "activities": {
       "rafting": "ریفٹنگ",
@@ -569,6 +574,17 @@
     "view": {
       "grid": "گرڈ منظر",
       "list": "فہرست منظر"
+    },
+    "activeFilters": {
+      "label": "فعال فلٹرز",
+      "remove": "{filter} فلٹر ہٹائیں",
+      "groupSize": "{count}+ کا گروپ",
+      "priceRange": "₹{min} – ₹{max}",
+      "priceMin": "₹{min} سے",
+      "priceMax": "₹{max} تک",
+      "rating": "{rating}★ اور اس سے زیادہ",
+      "safety": "حفاظت کی جانچ شدہ",
+      "cancellation": "لچکدار منسوخی"
     }
   },
   "SignInPage": {

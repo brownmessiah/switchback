@@ -535,7 +535,12 @@
       "destination": "गंतव्य",
       "state": "राज्य",
       "allStates": "सभी राज्य",
-      "groupSizeHelp": "कम से कम इतने लोगों के समूह के लिए उपयुक्त"
+      "groupSizeHelp": "कम से कम इतने लोगों के समूह के लिए उपयुक्त",
+      "trust": "भरोसा और लचीलापन",
+      "rating": "रेटिंग",
+      "ratingOption": "{rating}★ और अधिक",
+      "safetyVerified": "सुरक्षा जाँची गई",
+      "flexibleCancellation": "लचीली रद्दीकरण नीति"
     },
     "activities": {
       "rafting": "राफ्टिंग",
@@ -569,6 +574,17 @@
     "view": {
       "grid": "ग्रिड दृश्य",
       "list": "सूची दृश्य"
+    },
+    "activeFilters": {
+      "label": "सक्रिय फ़िल्टर",
+      "remove": "{filter} फ़िल्टर हटाएँ",
+      "groupSize": "{count}+ का समूह",
+      "priceRange": "₹{min} – ₹{max}",
+      "priceMin": "₹{min} से",
+      "priceMax": "₹{max} तक",
+      "rating": "{rating}★ और अधिक",
+      "safety": "सुरक्षा जाँची गई",
+      "cancellation": "लचीली रद्दीकरण नीति"
     }
   },
   "SignInPage": {

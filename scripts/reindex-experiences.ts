@@ -16,6 +16,7 @@ import { eq } from 'drizzle-orm'
 
 import { db } from '@/db/client'
 import { experiences, vendorProfiles } from '@/db/schema'
+import { loadExperienceRatingMap } from '@/lib/experiences/card-badges'
 import { publiclyVisibleExperienceCondition } from '@/lib/experiences/public-filter'
 import {
   ensureExperienceIndexSettings,
@@ -41,11 +42,23 @@ async function main(): Promise<void> {
       durationMinutes: experiences.durationMinutes,
       maxGroupSize: experiences.maxGroupSize,
       seasonMonths: experiences.seasonMonths,
+      // Issue 10 trust-oriented filter fields — all REAL data (D0).
+      requiresSafetyStack: experiences.requiresSafetyStack,
+      cancellationPreset: experiences.cancellationPreset,
+      vendorKycTier: vendorProfiles.kycTier,
       updatedAt: experiences.updatedAt,
     })
     .from(experiences)
     .innerJoin(vendorProfiles, eq(experiences.vendorUserId, vendorProfiles.userId))
     .where(publiclyVisibleExperienceCondition())
+
+  // Issue 10: batch-load the published-review rating aggregate for every row
+  // (one group-by query, no N+1 — reuses the card-badges loader so the indexed
+  // ratingAvg matches what the cards show). Absent => unrated => 0.
+  const ratingMap = await loadExperienceRatingMap(
+    db,
+    rows.map((r) => r.id),
+  )
 
   let indexed = 0
   for (const exp of rows) {
@@ -64,6 +77,12 @@ async function main(): Promise<void> {
       durationMinutes: exp.durationMinutes,
       maxGroupSize: exp.maxGroupSize,
       seasonMonths: exp.seasonMonths ?? [],
+      // Issue 10 trust-oriented filter fields. Unrated => ratingAvg 0 (NOT null)
+      // so the numeric attribute is always present (documented choice).
+      ratingAvg: ratingMap.get(exp.id)?.avg ?? 0,
+      requiresSafetyStack: exp.requiresSafetyStack,
+      vendorKycTier: exp.vendorKycTier,
+      cancellationPreset: exp.cancellationPreset,
     }
     await indexExperience(doc)
     indexed++

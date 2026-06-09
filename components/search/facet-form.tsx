@@ -29,6 +29,8 @@ import { cn } from '@/lib/utils'
 const DIFFICULTY_OPTIONS = ['easy', 'moderate', 'challenging', 'extreme'] as const
 /** Months 1-12 for the "runs in month" facet. */
 const MONTH_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const
+/** Minimum-rating thresholds (issue 10) — `ratingAvg >= N`. */
+const RATING_OPTIONS = [4, 4.5] as const
 
 const CHIP_BASE =
   'min-tap flex w-full items-center rounded-[var(--radius-control)] px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
@@ -328,7 +330,73 @@ export function FacetForm({ parsed, instanceId }: FacetFormProps): ReactElement 
         </div>
       </details>
 
-      {/* 5 — Price range (debounced) */}
+      {/* 5 — Trust & flexibility (issue 10): rating, Safety Checked, Flexible
+          cancellation. All map to REAL data. There is deliberately NO "Instant
+          confirmation" filter — it is universally true (ADR-0003). */}
+      <fieldset className="space-y-3 border-t border-border pt-3" data-testid="facet-trust">
+        <legend className="text-2xs font-medium uppercase tracking-[var(--tracking-eyebrow)] text-muted-foreground">
+          {t('filters.trust')}
+        </legend>
+
+        <div className="space-y-2" data-testid="facet-rating">
+          <span className="block text-sm">{t('filters.rating')}</span>
+          <div className="flex flex-col gap-1" role="group" aria-label={t('filters.rating')}>
+            {RATING_OPTIONS.map((r) => {
+              const active = parsed.minRating === r
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => navigate({ minRating: active ? null : String(r) })}
+                  className={cn(
+                    CHIP_BASE,
+                    active
+                      ? 'bg-primary font-medium text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-muted',
+                  )}
+                >
+                  {t('filters.ratingOption', { rating: r })}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          data-testid="facet-safety"
+          aria-pressed={Boolean(parsed.safetyVerified)}
+          onClick={() => navigate({ safetyVerified: parsed.safetyVerified ? null : 'true' })}
+          className={cn(
+            CHIP_BASE,
+            parsed.safetyVerified
+              ? 'bg-primary font-medium text-primary-foreground'
+              : 'text-muted-foreground hover:bg-muted',
+          )}
+        >
+          {t('filters.safetyVerified')}
+        </button>
+
+        <button
+          type="button"
+          data-testid="facet-flexible"
+          aria-pressed={parsed.cancellation === 'flexible'}
+          onClick={() =>
+            navigate({ cancellation: parsed.cancellation === 'flexible' ? null : 'flexible' })
+          }
+          className={cn(
+            CHIP_BASE,
+            parsed.cancellation === 'flexible'
+              ? 'bg-primary font-medium text-primary-foreground'
+              : 'text-muted-foreground hover:bg-muted',
+          )}
+        >
+          {t('filters.flexibleCancellation')}
+        </button>
+      </fieldset>
+
+      {/* 6 — Price range (debounced) */}
       <fieldset className="space-y-2">
         <legend className="text-2xs font-medium uppercase tracking-[var(--tracking-eyebrow)] text-muted-foreground">
           {t('filters.priceRange')}

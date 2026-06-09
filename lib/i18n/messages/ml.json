@@ -535,7 +535,12 @@
       "destination": "ലക്ഷ്യസ്ഥാനം",
       "state": "സംസ്ഥാനം",
       "allStates": "എല്ലാ സംസ്ഥാനങ്ങളും",
-      "groupSizeHelp": "കുറഞ്ഞത് ഇത്രയും പേരുള്ള ഗ്രൂപ്പിന് അനുയോജ്യം"
+      "groupSizeHelp": "കുറഞ്ഞത് ഇത്രയും പേരുള്ള ഗ്രൂപ്പിന് അനുയോജ്യം",
+      "trust": "വിശ്വാസവും വഴക്കവും",
+      "rating": "റേറ്റിംഗ്",
+      "ratingOption": "{rating}★ ഉം അതിന് മുകളിലും",
+      "safetyVerified": "സുരക്ഷ പരിശോധിച്ചു",
+      "flexibleCancellation": "വഴക്കമുള്ള റദ്ദാക്കൽ"
     },
     "activities": {
       "rafting": "റാഫ്റ്റിംഗ്",
@@ -569,6 +574,17 @@
     "view": {
       "grid": "ഗ്രിഡ് കാഴ്ച",
       "list": "പട്ടിക കാഴ്ച"
+    },
+    "activeFilters": {
+      "label": "സജീവ ഫിൽട്ടറുകൾ",
+      "remove": "{filter} ഫിൽട്ടർ നീക്കം ചെയ്യുക",
+      "groupSize": "{count}+ പേരുടെ സംഘം",
+      "priceRange": "₹{min} – ₹{max}",
+      "priceMin": "₹{min} മുതൽ",
+      "priceMax": "₹{max} വരെ",
+      "rating": "{rating}★ ഉം അതിന് മുകളിലും",
+      "safety": "സുരക്ഷ പരിശോധിച്ചു",
+      "cancellation": "വഴക്കമുള്ള റദ്ദാക്കൽ"
     }
   },
   "SignInPage": {

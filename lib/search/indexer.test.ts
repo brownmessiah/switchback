@@ -56,6 +56,11 @@ const sampleDoc: ExperienceSearchDoc = {
   durationMinutes: 240,
   maxGroupSize: 12,
   seasonMonths: [3, 4, 5, 6, 9, 10, 11],
+  // Issue 10 trust-oriented filter fields.
+  ratingAvg: 4.7,
+  requiresSafetyStack: true,
+  vendorKycTier: 'business',
+  cancellationPreset: 'flexible',
 }
 
 describe('search indexer', () => {
@@ -147,6 +152,26 @@ describe('search indexer', () => {
     expect(doc.state).toBeNull()
   })
 
+  it('maps the issue-10 trust-oriented filter fields onto the Meili document', async () => {
+    const { client, addCalls } = makeStub()
+    await indexExperience(sampleDoc, { client })
+    const doc = (addCalls[0] as Array<Record<string, unknown>>)[0]!
+    expect(doc.ratingAvg).toBe(4.7)
+    expect(doc.requiresSafetyStack).toBe(true)
+    expect(doc.vendorKycTier).toBe('business')
+    expect(doc.cancellationPreset).toBe('flexible')
+  })
+
+  it('indexes an unrated Experience as ratingAvg = 0 (a rating >= N filter with N>0 must not match it)', async () => {
+    // No published reviews → ratingAvg 0, NOT null, so the numeric `ratingAvg`
+    // attribute is always present and a `ratingAvg >= 4` filter excludes it
+    // while `ratingAvg >= 0` still matches it (documented choice).
+    const { client, addCalls } = makeStub()
+    await indexExperience({ ...sampleDoc, ratingAvg: 0 }, { client })
+    const doc = (addCalls[0] as Array<Record<string, unknown>>)[0]!
+    expect(doc.ratingAvg).toBe(0)
+  })
+
   it('passes null structured fields through and derives a null durationBand', async () => {
     const { client, addCalls } = makeStub()
     await indexExperience(
@@ -212,6 +237,15 @@ describe('ensureExperienceIndexSettings', () => {
     // an unconfigured attribute 400s the search page (ADR-0013).
     expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('category')
     expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('state')
+  })
+
+  it('declares the issue-10 trust filter attributes (rating / safety / KYC / cancellation)', async () => {
+    // Each trust facet the /search UI can emit MUST be filterable or
+    // Meilisearch 400s and the search page crashes (ADR-0013).
+    expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('ratingAvg')
+    expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('requiresSafetyStack')
+    expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('vendorKycTier')
+    expect(EXPERIENCE_FILTERABLE_ATTRIBUTES).toContain('cancellationPreset')
   })
 
   it('enqueues updateSettings at most once per process across direct calls', async () => {

@@ -457,7 +457,12 @@
       "destination": "গন্তব্য",
       "state": "ৰাজ্য",
       "allStates": "সকলো ৰাজ্য",
-      "groupSizeHelp": "কমেও ইমান লোকৰ দলৰ বাবে উপযুক্ত"
+      "groupSizeHelp": "কমেও ইমান লোকৰ দলৰ বাবে উপযুক্ত",
+      "trust": "বিশ্বাস আৰু নমনীয়তা",
+      "rating": "ৰেটিং",
+      "ratingOption": "{rating}★ আৰু ততোধিক",
+      "safetyVerified": "সুৰক্ষা পৰীক্ষিত",
+      "flexibleCancellation": "নমনীয় বাতিলকৰণ"
     },
     "activities": {
       "rafting": "ৰাফ্টিং",
@@ -491,6 +496,17 @@
     "view": {
       "grid": "গ্ৰিড দৃশ্য",
       "list": "তালিকা দৃশ্য"
+    },
+    "activeFilters": {
+      "label": "সক্ৰিয় ফিল্টাৰ",
+      "remove": "{filter} ফিল্টাৰ আঁতৰাওক",
+      "groupSize": "{count}+ ৰ দল",
+      "priceRange": "₹{min} – ₹{max}",
+      "priceMin": "₹{min} ৰ পৰা",
+      "priceMax": "₹{max} লৈকে",
+      "rating": "{rating}★ আৰু ততোধিক",
+      "safety": "সুৰক্ষা পৰীক্ষিত",
+      "cancellation": "নমনীয় বাতিলকৰণ"
     }
   },
   "SignInPage": {

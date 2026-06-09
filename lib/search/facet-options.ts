@@ -35,7 +35,7 @@ export interface FacetOption {
  * message keys free of hyphens (which `next-intl` treats specially in key
  * paths) while staying a pure function of the registry slug.
  */
-function slugToI18nKey(slug: string): string {
+export function slugToI18nKey(slug: string): string {
   return slug.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase())
 }
 

@@ -535,7 +535,12 @@
       "destination": "గమ్యం",
       "state": "రాష్ట్రం",
       "allStates": "అన్ని రాష్ట్రాలు",
-      "groupSizeHelp": "కనీసం ఇంత మంది ఉన్న సమూహానికి సరిపోతుంది"
+      "groupSizeHelp": "కనీసం ఇంత మంది ఉన్న సమూహానికి సరిపోతుంది",
+      "trust": "నమ్మకం & సౌలభ్యం",
+      "rating": "రేటింగ్",
+      "ratingOption": "{rating}★ & అంతకంటే ఎక్కువ",
+      "safetyVerified": "భద్రత ధృవీకరించబడింది",
+      "flexibleCancellation": "సౌకర్యవంతమైన రద్దు"
     },
     "activities": {
       "rafting": "రాఫ్టింగ్",
@@ -569,6 +574,17 @@
     "view": {
       "grid": "గ్రిడ్ వీక్షణ",
       "list": "జాబితా వీక్షణ"
+    },
+    "activeFilters": {
+      "label": "క్రియాశీల ఫిల్టర్‌లు",
+      "remove": "{filter} ఫిల్టర్‌ను తీసివేయి",
+      "groupSize": "{count}+ బృందం",
+      "priceRange": "₹{min} – ₹{max}",
+      "priceMin": "₹{min} నుండి",
+      "priceMax": "₹{max} వరకు",
+      "rating": "{rating}★ & అంతకంటే ఎక్కువ",
+      "safety": "భద్రత ధృవీకరించబడింది",
+      "cancellation": "సౌకర్యవంతమైన రద్దు"
     }
   },
   "SignInPage": {

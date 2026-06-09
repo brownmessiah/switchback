@@ -535,7 +535,12 @@
       "destination": "இலக்கு",
       "state": "மாநிலம்",
       "allStates": "அனைத்து மாநிலங்கள்",
-      "groupSizeHelp": "குறைந்தது இத்தனை பேர் கொண்ட குழுவிற்கு ஏற்றது"
+      "groupSizeHelp": "குறைந்தது இத்தனை பேர் கொண்ட குழுவிற்கு ஏற்றது",
+      "trust": "நம்பிக்கை & நெகிழ்வு",
+      "rating": "மதிப்பீடு",
+      "ratingOption": "{rating}★ மற்றும் மேல்",
+      "safetyVerified": "பாதுகாப்பு சரிபார்க்கப்பட்டது",
+      "flexibleCancellation": "நெகிழ்வான ரத்து"
     },
     "activities": {
       "rafting": "ராஃப்டிங்",
@@ -569,6 +574,17 @@
     "view": {
       "grid": "கட்டக் காட்சி",
       "list": "பட்டியல் காட்சி"
+    },
+    "activeFilters": {
+      "label": "செயலில் உள்ள வடிப்பான்கள்",
+      "remove": "{filter} வடிப்பானை அகற்று",
+      "groupSize": "{count}+ குழு",
+      "priceRange": "₹{min} – ₹{max}",
+      "priceMin": "₹{min} முதல்",
+      "priceMax": "₹{max} வரை",
+      "rating": "{rating}★ மற்றும் மேல்",
+      "safety": "பாதுகாப்பு சரிபார்க்கப்பட்டது",
+      "cancellation": "நெகிழ்வான ரத்து"
     }
   },
   "SignInPage": {

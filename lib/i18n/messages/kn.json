@@ -535,7 +535,12 @@
       "destination": "ಗಮ್ಯ",
       "state": "ರಾಜ್ಯ",
       "allStates": "ಎಲ್ಲಾ ರಾಜ್ಯಗಳು",
-      "groupSizeHelp": "ಕನಿಷ್ಠ ಇಷ್ಟು ಜನರ ಗುಂಪಿಗೆ ಸೂಕ್ತ"
+      "groupSizeHelp": "ಕನಿಷ್ಠ ಇಷ್ಟು ಜನರ ಗುಂಪಿಗೆ ಸೂಕ್ತ",
+      "trust": "ವಿಶ್ವಾಸ ಮತ್ತು ನಮ್ಯತೆ",
+      "rating": "ರೇಟಿಂಗ್",
+      "ratingOption": "{rating}★ ಮತ್ತು ಹೆಚ್ಚು",
+      "safetyVerified": "ಸುರಕ್ಷತೆ ಪರಿಶೀಲಿಸಲಾಗಿದೆ",
+      "flexibleCancellation": "ಹೊಂದಿಕೊಳ್ಳುವ ರದ್ದತಿ"
     },
     "activities": {
       "rafting": "ರಾಫ್ಟಿಂಗ್",
@@ -569,6 +574,17 @@
     "view": {
       "grid": "ಗ್ರಿಡ್ ವೀಕ್ಷಣೆ",
       "list": "ಪಟ್ಟಿ ವೀಕ್ಷಣೆ"
+    },
+    "activeFilters": {
+      "label": "ಸಕ್ರಿಯ ಫಿಲ್ಟರ್‌ಗಳು",
+      "remove": "{filter} ಫಿಲ್ಟರ್ ತೆಗೆದುಹಾಕಿ",
+      "groupSize": "{count}+ ಗುಂಪು",
+      "priceRange": "₹{min} – ₹{max}",
+      "priceMin": "₹{min} ರಿಂದ",
+      "priceMax": "₹{max} ವರೆಗೆ",
+      "rating": "{rating}★ ಮತ್ತು ಹೆಚ್ಚು",
+      "safety": "ಸುರಕ್ಷತೆ ಪರಿಶೀಲಿಸಲಾಗಿದೆ",
+      "cancellation": "ಹೊಂದಿಕೊಳ್ಳುವ ರದ್ದತಿ"
     }
   },
   "SignInPage": {

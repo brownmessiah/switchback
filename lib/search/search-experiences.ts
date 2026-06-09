@@ -36,6 +36,17 @@ export interface SearchExperiencesParams {
   category?: string
   /** Destination = Indian state (e.g. "Goa", "Himachal Pradesh") — issue 04 follow-up. */
   state?: string
+  // Issue 10 trust-oriented filters — all map to REAL data (D0).
+  /** Minimum published-review rating average — `ratingAvg >= N`. */
+  minRating?: number
+  /**
+   * "Safety Checked" filter — the per-listing Safety stack signal (ADR-0015).
+   * Maps to `requiresSafetyStack = true`. Only `true` is a filter; `false`
+   * (the unchecked control) is an unset filter and is omitted.
+   */
+  safetyVerified?: boolean
+  /** Flexible cancellation preset (ADR-0005) — `cancellationPreset = "flexible"`. NEVER "free". */
+  cancellation?: string
 }
 
 export interface SearchExperienceHit {
@@ -97,6 +108,22 @@ export function buildMeiliFilter(params: Omit<SearchExperiencesParams, 'q' | 'so
   if (params.state) {
     parts.push(`state = "${params.state}"`)
   }
+  // Issue 10 trust-oriented filters — all map to REAL index data (D0).
+  // `minRating` is a numeric lower-bound; 0 is a legitimate value (unrated docs
+  // index ratingAvg = 0) so we check `!== undefined`, not truthiness, and a
+  // "rating ≥ 0" filter matches every doc. `safetyVerified` only filters when
+  // TRUE (the per-listing Safety Checked signal, ADR-0015); `false` is unset.
+  // `cancellation` is the Flexible preset (ADR-0005) — string, quoted; NEVER
+  // "free".
+  if (params.minRating !== undefined) {
+    parts.push(`ratingAvg >= ${params.minRating}`)
+  }
+  if (params.safetyVerified) {
+    parts.push('requiresSafetyStack = true')
+  }
+  if (params.cancellation) {
+    parts.push(`cancellationPreset = "${params.cancellation}"`)
+  }
 
   return parts.join(' AND ')
 }
@@ -133,7 +160,12 @@ export function isFilteredSearch(params: SearchExperiencesParams): boolean {
     params.maxGroupSize !== undefined ||
     // Category + Destination=State facets (issue 04 follow-up).
     params.category ||
-    params.state
+    params.state ||
+    // Issue 10 trust-oriented filters. `minRating` checked with `!== undefined`
+    // (0 is a real value); `safetyVerified` only when TRUE (unchecked is unset).
+    params.minRating !== undefined ||
+    params.safetyVerified ||
+    params.cancellation
   )
 }
 

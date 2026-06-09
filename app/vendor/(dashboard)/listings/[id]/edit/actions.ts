@@ -9,6 +9,7 @@ import { availabilitySlots } from '@/db/schema/availability-slots'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { auth } from '@/lib/auth'
 import { writeAuditLog } from '@/lib/audit/write'
+import { loadExperienceRatingMap } from '@/lib/experiences/card-badges'
 import { replaceItinerary } from '@/lib/experiences/itinerary'
 import { assertWithinTier, type KycTier } from '@/lib/kyc/tier-caps'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
@@ -174,6 +175,11 @@ export async function executeUpdateExperience(
     // (app/admin/experiences/actions.ts). The facet fields are built from the
     // freshly-saved `data.*`, NOT the pre-edit row — the form owns them now.
     if (existing.status === 'published') {
+      // Issue 10 — an edit does not touch reviews, so PRESERVE the live
+      // published-review aggregate rather than zeroing ratingAvg on every save.
+      // safety / KYC tier / cancellation are REAL data: the form owns
+      // requiresSafetyStack + cancellationPreset, the Vendor row owns kycTier.
+      const ratingMap = await loadExperienceRatingMap(db, [data.id])
       const searchDoc: ExperienceSearchDoc = {
         id: data.id,
         slug: existing.slug,
@@ -189,6 +195,10 @@ export async function executeUpdateExperience(
         durationMinutes: data.durationMinutes ?? null,
         maxGroupSize: data.maxGroupSize ?? null,
         seasonMonths: data.seasonMonths ?? [],
+        ratingAvg: ratingMap.get(data.id)?.avg ?? 0,
+        requiresSafetyStack: data.requiresSafetyStack,
+        vendorKycTier: existing.kycTier,
+        cancellationPreset: data.cancellationPreset,
       }
       await indexExperience(searchDoc, { client: opts.searchClient })
     }

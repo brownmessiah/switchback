@@ -90,6 +90,11 @@ export async function executeApproveExperience(
       durationMinutes: experiences.durationMinutes,
       maxGroupSize: experiences.maxGroupSize,
       seasonMonths: experiences.seasonMonths,
+      // Issue 10 trust-oriented filters — indexed so the /search rail can filter
+      // by safety / KYC tier / cancellation. All REAL data (D0).
+      requiresSafetyStack: experiences.requiresSafetyStack,
+      cancellationPreset: experiences.cancellationPreset,
+      vendorKycTier: vendorProfiles.kycTier,
     })
     .from(experiences)
     .innerJoin(vendorProfiles, eq(experiences.vendorUserId, vendorProfiles.userId))
@@ -160,6 +165,13 @@ export async function executeApproveExperience(
     durationMinutes: exp.durationMinutes,
     maxGroupSize: exp.maxGroupSize,
     seasonMonths: exp.seasonMonths ?? [],
+    // Issue 10 trust-oriented filters. A freshly-approved Experience has no
+    // published reviews yet, so ratingAvg starts at 0 (the search:reindex job
+    // backfills the live aggregate); safety / KYC / cancellation are REAL data.
+    ratingAvg: 0,
+    requiresSafetyStack: exp.requiresSafetyStack,
+    vendorKycTier: exp.vendorKycTier,
+    cancellationPreset: exp.cancellationPreset,
   }
   await indexExperience(searchDoc, { client: opts.searchClient })
 

@@ -457,7 +457,12 @@
       "destination": "ଗନ୍ତବ୍ୟ",
       "state": "ରାଜ୍ୟ",
       "allStates": "ସମସ୍ତ ରାଜ୍ୟ",
-      "groupSizeHelp": "ଅତି କମ୍‌ରେ ଏତିକି ଲୋକଙ୍କ ଗୋଷ୍ଠୀ ପାଇଁ ଉପଯୁକ୍ତ"
+      "groupSizeHelp": "ଅତି କମ୍‌ରେ ଏତିକି ଲୋକଙ୍କ ଗୋଷ୍ଠୀ ପାଇଁ ଉପଯୁକ୍ତ",
+      "trust": "ବିଶ୍ୱାସ ଓ ନମନୀୟତା",
+      "rating": "ରେଟିଂ",
+      "ratingOption": "{rating}★ ଓ ଅଧିକ",
+      "safetyVerified": "ସୁରକ୍ଷା ଯାଞ୍ଚ ହୋଇଛି",
+      "flexibleCancellation": "ନମନୀୟ ବାତିଲ ନୀତି"
     },
     "activities": {
       "rafting": "ରାଫ୍ଟିଂ",
@@ -491,6 +496,17 @@
     "view": {
       "grid": "ଗ୍ରିଡ୍ ଦୃଶ୍ୟ",
       "list": "ତାଲିକା ଦୃଶ୍ୟ"
+    },
+    "activeFilters": {
+      "label": "ସକ୍ରିୟ ଫିଲ୍ଟର",
+      "remove": "{filter} ଫିଲ୍ଟର ହଟାନ୍ତୁ",
+      "groupSize": "{count}+ ର ଦଳ",
+      "priceRange": "₹{min} – ₹{max}",
+      "priceMin": "₹{min} ଠାରୁ",
+      "priceMax": "₹{max} ପର୍ଯ୍ୟନ୍ତ",
+      "rating": "{rating}★ ଓ ଅଧିକ",
+      "safety": "ସୁରକ୍ଷା ଯାଞ୍ଚ ହୋଇଛି",
+      "cancellation": "ନମନୀୟ ବାତିଲ ନୀତି"
     }
   },
   "SignInPage": {

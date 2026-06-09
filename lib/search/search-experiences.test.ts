@@ -118,6 +118,46 @@ describe('buildMeiliFilter (Task 23)', () => {
       'activitySlug = "rafting" AND regionSlug = "rishikesh" AND pricePerPersonRupees >= 1000 AND pricePerPersonRupees <= 5000 AND difficulty = "moderate" AND durationBand = "half_day" AND seasonMonths = 6 AND maxGroupSize >= 8',
     )
   })
+
+  // Issue 10 — trust-oriented filters mapped to REAL data (D0).
+  it('filters by minimum rating as a ratingAvg lower-bound (numeric, bare)', () => {
+    expect(buildMeiliFilter({ minRating: 4 })).toBe('ratingAvg >= 4')
+  })
+
+  it('treats minRating = 0 the same as any other lower-bound (matches all docs)', () => {
+    // A "rating ≥ 0" filter is a real lower-bound, not an unset filter — 0 is a
+    // legitimate value (unrated docs index ratingAvg = 0). It must still emit a
+    // clause so the chip/round-trip is honest.
+    expect(buildMeiliFilter({ minRating: 0 })).toBe('ratingAvg >= 0')
+  })
+
+  it('maps safetyVerified to requiresSafetyStack = true (the per-listing Safety Checked signal)', () => {
+    expect(buildMeiliFilter({ safetyVerified: true })).toBe(
+      'requiresSafetyStack = true',
+    )
+  })
+
+  it('omits safetyVerified when false (an unset trust filter is not a filter)', () => {
+    expect(buildMeiliFilter({ safetyVerified: false })).toBe('')
+  })
+
+  it('maps the Flexible cancellation preset to cancellationPreset = "flexible"', () => {
+    expect(buildMeiliFilter({ cancellation: 'flexible' })).toBe(
+      'cancellationPreset = "flexible"',
+    )
+  })
+
+  it('combines the trust facets with the existing ones in declaration order', () => {
+    const filter = buildMeiliFilter({
+      activity: 'rafting',
+      minRating: 4,
+      safetyVerified: true,
+      cancellation: 'flexible',
+    })
+    expect(filter).toBe(
+      'activitySlug = "rafting" AND ratingAvg >= 4 AND requiresSafetyStack = true AND cancellationPreset = "flexible"',
+    )
+  })
 })
 
 describe('isFilteredSearch', () => {
@@ -141,6 +181,18 @@ describe('isFilteredSearch', () => {
     const { isFilteredSearch } = await import('./search-experiences')
     expect(isFilteredSearch({ category: 'water' })).toBe(true)
     expect(isFilteredSearch({ state: 'Goa' })).toBe(true)
+  })
+
+  it('returns true when only a trust filter is set (issue 10)', async () => {
+    const { isFilteredSearch } = await import('./search-experiences')
+    expect(isFilteredSearch({ minRating: 4 })).toBe(true)
+    expect(isFilteredSearch({ safetyVerified: true })).toBe(true)
+    expect(isFilteredSearch({ cancellation: 'flexible' })).toBe(true)
+  })
+
+  it('returns false when safetyVerified is explicitly false (issue 10)', async () => {
+    const { isFilteredSearch } = await import('./search-experiences')
+    expect(isFilteredSearch({ safetyVerified: false })).toBe(false)
   })
 
   it('returns false when only q is set', async () => {

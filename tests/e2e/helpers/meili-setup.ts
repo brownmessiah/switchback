@@ -18,12 +18,12 @@
  * then runs against the in-process stub, which has nothing to reset).
  */
 
-import { eq } from 'drizzle-orm'
+import { and, eq, inArray, sql as dsql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { Meilisearch } from 'meilisearch'
 import postgres from 'postgres'
 
-import { experiences, vendorProfiles } from '@/db/schema'
+import { experiences, reviews, vendorProfiles } from '@/db/schema'
 // The activity/region registries and duration-band.ts are intentionally
 // dependency-free (no lib/env), so they are safe to import here even though
 // global-setup runs before .env.local loads.
@@ -54,6 +54,11 @@ const EXPERIENCE_FILTERABLE_ATTRIBUTES = [
   // Category (activity rollup) + Destination=State facets (issue 04 follow-up).
   'category',
   'state',
+  // Issue 10 trust-oriented filters — rating / safety / KYC tier / cancellation.
+  'ratingAvg',
+  'requiresSafetyStack',
+  'vendorKycTier',
+  'cancellationPreset',
 ]
 const EXPERIENCE_SORTABLE_ATTRIBUTES = [
   'pricePerPersonRupees',
@@ -83,6 +88,13 @@ interface MeiliExperienceDoc {
   // derived from activitySlug/regionSlug via the registries.
   category: string | null
   state: string | null
+  // Issue 10 trust-oriented filters. Mirrors lib/search/indexer.ts MeiliPayload
+  // so the E2E trust-filter specs have something to filter on. `ratingAvg` is
+  // the published-review aggregate (0 when unrated).
+  ratingAvg: number
+  requiresSafetyStack: boolean
+  vendorKycTier: string
+  cancellationPreset: string
 }
 
 export async function resetSearchIndex(): Promise<void> {
@@ -137,10 +149,40 @@ export async function resetSearchIndex(): Promise<void> {
         durationMinutes: experiences.durationMinutes,
         maxGroupSize: experiences.maxGroupSize,
         seasonMonths: experiences.seasonMonths,
+        // Issue 10 trust-oriented filters — REAL data from experiences + vendor.
+        requiresSafetyStack: experiences.requiresSafetyStack,
+        cancellationPreset: experiences.cancellationPreset,
+        vendorKycTier: vendorProfiles.kycTier,
       })
       .from(experiences)
       .innerJoin(vendorProfiles, eq(experiences.vendorUserId, vendorProfiles.userId))
       .where(eq(experiences.status, 'published'))
+
+    // Issue 10 — published-review rating aggregate per Experience (one group-by;
+    // mirrors lib/experiences/card-badges loadExperienceRatingMap). Unrated →
+    // absent → ratingAvg 0, so a `ratingAvg >= N` (N>0) filter excludes it.
+    const ratingMap = new Map<string, number>()
+    if (rows.length > 0) {
+      const ratingRows = await db
+        .select({
+          experienceId: reviews.experienceId,
+          avg: dsql<number>`avg(${reviews.rating})::float`,
+        })
+        .from(reviews)
+        .where(
+          and(
+            eq(reviews.status, 'published'),
+            inArray(
+              reviews.experienceId,
+              rows.map((r) => r.id),
+            ),
+          ),
+        )
+        .groupBy(reviews.experienceId)
+      for (const rr of ratingRows) {
+        ratingMap.set(rr.experienceId, Math.round(Number(rr.avg) * 10) / 10)
+      }
+    }
 
     if (rows.length > 0) {
       const docs: MeiliExperienceDoc[] = rows.map((r) => ({
@@ -161,6 +203,10 @@ export async function resetSearchIndex(): Promise<void> {
         seasonMonths: r.seasonMonths ?? [],
         category: getActivity(r.activitySlug)?.category ?? null,
         state: getRegion(r.regionSlug)?.state ?? null,
+        ratingAvg: ratingMap.get(r.id) ?? 0,
+        requiresSafetyStack: r.requiresSafetyStack,
+        vendorKycTier: r.vendorKycTier,
+        cancellationPreset: r.cancellationPreset,
       }))
       const add = await client
         .index(EXPERIENCE_INDEX)

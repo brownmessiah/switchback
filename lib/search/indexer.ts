@@ -44,6 +44,14 @@ export const EXPERIENCE_FILTERABLE_ATTRIBUTES: readonly string[] = [
   // the controlled-vocabulary registries — no new call-site field is needed.
   'category',
   'state',
+  // Issue 10 trust-oriented filters — all backed by REAL data (D0): `ratingAvg`
+  // is the published-review aggregate; `requiresSafetyStack` is the per-listing
+  // Safety stack signal (ADR-0015); `vendorKycTier` is the Vendor KYC tier
+  // (ADR-0007); `cancellationPreset` is the cancellation policy (ADR-0005).
+  'ratingAvg',
+  'requiresSafetyStack',
+  'vendorKycTier',
+  'cancellationPreset',
 ]
 
 /**
@@ -75,6 +83,20 @@ export interface ExperienceSearchDoc {
   durationMinutes: number | null
   maxGroupSize: number | null
   seasonMonths: number[]
+  // Issue 10 trust-oriented filter fields — all REAL data (D0).
+  /**
+   * Published-review rating average (0 when the Experience has no published
+   * reviews). NOT nullable: a numeric attribute is always present so a
+   * `ratingAvg >= N` filter excludes unrated docs for N>0 and includes them for
+   * N=0 (documented choice).
+   */
+  ratingAvg: number
+  /** Whether the activity triggers the Safety stack — "Safety Checked" (ADR-0015). */
+  requiresSafetyStack: boolean
+  /** Vendor KYC tier (ADR-0007): phone / identity / business. */
+  vendorKycTier: string
+  /** Cancellation policy preset (ADR-0005): flexible / moderate / strict / custom. */
+  cancellationPreset: string
 }
 
 export interface IndexerOpts {
@@ -102,6 +124,11 @@ interface MeiliPayload {
   // DERIVED from activitySlug/regionSlug via the registries at index time.
   category: string | null
   state: string | null
+  // Issue 10 trust-oriented filter fields — passed through from the doc.
+  ratingAvg: number
+  requiresSafetyStack: boolean
+  vendorKycTier: string
+  cancellationPreset: string
 }
 
 function toMeiliDoc(doc: ExperienceSearchDoc): MeiliPayload {
@@ -127,6 +154,11 @@ function toMeiliDoc(doc: ExperienceSearchDoc): MeiliPayload {
     // slugs via the registries — keeps call-sites unchanged (issue 04 follow-up).
     category: getActivity(doc.activitySlug)?.category ?? null,
     state: getRegion(doc.regionSlug)?.state ?? null,
+    // Issue 10 trust-oriented filters — pass the REAL data through unchanged.
+    ratingAvg: doc.ratingAvg,
+    requiresSafetyStack: doc.requiresSafetyStack,
+    vendorKycTier: doc.vendorKycTier,
+    cancellationPreset: doc.cancellationPreset,
   }
 }
 

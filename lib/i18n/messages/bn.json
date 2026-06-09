@@ -535,7 +535,12 @@
       "destination": "গন্তব্য",
       "state": "রাজ্য",
       "allStates": "সব রাজ্য",
-      "groupSizeHelp": "অন্তত এত জনের দলের জন্য উপযুক্ত"
+      "groupSizeHelp": "অন্তত এত জনের দলের জন্য উপযুক্ত",
+      "trust": "বিশ্বাস ও নমনীয়তা",
+      "rating": "রেটিং",
+      "ratingOption": "{rating}★ ও তার বেশি",
+      "safetyVerified": "নিরাপত্তা যাচাইকৃত",
+      "flexibleCancellation": "নমনীয় বাতিলকরণ"
     },
     "activities": {
       "rafting": "র‍্যাফটিং",
@@ -569,6 +574,17 @@
     "view": {
       "grid": "গ্রিড ভিউ",
       "list": "তালিকা ভিউ"
+    },
+    "activeFilters": {
+      "label": "সক্রিয় ফিল্টার",
+      "remove": "{filter} ফিল্টার সরান",
+      "groupSize": "{count}+ জনের দল",
+      "priceRange": "₹{min} – ₹{max}",
+      "priceMin": "₹{min} থেকে",
+      "priceMax": "₹{max} পর্যন্ত",
+      "rating": "{rating}★ ও তার বেশি",
+      "safety": "নিরাপত্তা যাচাইকৃত",
+      "cancellation": "নমনীয় বাতিলকরণ"
     }
   },
   "SignInPage": {

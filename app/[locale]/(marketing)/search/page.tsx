@@ -3,6 +3,7 @@ import type { ReactElement } from 'react'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 import { ExperienceCard, type ExperienceCardData } from '@/components/experience-card'
+import { ActiveFilterChips } from '@/components/search/active-filter-chips'
 import { FacetForm } from '@/components/search/facet-form'
 import { FiltersSheet } from '@/components/search/filters-sheet'
 import { SearchBox } from '@/components/search/search-box'
@@ -43,6 +44,13 @@ function parseSearchParams(
   // don't mark the search as filtered.
   const category = first(raw.category)
   const state = first(raw.state)
+  // Issue 10 trust-oriented filters. Empty strings collapse to undefined so an
+  // unset control never marks the search as filtered (matches the existing
+  // empty-string→undefined pattern). `safetyVerified` is a boolean toggle whose
+  // URL value is the string "true" when active.
+  const minRating = first(raw.minRating)
+  const cancellation = first(raw.cancellation)
+  const safetyVerified = first(raw.safetyVerified) === 'true'
 
   return {
     q: first(raw.q),
@@ -57,6 +65,12 @@ function parseSearchParams(
     maxGroupSize: groupSize ? Number(groupSize) : undefined,
     category: category || undefined,
     state: state || undefined,
+    // `minRating` parses to a number; an empty/absent value omits it (and a
+    // missing param is not filtered). `safetyVerified` is omitted when not
+    // exactly "true" so `false` is never carried (an unset trust filter).
+    minRating: minRating ? Number(minRating) : undefined,
+    safetyVerified: safetyVerified ? true : undefined,
+    cancellation: cancellation || undefined,
   }
 }
 
@@ -139,6 +153,10 @@ export default async function SearchPage({
 
         {/* Dense A1-card results grid (or list, per the view toggle). */}
         <section aria-label={t('results.sectionLabel')} className="min-w-0">
+          {/* Removable active-filter chips above the results (issue 10). The
+              client island derives them from the parsed params and removes a
+              single filter on dismiss. */}
+          <ActiveFilterChips parsed={parsed} />
           <div className="mb-4 flex items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground tabular-nums">
               {t('results.count', { count: hits.length })}

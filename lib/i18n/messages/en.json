@@ -524,7 +524,12 @@
       "destination": "Destination",
       "state": "State",
       "allStates": "All states",
-      "groupSizeHelp": "Fits a group of at least this many people"
+      "groupSizeHelp": "Fits a group of at least this many people",
+      "trust": "Trust & flexibility",
+      "rating": "Rating",
+      "ratingOption": "{rating}★ & up",
+      "safetyVerified": "Safety Checked",
+      "flexibleCancellation": "Flexible cancellation"
     },
     "activities": {
       "rafting": "Rafting",
@@ -558,6 +563,17 @@
     "view": {
       "grid": "Grid view",
       "list": "List view"
+    },
+    "activeFilters": {
+      "label": "Active filters",
+      "remove": "Remove {filter} filter",
+      "groupSize": "Group of {count}+",
+      "priceRange": "₹{min} – ₹{max}",
+      "priceMin": "From ₹{min}",
+      "priceMax": "Up to ₹{max}",
+      "rating": "{rating}★ & up",
+      "safety": "Safety Checked",
+      "cancellation": "Flexible cancellation"
     }
   },
   "SignInPage": {

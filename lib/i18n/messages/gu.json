@@ -535,7 +535,12 @@
       "destination": "ગંતવ્ય",
       "state": "રાજ્ય",
       "allStates": "બધાં રાજ્યો",
-      "groupSizeHelp": "ઓછામાં ઓછા આટલા લોકોના જૂથ માટે યોગ્ય"
+      "groupSizeHelp": "ઓછામાં ઓછા આટલા લોકોના જૂથ માટે યોગ્ય",
+      "trust": "વિશ્વાસ અને લવચીકતા",
+      "rating": "રેટિંગ",
+      "ratingOption": "{rating}★ અને વધુ",
+      "safetyVerified": "સલામતી ચકાસાયેલ",
+      "flexibleCancellation": "લવચીક રદ કરવાની નીતિ"
     },
     "activities": {
       "rafting": "રાફ્ટિંગ",
@@ -569,6 +574,17 @@
     "view": {
       "grid": "ગ્રિડ વ્યૂ",
       "list": "યાદી વ્યૂ"
+    },
+    "activeFilters": {
+      "label": "સક્રિય ફિલ્ટર",
+      "remove": "{filter} ફિલ્ટર દૂર કરો",
+      "groupSize": "{count}+ નો સમૂહ",
+      "priceRange": "₹{min} – ₹{max}",
+      "priceMin": "₹{min} થી",
+      "priceMax": "₹{max} સુધી",
+      "rating": "{rating}★ અને વધુ",
+      "safety": "સલામતી ચકાસાયેલ",
+      "cancellation": "લવચીક રદ કરવાની નીતિ"
     }
   },
   "SignInPage": {

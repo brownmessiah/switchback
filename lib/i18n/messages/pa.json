@@ -535,7 +535,12 @@
       "destination": "ਮੰਜ਼ਿਲ",
       "state": "ਰਾਜ",
       "allStates": "ਸਾਰੇ ਰਾਜ",
-      "groupSizeHelp": "ਘੱਟੋ-ਘੱਟ ਇੰਨੇ ਲੋਕਾਂ ਦੇ ਗਰੁੱਪ ਲਈ ਢੁਕਵਾਂ"
+      "groupSizeHelp": "ਘੱਟੋ-ਘੱਟ ਇੰਨੇ ਲੋਕਾਂ ਦੇ ਗਰੁੱਪ ਲਈ ਢੁਕਵਾਂ",
+      "trust": "ਭਰੋਸਾ ਤੇ ਲਚਕ",
+      "rating": "ਰੇਟਿੰਗ",
+      "ratingOption": "{rating}★ ਤੇ ਵੱਧ",
+      "safetyVerified": "ਸੁਰੱਖਿਆ ਜਾਂਚੀ ਗਈ",
+      "flexibleCancellation": "ਲਚਕਦਾਰ ਰੱਦ ਕਰਨ ਦੀ ਨੀਤੀ"
     },
     "activities": {
       "rafting": "ਰਾਫਟਿੰਗ",
@@ -569,6 +574,17 @@
     "view": {
       "grid": "ਗ੍ਰਿੱਡ ਝਲਕ",
       "list": "ਸੂਚੀ ਝਲਕ"
+    },
+    "activeFilters": {
+      "label": "ਸਰਗਰਮ ਫਿਲਟਰ",
+      "remove": "{filter} ਫਿਲਟਰ ਹਟਾਓ",
+      "groupSize": "{count}+ ਦਾ ਸਮੂਹ",
+      "priceRange": "₹{min} – ₹{max}",
+      "priceMin": "₹{min} ਤੋਂ",
+      "priceMax": "₹{max} ਤੱਕ",
+      "rating": "{rating}★ ਤੇ ਵੱਧ",
+      "safety": "ਸੁਰੱਖਿਆ ਜਾਂਚੀ ਗਈ",
+      "cancellation": "ਲਚਕਦਾਰ ਰੱਦ ਕਰਨ ਦੀ ਨੀਤੀ"
     }
   },
   "SignInPage": {

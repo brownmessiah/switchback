@@ -59,6 +59,12 @@ function baseProps(overrides: Partial<BookingRailMobileProps> = {}): BookingRail
       noDates: 'No dates',
     },
     closure: null,
+    toastLabels: {
+      dateSelected: 'Date selected. Now pick a time slot.',
+      slotSelected: 'Date & time slot selected.',
+      bookingStarted: 'Taking you to checkout…',
+      availabilityError: "We couldn't load availability. Please refresh.",
+    },
     ...overrides,
   }
 }

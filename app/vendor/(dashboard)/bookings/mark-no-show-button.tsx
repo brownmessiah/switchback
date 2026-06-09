@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useTransition } from 'react'
 
 import { Button } from '@/components/ui/button'
+import { toast } from '@/lib/toast'
 
 import { markNoShowAction } from './actions'
 
@@ -35,7 +36,7 @@ export function MarkNoShowButton({ bookingId, size = 'sm' }: MarkNoShowButtonPro
       if (result.ok) {
         router.refresh()
       } else {
-        alert(result.error)
+        toast.error(result.error)
       }
     })
   }

@@ -33,6 +33,7 @@ const baseLabels = {
   cancel: 'Cancel',
   validationError: 'Please write your question first.',
   genericError: 'Something went wrong. Please try again.',
+  toastSignInRequired: 'Sign in to ask a question about this Experience.',
 }
 
 function props(overrides: Partial<React.ComponentProps<typeof AskQuestion>> = {}) {

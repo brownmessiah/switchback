@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { useState, useTransition } from 'react'
 
 import { toggleWishlistAction } from '@/app/(app)/wishlist/actions'
+import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
 
 interface WishlistButtonProps {
@@ -41,12 +42,16 @@ export function WishlistButton({
     startTransition(async () => {
       const result = await toggleWishlistAction(experienceId)
       if (!result.ok) {
-        // Roll back the optimistic flip and route to sign-in.
+        // Roll back the optimistic flip and route to sign-in. A toast explains
+        // why the heart didn't stick (login-gated action — issue 24).
         setSaved(!optimistic)
+        toast.info(t('toast.signInRequired'))
         router.push('/sign-in')
         return
       }
       setSaved(result.saved)
+      // Confirm the Wishlist change with an accessible toast (issue 24).
+      toast.success(result.saved ? t('toast.added') : t('toast.removed'))
     })
   }
 

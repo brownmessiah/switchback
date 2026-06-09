@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { CalendarSlot } from '@/lib/experiences/booking-calendar'
 
 import { BookingRailInteractive } from './booking-rail-interactive'
+import type { BookingRailToastLabels } from './booking-rail-interactive'
 import type { BookingCalendarLabels } from './booking-calendar'
 
 /** One Group-size bracket row in the per-participant price table. */
@@ -70,6 +71,10 @@ interface BookingRailProps {
   calendarLabels: BookingCalendarLabels
   /** When set, booking is paused (ADR-0011 Region closure) and the CTA disabled. */
   closure?: BookingRailClosure | null
+  /** Already-translated booking-flow toast copy (issue 24). */
+  toastLabels: BookingRailToastLabels
+  /** True when the Availability feed failed to load (issue 24). */
+  availabilityError?: boolean
 }
 
 /**
@@ -98,6 +103,8 @@ export function BookingRail({
   locale,
   calendarLabels,
   closure,
+  toastLabels,
+  availabilityError,
 }: BookingRailProps): ReactElement {
   return (
     <Card className="gap-5 py-5 shadow-md ring-foreground/[0.08]">
@@ -122,6 +129,8 @@ export function BookingRail({
           locale={locale}
           calendarLabels={calendarLabels}
           closure={closure}
+          toastLabels={toastLabels}
+          availabilityError={availabilityError}
         />
       </CardContent>
     </Card>

@@ -313,6 +313,11 @@
       "saved": "Saved",
       "ariaAdd": "Save to wishlist",
       "ariaRemove": "Remove from wishlist"
+    },
+    "toast": {
+      "added": "Saved to your wishlist.",
+      "removed": "Removed from your wishlist.",
+      "signInRequired": "Sign in to save Experiences to your wishlist."
     }
   },
   "AdventurePage": {
@@ -577,7 +582,14 @@
       "signIn": "Sign in",
       "cancel": "Cancel",
       "validationError": "Please write your question first.",
-      "genericError": "Something went wrong. Please try again."
+      "genericError": "Something went wrong. Please try again.",
+      "toastSignInRequired": "Sign in to ask a question about this Experience."
+    },
+    "toast": {
+      "dateSelected": "Date selected. Now pick a time slot.",
+      "slotSelected": "Date & time slot selected.",
+      "bookingStarted": "Taking you to checkout…",
+      "availabilityError": "We couldn't load availability. Please refresh the page."
     }
   },
   "Gallery": {

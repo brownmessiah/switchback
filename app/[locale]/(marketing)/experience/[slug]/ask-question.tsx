@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
 
 import { askExperienceQuestionAction } from './ask-question-action'
@@ -37,6 +38,8 @@ export interface AskQuestionLabels {
   cancel: string
   validationError: string
   genericError: string
+  /** Toast copy fired when the action is login-gated (issue 24). */
+  toastSignInRequired: string
 }
 
 interface AskQuestionProps {
@@ -103,6 +106,7 @@ export function AskQuestion({
         formRef.current?.reset()
       } else if (res.error === 'unauthenticated') {
         setNeedsSignIn(true)
+        toast.info(labels.toastSignInRequired)
       } else {
         setError(res.error || labels.genericError)
       }

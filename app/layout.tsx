@@ -8,6 +8,7 @@ import { getLocale, getMessages } from "next-intl/server";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { Toaster } from "@/components/ui/toaster";
 import { IntlProvider } from "@/lib/i18n/provider";
 
 import "./globals.css";
@@ -85,6 +86,10 @@ export default async function RootLayout({
           <SiteHeader />
           <div className="flex-1">{children}</div>
           <SiteFooter />
+          {/* Global toaster (issue 24, D11) — mounted ONCE at the true root so
+              action toasts surface on every surface (marketing + app + vendor +
+              admin). Coexists with the locale-layout compare tray + rails. */}
+          <Toaster />
         </IntlProvider>
       </body>
     </html>

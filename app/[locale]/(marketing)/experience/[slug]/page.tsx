@@ -77,13 +77,24 @@ export const revalidate = 60
 
 interface PageProps {
   params: Promise<{ locale: string; slug: string }>
+  searchParams?: Promise<Record<string, string | string[] | undefined>>
 }
 
 export default async function ExperienceDetailPage({
   params,
+  searchParams,
 }: PageProps): Promise<ReactElement> {
   const { locale, slug } = await params
   setRequestLocale(locale)
+
+  // Test-only seam (issue 24): outside production, `?simulateAvailabilityError=1`
+  // flips the booking-rail availability-error toast so the E2E can assert the
+  // role=alert error path without injecting a real DB fault. Never reachable in
+  // production (guarded on NODE_ENV) and has no effect on the money path.
+  const resolvedSearchParams = (await searchParams) ?? {}
+  const simulateAvailabilityError =
+    process.env.NODE_ENV !== 'production' &&
+    resolvedSearchParams['simulateAvailabilityError'] === '1'
 
   const t = await getTranslations({ locale, namespace: 'ExperiencePage' })
   const tCommon = await getTranslations({ locale, namespace: 'Common' })
@@ -486,6 +497,17 @@ export default async function ExperienceDetailPage({
       noDates: t('calendar.noDates'),
     },
     closure: railClosure,
+    // Booking-flow action toasts (issue 24) — already-translated copy fired by
+    // the client island on date/slot selection + booking start + availability
+    // error. `availabilityError` is false in the happy path; the loader can
+    // flip it when the Availability feed fails to resolve.
+    toastLabels: {
+      dateSelected: t('toast.dateSelected'),
+      slotSelected: t('toast.slotSelected'),
+      bookingStarted: t('toast.bookingStarted'),
+      availabilityError: t('toast.availabilityError'),
+    },
+    availabilityError: simulateAvailabilityError,
   }
 
   // "Ask a Question" → Support Ticket (issue 17, DECISION D6). A login-gated
@@ -508,6 +530,7 @@ export default async function ExperienceDetailPage({
     cancel: t('askQuestion.cancel'),
     validationError: t('askQuestion.validationError'),
     genericError: t('askQuestion.genericError'),
+    toastSignInRequired: t('askQuestion.toastSignInRequired'),
   }
   const askQuestionContext = {
     experienceSlug: detail.slug,

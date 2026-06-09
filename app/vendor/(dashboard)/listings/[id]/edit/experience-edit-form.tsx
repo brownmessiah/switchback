@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
 
 import { ImageUpload, type UploadedImage } from '@/components/image-upload'
+import { toast } from '@/lib/toast'
 import type { Experience } from '@/db/schema/experiences'
 import type { ExperienceItineraryStep } from '@/db/schema/experience-itinerary-steps'
 
@@ -46,8 +47,13 @@ export function ExperienceEditForm({
           storageKey: result.asset.storageKey,
         }
         setImages((prev) => [...prev, newImage])
+        // Document uploaded (issue 24).
+        toast.success('Image uploaded.')
         return newImage
       }
+      // Surface the upload failure (issue 24) — the action result carries a
+      // user-facing reason; fall back to a generic line if absent.
+      toast.error('error' in result ? result.error : 'Image upload failed.')
       return null
     },
     [experience.id],

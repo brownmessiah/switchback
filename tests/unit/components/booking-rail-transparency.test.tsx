@@ -73,6 +73,12 @@ const BASE_PROPS = {
   locale: 'en',
   calendarLabels: CALENDAR_LABELS,
   closure: null,
+  toastLabels: {
+    dateSelected: 'toast.dateSelected',
+    slotSelected: 'toast.slotSelected',
+    bookingStarted: 'toast.bookingStarted',
+    availabilityError: 'toast.availabilityError',
+  },
 } as const
 
 function hoursFromNow(h: number): { id: string; startAtISO: string; endAtISO: string; remaining: number } {

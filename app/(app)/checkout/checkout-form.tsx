@@ -13,6 +13,7 @@ import { Minus, Plus } from 'lucide-react'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
 import { quoteCheckout } from '@/lib/payments/group-size-bracket'
+import { toast } from '@/lib/toast'
 
 import { writeAbandonmentAudit } from './abandonment-action'
 import { startCheckoutAction } from './actions'
@@ -48,6 +49,29 @@ interface CheckoutFormProps {
   paymentModesAllowed: string[]
   customerName: string | null
   customerEmail: string | null
+  /**
+   * Toast copy for the checkout flow (issue 24). Pure UI feedback — these do
+   * NOT alter the capture / booking-state money path (owned by
+   * startCheckoutAction + the Razorpay webhook). Optional: defaults to the same
+   * hardcoded English copy this authenticated route already uses inline (the
+   * /checkout route is excluded from locale routing per ADR-0012).
+   */
+  toastLabels?: CheckoutToastLabels
+}
+
+const DEFAULT_CHECKOUT_TOAST_LABELS: CheckoutToastLabels = {
+  bookingStarted: 'Starting your booking…',
+  paymentFailed: 'Payment was not completed. You have not been charged.',
+  startError: 'Something went wrong. Please try again.',
+}
+
+export interface CheckoutToastLabels {
+  /** Fired when the customer clicks Pay (booking started). */
+  bookingStarted: string
+  /** Fired when the Razorpay sheet is dismissed without paying. */
+  paymentFailed: string
+  /** Fired when startCheckoutAction returns !ok (start error). */
+  startError: string
 }
 
 type Step = 'details' | 'payment'
@@ -71,6 +95,7 @@ export function CheckoutForm({
   paymentModesAllowed,
   customerName,
   customerEmail,
+  toastLabels = DEFAULT_CHECKOUT_TOAST_LABELS,
 }: CheckoutFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -113,6 +138,9 @@ export function CheckoutForm({
   async function handleCheckout() {
     setError('')
     setLoading(true)
+    // Booking started (issue 24) — UI feedback only; the authoritative booking
+    // is created server-side by startCheckoutAction.
+    toast.info(toastLabels.bookingStarted)
 
     let result: Awaited<ReturnType<typeof startCheckoutAction>>
     try {
@@ -131,12 +159,14 @@ export function CheckoutForm({
       })
     } catch {
       setError('Something went wrong. Please try again.')
+      toast.error(toastLabels.startError)
       setLoading(false)
       return
     }
 
     if (!result.ok) {
       setError(result.message)
+      toast.error(result.message)
       setLoading(false)
       return
     }
@@ -153,6 +183,7 @@ export function CheckoutForm({
     // webhook is the authoritative capture; this handler only advances the UI.
     if (typeof window === 'undefined' || !window.Razorpay) {
       setError('Payment could not be started. Please reload and try again.')
+      toast.error(toastLabels.startError)
       setLoading(false)
       return
     }
@@ -181,6 +212,8 @@ export function CheckoutForm({
         ondismiss: async () => {
           await writeAbandonmentAudit(bookingId)
           setError('Payment was not completed. You have not been charged.')
+          // Payment failed / retry (issue 24) — never a false success.
+          toast.error(toastLabels.paymentFailed)
           setLoading(false)
         },
       },

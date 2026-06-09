@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useTransition } from 'react'
 
 import { Button } from '@/components/ui/button'
+import { toast } from '@/lib/toast'
 
 import { markCompleteAction } from './actions'
 
@@ -22,8 +23,7 @@ export function MarkCompleteButton({ bookingId, size = 'sm' }: MarkCompleteButto
       if (result.ok) {
         router.refresh()
       } else {
-        // In production this would be a toast; for now alert suffices.
-        alert(result.error)
+        toast.error(result.error)
       }
     })
   }

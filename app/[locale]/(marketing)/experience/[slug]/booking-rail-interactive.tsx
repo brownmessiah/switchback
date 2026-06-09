@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type ReactElement } from 'react'
+import { useEffect, useState, type ReactElement } from 'react'
 
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -8,6 +8,7 @@ import { CalendarX, CircleCheck, Clock, Info, Minus, Plus, Users, Wallet } from 
 
 import { buttonVariants } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
 import {
   bracketKeyFor,
@@ -63,6 +64,29 @@ export interface BookingRailInteractiveProps {
   /** Already-translated calendar labels. */
   calendarLabels: BookingCalendarLabels
   closure?: BookingRailClosure | null
+  /**
+   * Already-translated toast copy for the booking flow (issue 24). Fired when a
+   * date / time slot is chosen, when the booking is started, and (on mount) when
+   * availability failed to load.
+   */
+  toastLabels: BookingRailToastLabels
+  /**
+   * True when the server could not load the Availability slots for this
+   * Experience — surfaces an error toast on mount so the customer knows the
+   * pickers are stale rather than empty (issue 24).
+   */
+  availabilityError?: boolean
+}
+
+export interface BookingRailToastLabels {
+  /** Fired when a date is chosen on the calendar. */
+  dateSelected: string
+  /** Fired when a time slot ("date & time slot") is chosen. */
+  slotSelected: string
+  /** Fired when the Book-now CTA is clicked (booking started). */
+  bookingStarted: string
+  /** Fired on mount when the Availability feed failed to load. */
+  availabilityError: string
 }
 
 function formatRupees(amount: number): string {
@@ -93,8 +117,18 @@ export function BookingRailInteractive({
   locale,
   calendarLabels,
   closure,
+  toastLabels,
+  availabilityError = false,
 }: BookingRailInteractiveProps): ReactElement {
   const t = useTranslations('ExperiencePage')
+
+  // Surface a single error toast on mount when the Availability feed failed to
+  // load (issue 24). The pickers still render with whatever slots resolved.
+  useEffect(() => {
+    if (availabilityError) {
+      toast.error(toastLabels.availabilityError)
+    }
+  }, [availabilityError, toastLabels.availabilityError])
   const max = Math.max(1, maxParticipants)
   const byDate = slotsByDate(slots)
 
@@ -153,10 +187,12 @@ export function BookingRailInteractive({
     const firstId = firstBookableSlotId(byDate.get(key))
     setSelectedSlotId(firstId)
     clampCountTo(firstId)
+    toast.info(toastLabels.dateSelected)
   }
   function pickSlot(id: string): void {
     setSelectedSlotId(id)
     clampCountTo(id)
+    toast.info(toastLabels.slotSelected)
   }
 
   const dec = () => setCount((c) => Math.max(1, c - 1))
@@ -375,6 +411,7 @@ export function BookingRailInteractive({
         <>
           <Link
             href={href}
+            onClick={() => toast.info(toastLabels.bookingStarted)}
             className={buttonVariants({ size: 'lg', className: 'w-full' })}
           >
             {bookNowLabel}

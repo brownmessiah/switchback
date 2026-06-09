@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { toast } from '@/lib/toast'
 
 import { createVendorProfileAction } from './actions'
 
@@ -106,6 +107,7 @@ export function OnboardingForm({ userId: _userId }: OnboardingFormProps) {
       })
       if (!result.ok) {
         setError(result.error)
+        toast.error(result.error)
         return
       }
       // Clear the local draft on a successful create — it's now persisted
@@ -115,9 +117,12 @@ export function OnboardingForm({ userId: _userId }: OnboardingFormProps) {
       } catch {
         // Non-fatal.
       }
+      // Vendor application saved (issue 24).
+      toast.success('Vendor profile created. Welcome to Outvers.')
       router.push('/vendor/dashboard')
     } catch {
       setError('Something went wrong. Please try again.')
+      toast.error('Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }

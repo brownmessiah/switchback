@@ -2,6 +2,7 @@ import { and, desc, eq, inArray } from 'drizzle-orm'
 
 import { experiences } from '@/db/schema/experiences'
 import { loadCardBadgeResolver } from '@/lib/experiences/card-badges'
+import { publiclyVisibleExperienceCondition } from '@/lib/experiences/public-filter'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
 import {
@@ -144,7 +145,7 @@ export async function loadActivityLanding(
     .where(
       and(
         eq(experiences.activitySlug, activitySlug),
-        eq(experiences.status, 'published'),
+        publiclyVisibleExperienceCondition(),
       ),
     )
     .orderBy(desc(experiences.createdAt))
@@ -188,7 +189,7 @@ export async function loadCategoryLanding(
     .where(
       and(
         inArray(experiences.activitySlug, activitySlugs),
-        eq(experiences.status, 'published'),
+        publiclyVisibleExperienceCondition(),
       ),
     )
     .orderBy(desc(experiences.createdAt))

@@ -1,4 +1,5 @@
 import { getActivity } from '@/lib/activities/registry'
+import { isFixtureExperienceSlug } from '@/lib/experiences/fixture-slugs'
 import { getRegion } from '@/lib/regions/registry'
 
 import { durationBand } from './duration-band'
@@ -198,6 +199,11 @@ export async function indexExperience(
   doc: ExperienceSearchDoc,
   opts: IndexerOpts = {},
 ): Promise<void> {
+  // Issue 04 leak hardening: an admin/E2E fixture Experience must never become
+  // searchable, even if it is published when (re)indexed. The fixture-slug
+  // gate is the in-memory half of the shared public-filter predicate; the
+  // status half is enforced by the index callers (publish-only write path).
+  if (isFixtureExperienceSlug(doc.slug)) return
   const client = opts.client ?? getMeiliClient()
   await ensureExperienceIndexSettings({ client })
   await client.index(EXPERIENCE_INDEX).addDocuments([toMeiliDoc(doc)])

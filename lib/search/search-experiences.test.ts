@@ -245,6 +245,23 @@ describe('searchExperiences resilience (ADR-0013)', () => {
     expect(result.hits[0]!.slug).toBe('grand-rafting')
   })
 
+  it('defensively drops any admin/E2E fixture hit (issue 04 leak hardening)', async () => {
+    // Belt-and-suspenders: even if a stale Meili index still holds a fixture
+    // document, the shared public-filter predicate strips it from the results.
+    const stub = makeProbeStub(async () => ({
+      hits: [
+        { id: 'h1', slug: 'grand-rafting', title: 'Grand Rafting' },
+        {
+          id: 'h2',
+          slug: 'commission-scope-fixture-bir-billing',
+          title: 'Commission Scope Fixture',
+        },
+      ],
+    }))
+    const result = await searchExperiences({ q: 'rafting' }, { client: stub.client })
+    expect(result.hits.map((h) => h.slug)).toEqual(['grand-rafting'])
+  })
+
   it('maps the duration sort options onto Meili sort directives (ADR-0017)', async () => {
     const asc = makeProbeStub()
     await searchExperiences({ sort: 'duration_asc' }, { client: asc.client })

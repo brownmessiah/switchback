@@ -17,10 +17,11 @@ import { EmptyState } from '@/components/empty-state'
 import { ExperienceCard, type ExperienceCardData } from '@/components/experience-card'
 import { Badge } from '@/components/ui/badge'
 import { db } from '@/db/client'
-import { experiences, vendorProfiles } from '@/db/schema'
+import { vendorProfiles } from '@/db/schema'
 import { enrichCardBadges } from '@/lib/experiences/card-badges'
 import { loadExperienceCoverMap } from '@/lib/media/experience-images'
 import { generateAlternates } from '@/lib/seo/hreflang'
+import { loadVendorPublicExperiences } from '@/lib/vendor/public-profile'
 
 interface PageProps {
   params: Promise<{ locale: string; slug: string }>
@@ -73,19 +74,9 @@ export default async function VendorProfilePage({ params }: PageProps) {
 
   if (!vendor) notFound()
 
-  const vendorExperiences = await db
-    .select({
-      id: experiences.id,
-      slug: experiences.slug,
-      title: experiences.title,
-      shortDescription: experiences.shortDescription,
-      pricePerPerson_1_2: experiences.pricePerPerson_1_2,
-      regionSlug: experiences.regionSlug,
-      activitySlug: experiences.activitySlug,
-      difficulty: experiences.difficulty,
-    })
-    .from(experiences)
-    .where(eq(experiences.vendorUserId, vendor.userId))
+  // Public storefront catalogue — only publicly visible (published +
+  // non-fixture) Experiences surface here (issue 04, shared predicate).
+  const vendorExperiences = await loadVendorPublicExperiences(db, vendor.userId)
 
   const vendorCoverMap = await loadExperienceCoverMap(
     db,

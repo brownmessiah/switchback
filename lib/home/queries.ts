@@ -1,8 +1,9 @@
-import { desc, eq, sql } from 'drizzle-orm'
+import { desc, sql } from 'drizzle-orm'
 
 import { experiences } from '@/db/schema/experiences'
 
 import { loadCardBadgeResolver } from '@/lib/experiences/card-badges'
+import { publiclyVisibleExperienceCondition } from '@/lib/experiences/public-filter'
 import { loadExperienceCoverMap } from '@/lib/media/experience-images'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 import { listActivities } from '@/lib/activities/registry'
@@ -82,7 +83,7 @@ export async function loadHomePageData(db: DBOrTx): Promise<HomePageData> {
       difficulty: experiences.difficulty,
     })
     .from(experiences)
-    .where(eq(experiences.status, 'published'))
+    .where(publiclyVisibleExperienceCondition())
     .orderBy(desc(experiences.createdAt))
     .limit(FEATURED_EXPERIENCES_LIMIT)
 
@@ -113,7 +114,7 @@ export async function loadHomePageData(db: DBOrTx): Promise<HomePageData> {
       count: sql<number>`count(*)::int`,
     })
     .from(experiences)
-    .where(eq(experiences.status, 'published'))
+    .where(publiclyVisibleExperienceCondition())
     .groupBy(experiences.regionSlug)
   const regionCountMap = new Map(regionCounts.map((r) => [r.regionSlug, Number(r.count)]))
 
@@ -123,7 +124,7 @@ export async function loadHomePageData(db: DBOrTx): Promise<HomePageData> {
       count: sql<number>`count(*)::int`,
     })
     .from(experiences)
-    .where(eq(experiences.status, 'published'))
+    .where(publiclyVisibleExperienceCondition())
     .groupBy(experiences.activitySlug)
   const activityCountMap = new Map(
     activityCounts.map((r) => [r.activitySlug, Number(r.count)]),

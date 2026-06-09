@@ -85,6 +85,18 @@ describe('search indexer', () => {
     expect(deleteCalls).toEqual([sampleDoc.id])
   })
 
+  it('does NOT index an admin/E2E fixture Experience (issue 04 leak hardening)', async () => {
+    // A fixture slug must never become searchable, even if it is somehow
+    // published when (re)indexed — the shared public-filter predicate is the
+    // single gate (lib/experiences/public-filter).
+    const { client, addCalls } = makeStub()
+    await indexExperience(
+      { ...sampleDoc, slug: 'commission-scope-fixture-bir-billing' },
+      { client },
+    )
+    expect(addCalls).toHaveLength(0)
+  })
+
   it('indexExperience converts a numeric price to integer rupees and a Date to epoch ms', async () => {
     const { client, addCalls } = makeStub()
     await indexExperience(sampleDoc, { client })

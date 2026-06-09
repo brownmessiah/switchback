@@ -1,3 +1,5 @@
+import { isFixtureExperienceSlug } from '@/lib/experiences/fixture-slugs'
+
 import { ensureExperienceIndexSettings } from './indexer'
 import { getMeiliClient, type MeiliLike } from './meilisearch-client'
 
@@ -157,9 +159,15 @@ export async function searchExperiences(
       limit: 20,
     })
 
-    return {
-      hits: result.hits as SearchExperienceHit[],
-    }
+    // Issue 04 leak hardening: defensively drop any admin/E2E fixture hit.
+    // Fixtures are never indexed (the index write path + reindex script both
+    // route through the shared public-filter), but a stale index from before
+    // this gate must never surface one to a Customer.
+    const hits = (result.hits as SearchExperienceHit[]).filter(
+      (hit) => !isFixtureExperienceSlug(hit.slug),
+    )
+
+    return { hits }
   } catch (err) {
     // Never crash the customer-facing search page on a Meilisearch error —
     // degrade to an empty result set (the page renders its empty state). Log

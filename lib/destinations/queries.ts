@@ -2,6 +2,7 @@ import { and, count, desc, eq } from 'drizzle-orm'
 
 import { experiences } from '@/db/schema/experiences'
 import { loadCardBadgeResolver } from '@/lib/experiences/card-badges'
+import { publiclyVisibleExperienceCondition } from '@/lib/experiences/public-filter'
 import { getRegionImage } from '@/lib/images'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 import {
@@ -88,7 +89,7 @@ export async function loadRegionLanding(
     .where(
       and(
         eq(experiences.regionSlug, regionSlug),
-        eq(experiences.status, 'published'),
+        publiclyVisibleExperienceCondition(),
       ),
     )
     .orderBy(desc(experiences.createdAt))
@@ -130,7 +131,7 @@ export async function listRegionsWithCounts(
       experienceCount: count(),
     })
     .from(experiences)
-    .where(eq(experiences.status, 'published'))
+    .where(publiclyVisibleExperienceCondition())
     .groupBy(experiences.regionSlug)
 
   const countsBySlug = new Map<string, number>(

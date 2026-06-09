@@ -16,6 +16,7 @@ import { eq } from 'drizzle-orm'
 
 import { db } from '@/db/client'
 import { experiences, vendorProfiles } from '@/db/schema'
+import { publiclyVisibleExperienceCondition } from '@/lib/experiences/public-filter'
 import {
   ensureExperienceIndexSettings,
   indexExperience,
@@ -44,7 +45,7 @@ async function main(): Promise<void> {
     })
     .from(experiences)
     .innerJoin(vendorProfiles, eq(experiences.vendorUserId, vendorProfiles.userId))
-    .where(eq(experiences.status, 'published'))
+    .where(publiclyVisibleExperienceCondition())
 
   let indexed = 0
   for (const exp of rows) {

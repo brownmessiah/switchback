@@ -14,6 +14,7 @@ import { and, eq } from 'drizzle-orm'
 import { experiences } from '@/db/schema/experiences'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { listCategories } from '@/lib/activities/queries'
+import { publiclyVisibleExperienceCondition } from '@/lib/experiences/public-filter'
 import { isActivitySlug, listActivities } from '@/lib/activities/registry'
 import { DEFAULT_LOCALE, LAUNCH_LOCALES } from '@/lib/i18n/config'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
@@ -154,7 +155,7 @@ export async function generateExperienceSitemapUrls(
   const rows = await db
     .select({ slug: experiences.slug, updatedAt: experiences.updatedAt })
     .from(experiences)
-    .where(eq(experiences.status, 'published'))
+    .where(publiclyVisibleExperienceCondition())
 
   return rows.map((row) =>
     buildSitemapEntry(
@@ -185,7 +186,7 @@ export async function generateAdventureSitemapUrls(
       regionSlug: experiences.regionSlug,
     })
     .from(experiences)
-    .where(eq(experiences.status, 'published'))
+    .where(publiclyVisibleExperienceCondition())
 
   const entries: SitemapEntry[] = []
   for (const row of rows) {
@@ -222,7 +223,7 @@ export async function generateVendorSitemapUrls(
       experiences,
       and(
         eq(experiences.vendorUserId, vendorProfiles.userId),
-        eq(experiences.status, 'published'),
+        publiclyVisibleExperienceCondition(),
       ),
     )
 

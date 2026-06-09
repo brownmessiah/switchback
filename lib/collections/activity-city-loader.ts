@@ -7,6 +7,7 @@ import {
   isActivitySlug,
 } from '@/lib/activities/registry'
 import { loadCardBadgeResolver } from '@/lib/experiences/card-badges'
+import { publiclyVisibleExperienceCondition } from '@/lib/experiences/public-filter'
 import { loadExperienceCoverMap } from '@/lib/media/experience-images'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 import {
@@ -114,7 +115,7 @@ export async function loadActivityCityCollection(
       and(
         eq(experiences.activitySlug, parsed.activitySlug),
         eq(experiences.regionSlug, parsed.regionSlug),
-        eq(experiences.status, 'published'),
+        publiclyVisibleExperienceCondition(),
       ),
     )
     .orderBy(desc(experiences.createdAt))

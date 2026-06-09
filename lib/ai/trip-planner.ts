@@ -5,6 +5,7 @@ import { z } from 'zod'
 
 import { aiGenerations } from '@/db/schema/ai-generations'
 import { experiences } from '@/db/schema/experiences'
+import { publiclyVisibleExperienceCondition } from '@/lib/experiences/public-filter'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
 import {
@@ -112,10 +113,14 @@ function fingerprintInput(input: TripPlannerInput): string {
 }
 
 /**
- * RETRIEVAL: published experiences matching the region (and activity when
- * given), grounded directly in the canonical Postgres table. Direct DB query
- * (not Meili) keeps retrieval reliable in every environment; either is allowed
- * per the issue, and grounding in real published experience IDs is the point.
+ * RETRIEVAL: publicly-visible experiences matching the region (and activity
+ * when given), grounded directly in the canonical Postgres table. Direct DB
+ * query (not Meili) keeps retrieval reliable in every environment; either is
+ * allowed per the issue, and grounding in real published experience IDs is the
+ * point. The status gate is the shared `publiclyVisibleExperienceCondition()`
+ * (status = 'published' AND not an admin/E2E fixture slug) so the AI surface
+ * can never offer a fixture/test Experience as a candidate (ADR-0010 data
+ * honesty) — see lib/experiences/public-filter.ts.
  */
 async function retrieveCandidates(
   db: DBOrTx,
@@ -123,11 +128,11 @@ async function retrieveCandidates(
 ): Promise<RetrievalCandidate[]> {
   const where = input.activity
     ? and(
-        eq(experiences.status, 'published'),
+        publiclyVisibleExperienceCondition(),
         eq(experiences.regionSlug, input.region),
         eq(experiences.activitySlug, input.activity),
       )
-    : and(eq(experiences.status, 'published'), eq(experiences.regionSlug, input.region))
+    : and(publiclyVisibleExperienceCondition(), eq(experiences.regionSlug, input.region))
 
   const rows = await db
     .select({

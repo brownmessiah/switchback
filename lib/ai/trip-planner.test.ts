@@ -27,6 +27,12 @@ describe('AI trip planner — RAG-grounded itinerary (ADR-0010)', () => {
   let teardown: () => Promise<void>
   let publishedIds: string[]
 
+  // A PUBLISHED admin/E2E fixture Experience that lives in a real region
+  // (bir-billing / rishikesh). It is `published` so a naive region filter
+  // retrieves it, but it must NEVER be offered as an AI candidate (ADR-0010
+  // data honesty) — the public filter is the single gate that excludes it.
+  const FIXTURE_SLUG = 'commission-scope-fixture-bir-billing'
+
   beforeAll(async () => {
     const setup = await setupTestDb()
     db = setup.db
@@ -96,10 +102,29 @@ describe('AI trip planner — RAG-grounded itinerary (ADR-0010)', () => {
           activitySlug: 'bungee-jumping',
           status: 'draft',
         },
+        // A PUBLISHED admin/E2E fixture in the SAME region as the input. A
+        // naive `status = 'published' AND region` filter retrieves it, but
+        // the public filter must keep it out of the AI candidate set.
+        {
+          vendorUserId: 'u_vendor',
+          slug: FIXTURE_SLUG,
+          title: 'Commission Scope Fixture',
+          shortDescription: 'Admin/E2E fixture — not a real listing',
+          cancellationPreset: 'flexible',
+          paymentModesAllowed: ['full_upfront'],
+          pricePerPerson_1_2: '999.00',
+          pricePerPerson_3_5: '888.00',
+          pricePerPerson_6_plus: '777.00',
+          regionSlug: 'rishikesh',
+          activitySlug: 'rafting',
+          status: 'published',
+        },
       ])
-      .returning({ id: experiences.id, status: experiences.status })
+      .returning({ id: experiences.id, status: experiences.status, slug: experiences.slug })
 
-    publishedIds = rows.filter((r) => r.status === 'published').map((r) => r.id)
+    publishedIds = rows
+      .filter((r) => r.status === 'published' && r.slug !== FIXTURE_SLUG)
+      .map((r) => r.id)
   })
 
   const input = {
@@ -159,6 +184,29 @@ describe('AI trip planner — RAG-grounded itinerary (ADR-0010)', () => {
     }
     expect(result.packingList.length).toBeGreaterThan(0)
     expect(result.aiAssisted).toBe(true)
+  })
+
+  it('never retrieves a PUBLISHED fixture Experience as an AI candidate (public filter)', async () => {
+    // No Claude mock → deterministic RAG path round-robins the FULL retrieval
+    // set into the itinerary, so the recommended slugs ARE the candidate slugs.
+    generateItineraryDraftMock.mockReset()
+
+    const result = await generateItinerary(db, input, { requestedByUserId: null })
+
+    const recommendedSlugs = result.days.flatMap((d) => d.items.map((i) => i.slug))
+    // The published fixture lives in the queried region, so a naive region
+    // filter would surface it — the public filter must exclude it.
+    expect(recommendedSlugs).not.toContain(FIXTURE_SLUG)
+    // ...while the real published Experiences in the region ARE retrieved.
+    expect(recommendedSlugs).toContain('white-water-rafting')
+    expect(recommendedSlugs).toContain('sunrise-trek')
+
+    // The fixture id must also never appear in the recorded retrieval set
+    // (the candidate ids offered to the model) — ADR-0010 data honesty.
+    const rows = await db.select().from(aiGenerations)
+    expect(rows.length).toBe(1)
+    const retrieval = rows[0]!.retrievalSet as string[]
+    expect(retrieval.every((id) => publishedIds.includes(id))).toBe(true)
   })
 
   it('writes an ai_generations provenance row with retrievalSet + citationTraces (Claude path)', async () => {

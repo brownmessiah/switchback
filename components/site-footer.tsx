@@ -188,6 +188,48 @@ export function SiteFooter(): ReactElement | null {
                   </Link>
                 </li>
               </ul>
+
+              {/* Legal drafts (issue 07) — reachable from every public page.
+                  The canonical /cancellation-policy calculator link stays under
+                  the Support list above; these are the four legal documents.
+                  min-tap meets the §8.2 44px coarse-pointer floor. */}
+              <h3 className="mt-6 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {tf('legal')}
+              </h3>
+              <ul className="mt-3 space-y-2 text-sm">
+                <li>
+                  <Link
+                    href="/terms"
+                    className="min-tap inline-flex items-center text-foreground/80 transition hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                  >
+                    {tf('terms')}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/privacy"
+                    className="min-tap inline-flex items-center text-foreground/80 transition hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                  >
+                    {tf('privacy')}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/refund-cancellation"
+                    className="min-tap inline-flex items-center text-foreground/80 transition hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                  >
+                    {tf('refundCancellation')}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/vendor-terms"
+                    className="min-tap inline-flex items-center text-foreground/80 transition hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                  >
+                    {tf('vendorTerms')}
+                  </Link>
+                </li>
+              </ul>
             </div>
 
             <div>

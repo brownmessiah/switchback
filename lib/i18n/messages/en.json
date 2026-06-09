@@ -752,6 +752,11 @@
       "listYourExperience": "List your experience",
       "vendorDashboard": "Vendor dashboard",
       "vendorKyc": "Vendor KYC (soon)",
+      "legal": "Legal",
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy",
+      "refundCancellation": "Refund & cancellation",
+      "vendorTerms": "Vendor terms",
       "copyright": "All experiences are operated by third-party vendors.",
       "blog": "Blog",
       "contactHeading": "Contact",
@@ -1247,6 +1252,205 @@
       "heading": "Ready to list your adventure business?",
       "body": "Create your Vendor profile in minutes and start drafting Experiences today.",
       "cta": "Start Vendor Onboarding"
+    }
+  },
+  "TermsPage": {
+    "metadata": {
+      "title": "Terms of Service · Outvers",
+      "description": "The terms governing your use of Outvers — a marketplace connecting Customers with independent third-party Vendors who run adventure Experiences across India."
+    },
+    "breadcrumb": {
+      "label": "Terms of Service"
+    },
+    "hero": {
+      "title": "Terms of Service",
+      "updated": "These terms are a working draft.",
+      "intro": "These Terms of Service govern your access to and use of Outvers. By creating an account, browsing, or making a Booking, you agree to these terms."
+    },
+    "reviewNotice": "Working draft — pending final legal review. This document reflects how Outvers actually operates today, but the final wording is being reviewed by counsel before launch and may change.",
+    "marketplace": {
+      "heading": "Outvers is a marketplace, not the provider of Experiences",
+      "body": "Outvers operates an online marketplace that connects Customers with independent third-party Vendors. The adventure Experiences listed on Outvers — rafting, trekking, paragliding, diving and more — are owned, run and delivered by those Vendors, who are independent businesses, not employees or agents of Outvers. Outvers acts as an intermediary that lists Experiences, takes Bookings and processes payments on the Vendor's behalf. Outvers does not itself operate any Experience.",
+      "vendorResponsibility": "Each Vendor is responsible for the safety, quality, accuracy and lawful conduct of its own Experiences, including holding the licences, certifications and insurance its activity requires. Outvers verifies Vendors through a tiered KYC process (Phone verified, Identity verified, Business verified) but does not guarantee any Vendor's conduct or the outcome of any Experience."
+    },
+    "accounts": {
+      "heading": "Your account",
+      "body": "You must provide accurate information when you register and keep your account credentials secure. You are responsible for activity under your account. You must be legally able to enter into a contract to make a Booking, and you must meet any age, fitness or eligibility requirements an Experience states."
+    },
+    "bookings": {
+      "heading": "Bookings and payment",
+      "body": "When you make a Booking you enter into a contract with the Vendor for that Experience; Outvers facilitates that contract and the payment. Outvers uses a partial-pay model: by default a 25% Advance is captured at the time of Booking and the remaining 75% is captured automatically 24 hours before the Experience starts. For Experiences starting within 48 hours, or priced above ₹25,000, the full amount is captured upfront. Prices shown include applicable taxes as displayed at checkout."
+    },
+    "cancellations": {
+      "heading": "Cancellations and refunds",
+      "body": "Each Experience carries one of three cancellation presets — Flexible, Moderate or Strict — chosen by the Vendor and locked at the time of Booking. Inside-policy cancellations are refunded automatically; outside-policy requests are reviewed as a Dispute. If a Vendor cancels your Booking, you always receive a full refund. The full schedule, an interactive calculator and refund timing are on our refund and cancellation page."
+    },
+    "permits": {
+      "heading": "Permits and eligibility",
+      "body": "Some Experiences require a permit — for example certain high-altitude treks or protected areas. Where a permit is required, Outvers surfaces the requirement and links to the official process, but you are responsible for obtaining the required permit yourself. Outvers is not a permit broker and does not obtain permits on your behalf."
+    },
+    "conduct": {
+      "heading": "Acceptable use",
+      "body": "You agree not to misuse the platform, post unlawful or misleading content, attempt to circumvent payment, or interfere with other users. We may suspend or remove access for conduct that breaches these terms or applicable law."
+    },
+    "liability": {
+      "heading": "Liability",
+      "body": "Adventure activities carry inherent risks. Because Experiences are run by independent third-party Vendors, your contract for the activity itself is with the Vendor. To the extent permitted by law, Outvers is not liable for the acts, omissions or outcomes of any Vendor or Experience. Nothing in these terms limits any liability that cannot lawfully be limited."
+    },
+    "changes": {
+      "heading": "Changes and governing law",
+      "body": "We may update these terms from time to time; material changes will be notified on the platform. These terms are governed by the laws of India, and disputes are subject to the jurisdiction of the courts at the seat stated in our final published terms."
+    },
+    "contact": {
+      "heading": "Contact",
+      "body": "Questions about these terms? Email support@outvers.com.",
+      "email": "support@outvers.com"
+    }
+  },
+  "PrivacyPage": {
+    "metadata": {
+      "title": "Privacy Policy · Outvers",
+      "description": "How Outvers collects, uses and protects your personal data as a marketplace connecting Customers with independent third-party Vendors."
+    },
+    "breadcrumb": {
+      "label": "Privacy Policy"
+    },
+    "hero": {
+      "title": "Privacy Policy",
+      "intro": "This policy explains what personal data Outvers collects, why we collect it, how we use it, and the choices you have."
+    },
+    "reviewNotice": "Working draft — pending final legal review. This document reflects how Outvers actually handles data today, but the final wording is being reviewed by counsel before launch and may change.",
+    "collect": {
+      "heading": "Personal data we collect",
+      "body": "We collect the personal information you give us when you create an account, make a Booking, contact support or subscribe to updates — such as your name, email, phone number and Booking details. We collect payment information through our payment processor (Razorpay); Outvers does not store full card details. We also collect technical data such as device, browser and usage information to operate and improve the service."
+    },
+    "use": {
+      "heading": "How we use your data",
+      "body": "We use your personal data to take and manage Bookings, process payments and refunds to your Wallet, communicate with you, provide support, keep the marketplace safe, comply with legal and tax obligations, and improve our Experiences and platform."
+    },
+    "sharing": {
+      "heading": "When we share data",
+      "body": "Because Experiences are run by independent third-party Vendors, we share the Booking details a Vendor needs to deliver your Experience with the relevant Vendor. We share data with service providers who work on our behalf — for example our payment processor and search and hosting providers — and with authorities where the law requires it. We do not sell your personal data."
+    },
+    "retention": {
+      "heading": "Retention",
+      "body": "We keep personal data for as long as your account is active and as long as needed to provide the service, resolve Disputes, and meet legal, accounting and tax requirements (including TDS and GST records)."
+    },
+    "rights": {
+      "heading": "Your choices and rights",
+      "body": "You can access and update your account information at any time, unsubscribe from marketing emails, and request deletion of your account subject to records we must retain by law. To exercise these rights, contact us."
+    },
+    "security": {
+      "heading": "Security",
+      "body": "We use technical and organisational measures to protect your personal data. No system is perfectly secure, so we cannot promise absolute security, but we work to safeguard your information and to notify you of material incidents where required."
+    },
+    "contact": {
+      "heading": "Contact",
+      "body": "Privacy questions or requests? Email support@outvers.com.",
+      "email": "support@outvers.com"
+    }
+  },
+  "RefundCancellationPage": {
+    "metadata": {
+      "title": "Refund & Cancellation Policy · Outvers",
+      "description": "How cancellations and refunds work on Outvers — Flexible, Moderate and Strict presets, refund timing to your Refund balance, and bank cashout via Razorpay."
+    },
+    "breadcrumb": {
+      "label": "Refund & Cancellation"
+    },
+    "hero": {
+      "title": "Refund & Cancellation Policy",
+      "intro": "Every Experience carries a cancellation preset chosen by the Vendor and locked when you book. This page explains the presets, what you get back, and when."
+    },
+    "reviewNotice": "Working draft — pending final legal review. This summary reflects how cancellations and refunds actually work on Outvers today, but the final wording is being reviewed by counsel before launch and may change.",
+    "presets": {
+      "heading": "The three cancellation presets",
+      "intro": "Each Experience uses one of three presets. The preset is shown on the Experience before you book and is locked at the time of Booking. Windows are measured against the Experience start time.",
+      "columnPreset": "Preset",
+      "columnFull": "Full refund up to",
+      "columnHalf": "50% refund up to",
+      "columnAfter": "After that",
+      "flexible": "Flexible",
+      "moderate": "Moderate",
+      "strict": "Strict",
+      "flexibleFull": "24 hours before",
+      "flexibleHalf": "2 hours before",
+      "moderateFull": "72 hours before",
+      "moderateHalf": "24 hours before",
+      "strictFull": "14 days before",
+      "strictHalf": "7 days before",
+      "noRefund": "No refund"
+    },
+    "insidePolicy": {
+      "heading": "Inside-policy cancellations",
+      "body": "When you cancel within your Experience's preset window, the eligible amount is credited automatically to your Outvers Wallet (your Refund balance) within minutes — there is nothing to claim."
+    },
+    "vendorCancelled": {
+      "heading": "If the Vendor cancels",
+      "body": "If a Vendor cancels your Booking, you always receive a full refund regardless of the preset. Weather or safety stand-downs called by the Vendor are treated as a Vendor cancellation and refunded in full."
+    },
+    "outsidePolicy": {
+      "heading": "Outside-policy requests, no-shows and Disputes",
+      "body": "Cancellation requests outside your preset window — and no-shows — are routed to our support team as a Dispute. These are declined by default, but we review clear cases of Vendor fault and decide case by case."
+    },
+    "refundSla": {
+      "heading": "When you'll see the money",
+      "body": "Refunds are credited to your Outvers Wallet (your Refund balance) within 24–48 hours of an inside-policy cancellation. Your Refund balance is spendable on any future Booking; if you prefer, you can request a cashout to your original payment method, which Razorpay round-trips to your bank in 5–7 working days. The 24–48 hour window is when your Wallet is credited — the 5–7 working days applies only if you choose the bank cashout."
+    },
+    "policyLink": {
+      "label": "See the full policy and refund calculator",
+      "body": "Our cancellation policy page has the complete reference and an interactive calculator that quotes your exact refund before you book."
+    },
+    "contact": {
+      "heading": "Questions",
+      "body": "Need help with a refund? Email support@outvers.com.",
+      "email": "support@outvers.com"
+    }
+  },
+  "VendorTermsPage": {
+    "metadata": {
+      "title": "Vendor Terms · Outvers",
+      "description": "Terms for independent third-party Vendors on Outvers — KYC verification tiers, Commission, Payout flow, TDS and GST, and cancellation obligations."
+    },
+    "breadcrumb": {
+      "label": "Vendor Terms"
+    },
+    "hero": {
+      "title": "Vendor Terms",
+      "intro": "These terms apply to independent third-party Vendors who list and run Experiences on the Outvers marketplace."
+    },
+    "reviewNotice": "Working draft — pending final legal review. This document reflects how Vendor onboarding, Payouts and tax actually work on Outvers today, but the final wording is being reviewed by counsel before launch and may change.",
+    "relationship": {
+      "heading": "Your relationship with Outvers",
+      "body": "As a Vendor you are an independent business listing your own Experiences on the Outvers marketplace. You — not Outvers — own, operate and deliver your Experiences and are responsible for their safety, quality, legality, and for holding the licences, certifications and insurance your activity requires. Outvers is an intermediary that lists your Experiences, takes Bookings and processes payments on your behalf."
+    },
+    "kyc": {
+      "heading": "Verification (KYC) tiers",
+      "intro": "Vendors are verified in three tiers. Higher tiers unlock listing badges and broader catalogue access.",
+      "phone": "Phone verified — phone OTP at signup.",
+      "identity": "Identity verified — Aadhaar and PAN verified; earns the \"Identity verified\" badge.",
+      "business": "Business verified — GSTIN or Udyam plus a guide certificate and a video call; earns the \"Business verified\" badge."
+    },
+    "commission": {
+      "heading": "Commission",
+      "body": "Outvers charges a Commission on each completed Booking. The Commission is deducted from your Payout and is realised at the Completion of the Experience, not at the time of Booking. GST applies to the Commission and is shown on your invoice."
+    },
+    "payout": {
+      "heading": "Payouts",
+      "body": "A Payout is the money Outvers transfers to you for a completed Experience, net of Commission, GST on the Commission, and TDS. Payouts are issued T+7 from Booking Completion in daily batches. A Payout may be paused while a Dispute on the related Booking is open. You must keep accurate bank details on file to receive Payouts."
+    },
+    "tax": {
+      "heading": "TDS and GST",
+      "body": "Under Section 194-O, Outvers withholds TDS at 0.1% on the gross Booking value for resident-Indian Vendors. We file Form 26Q quarterly and issue you Form 16A. GST is applied to the Commission. You remain responsible for your own tax registration and filings."
+    },
+    "cancellation": {
+      "heading": "Cancellations and service levels",
+      "body": "Each Experience carries a cancellation preset (Flexible, Moderate or Strict) locked at the time of Booking. If you cancel a confirmed Booking, the Customer always receives a full refund and your response-time SLA score is affected. We track your response time and reliability; persistently low scores can limit your visibility or listing access."
+    },
+    "contact": {
+      "heading": "Contact",
+      "body": "Questions about Vendor terms? Email support@outvers.com.",
+      "email": "support@outvers.com"
     }
   }
 }

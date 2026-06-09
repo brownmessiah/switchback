@@ -119,6 +119,67 @@
   "RecentlyViewed": {
     "heading": "Recently viewed"
   },
+  "Compare": {
+    "toggle": {
+      "label": "Compare",
+      "capReached": "You can compare up to {max} Experiences. Remove one to add another."
+    },
+    "tray": {
+      "label": "Compare tray",
+      "count": "Compare ({count})",
+      "cta": "Compare",
+      "clear": "Clear"
+    },
+    "page": {
+      "heading": "Compare Experiences",
+      "subheading": "A side-by-side look at the Experiences you selected."
+    },
+    "metadata": {
+      "title": "Compare Experiences · Outvers",
+      "description": "Compare your selected adventure Experiences side by side — price, duration, difficulty, inclusions, cancellation policy, rating and more."
+    },
+    "empty": {
+      "body": "You haven’t added any Experiences to compare yet. Tap “Compare” on a card to start.",
+      "cta": "Browse Experiences"
+    },
+    "fields": {
+      "attribute": "Attribute",
+      "price": "Price",
+      "duration": "Duration",
+      "difficulty": "Difficulty",
+      "inclusions": "Inclusions",
+      "cancellation": "Cancellation",
+      "rating": "Rating",
+      "kyc": "Vendor verification",
+      "minAge": "Minimum age",
+      "groupSize": "Group-size brackets",
+      "vendor": "Vendor",
+      "notSpecified": "Not specified"
+    },
+    "priceBracket": {
+      "from1to2": "1–2 people",
+      "from3to5": "3–5 people",
+      "from6plus": "6+ people"
+    },
+    "groupSizeValue": "1–2 · 3–5 · 6+",
+    "minAgeValue": "{age}+ years",
+    "difficulty": {
+      "easy": "Easy",
+      "moderate": "Moderate",
+      "challenging": "Challenging",
+      "extreme": "Extreme"
+    },
+    "cancellation": {
+      "flexible": "Flexible cancellation",
+      "moderate": "Moderate cancellation",
+      "strict": "Strict cancellation",
+      "custom": "Custom cancellation"
+    },
+    "kyc": {
+      "identity": "Identity verified",
+      "business": "Business verified"
+    }
+  },
   "TrustBadges": {
     "verifiedVendor": {
       "identity": "Identity verified",

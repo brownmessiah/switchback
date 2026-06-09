@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { getMessages, setRequestLocale } from 'next-intl/server'
 import type { ReactNode } from 'react'
 
+import { CompareTray } from '@/components/compare/tray'
 import { SUPPORTED_LOCALES, isValidLocale } from '@/lib/i18n/config'
 import { IntlProvider } from '@/lib/i18n/provider'
 
@@ -31,6 +32,9 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     <IntlProvider locale={locale} messages={messages as Record<string, unknown>}>
       {children}
+      {/* Global compare tray (issue 20, D10) — persists across every marketing
+          card surface; hidden when the selection is empty. */}
+      <CompareTray />
     </IntlProvider>
   )
 }

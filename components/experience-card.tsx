@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 import { Award, Flame, MapPin, Star } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
+import { CompareToggle } from '@/components/compare/toggle'
 import { TrustBadge } from '@/components/trust-badge'
 import { WishlistButton } from '@/components/wishlist-button'
 import { resolveExperienceCover } from '@/lib/media/experience-images'
@@ -76,6 +77,13 @@ interface ExperienceCardProps {
    * list view. Any caller that omits this gets the unchanged grid card.
    */
   layout?: 'grid' | 'list'
+  /**
+   * Compare toggle (issue 20, D10). Renders the "Compare" checkbox in the card
+   * footer when `true` (the default — every discovery surface gets it). Pass
+   * `false` to suppress it (e.g. an embedded card where comparing makes no
+   * sense). Purely additive — the rest of the card is unchanged either way.
+   */
+  showCompare?: boolean
 }
 
 const ACTIVITY_LABELS: Record<string, string> = {
@@ -138,7 +146,11 @@ const DIFFICULTY_BADGE: Record<
  * (status never by colour alone, §1.3). Price renders in `.tabular-nums`;
  * coral affordance uses `text-primary-strong` (AA-safe), never `text-primary`.
  */
-export function ExperienceCard({ experience, layout = 'grid' }: ExperienceCardProps) {
+export function ExperienceCard({
+  experience,
+  layout = 'grid',
+  showCompare = true,
+}: ExperienceCardProps) {
   const t = useTranslations('HomePage')
   // Root translator for the shared TrustBadges namespace (the labels helper
   // passes fully-qualified `TrustBadges.*` keys so card + PDP share one source).
@@ -303,6 +315,14 @@ export function ExperienceCard({ experience, layout = 'grid' }: ExperienceCardPr
         </div>
       </div>
       </Link>
+      {/* Compare toggle (issue 20, D10) — a SIBLING of the Link (never nested in
+          the anchor, which would navigate on click). Guest-friendly, localStorage
+          only, max 3. Suppressible via `showCompare={false}`. */}
+      {showCompare ? (
+        <div className="mt-1.5 px-[var(--space-card-pad)]">
+          <CompareToggle slug={experience.slug} />
+        </div>
+      ) : null}
     </div>
   )
 }

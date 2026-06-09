@@ -207,6 +207,27 @@ describe('ExperienceCard trust badges (data-honest, issue 05)', () => {
   })
 })
 
+describe('ExperienceCard compare toggle (issue 20, D10)', () => {
+  it('renders a compare toggle by default', () => {
+    render(<ExperienceCard experience={base} />)
+    expect(screen.getByTestId('compare-toggle')).toBeTruthy()
+  })
+
+  it('omits the compare toggle when showCompare is false', () => {
+    render(<ExperienceCard experience={base} showCompare={false} />)
+    expect(screen.queryByTestId('compare-toggle')).toBeNull()
+  })
+
+  it('keeps the experience link intact alongside the compare toggle', () => {
+    const { container } = render(<ExperienceCard experience={base} />)
+    // The card's primary anchor is still the experience link (toggle is a
+    // sibling overlay, never nested in the anchor).
+    expect(container.querySelector('a')?.getAttribute('href')).toBe(
+      '/experience/rishikesh-rafting',
+    )
+  })
+})
+
 describe('ExperienceCard bare card (no new data)', () => {
   it('renders no difficulty, social-proof, or rating when none are passed', () => {
     const { container } = render(<ExperienceCard experience={base} />)

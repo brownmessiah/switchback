@@ -34,6 +34,10 @@ describe('STATIC_PUBLIC_PATHS', () => {
   it('includes the public /vendor-partner landing page (issue 06)', () => {
     expect(STATIC_PUBLIC_PATHS).toContain('/vendor-partner')
   })
+
+  it('does NOT include /compare — it is noindex and must stay out of the sitemap (issue 20, D10)', () => {
+    expect(STATIC_PUBLIC_PATHS).not.toContain('/compare')
+  })
 })
 
 describe('generateDestinationSitemapUrls', () => {

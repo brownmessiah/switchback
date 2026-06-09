@@ -25,6 +25,22 @@ test.describe('Home page', () => {
     })
   })
 
+  // Credibility copy (issue 01): the cancellation trust chip is "Flexible
+  // cancellation" — CONTEXT.md vocabulary (Inside-policy / Flexible
+  // cancellation), never "Free cancellation".
+  test('cancellation trust chip reads "Flexible cancellation", never "Free"', async ({
+    page,
+  }) => {
+    await page.goto('/')
+
+    await expect(
+      page.getByText('Flexible cancellation', { exact: false }).first(),
+    ).toBeVisible()
+    await expect(
+      page.getByText('Free cancellation', { exact: false }),
+    ).toHaveCount(0)
+  })
+
   // Variant-B functional contract: the hero search form and the activity
   // chips are real GET navigations to /search. Behaviour-level — fill +
   // submit + click, then assert the resulting URL — not coupled to markup.
@@ -851,6 +867,25 @@ test.describe('Sign-in page', () => {
       path: 'tests/e2e/screenshots/sign-in-step2.png',
       fullPage: true,
     })
+  })
+
+  // Credibility copy (issue 01): the Trust Wall no longer carries the fake
+  // "Booked by 40,000+ travellers." traction claim — it shows honest,
+  // non-numeric copy instead.
+  test('/sign-in does not render the fake-traction claim', async ({ page }) => {
+    const response = await page.goto('/sign-in')
+    expect(response?.status()).toBe(200)
+
+    // No traction number anywhere on the page.
+    await expect(page.getByText('40,000', { exact: false })).toHaveCount(0)
+    await expect(page.getByText(/travellers/i)).toHaveCount(0)
+
+    // The honest replacement heading renders.
+    await expect(
+      page.getByRole('heading', {
+        name: 'Built for verified adventure bookings across India.',
+      }),
+    ).toBeVisible()
   })
 })
 

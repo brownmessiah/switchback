@@ -8,7 +8,7 @@
       "searchButton": "Search"
     },
     "trustBadges": {
-      "freeCancellation": "Free cancellation",
+      "freeCancellation": "Flexible cancellation",
       "kycVerified": "KYC-verified vendors",
       "refundSla": "24-hour refund SLA",
       "transparentPricing": "Transparent pricing"
@@ -503,7 +503,7 @@
       "vendorCta": "Start onboarding"
     },
     "trustPanel": {
-      "heading": "Booked by 40,000+ travellers.",
+      "heading": "Built for verified adventure bookings across India.",
       "chipVerified": "Identity & Business verified Vendors",
       "chipRefund": "Exact refund shown before you confirm",
       "chipPartialPay": "Partial pay — pay 25% now"
@@ -642,7 +642,7 @@
     },
     "hero": {
       "title": "Safety and trust at Outvers",
-      "description": "Outvers is an adventure marketplace, so trust is the product. We do not own the rafts, the harnesses, or the trails — independent vendors do. Our job is to verify who they are, make the money rules predictable, and notify the right people when something goes wrong. Everything below is a feature that exists today, not a promise. Where Outvers does not do something — like obtaining your permits or dispatching emergency services — we say so plainly."
+      "description": "Outvers is an adventure marketplace, so trust is the product. We do not own the rafts, the harnesses, or the trails — independent vendors do. Our job is to verify who they are, make the money rules predictable, and notify the right people when something goes wrong. Some safety and verification features may vary by experience and vendor. Each Experience shows what is verified before you book. Where Outvers does not do something — like obtaining your permits or dispatching emergency services — we say so plainly."
     },
     "kyc": {
       "heading": "Every vendor climbs a three-tier verification ladder",

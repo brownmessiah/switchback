@@ -31,6 +31,20 @@ test.describe('Safety page', () => {
     // Breadcrumb nav present
     await expect(page.locator('nav[aria-label="Breadcrumb"]')).toBeVisible()
 
+    // Credibility copy (issue 01): the hero softens the old over-promise
+    // ("Everything below is a feature that exists today, not a promise.") to
+    // honest, vendor/experience-scoped language. Outvers NOTIFIES, does not
+    // dispatch — safety copy must not over-promise.
+    await expect(
+      page.getByText(
+        'Some safety and verification features may vary by experience and vendor.',
+        { exact: false },
+      ),
+    ).toBeVisible()
+    await expect(page.getByText('not a promise', { exact: false })).toHaveCount(
+      0,
+    )
+
     // The three-tier KYC verification ladder (ADR-0007) — each badge name is
     // load-bearing CONTEXT.md vocabulary.
     await expect(page.getByText('Phone verified', { exact: false }).first()).toBeVisible()

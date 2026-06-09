@@ -1573,5 +1573,13 @@
   },
   "RecentlyViewed": {
     "heading": "শেহতীয়াকৈ চোৱা"
+  },
+  "Gallery": {
+    "openGallery": "ফটো গেলাৰী খোলক",
+    "viewAllPhotos": "{count} টা ফটো",
+    "close": "গেলাৰী বন্ধ কৰক",
+    "previousImage": "পূৰ্বৱৰ্তী ছবি",
+    "nextImage": "পৰৱৰ্তী ছবি",
+    "imageOf": "{total} টাৰ ভিতৰত {current} নং ছবি"
   }
 }

@@ -10,7 +10,6 @@ import {
   CalendarRange,
   CircleCheck,
   Clock,
-  Images,
   Languages,
   MapPin,
   Star,
@@ -27,7 +26,6 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { and, eq } from 'drizzle-orm'
-import Image from 'next/image'
 
 import { loadRecentlyViewedCardsAction } from '@/components/recently-viewed/actions'
 import { RecentlyViewedRail } from '@/components/recently-viewed/rail'
@@ -65,6 +63,7 @@ import { touristTrip } from '@/lib/seo/schemas/trip'
 import { AnchorNav, type AnchorNavItem } from './anchor-nav'
 import { BookingRail, type BookingRailClosure } from './booking-rail'
 import { BookingRailMobile } from './booking-rail-mobile'
+import { Gallery, type GalleryImage as GalleryTile } from './gallery'
 import {
   ExperienceAfterBooking,
   ExperienceDisclosure,
@@ -168,14 +167,16 @@ export default async function ExperienceDetailPage({
 
   // Airbnb-style hero+grid: 1 large hero + up to 4 grid tiles. Real media first,
   // then DISTINCT activity fallbacks so a bare listing still shows five varied
-  // photos rather than one cropped five ways. The "show all" affordance is shown
-  // only when there is genuine extra media (>3 real assets) to reveal.
-  const galleryHeroTiles: string[] = Array.from({ length: 5 }, (_, i) =>
-    detail.gallery[i]?.url ?? getActivityImage(detail.activity.slug, i % 3),
-  )
-  const galleryAltFor = (i: number): string =>
-    detail.gallery[i]?.altText ?? (i === 0 ? detail.title : '')
-  const showAllPhotos = detail.gallery.length > 3
+  // photos rather than one cropped five ways. These same tiles feed the
+  // fullscreen swipeable gallery modal (issue 14). Alt text is honest — real
+  // media alt where present, else the Experience title for the hero. We do NOT
+  // fabricate per-image labels (D0): the modal shows the title + image counter,
+  // no invented Activity/Location categories, since media records carry no
+  // per-image label data. The `label` field stays open for when such data lands.
+  const galleryTilesForModal: GalleryTile[] = Array.from({ length: 5 }, (_, i) => ({
+    url: detail.gallery[i]?.url ?? getActivityImage(detail.activity.slug, i % 3),
+    alt: detail.gallery[i]?.altText ?? (i === 0 ? detail.title : detail.title),
+  }))
 
   const productJson = product({
     name: detail.title,
@@ -534,47 +535,17 @@ export default async function ExperienceDetailPage({
         {/* Left column — content */}
         <div className="min-w-0">
           {/* Airbnb-grade hero+grid gallery (1 large hero + a 2×2 grid),
-              full content-width above the title. Rounded corners + hairline ring
-              + a subtle hover dim; a "Show all photos" affordance overlays the
-              last tile when the listing carries genuine extra media. On mobile
-              it collapses to a single full-bleed hero (the grid is hidden), so
-              the page leads with one clean, generous image. */}
-          <div className="group/gallery relative mb-[var(--space-section)] grid aspect-[3/2] grid-cols-1 gap-2 overflow-hidden rounded-[var(--radius-2xl)] ring-1 ring-foreground/10 md:aspect-[2/1] md:grid-cols-4 md:grid-rows-2">
-            {/* Hero — spans both rows + half the width on ≥md. */}
-            <div className="relative md:col-span-2 md:row-span-2">
-              <Image
-                src={galleryHeroTiles[0]}
-                alt={galleryAltFor(0)}
-                fill
-                className="object-cover transition-[filter] duration-[var(--duration-base)] group-hover/gallery:brightness-[0.97]"
-                preload
-                sizes="(max-width: 768px) 100vw, 50vw"
-              />
-            </div>
-            {/* 2×2 grid — hidden on mobile so the hero leads cleanly. */}
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="relative hidden md:block">
-                <Image
-                  src={galleryHeroTiles[i]}
-                  alt={galleryAltFor(i)}
-                  fill
-                  className="object-cover transition-[filter] duration-[var(--duration-base)] group-hover/gallery:brightness-[0.97]"
-                  sizes="25vw"
-                />
-              </div>
-            ))}
-            {/* "Show all photos" affordance — a language-neutral photo-count cue
-                (gallery icon + total count) bottom-right, surfaced only when there
-                is real extra media. Static in v1 (no lightbox); kept text-free so
-                it needs no new locale key while still reading as the standard
-                "more photos" affordance. */}
-            {showAllPhotos && (
-              <span className="pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-[var(--radius-control)] border border-border bg-background/95 px-3 py-1.5 text-xs font-semibold text-foreground shadow-sm backdrop-blur tabular-nums">
-                <Images aria-hidden="true" className="size-3.5 shrink-0" />
-                {detail.gallery.length}
-              </span>
-            )}
-          </div>
+              full content-width above the title (issue 14). Clicking any tile
+              opens a fullscreen, swipeable, focus-trapped Dialog (ESC + arrows +
+              mobile swipe). Layout/order are unchanged — the markup moved into
+              the <Gallery> client island verbatim. On mobile it collapses to a
+              single full-bleed hero (the grid is hidden) so the page leads with
+              one clean, generous image; the modal then reveals the rest. */}
+          <Gallery
+            images={galleryTilesForModal}
+            title={detail.title}
+            totalReal={detail.gallery.length}
+          />
 
           {/* Title + rating-under-title row + Vendor attribution (DESIGN.md
               §4 B2.1–2). A tight Airbnb-style block: location/category eyebrow,

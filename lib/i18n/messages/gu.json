@@ -1573,5 +1573,13 @@
   },
   "RecentlyViewed": {
     "heading": "તાજેતરમાં જોયેલ"
+  },
+  "Gallery": {
+    "openGallery": "ફોટો ગેલેરી ખોલો",
+    "viewAllPhotos": "{count} ફોટા",
+    "close": "ગેલેરી બંધ કરો",
+    "previousImage": "પાછલી છબી",
+    "nextImage": "આગલી છબી",
+    "imageOf": "{total} માંથી {current} છબી"
   }
 }

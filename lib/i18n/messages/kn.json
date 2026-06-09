@@ -1573,5 +1573,13 @@
   },
   "RecentlyViewed": {
     "heading": "ಇತ್ತೀಚೆಗೆ ನೋಡಿದವು"
+  },
+  "Gallery": {
+    "openGallery": "ಫೋಟೋ ಗ್ಯಾಲರಿ ತೆರೆಯಿರಿ",
+    "viewAllPhotos": "{count} ಫೋಟೋಗಳು",
+    "close": "ಗ್ಯಾಲರಿ ಮುಚ್ಚಿ",
+    "previousImage": "ಹಿಂದಿನ ಚಿತ್ರ",
+    "nextImage": "ಮುಂದಿನ ಚಿತ್ರ",
+    "imageOf": "{total} ರಲ್ಲಿ {current} ನೇ ಚಿತ್ರ"
   }
 }

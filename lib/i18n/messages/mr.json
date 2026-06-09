@@ -1573,5 +1573,13 @@
   },
   "RecentlyViewed": {
     "heading": "अलीकडे पाहिलेले"
+  },
+  "Gallery": {
+    "openGallery": "फोटो गॅलरी उघडा",
+    "viewAllPhotos": "{count} फोटो",
+    "close": "गॅलरी बंद करा",
+    "previousImage": "मागील प्रतिमा",
+    "nextImage": "पुढील प्रतिमा",
+    "imageOf": "{total} पैकी {current} प्रतिमा"
   }
 }

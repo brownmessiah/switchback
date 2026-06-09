@@ -1573,5 +1573,13 @@
   },
   "RecentlyViewed": {
     "heading": "ସମ୍ପ୍ରତି ଦେଖାଯାଇଥିବା"
+  },
+  "Gallery": {
+    "openGallery": "ଫଟୋ ଗ୍ୟାଲେରୀ ଖୋଲନ୍ତୁ",
+    "viewAllPhotos": "{count}ଟି ଫଟୋ",
+    "close": "ଗ୍ୟାଲେରୀ ବନ୍ଦ କରନ୍ତୁ",
+    "previousImage": "ପୂର୍ବ ଚିତ୍ର",
+    "nextImage": "ପରବର୍ତ୍ତୀ ଚିତ୍ର",
+    "imageOf": "{total}ଟି ମଧ୍ୟରୁ {current} ଚିତ୍ର"
   }
 }

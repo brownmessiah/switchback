@@ -1573,5 +1573,13 @@
   },
   "RecentlyViewed": {
     "heading": "சமீபத்தில் பார்த்தவை"
+  },
+  "Gallery": {
+    "openGallery": "புகைப்பட தொகுப்பைத் திற",
+    "viewAllPhotos": "{count} புகைப்படங்கள்",
+    "close": "தொகுப்பை மூடு",
+    "previousImage": "முந்தைய படம்",
+    "nextImage": "அடுத்த படம்",
+    "imageOf": "{total} இல் {current} ஆவது படம்"
   }
 }

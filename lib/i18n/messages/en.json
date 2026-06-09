@@ -462,6 +462,14 @@
       }
     }
   },
+  "Gallery": {
+    "openGallery": "Open photo gallery",
+    "viewAllPhotos": "{count} photos",
+    "close": "Close gallery",
+    "previousImage": "Previous image",
+    "nextImage": "Next image",
+    "imageOf": "Image {current} of {total}"
+  },
   "SearchPage": {
     "metadata": {
       "title": "Search Experiences · Outvers",

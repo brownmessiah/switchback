@@ -1573,5 +1573,13 @@
   },
   "RecentlyViewed": {
     "heading": "ఇటీవల చూసినవి"
+  },
+  "Gallery": {
+    "openGallery": "ఫోటో గ్యాలరీని తెరవండి",
+    "viewAllPhotos": "{count} ఫోటోలు",
+    "close": "గ్యాలరీని మూసివేయండి",
+    "previousImage": "మునుపటి చిత్రం",
+    "nextImage": "తదుపరి చిత్రం",
+    "imageOf": "{total}లో {current}వ చిత్రం"
   }
 }

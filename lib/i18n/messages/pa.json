@@ -1573,5 +1573,13 @@
   },
   "RecentlyViewed": {
     "heading": "ਹਾਲ ਹੀ ਵਿੱਚ ਵੇਖੇ ਗਏ"
+  },
+  "Gallery": {
+    "openGallery": "ਫੋਟੋ ਗੈਲਰੀ ਖੋਲ੍ਹੋ",
+    "viewAllPhotos": "{count} ਫੋਟੋ",
+    "close": "ਗੈਲਰੀ ਬੰਦ ਕਰੋ",
+    "previousImage": "ਪਿਛਲੀ ਤਸਵੀਰ",
+    "nextImage": "ਅਗਲੀ ਤਸਵੀਰ",
+    "imageOf": "{total} ਵਿੱਚੋਂ {current} ਤਸਵੀਰ"
   }
 }

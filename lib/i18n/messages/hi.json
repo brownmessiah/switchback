@@ -1573,5 +1573,13 @@
   },
   "RecentlyViewed": {
     "heading": "हाल ही में देखे गए"
+  },
+  "Gallery": {
+    "openGallery": "फ़ोटो गैलरी खोलें",
+    "viewAllPhotos": "{count} फ़ोटो",
+    "close": "गैलरी बंद करें",
+    "previousImage": "पिछली छवि",
+    "nextImage": "अगली छवि",
+    "imageOf": "{total} में से {current} छवि"
   }
 }

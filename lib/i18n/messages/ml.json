@@ -1573,5 +1573,13 @@
   },
   "RecentlyViewed": {
     "heading": "അടുത്തിടെ കണ്ടവ"
+  },
+  "Gallery": {
+    "openGallery": "ഫോട്ടോ ഗാലറി തുറക്കുക",
+    "viewAllPhotos": "{count} ഫോട്ടോകൾ",
+    "close": "ഗാലറി അടയ്ക്കുക",
+    "previousImage": "മുൻപത്തെ ചിത്രം",
+    "nextImage": "അടുത്ത ചിത്രം",
+    "imageOf": "{total}ൽ {current}-ാം ചിത്രം"
   }
 }

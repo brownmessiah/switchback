@@ -1573,5 +1573,13 @@
   },
   "RecentlyViewed": {
     "heading": "সম্প্রতি দেখা"
+  },
+  "Gallery": {
+    "openGallery": "ফটো গ্যালারি খুলুন",
+    "viewAllPhotos": "{count}টি ছবি",
+    "close": "গ্যালারি বন্ধ করুন",
+    "previousImage": "আগের ছবি",
+    "nextImage": "পরের ছবি",
+    "imageOf": "{total}টির মধ্যে {current} নম্বর ছবি"
   }
 }

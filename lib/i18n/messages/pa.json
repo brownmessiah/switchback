@@ -724,10 +724,13 @@
         "errorGeneric": "ਕੁਝ ਗਲਤ ਹੋ ਗਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
       }
     },
-    "experiences": "ਅਨੁਭਵ",
+    "explore": "ਖੋਜੋ",
     "destinations": "ਟਿਕਾਣੇ",
-    "community": "ਕਮਿਊਨਿਟੀ",
-    "blog": "ਬਲੌਗ"
+    "activities": "ਗਤੀਵਿਧੀਆਂ",
+    "safety": "ਸੁਰੱਖਿਆ",
+    "blog": "ਬਲੌਗ",
+    "tripGroups": "ਟ੍ਰਿਪ ਗਰੁੱਪ",
+    "listYourExperience": "ਆਪਣਾ ਅਨੁਭਵ ਸੂਚੀਬੱਧ ਕਰੋ"
   },
   "NotFound": {
     "heading": "404",

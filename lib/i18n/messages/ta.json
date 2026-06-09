@@ -724,10 +724,13 @@
         "errorGeneric": "ஏதோ தவறு நடந்தது. மீண்டும் முயற்சிக்கவும்."
       }
     },
-    "experiences": "அனுபவங்கள்",
+    "explore": "ஆராயுங்கள்",
     "destinations": "இடங்கள்",
-    "community": "சமூகம்",
-    "blog": "வலைப்பதிவு"
+    "activities": "செயல்பாடுகள்",
+    "safety": "பாதுகாப்பு",
+    "blog": "வலைப்பதிவு",
+    "tripGroups": "பயணக் குழுக்கள்",
+    "listYourExperience": "உங்கள் அனுபவத்தை பட்டியலிடுங்கள்"
   },
   "NotFound": {
     "heading": "404",

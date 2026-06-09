@@ -724,10 +724,13 @@
         "errorGeneric": "काहीतरी चूक झाली. कृपया पुन्हा प्रयत्न करा."
       }
     },
-    "experiences": "अनुभव",
+    "explore": "शोधा",
     "destinations": "ठिकाणे",
-    "community": "समुदाय",
-    "blog": "ब्लॉग"
+    "activities": "उपक्रम",
+    "safety": "सुरक्षा",
+    "blog": "ब्लॉग",
+    "tripGroups": "ट्रिप ग्रुप्स",
+    "listYourExperience": "तुमचा अनुभव सूचीबद्ध करा"
   },
   "NotFound": {
     "heading": "404",

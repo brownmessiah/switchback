@@ -724,10 +724,13 @@
         "errorGeneric": "કંઈક ખોટું થયું. કૃપા કરીને ફરી પ્રયાસ કરો."
       }
     },
-    "experiences": "અનુભવો",
+    "explore": "એક્સપ્લોર",
     "destinations": "સ્થળો",
-    "community": "સમુદાય",
-    "blog": "બ્લોગ"
+    "activities": "પ્રવૃત્તિઓ",
+    "safety": "સલામતી",
+    "blog": "બ્લોગ",
+    "tripGroups": "ટ્રિપ ગ્રુપ્સ",
+    "listYourExperience": "તમારો અનુભવ લિસ્ટ કરો"
   },
   "NotFound": {
     "heading": "404",

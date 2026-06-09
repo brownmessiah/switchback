@@ -765,10 +765,13 @@
         "errorGeneric": "Something went wrong. Please try again."
       }
     },
-    "experiences": "Experiences",
+    "explore": "Explore",
     "destinations": "Destinations",
-    "community": "Community",
-    "blog": "Blog"
+    "activities": "Activities",
+    "safety": "Safety",
+    "blog": "Blog",
+    "tripGroups": "Trip Groups",
+    "listYourExperience": "List your experience"
   },
   "NotFound": {
     "heading": "404",

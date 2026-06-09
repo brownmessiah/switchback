@@ -54,8 +54,12 @@ export function UserMenu({ user, role }: UserMenuProps) {
         <DropdownMenuItem>
           <Link href="/dashboard" className="w-full">My bookings</Link>
         </DropdownMenuItem>
+        {/* Trip Groups (ADR-0009) — the convened-group product. Relabelled
+            from the old vague "Community" tab (issue 03, DECISION D2); the
+            /community route is unchanged, only the label moved here from the
+            primary nav. */}
         <DropdownMenuItem>
-          <Link href="/community" className="w-full">Community</Link>
+          <Link href="/community" className="w-full">Trip Groups</Link>
         </DropdownMenuItem>
         <DropdownMenuItem>
           <Link href="/support" className="w-full">Support</Link>

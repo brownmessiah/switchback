@@ -660,10 +660,13 @@
         "errorGeneric": "କିଛି ଭୁଲ ହୋଇଗଲା। ଦୟାକରି ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।"
       }
     },
-    "experiences": "ଅନୁଭୂତି",
+    "explore": "ଅନ୍ୱେଷଣ",
     "destinations": "ସ୍ଥାନ",
-    "community": "ସମ୍ପ୍ରଦାୟ",
-    "blog": "ବ୍ଲଗ୍"
+    "activities": "କାର୍ଯ୍ୟକଳାପ",
+    "safety": "ସୁରକ୍ଷା",
+    "blog": "ବ୍ଲଗ୍",
+    "tripGroups": "ଟ୍ରିପ୍ ଗ୍ରୁପ୍",
+    "listYourExperience": "ଆପଣଙ୍କ ଅନୁଭୂତି ତାଲିକାଭୁକ୍ତ କରନ୍ତୁ"
   },
   "NotFound": {
     "heading": "404",

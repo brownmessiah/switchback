@@ -724,10 +724,13 @@
         "errorGeneric": "कुछ गड़बड़ हो गई। कृपया फिर से प्रयास करें।"
       }
     },
-    "experiences": "अनुभव",
+    "explore": "खोजें",
     "destinations": "डेस्टिनेशन",
-    "community": "समुदाय",
-    "blog": "ब्लॉग"
+    "activities": "गतिविधियाँ",
+    "safety": "सुरक्षा",
+    "blog": "ब्लॉग",
+    "tripGroups": "ट्रिप ग्रुप्स",
+    "listYourExperience": "अपना अनुभव सूचीबद्ध करें"
   },
   "NotFound": {
     "heading": "404",

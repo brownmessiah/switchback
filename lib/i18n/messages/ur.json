@@ -724,10 +724,13 @@
         "errorGeneric": "کچھ غلط ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔"
       }
     },
-    "experiences": "تجربات",
+    "explore": "تلاش کریں",
     "destinations": "مقامات",
-    "community": "کمیونٹی",
-    "blog": "بلاگ"
+    "activities": "سرگرمیاں",
+    "safety": "حفاظت",
+    "blog": "بلاگ",
+    "tripGroups": "ٹرپ گروپس",
+    "listYourExperience": "اپنا تجربہ درج کریں"
   },
   "NotFound": {
     "heading": "404",

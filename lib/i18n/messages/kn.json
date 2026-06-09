@@ -724,10 +724,13 @@
         "errorGeneric": "ಏನೋ ತಪ್ಪಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
       }
     },
-    "experiences": "ಅನುಭವಗಳು",
+    "explore": "ಅನ್ವೇಷಿಸಿ",
     "destinations": "ತಾಣಗಳು",
-    "community": "ಸಮುದಾಯ",
-    "blog": "ಬ್ಲಾಗ್"
+    "activities": "ಚಟುವಟಿಕೆಗಳು",
+    "safety": "ಸುರಕ್ಷತೆ",
+    "blog": "ಬ್ಲಾಗ್",
+    "tripGroups": "ಟ್ರಿಪ್ ಗುಂಪುಗಳು",
+    "listYourExperience": "ನಿಮ್ಮ ಅನುಭವವನ್ನು ಪಟ್ಟಿಮಾಡಿ"
   },
   "NotFound": {
     "heading": "404",

@@ -724,10 +724,13 @@
         "errorGeneric": "ఏదో తప్పు జరిగింది. దయచేసి మళ్లీ ప్రయత్నించండి."
       }
     },
-    "experiences": "అనుభవాలు",
+    "explore": "అన్వేషించండి",
     "destinations": "గమ్యస్థానాలు",
-    "community": "సంఘం",
-    "blog": "బ్లాగ్"
+    "activities": "కార్యకలాపాలు",
+    "safety": "భద్రత",
+    "blog": "బ్లాగ్",
+    "tripGroups": "ట్రిప్ గ్రూప్‌లు",
+    "listYourExperience": "మీ అనుభవాన్ని లిస్ట్ చేయండి"
   },
   "NotFound": {
     "heading": "404",

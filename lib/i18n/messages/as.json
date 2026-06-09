@@ -660,10 +660,13 @@
         "errorGeneric": "কিবা এটা ভুল হ’ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।"
       }
     },
-    "experiences": "অভিজ্ঞতা",
+    "explore": "অন্বেষণ",
     "destinations": "গন্তব্য",
-    "community": "সম্প্ৰদায়",
-    "blog": "ব্লগ"
+    "activities": "কাৰ্যকলাপ",
+    "safety": "সুৰক্ষা",
+    "blog": "ব্লগ",
+    "tripGroups": "ট্ৰিপ গ্ৰুপ",
+    "listYourExperience": "আপোনাৰ অভিজ্ঞতা তালিকাভুক্ত কৰক"
   },
   "NotFound": {
     "heading": "404",

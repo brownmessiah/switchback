@@ -1383,7 +1383,7 @@
     },
     "insidePolicy": {
       "heading": "Inside-policy cancellations",
-      "body": "When you cancel within your Experience's preset window, the eligible amount is credited automatically to your Outvers Wallet (your Refund balance) within minutes — there is nothing to claim."
+      "body": "When you cancel within your Experience's preset window, the eligible amount is credited automatically to your Outvers Wallet (your Refund balance) — there's nothing to claim; see the refund timing below."
     },
     "vendorCancelled": {
       "heading": "If the Vendor cancels",

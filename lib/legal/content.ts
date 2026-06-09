@@ -7,8 +7,11 @@
  * Counsel reviews before launch.
  *
  * The load-bearing facts live here as typed constants so they are
- * unit-assertable without rendering a page, and so the four pages and the
- * existing /cancellation-policy page can never drift apart:
+ * unit-assertable without rendering a page. These constants back the
+ * lib/legal unit tests that assert ADR fidelity — they are NOT yet wired
+ * into the page render, which reads its copy from the i18n messages
+ * (en.json) directly. Keep these constants in step with the ADRs and the
+ * copy by hand until the render consumes them:
  *   - CANCELLATION_PRESETS — ADR-0005 (per-Experience, locked at Booking
  *     creation). Flexible / Moderate / Strict.
  *   - REFUND_SLA           — ADR-0004. Wallet (Refund balance) credited

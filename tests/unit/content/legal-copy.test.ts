@@ -119,6 +119,21 @@ describe('Refund & Cancellation copy: ADR-0005 presets + ADR-0004 SLA', () => {
     expect(all).toMatch(/5[–-]7 working days/)
   })
 
+  it('inside-policy body carries no conflicting timing claim (ADR-0004: timing lives only in the SLA section)', () => {
+    const insidePolicyBody = (
+      (en.RefundCancellationPage as Record<string, Record<string, string>>).insidePolicy
+    ).body
+    expect(insidePolicyBody).not.toMatch(/minutes/i)
+    expect(insidePolicyBody).not.toMatch(/instant/i)
+  })
+
+  it('refund SLA body is the single source of the 24–48h timing', () => {
+    const slaBody = (
+      (en.RefundCancellationPage as Record<string, Record<string, string>>).refundSla
+    ).body
+    expect(slaBody).toMatch(/24[–-]48/)
+  })
+
   it('Vendor-cancelled Booking is always a full refund', () => {
     expect(all).toMatch(/Vendor/)
     expect(all).toMatch(/full refund/i)

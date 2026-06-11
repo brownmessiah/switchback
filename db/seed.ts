@@ -547,7 +547,10 @@ async function seed(): Promise<void> {
   await db
     .insert(users)
     .values([
-      { id: 'u_seed_admin', email: 'admin@seed.outvers.dev', name: 'Seed Admin' },
+      // Public-grade display name: blog_posts.author_admin_id → users.name is
+      // the PUBLIC blog byline (NOT NULL column), so this user's name renders
+      // on every seeded article. Never an internal label here (QA fix pass).
+      { id: 'u_seed_admin', email: 'admin@seed.outvers.dev', name: 'Outvers Editorial Team' },
       // #28 Sub-admin governance fixture — an Admin whose permissions are a
       // STRICT SUBSET (ADR-0006). Holds vendors/audit/analytics but NOT
       // payouts/refunds/sub_admins/reports. Drives the server-side permission

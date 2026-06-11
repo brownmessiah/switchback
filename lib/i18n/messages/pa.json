@@ -1103,6 +1103,17 @@
       "nameLabel": "ਤੁਹਾਡਾ ਨਾਮ",
       "emailLabel": "ਈਮੇਲ ਪਤਾ",
       "subjectLabel": "ਵਿਸ਼ਾ",
+      "categoryLabel": "ਇਹ ਕਿਸ ਬਾਰੇ ਹੈ?",
+      "categories": {
+        "bookingIssue": "ਬੁਕਿੰਗ ਸਮੱਸਿਆ",
+        "paymentIssue": "ਭੁਗਤਾਨ ਸਮੱਸਿਆ",
+        "refundCancellation": "ਰਿਫੰਡ ਜਾਂ ਰੱਦ ਕਰਨਾ",
+        "vendorSupport": "ਵਿਕਰੇਤਾ ਸਹਾਇਤਾ",
+        "safetyConcern": "ਸੁਰੱਖਿਆ ਚਿੰਤਾ",
+        "generalQuestion": "ਆਮ ਸਵਾਲ"
+      },
+      "bookingIdLabel": "ਬੁਕਿੰਗ ਆਈਡੀ (ਵਿਕਲਪਿਕ)",
+      "bookingIdPlaceholder": "ਜਿਵੇਂ, ਤੁਹਾਡੀ ਪੁਸ਼ਟੀ ਈਮੇਲ ਵਿਚਲਾ ਹਵਾਲਾ",
       "messageLabel": "ਸੁਨੇਹਾ",
       "submit": "ਸੁਨੇਹਾ ਭੇਜੋ",
       "submitting": "ਭੇਜਿਆ ਜਾ ਰਿਹਾ ਹੈ…",

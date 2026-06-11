@@ -1103,6 +1103,17 @@
       "nameLabel": "നിങ്ങളുടെ പേര്",
       "emailLabel": "ഇമെയിൽ വിലാസം",
       "subjectLabel": "വിഷയം",
+      "categoryLabel": "ഇത് എന്തിനെക്കുറിച്ചാണ്?",
+      "categories": {
+        "bookingIssue": "ബുക്കിംഗ് പ്രശ്നം",
+        "paymentIssue": "പേയ്മെന്റ് പ്രശ്നം",
+        "refundCancellation": "റീഫണ്ട് അല്ലെങ്കിൽ റദ്ദാക്കൽ",
+        "vendorSupport": "വെണ്ടർ പിന്തുണ",
+        "safetyConcern": "സുരക്ഷാ ആശങ്ക",
+        "generalQuestion": "പൊതുവായ ചോദ്യം"
+      },
+      "bookingIdLabel": "ബുക്കിംഗ് ഐഡി (ഓപ്ഷണൽ)",
+      "bookingIdPlaceholder": "ഉദാ., നിങ്ങളുടെ സ്ഥിരീകരണ ഇമെയിലിലെ റഫറൻസ്",
       "messageLabel": "സന്ദേശം",
       "submit": "സന്ദേശം അയയ്ക്കുക",
       "submitting": "അയയ്ക്കുന്നു…",

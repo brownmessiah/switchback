@@ -1165,6 +1165,17 @@
       "nameLabel": "Your name",
       "emailLabel": "Email address",
       "subjectLabel": "Subject",
+      "categoryLabel": "What's this about?",
+      "categories": {
+        "bookingIssue": "Booking issue",
+        "paymentIssue": "Payment issue",
+        "refundCancellation": "Refund or cancellation",
+        "vendorSupport": "Vendor support",
+        "safetyConcern": "Safety concern",
+        "generalQuestion": "General question"
+      },
+      "bookingIdLabel": "Booking ID (optional)",
+      "bookingIdPlaceholder": "e.g. the reference from your confirmation email",
       "messageLabel": "Message",
       "submit": "Send message",
       "submitting": "Sending…",

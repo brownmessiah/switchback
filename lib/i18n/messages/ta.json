@@ -1103,6 +1103,17 @@
       "nameLabel": "உங்கள் பெயர்",
       "emailLabel": "மின்னஞ்சல் முகவரி",
       "subjectLabel": "பொருள்",
+      "categoryLabel": "இது எதைப் பற்றியது?",
+      "categories": {
+        "bookingIssue": "முன்பதிவு சிக்கல்",
+        "paymentIssue": "கட்டணச் சிக்கல்",
+        "refundCancellation": "பணத்திருப்பம் அல்லது ரத்து",
+        "vendorSupport": "விற்பனையாளர் ஆதரவு",
+        "safetyConcern": "பாதுகாப்பு கவலை",
+        "generalQuestion": "பொதுவான கேள்வி"
+      },
+      "bookingIdLabel": "முன்பதிவு ஐடி (விருப்பத் தேர்வு)",
+      "bookingIdPlaceholder": "எ.கா., உங்கள் உறுதிப்படுத்தல் மின்னஞ்சலில் உள்ள குறிப்பு",
       "messageLabel": "செய்தி",
       "submit": "செய்தி அனுப்பு",
       "submitting": "அனுப்புகிறது…",

@@ -1103,6 +1103,17 @@
       "nameLabel": "તમારું નામ",
       "emailLabel": "ઇમેઇલ સરનામું",
       "subjectLabel": "વિષય",
+      "categoryLabel": "આ શેના વિશે છે?",
+      "categories": {
+        "bookingIssue": "બુકિંગ સમસ્યા",
+        "paymentIssue": "ચુકવણી સમસ્યા",
+        "refundCancellation": "રિફંડ અથવા રદ",
+        "vendorSupport": "વેન્ડર સહાય",
+        "safetyConcern": "સલામતી ચિંતા",
+        "generalQuestion": "સામાન્ય પ્રશ્ન"
+      },
+      "bookingIdLabel": "બુકિંગ આઈડી (વૈકલ્પિક)",
+      "bookingIdPlaceholder": "દા.ત., તમારા કન્ફર્મેશન ઈમેલમાંનો સંદર્ભ",
       "messageLabel": "સંદેશ",
       "submit": "સંદેશ મોકલો",
       "submitting": "મોકલી રહ્યું છે…",

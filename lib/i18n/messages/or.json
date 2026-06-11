@@ -1017,6 +1017,17 @@
       "nameLabel": "ଆପଣଙ୍କ ନାମ",
       "emailLabel": "ଇମେଲ୍ ଠିକଣା",
       "subjectLabel": "ବିଷୟ",
+      "categoryLabel": "ଏହା କେଉଁ ବିଷୟରେ?",
+      "categories": {
+        "bookingIssue": "ବୁକିଂ ସମସ୍ୟା",
+        "paymentIssue": "ପେମେଣ୍ଟ ସମସ୍ୟା",
+        "refundCancellation": "ରିଫଣ୍ଡ କିମ୍ବା ବାତିଲ",
+        "vendorSupport": "ଭେଣ୍ଡର ସହାୟତା",
+        "safetyConcern": "ସୁରକ୍ଷା ଚିନ୍ତା",
+        "generalQuestion": "ସାଧାରଣ ପ୍ରଶ୍ନ"
+      },
+      "bookingIdLabel": "ବୁକିଂ ଆଇଡି (ବୈକଳ୍ପିକ)",
+      "bookingIdPlaceholder": "ଯଥା, ଆପଣଙ୍କ ନିଶ୍ଚିତକରଣ ଇମେଲରେ ଥିବା ସନ୍ଦର୍ଭ",
       "messageLabel": "ବାର୍ତ୍ତା",
       "submit": "ବାର୍ତ୍ତା ପଠାନ୍ତୁ",
       "submitting": "ପଠାଯାଉଛି…",

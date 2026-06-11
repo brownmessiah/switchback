@@ -4,6 +4,9 @@ import { useId, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { CheckCircle2, TriangleAlert } from 'lucide-react'
 
+import type { ContactCategory } from '@/lib/support/contact'
+import { CONTACT_CATEGORY_TO_TICKET_CATEGORY } from '@/lib/support/contact'
+
 import { submitContactAction } from './actions'
 
 /**
@@ -31,6 +34,8 @@ export function ContactForm() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [subject, setSubject] = useState('')
+  const [category, setCategory] = useState<ContactCategory>('generalQuestion')
+  const [bookingId, setBookingId] = useState('')
   const [message, setMessage] = useState('')
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
@@ -41,7 +46,13 @@ export function ContactForm() {
   const nameId = useId()
   const emailId = useId()
   const subjectId = useId()
+  const categoryId = useId()
+  const bookingIdId = useId()
   const messageId = useId()
+
+  const categoryOptions = Object.keys(
+    CONTACT_CATEGORY_TO_TICKET_CATEGORY,
+  ) as ContactCategory[]
 
   function validate(): FieldErrors {
     const errs: FieldErrors = {}
@@ -65,6 +76,8 @@ export function ContactForm() {
         name: name.trim(),
         email: email.trim(),
         subject: subject.trim(),
+        category,
+        bookingId: bookingId.trim() || undefined,
         message: message.trim(),
       })
       if (result.ok) {
@@ -177,6 +190,43 @@ export function ContactForm() {
             {fieldErrors.subject}
           </p>
         )}
+      </div>
+
+      <div className="grid gap-5 md:grid-cols-2">
+        <div className="flex flex-col gap-[var(--space-field)]">
+          <label htmlFor={categoryId} className="text-sm font-medium text-foreground">
+            {t('categoryLabel')}
+          </label>
+          <select
+            id={categoryId}
+            name="category"
+            value={category}
+            onChange={(e) => setCategory(e.target.value as ContactCategory)}
+            className={inputClass}
+          >
+            {categoryOptions.map((option) => (
+              <option key={option} value={option}>
+                {t(`categories.${option}`)}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-[var(--space-field)]">
+          <label htmlFor={bookingIdId} className="text-sm font-medium text-foreground">
+            {t('bookingIdLabel')}
+          </label>
+          <input
+            id={bookingIdId}
+            name="bookingId"
+            type="text"
+            value={bookingId}
+            onChange={(e) => setBookingId(e.target.value)}
+            maxLength={60}
+            placeholder={t('bookingIdPlaceholder')}
+            className={inputClass}
+          />
+        </div>
       </div>
 
       <div className="flex flex-col gap-[var(--space-field)]">

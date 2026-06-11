@@ -1103,6 +1103,17 @@
       "nameLabel": "آپ کا نام",
       "emailLabel": "ای میل پتہ",
       "subjectLabel": "موضوع",
+      "categoryLabel": "یہ کس بارے میں ہے؟",
+      "categories": {
+        "bookingIssue": "بکنگ کا مسئلہ",
+        "paymentIssue": "ادائیگی کا مسئلہ",
+        "refundCancellation": "رقم کی واپسی یا منسوخی",
+        "vendorSupport": "وینڈر سپورٹ",
+        "safetyConcern": "حفاظتی تشویش",
+        "generalQuestion": "عام سوال"
+      },
+      "bookingIdLabel": "بکنگ آئی ڈی (اختیاری)",
+      "bookingIdPlaceholder": "مثلاً، آپ کے تصدیقی ای میل کا حوالہ",
       "messageLabel": "پیغام",
       "submit": "پیغام بھیجیں",
       "submitting": "بھیجا جا رہا ہے…",

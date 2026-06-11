@@ -1103,6 +1103,17 @@
       "nameLabel": "ನಿಮ್ಮ ಹೆಸರು",
       "emailLabel": "ಇಮೇಲ್ ವಿಳಾಸ",
       "subjectLabel": "ವಿಷಯ",
+      "categoryLabel": "ಇದು ಯಾವುದರ ಬಗ್ಗೆ?",
+      "categories": {
+        "bookingIssue": "ಬುಕಿಂಗ್ ಸಮಸ್ಯೆ",
+        "paymentIssue": "ಪಾವತಿ ಸಮಸ್ಯೆ",
+        "refundCancellation": "ಮರುಪಾವತಿ ಅಥವಾ ರದ್ದತಿ",
+        "vendorSupport": "ಮಾರಾಟಗಾರರ ಬೆಂಬಲ",
+        "safetyConcern": "ಸುರಕ್ಷತಾ ಕಳವಳ",
+        "generalQuestion": "ಸಾಮಾನ್ಯ ಪ್ರಶ್ನೆ"
+      },
+      "bookingIdLabel": "ಬುಕಿಂಗ್ ಐಡಿ (ಐಚ್ಛಿಕ)",
+      "bookingIdPlaceholder": "ಉದಾ., ನಿಮ್ಮ ದೃಢೀಕರಣ ಇಮೇಲ್‌ನಲ್ಲಿರುವ ಉಲ್ಲೇಖ",
       "messageLabel": "ಸಂದೇಶ",
       "submit": "ಸಂದೇಶ ಕಳುಹಿಸಿ",
       "submitting": "ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ…",

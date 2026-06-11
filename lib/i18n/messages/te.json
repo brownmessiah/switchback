@@ -1103,6 +1103,17 @@
       "nameLabel": "మీ పేరు",
       "emailLabel": "ఇమెయిల్ చిరునామా",
       "subjectLabel": "విషయం",
+      "categoryLabel": "ఇది దేని గురించి?",
+      "categories": {
+        "bookingIssue": "బుకింగ్ సమస్య",
+        "paymentIssue": "చెల్లింపు సమస్య",
+        "refundCancellation": "రీఫండ్ లేదా రద్దు",
+        "vendorSupport": "విక్రేత మద్దతు",
+        "safetyConcern": "భద్రతా ఆందోళన",
+        "generalQuestion": "సాధారణ ప్రశ్న"
+      },
+      "bookingIdLabel": "బుకింగ్ ఐడి (ఐచ్ఛికం)",
+      "bookingIdPlaceholder": "ఉదా., మీ నిర్ధారణ ఇమెయిల్‌లోని సూచన",
       "messageLabel": "సందేశం",
       "submit": "సందేశం పంపండి",
       "submitting": "పంపుతోంది…",

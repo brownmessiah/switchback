@@ -1017,6 +1017,17 @@
       "nameLabel": "আপোনাৰ নাম",
       "emailLabel": "ইমেইল ঠিকনা",
       "subjectLabel": "বিষয়",
+      "categoryLabel": "এইটো কিহৰ বিষয়ে?",
+      "categories": {
+        "bookingIssue": "বুকিং সমস্যা",
+        "paymentIssue": "পেমেণ্ট সমস্যা",
+        "refundCancellation": "ৰিফাণ্ড বা বাতিল",
+        "vendorSupport": "বিক্ৰেতা সহায়",
+        "safetyConcern": "সুৰক্ষাৰ চিন্তা",
+        "generalQuestion": "সাধাৰণ প্ৰশ্ন"
+      },
+      "bookingIdLabel": "বুকিং আইডি (বৈকল্পিক)",
+      "bookingIdPlaceholder": "যেনে, আপোনাৰ নিশ্চিতকৰণ ইমেইলৰ প্ৰসংগ",
       "messageLabel": "বাৰ্তা",
       "submit": "বাৰ্তা পঠাওক",
       "submitting": "পঠিয়াই থকা হৈছে…",

@@ -1103,6 +1103,17 @@
       "nameLabel": "আপনার নাম",
       "emailLabel": "ইমেল ঠিকানা",
       "subjectLabel": "বিষয়",
+      "categoryLabel": "এটি কী বিষয়ে?",
+      "categories": {
+        "bookingIssue": "বুকিং সমস্যা",
+        "paymentIssue": "পেমেন্ট সমস্যা",
+        "refundCancellation": "রিফান্ড বা বাতিল",
+        "vendorSupport": "বিক্রেতা সহায়তা",
+        "safetyConcern": "নিরাপত্তা সংক্রান্ত উদ্বেগ",
+        "generalQuestion": "সাধারণ প্রশ্ন"
+      },
+      "bookingIdLabel": "বুকিং আইডি (ঐচ্ছিক)",
+      "bookingIdPlaceholder": "যেমন, আপনার নিশ্চিতকরণ ইমেলের রেফারেন্স",
       "messageLabel": "বার্তা",
       "submit": "বার্তা পাঠান",
       "submitting": "পাঠানো হচ্ছে…",

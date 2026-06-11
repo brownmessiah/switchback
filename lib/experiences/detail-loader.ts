@@ -14,6 +14,10 @@ import {
   type GalleryImage,
   loadExperienceGallery,
 } from '@/lib/media/experience-images'
+import {
+  isPubliclyVisibleExperience,
+  publiclyVisibleExperienceCondition,
+} from '@/lib/experiences/public-filter'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 import {
   type PermitMeta,
@@ -187,7 +191,10 @@ export async function loadExperienceDetail(
     .where(
       and(
         eq(experiences.slug, args.slug),
-        eq(experiences.status, 'published'),
+        // Same public-visibility rule as every list-query: published AND not
+        // an admin/E2E fixture. A published fixture must 404 on direct URL
+        // access too (the leak issue 04 deferred).
+        publiclyVisibleExperienceCondition(),
       ),
     )
     .limit(1)
@@ -217,7 +224,7 @@ export async function loadExperienceDetail(
     .where(eq(experiences.id, redirect.entityId))
     .limit(1)
 
-  if (!target || target.status !== 'published') return null
+  if (!target || !isPubliclyVisibleExperience(target)) return null
 
   return { type: 'redirect', lng: args.lng, canonicalSlug: target.slug }
 }

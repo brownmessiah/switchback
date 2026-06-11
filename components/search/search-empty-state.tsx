@@ -28,6 +28,8 @@ export interface SearchEmptyStateLabels {
   readonly clearFilters: string
   /** Already-translated "Popular searches" eyebrow over the alternatives. */
   readonly alternativesLabel: string
+  /** Already-translated "Browse nearby destinations" CTA (`results.browseDestinations`). */
+  readonly browseDestinations: string
 }
 
 interface SearchEmptyStateProps {
@@ -87,6 +89,17 @@ export function SearchEmptyState({
           </ul>
         </div>
       ) : null}
+      {/* Always-on browse path (QA fix pass): even with no live alternatives
+          a dead-end search keeps a way out. */}
+      <div className="mt-4">
+        <Link
+          href="/destinations"
+          data-testid="search-empty-browse-destinations"
+          className="min-tap inline-flex items-center text-sm font-medium text-primary underline-offset-4 transition hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          {labels.browseDestinations}
+        </Link>
+      </div>
     </EmptyState>
   )
 }

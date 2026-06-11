@@ -228,6 +228,7 @@ export default async function SearchPage({
                   hint: t('results.emptyHint'),
                   clearFilters: t('results.clearFilters'),
                   alternativesLabel: t('results.popularLabel'),
+                  browseDestinations: t('results.browseDestinations'),
                 }}
               />
             ) : view === 'list' ? (

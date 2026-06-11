@@ -11,6 +11,7 @@ const labels = {
   hint: 'Try adjusting your filters or search for something else.',
   clearFilters: 'Clear filters',
   alternativesLabel: 'Popular searches',
+  browseDestinations: 'Browse nearby destinations',
 }
 
 const alternatives: SearchEmptyAlternative[] = [
@@ -53,5 +54,13 @@ describe('SearchEmptyState', () => {
   it('omits the alternatives block entirely when there is no live inventory', () => {
     render(<SearchEmptyState labels={labels} isFiltered alternatives={[]} />)
     expect(screen.queryByText('Popular searches')).toBeNull()
+  })
+
+  // QA fix pass: the empty state always offers a destinations browse path —
+  // even with zero live alternatives — so a dead-end search has a way out.
+  it('offers a "Browse nearby destinations" link to /destinations', () => {
+    render(<SearchEmptyState labels={labels} isFiltered alternatives={[]} />)
+    const browse = screen.getByRole('link', { name: 'Browse nearby destinations' })
+    expect(browse).toHaveAttribute('href', '/destinations')
   })
 })

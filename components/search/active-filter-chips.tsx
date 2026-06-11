@@ -11,7 +11,7 @@ import {
   deriveActiveFilterChips,
   type ActiveFilterChip,
 } from '@/lib/search/active-filter-chips'
-import { slugToI18nKey } from '@/lib/search/facet-options'
+import { humanizeSlug, slugToI18nKey } from '@/lib/search/facet-options'
 import type { SearchExperiencesParams } from '@/lib/search/search-experiences'
 
 interface ActiveFilterChipsProps {
@@ -55,10 +55,17 @@ export function ActiveFilterChips({ parsed }: ActiveFilterChipsProps): ReactElem
         return t(`filters.categoryOptions.${chip.value}`)
       case 'state':
         return chip.value ?? ''
-      case 'region':
-        return t(`regions.${slugToI18nKey(chip.value ?? '')}`)
-      case 'activity':
-        return t(`activities.${slugToI18nKey(chip.value ?? '')}`)
+      // Slug-valued chips can carry an unknown value straight from the URL
+      // (stale inbound link, hand-edited query). Fall back to a humanized
+      // slug rather than leaking the raw "SearchPage.…" key (QA fix pass).
+      case 'region': {
+        const key = `regions.${slugToI18nKey(chip.value ?? '')}`
+        return t.has(key) ? t(key) : humanizeSlug(chip.value ?? '')
+      }
+      case 'activity': {
+        const key = `activities.${slugToI18nKey(chip.value ?? '')}`
+        return t.has(key) ? t(key) : humanizeSlug(chip.value ?? '')
+      }
       case 'difficulty':
         return t(`filters.difficultyOptions.${chip.value}`)
       case 'durationBand':

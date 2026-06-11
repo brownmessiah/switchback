@@ -40,6 +40,17 @@ export function slugToI18nKey(slug: string): string {
 }
 
 /**
+ * Human-readable fallback for a slug with no i18n entry (an unknown or stale
+ * facet value arriving via the URL): `scuba` → `Scuba`, `spiti-valley` →
+ * `Spiti valley`. Display-only — never a substitute for translating known
+ * registry slugs.
+ */
+export function humanizeSlug(slug: string): string {
+  const words = slug.split('-').filter(Boolean).join(' ')
+  return words.charAt(0).toUpperCase() + words.slice(1)
+}
+
+/**
  * Activity facet options — one per activities-registry entry. `i18nKey`
  * resolves against `SearchPage.activities`.
  */

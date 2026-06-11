@@ -28,40 +28,24 @@ test.describe('responsive · public surfaces (< lg)', () => {
     }
   })
 
-  test('home trust + how-it-works sections render with no horizontal overflow (issue 08)', async ({
+  test('home trust strip + how-it-works render with no horizontal overflow', async ({
     page,
   }) => {
     await page.goto('/', { waitUntil: 'networkidle' })
 
-    // Both new sections are present at the mobile/tablet viewport (they wrap /
-    // stack rather than scroll horizontally).
+    // The compact trust strip (owner screenshots 2026-06-11) sits directly
+    // under the hero; how-it-works stays at the bottom. Both wrap/stack
+    // rather than scroll horizontally.
     await expect(
       page.getByRole('region', { name: 'Adventure you can trust' }),
     ).toBeVisible()
+    await expect(page.getByTestId('trust-card')).toHaveCount(4)
     await expect(
       page.getByRole('region', { name: 'How Outvers works' }),
     ).toBeVisible()
 
     // No page-level horizontal overflow (re-asserted after the sections render).
     expect(await pageHorizontalOverflow(page)).toBeLessThanOrEqual(2)
-  })
-
-  test('home activity chips: no h-scroll strip; +N more only on phones', async ({
-    page,
-  }) => {
-    await page.goto('/', { waitUntil: 'networkidle' })
-    const more = page.getByTestId('activities-more')
-    const width = page.viewportSize()?.width ?? 0
-    if (width < 768) {
-      // phone: when the seed exceeds the cap, +N more is visible and points at /search
-      if (await more.count()) {
-        await expect(more.first()).toBeVisible()
-        await expect(more.first()).toHaveAttribute('href', /\/search/)
-      }
-    } else {
-      // tablet/desktop: the +N more affordance is not shown (all chips render)
-      await expect(more).toBeHidden()
-    }
   })
 
   test('search: the desktop filter rail is hidden and the Filters Sheet opens the facets', async ({

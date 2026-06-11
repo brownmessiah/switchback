@@ -97,6 +97,11 @@
     }
   },
   "HomeSearch": {
+    "single": {
+      "label": "Search destinations or activities",
+      "placeholder": "Destination or activity",
+      "submit": "Search"
+    },
     "fields": {
       "destination": "Destination",
       "activity": "Activity",
@@ -979,11 +984,11 @@
       "bookTitle": "Book with transparent money rules",
       "bookBody": "Eligible bookings use partial pay — a 25% Advance now, the rest auto-captured 24 hours before you go. Refunds follow a fixed cancellation preset, never a case-by-case guess.",
       "trustTitle": "Trust built on verification",
-      "trustBody": "Every vendor climbs a three-tier KYC ladder — Phone verified, Identity verified, Business verified — and the badge on each listing tells you how far they got. For higher-risk activities, a safety stack adds a trusted contact, SOS notifications, and check-in pings."
+      "trustBody": "Every vendor climbs a three-tier KYC ladder — Phone verified, Identity verified, Business verified — and the badge on each listing tells you how far they got. For higher-risk activities, a safety stack adds a trusted contact, with SOS notifications and check-in pings where enabled."
     },
     "honesty": {
       "heading": "What we are — and what we are not",
-      "body": "Outvers is a marketplace. The Experiences are operated by independent third-party vendors, not by Outvers. We verify vendors, hold the money rules, and notify your contacts when you trigger SOS — but we do not run the trips ourselves, we do not obtain permits on your behalf, and our SOS is a notification tool, not an emergency response service. Being clear about this is part of the trust."
+      "body": "Outvers is a marketplace. The Experiences are operated by independent third-party vendors, not by Outvers. We verify vendors, hold the money rules, and — where SOS is enabled — notify your contacts when you trigger it. But we do not run the trips ourselves, we do not obtain permits on your behalf, and our SOS is a notification tool, not an emergency response service. Being clear about this is part of the trust."
     },
     "contact": {
       "heading": "Get in touch",
@@ -1139,7 +1144,7 @@
       },
       "safetyStack": {
         "question": "What safety features does Outvers offer?",
-        "answer": "Experiences flagged for it use the Safety stack: a Trusted contact you record before booking, automated check-in pings at trip start and end, an SOS button, and ephemeral live-location sharing. On an SOS trigger, Outvers notifies your Trusted contact, the Vendor, and Outvers ops by WhatsApp and SMS — Outvers notifies, it does not dispatch."
+        "answer": "Experiences flagged for it use the Safety stack: a Trusted contact you record before booking, plus — where enabled — automated check-in pings at trip start and end, an SOS button, and ephemeral live-location sharing. On an SOS trigger, Outvers notifies your Trusted contact, the Vendor, and Outvers ops — Outvers notifies, it does not dispatch."
       }
     },
     "stillStuck": {

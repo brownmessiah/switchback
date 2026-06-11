@@ -19,18 +19,49 @@ import { describe, expect, it } from 'vitest'
  * checks, two-bucket Wallet, T-24h auto-capture (this test deliberately does
  * not touch those).
  */
-describe('SafetyPage copy — only shipped features stated unconditionally', () => {
-  const en = JSON.parse(
-    readFileSync(join(process.cwd(), 'lib/i18n/messages/en.json'), 'utf8'),
-  ) as Record<string, unknown>
+describe('safety copy — only shipped features stated unconditionally', () => {
+  const raw = readFileSync(
+    join(process.cwd(), 'lib/i18n/messages/en.json'),
+    'utf8',
+  )
+  const en = JSON.parse(raw) as Record<string, unknown>
   const safety = JSON.stringify(en.SafetyPage)
 
-  it('does not claim an unconditional WhatsApp-and-SMS SOS fan-out', () => {
-    expect(safety).not.toContain('WhatsApp and SMS')
+  // Whole-file checks: the same over-claims also lived on AboutPage
+  // (howItWorks.trustBody, honesty.body) and HelpPage (faq.safetyStack).
+  it('never claims an unconditional WhatsApp-and-SMS SOS fan-out anywhere', () => {
+    expect(raw).not.toContain('WhatsApp and SMS')
   })
 
-  it('does not promise a live 72-hour location auto-delete', () => {
-    expect(safety).not.toContain('auto-deleted 72 hours')
+  it('never promises a live 72-hour location auto-delete anywhere', () => {
+    expect(raw).not.toContain('auto-deleted 72 hours')
+  })
+
+  it('mentions SOS only with a feature-conditional hedge', () => {
+    // Every SOS-capability claim must carry "where enabled" / "where
+    // supported" phrasing in the same value (posture statements that describe
+    // what SOS does NOT do are exempt by construction — they contain
+    // "notifies people" / "not an emergency").
+    const offenders: string[] = []
+    function walk(node: unknown, path: string[]): void {
+      if (node && typeof node === 'object') {
+        for (const [k, v] of Object.entries(node)) walk(v, [...path, k])
+        return
+      }
+      if (typeof node !== 'string' || !node.includes('SOS')) return
+      const hedged =
+        node.includes('where enabled') ||
+        node.includes('where supported') ||
+        node.includes('If trip location sharing is enabled') ||
+        // Pure posture/disclaimer statements (what SOS is NOT).
+        node.includes('notifies people') ||
+        node.includes('not an emergency')
+      if (!hedged) offenders.push(path.join('.'))
+    }
+    walk(en, [])
+    // Titles are nav labels, not capability claims.
+    const claimOffenders = offenders.filter((p) => !p.endsWith('Title'))
+    expect(claimOffenders).toEqual([])
   })
 
   it('states the 48-hour dispute window as a target, not a guarantee', () => {

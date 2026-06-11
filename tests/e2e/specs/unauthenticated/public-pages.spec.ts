@@ -244,46 +244,43 @@ test.describe('Home page', () => {
     }
   })
 
-  test('primary CTA "Explore Experiences" routes to /search', async ({
-    page,
-  }) => {
+  // Headout-style hero (owner screenshots 2026-06-11): the single search bar
+  // IS the call to action — no hero CTA buttons remain. Submitting the field
+  // GET-routes to /search?q= with zero JS required.
+  test('single hero search submits to /search?q=', async ({ page }) => {
     await page.goto('/')
 
-    const cta = page.getByRole('link', { name: 'Explore Experiences' })
-    await expect(cta).toBeVisible()
-    await expect(cta).toHaveAttribute('href', '/search')
+    const form = page.getByTestId('home-hero-search')
+    await expect(form).toBeVisible()
 
-    await cta.click()
-    await page.waitForURL('**/search')
+    const input = form.getByRole('searchbox')
+    await input.fill('rafting')
+    await input.press('Enter')
+    await page.waitForURL('**/search?q=rafting')
     expect(new URL(page.url()).pathname).toBe('/search')
   })
 
-  test('secondary CTA "List Your Experience" routes to /vendor-partner (issue 06)', async ({
+  test('the old hero CTA buttons are gone; supply CTA lives in the header', async ({
     page,
   }) => {
     await page.goto('/')
 
-    const cta = page.getByRole('link', { name: 'List Your Experience' })
-    await expect(cta).toBeVisible()
-    // Re-pointed in #06: the hero now funnels to the public partner page.
-    await expect(cta).toHaveAttribute('href', '/vendor-partner')
+    await expect(
+      page.getByRole('link', { name: 'Explore Experiences' }),
+    ).toHaveCount(0)
+    // The supply-side CTA is the header's (single) "List your experience".
+    const headerCta = page.getByRole('link', { name: 'List your experience' })
+    await expect(headerCta).toBeVisible()
+    await expect(headerCta).toHaveAttribute('href', '/vendor-partner')
   })
 
-  test('both hero CTAs are keyboard-focusable and meet the 44px min-tap target', async ({
+  test('the compact trust strip renders directly under the hero', async ({
     page,
   }) => {
     await page.goto('/')
 
-    for (const name of ['Explore Experiences', 'List Your Experience']) {
-      const cta = page.getByRole('link', { name })
-      await cta.focus()
-      await expect(cta).toBeFocused()
-
-      const box = await cta.boundingBox()
-      expect(box).not.toBeNull()
-      // .min-tap guarantees a >=44px tap target (ADR-0018).
-      expect(box!.height).toBeGreaterThanOrEqual(44)
-    }
+    const items = page.getByTestId('trust-card')
+    await expect(items).toHaveCount(4)
   })
 })
 

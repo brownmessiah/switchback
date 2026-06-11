@@ -35,65 +35,55 @@ beforeEach(() => {
   mockPathname = '/'
 })
 
-function getPrimaryNav(): HTMLElement {
-  return screen.getByRole('navigation', { name: 'Primary' })
-}
+/**
+ * Minimal header contract (owner screenshots, 2026-06-11 — Headout-style):
+ * ONLY the wordmark, the supply-side "List your experience" CTA, the locale/
+ * theme utilities, and the auth control. The five discovery links (Explore /
+ * Destinations / Activities / Safety / Blog) moved out of the header — they
+ * live in the footer's "Explore" + "Support" columns sitewide. This
+ * supersedes the issue-03 discovery-forward bar.
+ */
+const REMOVED_DISCOVERY_KEYS = [
+  'explore',
+  'destinations',
+  'activities',
+  'safety',
+  'blog',
+  'community',
+  'experiences',
+] as const
 
-describe('SiteHeader — discovery-forward primary nav (issue 03)', () => {
-  it('renders exactly the five discovery items with correct hrefs', () => {
+describe('SiteHeader — minimal Headout-style bar (screenshots 2026-06-11)', () => {
+  it('renders the wordmark linking home', () => {
     render(<SiteHeader />)
-    const nav = getPrimaryNav()
-
-    const explore = within(nav).getByRole('link', { name: 'explore' })
-    expect(explore).toHaveAttribute('href', '/search')
-
-    expect(within(nav).getByRole('link', { name: 'destinations' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'homeAriaLabel' })).toHaveAttribute(
       'href',
-      '/destinations',
-    )
-    // Activities lands on the canonical search grid (no /activities index route).
-    expect(within(nav).getByRole('link', { name: 'activities' })).toHaveAttribute(
-      'href',
-      '/search',
-    )
-    expect(within(nav).getByRole('link', { name: 'safety' })).toHaveAttribute(
-      'href',
-      '/safety',
-    )
-    expect(within(nav).getByRole('link', { name: 'blog' })).toHaveAttribute(
-      'href',
-      '/blog',
+      '/',
     )
   })
 
-  it('does NOT render a "Community" primary item or an /community link', () => {
+  it('renders NO discovery links in the header at all', () => {
     render(<SiteHeader />)
-    const nav = getPrimaryNav()
-    expect(within(nav).queryByRole('link', { name: 'community' })).not.toBeInTheDocument()
-    expect(
-      within(nav).queryByRole('link', { name: /community/i }),
-    ).not.toBeInTheDocument()
+    for (const key of REMOVED_DISCOVERY_KEYS) {
+      expect(
+        screen.queryByRole('link', { name: key }),
+      ).not.toBeInTheDocument()
+    }
   })
 
-  it('does NOT render the old "Experiences" primary label', () => {
+  it('renders the "List your experience" CTA → /vendor-partner on the desktop bar', () => {
     render(<SiteHeader />)
-    const nav = getPrimaryNav()
-    expect(
-      within(nav).queryByRole('link', { name: 'experiences' }),
-    ).not.toBeInTheDocument()
-  })
-
-  it('renders a right-side "List your experience" CTA → /vendor-partner (issue 06)', () => {
-    render(<SiteHeader />)
-    const nav = getPrimaryNav()
+    const nav = screen.getByRole('navigation', { name: 'Primary' })
     expect(
       within(nav).getByRole('link', { name: 'listYourExperience' }),
     ).toHaveAttribute('href', '/vendor-partner')
   })
 
-  it('keeps the AuthStatus (Sign in) control on the desktop bar', () => {
+  it('keeps the utilities: theme toggle, language selector, AuthStatus (Sign in)', () => {
     render(<SiteHeader />)
     expect(screen.getByTestId('auth-status')).toBeInTheDocument()
+    expect(screen.getAllByTestId('language-selector').length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('button', { name: 'theme' }).length).toBeGreaterThan(0)
   })
 
   it('returns null inside the back-office (e.g. /admin)', () => {
@@ -103,38 +93,12 @@ describe('SiteHeader — discovery-forward primary nav (issue 03)', () => {
   })
 })
 
-describe('SiteHeader — mobile drawer mirrors the discovery nav (issue 03)', () => {
+describe('SiteHeader — mobile menu mirrors the minimal bar', () => {
   function getMobileNav(): HTMLElement {
     return screen.getByRole('navigation', { name: 'Mobile primary' })
   }
 
-  it('mirrors the five discovery items with the same hrefs', () => {
-    render(<SiteHeader />)
-    const nav = getMobileNav()
-
-    expect(within(nav).getByRole('link', { name: 'explore' })).toHaveAttribute(
-      'href',
-      '/search',
-    )
-    expect(within(nav).getByRole('link', { name: 'destinations' })).toHaveAttribute(
-      'href',
-      '/destinations',
-    )
-    expect(within(nav).getByRole('link', { name: 'activities' })).toHaveAttribute(
-      'href',
-      '/search',
-    )
-    expect(within(nav).getByRole('link', { name: 'safety' })).toHaveAttribute(
-      'href',
-      '/safety',
-    )
-    expect(within(nav).getByRole('link', { name: 'blog' })).toHaveAttribute(
-      'href',
-      '/blog',
-    )
-  })
-
-  it('mirrors the right-side CTAs: List your experience (→ /vendor-partner) + Sign in', () => {
+  it('carries ONLY List your experience + Sign in (no discovery links)', () => {
     render(<SiteHeader />)
     const nav = getMobileNav()
     expect(
@@ -144,17 +108,14 @@ describe('SiteHeader — mobile drawer mirrors the discovery nav (issue 03)', ()
       'href',
       '/sign-in',
     )
+    for (const key of REMOVED_DISCOVERY_KEYS) {
+      expect(
+        within(nav).queryByRole('link', { name: key }),
+      ).not.toBeInTheDocument()
+    }
   })
 
-  it('has no "Community" item in the mobile drawer', () => {
-    render(<SiteHeader />)
-    const nav = getMobileNav()
-    expect(
-      within(nav).queryByRole('link', { name: /community/i }),
-    ).not.toBeInTheDocument()
-  })
-
-  it('every drawer link carries the .min-tap class (>=44px tap target, ADR-0018)', () => {
+  it('every menu link carries the .min-tap class (>=44px tap target, ADR-0018)', () => {
     render(<SiteHeader />)
     const nav = getMobileNav()
     const links = within(nav).getAllByRole('link')

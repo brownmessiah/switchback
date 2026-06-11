@@ -29,15 +29,15 @@ afterEach(() => {
   cleanup()
 })
 
-// The six trust-card keys, in render order. Each is a descriptive feature
-// category backed by real product behaviour — NOT a numeric claim.
+// The four trust-strip keys, in render order (Headout-style compact strip,
+// owner screenshots 2026-06-11 — was six full cards in issue 08). Each is a
+// descriptive feature category backed by real product behaviour — NOT a
+// numeric claim.
 const TRUST_CARD_KEYS = [
   'verifiedVendors',
   'transparentPricing',
   'safetyFirst',
-  'bookingSupport',
   'instantConfirmation',
-  'secureCheckout',
 ] as const
 
 // The five "How Outvers Works" steps, in order.
@@ -59,8 +59,8 @@ const FORBIDDEN_SUBSTRINGS = [
   'operator',
 ]
 
-describe('HomeTrust — "Adventure You Can Trust" section (issue 08)', () => {
-  it('renders inside a labelled <section> with a single <h2> heading', () => {
+describe('HomeTrust — compact trust strip (owner screenshots 2026-06-11)', () => {
+  it('renders inside a labelled <section> with a single (sr-only) <h2> heading', () => {
     render(<HomeTrust />)
     const region = screen.getByRole('region', {
       name: 'HomePage.trust.heading',
@@ -71,8 +71,9 @@ describe('HomeTrust — "Adventure You Can Trust" section (issue 08)', () => {
     expect(headings[0].textContent).toBe('HomePage.trust.heading')
   })
 
-  it('renders all six trust cards with their title + description', () => {
+  it('renders exactly four compact strip items with title + one-liner', () => {
     render(<HomeTrust />)
+    expect(screen.getAllByTestId('trust-card')).toHaveLength(4)
     for (const key of TRUST_CARD_KEYS) {
       expect(
         screen.getByText(`HomePage.trust.cards.${key}.title`),
@@ -83,13 +84,7 @@ describe('HomeTrust — "Adventure You Can Trust" section (issue 08)', () => {
     }
   })
 
-  it('renders exactly six trust cards', () => {
-    render(<HomeTrust />)
-    const cards = screen.getAllByTestId('trust-card')
-    expect(cards).toHaveLength(6)
-  })
-
-  it('renders a distinct accessible icon (aria-hidden) per card', () => {
+  it('renders a distinct accessible icon (aria-hidden) per item', () => {
     const { container } = render(<HomeTrust />)
     const cards = Array.from(
       container.querySelectorAll('[data-testid="trust-card"]'),
@@ -99,8 +94,8 @@ describe('HomeTrust — "Adventure You Can Trust" section (issue 08)', () => {
       expect(svg?.getAttribute('aria-hidden')).toBe('true')
       return svg?.innerHTML
     })
-    // All six icons are distinct (no copy-paste icon reuse).
-    expect(new Set(iconHtml).size).toBe(6)
+    // All four icons are distinct (no copy-paste icon reuse).
+    expect(new Set(iconHtml).size).toBe(4)
   })
 
   it('does not emit fabricated metrics or over-promising claims', () => {

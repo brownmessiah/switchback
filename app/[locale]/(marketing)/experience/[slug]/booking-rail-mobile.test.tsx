@@ -100,6 +100,8 @@ describe('BookingRailMobile', () => {
             reason: 'Monsoon shutdown',
             reopens: 'Reopens 1 September 2026',
             bookingDisabled: 'Booking is paused for this Experience.',
+            exploreSimilarLabel: 'Explore similar experiences',
+            exploreSimilarHref: '/search?region=lonavala',
           },
         })}
       />,

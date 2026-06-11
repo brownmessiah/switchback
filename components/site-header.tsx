@@ -12,31 +12,18 @@ import { LanguageSelector } from './language-selector'
 import { ThemeToggle } from './theme-toggle'
 
 /**
- * Discovery-forward primary nav (issue 03, DECISION D2). Five surfaces, all
- * resolving:
- *   - Explore → /search        (the full experience grid; label-only — no route rename)
- *   - Destinations → /destinations
- *   - Activities → /search      (activity-browse; there is no /activities index
- *                                route, so this lands on the canonical search
- *                                grid, mirroring the home "all activities" link)
- *   - Safety → /safety
- *   - Blog → /blog
- *
- * The old vague "Community" tab is GONE from the primary bar — the (real)
- * Trip Groups product (ADR-0009) moves into the user menu. The /community
- * routes stay intact; only the nav tab is removed.
+ * Minimal Headout-style header (owner screenshots, 2026-06-11): ONLY the
+ * wordmark, the supply-side "List your experience" CTA, the theme/locale
+ * utilities, and the auth control. This supersedes the issue-03
+ * discovery-forward bar — the five discovery surfaces (Explore /
+ * Destinations / Activities / Safety / Blog) stay reachable sitewide via the
+ * footer's "Explore" + "Support" columns, and the homepage hero search is
+ * the primary discovery entry.
  */
-const NAV_LINKS = [
-  { href: '/search', key: 'explore' },
-  { href: '/destinations', key: 'destinations' },
-  { href: '/search', key: 'activities' },
-  { href: '/safety', key: 'safety' },
-  { href: '/blog', key: 'blog' },
-] as const
 
 /**
  * Supply-side CTA → the public /vendor-partner landing page (issue 06), which
- * funnels into the auth-gated /vendor/onboarding. The nav points at the
+ * funnels into the auth-gated /vendor/onboarding. The header points at the
  * crawlable partner page, not the onboarding route itself.
  */
 const VENDOR_CTA_HREF = '/vendor-partner'
@@ -67,20 +54,7 @@ export function SiteHeader(): ReactElement | null {
           {t('home')}
         </Link>
 
-        <nav aria-label="Primary" className="hidden items-center gap-6 sm:flex">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.key}
-              href={link.href}
-              className={
-                isHome
-                  ? 'text-sm text-white/80 hover:text-white'
-                  : 'text-sm text-muted-foreground hover:text-foreground'
-              }
-            >
-              {t(link.key)}
-            </Link>
-          ))}
+        <nav aria-label="Primary" className="hidden items-center gap-4 sm:flex">
           <Link
             href={VENDOR_CTA_HREF}
             className={
@@ -123,15 +97,6 @@ export function SiteHeader(): ReactElement | null {
             aria-label="Mobile primary"
             className="absolute right-4 mt-2 flex w-56 flex-col gap-1 rounded-lg border bg-popover p-2 shadow-lg"
           >
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.key}
-                href={link.href}
-                className="min-tap flex items-center rounded px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              >
-                {t(link.key)}
-              </Link>
-            ))}
             <Link
               href={VENDOR_CTA_HREF}
               className="min-tap flex items-center rounded px-3 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground"

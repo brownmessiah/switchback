@@ -41,7 +41,6 @@ const BASE_PROPS = {
   bookNowLabel: 'pricing.bookNow',
   checkoutHref: '/checkout?experienceId=e1',
   locale: 'en',
-  slots: [],
   calendarLabels: {
     selectDate: 'calendar.selectDate',
     today: 'calendar.today',
@@ -74,7 +73,7 @@ afterEach(() => {
 
 describe('BookingRailInteractive — Region-closure CTA', () => {
   it('replaces the booking CTA with an "Explore similar experiences" link when closed', () => {
-    render(<BookingRailInteractive {...BASE_PROPS} closure={CLOSURE} />)
+    render(<BookingRailInteractive {...BASE_PROPS} closure={CLOSURE} slots={[]} />)
 
     // No "Book now" affordance at all — not even a disabled one.
     expect(screen.queryByText('pricing.bookNow')).toBeNull()

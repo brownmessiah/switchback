@@ -3,28 +3,16 @@ import Image from 'next/image'
 import Link from 'next/link'
 import type { ReactElement } from 'react'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
-import {
-  ChevronDown,
-  CreditCard,
-  MapPin,
-  ShieldCheck,
-  XCircle,
-} from 'lucide-react'
+import { ChevronDown, MapPin } from 'lucide-react'
 
 import { ExperienceCard } from '@/components/experience-card'
 import { loadRecentlyViewedCardsAction } from '@/components/recently-viewed/actions'
 import { RecentlyViewedRail } from '@/components/recently-viewed/rail'
+import { HomeHeroSearch } from '@/components/home/hero-search'
 import { HomeHowItWorks } from '@/components/home/how-it-works'
-import {
-  HomeStructuredSearch,
-  type StructuredSearchOption,
-} from '@/components/home/structured-search'
 import { HomeTrust } from '@/components/home/trust'
-import { Badge } from '@/components/ui/badge'
 import { db } from '@/db/client'
 import { env } from '@/lib/env'
-import { getActivityIcon } from '@/lib/home/activity-icons'
-import { loadPopularSearchChips } from '@/lib/home/popular-chips'
 import { loadHomePageData } from '@/lib/home/queries'
 import { getHeroImage, getRegionImage } from '@/lib/images'
 import { generateAlternates } from '@/lib/seo/hreflang'
@@ -32,12 +20,6 @@ import { organization } from '@/lib/seo/schemas/organization'
 import { website } from '@/lib/seo/schemas/website'
 
 export const revalidate = 60
-
-/**
- * Max activity chips shown on phones before collapsing the rest behind a
- * "+N more" link. Sized for ~2 rows at 375px; md+ shows every chip.
- */
-const MOBILE_CHIP_CAP = 6
 
 type Props = {
   readonly params: Promise<{ locale: string }>
@@ -59,38 +41,8 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
   setRequestLocale(locale)
 
   const t = await getTranslations({ locale, namespace: 'HomePage' })
-  // `SearchPage` carries the localised region/activity display names (the same
-  // ones the /search facet rail uses) so the structured-search selects + the
-  // popular chips read in the active locale.
-  const tFacet = await getTranslations({ locale, namespace: 'SearchPage' })
-  const tHomeSearch = await getTranslations({ locale, namespace: 'HomeSearch' })
-  const [data, popularChips] = await Promise.all([
-    loadHomePageData(db),
-    loadPopularSearchChips(db),
-  ])
+  const data = await loadHomePageData(db)
   const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
-
-  // Structured-search options — only inventory-backed (count > 0) regions /
-  // activities (DECISION D0). `displayNameHi` etc. live in the registry, but we
-  // resolve the LABEL via the SearchPage.regions/activities namespace so the
-  // selects localise across all 13 locales (the registry only ships en + hi).
-  function slugToFacetKey(slug: string): string {
-    return slug.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase())
-  }
-  const destinationOptions: StructuredSearchOption[] = data.featuredDestinations
-    .filter((d) => d.experienceCount > 0)
-    .map((d) => ({
-      slug: d.slug,
-      i18nKey: slugToFacetKey(d.slug),
-      nameEn: tFacet(`regions.${slugToFacetKey(d.slug)}`),
-    }))
-  const activityOptions: StructuredSearchOption[] = data.featuredActivities
-    .filter((a) => a.experienceCount > 0)
-    .map((a) => ({
-      slug: a.slug,
-      i18nKey: slugToFacetKey(a.slug),
-      nameEn: tFacet(`activities.${slugToFacetKey(a.slug)}`),
-    }))
 
   // Home JSON-LD (ADR-0013): exactly ONE WebSite node (with the sitelinks
   // SearchAction) + one Organization node. The SearchAction target deep-links
@@ -111,31 +63,6 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
       'Indian adventure-activity marketplace — rafting, paragliding, scuba, trekking from KYC-verified vendors.',
   })
 
-  // Trust band — opaque chips on an opaque strip (Direction B). Each pairs a
-  // semantic-status colour with a lucide icon (status never by colour alone,
-  // DESIGN.md §1.3) so it clears AA over imagery where the as-is overlaid
-  // micro-text failed.
-  const trustChips = [
-    {
-      key: 'freeCancellation',
-      Icon: XCircle,
-      label: t('trustBadges.freeCancellation'),
-      variant: 'success' as const,
-    },
-    {
-      key: 'kycVerified',
-      Icon: ShieldCheck,
-      label: t('trustBadges.kycVerified'),
-      variant: 'success' as const,
-    },
-    {
-      key: 'transparentPricing',
-      Icon: CreditCard,
-      label: t('trustBadges.transparentPricing'),
-      variant: 'info' as const,
-    },
-  ]
-
   return (
     <main>
       <script
@@ -147,9 +74,11 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJson) }}
       />
 
-      {/* CINEMATIC HERO (Direction B) — full-bleed photo + scrim, opaque search
-          card lifted off the image, opaque trust strip, activity chip scroll. */}
-      <section className="relative flex min-h-[88vh] flex-col items-center justify-center overflow-hidden pt-20 pb-12">
+      {/* CINEMATIC HERO — Headout-style minimal (owner screenshots
+          2026-06-11): full-bleed photo + scrim, headline, ONE search bar.
+          The chip rows / CTA buttons / 4-field module are gone (clutter);
+          height trimmed so the trust strip below lands in the first screen. */}
+      <section className="relative flex min-h-[72vh] flex-col items-center justify-center overflow-hidden pt-20 pb-12">
         <div className="absolute inset-0">
           <Image
             src={getHeroImage()}
@@ -179,134 +108,20 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
             {t('hero.subtitle')}
           </p>
 
-          {/* Explicit marketplace CTAs. Primary -> /search (Customers).
-              Secondary -> Vendor onboarding (supply side). Both carry .min-tap
-              for >=44px mobile tap targets (ADR-0018) and visible focus rings
-              for keyboard users. */}
-          <div className="mt-7 flex w-full max-w-md flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
-              href="/search"
-              className="min-tap inline-flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-control)] bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-md)] transition-colors duration-150 hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:w-auto"
-            >
-              {t('hero.exploreCta')}
-            </Link>
-            {/* Supply-side CTA → public /vendor-partner landing (issue 06),
-                which funnels into the auth-gated /vendor/onboarding. */}
-            <Link
-              href="/vendor-partner"
-              className="min-tap inline-flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-control)] bg-surface-0/95 px-6 text-sm font-semibold text-foreground shadow-[var(--shadow-md)] ring-1 ring-foreground/10 transition-colors duration-150 hover:bg-surface-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:w-auto"
-            >
-              {t('hero.listCta')}
-            </Link>
-          </div>
+          {/* The search bar IS the call to action (Headout pattern): one
+              "Destination or activity" field GET-posting to /search?q=. The
+              supply-side "List your experience" CTA lives permanently in the
+              header + footer instead of duplicating here; the popular/trust/
+              category chip rows are gone (judged clutter in the owner's
+              screenshot pass, 2026-06-11). */}
+          <HomeHeroSearch />
 
           {/* Secondary emotional brand line — kept from the original hero, now
-              a smaller line below the keyword heading (a paragraph, not the
-              page heading). */}
-          <p className="mt-4 text-sm font-medium text-white/80 [text-shadow:0_1px_2px_rgb(0_0_0/0.6)] sm:text-base">
+              a smaller line below the search (a paragraph, not the page
+              heading). */}
+          <p className="mt-5 text-sm font-medium text-white/80 [text-shadow:0_1px_2px_rgb(0_0_0/0.6)] sm:text-base">
             {t('hero.brandLine')}
           </p>
-
-          {/* Structured 4-field search (issue 09) — Destination / Activity /
-              Date / Group size, mapped onto the EXISTING /search facets via
-              lib/search/home-query (no new query infra). Replaces the single
-              keyword field while keeping the H1 + CTAs above intact. Options are
-              inventory-backed (DECISION D0). Desktop = inline bar; phone = a
-              full-screen overlay (ADR-0018 large touch targets). */}
-          <HomeStructuredSearch
-            destinations={destinationOptions}
-            activities={activityOptions}
-          />
-
-          {/* Popular search chips (issue 09 / D0) — high-intent Destination ×
-              Activity shortcuts; only pairs with REAL published inventory
-              render, each deep-linking into a pre-filtered /search. */}
-          {popularChips.length > 0 && (
-            <nav
-              aria-label={tHomeSearch('popular.heading')}
-              className="mt-5 w-full max-w-xl"
-            >
-              <p className="mb-2 text-xs font-medium uppercase tracking-[var(--tracking-eyebrow)] text-white/80 [text-shadow:0_1px_2px_rgb(0_0_0/0.6)]">
-                {tHomeSearch('popular.heading')}
-              </p>
-              <ul className="flex flex-wrap justify-center gap-2">
-                {popularChips.map((chip) => (
-                  <li key={`${chip.regionSlug}:${chip.activitySlug}`}>
-                    <Link
-                      href={chip.href}
-                      data-testid="home-popular-chip"
-                      className="min-tap inline-flex items-center gap-2 whitespace-nowrap rounded-[var(--radius-pill)] bg-surface-0/95 px-4 py-2 text-sm font-medium text-foreground shadow-[var(--shadow-sm)] ring-1 ring-foreground/10 transition-colors duration-150 hover:bg-surface-0 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                    >
-                      {tHomeSearch('popular.chip', {
-                        destination: tFacet(`regions.${chip.regionI18nKey}`),
-                        activity: tFacet(`activities.${chip.activityI18nKey}`),
-                      })}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          )}
-
-          {/* Opaque trust strip — semantic-status chips with paired icons. */}
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-            {trustChips.map(({ key, Icon, label, variant }) => (
-              <Badge
-                key={key}
-                variant={variant}
-                className="h-7 px-3 py-1 text-xs shadow-[var(--shadow-sm)]"
-              >
-                <Icon aria-hidden="true" />
-                {label}
-              </Badge>
-            ))}
-          </div>
-
-          {/* Activity-category chips — pill Badges with lucide icons. Wrap at all
-              widths (no h-scroll). Phones cap at MOBILE_CHIP_CAP with a "+N more"
-              link to /search; tablet/desktop (md+) show every chip. */}
-          {data.featuredActivities.length > 0 && (
-            <nav
-              aria-label={t('activities.heading')}
-              className="mt-8 w-full max-w-xl"
-            >
-              <ul className="flex flex-wrap justify-center gap-2">
-                {data.featuredActivities.map((a, index) => {
-                  const Icon = getActivityIcon(a.slug)
-                  return (
-                    <li
-                      key={a.slug}
-                      className={index >= MOBILE_CHIP_CAP ? 'hidden md:block' : ''}
-                    >
-                      <Link
-                        href={`/search?activity=${a.slug}`}
-                        className="min-tap inline-flex items-center gap-2 whitespace-nowrap rounded-[var(--radius-pill)] bg-surface-0 px-4 py-2 text-sm font-medium text-foreground shadow-[var(--shadow-sm)] ring-1 ring-foreground/10 transition-colors duration-150 hover:bg-surface-1 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                      >
-                        <Icon
-                          className="size-4 text-primary-strong"
-                          aria-hidden="true"
-                        />
-                        {a.displayNameEn}
-                      </Link>
-                    </li>
-                  )
-                })}
-                {data.featuredActivities.length > MOBILE_CHIP_CAP && (
-                  <li className="md:hidden">
-                    <Link
-                      href="/search"
-                      data-testid="activities-more"
-                      className="min-tap inline-flex items-center gap-2 whitespace-nowrap rounded-[var(--radius-pill)] bg-surface-0 px-4 py-2 text-sm font-medium text-foreground shadow-[var(--shadow-sm)] ring-1 ring-foreground/10 transition-colors duration-150 hover:bg-surface-1 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                    >
-                      {t('activities.more', {
-                        count: data.featuredActivities.length - MOBILE_CHIP_CAP,
-                      })}
-                    </Link>
-                  </li>
-                )}
-              </ul>
-            </nav>
-          )}
         </div>
 
         {/* Scroll indicator */}
@@ -314,6 +129,11 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
           <ChevronDown className="size-6 text-white/70" aria-hidden="true" />
         </div>
       </section>
+
+      {/* COMPACT TRUST STRIP — directly under the hero so it lands in the
+          first screen (owner screenshots 2026-06-11; was a six-card section
+          lower on the page). */}
+      <HomeTrust />
 
       {/* DESTINATIONS — decision-complete tiles with activity counts */}
       <section
@@ -373,10 +193,6 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
           ))}
         </ul>
       </section>
-
-      {/* ADVENTURE YOU CAN TRUST — six descriptive trust cards (issue 08).
-          No fabricated metrics; each card maps to real product behaviour. */}
-      <HomeTrust />
 
       {/* FEATURED EXPERIENCES — A1 decision-complete card grid */}
       {data.featuredExperiences.length > 0 && (

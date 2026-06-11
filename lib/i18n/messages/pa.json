@@ -393,7 +393,8 @@
     "closure": {
       "heading": "ਇਸ ਵੇਲੇ ਬੰਦ ਹੈ",
       "reopens": "{date} ਨੂੰ ਮੁੜ ਖੁੱਲ੍ਹੇਗਾ",
-      "bookingDisabled": "ਇਸ ਖੇਤਰ ਦੇ ਬੰਦ ਰਹਿਣ ਤੱਕ ਬੁਕਿੰਗ ਰੋਕੀ ਗਈ ਹੈ।"
+      "bookingDisabled": "ਇਸ ਖੇਤਰ ਦੇ ਬੰਦ ਰਹਿਣ ਤੱਕ ਬੁਕਿੰਗ ਰੋਕੀ ਗਈ ਹੈ।",
+      "exploreSimilar": "ਮਿਲਦੇ-ਜੁਲਦੇ ਅਨੁਭਵ ਵੇਖੋ"
     },
     "cancellation": {
       "flexible": "ਅਨੁਭਵ ਤੋਂ 24 ਘੰਟੇ ਪਹਿਲਾਂ ਮੁਫ਼ਤ ਰੱਦ। 2 ਘੰਟਿਆਂ ਵਿੱਚ 50% ਰਿਫੰਡ। ਉਸ ਤੋਂ ਬਾਅਦ ਕੋਈ ਰਿਫੰਡ ਨਹੀਂ।",
@@ -739,8 +740,7 @@
       "regionsLabel": "ਕਵਰ ਕੀਤੇ ਖੇਤਰ"
     },
     "message": {
-      "action": "ਵਿਕਰੇਤਾ ਨੂੰ ਸੁਨੇਹਾ ਭੇਜੋ",
-      "comingSoon": "ਜਲਦੀ ਆ ਰਿਹਾ ਹੈ"
+      "contactSupport": "Outvers ਸਹਾਇਤਾ ਨਾਲ ਸੰਪਰਕ ਕਰੋ"
     },
     "trust": {
       "provenanceHeading": "ਅਸੀਂ ਕੀ ਪ੍ਰਮਾਣਿਤ ਕੀਤਾ",

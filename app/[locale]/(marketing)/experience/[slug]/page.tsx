@@ -410,6 +410,10 @@ export default async function ExperienceDetailPage({
           }),
         }),
         bookingDisabled: t('closure.bookingDisabled'),
+        exploreSimilarLabel: t('closure.exploreSimilar'),
+        // Same-Region /search is always a live surface (public-filter gated),
+        // unlike the on-page Similar rail which can be empty.
+        exploreSimilarHref: `/search?region=${detail.region.slug}`,
       }
     : null
 

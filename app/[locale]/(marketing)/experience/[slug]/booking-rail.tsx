@@ -25,6 +25,10 @@ export interface BookingRailClosure {
   reopens: string
   /** Already-translated "Booking is paused…" helper. */
   bookingDisabled: string
+  /** Already-translated "Explore similar experiences" CTA label. */
+  exploreSimilarLabel: string
+  /** Where the explore CTA lands (same-Region /search, always live). */
+  exploreSimilarHref: string
 }
 
 interface BookingRailProps {

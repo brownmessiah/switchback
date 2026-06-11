@@ -452,7 +452,8 @@
     "closure": {
       "heading": "Currently closed",
       "reopens": "Reopens {date}",
-      "bookingDisabled": "Booking is paused while this region is closed."
+      "bookingDisabled": "Booking is paused while this region is closed.",
+      "exploreSimilar": "Explore similar experiences"
     },
     "cancellation": {
       "flexible": "Free cancellation up to 24 hours before the Experience. 50% refund within 2 hours. No refund after.",
@@ -801,8 +802,7 @@
       "responseScore": "Response score: {score}%"
     },
     "message": {
-      "action": "Message Vendor",
-      "comingSoon": "Coming soon"
+      "contactSupport": "Contact Outvers support"
     },
     "trust": {
       "provenanceHeading": "What we verified",

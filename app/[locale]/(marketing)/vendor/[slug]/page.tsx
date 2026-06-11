@@ -10,6 +10,7 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
@@ -179,29 +180,19 @@ export default async function VendorProfilePage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* "Message Vendor" — HONEST coming-soon affordance. Cold
-                customer→Vendor messaging has no production backend, so this is
-                a disabled <button> (not a dead link) with an accessible
-                caption explaining it is not yet available. */}
+            {/* Contact affordance — routes to Outvers support (/contact), per
+                D6: no direct customer→Vendor messaging until moderation and
+                support rules exist. Never a disabled "coming soon" dead-end
+                on an investor-facing storefront (QA fix pass). */}
             <div className="flex flex-col items-start gap-1 sm:items-end">
-              <button
-                type="button"
-                disabled
-                aria-disabled="true"
+              <Link
+                href="/contact"
                 data-testid="message-vendor"
-                aria-describedby="message-vendor-note"
-                className="inline-flex h-9 cursor-not-allowed items-center justify-center gap-1.5 rounded-[var(--radius-control)] border border-border bg-muted px-4 text-sm font-medium text-muted-foreground opacity-60"
+                className="min-tap inline-flex h-9 items-center justify-center gap-1.5 rounded-[var(--radius-control)] border border-border bg-surface-0 px-4 text-sm font-medium text-foreground transition hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
               >
                 <MessageSquare aria-hidden="true" className="size-4 shrink-0" />
-                {t('message.action')}
-              </button>
-              <p
-                id="message-vendor-note"
-                data-testid="message-vendor-note"
-                className="text-2xs uppercase tracking-[var(--tracking-eyebrow)] text-muted-foreground"
-              >
-                {t('message.comingSoon')}
-              </p>
+                {t('message.contactSupport')}
+              </Link>
             </div>
           </div>
         </div>

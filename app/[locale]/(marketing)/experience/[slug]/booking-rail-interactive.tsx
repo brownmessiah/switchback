@@ -392,17 +392,20 @@ export function BookingRailInteractive({
             <p className="text-muted-foreground">{closure.reason}</p>
             <p className="text-xs text-muted-foreground">{closure.reopens}</p>
           </div>
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
+          {/* A closed listing gets a REAL next action, never a disabled
+              "Book now" (QA fix pass): explore live alternatives in the same
+              Region. A "notify me when available" CTA needs waitlist infra
+              that doesn't exist yet — deliberately not faked here. */}
+          <Link
+            href={closure.exploreSimilarHref}
             className={buttonVariants({
               size: 'lg',
-              className: 'w-full cursor-not-allowed opacity-60',
+              variant: 'outline',
+              className: 'w-full',
             })}
           >
-            {bookNowLabel}
-          </button>
+            {closure.exploreSimilarLabel}
+          </Link>
           <p className="text-center text-xs text-muted-foreground">
             {closure.bookingDisabled}
           </p>

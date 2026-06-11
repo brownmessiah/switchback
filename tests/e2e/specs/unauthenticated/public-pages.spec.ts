@@ -710,13 +710,13 @@ test.describe('Vendor profile', () => {
   }) => {
     await page.goto('/vendor/himalayan-hikes-co')
 
-    const messageBtn = page.getByTestId('message-vendor')
-    await expect(messageBtn).toBeVisible()
-    // It is a real disabled <button>, not a link — no navigation possible.
-    await expect(messageBtn).toBeDisabled()
-    await expect(messageBtn).toHaveAttribute('aria-disabled', 'true')
-    // An accessible "coming soon" caption explains why it is disabled.
-    await expect(page.getByTestId('message-vendor-note')).toBeVisible()
+    // QA fix pass: no "Coming soon" dead-end on the storefront. The contact
+    // affordance is a REAL link routing to Outvers support (D6: no direct
+    // customer→Vendor messaging until moderation/support rules exist).
+    const contactLink = page.getByTestId('message-vendor')
+    await expect(contactLink).toBeVisible()
+    await expect(contactLink).toHaveAttribute('href', /\/contact$/)
+    await expect(page.getByTestId('message-vendor-note')).toHaveCount(0)
   })
 
   // Vendor JSON-LD (ADR-0013 / issue 21): a Business-verified Vendor (KYC tier

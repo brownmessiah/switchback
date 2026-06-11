@@ -2065,11 +2065,16 @@ test.describe('Admin region-closure create/delete (#25)', () => {
       // single element.
       await expect(page.getByText('Currently closed').first()).toBeVisible({ timeout: 15_000 })
       await expect(page.getByText(REASON)).toBeVisible()
-      // The Book-now link is gone — replaced by a disabled button.
+      // The Book-now affordance is gone entirely (QA fix pass): a closed
+      // listing offers a real next action instead — "Explore similar
+      // experiences" deep-linking to the same-Region /search.
       await expect(page.getByRole('link', { name: 'Book now' })).toHaveCount(0)
-      const disabledBook = page.getByRole('button', { name: 'Book now' })
-      await expect(disabledBook).toBeVisible()
-      await expect(disabledBook).toBeDisabled()
+      await expect(page.getByRole('button', { name: 'Book now' })).toHaveCount(0)
+      const exploreSimilar = page.getByRole('link', {
+        name: 'Explore similar experiences',
+      })
+      await expect(exploreSimilar).toBeVisible()
+      await expect(exploreSimilar).toHaveAttribute('href', /\/search\?region=/)
 
       await page.screenshot({
         path: 'tests/e2e/screenshots/admin-region-closure-blocked.png',

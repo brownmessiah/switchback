@@ -393,7 +393,8 @@
     "closure": {
       "heading": "فی الحال بند ہے",
       "reopens": "{date} کو دوبارہ کھلے گا",
-      "bookingDisabled": "اس علاقے کے بند رہنے تک بُکنگ روک دی گئی ہے۔"
+      "bookingDisabled": "اس علاقے کے بند رہنے تک بُکنگ روک دی گئی ہے۔",
+      "exploreSimilar": "ملتے جلتے تجربات دیکھیں"
     },
     "cancellation": {
       "flexible": "تجربے سے 24 گھنٹے پہلے مفت منسوخی۔ 2 گھنٹوں میں 50% ریفنڈ۔ اس کے بعد کوئی ریفنڈ نہیں۔",
@@ -739,8 +740,7 @@
       "regionsLabel": "احاطہ شدہ علاقے"
     },
     "message": {
-      "action": "وینڈر کو پیغام بھیجیں",
-      "comingSoon": "جلد آ رہا ہے"
+      "contactSupport": "Outvers سپورٹ سے رابطہ کریں"
     },
     "trust": {
       "provenanceHeading": "ہم نے کیا تصدیق کیا",

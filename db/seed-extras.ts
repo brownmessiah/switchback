@@ -39,11 +39,12 @@ import type {
   ItineraryStepInput,
 } from '@/lib/experiences/structured-schema'
 
+import { upsertBlogPosts } from './content/blog/upsert'
+
 import {
   availabilityPatterns,
   availabilitySlots,
   bookings,
-  blogPosts,
   commissionTiers,
   conversations,
   customerProfiles,
@@ -109,7 +110,6 @@ export const IMG = (id: string, w = 1200): string =>
 const FALLBACK_PHOTOS = ['photo-1506905925346-21bda4d32df4', 'photo-1470071459604-3b5ec3a7fe05', 'photo-1426604966848-d7adac402bff', 'photo-1501785888041-af3ef285b470']
 const AVATAR_PHOTOS = ['photo-1500648767791-00dcc994a43e', 'photo-1494790108377-be9c29b29330', 'photo-1507003211169-0a1dd7228f2d', 'photo-1438761681033-6461ffad8d80', 'photo-1472099645785-5658abf4ff4e', 'photo-1544005313-94ddf0286df2', 'photo-1633332755192-727a05c4013d', 'photo-1607746882042-944635dfe10e']
 export const VENDOR_LOGO_PHOTOS = ['photo-1557804506-669a67965ba0', 'photo-1487058792275-0ad4aaf24ca7']
-const BLOG_COVER_PHOTOS = ['photo-1530866495561-507c9faab2ed', 'photo-1551632811-561732d1e306', 'photo-1418846531910-2b7bb1043512', 'photo-1583364512105-951b6f7080ae', 'photo-1516426122078-c23e76319801', 'photo-1551524559-8af4e6624178', 'photo-1504280390367-361c6d9f38f4', 'photo-1522163182402-834f871fd851', 'photo-1506905925346-21bda4d32df4', 'photo-1470071459604-3b5ec3a7fe05']
 
 /** Deterministic uuid-shaped IDs in a private namespace (idempotent re-runs). */
 function ns(prefix: string, n: number): string {
@@ -645,19 +645,6 @@ const HERO_REVIEW_BANK: Array<{ rating: number; title: string; body: string; res
   { rating: 5, title: 'The real deal', body: 'No upselling, no shortcuts, no surprises. Just a superbly run adventure by people who know exactly what they are doing. Highly, highly recommended.' },
 ]
 
-const BLOG: Array<{ slug: string; title: string; category: string; excerpt: string }> = [
-  { slug: 'rishikesh-rafting-grades-explained', title: 'Rishikesh Rafting Grades, Explained (I–V)', category: 'guides', excerpt: 'What the Grade III+ on your booking actually means — and which stretch of the Ganga is right for first-timers.' },
-  { slug: 'best-time-bir-billing-paragliding', title: 'The Best Time to Fly Bir-Billing', category: 'destinations', excerpt: 'Thermals, monsoon windows, and the two paragliding seasons that make Bir the world’s second-best flying site.' },
-  { slug: 'first-scuba-dive-india-checklist', title: 'Your First Scuba Dive in India: A Checklist', category: 'tips', excerpt: 'From cert cards to ear-equalising — everything to know before a Discover-Scuba dive in Goa or the Andamans.' },
-  { slug: 'packing-for-a-himalayan-trek', title: 'Packing for a Himalayan Trek (Without Overpacking)', category: 'tips', excerpt: 'The layering system, the footwear test, and the five items trekkers always forget.' },
-  { slug: 'how-outvers-verifies-vendors', title: 'How Outvers Verifies Every Vendor', category: 'culture', excerpt: 'Inside the three-tier KYC ladder — phone, identity, and business — and why it makes booking safer.' },
-  { slug: 'monsoon-adventures-in-the-sahyadris', title: 'Monsoon Adventures in the Sahyadris', category: 'adventure', excerpt: 'Waterfall rappelling, valley crossings, and the green-season magic of Lonavala and the Western Ghats.' },
-  { slug: 'understanding-free-cancellation', title: 'Understanding Free Cancellation & Refunds', category: 'guides', excerpt: 'Flexible vs moderate vs strict — how our cancellation presets work and when you get a full refund.' },
-  { slug: 'leh-ladakh-acclimatisation-guide', title: 'Leh-Ladakh: An Acclimatisation Guide', category: 'destinations', excerpt: 'Altitude is the real challenge in Ladakh. Here is how to arrive, rest, and ramp up safely before a high pass.' },
-  { slug: 'snow-leopard-spotting-spiti', title: 'Snow-Leopard Spotting in Spiti', category: 'adventure', excerpt: 'Why winter in Kibber is the world’s best chance to see the ghost of the mountains — with local spotters.' },
-  { slug: 'beginner-skiing-solang-vs-auli', title: 'Beginner Skiing: Solang vs Auli', category: 'guides', excerpt: 'Two of India’s best learner slopes compared — lifts, lessons, season length, and total cost.' },
-]
-
 async function main(db: SeedDb): Promise<void> {
   // ── 1. Catalog vendors (users + verified business-tier profiles) ──────────
   await db
@@ -1083,24 +1070,10 @@ async function main(db: SeedDb): Promise<void> {
     })
   }
 
-  // ── 9. Blog posts (>=6) with cover images + markdown body ─────────────────
-  for (let i = 0; i < BLOG.length; i++) {
-    const p = BLOG[i]
-    const exists = await db.select({ id: blogPosts.id }).from(blogPosts).where(eq(blogPosts.slug, p.slug)).limit(1)
-    if (exists.length > 0) continue
-    const body = `# ${p.title}\n\n${p.excerpt}\n\n## Why it matters\n\nAdventure travel in India is booming, but the gap between a great day out and a disappointing one usually comes down to preparation and a trustworthy operator. Below we break it down.\n\n- **Safety first.** Every Outvers vendor is KYC-verified and carries the right permits.\n- **Transparent pricing.** What you see is what you pay — no surprise gear fees.\n- **Free cancellation.** Book early, change plans freely within policy.\n\n## The bottom line\n\nDo your homework, book a verified operator, and the rest takes care of itself. See you out there.`
-    await db.insert(blogPosts).values({
-      title: p.title,
-      slug: p.slug,
-      content: body,
-      excerpt: p.excerpt,
-      category: p.category,
-      coverImageUrl: IMG(BLOG_COVER_PHOTOS[i % BLOG_COVER_PHOTOS.length], 1200),
-      status: 'published',
-      publishedAt: ago((i + 1) * 4),
-      authorAdminId: ADMIN_ID,
-    })
-  }
+  // ── 9. Blog posts — the editorial corpus (db/content/blog, 40 posts) ──────
+  // Idempotent upsert keyed on slug; reuses the demo admin as the byline so the
+  // index/PDP render the real corpus instead of placeholder stubs.
+  await upsertBlogPosts(db, { authorAdminId: ADMIN_ID })
 
   // ── 10. site_content — all 6 sections (admin CMS; not yet read publicly) ──
   const featuredIds = catalogIds.slice(0, 6)

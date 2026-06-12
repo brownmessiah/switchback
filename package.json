@@ -19,6 +19,7 @@
     "db:studio": "drizzle-kit studio",
     "db:seed": "dotenv -e .env.local -- tsx db/seed.ts",
     "db:seed:demo": "dotenv -e .env.local -- tsx db/seed-demo-catalog.ts",
+    "db:seed:blog": "dotenv -e .env.local -- tsx db/content/blog/seed-content.ts",
     "search:reindex": "dotenv -e .env.local -- tsx scripts/reindex-experiences.ts",
     "i18n:check": "tsx scripts/i18n-check.ts",
     "i18n:missing": "tsx scripts/i18n-missing-report.ts",

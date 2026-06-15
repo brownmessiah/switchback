@@ -19,8 +19,8 @@ import {
   buildCheckInDeepLink,
   shouldShowCheckInQr,
 } from '@/lib/bookings/checkin-qr'
+import { resolveCheckInSecret } from '@/lib/bookings/checkin-secret'
 import { loadBookingConfirmation } from '@/lib/bookings/confirmation-loader'
-import { resolveCheckInSecret } from '@/app/vendor/(dashboard)/checkin/checkin-secret'
 
 import {
   getConfirmationPresentation,

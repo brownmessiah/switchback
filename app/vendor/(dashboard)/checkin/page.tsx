@@ -1,4 +1,5 @@
 import { headers } from 'next/headers'
+import { notFound } from 'next/navigation'
 
 import { db } from '@/db/client'
 import { auth } from '@/lib/auth'
@@ -26,7 +27,8 @@ export default async function VendorCheckinPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const session = await auth.api.getSession({ headers: await headers() })
-  const userId = session!.user.id
+  if (!session?.user) notFound()
+  const userId = session.user.id
 
   // Read gate: a user reaching the scanner must hold bookings:checkin on their
   // own account. Throwing variant → notFound() on denial.

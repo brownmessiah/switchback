@@ -6,8 +6,9 @@ import { z } from 'zod'
 import { db as prodDb } from '@/db/client'
 import { auth } from '@/lib/auth'
 
+import { resolveCheckInSecret } from '@/lib/bookings/checkin-secret'
+
 import { executeRecordCheckIn, type RecordCheckInResult } from './checkin-core'
-import { resolveCheckInSecret } from './checkin-secret'
 
 /**
  * Server Action boundary for QR check-in (issue #06).

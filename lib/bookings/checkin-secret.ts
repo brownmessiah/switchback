@@ -8,8 +8,9 @@
  * confirmation page (which SIGNS the QR) and the check-in core (which VERIFIES)
  * resolve the secret here, so they can never drift.
  *
- * This is a plain module — NOT a `'use server'` file — so importing it is safe
- * from a Server Component and a Server Action alike.
+ * Lives in `lib/bookings/` (alongside `checkin-token.ts` / `checkin-qr.ts`) so
+ * both the customer surface (`app/(app)/...`) and the vendor surface
+ * (`app/vendor/...`) import it without crossing a route-group boundary.
  */
 export function resolveCheckInSecret(): string {
   const secret = process.env.CHECKIN_TOKEN_SECRET ?? process.env.BETTER_AUTH_SECRET

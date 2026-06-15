@@ -89,14 +89,15 @@ export async function executeCreateVendorProfile(
 
   const { businessName, slug, pan, about } = parsed.data
 
-  // Reject if this user already has a profile.
+  // Look up this user's existing profile, if any.
   const [existing] = await db
-    .select({ userId: vendorProfiles.userId })
+    .select({ userId: vendorProfiles.userId, closedAt: vendorProfiles.closedAt })
     .from(vendorProfiles)
     .where(eq(vendorProfiles.userId, userId))
     .limit(1)
 
-  if (existing) {
+  // An ACTIVE profile already exists — reject (one Vendor profile per user).
+  if (existing && !existing.closedAt) {
     return { ok: false, error: 'You already have a vendor profile.' }
   }
 
@@ -109,6 +110,27 @@ export async function executeCreateVendorProfile(
 
   if (conflict) {
     return { ok: false, error: 'This slug is already taken. Please choose another.' }
+  }
+
+  // Reactivation path (issue 06): a soft-closed Vendor re-onboarding. Clear
+  // closed_at + reason and refresh business details on the SAME row instead of
+  // inserting (which would violate the userId PK). Honors the reversible-close
+  // decision — slug retained, history never deleted.
+  if (existing?.closedAt) {
+    await db
+      .update(vendorProfiles)
+      .set({
+        businessName,
+        slug,
+        pan: pan ?? null,
+        about: about ?? null,
+        closedAt: null,
+        closureReason: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(vendorProfiles.userId, userId))
+
+    return { ok: true }
   }
 
   try {

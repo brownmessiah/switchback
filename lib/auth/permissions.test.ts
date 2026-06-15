@@ -209,4 +209,33 @@ describe('requireVendorProfile (ADR-0006)', () => {
   it('non-existent user is redirected', async () => {
     await expect(requireVendorProfile(db, 'u_ghost')).rejects.toThrow()
   })
+
+  // issue 06 — a soft-closed Vendor (closed_at set) is no longer an active
+  // Vendor: the row must NOT count, so the layer falls through to the redirect
+  // and the user reverts to a Customer-only account WITHOUT the row being deleted.
+  it('user with a CLOSED vendor_profiles row is redirected (closed_at set)', async () => {
+    await db.insert(users).values({ id: 'u_closed', email: 'closed@test.com' })
+    await db.insert(vendorProfiles).values({
+      userId: 'u_closed',
+      businessName: 'Closed Biz',
+      slug: 'closed-biz',
+      closedAt: new Date(),
+      closureReason: 'left the platform',
+    })
+
+    await expect(requireVendorProfile(db, 'u_closed')).rejects.toThrow()
+  })
+
+  it('an active (closed_at NULL) vendor still passes — suspension is orthogonal', async () => {
+    await db.insert(users).values({ id: 'u_suspended', email: 'suspended@test.com' })
+    await db.insert(vendorProfiles).values({
+      userId: 'u_suspended',
+      businessName: 'Suspended Biz',
+      slug: 'suspended-biz',
+      suspended: true, // admin-suspended but NOT self-closed
+    })
+
+    // suspended is handled elsewhere; the gate only cares about closed_at IS NULL.
+    await expect(requireVendorProfile(db, 'u_suspended')).resolves.not.toThrow()
+  })
 })

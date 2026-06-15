@@ -1,11 +1,14 @@
-import { eq } from 'drizzle-orm'
+import { count, eq } from 'drizzle-orm'
 import { headers } from 'next/headers'
 
 import { db } from '@/db/client'
+import { experiences } from '@/db/schema/experiences'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { auth } from '@/lib/auth'
 
 import { BusinessDetailsForm } from './business-details-form'
+import { getVendorClosureEligibility } from './close-account-actions'
+import { CloseAccountDangerZone } from './close-account-danger-zone'
 import { KycDisplay } from './kyc-display'
 import { PayoutMethodForm } from './payout-method-form'
 import { SettingsAnchorNav } from './settings-anchor-nav'
@@ -39,10 +42,20 @@ export default async function VendorSettingsPage() {
   const payoutDest =
     vendor.payoutDestination as Record<string, string> | null
 
+  // Server-compute closure eligibility from real Bookings/Payout state, plus
+  // the published-Experience count for the dialog consequence copy. Never
+  // trusted from the client (issue 06).
+  const eligibility = await getVendorClosureEligibility(db, userId)
+  const [{ value: publishedExperienceCount }] = await db
+    .select({ value: count() })
+    .from(experiences)
+    .where(eq(experiences.vendorUserId, userId))
+
   const sections = [
     { id: 'business-details', label: 'Business details' },
     { id: 'payout-method', label: 'Payout method' },
     { id: 'verification', label: 'Verification' },
+    { id: 'danger-zone', label: 'Account' },
   ] as const
 
   return (
@@ -95,6 +108,21 @@ export default async function VendorSettingsPage() {
               udyamId={vendor.udyamId}
               aadhaarVerifiedAt={vendor.aadhaarVerifiedAt}
               videoCallVerifiedAt={vendor.videoCallVerifiedAt}
+            />
+          </section>
+
+          <section
+            id="danger-zone"
+            className="scroll-mt-[calc(var(--header-offset,4rem)+1rem)]"
+          >
+            <CloseAccountDangerZone
+              eligibility={{
+                canClose: eligibility.canClose,
+                inFlightCount: eligibility.inFlightCount,
+                unsettledDuesCount: eligibility.unsettledDuesCount,
+                publishedExperienceCount,
+                suspended: vendor.suspended,
+              }}
             />
           </section>
         </div>

@@ -1,5 +1,6 @@
 import {
   boolean,
+  index,
   integer,
   jsonb,
   numeric,
@@ -91,8 +92,17 @@ export const vendorProfiles = pgTable('vendor_profiles', {
   // bookings; their Experiences should display as paused.
   suspended: boolean('suspended').default(false).notNull(),
 
+  // ── Self-serve account closure (issue 06) ──────────────────────────
+  // Soft-archive marker. A row is an "active vendor" only when closedAt
+  // IS NULL. ORTHOGONAL to `suspended` (admin-controlled) — both honored.
+  // Never deleted: ADR-0016 retention of financial/tax records. Re-onboarding
+  // reactivates by clearing closedAt (honors the locked reversible-close
+  // decision — see app/vendor/onboarding/actions.ts).
+  closedAt: timestamp('closed_at', { withTimezone: true }),
+  closureReason: text('closure_reason'),
+
   ...timestamps,
-})
+}, (t) => [index('vendor_profiles_by_closed_at').on(t.closedAt)])
 
 export type VendorProfile = typeof vendorProfiles.$inferSelect
 export type NewVendorProfile = typeof vendorProfiles.$inferInsert

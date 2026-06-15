@@ -188,6 +188,46 @@ describe('authenticated-route i18n messages', () => {
     })
   })
 
+  describe('VendorSettingsClosure namespace', () => {
+    it('exists in en.json', () => {
+      expect(enMessages).toHaveProperty('VendorSettingsClosure')
+    })
+
+    it('exists in hi.json', () => {
+      expect(hiMessages).toHaveProperty('VendorSettingsClosure')
+    })
+
+    it('has matching keys in en.json and hi.json', () => {
+      const enKeys = collectKeys(
+        (enMessages as Record<string, Record<string, unknown>>).VendorSettingsClosure,
+      )
+      const hiKeys = collectKeys(
+        (hiMessages as Record<string, Record<string, unknown>>).VendorSettingsClosure,
+      )
+      expect(enKeys).toEqual(hiKeys)
+    })
+
+    it('includes the danger-zone, dialog, and blocked-checklist keys', () => {
+      const c = (enMessages as Record<string, Record<string, unknown>>)
+        .VendorSettingsClosure as Record<string, unknown>
+      expect(c).toHaveProperty('sectionTitle')
+      expect(c).toHaveProperty('trigger')
+      expect(c).toHaveProperty('blockedInFlight')
+      expect(c).toHaveProperty('blockedDues')
+      expect(c).toHaveProperty('dialogTitle')
+      expect(c).toHaveProperty('confirmLabel')
+      expect(c).toHaveProperty('confirmPhrase')
+      expect(c).toHaveProperty('submit')
+      expect(c).toHaveProperty('successToast')
+    })
+
+    it('uses the locale-stable confirmPhrase "CLOSE"', () => {
+      const c = (enMessages as Record<string, Record<string, unknown>>)
+        .VendorSettingsClosure as Record<string, unknown>
+      expect(c.confirmPhrase).toBe('CLOSE')
+    })
+  })
+
   describe('CustomerNav namespace', () => {
     it('exists in en.json', () => {
       expect(enMessages).toHaveProperty('CustomerNav')
@@ -270,6 +310,13 @@ describe('authenticated-route i18n messages', () => {
     const enVendorQuickActionsKeys = collectKeys(
       (enMessages as Record<string, Record<string, unknown>>).VendorQuickActions,
     )
+    // issue 06 — the vendor account-closure Danger Zone strings. Same
+    // single-locale-load hazard: every supported locale must physically carry
+    // the VendorSettingsClosure keys or a vendor browsing in that locale gets a
+    // MISSING_MESSAGE crash on the Settings page.
+    const enVendorSettingsClosureKeys = collectKeys(
+      (enMessages as Record<string, Record<string, unknown>>).VendorSettingsClosure,
+    )
 
     for (const locale of SUPPORTED_LOCALES) {
       describe(`locale: ${locale}`, () => {
@@ -319,6 +366,34 @@ describe('authenticated-route i18n messages', () => {
             localeKeys,
             `${locale}.json VendorQuickActions keys differ from en`,
           ).toEqual(enVendorQuickActionsKeys)
+        })
+
+        it('has a VendorSettingsClosure namespace with the same key set as en', () => {
+          const messages = MESSAGES_BY_LOCALE[locale]
+          const vendorSettingsClosure = messages.VendorSettingsClosure as
+            | Record<string, unknown>
+            | undefined
+          expect(
+            vendorSettingsClosure,
+            `${locale}.json is missing the VendorSettingsClosure namespace`,
+          ).toBeDefined()
+
+          const localeKeys = collectKeys(vendorSettingsClosure as Record<string, unknown>)
+          expect(
+            localeKeys,
+            `${locale}.json VendorSettingsClosure keys differ from en`,
+          ).toEqual(enVendorSettingsClosureKeys)
+        })
+
+        it('has the locale-stable confirmPhrase "CLOSE" (identical in every locale)', () => {
+          const messages = MESSAGES_BY_LOCALE[locale]
+          const vendorSettingsClosure = messages.VendorSettingsClosure as
+            | Record<string, unknown>
+            | undefined
+          expect(
+            vendorSettingsClosure?.confirmPhrase,
+            `${locale}.json VendorSettingsClosure.confirmPhrase must be "CLOSE"`,
+          ).toBe('CLOSE')
         })
       })
     }

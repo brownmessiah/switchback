@@ -20,7 +20,7 @@ import {
   type CreatePatternInput,
   type UpdatePatternInput,
 } from '@/lib/availability/pattern-crud'
-import { materializeSlots } from '@/lib/availability/slot-materializer'
+import { executeMaterializeSlots } from '@/lib/availability/materialize-core'
 
 // ── Auth helper ─────────────────────────────────────────────────
 
@@ -72,8 +72,12 @@ export async function deletePatternAction(patternId: string) {
 export async function materializeSlotsAction(experienceId: string) {
   const gate = await requireAvailabilityManage()
   if ('error' in gate) return { ok: false as const, error: gate.error }
-  const result = await materializeSlots(prodDb, experienceId)
-  return { ok: true as const, ...result }
+  // Ownership pre-check lives in the core: it verifies the GATE-RESOLVED userId
+  // owns `experienceId` before materializing — never the client input alone
+  // (issue #03 review, FIX 3 — closes the cross-vendor write bypass). Mirrors
+  // blockDateAction/unblockDateAction, which pass the gated userId to a lib
+  // that verifies ownership.
+  return executeMaterializeSlots(prodDb, gate.userId, experienceId)
 }
 
 // ── Date blocking actions ───────────────────────────────────────

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ResponsiveTable } from '@/components/ui/responsive-table'
 import { db } from '@/db/client'
 import { auth } from '@/lib/auth'
+import { requireVendorAccess } from '@/lib/auth/permissions'
 import { bookingStatusBadge } from '@/lib/bookings/booking-status-badge'
 import {
   type BookingStatusCount,
@@ -37,6 +38,12 @@ import { TrendChart } from '../dashboard/dashboard-charts'
 export default async function VendorAnalyticsPage() {
   const session = await auth.api.getSession({ headers: await headers() })
   const userId = session!.user.id
+
+  // Permission gate (issue #03 review, FIX 1) — the layout only enforces
+  // `bookings:read` (held by every Vendor role), so analytics-read denial
+  // (Guide has no `analytics:read`) must be enforced HERE at the route.
+  // Throwing variant → `notFound()`, matching the layout's gate call.
+  await requireVendorAccess(db, userId, 'analytics:read')
 
   const data = await loadVendorAnalytics(db, userId)
   const t = await getTranslations('VendorAnalytics')

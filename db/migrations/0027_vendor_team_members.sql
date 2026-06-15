@@ -21,3 +21,5 @@ CREATE TABLE IF NOT EXISTS "vendor_team_members" (
 CREATE UNIQUE INDEX IF NOT EXISTS "vendor_team_members_vendor_member_unique" ON "vendor_team_members" USING btree ("vendor_user_id", "member_user_id");
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "vendor_team_members_by_member" ON "vendor_team_members" USING btree ("member_user_id");
+--> statement-breakpoint
+ALTER TABLE "vendor_team_members" ADD CONSTRAINT "vendor_team_members_no_owner_role" CHECK ("role" <> 'owner');

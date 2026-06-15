@@ -16,9 +16,11 @@ export type { VendorResponseInput, VendorResponseResult }
  * session and gates with `hasVendorAccess` before delegating to the
  * db-injected core in ./review-cores (issue #03).
  *
- * Permission: responding to a Review is part of the bookings/operations
- * surface (a Vendor reads/responds to feedback on its Bookings) → the
- * `bookings:read` operational role bound. Owner is unchanged.
+ * Permission: posting a public vendor response is a WRITE on the
+ * bookings/operations surface, so it gates on `bookings:manage` — NOT
+ * `bookings:read` (issue #03 review, FIX 4). `bookings:read` is held by Guide +
+ * Accountant, who must NOT be able to post a response; `bookings:manage` is held
+ * by Owner, Manager, and Booking Staff. Owner is unchanged.
  */
 export async function submitVendorResponseAction(
   input: { reviewId: string; responseText: string },
@@ -27,7 +29,7 @@ export async function submitVendorResponseAction(
   if (!session?.user) {
     return { ok: false, error: 'Sign in to continue.' }
   }
-  if (!(await hasVendorAccess(prodDb, session.user.id, 'bookings:read'))) {
+  if (!(await hasVendorAccess(prodDb, session.user.id, 'bookings:manage'))) {
     return { ok: false, error: 'You do not have permission to respond to reviews.' }
   }
 

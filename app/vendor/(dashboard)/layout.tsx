@@ -33,6 +33,8 @@ export default async function VendorDashboardLayout({
   // /vendor/onboarding if no vendor profile exists (per ADR-0006). This
   // handles the Owner-without-profile path (onboarding lives OUTSIDE this
   // route group, so the redirect does not loop).
+  // TODO(#04): admit active team members + resolve acting vendor context
+  // (multi-seat context-resolution is issue #04's deliberate design).
   await requireVendorProfile(db, session.user.id)
 
   // Gate 2 (issue #03): the acting user must resolve to an active member/owner

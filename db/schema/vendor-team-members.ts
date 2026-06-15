@@ -30,6 +30,13 @@ export const vendorMemberStatusEnum = pgEnum('vendor_member_status', ['active', 
  * (`vendor_user_id`, = `vendor_profiles.user_id`). Owner is implicit and
  * never stored here. Unique on `(vendor_user_id, member_user_id)`: one human
  * holds at most one role per Vendor account.
+ *
+ * Defense-in-depth (issue #03 review, FIX 2): migration 0027 carries a CHECK
+ * constraint `vendor_team_members_no_owner_role` enforcing `role <> 'owner'` at
+ * the DB layer — Owner is resolved implicitly from `vendor_profiles` and must
+ * never become a membership row (a future invite bug could otherwise grant
+ * DB-level owner). Drizzle does not need the CHECK to typecheck, so it is
+ * documented here rather than re-declared.
  */
 export const vendorTeamMembers = pgTable(
   'vendor_team_members',

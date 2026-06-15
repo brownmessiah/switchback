@@ -58,6 +58,13 @@ const InputSchema = z.object({
   paymentMode: z.enum(['full_upfront', 'partial_pay', 'reserve_now_pay_later']),
   tripGroupId: z.string().uuid().nullable().optional(),
   acknowledgedPermits: z.boolean().optional().default(false),
+  // ADR-0011 revision 2026-06-16 (issue #07): optional Customer-selected
+  // pricing variation. A supplied id MUST be a valid, ACTIVE variation
+  // belonging to this Experience — resolvePricing REJECTS an unknown / foreign
+  // / inactive id (the transaction rolls back), never silently downgrading to
+  // the tier/bracket chain. The resolved price flows into the SAME snapshot
+  // columns, so the existing snapshot-immutability machinery protects it.
+  variationId: z.string().uuid().optional(),
   idempotencyKey: z.string().uuid(),
 })
 
@@ -236,11 +243,15 @@ export async function createBooking(
       )
     }
 
-    // 6. Resolve pricing chain — snapshotted on the row below.
+    // 6. Resolve pricing chain — snapshotted on the row below. A supplied
+    // variationId is arm 0 (top precedence, ADR-0011 revision 2026-06-16): an
+    // invalid one throws here, rolling back the whole transaction (no booking,
+    // no capacity decrement).
     const pricing = await resolvePricing(tx, {
       experienceId: parsed.experienceId,
       participantCount: parsed.participantCount,
       now: slot.startAt,
+      variationId: parsed.variationId,
     })
     const grossRupees = Math.floor(
       Number(pricing.pricePerParticipant) * parsed.participantCount,

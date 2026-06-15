@@ -60,3 +60,39 @@ Every Experience defines `price_per_person_1_2`, `price_per_person_3_5`, `price_
 - `pricing_tiers` and `commission_tiers` are parallel tables with very similar shapes. Resist the urge to merge them — they serve different roles and have different audit semantics. Document the parallelism in `db/schema/`.
 - The region taxonomy (`region_slug` values) needs to be canonical and exhaustive — managed in `lib/regions/registry.ts` alongside the permit registry. Adding a region is a code change in v1.
 - For permit-required Experiences booked by Customers who are Indian citizens, ILP fields can be pre-filled from Aadhaar data; for foreigners, the application is fully external. Don't assume Aadhaar is available — permit panel must work for foreign Customers too.
+
+## Revision 2026-06-16 — selected pricing variation (issue #07)
+
+The original Decision above stands unchanged. This revision **inserts a new top arm** into the per-participant pricing chain: a Customer-selected **pricing variation**.
+
+### What a pricing variation is
+
+A named, per-Experience price option (`experience_pricing_variations`: `name`, optional `description`, `price_per_person`, optional `duration_minutes`, `is_active` toggle, FK to the Experience with `ON DELETE CASCADE`). It lets a Vendor offer distinct priced options on one Experience — "Sunrise batch", "Private session", "With gear rental" — without modelling each as a separate Experience or abusing the group-size brackets.
+
+### Amended resolution chain (precedence at Booking-create)
+
+When a Booking is created with a valid, active `variationId` belonging to the Experience, **that variation's `price_per_person` is the per-participant price and is snapshotted**. The full precedence is now:
+
+0. **Selected pricing variation** (`experience_pricing_variations`, when a valid active `variationId` is supplied) — **NEW, top precedence**
+1. Active pricing tier override (`pricing_tiers` table, time-windowed, festival/season-scoped)
+2. Slot-specific override (admin tool, rare)
+3. Experience tier-based price (group-size brackets 1-2 / 3-5 / 6+)
+4. Experience base price
+
+The resolved value still writes to `bookings.price_per_participant_snapshot` + `bookings.pricing_basis_snapshot` and is **never recomputed** — a later change to the variation's `price_per_person` does not alter an existing Booking. The `pricing_basis_snapshot` records `pricing_variation:<variationId>` so the audit trail identifies exactly which variation fired.
+
+### Capacity remains a property of the Availability slot
+
+Variations are a **pricing** concept only. They **share the Availability slot's capacity** — a slot still holds N participants regardless of which (or no) variation is chosen. The slot generator and the atomic capacity-decrement inside the Booking-create transaction are **UNCHANGED**; the slot/capacity decision in the original Decision stands. There is no per-variation capacity.
+
+### Determinism: an invalid `variationId` is rejected, not downgraded
+
+A `variationId` that is unknown, belongs to a different Experience, or is inactive is **REJECTED** at Booking-create (the transaction rolls back) — it is **not** silently downgraded to the pricing-tier/bracket chain. This preserves determinism: a Customer who selected a specific priced option never silently pays a different resolved price.
+
+### Group-size brackets still apply when no variation is selected
+
+The group-size brackets remain **mandatory** (per the original Decision). When no `variationId` is supplied, resolution is exactly as before (pricing tier → slot override → bracket → base). Variations are additive and optional.
+
+### Scope note
+
+ADR-0005 (cancellation), ADR-0003 (refunds), and ADR-0006 (permissions) are **untouched** by this revision. This is purely a pricing-input addition layered on top of the existing snapshot machinery.

@@ -12,6 +12,7 @@ export * from './admin-profiles'
 
 export * from './experiences'
 export * from './experience-itinerary-steps'
+export * from './experience-pricing-variations'
 export * from './media-assets'
 export * from './availability-patterns'
 export * from './availability-slots'

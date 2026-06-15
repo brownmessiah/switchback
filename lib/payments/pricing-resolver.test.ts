@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import { experiences } from '@/db/schema/experiences'
+import { experiencePricingVariations } from '@/db/schema/experience-pricing-variations'
 import { pricingTiers } from '@/db/schema/pricing-tiers'
 import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
@@ -60,7 +61,7 @@ describe('resolvePricing (ADR-0011)', () => {
   })
 
   beforeEach(async () => {
-    await db.execute(sql`TRUNCATE TABLE pricing_tiers`)
+    await db.execute(sql`TRUNCATE TABLE pricing_tiers, experience_pricing_variations`)
   })
 
   describe('group-size brackets', () => {
@@ -238,6 +239,145 @@ describe('resolvePricing (ADR-0011)', () => {
         now,
       })
       expect(r.basis).toBe('experience_bracket:1_2')
+    })
+  })
+
+  describe('pricing variations (ADR-0011 revision 2026-06-16, issue #07)', () => {
+    // An active pricing-tier window that WOULD fire if the variation arm did
+    // not win — used to prove the variation is TOP precedence (arm 0).
+    const tierStart = new Date('2026-09-01T00:00:00Z')
+    const tierEnd = new Date('2026-09-30T23:59:59Z')
+    const duringTier = new Date('2026-09-15T12:00:00Z')
+
+    async function seedVariation(values: {
+      experienceId: string
+      name: string
+      pricePerPerson: string
+      isActive?: boolean
+    }): Promise<string> {
+      const [v] = await db
+        .insert(experiencePricingVariations)
+        .values({
+          experienceId: values.experienceId,
+          name: values.name,
+          pricePerPerson: values.pricePerPerson,
+          isActive: values.isActive ?? true,
+        })
+        .returning({ id: experiencePricingVariations.id })
+      return v!.id
+    }
+
+    it('a valid active variation wins and is the resolved price', async () => {
+      const variationId = await seedVariation({
+        experienceId,
+        name: 'Private session',
+        pricePerPerson: '5000.00',
+      })
+      const r = await resolvePricing(db, {
+        experienceId,
+        participantCount: 2,
+        variationId,
+      })
+      expect(r.pricePerParticipant).toBe('5000.00')
+      expect(r.basis).toBe(`pricing_variation:${variationId}`)
+    })
+
+    it('a variation wins OVER an active pricing tier (top precedence, arm 0)', async () => {
+      await db.insert(pricingTiers).values({
+        name: 'monsoon_2026',
+        startAt: tierStart,
+        endAt: tierEnd,
+        pricePerPersonOverride: '999.00',
+        reason: 'Monsoon promo',
+        createdByAdminUserId: 'u_v',
+      })
+      const variationId = await seedVariation({
+        experienceId,
+        name: 'Sunrise batch',
+        pricePerPerson: '5000.00',
+      })
+      // `now` falls inside the tier window, so the tier WOULD fire absent the
+      // variation. The variation must still win.
+      const r = await resolvePricing(db, {
+        experienceId,
+        participantCount: 1,
+        variationId,
+        now: duringTier,
+      })
+      expect(r.pricePerParticipant).toBe('5000.00')
+      expect(r.basis).toBe(`pricing_variation:${variationId}`)
+    })
+
+    it('rejects a variation belonging to ANOTHER experience', async () => {
+      // A second experience under the same vendor with its own variation.
+      const [otherExp] = await db
+        .insert(experiences)
+        .values({
+          vendorUserId: 'u_v',
+          slug: 'kayak-day',
+          title: 'Kayak Day',
+          cancellationPreset: 'flexible',
+          paymentModesAllowed: ['full_upfront'],
+          pricePerPerson_1_2: '3000.00',
+          pricePerPerson_3_5: '2500.00',
+          pricePerPerson_6_plus: '2000.00',
+          regionSlug: 'rishikesh',
+          activitySlug: 'kayaking',
+        })
+        .returning({ id: experiences.id })
+      const foreignVariationId = await seedVariation({
+        experienceId: otherExp!.id,
+        name: 'Foreign',
+        pricePerPerson: '4000.00',
+      })
+      await expect(
+        resolvePricing(db, {
+          experienceId,
+          participantCount: 1,
+          variationId: foreignVariationId,
+        }),
+      ).rejects.toThrow(/not valid for experience/i)
+      // Clean up the extra experience so the shared fixture stays intact.
+      await db.execute(sql`DELETE FROM experiences WHERE slug = 'kayak-day'`)
+    })
+
+    it('rejects an INACTIVE variation', async () => {
+      const inactiveId = await seedVariation({
+        experienceId,
+        name: 'Retired option',
+        pricePerPerson: '5000.00',
+        isActive: false,
+      })
+      await expect(
+        resolvePricing(db, {
+          experienceId,
+          participantCount: 1,
+          variationId: inactiveId,
+        }),
+      ).rejects.toThrow(/not active/i)
+    })
+
+    it('rejects an unknown variationId', async () => {
+      await expect(
+        resolvePricing(db, {
+          experienceId,
+          participantCount: 1,
+          variationId: '00000000-0000-0000-0000-000000000abc',
+        }),
+      ).rejects.toThrow(/not valid for experience/i)
+    })
+
+    it('with no variationId the group-size bracket still resolves (regression)', async () => {
+      // A variation EXISTS on the experience but no variationId is passed, so
+      // resolution falls through to the bracket exactly as before.
+      await seedVariation({
+        experienceId,
+        name: 'Unused',
+        pricePerPerson: '5000.00',
+      })
+      const r = await resolvePricing(db, { experienceId, participantCount: 4 })
+      expect(r.pricePerParticipant).toBe('1500.00')
+      expect(r.basis).toBe('experience_bracket:3_5')
     })
   })
 

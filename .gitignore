@@ -44,6 +44,9 @@ yarn-error.log*
 # Local MCP server config (contains API keys — do not commit)
 .mcp.json
 
+# self-contained local dev stack (Postgres cluster + Meilisearch binary/data)
+.dev-stack/
+
 # vercel
 .vercel
 

@@ -8,20 +8,26 @@ Status: **M2 Money-path backend complete** (Tasks 1–18, 22 of `docs/plans/2026
 
 ## Quick start
 
-```bash
-# 1. Install deps
-pnpm install
+### Option A — fully local stack (recommended, no cloud accounts)
 
-# 2. Configure environment
+One command provisions an isolated Postgres + Meilisearch, wires `.env.local`, applies the schema, seeds demo data, builds the search index, and starts the dev server. **No Docker required.**
+
+```bash
+pnpm install
+pnpm dev:stack
+# → http://localhost:3000   (Postgres :5544 · Meilisearch :7700)
+```
+
+Only prerequisite: the Postgres@15 toolchain (`brew install postgresql@15`). Everything else — the Meilisearch binary and all data — is fetched and stored under `.dev-stack/` (gitignored); it never touches a system Postgres or the E2E DB. Full command set: [Local dev stack](#local-dev-stack).
+
+### Option B — remote Neon + managed Meilisearch
+
+```bash
+pnpm install
 cp .env.example .env.local
 # Edit .env.local — at minimum, DATABASE_URL + BETTER_AUTH_SECRET + NEXT_PUBLIC_APP_URL
-
-# 3. Apply migrations to your Neon dev branch
-pnpm db:migrate
-
-# 4. Boot dev server
-pnpm dev
-# → http://localhost:3000
+pnpm db:migrate        # apply migrations to your Neon dev branch
+pnpm dev               # → http://localhost:3000
 ```
 
 The dev server boots with Turbopack in ~300ms. Without a populated database, you'll see the default Next.js landing page; auth routes at `/api/auth/*` are operational.
@@ -33,6 +39,12 @@ The dev server boots with Turbopack in ~300ms. Without a populated database, you
 | Command | Purpose |
 |---|---|
 | `pnpm dev` | Next.js dev server with Turbopack |
+| `pnpm dev:stack` | **Bring up the full local stack** (Postgres + Meilisearch + schema + seed + dev) — see [Local dev stack](#local-dev-stack) |
+| `pnpm dev:stack:down` | Stop Postgres + Meilisearch (keeps data) |
+| `pnpm dev:stack:status` | Show what's running |
+| `pnpm dev:stack:reset` | Drop + recreate + re-seed the dev DB |
+| `pnpm dev:stack:nuke` | Stop everything and delete `.dev-stack/` |
+| `pnpm dev:stack:logs` | Tail Postgres + Meilisearch logs |
 | `pnpm build` | Production build |
 | `pnpm start` | Production server (use after `build`) |
 | `pnpm lint` | ESLint |
@@ -46,6 +58,29 @@ The dev server boots with Turbopack in ~300ms. Without a populated database, you
 | `pnpm db:migrate` | Apply pending migrations |
 | `pnpm db:push` | Push schema directly (dev only — bypasses migrations) |
 | `pnpm db:studio` | Open Drizzle Studio (web UI) |
+
+---
+
+## Local dev stack
+
+`scripts/dev-stack.sh` (via `pnpm dev:stack`) runs a **self-contained, Docker-free** local stack, so you can develop without a Neon branch or a managed Meilisearch. All state lives under `.dev-stack/` (gitignored).
+
+| Command | Does |
+|---|---|
+| `pnpm dev:stack` | Provision + seed + start the dev server (idempotent — safe to re-run) |
+| `pnpm dev:stack:status` | What's running |
+| `pnpm dev:stack:down` | Stop Postgres + Meilisearch (data preserved) |
+| `pnpm dev:stack:reset` | Drop + recreate + re-seed the dev DB |
+| `pnpm dev:stack:nuke` | Stop everything and delete `.dev-stack/` |
+| `pnpm dev:stack:logs` | Tail service logs |
+
+**What `up` does, in order:** initializes a native Postgres@15 cluster on `:5544` (db `outvers_dev`) → downloads a pinned Meilisearch v1.14 binary and starts it on `:7700` → backs up and wires `.env.local` (`DATABASE_URL`, `MEILISEARCH_HOST`/`KEY`, `NEXT_PUBLIC_APP_URL`; generates `BETTER_AUTH_SECRET` if missing) → `drizzle-kit push` → `pnpm db:seed` → `pnpm search:reindex` → `pnpm dev`. Postgres + Meilisearch keep running after you Ctrl-C the dev server; stop them with `pnpm dev:stack:down`.
+
+**Flags** (for `up` — invoke the script directly, e.g. `bash scripts/dev-stack.sh up --demo`): `--no-dev` (provision only, don't start the server), `--no-seed`, `--no-reindex`, `--no-schema`, `--demo` (also seed the demo catalog), `--blog` (also seed the blog corpus).
+
+**Prereqs & overrides:** requires the Postgres@15 toolchain (`brew install postgresql@15`); the Meilisearch binary is auto-downloaded. The dedicated `:5544` port keeps this isolated from a system Postgres (`:5432`) and the E2E DB (`:5433`). Override ports/keys via `OUTVERS_PG_PORT`, `OUTVERS_PG_DB`, `OUTVERS_MEILI_PORT`, `OUTVERS_MEILI_KEY`, `OUTVERS_MEILI_VERSION`, `OUTVERS_APP_URL`.
+
+> The same native approach (Postgres + the Meilisearch binary, no Docker) backs the Playwright E2E harness — see `tests/e2e/helpers/`. The harness is **not** Docker-only.
 
 ---
 

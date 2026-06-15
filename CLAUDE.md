@@ -11,6 +11,9 @@ Read `docs/adr/` before changing any of: payments, refunds, cancellation, vendor
 ## Engineering workflow
 See PLAN.md "Engineering workflow" for the skill + agent map. TDD is mandatory — invoke `superpowers:test-driven-development` at the start of every feature, bugfix, or refactor. Invoke `superpowers:verification-before-completion` before every commit.
 
+## Local dev / E2E stack
+`pnpm dev:stack` brings up the entire local stack in one command, **Docker-free**: an isolated native Postgres@15 cluster (`:5544`, db `outvers_dev`) + a downloaded Meilisearch binary (`:7700`), then wires `.env.local`, pushes the schema, seeds, reindexes, and starts the dev server. State lives under `.dev-stack/` (gitignored); manage it with `pnpm dev:stack:{down,status,reset,nuke,logs}`. See `scripts/dev-stack.sh` and README "Local dev stack". The Playwright E2E harness is **also runnable natively without Docker** (Postgres + the Meilisearch binary via `tests/e2e/helpers/`) — do not assume "the harness is down" or that Docker is required.
+
 ## Agent skills
 
 ### Issue tracker

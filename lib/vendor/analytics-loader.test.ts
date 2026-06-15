@@ -8,7 +8,148 @@ import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 
-import { loadVendorAnalytics, shapeAnalytics } from './analytics-loader'
+import {
+  computeAverage,
+  computePercentChange,
+  computeRate,
+  loadVendorAnalytics,
+  shapeAnalytics,
+  shapeKeyMetrics,
+} from './analytics-loader'
+
+describe('computePercentChange', () => {
+  // The single load-bearing honesty rule: NEVER fabricate a "+100%" when the
+  // prior period had no data to compare against.
+
+  it('returns no comparison (null, hasPrior=false) when the prior period is empty', () => {
+    const { percentChange, hasPrior } = computePercentChange(500, 0)
+
+    expect(hasPrior).toBe(false)
+    expect(percentChange).toBeNull() // NOT +100% — there is nothing to compare
+  })
+
+  it('computes a positive delta when current exceeds prior', () => {
+    const { percentChange, hasPrior } = computePercentChange(150, 100)
+
+    expect(hasPrior).toBe(true)
+    expect(percentChange).toBe(50) // (150-100)/100 * 100
+  })
+
+  it('computes a negative delta when current is below prior', () => {
+    const { percentChange, hasPrior } = computePercentChange(80, 100)
+
+    expect(hasPrior).toBe(true)
+    expect(percentChange).toBe(-20) // (80-100)/100 * 100
+  })
+
+  it('reports exactly 0% when current equals prior', () => {
+    const { percentChange, hasPrior } = computePercentChange(100, 100)
+
+    expect(hasPrior).toBe(true)
+    expect(percentChange).toBe(0)
+  })
+})
+
+describe('computeAverage', () => {
+  it('returns 0 when the count is zero (no divide-by-zero, no NaN)', () => {
+    expect(computeAverage(0, 0)).toBe(0)
+    expect(computeAverage(5000, 0)).toBe(0)
+  })
+
+  it('floors the average to integer rupees', () => {
+    expect(computeAverage(10000, 3)).toBe(3333) // 3333.33 → 3333
+  })
+
+  it('computes an exact average when it divides evenly', () => {
+    expect(computeAverage(15000, 2)).toBe(7500)
+  })
+})
+
+describe('computeRate', () => {
+  it('returns 0 when the denominator is zero (no divide-by-zero, no NaN)', () => {
+    expect(computeRate(0, 0)).toBe(0)
+    expect(computeRate(3, 0)).toBe(0)
+  })
+
+  it('computes the ratio as a percentage', () => {
+    expect(computeRate(1, 4)).toBe(25) // 1/4 * 100
+  })
+
+  it('returns 0 when the numerator is zero', () => {
+    expect(computeRate(0, 10)).toBe(0)
+  })
+})
+
+describe('shapeKeyMetrics', () => {
+  // Pure shaping for the Key Metrics grid: every zero-base path must be
+  // testable without a DB, and must NEVER fabricate a comparison.
+
+  it('derives all metrics from raw aggregate rows', () => {
+    const shaped = shapeKeyMetrics({
+      current30: { total: 6, revenue: '60000.00' },
+      prior30: { total: 4, revenue: '40000.00' },
+      totalRevenue: 100000,
+      totalBookings: 10,
+      upcoming7: { total: 3 },
+      new7: { total: 5 },
+      cancelled: { total: 2 },
+      repeatCustomers: 1,
+    })
+
+    expect(shaped.last30Revenue).toBe(60000)
+    expect(shaped.last30Bookings).toBe(6)
+    // Revenue delta: (60000-40000)/40000 * 100 = 50; bookings: (6-4)/4 = 50
+    expect(shaped.last30RevenueChange).toBe(50)
+    expect(shaped.last30BookingsChange).toBe(50)
+    expect(shaped.hasPriorPeriod).toBe(true)
+    // Average booking value uses the all-time totals (consistent with headline).
+    expect(shaped.avgBookingValue).toBe(10000) // 100000 / 10
+    expect(shaped.upcoming7Confirmed).toBe(3)
+    expect(shaped.newBookings7).toBe(5)
+    // Cancellation rate: 2 / 10 = 20%
+    expect(shaped.cancellationRate).toBe(20)
+    expect(shaped.repeatCustomers).toBe(1)
+  })
+
+  it('shows an honest no-comparison state when the prior window is empty', () => {
+    const shaped = shapeKeyMetrics({
+      current30: { total: 3, revenue: '30000.00' },
+      prior30: { total: 0, revenue: null },
+      totalRevenue: 30000,
+      totalBookings: 3,
+      upcoming7: { total: 1 },
+      new7: { total: 3 },
+      cancelled: { total: 0 },
+      repeatCustomers: 0,
+    })
+
+    // Prior period empty → NO fabricated "+100%".
+    expect(shaped.hasPriorPeriod).toBe(false)
+    expect(shaped.last30RevenueChange).toBeNull()
+    expect(shaped.last30BookingsChange).toBeNull()
+    // The current-window figures are still real and shown.
+    expect(shaped.last30Revenue).toBe(30000)
+    expect(shaped.last30Bookings).toBe(3)
+  })
+
+  it('applies safe zero-base defaults when every aggregate row is missing', () => {
+    const shaped = shapeKeyMetrics({
+      totalRevenue: 0,
+      totalBookings: 0,
+    })
+
+    expect(shaped.last30Revenue).toBe(0)
+    expect(shaped.last30Bookings).toBe(0)
+    expect(shaped.last30RevenueChange).toBeNull()
+    expect(shaped.last30BookingsChange).toBeNull()
+    expect(shaped.hasPriorPeriod).toBe(false)
+    expect(shaped.avgBookingValue).toBe(0) // no divide-by-zero
+    expect(shaped.upcoming7Confirmed).toBe(0)
+    expect(shaped.newBookings7).toBe(0)
+    expect(shaped.cancellationRate).toBe(0) // no NaN
+    expect(shaped.repeatCustomers).toBe(0)
+  })
+})
 
 describe('shapeAnalytics', () => {
   // Pure shaping: the zero/empty path must be testable without a DB.
@@ -254,5 +395,215 @@ describe('loadVendorAnalytics', () => {
     expect(result.totalBookings).toBe(0)
     expect(result.totalRevenue).toBe(0)
     expect(result.hasData).toBe(false)
+  })
+
+  // ── Trended Key Metrics (issue 02) — windowed against real seeded data ──
+
+  /** Insert a confirmed Booking confirmed `daysAgo` days ago for our Vendor. */
+  async function seedConfirmedBooking(opts: {
+    daysAgo: number
+    gross: string
+    customerUserId?: string
+  }) {
+    const confirmedAt = new Date()
+    confirmedAt.setDate(confirmedAt.getDate() - opts.daysAgo)
+    await db.insert(bookings).values({
+      ...baseBooking,
+      customerUserId: opts.customerUserId ?? 'u_c',
+      experienceId,
+      slotId: futureSlotId,
+      participantCount: 1,
+      grossTotalSnapshot: opts.gross,
+      confirmedAt,
+      state: 'confirmed',
+    })
+  }
+
+  it('computes Last-30-day revenue/bookings and the prior-30-day delta', async () => {
+    // Prior window (31–60 days ago): 1 booking, gross 10000.
+    await seedConfirmedBooking({ daysAgo: 45, gross: '10000.00' })
+    // Current window (0–30 days ago): 2 bookings, gross 10000 + 5000 = 15000.
+    await seedConfirmedBooking({ daysAgo: 5, gross: '10000.00' })
+    await seedConfirmedBooking({ daysAgo: 20, gross: '5000.00' })
+
+    const { keyMetrics } = await loadVendorAnalytics(db, 'u_v')
+
+    expect(keyMetrics.last30Bookings).toBe(2)
+    expect(keyMetrics.last30Revenue).toBe(15000)
+    expect(keyMetrics.hasPriorPeriod).toBe(true)
+    // Revenue: (15000-10000)/10000 = +50%. Bookings: (2-1)/1 = +100%.
+    expect(keyMetrics.last30RevenueChange).toBe(50)
+    expect(keyMetrics.last30BookingsChange).toBe(100)
+  })
+
+  it('reports no prior-period comparison when there were no prior Bookings', async () => {
+    // Only current-window data — the prior window is empty.
+    await seedConfirmedBooking({ daysAgo: 3, gross: '5000.00' })
+
+    const { keyMetrics } = await loadVendorAnalytics(db, 'u_v')
+
+    expect(keyMetrics.last30Bookings).toBe(1)
+    expect(keyMetrics.hasPriorPeriod).toBe(false)
+    // No fabricated "+100%" — honest null when there is nothing to compare.
+    expect(keyMetrics.last30RevenueChange).toBeNull()
+    expect(keyMetrics.last30BookingsChange).toBeNull()
+  })
+
+  it('computes the all-time Average Booking Value (consistent with the headline)', async () => {
+    await seedConfirmedBooking({ daysAgo: 2, gross: '10000.00' })
+    await seedConfirmedBooking({ daysAgo: 40, gross: '5000.00' })
+
+    const result = await loadVendorAnalytics(db, 'u_v')
+
+    // Average uses the all-time totals: (10000 + 5000) / 2 = 7500.
+    expect(result.keyMetrics.avgBookingValue).toBe(7500)
+    expect(result.keyMetrics.avgBookingValue).toBe(
+      Math.floor(result.totalRevenue / result.totalBookings),
+    )
+  })
+
+  it('counts Upcoming-7-day confirmed Bookings by slot start', async () => {
+    // Future slot at +10 days is OUT of the 7-day window; add a +3-day slot.
+    const soon = new Date()
+    soon.setDate(soon.getDate() + 3)
+    const soonEnd = new Date(soon)
+    soonEnd.setHours(soonEnd.getHours() + 2)
+    const [soonSlot] = await db
+      .insert(availabilitySlots)
+      .values({
+        experienceId,
+        startAt: soon,
+        endAt: soonEnd,
+        capacity: 8,
+        capacityTaken: 0,
+      })
+      .returning({ id: availabilitySlots.id })
+
+    // Confirmed booking on the +3-day slot (in window).
+    await db.insert(bookings).values({
+      ...baseBooking,
+      experienceId,
+      slotId: soonSlot!.id,
+      participantCount: 1,
+      grossTotalSnapshot: '5000.00',
+      state: 'confirmed',
+    })
+    // Confirmed booking on the +10-day slot (out of the 7-day window).
+    await db.insert(bookings).values({
+      ...baseBooking,
+      experienceId,
+      slotId: futureSlotId,
+      participantCount: 1,
+      grossTotalSnapshot: '5000.00',
+      state: 'confirmed',
+    })
+
+    const { keyMetrics } = await loadVendorAnalytics(db, 'u_v')
+
+    expect(keyMetrics.upcoming7Confirmed).toBe(1)
+  })
+
+  it('counts only confirmed Bookings for Upcoming-7-day (excludes cancelled)', async () => {
+    const soon = new Date()
+    soon.setDate(soon.getDate() + 2)
+    const soonEnd = new Date(soon)
+    soonEnd.setHours(soonEnd.getHours() + 2)
+    const [soonSlot] = await db
+      .insert(availabilitySlots)
+      .values({
+        experienceId,
+        startAt: soon,
+        endAt: soonEnd,
+        capacity: 8,
+        capacityTaken: 0,
+      })
+      .returning({ id: availabilitySlots.id })
+
+    await db.insert(bookings).values({
+      ...baseBooking,
+      experienceId,
+      slotId: soonSlot!.id,
+      participantCount: 1,
+      grossTotalSnapshot: '5000.00',
+      state: 'cancelled_by_customer',
+    })
+
+    const { keyMetrics } = await loadVendorAnalytics(db, 'u_v')
+
+    expect(keyMetrics.upcoming7Confirmed).toBe(0)
+  })
+
+  it('counts New Bookings confirmed in the last 7 days', async () => {
+    await seedConfirmedBooking({ daysAgo: 1, gross: '5000.00' }) // in 7-day window
+    await seedConfirmedBooking({ daysAgo: 6, gross: '5000.00' }) // in 7-day window
+    await seedConfirmedBooking({ daysAgo: 20, gross: '5000.00' }) // outside
+
+    const { keyMetrics } = await loadVendorAnalytics(db, 'u_v')
+
+    expect(keyMetrics.newBookings7).toBe(2)
+  })
+
+  it('computes the Cancellation Rate from the three cancelled_* states (not no_show)', async () => {
+    // 2 confirmed + 1 cancelled + 1 no_show → total 4 bookings, 1 cancellation.
+    await seedConfirmedBooking({ daysAgo: 3, gross: '5000.00' })
+    await seedConfirmedBooking({ daysAgo: 4, gross: '5000.00' })
+    await db.insert(bookings).values({
+      ...baseBooking,
+      experienceId,
+      slotId: futureSlotId,
+      participantCount: 1,
+      grossTotalSnapshot: '5000.00',
+      state: 'cancelled_by_vendor',
+    })
+    await db.insert(bookings).values({
+      ...baseBooking,
+      experienceId,
+      slotId: futureSlotId,
+      participantCount: 1,
+      grossTotalSnapshot: '5000.00',
+      state: 'no_show',
+    })
+
+    const { keyMetrics } = await loadVendorAnalytics(db, 'u_v')
+
+    // 1 cancellation / 4 total = 25% — no_show is NOT a cancellation.
+    expect(keyMetrics.cancellationRate).toBe(25)
+  })
+
+  it('reports a 0 Cancellation Rate (not NaN) for a Vendor with no Bookings', async () => {
+    const { keyMetrics } = await loadVendorAnalytics(db, 'u_v')
+
+    expect(keyMetrics.cancellationRate).toBe(0)
+    expect(Number.isNaN(keyMetrics.cancellationRate)).toBe(false)
+  })
+
+  it('counts Repeat Customers (Customers with more than one Booking)', async () => {
+    await db.insert(users).values([
+      { id: 'u_c2', email: 'c2@test.com', name: 'Repeat Customer' },
+      { id: 'u_c3', email: 'c3@test.com', name: 'One-time Customer' },
+    ])
+    // u_c2 books twice; u_c3 books once. Only u_c2 is a repeat customer.
+    await seedConfirmedBooking({ daysAgo: 2, gross: '5000.00', customerUserId: 'u_c2' })
+    await seedConfirmedBooking({ daysAgo: 3, gross: '5000.00', customerUserId: 'u_c2' })
+    await seedConfirmedBooking({ daysAgo: 4, gross: '5000.00', customerUserId: 'u_c3' })
+
+    const { keyMetrics } = await loadVendorAnalytics(db, 'u_v')
+
+    expect(keyMetrics.repeatCustomers).toBe(1)
+  })
+
+  it('returns zero-base Key Metrics for a Vendor with no Bookings', async () => {
+    const { keyMetrics } = await loadVendorAnalytics(db, 'u_v')
+
+    expect(keyMetrics.last30Revenue).toBe(0)
+    expect(keyMetrics.last30Bookings).toBe(0)
+    expect(keyMetrics.last30RevenueChange).toBeNull()
+    expect(keyMetrics.last30BookingsChange).toBeNull()
+    expect(keyMetrics.hasPriorPeriod).toBe(false)
+    expect(keyMetrics.avgBookingValue).toBe(0)
+    expect(keyMetrics.upcoming7Confirmed).toBe(0)
+    expect(keyMetrics.newBookings7).toBe(0)
+    expect(keyMetrics.cancellationRate).toBe(0)
+    expect(keyMetrics.repeatCustomers).toBe(0)
   })
 })

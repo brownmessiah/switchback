@@ -39,7 +39,8 @@ export interface ClosureEligibility {
   canClose: boolean
   inFlightCount: number
   unsettledDuesCount: number
-  publishedExperienceCount: number
+  /** Count of Experiences closure will archive (status != 'archived'). */
+  archivableExperienceCount: number
   suspended: boolean
 }
 
@@ -63,7 +64,7 @@ export function CloseAccountDangerZone({ eligibility }: { eligibility: ClosureEl
   const [reason, setReason] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const { canClose, inFlightCount, unsettledDuesCount, publishedExperienceCount, suspended } =
+  const { canClose, inFlightCount, unsettledDuesCount, archivableExperienceCount, suspended } =
     eligibility
   const blocked = !canClose
   const phraseMatches = confirm === CLOSE_CONFIRM_PHRASE
@@ -153,7 +154,7 @@ export function CloseAccountDangerZone({ eligibility }: { eligibility: ClosureEl
 
           <ul className="space-y-2 text-sm">
             <li className="text-card-foreground">
-              {t('dialogConsequenceExperiences', { count: publishedExperienceCount })}
+              {t('dialogConsequenceExperiences', { count: archivableExperienceCount })}
             </li>
             <li className="text-muted-foreground">{t('dialogConsequenceRetention')}</li>
             <li className="text-muted-foreground">{t('dialogReversibility')}</li>

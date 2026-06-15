@@ -1,13 +1,15 @@
-import { count, eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { headers } from 'next/headers'
 
 import { db } from '@/db/client'
-import { experiences } from '@/db/schema/experiences'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { auth } from '@/lib/auth'
 
 import { BusinessDetailsForm } from './business-details-form'
-import { getVendorClosureEligibility } from './close-account-actions'
+import {
+  getArchivableExperienceCount,
+  getVendorClosureEligibility,
+} from './close-account-core'
 import { CloseAccountDangerZone } from './close-account-danger-zone'
 import { KycDisplay } from './kyc-display'
 import { PayoutMethodForm } from './payout-method-form'
@@ -43,13 +45,11 @@ export default async function VendorSettingsPage() {
     vendor.payoutDestination as Record<string, string> | null
 
   // Server-compute closure eligibility from real Bookings/Payout state, plus
-  // the published-Experience count for the dialog consequence copy. Never
-  // trusted from the client (issue 06).
+  // the count of Experiences that closure WILL archive (status != 'archived',
+  // matching the archive query) for the dialog consequence copy. Never trusted
+  // from the client (issue 06).
   const eligibility = await getVendorClosureEligibility(db, userId)
-  const [{ value: publishedExperienceCount }] = await db
-    .select({ value: count() })
-    .from(experiences)
-    .where(eq(experiences.vendorUserId, userId))
+  const archivableExperienceCount = await getArchivableExperienceCount(db, userId)
 
   const sections = [
     { id: 'business-details', label: 'Business details' },
@@ -120,7 +120,7 @@ export default async function VendorSettingsPage() {
                 canClose: eligibility.canClose,
                 inFlightCount: eligibility.inFlightCount,
                 unsettledDuesCount: eligibility.unsettledDuesCount,
-                publishedExperienceCount,
+                archivableExperienceCount,
                 suspended: vendor.suspended,
               }}
             />

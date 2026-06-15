@@ -12,8 +12,9 @@ import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 
 import {
   executeCloseVendorAccount,
+  getArchivableExperienceCount,
   getVendorClosureEligibility,
-} from './close-account-actions'
+} from './close-account-core'
 
 /**
  * Account-closure core logic (issue 06).
@@ -231,6 +232,121 @@ describe('getVendorClosureEligibility (issue 06 — block-until-clean)', () => {
   })
 })
 
+describe('getArchivableExperienceCount (issue 06 — accurate archive count)', () => {
+  let db: TestDB
+  let teardown: () => Promise<void>
+
+  beforeAll(async () => {
+    const setup = await setupTestDb()
+    db = setup.db
+    teardown = setup.teardown
+  })
+
+  afterAll(async () => {
+    await teardown()
+  })
+
+  beforeEach(async () => {
+    await db.execute(
+      sql`TRUNCATE TABLE audit_logs, bookings, availability_slots, experiences, vendor_profiles, customer_profiles, users CASCADE`,
+    )
+    await seedBaseline(db) // seeds VENDOR + one 'published' Experience
+  })
+
+  it('counts only Experiences that closure will archive (status != archived)', async () => {
+    // Add a draft, a paused, and an already-archived Experience alongside the
+    // baseline 'published' one. The count fed to the dialog copy must equal what
+    // the archive UPDATE (ne status 'archived') actually flips: published + draft
+    // + paused = 3, excluding the already-archived one.
+    await db.insert(experiences).values([
+      {
+        vendorUserId: VENDOR,
+        slug: 'draft-trek',
+        title: 'Draft Trek',
+        cancellationPreset: 'moderate',
+        paymentModesAllowed: ['full_upfront'],
+        pricePerPerson_1_2: '1000.00',
+        pricePerPerson_3_5: '1000.00',
+        pricePerPerson_6_plus: '1000.00',
+        regionSlug: 'manali',
+        activitySlug: 'trekking',
+        status: 'draft',
+      },
+      {
+        vendorUserId: VENDOR,
+        slug: 'paused-kayak',
+        title: 'Paused Kayak',
+        cancellationPreset: 'moderate',
+        paymentModesAllowed: ['full_upfront'],
+        pricePerPerson_1_2: '1000.00',
+        pricePerPerson_3_5: '1000.00',
+        pricePerPerson_6_plus: '1000.00',
+        regionSlug: 'goa',
+        activitySlug: 'kayaking',
+        status: 'paused',
+      },
+      {
+        vendorUserId: VENDOR,
+        slug: 'old-archived',
+        title: 'Old Archived',
+        cancellationPreset: 'moderate',
+        paymentModesAllowed: ['full_upfront'],
+        pricePerPerson_1_2: '1000.00',
+        pricePerPerson_3_5: '1000.00',
+        pricePerPerson_6_plus: '1000.00',
+        regionSlug: 'ladakh',
+        activitySlug: 'trekking',
+        status: 'archived',
+      },
+    ])
+
+    const result = await getArchivableExperienceCount(db, VENDOR)
+
+    expect(result).toBe(3)
+  })
+
+  it('returns 0 when every Experience is already archived', async () => {
+    await db
+      .update(experiences)
+      .set({ status: 'archived' })
+      .where(eq(experiences.vendorUserId, VENDOR))
+
+    const result = await getArchivableExperienceCount(db, VENDOR)
+
+    expect(result).toBe(0)
+  })
+
+  it('equals the audit payload experiencesArchivedCount after a real close', async () => {
+    // Add a draft so the archivable count is > the single published baseline:
+    // the pre-close count and the post-close archived count must agree.
+    await db.insert(experiences).values({
+      vendorUserId: VENDOR,
+      slug: 'draft-two',
+      title: 'Draft Two',
+      cancellationPreset: 'moderate',
+      paymentModesAllowed: ['full_upfront'],
+      pricePerPerson_1_2: '1000.00',
+      pricePerPerson_3_5: '1000.00',
+      pricePerPerson_6_plus: '1000.00',
+      regionSlug: 'rishikesh',
+      activitySlug: 'rafting',
+      status: 'draft',
+    })
+
+    const countBefore = await getArchivableExperienceCount(db, VENDOR)
+    expect(countBefore).toBe(2)
+
+    await executeCloseVendorAccount(db, VENDOR, { confirmPhrase: 'CLOSE', reason: null })
+
+    const [audit] = await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.action, 'vendor.profile.closed'))
+    const payload = audit!.payload as Record<string, unknown>
+    expect(payload.experiencesArchivedCount).toBe(countBefore)
+  })
+})
+
 describe('executeCloseVendorAccount (issue 06 — transactional soft-close)', () => {
   let db: TestDB
   let teardown: () => Promise<void>
@@ -407,6 +523,65 @@ describe('executeCloseVendorAccount (issue 06 — transactional soft-close)', ()
       .from(vendorProfiles)
       .where(eq(vendorProfiles.userId, VENDOR))
     expect(vendor!.closedAt).toBeNull()
+  })
+
+  it('rolls back ALL of {Experiences archive, closed_at, audit row} when a mid-transaction write fails (atomic)', async () => {
+    // Inject a db whose transaction passes a tx that throws on the audit
+    // insert — the LAST write inside the tx, AFTER the Experiences archive and
+    // the vendor_profiles UPDATE have already executed. If the close is truly
+    // one db.transaction, all three must roll back together.
+    const failAuditInsert = () => {
+      throw new Error('simulated mid-transaction audit failure')
+    }
+    const failingDb = {
+      ...db,
+      select: db.select.bind(db),
+      // Throw on a top-level (non-tx) audit insert too, so this test still
+      // detects non-atomicity if writeAuditLog is ever moved OUTSIDE the tx.
+      insert: failAuditInsert,
+      transaction: (cb: (tx: unknown) => Promise<unknown>) =>
+        db.transaction((tx) => {
+          const failingTx = new Proxy(tx, {
+            get(target, prop, receiver) {
+              if (prop === 'insert') {
+                // Audit row insert (writeAuditLog) → blow up mid-tx.
+                return failAuditInsert
+              }
+              return Reflect.get(target, prop, receiver)
+            },
+          })
+          return cb(failingTx)
+        }),
+    } as unknown as TestDB
+
+    await expect(
+      executeCloseVendorAccount(failingDb, VENDOR, {
+        confirmPhrase: 'CLOSE',
+        reason: 'Should roll back',
+      }),
+    ).rejects.toThrow(/simulated mid-transaction audit failure/)
+
+    // (b) the Experience status is UNCHANGED (not 'archived')
+    const [exp] = await db
+      .select({ status: experiences.status })
+      .from(experiences)
+      .where(eq(experiences.id, experienceId))
+    expect(exp!.status).toBe('published')
+
+    // (c) vendor_profiles.closed_at is still NULL
+    const [vendor] = await db
+      .select({ closedAt: vendorProfiles.closedAt, closureReason: vendorProfiles.closureReason })
+      .from(vendorProfiles)
+      .where(eq(vendorProfiles.userId, VENDOR))
+    expect(vendor!.closedAt).toBeNull()
+    expect(vendor!.closureReason).toBeNull()
+
+    // (d) NO audit row was written
+    const auditRows = await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.action, 'vendor.profile.closed'))
+    expect(auditRows).toHaveLength(0)
   })
 
   it('is idempotent: closing an already-closed vendor is a no-op success without a second audit row', async () => {

@@ -232,7 +232,7 @@
     "blockedSuspended": "आपका Vendor खाता निलंबित है। इसे बंद करने से पहले सहायता से संपर्क करें।",
     "blockedSuspendedLink": "सहायता से संपर्क करें",
     "dialogTitle": "अपना Vendor खाता बंद करें",
-    "dialogConsequenceExperiences": "आपके {count} प्रकाशित Experiences संग्रहीत हो जाएंगे और खोज से हटा दिए जाएंगे।",
+    "dialogConsequenceExperiences": "आपके {count} सक्रिय Experiences संग्रहीत हो जाएंगे और खोज से हटा दिए जाएंगे।",
     "dialogConsequenceCustomer": "आप केवल-Customer खाते पर लौट आएंगे। आपकी Bookings, wallet और इतिहास सुरक्षित रहेंगे।",
     "dialogConsequenceRetention": "Outvers कानून के अनुसार आपके वित्तीय और कर रिकॉर्ड बनाए रखता है।",
     "dialogReversibility": "आप फिर से onboarding शुरू करके अपना Vendor खाता दोबारा खोल सकते हैं।",

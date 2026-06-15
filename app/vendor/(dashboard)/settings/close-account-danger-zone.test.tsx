@@ -53,7 +53,7 @@ const ELIGIBLE = {
   canClose: true,
   inFlightCount: 0,
   unsettledDuesCount: 0,
-  publishedExperienceCount: 3,
+  archivableExperienceCount: 3,
   suspended: false,
 }
 

@@ -11,13 +11,15 @@
 #
 #   pnpm dev:stack              # up: provision + seed + start dev server
 #   pnpm dev:stack:public       # same, PLUS an ngrok tunnel (view from anywhere)
+#   pnpm dev:stack:prod         # production build (next build) + next start + tunnel
 #   pnpm dev:stack:tunnel       # start just the ngrok tunnel (stack already up)
 #   pnpm dev:stack:status       # what's running
-#   pnpm dev:stack:down         # stop Postgres + Meilisearch + ngrok (keeps data)
+#   pnpm dev:stack:down         # stop app + Postgres + Meilisearch + ngrok (keeps data)
 #   pnpm dev:stack:reset        # drop + re-create + re-seed the DB
 #   pnpm dev:stack:nuke         # stop everything and delete .dev-stack/
 #
-# Flags (for `up`): --tunnel --no-dev --no-seed --no-reindex --no-schema --demo --blog
+# Flags (for `up`): --prod --no-build --tunnel --no-dev --no-seed --no-reindex
+#                   --no-schema --demo --blog
 #
 # Overridable via env: OUTVERS_PG_PORT OUTVERS_PG_DB OUTVERS_MEILI_PORT
 #                      OUTVERS_MEILI_KEY OUTVERS_MEILI_VERSION OUTVERS_APP_URL
@@ -308,7 +310,7 @@ print_summary() {
   printf '\n%s━━━━━━━━ outvers dev stack ━━━━━━━━%s\n' "$BOLD" "$RST"
   printf '  Postgres     localhost:%s  (db %s · user %s)\n' "$PG_PORT" "$PG_DB" "$PG_USER"
   printf '  Meilisearch  http://localhost:%s\n' "$MEILI_PORT"
-  printf '  App          %s\n' "$APP_URL"
+  printf '  App          %s%s\n' "$APP_URL" "$([ "$WITH_PROD" = true ] && echo '  (production build · next start)')"
   [ "$WITH_TUNNEL" = true ] && printf '  Public URL   https://%s  (ngrok · view from anywhere)\n' "$NGROK_DOMAIN"
   printf '  DB URL       %s\n' "$DB_URL"
   printf '  State        .dev-stack/  (gitignored · run `pnpm dev:stack:nuke` to wipe)\n\n'
@@ -317,6 +319,32 @@ print_summary() {
 # ---------------------------------------------------------------------------
 # Subcommands.
 # ---------------------------------------------------------------------------
+# Production build + serve (--prod). Unlike dev, the server runs DETACHED and
+# tracked via app.pid, so `dev:stack:down` stops it like the other services.
+build_app() {
+  [ "$DO_BUILD" = true ] || { warn "Skipping build (--no-build) — serving the existing .next"; return; }
+  log "Building for production (next build)"
+  pnpm build
+  ok "Production build complete"
+}
+
+start_prod_server() {
+  if port_busy 3000; then
+    warn "Port 3000 already in use — leaving the existing server (run dev:stack:down first to replace it)"
+    return
+  fi
+  log "Starting production server (next start, detached)"
+  start_detached "$LOG_DIR/app.log" "$RUN_DIR/app.pid" pnpm start
+  local i
+  for i in $(seq 1 80); do
+    if curl -fsS -o /dev/null --max-time 2 "http://localhost:3000/" 2>/dev/null; then break; fi
+    sleep 0.5
+  done
+  curl -fsS -o /dev/null --max-time 2 "http://localhost:3000/" 2>/dev/null \
+    && ok "Production server up (http://localhost:3000)" \
+    || die "Production server did not respond — see .dev-stack/logs/app.log"
+}
+
 cmd_up() {
   mkdir -p "$STACK_DIR" "$LOG_DIR" "$RUN_DIR"
   ensure_node_runtime
@@ -328,6 +356,15 @@ cmd_up() {
   push_schema
   seed_db
   reindex
+  if [ "$WITH_PROD" = true ]; then
+    build_app
+    start_prod_server
+    [ "$WITH_TUNNEL" = true ] && ensure_ngrok
+    print_summary
+    ok "Production stack running in the background (next start, detached)."
+    printf '\nManage:\n  pnpm dev:stack:status    # check services\n  pnpm dev:stack:down      # stop app + Postgres + Meilisearch + ngrok\n\n'
+    return
+  fi
   [ "$WITH_TUNNEL" = true ] && ensure_ngrok
   print_summary
   if [ "$START_DEV" = true ]; then
@@ -340,6 +377,16 @@ cmd_up() {
 
 cmd_down() {
   resolve_pg_bin
+  if [ -f "$RUN_DIR/app.pid" ]; then
+    local apid; apid="$(cat "$RUN_DIR/app.pid")"
+    if kill -0 "$apid" 2>/dev/null; then
+      # `pnpm start` leads a session (start_detached setsid) whose group includes
+      # the child `next start` — signal the whole group so nothing is orphaned.
+      kill -TERM "-$apid" 2>/dev/null || kill "$apid" 2>/dev/null
+      ok "Stopped app server (pid $apid)"
+    fi
+    rm -f "$RUN_DIR/app.pid"
+  fi
   if [ -f "$RUN_DIR/ngrok.pid" ]; then
     local npid; npid="$(cat "$RUN_DIR/ngrok.pid")"
     if kill -0 "$npid" 2>/dev/null; then kill "$npid" 2>/dev/null && ok "Stopped ngrok (pid $npid)"; fi
@@ -429,7 +476,8 @@ cmd_logs() {
 # Arg parsing + dispatch.
 # ---------------------------------------------------------------------------
 CMD="up"
-START_DEV=true; DO_SEED=true; DO_DEMO=false; DO_BLOG=false; DO_REINDEX=true; DO_SCHEMA=true; WITH_TUNNEL=false
+START_DEV=true; DO_SEED=true; DO_DEMO=false; DO_BLOG=false; DO_REINDEX=true; DO_SCHEMA=true
+WITH_TUNNEL=false; WITH_PROD=false; DO_BUILD=true
 
 if [ $# -gt 0 ]; then
   case "$1" in
@@ -441,6 +489,8 @@ fi
 while [ $# -gt 0 ]; do
   case "$1" in
     --tunnel)     WITH_TUNNEL=true ;;
+    --prod)       WITH_PROD=true ;;
+    --no-build)   DO_BUILD=false ;;
     --no-dev)     START_DEV=false ;;
     --no-seed)    DO_SEED=false ;;
     --no-reindex) DO_REINDEX=false ;;

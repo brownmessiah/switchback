@@ -40,7 +40,8 @@ The dev server boots with Turbopack in ~300ms. Without a populated database, you
 |---|---|
 | `pnpm dev` | Next.js dev server with Turbopack |
 | `pnpm dev:stack` | **Bring up the full local stack** (Postgres + Meilisearch + schema + seed + dev) — see [Local dev stack](#local-dev-stack) |
-| `pnpm dev:stack:down` | Stop Postgres + Meilisearch (keeps data) |
+| `pnpm dev:stack:prod` | Production build (`next build`) + `next start` + ngrok tunnel (detached, tracked) |
+| `pnpm dev:stack:down` | Stop app + Postgres + Meilisearch + ngrok (keeps data) |
 | `pnpm dev:stack:status` | Show what's running |
 | `pnpm dev:stack:reset` | Drop + recreate + re-seed the dev DB |
 | `pnpm dev:stack:nuke` | Stop everything and delete `.dev-stack/` |
@@ -68,15 +69,19 @@ The dev server boots with Turbopack in ~300ms. Without a populated database, you
 | Command | Does |
 |---|---|
 | `pnpm dev:stack` | Provision + seed + start the dev server (idempotent — safe to re-run) |
+| `pnpm dev:stack:public` | Same as `dev:stack`, plus an ngrok tunnel on the reserved domain |
+| `pnpm dev:stack:prod` | Production build (`next build`) → `next start` (detached, tracked) + ngrok tunnel |
 | `pnpm dev:stack:status` | What's running |
-| `pnpm dev:stack:down` | Stop Postgres + Meilisearch (data preserved) |
+| `pnpm dev:stack:down` | Stop app + Postgres + Meilisearch + ngrok (data preserved) |
 | `pnpm dev:stack:reset` | Drop + recreate + re-seed the dev DB |
 | `pnpm dev:stack:nuke` | Stop everything and delete `.dev-stack/` |
 | `pnpm dev:stack:logs` | Tail service logs |
 
 **What `up` does, in order:** initializes a native Postgres@15 cluster on `:5544` (db `outvers_dev`) → downloads a pinned Meilisearch v1.14 binary and starts it on `:7700` → backs up and wires `.env.local` (`DATABASE_URL`, `MEILISEARCH_HOST`/`KEY`, `NEXT_PUBLIC_APP_URL`; generates `BETTER_AUTH_SECRET` if missing) → `drizzle-kit push` → `pnpm db:seed` → `pnpm search:reindex` → `pnpm dev`. Postgres + Meilisearch keep running after you Ctrl-C the dev server; stop them with `pnpm dev:stack:down`.
 
-**Flags** (for `up` — invoke the script directly, e.g. `bash scripts/dev-stack.sh up --demo`): `--no-dev` (provision only, don't start the server), `--no-seed`, `--no-reindex`, `--no-schema`, `--demo` (also seed the demo catalog), `--blog` (also seed the blog corpus).
+**Flags** (for `up` — invoke the script directly, e.g. `bash scripts/dev-stack.sh up --demo`): `--tunnel` (start ngrok), `--prod` (production build → `next start`, detached + tracked, instead of `next dev`), `--no-build` (with `--prod`: serve the existing `.next` without rebuilding), `--no-dev` (provision only, don't start the server), `--no-seed`, `--no-reindex`, `--no-schema`, `--demo` (also seed the demo catalog), `--blog` (also seed the blog corpus).
+
+**Production preview:** `pnpm dev:stack:prod` runs `next build` then serves it with `next start` (detached, so the terminal returns) on the reserved ngrok URL. Because it's tracked via a pidfile, `pnpm dev:stack:down` stops the app server too (along with Postgres, Meilisearch, and ngrok).
 
 **Prereqs & overrides:** requires the Postgres@15 toolchain (`brew install postgresql@15`); the Meilisearch binary is auto-downloaded. The dedicated `:5544` port keeps this isolated from a system Postgres (`:5432`) and the E2E DB (`:5433`). Override ports/keys via `OUTVERS_PG_PORT`, `OUTVERS_PG_DB`, `OUTVERS_MEILI_PORT`, `OUTVERS_MEILI_KEY`, `OUTVERS_MEILI_VERSION`, `OUTVERS_APP_URL`.
 

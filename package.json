@@ -6,6 +6,7 @@
     "dev": "next dev",
     "dev:stack": "bash scripts/dev-stack.sh up",
     "dev:stack:public": "bash scripts/dev-stack.sh up --tunnel",
+    "dev:stack:prod": "bash scripts/dev-stack.sh up --prod --tunnel",
     "dev:stack:tunnel": "bash scripts/dev-stack.sh tunnel",
     "dev:stack:down": "bash scripts/dev-stack.sh down",
     "dev:stack:status": "bash scripts/dev-stack.sh status",

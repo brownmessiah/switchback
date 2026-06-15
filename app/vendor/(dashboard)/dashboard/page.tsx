@@ -12,9 +12,7 @@ import {
   verifiedVendorBadgeLabel,
 } from '@/lib/vendor/dashboard-loader'
 
-import { ActionItems } from './action-items'
 import { TrendChart } from './dashboard-charts'
-import { InsightsRail } from './insights-rail'
 import { VendorQuickActions } from './quick-actions'
 
 /**
@@ -42,12 +40,9 @@ export default async function VendorDashboardPage() {
   const verifiedVendorLabel = verifiedVendorBadgeLabel(data.kycTier)
 
   return (
-    // grid-cols-1 at the base breakpoint pins the single mobile column to the
-    // track width — without it the column auto-sizes to max-content and the
-    // charts/insights push the page wider than the viewport (mobile h-overflow).
-    <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      {/* Main column */}
-      <div className="min-w-0 space-y-8">
+    // Single operational column. min-w-0 keeps the trend charts from forcing a
+    // wider-than-viewport track at the mobile breakpoint (h-overflow guard).
+    <div className="min-w-0 space-y-8">
       <div>
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
@@ -64,14 +59,14 @@ export default async function VendorDashboardPage() {
       </div>
 
       {/* Quick-action wayfinding row (#04) — shortcuts to the highest-frequency
-          Vendor surfaces. Placed above the KPI grid; existing KPIs/charts/
-          action-items/upcoming-bookings below are unchanged. */}
+          Vendor surfaces. Placed above the KPI grid; the KPIs, trend charts,
+          and upcoming-bookings table follow below. */}
       <VendorQuickActions />
 
       {/* Enhanced stat cards — compact single-metric KPI row: 1-col (base) →
-          2-col (md:) → 4-col (lg:). The structural flip keys off md:/lg: per
-          §8.1 (never sm:); 4-up at lg is permitted for compact KPI rows. */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          3-up (md:). The structural flip keys off md: per §8.1 (never sm:);
+          a 3-up compact KPI row reads cleanly without a trailing gap. */}
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -82,20 +77,6 @@ export default async function VendorDashboardPage() {
             <p className="text-3xl font-semibold tabular-nums">{data.todayBookings}</p>
             <p className="mt-1 text-xs text-muted-foreground tabular-nums">
               {data.totalBookings} total all time
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Pending actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-semibold tabular-nums">{data.pendingActionsCount}</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              bookings needing response
             </p>
           </CardContent>
         </Card>
@@ -159,9 +140,6 @@ export default async function VendorDashboardPage() {
         />
       </div>
 
-      {/* Action items */}
-      <ActionItems items={data.actionItems} />
-
       {/* Upcoming bookings — A3 table migrated to ResponsiveTable (ADR-0018 /
           DESIGN.md §8.5): Table ≥ md, stacked label:value Cards < md. The
           heading rides above the table since ResponsiveTable owns its own
@@ -219,10 +197,6 @@ export default async function VendorDashboardPage() {
           ]}
         />
       </div>
-      </div>
-
-      {/* Insights rail (C "Insight-First Growth Hub" — issue #74) */}
-      <InsightsRail insights={data.insights} />
     </div>
   )
 }

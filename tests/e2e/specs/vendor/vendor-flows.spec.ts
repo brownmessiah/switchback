@@ -2052,15 +2052,16 @@ test.describe('Vendor booking management (#19)', () => {
       page.getByText(new RegExp(`${slaScore.toFixed(1)}%`)),
     ).toBeVisible()
 
-    // ── C "Insight-First Growth Hub" rail (#74) — REAL-data insights ──────
     // A1: the business verified-Vendor badge surfaces (business KYC tier).
     await expect(page.getByTestId('verified-vendor-badge')).toBeVisible()
 
-    // C: the ranked Insights rail renders with at least the top-performer
-    // insight — the business Vendor owns ≥5 Bookings across Experiences, so a
-    // most-booked Experience is always derivable (no fabrication).
-    await expect(page.getByTestId('insights-rail')).toBeVisible()
-    await expect(page.getByTestId('insight-top_performer')).toBeVisible()
+    // Issue #01 (dashboard simplification): the Insights rail, Action-items
+    // panel, and Pending-actions KPI were removed. The two trend charts remain
+    // as the core operational signal and must still render.
+    await expect(page.getByText('Bookings (last 30 days)')).toBeVisible()
+    await expect(page.getByText('Revenue (last 30 days)')).toBeVisible()
+    // The removed Pending-actions KPI must no longer be on the overview.
+    await expect(page.getByText('Pending actions')).toHaveCount(0)
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/vendor-dashboard-stats.png',

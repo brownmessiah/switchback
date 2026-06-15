@@ -248,6 +248,23 @@ describe('LanguageSelector accessibility', () => {
   })
 })
 
+// ---- Dark-backdrop variant (home hero) ----
+
+describe('LanguageSelector onDark', () => {
+  it('uses white trigger text on a dark backdrop (home hero legibility)', () => {
+    render(<LanguageSelector variant="compact" onDark />)
+    const trigger = screen.getByRole('button', { name: /language/i })
+    expect(trigger.className).toContain('text-white')
+  })
+
+  it('uses foreground (non-white) trigger text by default (light surface)', () => {
+    render(<LanguageSelector variant="compact" />)
+    const trigger = screen.getByRole('button', { name: /language/i })
+    expect(trigger.className).not.toContain('text-white')
+    expect(trigger.className).toContain('hover:text-accent-foreground')
+  })
+})
+
 // ---- Font conditional loading ----
 
 describe('LanguageSelector font class', () => {

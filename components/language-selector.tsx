@@ -31,11 +31,19 @@ interface LanguageSelectorProps {
   readonly variant: 'compact' | 'full'
   /** Optional extra className for the wrapper element. */
   readonly className?: string
+  /**
+   * Render for a dark backdrop (e.g. the transparent home header over the hero
+   * image). Switches the trigger to white text + a white-tinted hover so the
+   * globe and locale code stay legible — mirrors the ThemeToggle's `isHome`
+   * treatment. Defaults to `false` (foreground text on a light surface).
+   */
+  readonly onDark?: boolean
 }
 
 export function LanguageSelector({
   variant,
   className = '',
+  onDark = false,
 }: LanguageSelectorProps): ReactElement {
   const { locale, switchLocale } = useIntl()
   const [open, setOpen] = useState(false)
@@ -152,7 +160,11 @@ export function LanguageSelector({
         aria-controls={listboxId}
         onClick={handleTriggerClick}
         onKeyDown={handleTriggerKeyDown}
-        className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className={`flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+          onDark
+            ? 'text-white hover:bg-white/10 hover:text-white'
+            : 'hover:bg-accent hover:text-accent-foreground'
+        }`}
       >
         <Globe className="size-4" aria-hidden="true" />
         <span>{displayText}</span>

@@ -16,6 +16,15 @@ interface RecentlyViewedRailProps {
    * client component (it never touches the DB directly).
    */
   fetchCards: (slugs: string[]) => Promise<ExperienceCardData[]>
+  /**
+   * Whether the rail supplies its own centered width gutter
+   * (`mx-auto max-w-6xl px-4 sm:px-6`). Defaults to `true` for the home and
+   * /search pages, where the rail is a standalone top-level section. Pass
+   * `false` on the PDP, where the rail is nested inside a `<main>` that already
+   * constrains width + padding — without this the rail would double-pad and sit
+   * one gutter to the right of the sibling "Similar experiences" grid.
+   */
+  contained?: boolean
 }
 
 /**
@@ -34,6 +43,7 @@ interface RecentlyViewedRailProps {
  */
 export function RecentlyViewedRail({
   fetchCards,
+  contained = true,
 }: RecentlyViewedRailProps): ReactElement | null {
   const t = useTranslations('RecentlyViewed')
   const [cards, setCards] = useState<ExperienceCardData[]>([])
@@ -64,7 +74,11 @@ export function RecentlyViewedRail({
     <section
       aria-label={t('heading')}
       data-testid="recently-viewed-rail"
-      className="mx-auto max-w-6xl px-4 py-[var(--space-section)] sm:px-6"
+      className={
+        contained
+          ? 'mx-auto max-w-6xl px-4 py-[var(--space-section)] sm:px-6'
+          : 'py-[var(--space-section)]'
+      }
     >
       <header className="mb-8">
         <h2 className="font-heading text-h3 font-bold tracking-tight">{t('heading')}</h2>

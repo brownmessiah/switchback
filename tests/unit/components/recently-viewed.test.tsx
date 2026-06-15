@@ -115,6 +115,40 @@ describe('RecentlyViewedRail', () => {
     expect(screen.getByText('heading')).toBeTruthy()
   })
 
+  it('is self-contained by default — applies its own width gutter (home / search standalone)', async () => {
+    window.localStorage.setItem(
+      RECENTLY_VIEWED_STORAGE_KEY,
+      JSON.stringify(['a']),
+    )
+    const fetchCards = vi.fn(async () => [card('a', 'Card A')])
+    const { container } = render(<RecentlyViewedRail fetchCards={fetchCards} />)
+    await waitFor(() => {
+      expect(screen.getByText('Card A')).toBeTruthy()
+    })
+    const section = container.querySelector('section') as HTMLElement
+    expect(section.className).toContain('max-w-6xl')
+    expect(section.className).toContain('mx-auto')
+  })
+
+  it('drops its own width gutter when contained={false} (parent already constrains width, e.g. PDP)', async () => {
+    window.localStorage.setItem(
+      RECENTLY_VIEWED_STORAGE_KEY,
+      JSON.stringify(['a']),
+    )
+    const fetchCards = vi.fn(async () => [card('a', 'Card A')])
+    const { container } = render(
+      <RecentlyViewedRail fetchCards={fetchCards} contained={false} />,
+    )
+    await waitFor(() => {
+      expect(screen.getByText('Card A')).toBeTruthy()
+    })
+    const section = container.querySelector('section') as HTMLElement
+    // No second max-width / horizontal padding so it aligns with the parent gutter.
+    expect(section.className).not.toContain('max-w-6xl')
+    expect(section.className).not.toContain('mx-auto')
+    expect(section.className).not.toContain('px-4')
+  })
+
   it('does not render unpublished/fixture cards — it only renders what the gated fetcher returns', async () => {
     window.localStorage.setItem(
       RECENTLY_VIEWED_STORAGE_KEY,

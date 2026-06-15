@@ -1113,7 +1113,7 @@ export default async function ExperienceDetailPage({
           Experiences, gated through lib/experiences/public-filter and hidden
           when empty. The current PDP self-includes (it was just recorded); that
           is acceptable parity behaviour for a recently-viewed rail. */}
-      <RecentlyViewedRail fetchCards={loadRecentlyViewedCardsAction} />
+      <RecentlyViewedRail fetchCards={loadRecentlyViewedCardsAction} contained={false} />
     </main>
   )
 }

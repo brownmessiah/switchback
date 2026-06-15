@@ -69,7 +69,7 @@ export function SiteHeader(): ReactElement | null {
             label={t('themeToggle')}
             className={isHome ? 'text-white hover:bg-white/10 hover:text-white' : ''}
           />
-          <LanguageSelector variant="compact" />
+          <LanguageSelector variant="compact" onDark={isHome} />
           <AuthStatus />
         </nav>
 

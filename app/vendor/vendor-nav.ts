@@ -11,7 +11,7 @@ export interface VendorNavItem {
 }
 
 export const VENDOR_NAV_ITEMS: readonly VendorNavItem[] = [
-  { href: '/vendor/dashboard', label: 'Dashboard', labelKey: 'dashboard', icon: '◻' },
+  { href: '/vendor/dashboard', label: 'Dashboard', labelKey: 'dashboard', icon: '⊞' },
   { href: '/vendor/analytics', label: 'Analytics', labelKey: 'analytics', icon: '📈' },
   { href: '/vendor/listings', label: 'Listings', labelKey: 'listings', icon: '☰' },
   { href: '/vendor/bookings', label: 'Bookings', labelKey: 'bookings', icon: '📋' },

@@ -52,11 +52,11 @@ export function TrendChart({ title, data, colorToken, formatAs, type }: TrendCha
     ? formatAxisTick
     : (v: number) => String(v)
 
-  // Show every 5th label to avoid crowding
-  const chartData = data.map((d, i) => ({
-    ...d,
-    label: i % 5 === 0 ? formatDateLabel(d.date) : '',
-  }))
+  // Key the X-axis on the UNIQUE `date` (below), not a sparse `label` that is an
+  // empty string for 4 of every 5 points: duplicate `''` categories made
+  // Recharts mis-map hovers to the wrong datum, so the tooltip reported a 0-day
+  // for a visible spike. Tick labels are thinned via tickFormatter + interval.
+  const chartData = data.map((d) => ({ ...d }))
 
   return (
     <Card>
@@ -76,7 +76,10 @@ export function TrendChart({ title, data, colorToken, formatAs, type }: TrendCha
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis
-                  dataKey="label"
+                  dataKey="date"
+                  tickFormatter={formatDateLabel}
+                  interval="preserveStartEnd"
+                  minTickGap={24}
                   tick={{ fontSize: 11 }}
                   className="text-muted-foreground"
                   tickLine={false}
@@ -116,7 +119,10 @@ export function TrendChart({ title, data, colorToken, formatAs, type }: TrendCha
               <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis
-                  dataKey="label"
+                  dataKey="date"
+                  tickFormatter={formatDateLabel}
+                  interval="preserveStartEnd"
+                  minTickGap={24}
                   tick={{ fontSize: 11 }}
                   className="text-muted-foreground"
                   tickLine={false}

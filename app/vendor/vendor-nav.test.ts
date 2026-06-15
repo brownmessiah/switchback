@@ -3,14 +3,15 @@ import { describe, expect, it } from 'vitest'
 import { VENDOR_NAV_ITEMS } from './vendor-nav'
 
 describe('vendor-nav', () => {
-  it('contains exactly 7 nav items', () => {
-    expect(VENDOR_NAV_ITEMS).toHaveLength(7)
+  it('contains exactly 8 nav items', () => {
+    expect(VENDOR_NAV_ITEMS).toHaveLength(8)
   })
 
   it('includes all expected labels in order', () => {
     const labels = VENDOR_NAV_ITEMS.map((item) => item.label)
     expect(labels).toEqual([
       'Dashboard',
+      'Analytics',
       'Listings',
       'Bookings',
       'Payouts',
@@ -39,13 +40,18 @@ describe('vendor-nav', () => {
     }
   })
 
-  it('preserves original 4 items (Dashboard, Listings, Bookings, Payouts) first', () => {
-    const firstFour = VENDOR_NAV_ITEMS.slice(0, 4).map((item) => item.label)
-    expect(firstFour).toEqual(['Dashboard', 'Listings', 'Bookings', 'Payouts'])
+  it('keeps Dashboard first and places Analytics directly after it', () => {
+    const firstTwo = VENDOR_NAV_ITEMS.slice(0, 2).map((item) => item.label)
+    expect(firstTwo).toEqual(['Dashboard', 'Analytics'])
   })
 
-  it('new items (Reviews, Messages, Settings) come after original items', () => {
-    const lastThree = VENDOR_NAV_ITEMS.slice(4).map((item) => item.label)
+  it('preserves the original core items (Listings, Bookings, Payouts) after Analytics', () => {
+    const coreItems = VENDOR_NAV_ITEMS.slice(2, 5).map((item) => item.label)
+    expect(coreItems).toEqual(['Listings', 'Bookings', 'Payouts'])
+  })
+
+  it('keeps the secondary items (Reviews, Messages, Settings) last', () => {
+    const lastThree = VENDOR_NAV_ITEMS.slice(5).map((item) => item.label)
     expect(lastThree).toEqual(['Reviews', 'Messages', 'Settings'])
   })
 })

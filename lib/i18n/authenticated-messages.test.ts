@@ -86,16 +86,45 @@ describe('authenticated-route i18n messages', () => {
       expect(enKeys).toEqual(hiKeys)
     })
 
-    it('includes all 7 vendor nav item labels', () => {
+    it('includes all 8 vendor nav item labels', () => {
       const vendorNav = (enMessages as Record<string, Record<string, unknown>>).VendorNav as Record<string, unknown>
       const items = vendorNav.items as Record<string, unknown>
-      expect(Object.keys(items)).toHaveLength(7)
+      // 8 items (#01 added the /vendor/analytics surface)
+      expect(Object.keys(items)).toHaveLength(8)
     })
 
     it('includes portal title and complete setup CTA', () => {
       const vendorNav = (enMessages as Record<string, Record<string, unknown>>).VendorNav as Record<string, unknown>
       expect(vendorNav).toHaveProperty('portalTitle')
       expect(vendorNav).toHaveProperty('completeSetup')
+    })
+  })
+
+  describe('VendorAnalytics namespace', () => {
+    it('exists in en.json', () => {
+      expect(enMessages).toHaveProperty('VendorAnalytics')
+    })
+
+    it('exists in hi.json', () => {
+      expect(hiMessages).toHaveProperty('VendorAnalytics')
+    })
+
+    it('has matching keys in en.json and hi.json', () => {
+      const enKeys = collectKeys(
+        (enMessages as Record<string, Record<string, unknown>>).VendorAnalytics,
+      )
+      const hiKeys = collectKeys(
+        (hiMessages as Record<string, Record<string, unknown>>).VendorAnalytics,
+      )
+      expect(enKeys).toEqual(hiKeys)
+    })
+
+    it('includes the page title, KPI labels, and empty-state message', () => {
+      const va = (enMessages as Record<string, Record<string, unknown>>).VendorAnalytics as Record<string, unknown>
+      expect(va).toHaveProperty('title')
+      expect(va).toHaveProperty('totalRevenue')
+      expect(va).toHaveProperty('totalBookings')
+      expect(va).toHaveProperty('emptyState')
     })
   })
 

@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 
 import { db } from '@/db/client'
 import { auth } from '@/lib/auth'
-import { requireVendorProfile } from '@/lib/auth/permissions'
+import { requireVendorAccess, requireVendorProfile } from '@/lib/auth/permissions'
 
 import { VendorSidebar } from '../vendor-sidebar'
 
@@ -29,9 +29,19 @@ export default async function VendorDashboardLayout({
     redirect('/sign-in')
   }
 
-  // Gate: user must have a vendor_profiles row. Redirects to
-  // /vendor/onboarding if no vendor profile exists (per ADR-0006).
+  // Gate 1: user must have an active vendor_profiles row. Redirects to
+  // /vendor/onboarding if no vendor profile exists (per ADR-0006). This
+  // handles the Owner-without-profile path (onboarding lives OUTSIDE this
+  // route group, so the redirect does not loop).
   await requireVendorProfile(db, session.user.id)
+
+  // Gate 2 (issue #03): the acting user must resolve to an active member/owner
+  // role with at least read access. `bookings:read` is held by every valid
+  // Vendor role (Owner, Manager, Booking Staff, Guide, Accountant), so this is
+  // the minimal "you belong to this Vendor account" bound. For today's
+  // single-seat case the Owner resolves and passes → zero behavior change;
+  // an inactive/non-member is denied (notFound) rather than seeing the shell.
+  await requireVendorAccess(db, session.user.id, 'bookings:read')
 
   // flex-col on mobile so the sticky mobile header bar (a VendorSidebar child)
   // stacks full-width on top instead of sitting as a row sibling that eats the

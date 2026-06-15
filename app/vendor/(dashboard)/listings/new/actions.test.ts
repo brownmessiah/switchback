@@ -7,7 +7,7 @@ import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { loadItinerary } from '@/lib/experiences/itinerary'
 import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 
-import { executeCreateExperience, type CreateExperienceInput } from './actions'
+import { executeCreateExperience, type CreateExperienceInput } from './create-core'
 
 /**
  * Core (db-injected) create logic for the Vendor authoring form (issue 05).

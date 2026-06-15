@@ -9,7 +9,7 @@ import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 
-import { executeSubmitVendorResponse } from './actions'
+import { executeSubmitVendorResponse } from './review-cores'
 import { computeAverageRating } from './utils'
 
 describe('executeSubmitVendorResponse', () => {

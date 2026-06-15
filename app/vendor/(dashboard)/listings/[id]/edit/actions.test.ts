@@ -12,7 +12,7 @@ import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 import {
   executeUpdateExperience,
   type UpdateExperienceInput,
-} from './actions'
+} from './update-core'
 
 /**
  * A capturing Meilisearch stub honouring the indexer surface, so the edit

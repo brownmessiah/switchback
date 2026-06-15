@@ -33,6 +33,19 @@ import {
 
 const TEAM_PATH = '/vendor/team'
 
+/**
+ * Sanitized fallback envelope (security review LOW-3). The team cores return
+ * typed `{ ok: false, error }` envelopes for every expected denial/validation
+ * case; this only catches an UNEXPECTED throw (e.g. a unique-index race on
+ * `(vendor_user_id, member_user_id)` slipping past the application-layer check)
+ * so a raw Postgres error never propagates to the client. Mirrors the
+ * error-envelope style in `bookings/action-cores.ts`.
+ */
+const UNEXPECTED_ERROR: TeamActionResult = {
+  ok: false,
+  error: 'An unexpected error occurred.',
+}
+
 async function gate(): Promise<
   { ok: true; vendorUserId: string } | { ok: false; result: TeamActionResult }
 > {
@@ -55,9 +68,13 @@ export async function inviteTeamMember(
   const gated = await gate()
   if (!gated.ok) return gated.result
 
-  const result = await executeInviteTeamMember(prodDb, gated.vendorUserId, input)
-  if (result.ok) revalidatePath(TEAM_PATH)
-  return result
+  try {
+    const result = await executeInviteTeamMember(prodDb, gated.vendorUserId, input)
+    if (result.ok) revalidatePath(TEAM_PATH)
+    return result
+  } catch {
+    return UNEXPECTED_ERROR
+  }
 }
 
 export async function editTeamMemberRole(
@@ -66,9 +83,13 @@ export async function editTeamMemberRole(
   const gated = await gate()
   if (!gated.ok) return gated.result
 
-  const result = await executeEditTeamMemberRole(prodDb, gated.vendorUserId, input)
-  if (result.ok) revalidatePath(TEAM_PATH)
-  return result
+  try {
+    const result = await executeEditTeamMemberRole(prodDb, gated.vendorUserId, input)
+    if (result.ok) revalidatePath(TEAM_PATH)
+    return result
+  } catch {
+    return UNEXPECTED_ERROR
+  }
 }
 
 export async function deactivateTeamMember(
@@ -77,9 +98,13 @@ export async function deactivateTeamMember(
   const gated = await gate()
   if (!gated.ok) return gated.result
 
-  const result = await executeDeactivateTeamMember(prodDb, gated.vendorUserId, input)
-  if (result.ok) revalidatePath(TEAM_PATH)
-  return result
+  try {
+    const result = await executeDeactivateTeamMember(prodDb, gated.vendorUserId, input)
+    if (result.ok) revalidatePath(TEAM_PATH)
+    return result
+  } catch {
+    return UNEXPECTED_ERROR
+  }
 }
 
 export async function removeTeamMember(
@@ -88,7 +113,11 @@ export async function removeTeamMember(
   const gated = await gate()
   if (!gated.ok) return gated.result
 
-  const result = await executeRemoveTeamMember(prodDb, gated.vendorUserId, input)
-  if (result.ok) revalidatePath(TEAM_PATH)
-  return result
+  try {
+    const result = await executeRemoveTeamMember(prodDb, gated.vendorUserId, input)
+    if (result.ok) revalidatePath(TEAM_PATH)
+    return result
+  } catch {
+    return UNEXPECTED_ERROR
+  }
 }

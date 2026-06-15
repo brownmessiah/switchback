@@ -159,6 +159,74 @@ describe('executeInviteTeamMember', () => {
     }
   })
 
+  // FIX B (security review MEDIUM-3): the invite lowercases the input email,
+  // but the existing-user lookup must be case-insensitive too — otherwise a
+  // `users` row stored with mixed case (via any non-normalizing path) is
+  // missed and a DUPLICATE user is created for the same person.
+  it('LINKS to an existing user whose stored email differs only in case (no duplicate)', async () => {
+    await seedVendor(db, 'u_owner')
+    await db
+      .insert(users)
+      .values({ id: 'u_mixed', email: 'Member@Example.com', name: 'Mixed Case' })
+
+    const result = await executeInviteTeamMember(db, 'u_owner', {
+      email: 'member@example.com',
+      role: 'manager',
+    })
+
+    expect(result.ok).toBe(true)
+
+    // No second users row was created — the lowercase invite linked the
+    // mixed-case row. Compare case-insensitively so the assertion itself is
+    // not subject to the same casing trap.
+    const matchingUsers = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(sql`lower(${users.email}) = 'member@example.com'`)
+    expect(matchingUsers).toHaveLength(1)
+    expect(matchingUsers[0]!.id).toBe('u_mixed')
+
+    // The membership points at the existing (mixed-case) user id.
+    const [membership] = await db
+      .select({ memberUserId: vendorTeamMembers.memberUserId, role: vendorTeamMembers.role })
+      .from(vendorTeamMembers)
+      .where(eq(vendorTeamMembers.vendorUserId, 'u_owner'))
+      .limit(1)
+    expect(membership!.memberUserId).toBe('u_mixed')
+    expect(membership!.role).toBe('manager')
+  })
+
+  // FIX C (security review LOW-1): owner protection by user id, not just email.
+  // The email guard reads the Owner email via the vendor_profiles⨝users join,
+  // so it is SKIPPED whenever that lookup yields no email (phone-only Owner, or
+  // — as isolated here — the profile-join returning nothing). The authoritative
+  // backstop is that the existing user the invite resolves to may never equal
+  // the Owner's id. Without the id guard this test inserts a membership for the
+  // Owner's own account; with it, the invite is rejected.
+  it('rejects linking an existing user whose id equals the owner id (id-based guard)', async () => {
+    // Owner users row exists and is findable by the email lookup, but the
+    // email guard's profile-join finds nothing → email guard is skipped, so
+    // only the id guard can protect the Owner here.
+    await db.insert(users).values({ id: 'u_owner', email: 'owner@biz.com' })
+
+    const result = await executeInviteTeamMember(db, 'u_owner', {
+      email: 'owner@biz.com',
+      role: 'manager',
+    })
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toMatch(/owner/i)
+    }
+
+    // No membership row was created for the Owner's own id.
+    const memberships = await db
+      .select()
+      .from(vendorTeamMembers)
+      .where(eq(vendorTeamMembers.memberUserId, 'u_owner'))
+    expect(memberships).toHaveLength(0)
+  })
+
   it('rejects an invalid email', async () => {
     await seedVendor(db, 'u_owner')
 
@@ -183,6 +251,35 @@ describe('executeInviteTeamMember', () => {
       .from(auditLogs)
       .where(eq(auditLogs.action, 'vendor.team.invite'))
     expect(logs).toHaveLength(1)
+  })
+
+  // FIX A (security review MEDIUM-1): the existing-user LINK path must be
+  // transactional too — membership insert + audit write atomic, so a failed
+  // audit write cannot leave a membership row with no audit record.
+  it('writes membership + audit atomically on the existing-user LINK path', async () => {
+    await seedVendor(db, 'u_owner')
+    await db.insert(users).values({ id: 'u_link', email: 'link@person.com' })
+
+    const result = await executeInviteTeamMember(db, 'u_owner', {
+      email: 'link@person.com',
+      role: 'guide',
+    })
+
+    expect(result.ok).toBe(true)
+
+    const [membership] = await db
+      .select()
+      .from(vendorTeamMembers)
+      .where(eq(vendorTeamMembers.memberUserId, 'u_link'))
+      .limit(1)
+    expect(membership).toBeDefined()
+
+    const logs = await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.action, 'vendor.team.invite'))
+    expect(logs).toHaveLength(1)
+    expect(logs[0]!.entityId).toBe('u_link')
   })
 
   it("an invited member's role is immediately enforced by the issue-03 gate", async () => {

@@ -156,7 +156,13 @@ export async function executeInviteTeamMember(
 
   const { fullName, email, phone, role, status } = parsed.data
 
-  // Owner protection: never invite the Owner's own email as a member.
+  // TODO: per-vendor invite quota (security review MEDIUM-2, needs a product-defined limit)
+
+  // Owner protection (email): never invite the Owner's own email as a member.
+  // This is an early, clearer rejection — but it cannot fire for a phone-only
+  // (null-email) Owner, so the id-based guard below is the authoritative
+  // backstop. The join email is compared case-insensitively to mirror the
+  // lowercase-normalized invite email (security review MEDIUM-3 / LOW-1).
   const [ownerRow] = await db
     .select({ email: users.email })
     .from(vendorProfiles)
@@ -168,33 +174,48 @@ export async function executeInviteTeamMember(
     return { ok: false, error: 'You are the account owner and already have full access.' }
   }
 
+  // Case-insensitive lookup (security review MEDIUM-3): the invite email is
+  // already lowercased by the schema, so compare against lower(users.email).
+  // A case-sensitive `eq` would miss a row stored with mixed case and create a
+  // DUPLICATE user for the same person.
   const [existingUser] = await db
     .select({ id: users.id })
     .from(users)
-    .where(eq(users.email, email))
+    .where(sql`lower(${users.email}) = ${email}`)
     .limit(1)
 
   if (existingUser) {
+    // Owner protection (id): the authoritative backstop. The Owner can never
+    // be added as a member of their own account, regardless of email casing or
+    // a null Owner email (security review LOW-1).
+    if (existingUser.id === vendorUserId) {
+      return { ok: false, error: 'You are the account owner and already have full access.' }
+    }
+
     // Already on THIS team (any status) → clear, idempotent-safe error.
     const existingMembership = await findMembership(db, vendorUserId, existingUser.id)
     if (existingMembership) {
       return { ok: false, error: 'This person is already on your team.' }
     }
 
-    await db.insert(vendorTeamMembers).values({
-      vendorUserId,
-      memberUserId: existingUser.id,
-      role,
-      status: status ?? 'active',
-      invitedAt: new Date(),
-    })
+    // Membership insert + audit write atomic (security review MEDIUM-1):
+    // a failed audit write must not leave a membership row with no audit record.
+    await db.transaction(async (tx) => {
+      await tx.insert(vendorTeamMembers).values({
+        vendorUserId,
+        memberUserId: existingUser.id,
+        role,
+        status: status ?? 'active',
+        invitedAt: new Date(),
+      })
 
-    await writeAuditLog(db, {
-      actorUserId: vendorUserId,
-      action: 'vendor.team.invite',
-      entityType: 'vendor_team_member',
-      entityId: existingUser.id,
-      payload: { email, role, linkedExistingUser: true },
+      await writeAuditLog(tx, {
+        actorUserId: vendorUserId,
+        action: 'vendor.team.invite',
+        entityType: 'vendor_team_member',
+        entityId: existingUser.id,
+        payload: { email, role, linkedExistingUser: true },
+      })
     })
 
     return { ok: true, memberUserId: existingUser.id }

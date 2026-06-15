@@ -159,6 +159,35 @@ describe('authenticated-route i18n messages', () => {
     })
   })
 
+  describe('VendorQuickActions namespace', () => {
+    it('exists in en.json', () => {
+      expect(enMessages).toHaveProperty('VendorQuickActions')
+    })
+
+    it('exists in hi.json', () => {
+      expect(hiMessages).toHaveProperty('VendorQuickActions')
+    })
+
+    it('has matching keys in en.json and hi.json', () => {
+      const enKeys = collectKeys(
+        (enMessages as Record<string, Record<string, unknown>>).VendorQuickActions,
+      )
+      const hiKeys = collectKeys(
+        (hiMessages as Record<string, Record<string, unknown>>).VendorQuickActions,
+      )
+      expect(enKeys).toEqual(hiKeys)
+    })
+
+    it('includes the heading and the four card labels', () => {
+      const qa = (enMessages as Record<string, Record<string, unknown>>).VendorQuickActions as Record<string, unknown>
+      expect(qa).toHaveProperty('heading')
+      expect(qa).toHaveProperty('addExperience')
+      expect(qa).toHaveProperty('viewBookings')
+      expect(qa).toHaveProperty('manageAvailability')
+      expect(qa).toHaveProperty('viewEarnings')
+    })
+  })
+
   describe('CustomerNav namespace', () => {
     it('exists in en.json', () => {
       expect(enMessages).toHaveProperty('CustomerNav')
@@ -235,6 +264,12 @@ describe('authenticated-route i18n messages', () => {
     const enVendorAnalyticsKeys = collectKeys(
       (enMessages as Record<string, Record<string, unknown>>).VendorAnalytics,
     )
+    // #04 dashboard quick-action cards — same single-locale-load hazard: every
+    // supported locale must physically carry the VendorQuickActions keys or a
+    // vendor browsing in that locale gets a MISSING_MESSAGE crash on the home.
+    const enVendorQuickActionsKeys = collectKeys(
+      (enMessages as Record<string, Record<string, unknown>>).VendorQuickActions,
+    )
 
     for (const locale of SUPPORTED_LOCALES) {
       describe(`locale: ${locale}`, () => {
@@ -267,6 +302,23 @@ describe('authenticated-route i18n messages', () => {
             localeKeys,
             `${locale}.json VendorAnalytics keys differ from en`,
           ).toEqual(enVendorAnalyticsKeys)
+        })
+
+        it('has a VendorQuickActions namespace with the same key set as en', () => {
+          const messages = MESSAGES_BY_LOCALE[locale]
+          const vendorQuickActions = messages.VendorQuickActions as
+            | Record<string, unknown>
+            | undefined
+          expect(
+            vendorQuickActions,
+            `${locale}.json is missing the VendorQuickActions namespace`,
+          ).toBeDefined()
+
+          const localeKeys = collectKeys(vendorQuickActions as Record<string, unknown>)
+          expect(
+            localeKeys,
+            `${locale}.json VendorQuickActions keys differ from en`,
+          ).toEqual(enVendorQuickActionsKeys)
         })
       })
     }

@@ -185,6 +185,13 @@
     "totalBookingsHint": "All-time Bookings across your Experiences.",
     "emptyState": "No Bookings yet. Once customers start booking your Experiences, your revenue and booking numbers will appear here."
   },
+  "VendorQuickActions": {
+    "heading": "Quick actions",
+    "addExperience": "Add Experience",
+    "viewBookings": "View Bookings",
+    "manageAvailability": "Manage Availability",
+    "viewEarnings": "View Earnings"
+  },
   "BookingStatus": {
     "pending_payment": "கட்டணம் நிலுவையில் உள்ளது",
     "confirmed": "உறுதிப்படுத்தப்பட்டது",

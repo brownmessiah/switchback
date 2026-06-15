@@ -467,6 +467,27 @@ export default async function ExperienceDetailPage({
       { label: t('pricing.tier3_5'), priceRupees: detail.pricePerPerson_3_5 },
       { label: t('pricing.tier6Plus'), priceRupees: detail.pricePerPerson_6_plus },
     ],
+    // Active pricing variations (issue #08) — the selector + labels are passed
+    // only when the Experience has ≥1 active variation; the rail renders no
+    // selector otherwise (brackets behave exactly as before). The name +
+    // description are Vendor-authored listing content; the surrounding chrome is
+    // translated.
+    variations: detail.activeVariations.map((v) => ({
+      id: v.id,
+      name: v.name,
+      description: v.description,
+      priceRupees: v.pricePerPersonRupees,
+      durationMinutes: v.durationMinutes,
+    })),
+    variationLabels:
+      detail.activeVariations.length > 0
+        ? {
+            heading: t('pricing.chooseOption'),
+            standardOption: t('pricing.standardOption'),
+            perPerson: t('pricing.perPerson'),
+            durationSuffix: t('pricing.variationDuration', { minutes: '{minutes}' }),
+          }
+        : undefined,
     perPersonLabel: t('pricing.perPerson'),
     participantsLabel: t('pricing.participants'),
     totalLabel: t('pricing.total'),

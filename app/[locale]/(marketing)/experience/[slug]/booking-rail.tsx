@@ -16,6 +16,35 @@ export interface BookingRailBracket {
   priceRupees: number
 }
 
+/**
+ * One active pricing variation offered in the PDP selector (issue #08). The
+ * `name` / `description` are the Vendor-authored copy (already
+ * locale-independent listing content). Selecting it drives the shown per-person
+ * price and is submitted as `variationId`; the SERVER resolves + snapshots the
+ * authoritative price (the client never sends a price).
+ */
+export interface BookingRailVariation {
+  id: string
+  name: string
+  description: string | null
+  /** Per-person price in whole rupees (display only). */
+  priceRupees: number
+  /** Optional per-variation duration override in minutes, or null. */
+  durationMinutes: number | null
+}
+
+/** Already-translated labels for the pricing-variation selector. */
+export interface BookingRailVariationLabels {
+  /** Selector heading, e.g. "Choose an option". */
+  heading: string
+  /** The default "Standard (group pricing)" option label when no variation is picked. */
+  standardOption: string
+  /** "/ person" suffix shown beside each option price. */
+  perPerson: string
+  /** Duration-suffix formatter token, e.g. "· {minutes} min". */
+  durationSuffix: string
+}
+
 export interface BookingRailClosure {
   /** Already-translated "Currently closed" heading. */
   heading: string
@@ -38,6 +67,14 @@ interface BookingRailProps {
   priceTableLabel: string
   /** Ordered 1-2 / 3-5 / 6+ Group-size brackets. */
   brackets: ReadonlyArray<BookingRailBracket>
+  /**
+   * Active pricing variations (issue #08). When non-empty the rail renders a
+   * selector; selecting one drives the per-person price + the submitted
+   * `variationId`. Empty → no selector, brackets render exactly as before.
+   */
+  variations?: ReadonlyArray<BookingRailVariation>
+  /** Already-translated variation-selector labels (present when variations exist). */
+  variationLabels?: BookingRailVariationLabels
   /** Already-translated "/ person" suffix (`pricing.perPerson`). */
   perPersonLabel: string
   /** Already-translated "Participants" selector label (`pricing.participants`). */
@@ -95,6 +132,8 @@ export function BookingRail({
   heading,
   priceTableLabel,
   brackets,
+  variations,
+  variationLabels,
   perPersonLabel,
   participantsLabel,
   totalLabel,
@@ -121,6 +160,8 @@ export function BookingRail({
         <BookingRailInteractive
           priceTableLabel={priceTableLabel}
           brackets={brackets}
+          variations={variations}
+          variationLabels={variationLabels}
           perPersonLabel={perPersonLabel}
           participantsLabel={participantsLabel}
           totalLabel={totalLabel}

@@ -33,14 +33,18 @@ import { listActivities } from '@/lib/activities/registry'
 import { listRegions } from '@/lib/regions/registry'
 import type { GuideLanguage } from '@/lib/experiences/structured-schema'
 
+import { hasAtLeastOnePrice } from '@/lib/vendor/listing-price-validation'
+
 import {
   CheckboxGroup,
   DIFFICULTY_OPTIONS,
   ItineraryEditor,
   LANGUAGE_OPTIONS,
   MONTHS,
+  PricingVariationsEditor,
   StringListEditor,
   type DifficultyValue,
+  type PricingVariationRow,
   type StructuredItineraryStep,
 } from './structured-fields'
 
@@ -115,6 +119,10 @@ export interface ListingFormValues {
   exclusions: string[]
   whatToBring: string[]
   itinerary: StructuredItineraryStep[]
+  // ── Named pricing variations (ADR-0011 revision 2026-06-16, issue #08) ──────
+  // Each row is a distinct priced option offered alongside the Group-size base
+  // price. Scalars stay as raw input strings (coerced in the submit mapper).
+  pricingVariations: PricingVariationRow[]
 }
 
 export interface ListingSubmitResult {
@@ -232,6 +240,39 @@ export function toStructuredSubmitFields(values: ListingFormValues): StructuredS
   }
 }
 
+/**
+ * A coerced pricing variation as the create/edit actions expect it: numeric
+ * price as a string (numeric(12,2)), duration as a number/null, optional id.
+ * Empty / unnamed / unpriced rows are dropped before submit — a half-typed row
+ * is never persisted. The shared Zod schema is the authoritative bound check.
+ */
+export interface PricingVariationSubmit {
+  id?: string
+  name: string
+  description: string | null
+  pricePerPerson: string
+  durationMinutes: number | null
+  isActive: boolean
+}
+
+export function toPricingVariationsSubmit(
+  values: ListingFormValues,
+): PricingVariationSubmit[] {
+  return values.pricingVariations
+    .filter((v) => v.name.trim() !== '' && v.pricePerPerson.trim() !== '')
+    .map((v) => {
+      const duration = v.durationMinutes.trim()
+      return {
+        ...(v.id ? { id: v.id } : {}),
+        name: v.name.trim(),
+        description: v.description.trim() === '' ? null : v.description.trim(),
+        pricePerPerson: v.pricePerPerson.trim(),
+        durationMinutes: duration === '' ? null : Number(duration),
+        isActive: v.isActive,
+      }
+    })
+}
+
 export function ListingFormStepper({
   mode,
   initialValues,
@@ -292,8 +333,19 @@ export function ListingFormStepper({
       if (!values.region) return 'Choose a region to continue.'
     }
     if (id === 'pricing') {
-      if (!isPositive(values.price12)) {
-        return 'Enter a positive price for the 1-2 guests bracket.'
+      // The KEY rule (issue #08): a base (1-2) price OR ≥1 ACTIVE pricing
+      // variation must exist. A blank base is allowed only when an active
+      // variation carries the price.
+      if (
+        !hasAtLeastOnePrice({
+          basePrice: values.price12,
+          variations: values.pricingVariations,
+        })
+      ) {
+        return 'Add a base price or at least one active pricing variation.'
+      }
+      if (values.price12 && !isPositive(values.price12)) {
+        return 'The 1-2 guests price must be a positive amount.'
       }
       if (values.price35 && !isPositive(values.price35)) {
         return 'The 3-5 guests price must be a positive amount.'
@@ -615,7 +667,6 @@ export function ListingFormStepper({
                   onChange={(e) => update('price12', e.target.value)}
                   placeholder="2500"
                   min={1}
-                  required
                 />
                 <p className="text-xs text-muted-foreground">/ person</p>
               </div>
@@ -651,6 +702,17 @@ export function ListingFormStepper({
                 If left blank, 3-5 and 6+ prices default to the 1-2 price.
               </p>
             )}
+
+            {/* ── Pricing variations (issue #08) ─────────────────────────────
+                Distinct priced options offered alongside the brackets. At least
+                one active variation OR a base price is required (validated on
+                Continue / Save). */}
+            <div className="border-t pt-4">
+              <PricingVariationsEditor
+                variations={values.pricingVariations}
+                onChange={(next) => update('pricingVariations', next)}
+              />
+            </div>
           </CardContent>
         </Card>
       )}

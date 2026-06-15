@@ -472,6 +472,39 @@ export async function getExperienceById(
 }
 
 /**
+ * Active pricing variations for an Experience (issue #08 E2E assertions),
+ * ordered by creation. Returns the name + per-person price (whole rupees) +
+ * active flag so a spec can assert the form persisted them.
+ */
+export interface PricingVariationRow {
+  id: string
+  name: string
+  pricePerPerson: number
+  isActive: boolean
+}
+
+export async function getPricingVariationsForExperience(
+  experienceId: string,
+): Promise<PricingVariationRow[]> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { id: string; name: string; price_per_person: string; is_active: boolean }[]
+    >`
+      SELECT id, name, price_per_person, is_active
+      FROM experience_pricing_variations
+      WHERE experience_id = ${experienceId}
+      ORDER BY created_at ASC
+    `
+    return rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      pricePerPerson: Math.floor(Number(r.price_per_person)),
+      isActive: r.is_active,
+    }))
+  })
+}
+
+/**
  * ADR-0017 structured attributes + itinerary for an Experience (issue 05
  * round-trip assertions). Returns the scalar/array facets and the itinerary
  * step titles in stepOrder.

@@ -1,5 +1,7 @@
 import { experiences } from '@/db/schema'
 import { replaceItinerary } from '@/lib/experiences/itinerary'
+import { replacePricingVariations } from '@/lib/experiences/pricing-variations-write'
+import { fromPriceRupees } from '@/lib/payments/pricing-variations'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
 import { createExperienceSchema, type CreateExperienceInput } from './schema'
@@ -52,9 +54,15 @@ export async function executeCreateExperience(
   const data = parsed.data
   const slug = slugify(data.title)
 
-  // The 3-5 / 6+ brackets default to the 1-2 price when the Vendor leaves
-  // them blank (flat-priced listings — ADR-0011).
-  const price12 = data.pricePerPerson_1_2
+  // The bracket columns are NOT NULL (ADR-0011). When the Vendor priced the
+  // Experience entirely via active pricing variations (issue #08) and left the
+  // base blank, seed all three brackets from the lowest active variation so the
+  // group-size fallback arm still has a real number — the variation remains the
+  // resolved price whenever one is selected (resolvePricing arm 0).
+  const variationFromPrice = Number(
+    fromPriceRupees(data.pricingVariations ?? [], data.pricePerPerson_1_2 ?? 0),
+  )
+  const price12 = data.pricePerPerson_1_2 ?? variationFromPrice
   const price35 = data.pricePerPerson_3_5 ?? price12
   const price6 = data.pricePerPerson_6_plus ?? price35
 
@@ -94,6 +102,12 @@ export async function executeCreateExperience(
 
       if (data.itinerary !== undefined && data.itinerary.length > 0) {
         await replaceItinerary(tx, row.id, data.itinerary)
+      }
+
+      // Persist the named pricing variations (active + inactive) in the SAME
+      // transaction as the draft row (issue #08). New rows only on create.
+      if (data.pricingVariations !== undefined && data.pricingVariations.length > 0) {
+        await replacePricingVariations(tx, row.id, data.pricingVariations)
       }
 
       return row.id

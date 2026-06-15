@@ -6,6 +6,8 @@ import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { writeAuditLog } from '@/lib/audit/write'
 import { loadExperienceRatingMap } from '@/lib/experiences/card-badges'
 import { replaceItinerary } from '@/lib/experiences/itinerary'
+import { replacePricingVariations } from '@/lib/experiences/pricing-variations-write'
+import { fromPriceRupees } from '@/lib/payments/pricing-variations'
 import { assertWithinTier, type KycTier } from '@/lib/kyc/tier-caps'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 import { indexExperience, type ExperienceSearchDoc } from '@/lib/search/indexer'
@@ -71,6 +73,9 @@ export async function executeUpdateExperience(
       slug: experiences.slug,
       kycTier: vendorProfiles.kycTier,
       vendorSlug: vendorProfiles.slug,
+      // The persisted base price — the ultimate fallback when the form sends
+      // neither a base price nor a variation set (issue #08).
+      existingPrice12: experiences.pricePerPerson_1_2,
     })
     .from(experiences)
     .innerJoin(vendorProfiles, eq(experiences.vendorUserId, vendorProfiles.userId))
@@ -83,6 +88,23 @@ export async function executeUpdateExperience(
   if (existing.vendorUserId !== userId) {
     return { ok: false, error: 'You do not own this experience.' }
   }
+
+  // Resolve the three NOT-NULL bracket prices (ADR-0011). The base (1-2) price
+  // is optional when active pricing variations carry the price (issue #08): in
+  // that case seed the brackets from the lowest active variation so the
+  // group-size fallback arm always has a real number. With neither base nor a
+  // variation set, keep the existing persisted base price.
+  const variationFromPrice = data.pricingVariations
+    ? Number(
+        fromPriceRupees(
+          data.pricingVariations,
+          data.pricePerPerson_1_2 ?? Number(existing.existingPrice12),
+        ),
+      )
+    : (data.pricePerPerson_1_2 ?? Number(existing.existingPrice12))
+  const price12 = data.pricePerPerson_1_2 ?? variationFromPrice
+  const price35 = data.pricePerPerson_3_5 ?? price12
+  const price6 = data.pricePerPerson_6_plus ?? price35
 
   // ADR-0007 — enforce the Vendor's KYC-tier caps when editing a LIVE
   // listing (published / pending_review / paused). Editing a draft is
@@ -101,11 +123,7 @@ export async function executeUpdateExperience(
 
     const tierCheck = assertWithinTier({
       kycTier: existing.kycTier as KycTier,
-      pricePerPersonRupees: Math.max(
-        data.pricePerPerson_1_2,
-        data.pricePerPerson_3_5,
-        data.pricePerPerson_6_plus,
-      ),
+      pricePerPersonRupees: Math.max(price12, price35, price6),
       isCombo: data.isCombo,
       slots,
     })
@@ -142,9 +160,9 @@ export async function executeUpdateExperience(
           longDescription: data.longDescription ?? null,
           activitySlug: data.activitySlug,
           regionSlug: data.regionSlug,
-          pricePerPerson_1_2: String(data.pricePerPerson_1_2),
-          pricePerPerson_3_5: String(data.pricePerPerson_3_5),
-          pricePerPerson_6_plus: String(data.pricePerPerson_6_plus),
+          pricePerPerson_1_2: String(price12),
+          pricePerPerson_3_5: String(price35),
+          pricePerPerson_6_plus: String(price6),
           cancellationPreset: data.cancellationPreset,
           paymentModesAllowed: data.paymentModesAllowed,
           isCombo: data.isCombo,
@@ -172,6 +190,14 @@ export async function executeUpdateExperience(
       if (data.itinerary !== undefined) {
         await replaceItinerary(tx, data.id, data.itinerary)
       }
+
+      // Pricing variations (issue #08) — upsert ownership-scoped in the SAME
+      // transaction. Omitting the field leaves existing rows untouched; sending
+      // `[]` clears them. A variation id from another Experience is never
+      // honoured (replacePricingVariations re-checks experienceId).
+      if (data.pricingVariations !== undefined) {
+        await replacePricingVariations(tx, data.id, data.pricingVariations)
+      }
     })
 
     // ADR-0013 — a PUBLISHED Experience is the canonical search row. Keep the
@@ -197,7 +223,7 @@ export async function executeUpdateExperience(
         activitySlug: data.activitySlug,
         regionSlug: data.regionSlug,
         vendorSlug: existing.vendorSlug,
-        pricePerPersonRupees: Math.round(data.pricePerPerson_1_2),
+        pricePerPersonRupees: Math.round(price12),
         isCombo: data.isCombo,
         publishedAt: now,
         difficulty: data.difficulty ?? null,

@@ -221,6 +221,7 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
                   title: exp.title,
                   shortDescription: exp.shortDescription,
                   pricePerParticipantRupees: exp.pricePerParticipantRupees,
+                  fromPriceRupees: exp.fromPriceRupees,
                   regionSlug: exp.regionSlug,
                   activitySlug: exp.activitySlug,
                   coverImageUrl: exp.coverImageUrl,

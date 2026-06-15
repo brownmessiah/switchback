@@ -1,6 +1,7 @@
 import { and, asc, eq, gte, lte, sql } from 'drizzle-orm'
 
 import { availabilitySlots } from '@/db/schema/availability-slots'
+import { experiencePricingVariations } from '@/db/schema/experience-pricing-variations'
 import type { ExperienceItineraryStep } from '@/db/schema/experience-itinerary-steps'
 import { experiences } from '@/db/schema/experiences'
 import { regionClosures } from '@/db/schema/region-closures'
@@ -142,6 +143,28 @@ export interface ExperienceDetailData {
    * (ADR-0009). Empty when the Experience has no steps.
    */
   itinerary: ExperienceItineraryStep[]
+  /**
+   * ACTIVE named pricing variations (ADR-0011 revision 2026-06-16, issue #08),
+   * ordered by creation. The PDP renders a selector when this is non-empty;
+   * selecting one drives the shown per-person price and is passed to
+   * Booking-create as `variationId` (the SERVER resolves + snapshots the
+   * price). `pricePerPersonRupees` is whole rupees for display; inactive
+   * variations are excluded (they are never offered to Customers). Empty when
+   * the Experience has no active variations — the PDP renders brackets exactly
+   * as before.
+   */
+  activeVariations: ExperienceDetailVariation[]
+}
+
+/** One active pricing variation as the PDP selector consumes it. */
+export interface ExperienceDetailVariation {
+  id: string
+  name: string
+  description: string | null
+  /** Per-person price in whole rupees (display); server snapshots the exact value. */
+  pricePerPersonRupees: number
+  /** Optional per-variation duration override (minutes), or null. */
+  durationMinutes: number | null
 }
 
 export type ExperienceDetailResult =
@@ -335,6 +358,27 @@ async function hydrateDetail(
   const gallery = await loadExperienceGallery(db, exp.id)
   const itinerary = await loadItinerary(db, exp.id)
 
+  // Active pricing variations (issue #08) — only ACTIVE ones are offered to
+  // Customers; inactive rows never reach the PDP. Ordered by creation so the
+  // selector is stable. The displayed price is whole rupees; the SERVER
+  // re-resolves + snapshots the exact numeric(12,2) at Booking-create.
+  const variationRows = await db
+    .select({
+      id: experiencePricingVariations.id,
+      name: experiencePricingVariations.name,
+      description: experiencePricingVariations.description,
+      pricePerPerson: experiencePricingVariations.pricePerPerson,
+      durationMinutes: experiencePricingVariations.durationMinutes,
+    })
+    .from(experiencePricingVariations)
+    .where(
+      and(
+        eq(experiencePricingVariations.experienceId, exp.id),
+        eq(experiencePricingVariations.isActive, true),
+      ),
+    )
+    .orderBy(asc(experiencePricingVariations.createdAt))
+
   return {
     type: 'found',
     lng,
@@ -389,6 +433,13 @@ async function hydrateDetail(
       exclusions: exp.exclusions ?? [],
       whatToBring: exp.whatToBring ?? [],
       itinerary,
+      activeVariations: variationRows.map((v) => ({
+        id: v.id,
+        name: v.name,
+        description: v.description,
+        pricePerPersonRupees: Math.floor(Number(v.pricePerPerson)),
+        durationMinutes: v.durationMinutes,
+      })),
     },
   }
 }

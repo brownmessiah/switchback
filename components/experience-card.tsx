@@ -22,6 +22,14 @@ export interface ExperienceCardData {
   title: string
   shortDescription?: string | null
   pricePerParticipantRupees: number
+  /**
+   * Lowest ACTIVE pricing-variation entry price in whole rupees (issue #08).
+   * When present AND strictly below `pricePerParticipantRupees`, the card shows
+   * "From ₹{fromPriceRupees} / person" instead of the plain base/bracket price.
+   * Computed server-side via `fromPriceRupees`. Bracket-only experiences (no
+   * active variations) omit it → the card renders EXACTLY as before.
+   */
+  fromPriceRupees?: number | null
   regionSlug: string
   activitySlug: string
   vendorName?: string
@@ -166,6 +174,14 @@ export function ExperienceCard({
   const showRating = ratingCount > 0
   const difficultyConfig = difficulty ? DIFFICULTY_BADGE[difficulty] : null
 
+  // "From ₹X" (issue #08): when an active pricing variation undercuts the base
+  // price, advertise the lowest entry point. Only fires when fromPriceRupees is
+  // present AND strictly cheaper than the base — equal/absent → plain price.
+  const fromPrice = experience.fromPriceRupees ?? null
+  const showFromPrice =
+    fromPrice != null && fromPrice > 0 && fromPrice < experience.pricePerParticipantRupees
+  const displayPriceRupees = showFromPrice ? fromPrice : experience.pricePerParticipantRupees
+
   // Data-honest trust badges (issue 05) — derived purely from this listing's
   // real data; a field that is absent simply omits its badge. "Popular Choice"
   // is NOT here — it is the social-proof `highlight` overlay above.
@@ -308,8 +324,15 @@ export function ExperienceCard({
         ) : null}
 
         <div className="mt-auto pt-1">
+          {/* "From ₹X" (issue #08) — shown only when an active pricing variation
+              is strictly cheaper than the base/bracket price, advertising the
+              lowest entry point. Bracket-only listings render the plain price,
+              unchanged. */}
+          {showFromPrice ? (
+            <span className="mr-1 text-xs text-muted-foreground">{t('from')}</span>
+          ) : null}
           <span className="text-sm font-bold tabular-nums text-foreground">
-            ₹{experience.pricePerParticipantRupees.toLocaleString('en-IN')}
+            ₹{displayPriceRupees.toLocaleString('en-IN')}
           </span>
           <span className="ml-1 text-xs text-muted-foreground">/ person</span>
         </div>

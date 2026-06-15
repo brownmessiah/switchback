@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 
 import {
   ListingFormStepper,
+  toPricingVariationsSubmit,
   toStructuredSubmitFields,
   type ListingFormValues,
 } from '../listing-form-stepper'
@@ -38,6 +39,7 @@ const INITIAL_VALUES: ListingFormValues = {
   exclusions: [],
   whatToBring: [],
   itinerary: [],
+  pricingVariations: [],
 }
 
 export default function NewListingPage() {
@@ -50,10 +52,13 @@ export default function NewListingPage() {
       shortDescription: values.shortDescription || null,
       activitySlug: values.activity,
       regionSlug: values.region,
-      pricePerPerson_1_2: Number(values.price12),
+      // Base price is optional (issue #08) — send undefined when blank so the
+      // server can rely on the active variations instead of coercing NaN.
+      pricePerPerson_1_2: values.price12 ? Number(values.price12) : undefined,
       pricePerPerson_3_5: values.price35 ? Number(values.price35) : undefined,
       pricePerPerson_6_plus: values.price6 ? Number(values.price6) : undefined,
       cancellationPreset: values.cancellationPreset as 'flexible' | 'moderate' | 'strict',
+      pricingVariations: toPricingVariationsSubmit(values),
       ...structured,
     })
 

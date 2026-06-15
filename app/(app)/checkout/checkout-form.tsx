@@ -45,6 +45,16 @@ interface CheckoutFormProps {
   priceTier12: number
   priceTier35: number
   priceTier6: number
+  /**
+   * Selected pricing variation (issue #08). When set, the per-person price is
+   * the variation's flat price (NOT the group-size brackets) and `variationId`
+   * is submitted to startCheckoutAction → createBooking, where the SERVER
+   * resolves + snapshots the authoritative price. The client never sends a
+   * price — only the id. All three default to null (standard bracket pricing).
+   */
+  variationId?: string | null
+  variationName?: string | null
+  variationPricePerPerson?: number | null
   cancellationPreset: string
   paymentModesAllowed: string[]
   customerName: string | null
@@ -91,6 +101,9 @@ export function CheckoutForm({
   priceTier12,
   priceTier35,
   priceTier6,
+  variationId = null,
+  variationName = null,
+  variationPricePerPerson = null,
   cancellationPreset,
   paymentModesAllowed,
   customerName,
@@ -110,11 +123,19 @@ export function CheckoutForm({
   const [count, setCount] = useState(
     Math.min(Math.max(1, participantCount), Math.max(1, maxParticipants)),
   )
-  const quote = quoteCheckout(
-    { tier12: priceTier12, tier35: priceTier35, tier6: priceTier6 },
-    count,
-    supportsPartialPay,
-  )
+  // When a pricing variation is selected (issue #08) its flat per-person price
+  // replaces the group-size brackets — feed it into all three tiers so the live
+  // quote (gross / 25% advance / balance) derives from the same pure helper.
+  // This is DISPLAY only; the SERVER snapshots the authoritative price.
+  const quotePrices =
+    variationId != null && variationPricePerPerson != null
+      ? {
+          tier12: variationPricePerPerson,
+          tier35: variationPricePerPerson,
+          tier6: variationPricePerPerson,
+        }
+      : { tier12: priceTier12, tier35: priceTier35, tier6: priceTier6 }
+  const quote = quoteCheckout(quotePrices, count, supportsPartialPay)
   const pricePerPerson = quote.pricePerPerson
   const grossTotal = quote.gross
   const advanceAmount = quote.advance
@@ -151,6 +172,10 @@ export function CheckoutForm({
         participantCount: count,
         paymentMode,
         acknowledgedPermits: true,
+        // Pass ONLY the variation id (issue #08) — the server resolves +
+        // snapshots the price (createBooking → resolvePricing arm 0). An
+        // invalid/inactive/foreign id is rejected server-side.
+        ...(variationId ? { variationId } : {}),
         ...(tripGroupId ? { tripGroupId } : {}),
         // booking-create requires a UUID idempotency key (z.string().uuid()).
         // A non-UUID key (e.g. `checkout-<id>-<ts>`) fails the parse and the

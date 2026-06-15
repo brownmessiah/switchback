@@ -5,6 +5,7 @@ import { experiences } from '@/db/schema/experiences'
 import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { loadItinerary } from '@/lib/experiences/itinerary'
+import { loadPricingVariations } from '@/lib/experiences/pricing-variations-write'
 import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 
 import { executeCreateExperience, type CreateExperienceInput } from './create-core'
@@ -126,6 +127,82 @@ describe('executeCreateExperience', () => {
     expect(steps.map((s) => s.title)).toEqual(['Briefing', 'Paddle out'])
     expect(steps[0]!.stepOrder).toBe(0)
     expect(steps[1]!.stepOrder).toBe(1)
+  })
+
+  it('persists active + inactive pricing variations on create (issue #08)', async () => {
+    const result = await executeCreateExperience(
+      db,
+      'u_vendor_new',
+      validInput({
+        pricingVariations: [
+          {
+            name: 'Sunrise batch',
+            description: 'Early start',
+            pricePerPerson: '1800.00',
+            durationMinutes: 90,
+            isActive: true,
+          },
+          {
+            name: 'Private (off)',
+            description: null,
+            pricePerPerson: '4200.00',
+            durationMinutes: null,
+            isActive: false,
+          },
+        ],
+      }),
+    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    const variations = await loadPricingVariations(db, result.experienceId)
+    expect(variations).toHaveLength(2)
+    const byName = new Map(variations.map((v) => [v.name, v]))
+    expect(byName.get('Sunrise batch')?.pricePerPerson).toBe('1800.00')
+    expect(byName.get('Sunrise batch')?.isActive).toBe(true)
+    expect(byName.get('Private (off)')?.isActive).toBe(false)
+  })
+
+  it('allows a create with NO base price when an active variation is present', async () => {
+    const result = await executeCreateExperience(db, 'u_vendor_new', {
+      title: 'Variation-only listing',
+      activitySlug: 'kayaking',
+      regionSlug: 'goa',
+      // No base price — but one active variation carries the price.
+      cancellationPreset: 'flexible',
+      pricingVariations: [
+        {
+          name: 'Standard',
+          description: null,
+          pricePerPerson: '1500.00',
+          durationMinutes: null,
+          isActive: true,
+        },
+      ],
+    } as CreateExperienceInput)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    const variations = await loadPricingVariations(db, result.experienceId)
+    expect(variations).toHaveLength(1)
+  })
+
+  it('BLOCKS a create with no base price and only inactive variations', async () => {
+    const result = await executeCreateExperience(db, 'u_vendor_new', {
+      title: 'No usable price',
+      activitySlug: 'kayaking',
+      regionSlug: 'goa',
+      cancellationPreset: 'flexible',
+      pricingVariations: [
+        {
+          name: 'Inactive only',
+          description: null,
+          pricePerPerson: '1500.00',
+          durationMinutes: null,
+          isActive: false,
+        },
+      ],
+    } as CreateExperienceInput)
+    expect(result.ok).toBe(false)
   })
 
   it('rejects a missing title', async () => {

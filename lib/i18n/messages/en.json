@@ -94,7 +94,8 @@
       "moderate": "Moderate",
       "challenging": "Challenging",
       "extreme": "Extreme"
-    }
+    },
+    "from": "From"
   },
   "HomeSearch": {
     "single": {
@@ -579,7 +580,10 @@
       "advanceDue": "Advance due now (25%)",
       "balanceDue": "Balance at T-24h",
       "refundablePointer": "Refundable amount follows the {preset} cancellation policy — see the cancellation policy above.",
-      "fullUpfront": "Charged in full now (within 48 hours of the start, or above ₹25,000)."
+      "fullUpfront": "Charged in full now (within 48 hours of the start, or above ₹25,000).",
+      "chooseOption": "Choose an option",
+      "standardOption": "Standard (group pricing)",
+      "variationDuration": "· {minutes} min"
     },
     "closure": {
       "heading": "Currently closed",

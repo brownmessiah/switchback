@@ -205,6 +205,35 @@ describe('executeCreateExperience', () => {
     expect(result.ok).toBe(false)
   })
 
+  it('accepts the non_cancellable preset and persists reschedule_allowed=false (issue #09)', async () => {
+    const result = await executeCreateExperience(
+      db,
+      'u_vendor_new',
+      validInput({ cancellationPreset: 'non_cancellable', rescheduleAllowed: false }),
+    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    const [row] = await db
+      .select()
+      .from(experiences)
+      .where(eq(experiences.id, result.experienceId))
+    expect(row.cancellationPreset).toBe('non_cancellable')
+    expect(row.rescheduleAllowed).toBe(false)
+  })
+
+  it('defaults reschedule_allowed to true when not supplied (PRD default ON, issue #09)', async () => {
+    const result = await executeCreateExperience(db, 'u_vendor_new', validInput())
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    const [row] = await db
+      .select()
+      .from(experiences)
+      .where(eq(experiences.id, result.experienceId))
+    expect(row.rescheduleAllowed).toBe(true)
+  })
+
   it('rejects a missing title', async () => {
     const result = await executeCreateExperience(
       db,

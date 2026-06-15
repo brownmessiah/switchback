@@ -82,6 +82,9 @@ export async function executeCreateExperience(
           pricePerPerson_3_5: String(price35),
           pricePerPerson_6_plus: String(price6),
           cancellationPreset: data.cancellationPreset,
+          // ADR-0005 revision 2026-06-16 (issue #09) — persist the reschedule
+          // right; PRD default ON when the form omits it.
+          rescheduleAllowed: data.rescheduleAllowed ?? true,
           paymentModesAllowed: ['full_upfront', 'partial_pay'],
           status: 'draft',
           // ADR-0017 structured attributes — persisted when the form sends

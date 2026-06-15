@@ -247,6 +247,43 @@ describe('executeUpdateExperience', () => {
       expect(updated.requiresSafetyStack).toBe(true)
     })
 
+    it('accepts the non_cancellable preset and persists reschedule_allowed=false (issue #09)', async () => {
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        validInput({ cancellationPreset: 'non_cancellable', rescheduleAllowed: false }),
+      )
+      expect(result.ok).toBe(true)
+
+      const [updated] = await db
+        .select()
+        .from(experiences)
+        .where(eq(experiences.id, experienceId))
+      expect(updated.cancellationPreset).toBe('non_cancellable')
+      expect(updated.rescheduleAllowed).toBe(false)
+    })
+
+    it('round-trips reschedule_allowed=true on edit (issue #09)', async () => {
+      // Start the seeded Experience at reschedule OFF, then turn it back ON.
+      await db
+        .update(experiences)
+        .set({ rescheduleAllowed: false })
+        .where(eq(experiences.id, experienceId))
+
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        validInput({ rescheduleAllowed: true }),
+      )
+      expect(result.ok).toBe(true)
+
+      const [updated] = await db
+        .select()
+        .from(experiences)
+        .where(eq(experiences.id, experienceId))
+      expect(updated.rescheduleAllowed).toBe(true)
+    })
+
     it('preserves slug when updating other fields', async () => {
       await executeUpdateExperience(
         db,

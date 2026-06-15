@@ -348,6 +348,10 @@ export async function createBooking(
         commissionRateSnapshot: commission.rate,
         commissionBasisSnapshot: commission.basis,
         cancellationPresetSnapshot: exp.cancellationPreset,
+        // ADR-0005 revision 2026-06-16 (issue #09): snapshot the reschedule
+        // right alongside the preset — both locked at create so a later policy
+        // change never alters this Booking.
+        rescheduleAllowedSnapshot: exp.rescheduleAllowed,
         tdsAmountSnapshot: tds.tdsRupees.toFixed(2),
         tcsAmountSnapshot: tcs.tcsRupees.toFixed(2),
         tcsRateSnapshot: tcs.tcsRatePercent,
@@ -385,6 +389,7 @@ export async function createBooking(
         tcsRatePercent: tcs.tcsRatePercent,
         gstRateOnCommissionSnapshot: GST_RATE_ON_COMMISSION,
         cancellationPresetSnapshot: exp.cancellationPreset,
+        rescheduleAllowedSnapshot: exp.rescheduleAllowed,
         requestedPaymentMode: parsed.paymentMode,
         effectivePaymentMode,
         captureTrigger: captureTriggerAuditLabel,

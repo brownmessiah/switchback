@@ -24,6 +24,10 @@ export const cancellationPresetEnum = pgEnum('cancellation_preset', [
   'flexible',
   'moderate',
   'strict',
+  // ADR-0005 revision 2026-06-16 (issue #09): fourth named preset whose refund
+  // function ALWAYS returns 0. A Customer cancellation routes to Dispute. Still
+  // a named, constant-driven preset — no per-Experience free-form refund fields.
+  'non_cancellable',
   'custom',
 ])
 
@@ -102,6 +106,10 @@ export const experiences = pgTable(
     // ADR-0005 — Cancellation policy (snapshotted onto Booking at create).
     cancellationPreset: cancellationPresetEnum('cancellation_preset').notNull(),
     cancellationPolicyText: text('cancellation_policy_text'),
+    // ADR-0005 revision 2026-06-16 (issue #09): per-Experience reschedule right
+    // (PRD default ON). Snapshotted onto the Booking at create so a later change
+    // never alters an existing Booking's rights.
+    rescheduleAllowed: boolean('reschedule_allowed').notNull().default(true),
 
     // ADR-0001 / ADR-0002 — Payment modes the Experience accepts.
     paymentModesAllowed: paymentModeEnum('payment_modes_allowed').array().notNull(),

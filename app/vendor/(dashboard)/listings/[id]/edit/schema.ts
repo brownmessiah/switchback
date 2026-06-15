@@ -45,7 +45,13 @@ export const updateExperienceSchema = z
     pricePerPerson_1_2: z.number().positive('Price must be positive').optional(),
     pricePerPerson_3_5: z.number().positive('Price must be positive').optional(),
     pricePerPerson_6_plus: z.number().positive('Price must be positive').optional(),
-    cancellationPreset: z.enum(['flexible', 'moderate', 'strict', 'custom']),
+    // ADR-0005 revision 2026-06-16 (issue #09) — non_cancellable joins the
+    // windowed presets; custom remains admin-gated (edit already allowed it).
+    cancellationPreset: z.enum(['flexible', 'moderate', 'strict', 'non_cancellable', 'custom']),
+    // Per-Experience reschedule right (PRD default ON). Optional on input so
+    // existing callers need not supply it; the core applies the PRD default
+    // (the DB column also defaults true).
+    rescheduleAllowed: z.boolean().optional(),
     paymentModesAllowed: z
       .array(z.enum(['full_upfront', 'partial_pay', 'reserve_now_pay_later']))
       .min(1, 'At least one payment mode is required'),

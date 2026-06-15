@@ -164,6 +164,9 @@ export async function executeUpdateExperience(
           pricePerPerson_3_5: String(price35),
           pricePerPerson_6_plus: String(price6),
           cancellationPreset: data.cancellationPreset,
+          // ADR-0005 revision 2026-06-16 (issue #09) — persist the reschedule
+          // right; PRD default ON when the form omits it.
+          rescheduleAllowed: data.rescheduleAllowed ?? true,
           paymentModesAllowed: data.paymentModesAllowed,
           isCombo: data.isCombo,
           requiredPermits: data.requiredPermits,

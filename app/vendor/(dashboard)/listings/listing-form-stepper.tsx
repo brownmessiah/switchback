@@ -79,7 +79,15 @@ export const PERMITS = [
   'adventure_sports_license',
 ] as const
 
-export type CancellationPreset = 'flexible' | 'moderate' | 'strict' | 'custom'
+// ADR-0005 revision 2026-06-16 (issue #09): `non_cancellable` joins the preset
+// union so the form value contract round-trips it from the DB row. The preset
+// PICKER UI + the per-preset plain-language line are wired in issue #10.
+export type CancellationPreset =
+  | 'flexible'
+  | 'moderate'
+  | 'strict'
+  | 'non_cancellable'
+  | 'custom'
 
 // The platform's single default commission rate (ADR-0008 /
 // PLATFORM_DEFAULT_COMMISSION_RATE = '20.00'). Shown transparently as a trust

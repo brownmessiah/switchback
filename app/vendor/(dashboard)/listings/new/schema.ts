@@ -47,9 +47,14 @@ export const createExperienceSchema = z
     pricePerPerson_1_2: z.number().positive('Price must be positive').optional(),
     pricePerPerson_3_5: z.number().positive('Price must be positive').optional(),
     pricePerPerson_6_plus: z.number().positive('Price must be positive').optional(),
-    // Create offers only the three presets (custom requires admin approval and
-    // surfaces in edit only), matching the new-listing stepper.
-    cancellationPreset: z.enum(['flexible', 'moderate', 'strict']),
+    // Create offers the three windowed presets plus non_cancellable (ADR-0005
+    // revision 2026-06-16, issue #09). `custom` still requires admin approval and
+    // surfaces in edit only.
+    cancellationPreset: z.enum(['flexible', 'moderate', 'strict', 'non_cancellable']),
+    // ADR-0005 revision 2026-06-16 (issue #09) — per-Experience reschedule right
+    // (PRD default ON). Optional on input so existing callers need not supply it;
+    // the core applies the PRD default (the DB column also defaults true).
+    rescheduleAllowed: z.boolean().optional(),
 
     // Named pricing variations (ADR-0011 revision 2026-06-16, issue #08) —
     // optional; defaults to none. The active ones can stand in for a base price.

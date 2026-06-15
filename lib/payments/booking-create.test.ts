@@ -1018,6 +1018,65 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
     })
   })
 
+  // ── Cancellation snapshot: preset + reschedule (ADR-0005 revision, issue #09) ──
+  //
+  // Both the cancellation preset (already snapshotted) and the new
+  // reschedule_allowed flag are locked onto the Booking at create. A later
+  // change to the Experience's preset / flag never alters an existing Booking —
+  // the snapshot rule that protects the money path also protects the
+  // cancellation rights the refund math reads from.
+  describe('cancellation snapshot immutability (ADR-0005 revision, issue #09)', () => {
+    beforeEach(async () => {
+      // Sibling suites mutate the shared Vendor; reset to a clean identity tier.
+      await db
+        .update(vendorProfiles)
+        .set({ kycTier: 'identity', pan: 'ABCDE1234F', taxpayerType: null })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+    })
+
+    it('snapshots non_cancellable preset + reschedule_allowed=false at create', async () => {
+      // Re-create the seeded Experience as non_cancellable with reschedule OFF.
+      await db
+        .update(experiences)
+        .set({ cancellationPreset: 'non_cancellable', rescheduleAllowed: false })
+        .where(eq(experiences.id, experienceId))
+
+      const r = await createBooking(db, defaultInput())
+      const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
+      expect(row?.cancellationPresetSnapshot).toBe('non_cancellable')
+      expect(row?.rescheduleAllowedSnapshot).toBe(false)
+    })
+
+    it('defaults reschedule_allowed snapshot to true for the seeded (flexible) Experience', async () => {
+      // The seeded Experience does not set rescheduleAllowed, so the column
+      // default (true) holds and is snapshotted as true.
+      const r = await createBooking(db, defaultInput())
+      const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
+      expect(row?.cancellationPresetSnapshot).toBe('flexible')
+      expect(row?.rescheduleAllowedSnapshot).toBe(true)
+    })
+
+    it('does NOT re-resolve the preset / reschedule snapshot when the Experience changes after booking', async () => {
+      // Book against non_cancellable + reschedule OFF.
+      await db
+        .update(experiences)
+        .set({ cancellationPreset: 'non_cancellable', rescheduleAllowed: false })
+        .where(eq(experiences.id, experienceId))
+      const r = await createBooking(db, defaultInput())
+
+      // Now FLIP the Experience's policy AFTER the booking is created.
+      await db
+        .update(experiences)
+        .set({ cancellationPreset: 'flexible', rescheduleAllowed: true })
+        .where(eq(experiences.id, experienceId))
+
+      // Re-read the Booking: its snapshots are frozen at booking-time values.
+      const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
+      expect(row?.cancellationPresetSnapshot).toBe('non_cancellable')
+      expect(row?.rescheduleAllowedSnapshot).toBe(false)
+    })
+  })
+
   // ── Tier-2 cap re-check at booking-create (ADR-0007) ──────────────
   //
   // The caps are double-checked at booking-create because the Vendor's

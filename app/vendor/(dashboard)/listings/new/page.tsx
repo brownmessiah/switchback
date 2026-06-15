@@ -57,7 +57,13 @@ export default function NewListingPage() {
       pricePerPerson_1_2: values.price12 ? Number(values.price12) : undefined,
       pricePerPerson_3_5: values.price35 ? Number(values.price35) : undefined,
       pricePerPerson_6_plus: values.price6 ? Number(values.price6) : undefined,
-      cancellationPreset: values.cancellationPreset as 'flexible' | 'moderate' | 'strict',
+      // ADR-0005 revision 2026-06-16 (issue #09) — create accepts the four named
+      // presets; `custom` stays admin-gated (edit-only). The picker UI is #10.
+      cancellationPreset: values.cancellationPreset as
+        | 'flexible'
+        | 'moderate'
+        | 'strict'
+        | 'non_cancellable',
       pricingVariations: toPricingVariationsSubmit(values),
       ...structured,
     })

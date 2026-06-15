@@ -29,8 +29,7 @@ import { TrendChart } from '../dashboard/dashboard-charts'
  *     Commission / GST / TDS / TCS — those live on the Payouts ledger,
  *     ADR-0016). Labelled consistently with the Payouts page; no
  *     "you keep X%" figure is shown.
- *   - Total bookings — all-time confirmed reservations across the Vendor's
- *     Experiences.
+ *   - Total bookings — all-time Bookings across the Vendor's Experiences.
  *
  * When the Vendor has no Bookings, an honest empty state is shown instead of a
  * fabricated value (ADR-0012: all visible strings via next-intl).

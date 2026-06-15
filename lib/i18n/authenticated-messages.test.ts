@@ -7,8 +7,39 @@
 
 import { describe, expect, it } from 'vitest'
 
+import { VENDOR_NAV_ITEMS } from '@/app/vendor/vendor-nav'
+import { SUPPORTED_LOCALES, type SupportedLocale } from '@/lib/i18n/config'
+
+import asMessages from './messages/as.json'
+import bnMessages from './messages/bn.json'
 import enMessages from './messages/en.json'
+import guMessages from './messages/gu.json'
 import hiMessages from './messages/hi.json'
+import knMessages from './messages/kn.json'
+import mlMessages from './messages/ml.json'
+import mrMessages from './messages/mr.json'
+import orMessages from './messages/or.json'
+import paMessages from './messages/pa.json'
+import taMessages from './messages/ta.json'
+import teMessages from './messages/te.json'
+import urMessages from './messages/ur.json'
+
+/** All locale message bundles keyed by locale code, for cross-locale coverage. */
+const MESSAGES_BY_LOCALE: Record<SupportedLocale, Record<string, unknown>> = {
+  en: enMessages,
+  hi: hiMessages,
+  ta: taMessages,
+  te: teMessages,
+  kn: knMessages,
+  bn: bnMessages,
+  mr: mrMessages,
+  ml: mlMessages,
+  gu: guMessages,
+  pa: paMessages,
+  or: orMessages,
+  as: asMessages,
+  ur: urMessages,
+}
 
 /** Recursively collect all leaf-level keys as dot-separated paths. */
 function collectKeys(obj: Record<string, unknown>, prefix = ''): string[] {
@@ -193,5 +224,51 @@ describe('authenticated-route i18n messages', () => {
       const hiKeys = collectKeys(hiActions as Record<string, unknown>)
       expect(enKeys).toEqual(hiKeys)
     })
+  })
+
+  // Regression guard for the cross-locale i18n gap (#01 analytics surface).
+  // request.ts loads a SINGLE locale file with no runtime merge against en,
+  // so any key missing from a non-en locale throws MISSING_MESSAGE for users
+  // browsing in that locale. Every supported locale must physically contain
+  // the keys consumed by the vendor sidebar and the analytics page.
+  describe('cross-locale coverage for the vendor analytics surface', () => {
+    const enVendorAnalyticsKeys = collectKeys(
+      (enMessages as Record<string, Record<string, unknown>>).VendorAnalytics,
+    )
+
+    for (const locale of SUPPORTED_LOCALES) {
+      describe(`locale: ${locale}`, () => {
+        it('resolves every VENDOR_NAV_ITEMS labelKey under VendorNav.items', () => {
+          const messages = MESSAGES_BY_LOCALE[locale]
+          const vendorNav = messages.VendorNav as Record<string, unknown> | undefined
+          const items = vendorNav?.items as Record<string, unknown> | undefined
+          expect(items, `${locale}.json is missing VendorNav.items`).toBeDefined()
+
+          for (const navItem of VENDOR_NAV_ITEMS) {
+            expect(
+              items,
+              `${locale}.json VendorNav.items is missing "${navItem.labelKey}"`,
+            ).toHaveProperty(navItem.labelKey)
+          }
+        })
+
+        it('has a VendorAnalytics namespace with the same key set as en', () => {
+          const messages = MESSAGES_BY_LOCALE[locale]
+          const vendorAnalytics = messages.VendorAnalytics as
+            | Record<string, unknown>
+            | undefined
+          expect(
+            vendorAnalytics,
+            `${locale}.json is missing the VendorAnalytics namespace`,
+          ).toBeDefined()
+
+          const localeKeys = collectKeys(vendorAnalytics as Record<string, unknown>)
+          expect(
+            localeKeys,
+            `${locale}.json VendorAnalytics keys differ from en`,
+          ).toEqual(enVendorAnalyticsKeys)
+        })
+      })
+    }
   })
 })

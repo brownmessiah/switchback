@@ -167,6 +167,7 @@
     "completeSetup": "സെറ്റപ്പ് പൂർത്തിയാക്കുക",
     "items": {
       "dashboard": "ഡാഷ്‌ബോർഡ്",
+      "analytics": "അനലിറ്റിക്സ്",
       "listings": "ലിസ്റ്റിംഗുകൾ",
       "bookings": "ബുക്കിംഗുകൾ",
       "payouts": "പേഔട്ടുകൾ",
@@ -174,6 +175,15 @@
       "messages": "സന്ദേശങ്ങൾ",
       "settings": "ക്രമീകരണങ്ങൾ"
     }
+  },
+  "VendorAnalytics": {
+    "title": "Analytics",
+    "subtitle": "Your headline performance, drawn from real Bookings.",
+    "totalRevenue": "Total revenue",
+    "totalRevenueHint": "Gross Booking value, before commission, GST, and TDS.",
+    "totalBookings": "Total bookings",
+    "totalBookingsHint": "All-time Bookings across your Experiences.",
+    "emptyState": "No Bookings yet. Once customers start booking your Experiences, your revenue and booking numbers will appear here."
   },
   "BookingStatus": {
     "pending_payment": "പേയ്‌മെന്റ് ബാക്കിയുണ്ട്",

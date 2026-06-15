@@ -167,6 +167,7 @@
     "completeSetup": "સેટઅપ પૂર્ણ કરો",
     "items": {
       "dashboard": "ડેશબોર્ડ",
+      "analytics": "વિશ્લેષણ",
       "listings": "લિસ્ટિંગ્સ",
       "bookings": "બુકિંગ્સ",
       "payouts": "પેઆઉટ્સ",
@@ -174,6 +175,15 @@
       "messages": "સંદેશાઓ",
       "settings": "સેટિંગ્સ"
     }
+  },
+  "VendorAnalytics": {
+    "title": "Analytics",
+    "subtitle": "Your headline performance, drawn from real Bookings.",
+    "totalRevenue": "Total revenue",
+    "totalRevenueHint": "Gross Booking value, before commission, GST, and TDS.",
+    "totalBookings": "Total bookings",
+    "totalBookingsHint": "All-time Bookings across your Experiences.",
+    "emptyState": "No Bookings yet. Once customers start booking your Experiences, your revenue and booking numbers will appear here."
   },
   "BookingStatus": {
     "pending_payment": "ચુકવણી બાકી છે",

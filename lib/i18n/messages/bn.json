@@ -167,6 +167,7 @@
     "completeSetup": "সেটআপ সম্পন্ন করুন",
     "items": {
       "dashboard": "ড্যাশবোর্ড",
+      "analytics": "বিশ্লেষণ",
       "listings": "লিস্টিং",
       "bookings": "বুকিং",
       "payouts": "পেমেন্ট",
@@ -174,6 +175,15 @@
       "messages": "বার্তা",
       "settings": "সেটিংস"
     }
+  },
+  "VendorAnalytics": {
+    "title": "Analytics",
+    "subtitle": "Your headline performance, drawn from real Bookings.",
+    "totalRevenue": "Total revenue",
+    "totalRevenueHint": "Gross Booking value, before commission, GST, and TDS.",
+    "totalBookings": "Total bookings",
+    "totalBookingsHint": "All-time Bookings across your Experiences.",
+    "emptyState": "No Bookings yet. Once customers start booking your Experiences, your revenue and booking numbers will appear here."
   },
   "BookingStatus": {
     "pending_payment": "পেমেন্ট বাকি আছে",

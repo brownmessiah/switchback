@@ -167,6 +167,7 @@
     "completeSetup": "सेटअप पूर्ण करा",
     "items": {
       "dashboard": "डॅशबोर्ड",
+      "analytics": "विश्लेषण",
       "listings": "लिस्टिंग",
       "bookings": "बुकिंग",
       "payouts": "देयके",
@@ -174,6 +175,15 @@
       "messages": "संदेश",
       "settings": "सेटिंग्ज"
     }
+  },
+  "VendorAnalytics": {
+    "title": "Analytics",
+    "subtitle": "Your headline performance, drawn from real Bookings.",
+    "totalRevenue": "Total revenue",
+    "totalRevenueHint": "Gross Booking value, before commission, GST, and TDS.",
+    "totalBookings": "Total bookings",
+    "totalBookingsHint": "All-time Bookings across your Experiences.",
+    "emptyState": "No Bookings yet. Once customers start booking your Experiences, your revenue and booking numbers will appear here."
   },
   "BookingStatus": {
     "pending_payment": "देयक प्रलंबित",

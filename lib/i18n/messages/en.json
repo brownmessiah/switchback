@@ -282,7 +282,7 @@
     "totalRevenue": "Total revenue",
     "totalRevenueHint": "Gross Booking value, before commission, GST, and TDS.",
     "totalBookings": "Total bookings",
-    "totalBookingsHint": "All-time confirmed reservations across your Experiences.",
+    "totalBookingsHint": "All-time Bookings across your Experiences.",
     "emptyState": "No Bookings yet. Once customers start booking your Experiences, your revenue and booking numbers will appear here."
   },
   "BookingStatus": {

@@ -69,7 +69,11 @@ function SidebarContent({
 
       <div className={cn('border-t py-4', isRail ? 'px-3 lg:px-6' : 'px-6')}>
         <Link
-          href="/vendor/onboarding"
+          // A vendor only reaches this dashboard once a vendor_profiles row
+          // exists (the (dashboard) layout gate, ADR-0006), so /vendor/onboarding
+          // would redirect straight back — a silent no-op. The actionable
+          // "finish your setup" step is KYC verification, in settings.
+          href="/vendor/settings#verification"
           onClick={onNavigate}
           title={isRail ? t('completeSetup') : undefined}
           className={cn(

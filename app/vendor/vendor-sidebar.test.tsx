@@ -90,6 +90,23 @@ describe('VendorSidebar i18n', () => {
     expect(ctaElements.length).toBeGreaterThan(0)
   })
 
+  it('points the Complete setup CTA at verification settings, not profile onboarding', () => {
+    // A vendor only reaches the dashboard once a vendor_profiles row exists
+    // (the (dashboard) layout gate, ADR-0006), so /vendor/onboarding always
+    // redirects straight back — making the CTA a silent no-op. The actionable
+    // "finish your setup" step is KYC verification at /vendor/settings#verification.
+    renderWithIntl(
+      <VendorSidebar userName="Test Vendor" />,
+      { locale: 'en', messages: enMessages },
+    )
+
+    const ctas = screen.getAllByRole('link', { name: /complete setup/i })
+    expect(ctas.length).toBeGreaterThan(0)
+    for (const cta of ctas) {
+      expect(cta).toHaveAttribute('href', '/vendor/settings#verification')
+    }
+  })
+
   it('renders the mobile hamburger trigger labelled via translations', () => {
     // The shared PortalNavDrawer mounts a Sheet trigger (the hamburger) labelled
     // from Nav.openMenu — present in the DOM even though it is CSS-hidden at md+.

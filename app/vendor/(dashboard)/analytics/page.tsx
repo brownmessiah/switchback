@@ -2,10 +2,19 @@ import { TrendingDown, TrendingUp } from 'lucide-react'
 import { headers } from 'next/headers'
 import { getTranslations } from 'next-intl/server'
 
+import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ResponsiveTable } from '@/components/ui/responsive-table'
 import { db } from '@/db/client'
 import { auth } from '@/lib/auth'
-import { loadVendorAnalytics } from '@/lib/vendor/analytics-loader'
+import { bookingStatusBadge } from '@/lib/bookings/booking-status-badge'
+import {
+  type BookingStatusCount,
+  type ExperienceRevenue,
+  loadVendorAnalytics,
+} from '@/lib/vendor/analytics-loader'
+
+import { TrendChart } from '../dashboard/dashboard-charts'
 
 /**
  * Vendor Analytics surface (issue 01 — tracer bullet).
@@ -32,7 +41,24 @@ export default async function VendorAnalyticsPage() {
 
   const data = await loadVendorAnalytics(db, userId)
   const t = await getTranslations('VendorAnalytics')
+  // Reuse the shared, already-translated Booking-state labels (the BookingStatus
+  // namespace exists in every locale) rather than re-authoring state vocab.
+  const ts = await getTranslations('BookingStatus')
   const m = data.keyMetrics
+
+  /** Resolve a Booking state to its human label, reusing the shared badge
+   *  helper's label-key (falls back to the raw state for an unknown value). */
+  function statusLabel(state: string): string {
+    const labelKey = bookingStatusBadge(state).labelKey
+    // ts.has guards an unknown/future state so a missing key never throws.
+    return ts.has(labelKey) ? ts(labelKey) : state.replace(/_/g, ' ')
+  }
+
+  // Per-section emptiness — an honest empty state keys off real backing data,
+  // never a fabricated value. The day/month series are always FILLED windows,
+  // so "no data" means every point is 0 (sum === 0).
+  const dayHasData = data.revenueByDay.some((d) => d.value > 0)
+  const monthHasData = data.revenueByMonth.some((d) => d.value > 0)
 
   /** Render a Booking-count delta vs the prior 30-day window, or an honest
    *  neutral hint when the prior period had no data to compare against — we
@@ -223,6 +249,142 @@ export default async function VendorAnalyticsPage() {
             </Card>
           </div>
         </section>
+      ) : null}
+
+      {/* Charts + breakdowns (issue 03). Rendered for a Vendor WITH Bookings;
+          each chart/section carries its OWN honest empty state so a partially
+          populated Vendor never sees a fabricated value. Charts render THROUGH
+          the SHARED dashboard `TrendChart` primitive (imported, never forked) —
+          the same recharts wrapper the dashboard-home charts use. Revenue is
+          GROSS (ADR-0016); no net/payout/"you keep X%" figure. */}
+      {data.hasData ? (
+        <>
+          {/* Trends — daily (area) + monthly (bar) gross revenue. Each chart
+              shows a muted "no data yet" placeholder when its series is all-0. */}
+          <section className="space-y-4" data-testid="analytics-charts">
+            <h2 className="text-lg font-semibold tracking-tight">
+              {t('chartsHeading')}
+            </h2>
+            <div className="grid gap-4 lg:grid-cols-2">
+              {dayHasData ? (
+                <TrendChart
+                  title={t('revenueDayChartTitle')}
+                  data={data.revenueByDay}
+                  colorToken="chart-2"
+                  type="area"
+                  formatAs="currency"
+                />
+              ) : (
+                <Card data-testid="analytics-revenue-day-empty">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base font-medium">
+                      {t('revenueDayChartTitle')}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex h-[220px] items-center justify-center text-sm text-muted-foreground">
+                    {t('chartNoData')}
+                  </CardContent>
+                </Card>
+              )}
+
+              {monthHasData ? (
+                <TrendChart
+                  title={t('revenueMonthChartTitle')}
+                  data={data.revenueByMonth}
+                  colorToken="chart-1"
+                  type="bar"
+                  formatAs="currency"
+                />
+              ) : (
+                <Card data-testid="analytics-revenue-month-empty">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base font-medium">
+                      {t('revenueMonthChartTitle')}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex h-[220px] items-center justify-center text-sm text-muted-foreground">
+                    {t('chartNoData')}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </section>
+
+          {/* Booking status breakdown — counts grouped by Booking state, using
+              the SHARED ResponsiveTable + BookingStatusBadge so the colour/icon/
+              label triple matches the bookings table. Only occurring states show. */}
+          <section className="space-y-4" data-testid="analytics-status-breakdown">
+            <h2 className="text-lg font-semibold tracking-tight">
+              {t('statusBreakdownHeading')}
+            </h2>
+            <ResponsiveTable<BookingStatusCount>
+              caption={t('statusBreakdownHeading')}
+              rows={data.bookingStatusBreakdown}
+              getRowKey={(r) => r.state}
+              rowProps={(r) => ({ 'data-booking-state': r.state })}
+              empty={t('statusBreakdownEmpty')}
+              columns={[
+                {
+                  key: 'state',
+                  header: t('statusColumnLabel'),
+                  primary: true,
+                  cell: (r) => (
+                    <BookingStatusBadge
+                      state={r.state}
+                      label={statusLabel(r.state)}
+                      className="text-xs"
+                    />
+                  ),
+                },
+                {
+                  key: 'count',
+                  header: t('statusCountColumn'),
+                  align: 'right',
+                  cell: (r) => r.count.toLocaleString('en-IN'),
+                },
+              ]}
+            />
+          </section>
+
+          {/* Revenue by Experience — each Experience's Booking count + GROSS
+              revenue, ordered by revenue desc, via the SHARED ResponsiveTable.
+              Experiences with no Bookings are omitted (honest, no 0/0 noise). */}
+          <section
+            className="space-y-4"
+            data-testid="analytics-revenue-by-experience"
+          >
+            <h2 className="text-lg font-semibold tracking-tight">
+              {t('revenueByExperienceHeading')}
+            </h2>
+            <ResponsiveTable<ExperienceRevenue>
+              caption={t('revenueByExperienceHeading')}
+              rows={data.revenueByExperience}
+              getRowKey={(r) => r.experienceId}
+              rowProps={(r) => ({ 'data-experience-id': r.experienceId })}
+              empty={t('revenueByExperienceEmpty')}
+              columns={[
+                {
+                  key: 'title',
+                  header: t('experienceColumn'),
+                  primary: true,
+                  cell: (r) => r.title,
+                },
+                {
+                  key: 'bookings',
+                  header: t('bookingsColumn'),
+                  align: 'right',
+                  cell: (r) => r.bookings.toLocaleString('en-IN'),
+                },
+                {
+                  key: 'revenue',
+                  header: t('revenueColumn'),
+                  align: 'right',
+                  cell: (r) => `₹${r.revenue.toLocaleString('en-IN')}`,
+                },
+              ]}
+            />
+          </section>
+        </>
       ) : null}
 
       {/* Honest empty state — no fabricated values when there are no Bookings. */}

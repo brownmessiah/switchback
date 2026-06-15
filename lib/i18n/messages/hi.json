@@ -198,7 +198,20 @@
     "cancellationRateLabel": "रद्दीकरण दर",
     "cancellationRateHint": "सभी बुकिंग में से रद्द की गई बुकिंग का हिस्सा।",
     "repeatCustomersLabel": "दोहराने वाले ग्राहक",
-    "repeatCustomersHint": "एक से अधिक बार बुकिंग करने वाले ग्राहक।"
+    "repeatCustomersHint": "एक से अधिक बार बुकिंग करने वाले ग्राहक।",
+    "chartsHeading": "रुझान",
+    "revenueDayChartTitle": "राजस्व — पिछले 30 दिन",
+    "revenueMonthChartTitle": "मासिक राजस्व",
+    "chartNoData": "अभी कोई डेटा नहीं।",
+    "statusBreakdownHeading": "Booking स्थिति विवरण",
+    "statusBreakdownEmpty": "अभी कोई Booking नहीं है, इसलिए विभाजित करने के लिए कुछ नहीं है।",
+    "statusColumnLabel": "स्थिति",
+    "statusCountColumn": "Bookings",
+    "revenueByExperienceHeading": "Experience के अनुसार राजस्व",
+    "revenueByExperienceEmpty": "अभी कोई Booking नहीं है, इसलिए आपके Experiences को कोई राजस्व नहीं सौंपा जा सकता।",
+    "experienceColumn": "Experience",
+    "bookingsColumn": "Bookings",
+    "revenueColumn": "राजस्व"
   },
   "VendorQuickActions": {
     "heading": "त्वरित कार्य",

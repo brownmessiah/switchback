@@ -12,9 +12,13 @@ import {
   computeAverage,
   computePercentChange,
   computeRate,
+  fillMonths,
+  MONTHS_WINDOW,
   loadVendorAnalytics,
   shapeAnalytics,
+  shapeExperienceRevenue,
   shapeKeyMetrics,
+  shapeStatusBreakdown,
 } from './analytics-loader'
 
 describe('computePercentChange', () => {
@@ -77,6 +81,112 @@ describe('computeRate', () => {
 
   it('returns 0 when the numerator is zero', () => {
     expect(computeRate(0, 10)).toBe(0)
+  })
+})
+
+describe('fillMonths', () => {
+  // Pure month-fill for the Monthly Revenue series: every month in the window
+  // must appear as a `YYYY-MM-01` DayDataPoint, with 0 for months that have no
+  // backing rows, ordered chronologically. Mirrors fillDays for days.
+
+  it('emits one point per month across the window with first-of-month dates', () => {
+    const result = fillMonths(
+      new Date('2026-01-15T00:00:00Z'),
+      new Date('2026-03-10T00:00:00Z'),
+      [{ month: '2026-02', total: '5000.00' }],
+      'total',
+    )
+
+    expect(result).toEqual([
+      { date: '2026-01-01', value: 0 },
+      { date: '2026-02-01', value: 5000 },
+      { date: '2026-03-01', value: 0 },
+    ])
+  })
+
+  it('coerces a null aggregate value to 0 (never NaN)', () => {
+    const result = fillMonths(
+      new Date('2026-05-20T00:00:00Z'),
+      new Date('2026-05-20T00:00:00Z'),
+      [{ month: '2026-05', total: null }],
+      'total',
+    )
+
+    expect(result).toEqual([{ date: '2026-05-01', value: 0 }])
+  })
+
+  it('returns one zero-valued point per month for an empty window of rows', () => {
+    const result = fillMonths(
+      new Date('2025-12-01T00:00:00Z'),
+      new Date('2026-01-01T00:00:00Z'),
+      [],
+      'total',
+    )
+
+    expect(result).toEqual([
+      { date: '2025-12-01', value: 0 },
+      { date: '2026-01-01', value: 0 },
+    ])
+  })
+})
+
+describe('shapeStatusBreakdown', () => {
+  // Pure shaping for the status breakdown: coerce the grouped count and drop any
+  // zero/empty bucket so the page never renders a fabricated "0" state row.
+
+  it('coerces string counts to integers', () => {
+    const result = shapeStatusBreakdown([
+      { state: 'confirmed', count: '3' },
+      { state: 'completed', count: 1 },
+    ])
+
+    expect(result).toEqual([
+      { state: 'confirmed', count: 3 },
+      { state: 'completed', count: 1 },
+    ])
+  })
+
+  it('drops zero/null buckets (honest — no fabricated state rows)', () => {
+    const result = shapeStatusBreakdown([
+      { state: 'confirmed', count: 2 },
+      { state: 'disputed', count: 0 },
+      { state: 'no_show', count: null },
+    ])
+
+    expect(result).toEqual([{ state: 'confirmed', count: 2 }])
+  })
+
+  it('returns an empty array for no rows', () => {
+    expect(shapeStatusBreakdown([])).toEqual([])
+  })
+})
+
+describe('shapeExperienceRevenue', () => {
+  // Pure shaping for the revenue-by-Experience list: floor gross to integer
+  // rupees and coerce a null SUM()/COUNT() to 0 (never NaN/undefined).
+
+  it('floors gross revenue and coerces string aggregates', () => {
+    const result = shapeExperienceRevenue([
+      { experienceId: 'e1', title: 'Paragliding', bookings: '2', revenue: '12345.99' },
+    ])
+
+    expect(result).toEqual([
+      { experienceId: 'e1', title: 'Paragliding', bookings: 2, revenue: 12345 },
+    ])
+  })
+
+  it('coerces null aggregates to 0 (defensive)', () => {
+    const result = shapeExperienceRevenue([
+      { experienceId: 'e2', title: 'Rafting', bookings: null, revenue: null },
+    ])
+
+    expect(result).toEqual([
+      { experienceId: 'e2', title: 'Rafting', bookings: 0, revenue: 0 },
+    ])
+  })
+
+  it('returns an empty array for no rows', () => {
+    expect(shapeExperienceRevenue([])).toEqual([])
   })
 })
 
@@ -605,5 +715,250 @@ describe('loadVendorAnalytics', () => {
     expect(keyMetrics.newBookings7).toBe(0)
     expect(keyMetrics.cancellationRate).toBe(0)
     expect(keyMetrics.repeatCustomers).toBe(0)
+  })
+
+  // ── Charts + breakdowns (issue 03) — windowed against real seeded data ──
+
+  it('builds the last-30-day revenue series filled to one point per day', async () => {
+    // Two Bookings 5 and 20 days ago; gross 10000 + 5000 = 15000.
+    await seedConfirmedBooking({ daysAgo: 5, gross: '10000.00' })
+    await seedConfirmedBooking({ daysAgo: 20, gross: '5000.00' })
+
+    const { revenueByDay } = await loadVendorAnalytics(db, 'u_v')
+
+    // 31 points (30 days back + today), like the dashboard trend.
+    expect(revenueByDay).toHaveLength(31)
+    // The two seeded days carry the gross; every other day is a filled 0.
+    const nonZero = revenueByDay.filter((d) => d.value > 0)
+    expect(nonZero).toHaveLength(2)
+    const total = revenueByDay.reduce((sum, d) => sum + d.value, 0)
+    expect(total).toBe(15000)
+  })
+
+  it('keeps the daily revenue series consistent with the last-30-day metric', async () => {
+    // Internal consistency (PART B): the daily series must sum to the same gross
+    // as #02's last30Revenue — both windowed by confirmedAt.
+    await seedConfirmedBooking({ daysAgo: 2, gross: '7000.00' })
+    await seedConfirmedBooking({ daysAgo: 25, gross: '3000.00' })
+
+    const { revenueByDay, keyMetrics } = await loadVendorAnalytics(db, 'u_v')
+
+    const dailyTotal = revenueByDay.reduce((sum, d) => sum + d.value, 0)
+    expect(dailyTotal).toBe(keyMetrics.last30Revenue)
+  })
+
+  it('builds the monthly revenue series filled to one point per month', async () => {
+    // This month + ~2 months ago. Both fall inside the rolling 12-month window.
+    await seedConfirmedBooking({ daysAgo: 1, gross: '8000.00' })
+    await seedConfirmedBooking({ daysAgo: 65, gross: '4000.00' })
+
+    const { revenueByMonth } = await loadVendorAnalytics(db, 'u_v')
+
+    // Rolling 12-month window → 12 chronological first-of-month points.
+    expect(revenueByMonth).toHaveLength(MONTHS_WINDOW)
+    // Each point is a first-of-month date, ordered ascending.
+    for (const point of revenueByMonth) {
+      expect(point.date).toMatch(/^\d{4}-\d{2}-01$/)
+    }
+    const dates = revenueByMonth.map((p) => p.date)
+    expect([...dates].sort()).toEqual(dates)
+    // The two seeded months carry gross; the window sums to 12000.
+    const nonZero = revenueByMonth.filter((p) => p.value > 0)
+    expect(nonZero.length).toBeGreaterThanOrEqual(1)
+    const total = revenueByMonth.reduce((sum, p) => sum + p.value, 0)
+    expect(total).toBe(12000)
+  })
+
+  it('breaks Bookings down by state for the Vendor', async () => {
+    // 2 confirmed + 1 completed + 1 cancelled_by_customer.
+    await seedConfirmedBooking({ daysAgo: 3, gross: '5000.00' })
+    await seedConfirmedBooking({ daysAgo: 4, gross: '5000.00' })
+    await db.insert(bookings).values({
+      ...baseBooking,
+      experienceId,
+      slotId: futureSlotId,
+      participantCount: 1,
+      grossTotalSnapshot: '5000.00',
+      state: 'completed',
+    })
+    await db.insert(bookings).values({
+      ...baseBooking,
+      experienceId,
+      slotId: futureSlotId,
+      participantCount: 1,
+      grossTotalSnapshot: '5000.00',
+      state: 'cancelled_by_customer',
+    })
+
+    const { bookingStatusBreakdown } = await loadVendorAnalytics(db, 'u_v')
+
+    const byState = Object.fromEntries(
+      bookingStatusBreakdown.map((r) => [r.state, r.count]),
+    )
+    expect(byState.confirmed).toBe(2)
+    expect(byState.completed).toBe(1)
+    expect(byState.cancelled_by_customer).toBe(1)
+    // Only states that actually occur are emitted (honest — no fabricated rows).
+    const totalCounted = bookingStatusBreakdown.reduce((s, r) => s + r.count, 0)
+    expect(totalCounted).toBe(4)
+    expect(bookingStatusBreakdown.every((r) => r.count > 0)).toBe(true)
+  })
+
+  it('lists revenue by Experience ordered by revenue desc', async () => {
+    // A second Experience for the SAME Vendor, with a future slot.
+    const [exp2] = await db
+      .insert(experiences)
+      .values({
+        vendorUserId: 'u_v',
+        slug: 'rafting-rishikesh',
+        title: 'Rafting in Rishikesh',
+        cancellationPreset: 'moderate',
+        paymentModesAllowed: ['full_upfront'],
+        pricePerPerson_1_2: '3000.00',
+        pricePerPerson_3_5: '2800.00',
+        pricePerPerson_6_plus: '2600.00',
+        regionSlug: 'rishikesh',
+        activitySlug: 'rafting',
+        status: 'published',
+      })
+      .returning({ id: experiences.id })
+    const [exp2Slot] = await db
+      .insert(availabilitySlots)
+      .values({
+        experienceId: exp2!.id,
+        startAt: new Date(Date.now() + 9 * 86_400_000),
+        endAt: new Date(Date.now() + 9 * 86_400_000 + 7_200_000),
+        capacity: 8,
+        capacityTaken: 0,
+      })
+      .returning({ id: availabilitySlots.id })
+
+    // exp1 (Paragliding): 2 bookings, gross 10000 + 5000 = 15000.
+    await db.insert(bookings).values({
+      ...baseBooking,
+      experienceId,
+      slotId: futureSlotId,
+      participantCount: 2,
+      grossTotalSnapshot: '10000.00',
+    })
+    await db.insert(bookings).values({
+      ...baseBooking,
+      experienceId,
+      slotId: futureSlotId,
+      participantCount: 1,
+      grossTotalSnapshot: '5000.00',
+    })
+    // exp2 (Rafting): 1 booking, gross 6000.
+    await db.insert(bookings).values({
+      ...baseBooking,
+      experienceId: exp2!.id,
+      slotId: exp2Slot!.id,
+      participantCount: 2,
+      grossTotalSnapshot: '6000.00',
+    })
+
+    const { revenueByExperience } = await loadVendorAnalytics(db, 'u_v')
+
+    expect(revenueByExperience).toHaveLength(2)
+    // Ordered by revenue desc: Paragliding (15000) before Rafting (6000).
+    expect(revenueByExperience[0]!.title).toBe('Paragliding in Manali')
+    expect(revenueByExperience[0]!.revenue).toBe(15000)
+    expect(revenueByExperience[0]!.bookings).toBe(2)
+    expect(revenueByExperience[1]!.title).toBe('Rafting in Rishikesh')
+    expect(revenueByExperience[1]!.revenue).toBe(6000)
+    expect(revenueByExperience[1]!.bookings).toBe(1)
+  })
+
+  it('excludes other Vendors’ Experiences from the revenue-by-Experience list', async () => {
+    await db.insert(users).values({ id: 'u_v3', email: 'v3@test.com', name: 'Third Vendor' })
+    await db.insert(vendorProfiles).values({
+      userId: 'u_v3',
+      businessName: 'Third Co',
+      slug: 'third-co',
+      kycTier: 'business',
+      responseTimeSlaScore: '100.00',
+      commissionRate: '20.00',
+    })
+    const [otherExp] = await db
+      .insert(experiences)
+      .values({
+        vendorUserId: 'u_v3',
+        slug: 'trek-spiti',
+        title: 'Trek in Spiti',
+        cancellationPreset: 'moderate',
+        paymentModesAllowed: ['full_upfront'],
+        pricePerPerson_1_2: '9000.00',
+        pricePerPerson_3_5: '8000.00',
+        pricePerPerson_6_plus: '7000.00',
+        regionSlug: 'spiti',
+        activitySlug: 'trekking',
+        status: 'published',
+      })
+      .returning({ id: experiences.id })
+    const [otherSlot] = await db
+      .insert(availabilitySlots)
+      .values({
+        experienceId: otherExp!.id,
+        startAt: new Date(Date.now() + 11 * 86_400_000),
+        endAt: new Date(Date.now() + 11 * 86_400_000 + 7_200_000),
+        capacity: 8,
+        capacityTaken: 0,
+      })
+      .returning({ id: availabilitySlots.id })
+
+    // Our Vendor: 1 booking. Other Vendor: 1 booking that must NOT bleed in.
+    await db.insert(bookings).values({
+      ...baseBooking,
+      experienceId,
+      slotId: futureSlotId,
+      participantCount: 1,
+      grossTotalSnapshot: '5000.00',
+    })
+    await db.insert(bookings).values({
+      ...baseBooking,
+      experienceId: otherExp!.id,
+      slotId: otherSlot!.id,
+      participantCount: 1,
+      grossTotalSnapshot: '9000.00',
+    })
+
+    const { revenueByExperience } = await loadVendorAnalytics(db, 'u_v')
+
+    expect(revenueByExperience).toHaveLength(1)
+    expect(revenueByExperience[0]!.title).toBe('Paragliding in Manali')
+    expect(revenueByExperience.some((e) => e.title === 'Trek in Spiti')).toBe(false)
+  })
+
+  it('returns honest empty breakdowns for a Vendor with no Bookings', async () => {
+    const result = await loadVendorAnalytics(db, 'u_v')
+
+    // The day/month series are still FILLED windows (one point per period), but
+    // every value is 0 — the page keys its empty state off the all-zero sum.
+    expect(result.revenueByDay).toHaveLength(31)
+    expect(result.revenueByDay.every((d) => d.value === 0)).toBe(true)
+    expect(result.revenueByMonth).toHaveLength(MONTHS_WINDOW)
+    expect(result.revenueByMonth.every((m) => m.value === 0)).toBe(true)
+    // The breakdown + by-Experience lists are empty (no fabricated rows).
+    expect(result.bookingStatusBreakdown).toEqual([])
+    expect(result.revenueByExperience).toEqual([])
+  })
+
+  // ── Regression guard (issue 03 AC): the existing dashboard-home charts must
+  //    remain present and UNCHANGED. The two dashboard charts are fed by
+  //    `bookingsTrend` + `revenueTrend`; the analytics page only IMPORTS the
+  //    shared `TrendChart` and never touches the dashboard loader. Assert the
+  //    dashboard loader still returns BOTH trend series (robust loader-contract
+  //    assertion — not a brittle DOM/string check). ──
+  it('leaves the dashboard-home chart data sources (bookingsTrend + revenueTrend) intact', async () => {
+    await seedConfirmedBooking({ daysAgo: 2, gross: '5000.00' })
+
+    const { loadVendorDashboard } = await import('./dashboard-loader')
+    const dashboard = await loadVendorDashboard(db, 'u_v')
+
+    // Both dashboard-chart data sources still present, still 31-day filled.
+    expect(Array.isArray(dashboard.bookingsTrend)).toBe(true)
+    expect(Array.isArray(dashboard.revenueTrend)).toBe(true)
+    expect(dashboard.bookingsTrend).toHaveLength(31)
+    expect(dashboard.revenueTrend).toHaveLength(31)
   })
 })

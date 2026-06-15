@@ -4,6 +4,8 @@ import { availabilitySlots } from '@/db/schema/availability-slots'
 import { bookings } from '@/db/schema/bookings'
 import { experiences } from '@/db/schema/experiences'
 
+import { type DayDataPoint, fillDays } from './dashboard-loader'
+
 /**
  * Headline analytics figures for the Vendor Analytics surface.
  *
@@ -24,6 +26,40 @@ export interface VendorAnalyticsData {
   readonly hasData: boolean
   /** Trended Key Metrics grid (issue 02), all derived from real Bookings. */
   readonly keyMetrics: VendorKeyMetrics
+  /**
+   * Charts + breakdowns (issue 03), all derived from real Bookings — GROSS
+   * revenue (ADR-0016), no fabricated rows.
+   *
+   *  - `revenueByDay`   — gross revenue per day over the last 30 days, FILLED so
+   *                       every day appears (0 for gaps). Sums to the same gross
+   *                       as `keyMetrics.last30Revenue`.
+   *  - `revenueByMonth` — gross revenue per month over a rolling 12 months,
+   *                       FILLED (0 for empty months), chronological. Each point
+   *                       is a `YYYY-MM-01` DayDataPoint for the reused chart.
+   *  - `bookingStatusBreakdown` — Booking counts grouped by state; only states
+   *                       that actually occur (≥1 Booking) are emitted.
+   *  - `revenueByExperience`    — per-Experience Booking count + gross revenue,
+   *                       ordered by revenue desc. Experiences with no Bookings
+   *                       are omitted (the join is inner — honest, no 0/0 noise).
+   */
+  readonly revenueByDay: readonly DayDataPoint[]
+  readonly revenueByMonth: readonly DayDataPoint[]
+  readonly bookingStatusBreakdown: readonly BookingStatusCount[]
+  readonly revenueByExperience: readonly ExperienceRevenue[]
+}
+
+/** One Booking-state bucket for the status breakdown (only occurring states). */
+export interface BookingStatusCount {
+  readonly state: string
+  readonly count: number
+}
+
+/** One Experience's Booking count + gross revenue for the by-Experience list. */
+export interface ExperienceRevenue {
+  readonly experienceId: string
+  readonly title: string
+  readonly bookings: number
+  readonly revenue: number
 }
 
 /** Raw all-time aggregate row feeding the headline KPIs. The `count()` may be
@@ -42,9 +78,7 @@ interface RawAnalyticsStats {
  * no Commission/GST/TDS/TCS re-derivation. `hasData` is true iff there is at
  * least one Booking.
  */
-export function shapeAnalytics(
-  raw: RawAnalyticsStats,
-): Omit<VendorAnalyticsData, 'keyMetrics'> {
+export function shapeAnalytics(raw: RawAnalyticsStats): VendorAnalyticsHeadline {
   const { allTimeStats } = raw
   const totalBookings = allTimeStats?.total ?? 0
   const totalRevenue = Math.floor(Number(allTimeStats?.revenue ?? 0))
@@ -54,6 +88,14 @@ export function shapeAnalytics(
     hasData: totalBookings > 0,
   }
 }
+
+/** The three headline figures shared with the page's KPI row + empty-state gate.
+ *  Picked from the full data shape so the headline shaper stays narrowly typed
+ *  even as #02/#03 add Key Metrics + charts/breakdowns to VendorAnalyticsData. */
+type VendorAnalyticsHeadline = Pick<
+  VendorAnalyticsData,
+  'totalRevenue' | 'totalBookings' | 'hasData'
+>
 
 // ─────────────────────────────────────────────────────────────────────────
 // Trended Key Metrics (issue 02)
@@ -67,6 +109,47 @@ export function shapeAnalytics(
 export const WINDOW_DAYS = 30
 /** Window length (days) for the Upcoming / New-bookings metrics. */
 export const SHORT_WINDOW_DAYS = 7
+/** Window length (months) for the Monthly Revenue chart (rolling 12 months). */
+export const MONTHS_WINDOW = 12
+
+/**
+ * Fill a month range with data points, inserting 0 for months with no rows.
+ *
+ * The month analogue of `fillDays` for the Monthly Revenue chart: each emitted
+ * point is the FIRST DAY of its month (`YYYY-MM-01`) so it slots straight into
+ * the reused `TrendChart` (which expects `DayDataPoint`), and every month in
+ * `[from, to]` materialises chronologically — months with no Bookings show as 0
+ * rather than disappearing. Raw rows key their month as `YYYY-MM`; a null/absent
+ * aggregate coerces to 0 (never NaN). Pure + exported for direct unit testing.
+ */
+export function fillMonths(
+  from: Date,
+  to: Date,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  rawData: readonly Record<string, any>[],
+  valueKey: string,
+): DayDataPoint[] {
+  const dataMap = new Map<string, number>()
+  for (const row of rawData) {
+    const monthKey = String(row.month)
+    dataMap.set(monthKey, Math.floor(Number(row[valueKey] ?? 0)))
+  }
+
+  const result: DayDataPoint[] = []
+  // Walk month-by-month at UTC noon so a DST/timezone shift can never roll the
+  // cursor back into the previous month and duplicate/skip a point.
+  const current = new Date(
+    Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), 1, 12),
+  )
+  const end = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), 1, 12))
+  while (current <= end) {
+    const y = current.getUTCFullYear()
+    const m = String(current.getUTCMonth() + 1).padStart(2, '0')
+    result.push({ date: `${y}-${m}-01`, value: dataMap.get(`${y}-${m}`) ?? 0 })
+    current.setUTCMonth(current.getUTCMonth() + 1)
+  }
+  return result
+}
 
 /**
  * Booking states that count as a cancellation for the Cancellation Rate.
@@ -226,6 +309,18 @@ export async function loadVendorAnalytics(
   last7Start.setDate(last7Start.getDate() - SHORT_WINDOW_DAYS)
   const next7End = new Date(now)
   next7End.setDate(next7End.getDate() + SHORT_WINDOW_DAYS)
+  // Day floor for the revenue-by-day fill (matches the dashboard's todayStart so
+  // the series carries exactly 31 points: 30 days back + today).
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const dayTrendStart = new Date(todayStart)
+  dayTrendStart.setDate(dayTrendStart.getDate() - WINDOW_DAYS)
+  // Rolling 12-month window for the monthly series: first day (UTC) of the month
+  // that is (MONTHS_WINDOW − 1) months before this month, through today. Built in
+  // UTC so it lines up exactly with fillMonths' UTC month-walk (a local-midnight
+  // first-of-month would land on the prior day in a +UTC offset and emit 13).
+  const monthsStart = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (MONTHS_WINDOW - 1), 1, 12),
+  )
 
   // All-time headline totals — identical join + gross-sum as #01 / the dashboard.
   const [allTimeStats] = await db
@@ -325,6 +420,73 @@ export async function loadVendorAnalytics(
     .having(sql`count(*) > 1`)
   const repeatCustomers = repeatRows.length
 
+  // ── Charts + breakdowns (issue 03) — READ-ONLY GROSS aggregates ──
+
+  // Revenue by day (last 30 days), grouped by date(confirmedAt). Filled below so
+  // every day in the window materialises (0 for gaps) — same window + field as
+  // #02's last30Revenue, so the series sums to that metric (internal consistency).
+  const revenueByDayRaw = await db
+    .select({
+      date: sql<string>`date(${bookings.confirmedAt})`.as('date'),
+      total: sum(bookings.grossTotalSnapshot),
+    })
+    .from(bookings)
+    .innerJoin(experiences, eq(bookings.experienceId, experiences.id))
+    .where(
+      and(
+        eq(experiences.vendorUserId, vendorUserId),
+        gte(bookings.confirmedAt, last30Start),
+        lte(bookings.confirmedAt, now),
+      ),
+    )
+    .groupBy(sql`date(${bookings.confirmedAt})`)
+    .orderBy(sql`date(${bookings.confirmedAt})`)
+
+  // Revenue by month over the rolling 12-month window, grouped by month of
+  // confirmedAt (rendered as `YYYY-MM`). Filled below so every month appears.
+  const revenueByMonthRaw = await db
+    .select({
+      month: sql<string>`to_char(${bookings.confirmedAt}, 'YYYY-MM')`.as('month'),
+      total: sum(bookings.grossTotalSnapshot),
+    })
+    .from(bookings)
+    .innerJoin(experiences, eq(bookings.experienceId, experiences.id))
+    .where(
+      and(
+        eq(experiences.vendorUserId, vendorUserId),
+        gte(bookings.confirmedAt, monthsStart),
+        lte(bookings.confirmedAt, now),
+      ),
+    )
+    .groupBy(sql`to_char(${bookings.confirmedAt}, 'YYYY-MM')`)
+    .orderBy(sql`to_char(${bookings.confirmedAt}, 'YYYY-MM')`)
+
+  // Booking status breakdown: count() grouped by state. Only states that occur
+  // (≥1 Booking) come back — no fabricated zero rows.
+  const statusRows = await db
+    .select({ state: bookings.state, count: count() })
+    .from(bookings)
+    .innerJoin(experiences, eq(bookings.experienceId, experiences.id))
+    .where(eq(experiences.vendorUserId, vendorUserId))
+    .groupBy(bookings.state)
+    .orderBy(sql`count(*) DESC`)
+
+  // Revenue by Experience: per-Experience Booking count + gross, ordered by
+  // revenue desc. INNER JOIN → only Experiences with ≥1 Booking appear (honest,
+  // no 0/0 noise for never-booked Experiences).
+  const experienceRows = await db
+    .select({
+      experienceId: experiences.id,
+      title: experiences.title,
+      bookings: count(),
+      revenue: sum(bookings.grossTotalSnapshot),
+    })
+    .from(bookings)
+    .innerJoin(experiences, eq(bookings.experienceId, experiences.id))
+    .where(eq(experiences.vendorUserId, vendorUserId))
+    .groupBy(experiences.id, experiences.title)
+    .orderBy(sql`sum(${bookings.grossTotalSnapshot}) DESC`)
+
   const headline = shapeAnalytics({ allTimeStats })
 
   return {
@@ -339,5 +501,52 @@ export async function loadVendorAnalytics(
       cancelled,
       repeatCustomers,
     }),
+    revenueByDay: fillDays(dayTrendStart, todayStart, revenueByDayRaw, 'total'),
+    revenueByMonth: fillMonths(monthsStart, now, revenueByMonthRaw, 'total'),
+    bookingStatusBreakdown: shapeStatusBreakdown(statusRows),
+    revenueByExperience: shapeExperienceRevenue(experienceRows),
   }
+}
+
+/** Raw status-count rows from the grouped query (count may surface as string). */
+interface RawStatusRow {
+  state: string
+  count: number | string | null
+}
+
+/**
+ * Shape the Booking-status breakdown rows: coerce the grouped count to an
+ * integer and drop any defensive zero/empty buckets. Pure + exported so the
+ * coercion + drop-empty behaviour is unit-testable without a DB.
+ */
+export function shapeStatusBreakdown(
+  rows: readonly RawStatusRow[],
+): BookingStatusCount[] {
+  return rows
+    .map((r) => ({ state: r.state, count: Number(r.count ?? 0) }))
+    .filter((r) => r.count > 0)
+}
+
+/** Raw per-Experience rows from the grouped query (numeric aggregates as string). */
+interface RawExperienceRow {
+  experienceId: string
+  title: string
+  bookings: number | string | null
+  revenue: number | string | null
+}
+
+/**
+ * Shape the revenue-by-Experience rows: floor gross to integer rupees, coerce
+ * the count, and keep the revenue-desc order. Pure + exported so the null
+ * SUM()/COUNT() coercion paths are unit-testable without a DB.
+ */
+export function shapeExperienceRevenue(
+  rows: readonly RawExperienceRow[],
+): ExperienceRevenue[] {
+  return rows.map((r) => ({
+    experienceId: r.experienceId,
+    title: r.title,
+    bookings: Number(r.bookings ?? 0),
+    revenue: Math.floor(Number(r.revenue ?? 0)),
+  }))
 }

@@ -198,7 +198,20 @@
     "cancellationRateLabel": "Cancellation rate",
     "cancellationRateHint": "Cancelled Bookings as a share of all Bookings.",
     "repeatCustomersLabel": "Repeat Customers",
-    "repeatCustomersHint": "Customers who have booked more than once."
+    "repeatCustomersHint": "Customers who have booked more than once.",
+    "chartsHeading": "Trends",
+    "revenueDayChartTitle": "Revenue — last 30 days",
+    "revenueMonthChartTitle": "Monthly revenue",
+    "chartNoData": "No data yet.",
+    "statusBreakdownHeading": "Booking status breakdown",
+    "statusBreakdownEmpty": "No Bookings yet, so there is nothing to break down.",
+    "statusColumnLabel": "Status",
+    "statusCountColumn": "Bookings",
+    "revenueByExperienceHeading": "Revenue by Experience",
+    "revenueByExperienceEmpty": "No Bookings yet, so there is no revenue to attribute to your Experiences.",
+    "experienceColumn": "Experience",
+    "bookingsColumn": "Bookings",
+    "revenueColumn": "Revenue"
   },
   "VendorQuickActions": {
     "heading": "Quick actions",

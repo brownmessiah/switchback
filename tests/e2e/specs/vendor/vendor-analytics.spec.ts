@@ -86,6 +86,46 @@ test.describe('Vendor analytics', () => {
     await expect(page.getByText(/payout %/i)).toHaveCount(0)
   })
 
+  test('renders the charts, status breakdown, and Revenue-by-Experience for a Vendor with Bookings', async ({
+    page,
+  }) => {
+    await page.goto('/vendor/analytics')
+
+    // Trends section (issue 03) — both revenue charts render through the shared
+    // TrendChart primitive (the seed business Vendor has Bookings → real series).
+    await expect(page.getByTestId('analytics-charts')).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: 'Trends' }),
+    ).toBeVisible()
+    await expect(
+      page.getByText('Revenue — last 30 days', { exact: true }),
+    ).toBeVisible()
+    await expect(
+      page.getByText('Monthly revenue', { exact: true }),
+    ).toBeVisible()
+
+    // Booking status breakdown — counts grouped by Booking state.
+    await expect(page.getByTestId('analytics-status-breakdown')).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: 'Booking status breakdown' }),
+    ).toBeVisible()
+
+    // Revenue by Experience — per-Experience Booking count + gross revenue.
+    const byExperience = page.getByTestId('analytics-revenue-by-experience')
+    await expect(byExperience).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: 'Revenue by Experience' }),
+    ).toBeVisible()
+    // The seed Vendor has Bookings → at least one Experience row renders (the
+    // table key spreads data-experience-id onto every row at ≥ md AND < md).
+    await expect(
+      byExperience.locator('[data-experience-id]').first(),
+    ).toBeVisible()
+
+    // Revenue stays GROSS (ADR-0016) — no net/payout/"you keep X%" anywhere.
+    await expect(page.getByText(/you keep/i)).toHaveCount(0)
+  })
+
   // Empty-state contract for a Vendor WITHOUT Bookings: the honest empty state
   // renders and the Key Metrics grid does NOT (no fabricated values). The
   // zero-base aggregation is exhaustively unit-tested in
@@ -105,6 +145,16 @@ test.describe('Vendor analytics', () => {
     // No fabricated metrics — the Key Metrics grid must be absent.
     await expect(page.getByTestId('analytics-key-metrics')).toHaveCount(0)
     await expect(page.getByText('+100', { exact: false })).toHaveCount(0)
+    // No fabricated charts/breakdowns either — the issue-03 sections (which
+    // each carry their own honest empty state) are gated on data.hasData and
+    // must be absent for a Vendor with no Bookings. The all-zero-series and
+    // empty-list paths are exhaustively unit-tested in analytics-loader.test.ts
+    // ("returns honest empty breakdowns for a Vendor with no Bookings").
+    await expect(page.getByTestId('analytics-charts')).toHaveCount(0)
+    await expect(page.getByTestId('analytics-status-breakdown')).toHaveCount(0)
+    await expect(
+      page.getByTestId('analytics-revenue-by-experience'),
+    ).toHaveCount(0)
   })
 
   test('reaches Analytics from the sidebar nav item', async ({ page }) => {

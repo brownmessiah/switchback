@@ -1,4 +1,4 @@
-import { eq, type ExtractTablesWithRelations } from 'drizzle-orm'
+import { and, eq, isNull, type ExtractTablesWithRelations } from 'drizzle-orm'
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core'
 import { notFound } from 'next/navigation'
 
@@ -107,9 +107,15 @@ export async function hasAdminPermission(
 }
 
 /**
- * Verify that `userId` has a `vendor_profiles` row.
+ * Verify that `userId` has an ACTIVE `vendor_profiles` row.
  *
- * Throws a redirect to `/vendor/onboarding` if no vendor profile exists.
+ * Throws a redirect to `/vendor/onboarding` if no vendor profile exists OR
+ * the profile is soft-closed (closed_at IS NOT NULL — issue 06). A closed
+ * Vendor reverts to a Customer-only account WITHOUT the row being deleted;
+ * re-onboarding reactivates it (ADR-0006). `closed_at` (self-serve) and
+ * `suspended` (admin) are ORTHOGONAL — a row is an active Vendor only when
+ * closed_at IS NULL; suspension is handled separately, not here.
+ *
  * Used by the vendor layout to gate access.
  */
 export async function requireVendorProfile(
@@ -119,7 +125,7 @@ export async function requireVendorProfile(
   const [vendor] = await db
     .select({ userId: vendorProfiles.userId })
     .from(vendorProfiles)
-    .where(eq(vendorProfiles.userId, userId))
+    .where(and(eq(vendorProfiles.userId, userId), isNull(vendorProfiles.closedAt)))
     .limit(1)
 
   if (!vendor) {

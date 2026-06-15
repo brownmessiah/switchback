@@ -21,6 +21,7 @@ describe('executeCreateVendorProfile', () => {
       { id: 'u_onb_pan', email: 'onb-pan@test.com', name: 'PAN Vendor' },
       { id: 'u_onb_existing', email: 'onb-existing@test.com', name: 'Existing Vendor' },
       { id: 'u_onb_conflict', email: 'onb-conflict@test.com', name: 'Conflict Vendor' },
+      { id: 'u_onb_reopen', email: 'onb-reopen@test.com', name: 'Reopening Vendor' },
     ])
 
     // A vendor that already holds the slug we will test the conflict against.
@@ -170,5 +171,40 @@ describe('executeCreateVendorProfile', () => {
       .where(eq(vendorProfiles.userId, 'u_onb_conflict'))
 
     expect(rows).toHaveLength(0)
+  })
+
+  // ── Reactivation (issue 06 — honors reversible soft-close) ──────────
+  it('re-onboarding a closed vendor clears closedAt and restores access', async () => {
+    // A previously-closed Vendor (closed_at + reason set). Re-onboarding must
+    // reactivate the existing row keyed by userId, NOT violate the PK / fail.
+    await db.insert(vendorProfiles).values({
+      userId: 'u_onb_reopen',
+      businessName: 'Old Business',
+      slug: 'reopen-slug',
+      closedAt: new Date(),
+      closureReason: 'took a break',
+    })
+
+    const result = await executeCreateVendorProfile(db, 'u_onb_reopen', {
+      businessName: 'Reopened Business',
+      slug: 'reopen-slug',
+      pan: null,
+      about: 'Back in business.',
+    })
+
+    expect(result).toEqual({ ok: true })
+
+    const [row] = await db
+      .select()
+      .from(vendorProfiles)
+      .where(eq(vendorProfiles.userId, 'u_onb_reopen'))
+      .limit(1)
+
+    // Reactivated: closed_at + reason cleared so requireVendorProfile passes again.
+    expect(row.closedAt).toBeNull()
+    expect(row.closureReason).toBeNull()
+    // The new business details overwrite the old ones on reactivation.
+    expect(row.businessName).toBe('Reopened Business')
+    expect(row.about).toBe('Back in business.')
   })
 })

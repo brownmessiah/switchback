@@ -27,6 +27,7 @@ export const routing = defineRouting({
  */
 export const EXCLUDED_PREFIXES = [
   '/admin',
+  '/vendor/analytics',
   '/vendor/dashboard',
   '/vendor/listings',
   '/vendor/bookings',

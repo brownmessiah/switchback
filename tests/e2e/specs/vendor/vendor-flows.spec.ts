@@ -616,16 +616,22 @@ test.describe('Listing images', () => {
     const pngBase64 =
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
     const fileInput = page.locator('input[type="file"]')
+
+    // Capture the baseline delete-button count BEFORE the upload — the seed may
+    // have pre-existing gallery images on this listing, so we use a delta-based
+    // approach rather than assuming exactly 0 images upfront.
+    const deleteButtons = page.getByRole('button', { name: 'Delete image' })
+    const beforeCount = await deleteButtons.count()
+
     await fileInput.setInputFiles({
       name: 'e2e-listing-photo.png',
       mimeType: 'image/png',
       buffer: Buffer.from(pngBase64, 'base64'),
     })
 
-    // The preview tile (with its Delete button) appears once the upload action
-    // resolves and the client state updates.
-    const deleteButton = page.getByRole('button', { name: 'Delete image' })
-    await expect(deleteButton).toBeVisible({ timeout: 15_000 })
+    // The new preview tile (with its Delete button) appears once the upload
+    // action resolves and the client state updates.
+    await expect(deleteButtons).toHaveCount(beforeCount + 1, { timeout: 15_000 })
 
     // ── Assert: a media_assets row exists AND the file landed on the mock ─
     const assetsAfterUpload = await getMediaAssetsForExperience(experienceId)
@@ -641,8 +647,10 @@ test.describe('Listing images', () => {
     })
 
     // ── Delete the image → row removed AND file removed from the mock ────
-    await deleteButton.click()
-    await expect(deleteButton).toBeHidden({ timeout: 15_000 })
+    // New images are appended last; click the last delete button to remove the
+    // tile just uploaded (the DB assertion below self-verifies the right one).
+    await deleteButtons.last().click()
+    await expect(deleteButtons).toHaveCount(beforeCount, { timeout: 15_000 })
 
     const assetsAfterDelete = await getMediaAssetsForExperience(experienceId)
     expect(assetsAfterDelete.find((a) => a.id === asset.id)).toBeUndefined()
@@ -692,7 +700,8 @@ test.describe('Over-cap publish rejection (Identity tier, ADR-0007)', () => {
     await page.locator('button[type="submit"]').click()
 
     // The guard's rejection reason is surfaced inline (mentions the cap).
-    await expect(page.getByText(/per person|Rs\.?\s*5000|5,?000/i)).toBeVisible({
+    // Scope to <main> to avoid also matching the Sonner toast duplicate.
+    await expect(page.getByRole('main').getByText(/per person|Rs\.?\s*5000|5,?000/i)).toBeVisible({
       timeout: 15_000,
     })
     // The success banner must NOT appear.
@@ -721,6 +730,17 @@ test.describe('Over-cap publish rejection (Identity tier, ADR-0007)', () => {
     const experienceId = target!.id
     const newPrice = 1900
     expect(target!.pricePerPerson_1_2).not.toBe(newPrice)
+
+    // Normalize any seed slots that exceed the Identity-tier capacity cap (8)
+    // so the ADR-0007 capacity guard does not block this price-only edit.
+    {
+      const sql = postgres(e2eDbUrl(), { max: 1 })
+      try {
+        await sql`UPDATE availability_slots SET capacity = 8 WHERE experience_id = ${experienceId} AND capacity > 8`
+      } finally {
+        await sql.end()
+      }
+    }
 
     await page.goto(`/vendor/listings/${experienceId}/edit`)
     await expect(page.locator('h1')).toContainText('Edit experience')
@@ -790,6 +810,17 @@ test.describe('Tier-cap matrix — publish path (Identity tier, ADR-0007, #21)',
     const orig6 = seedRow.pricePerPerson_6_plus
 
     try {
+      // Normalize any seed slots that exceed the Identity-tier capacity cap (8)
+      // so the CAPACITY_OVER_CAP guard does not mask the PRICE_OVER_CAP result.
+      {
+        const sql = postgres(e2eDbUrl(), { max: 1 })
+        try {
+          await sql`UPDATE availability_slots SET capacity = 8 WHERE experience_id = ${experienceId} AND capacity > 8`
+        } finally {
+          await sql.end()
+        }
+      }
+
       await page.goto(`/vendor/listings/${experienceId}/edit`)
       await expect(page.locator('h1')).toContainText('Edit experience')
       // #76/#77 stepper: the price brackets live on the Pricing section.
@@ -802,7 +833,9 @@ test.describe('Tier-cap matrix — publish path (Identity tier, ADR-0007, #21)',
       await page.locator('#price6').fill('4000')
       await page.locator('button[type="submit"]').click()
 
-      await expect(page.getByText(/up to Rs\.?\s*5000 per person/i)).toBeVisible({
+      // Scope to the inline Alert inside <main> — the same message also appears
+      // as a Sonner toast, so an unscoped selector would match 2 elements.
+      await expect(page.getByRole('main').getByText(/up to Rs\.?\s*5000 per person/i)).toBeVisible({
         timeout: 15_000,
       })
       await expect(page.getByText('Experience updated.')).toHaveCount(0)
@@ -852,7 +885,8 @@ test.describe('Tier-cap matrix — publish path (Identity tier, ADR-0007, #21)',
       .check()
     await page.locator('button[type="submit"]').click()
 
-    await expect(page.getByText(/cannot publish Combo Experiences/i)).toBeVisible({
+    // Scope to <main> to avoid also matching the Sonner toast duplicate.
+    await expect(page.getByRole('main').getByText(/cannot publish Combo Experiences/i)).toBeVisible({
       timeout: 15_000,
     })
     await expect(page.getByText('Experience updated.')).toHaveCount(0)
@@ -883,7 +917,8 @@ test.describe('Tier-cap matrix — publish path (Identity tier, ADR-0007, #21)',
       // A no-op-price save still runs the guard, which reads ALL slots → the
       // capacity-9 slot trips CAPACITY_OVER_CAP.
       await page.locator('button[type="submit"]').click()
-      await expect(page.getByText(/up to 8 participants per slot/i)).toBeVisible({
+      // Scope to <main> to avoid also matching the Sonner toast duplicate.
+      await expect(page.getByRole('main').getByText(/up to 8 participants per slot/i)).toBeVisible({
         timeout: 15_000,
       })
       await expect(page.getByText('Experience updated.')).toHaveCount(0)
@@ -925,12 +960,24 @@ test.describe('Tier-cap matrix — publish path (Identity tier, ADR-0007, #21)',
       capacity: 8,
     })
 
+    // Normalize any seed slots that exceed the Identity-tier capacity cap (8)
+    // so CAPACITY_OVER_CAP doesn't fire before MULTI_DAY_NOT_ALLOWED.
+    {
+      const sql = postgres(e2eDbUrl(), { max: 1 })
+      try {
+        await sql`UPDATE availability_slots SET capacity = 8 WHERE experience_id = ${experienceId} AND capacity > 8`
+      } finally {
+        await sql.end()
+      }
+    }
+
     try {
       await page.goto(`/vendor/listings/${experienceId}/edit`)
       await expect(page.locator('h1')).toContainText('Edit experience')
 
       await page.locator('button[type="submit"]').click()
-      await expect(page.getByText(/only publish single-day Experiences/i)).toBeVisible({
+      // Scope to <main> to avoid also matching the Sonner toast duplicate.
+      await expect(page.getByRole('main').getByText(/only publish single-day Experiences/i)).toBeVisible({
         timeout: 15_000,
       })
       await expect(page.getByText('Experience updated.')).toHaveCount(0)
@@ -1007,7 +1054,9 @@ test.describe('Tier-cap matrix — booking-create on downgrade (ADR-0007, #21)',
 
       // The checkout action surfaces the ADR-0007 reason inline (the per-person
       // cap message), and must NOT navigate to a confirmation page.
-      await expect(page.getByText(/up to Rs\.?\s*5000 per person/i)).toBeVisible({
+      // Scope to <main> — the same message also appears as a Sonner toast,
+      // and an unscoped selector would match 2 elements (strict mode violation).
+      await expect(page.getByRole('main').getByText(/up to Rs\.?\s*5000 per person/i)).toBeVisible({
         timeout: 15_000,
       })
       await expect(page).not.toHaveURL(/\/bookings\/[^/]+\/confirmation/)
@@ -2229,6 +2278,10 @@ test.describe('Vendor settings persistence (#20)', () => {
     await expect(page.locator('h1')).toContainText('Settings')
 
     // Business tab is the default; update the About field and save.
+    // Triple-click to select all existing text before fill, in case the React-
+    // controlled textarea does not clear on a plain fill() dispatch.
+    await page.locator('#about').click()
+    await page.locator('#about').selectText()
     await page.locator('#about').fill(newAbout)
     await page.getByRole('button', { name: 'Save changes' }).click()
     await expect(page.getByText('Business details updated.')).toBeVisible({

@@ -15,6 +15,7 @@ import {
 import { ActionItems } from './action-items'
 import { TrendChart } from './dashboard-charts'
 import { InsightsRail } from './insights-rail'
+import { VendorQuickActions } from './quick-actions'
 
 /**
  * SLA badge presentation. Semantic status tokens (DESIGN.md §2) paired with a
@@ -61,6 +62,11 @@ export default async function VendorDashboardPage() {
           Welcome back{data.businessName ? `, ${data.businessName}` : ''}.
         </p>
       </div>
+
+      {/* Quick-action wayfinding row (#04) — shortcuts to the highest-frequency
+          Vendor surfaces. Placed above the KPI grid; existing KPIs/charts/
+          action-items/upcoming-bookings below are unchanged. */}
+      <VendorQuickActions />
 
       {/* Enhanced stat cards — compact single-metric KPI row: 1-col (base) →
           2-col (md:) → 4-col (lg:). The structural flip keys off md:/lg: per

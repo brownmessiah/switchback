@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest'
 import { VENDOR_NAV_ITEMS } from './vendor-nav'
 
 describe('vendor-nav', () => {
-  it('contains exactly 8 nav items', () => {
-    expect(VENDOR_NAV_ITEMS).toHaveLength(8)
+  it('contains exactly 9 nav items', () => {
+    expect(VENDOR_NAV_ITEMS).toHaveLength(9)
   })
 
   it('includes all expected labels in order', () => {
@@ -17,6 +17,7 @@ describe('vendor-nav', () => {
       'Payouts',
       'Reviews',
       'Messages',
+      'Team & Roles',
       'Settings',
     ])
   })
@@ -50,8 +51,16 @@ describe('vendor-nav', () => {
     expect(coreItems).toEqual(['Listings', 'Bookings', 'Payouts'])
   })
 
-  it('keeps the secondary items (Reviews, Messages, Settings) last', () => {
-    const lastThree = VENDOR_NAV_ITEMS.slice(5).map((item) => item.label)
-    expect(lastThree).toEqual(['Reviews', 'Messages', 'Settings'])
+  it('keeps the secondary items (Reviews, Messages, Team & Roles, Settings) last', () => {
+    const tail = VENDOR_NAV_ITEMS.slice(5).map((item) => item.label)
+    expect(tail).toEqual(['Reviews', 'Messages', 'Team & Roles', 'Settings'])
+  })
+
+  it('places Team & Roles directly above Settings (under Settings, adjacent)', () => {
+    const labels = VENDOR_NAV_ITEMS.map((item) => item.label)
+    const teamIdx = labels.indexOf('Team & Roles')
+    const settingsIdx = labels.indexOf('Settings')
+    expect(teamIdx).toBeGreaterThanOrEqual(0)
+    expect(settingsIdx).toBe(teamIdx + 1)
   })
 })

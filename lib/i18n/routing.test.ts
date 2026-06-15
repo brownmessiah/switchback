@@ -170,8 +170,14 @@ describe('shouldExcludeFromI18n()', () => {
   })
 
   describe('EXCLUDED_PREFIXES constant', () => {
-    it('contains all 19 excluded prefixes', () => {
-      expect(EXCLUDED_PREFIXES).toHaveLength(19)
+    it('contains all 20 excluded prefixes', () => {
+      expect(EXCLUDED_PREFIXES).toHaveLength(20)
+    })
+
+    it('includes /vendor/team', () => {
+      // Issue #05: without this the route is locale-rewritten to the public
+      // /vendor/[slug] storefront and 404s (the gotcha that bit prior batches).
+      expect(EXCLUDED_PREFIXES).toContain('/vendor/team')
     })
 
     it('includes /wallet', () => {

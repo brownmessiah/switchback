@@ -117,11 +117,12 @@ describe('authenticated-route i18n messages', () => {
       expect(enKeys).toEqual(hiKeys)
     })
 
-    it('includes all 8 vendor nav item labels', () => {
+    it('includes all 9 vendor nav item labels', () => {
       const vendorNav = (enMessages as Record<string, Record<string, unknown>>).VendorNav as Record<string, unknown>
       const items = vendorNav.items as Record<string, unknown>
-      // 8 items (#01 added the /vendor/analytics surface)
-      expect(Object.keys(items)).toHaveLength(8)
+      // 9 items (#01 added /vendor/analytics; #05 added /vendor/team).
+      expect(Object.keys(items)).toHaveLength(9)
+      expect(items).toHaveProperty('team')
     })
 
     it('includes portal title and complete setup CTA', () => {

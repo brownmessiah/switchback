@@ -18,5 +18,8 @@ export const VENDOR_NAV_ITEMS: readonly VendorNavItem[] = [
   { href: '/vendor/payouts', label: 'Payouts', labelKey: 'payouts', icon: '₹' },
   { href: '/vendor/reviews', label: 'Reviews', labelKey: 'reviews', icon: '★' },
   { href: '/vendor/messages', label: 'Messages', labelKey: 'messages', icon: '✉' },
+  // Team & Roles sits under Settings (adjacent, just above it) — the Owner's
+  // team-management surface (issue #05). Glyph mirrors the simple-icon style.
+  { href: '/vendor/team', label: 'Team & Roles', labelKey: 'team', icon: '👥' },
   { href: '/vendor/settings', label: 'Settings', labelKey: 'settings', icon: '⚙' },
 ]

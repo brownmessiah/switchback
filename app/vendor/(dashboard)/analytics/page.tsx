@@ -48,7 +48,7 @@ export default async function VendorAnalyticsPage() {
     return (
       <p
         className={`mt-1 flex items-center gap-1 text-xs tabular-nums ${
-          up ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'
+          up ? 'text-success' : 'text-destructive'
         }`}
       >
         <Icon className="size-3.5" aria-hidden />

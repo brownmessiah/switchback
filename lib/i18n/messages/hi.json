@@ -253,6 +253,24 @@
     "roleGuide": "गाइड",
     "roleAccountant": "लेखाकार"
   },
+  "VendorCheckin": {
+    "title": "चेक-इन स्कैन करें",
+    "subtitle": "अतिथि को आया हुआ चिह्नित करने के लिए उनका बुकिंग QR स्कैन करें, या उनका चेक-इन कोड पेस्ट करें।",
+    "manualLabel": "चेक-इन कोड",
+    "manualPlaceholder": "चेक-इन कोड पेस्ट करें",
+    "submit": "अतिथि को चेक इन करें",
+    "submitting": "चेक इन हो रहा है…",
+    "scanAgain": "दूसरा स्कैन करें",
+    "resultCheckedInTitle": "चेक इन हो गया",
+    "resultCheckedInBody": "इस अतिथि को आया हुआ चिह्नित कर दिया गया है।",
+    "resultAlreadyTitle": "पहले ही चेक इन हो चुका है",
+    "resultAlreadyBody": "यह अतिथि पहले ही आया हुआ चिह्नित था। कोई बदलाव नहीं किया गया।",
+    "resultInvalidTitle": "अमान्य या समय-समाप्त कोड",
+    "resultInvalidBody": "यह चेक-इन कोड अमान्य है, समय-समाप्त हो गया है, या आपके स्कैन करने योग्य नहीं है।",
+    "resultErrorTitle": "कुछ गलत हो गया",
+    "resultErrorBody": "हम यह चेक-इन दर्ज नहीं कर सके। कृपया पुनः प्रयास करें।",
+    "emptyTokenError": "पहले एक चेक-इन कोड दर्ज करें।"
+  },
   "VendorQuickActions": {
     "heading": "त्वरित कार्य",
     "addExperience": "अनुभव जोड़ें",

@@ -253,6 +253,24 @@
     "roleGuide": "ଗାଇଡ୍",
     "roleAccountant": "ହିସାବନବୀଶ"
   },
+  "VendorCheckin": {
+    "title": "ଚେକ୍-ଇନ୍ ସ୍କାନ୍ କରନ୍ତୁ",
+    "subtitle": "ଅତିଥି ଆସିଥିବା ଚିହ୍ନଟ କରିବାକୁ ସେମାନଙ୍କ ବୁକିଂ QR ସ୍କାନ୍ କରନ୍ତୁ, କିମ୍ବା ସେମାନଙ୍କ ଚେକ୍-ଇନ୍ କୋଡ୍ ପେଷ୍ଟ କରନ୍ତୁ।",
+    "manualLabel": "ଚେକ୍-ଇନ୍ କୋଡ୍",
+    "manualPlaceholder": "ଚେକ୍-ଇନ୍ କୋଡ୍ ପେଷ୍ଟ କରନ୍ତୁ",
+    "submit": "ଅତିଥିଙ୍କୁ ଚେକ୍ ଇନ୍ କରନ୍ତୁ",
+    "submitting": "ଚେକ୍ ଇନ୍ ହେଉଛି…",
+    "scanAgain": "ଅନ୍ୟ ଏକ ସ୍କାନ୍ କରନ୍ତୁ",
+    "resultCheckedInTitle": "ଚେକ୍ ଇନ୍ ହୋଇଗଲା",
+    "resultCheckedInBody": "ଏହି ଅତିଥିଙ୍କୁ ଆସିଥିବା ଭାବେ ଚିହ୍ନଟ କରାଯାଇଛି।",
+    "resultAlreadyTitle": "ପୂର୍ବରୁ ଚେକ୍ ଇନ୍ ହୋଇସାରିଛି",
+    "resultAlreadyBody": "ଏହି ଅତିଥି ପୂର୍ବରୁ ଆସିଥିବା ଭାବେ ଚିହ୍ନଟ ହୋଇଥିଲେ। କୌଣସି ପରିବର୍ତ୍ତନ କରାଯାଇନାହିଁ।",
+    "resultInvalidTitle": "ଅବୈଧ କିମ୍ବା ମିଆଦ ସରିଥିବା କୋଡ୍",
+    "resultInvalidBody": "ଏହି ଚେକ୍-ଇନ୍ କୋଡ୍ ଅବୈଧ, ମିଆଦ ସରିଯାଇଛି, କିମ୍ବା ଆପଣଙ୍କ ସ୍କାନ୍ କରିବା ଯୋଗ୍ୟ ନୁହେଁ।",
+    "resultErrorTitle": "କିଛି ଭୁଲ୍ ହୋଇଗଲା",
+    "resultErrorBody": "ଆମେ ଏହି ଚେକ୍-ଇନ୍ ରେକର୍ଡ କରିପାରିଲୁ ନାହିଁ। ଦୟାକରି ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।",
+    "emptyTokenError": "ପ୍ରଥମେ ଏକ ଚେକ୍-ଇନ୍ କୋଡ୍ ପ୍ରବେଶ କରନ୍ତୁ।"
+  },
   "VendorQuickActions": {
     "heading": "Quick actions",
     "addExperience": "Add Experience",

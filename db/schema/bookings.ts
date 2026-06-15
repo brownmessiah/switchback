@@ -173,6 +173,12 @@ export const bookings = pgTable(
       .default(sql`now()`)
       .notNull(),
     completedAt: timestamp('completed_at', { withTimezone: true }),
+    // Arrival timestamp set by the QR check-in flow (issue #06). This is a NEW
+    // timestamp field, NOT a lifecycle state — `state` is UNCHANGED by check-in
+    // (ADR-0003 untouched). Nullable: null until the customer is scanned in;
+    // set once, never overwritten (idempotent re-scan). Completion still flows
+    // exclusively through the existing mark-complete / auto-complete path.
+    checkedInAt: timestamp('checked_in_at', { withTimezone: true }),
     // True if Completion was triggered by the end_at + 24h auto-transition
     // (per ADR-0003 — used for Vendor-attestation-laziness SLA tracking).
     autoCompleted: boolean('auto_completed').default(false).notNull(),

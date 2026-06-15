@@ -253,6 +253,24 @@
     "roleGuide": "গাইড",
     "roleAccountant": "হিচাপ ৰক্ষক"
   },
+  "VendorCheckin": {
+    "title": "চেক-ইন স্কেন কৰক",
+    "subtitle": "অতিথি অহাটো চিহ্নিত কৰিবলৈ তেওঁলোকৰ বুকিং QR স্কেন কৰক, বা তেওঁলোকৰ চেক-ইন ক'ড পে'ষ্ট কৰক।",
+    "manualLabel": "চেক-ইন ক'ড",
+    "manualPlaceholder": "চেক-ইন ক'ড পে'ষ্ট কৰক",
+    "submit": "অতিথিক চেক ইন কৰক",
+    "submitting": "চেক ইন হৈ আছে…",
+    "scanAgain": "আন এটা স্কেন কৰক",
+    "resultCheckedInTitle": "চেক ইন হ'ল",
+    "resultCheckedInBody": "এই অতিথিক অহা বুলি চিহ্নিত কৰা হৈছে।",
+    "resultAlreadyTitle": "ইতিমধ্যে চেক ইন হৈছে",
+    "resultAlreadyBody": "এই অতিথিক আগতেই অহা বুলি চিহ্নিত কৰা হৈছিল। কোনো সলনি কৰা হোৱা নাই।",
+    "resultInvalidTitle": "অবৈধ বা ম্যাদ উকলা ক'ড",
+    "resultInvalidBody": "এই চেক-ইন ক'ডটো অবৈধ, ম্যাদ উকলিছে, বা আপোনাৰ স্কেন কৰাৰ যোগ্য নহয়।",
+    "resultErrorTitle": "কিবা ভুল হ'ল",
+    "resultErrorBody": "আমি এই চেক-ইনটো ৰেকৰ্ড কৰিব নোৱাৰিলোঁ। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
+    "emptyTokenError": "প্ৰথমে এটা চেক-ইন ক'ড দিয়ক।"
+  },
   "VendorQuickActions": {
     "heading": "Quick actions",
     "addExperience": "Add Experience",

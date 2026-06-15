@@ -253,6 +253,24 @@
     "roleGuide": "گائیڈ",
     "roleAccountant": "اکاؤنٹنٹ"
   },
+  "VendorCheckin": {
+    "title": "چیک ان اسکین کریں",
+    "subtitle": "مہمان کی آمد کو نشان زد کرنے کے لیے ان کا بکنگ QR اسکین کریں، یا ان کا چیک ان کوڈ پیسٹ کریں۔",
+    "manualLabel": "چیک ان کوڈ",
+    "manualPlaceholder": "چیک ان کوڈ پیسٹ کریں",
+    "submit": "مہمان کو چیک ان کریں",
+    "submitting": "چیک ان ہو رہا ہے…",
+    "scanAgain": "ایک اور اسکین کریں",
+    "resultCheckedInTitle": "چیک ان ہو گیا",
+    "resultCheckedInBody": "اس مہمان کو آمد کے طور پر نشان زد کر دیا گیا ہے۔",
+    "resultAlreadyTitle": "پہلے ہی چیک ان ہو چکا ہے",
+    "resultAlreadyBody": "یہ مہمان پہلے ہی آمد کے طور پر نشان زد تھا۔ کوئی تبدیلی نہیں کی گئی۔",
+    "resultInvalidTitle": "غلط یا میعاد ختم شدہ کوڈ",
+    "resultInvalidBody": "یہ چیک ان کوڈ غلط ہے، میعاد ختم ہو چکی ہے، یا آپ کے اسکین کرنے کے قابل نہیں ہے۔",
+    "resultErrorTitle": "کچھ غلط ہو گیا",
+    "resultErrorBody": "ہم یہ چیک ان ریکارڈ نہیں کر سکے۔ براہ کرم دوبارہ کوشش کریں۔",
+    "emptyTokenError": "پہلے ایک چیک ان کوڈ درج کریں۔"
+  },
   "VendorQuickActions": {
     "heading": "Quick actions",
     "addExperience": "Add Experience",

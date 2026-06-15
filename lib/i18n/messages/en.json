@@ -353,6 +353,24 @@
     "roleGuide": "Guide",
     "roleAccountant": "Accountant"
   },
+  "VendorCheckin": {
+    "title": "Scan check-in",
+    "subtitle": "Scan a guest's booking QR, or paste their check-in code, to mark them arrived.",
+    "manualLabel": "Check-in code",
+    "manualPlaceholder": "Paste the check-in code",
+    "submit": "Check in guest",
+    "submitting": "Checking in…",
+    "scanAgain": "Scan another",
+    "resultCheckedInTitle": "Checked in",
+    "resultCheckedInBody": "This guest has been marked as arrived.",
+    "resultAlreadyTitle": "Already checked in",
+    "resultAlreadyBody": "This guest was already marked as arrived. No change made.",
+    "resultInvalidTitle": "Invalid or expired code",
+    "resultInvalidBody": "This check-in code is invalid, expired, or not yours to scan.",
+    "resultErrorTitle": "Something went wrong",
+    "resultErrorBody": "We couldn't record this check-in. Please try again.",
+    "emptyTokenError": "Enter a check-in code first."
+  },
   "VendorQuickActions": {
     "heading": "Quick actions",
     "addExperience": "Add Experience",

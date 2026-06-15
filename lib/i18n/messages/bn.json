@@ -253,6 +253,24 @@
     "roleGuide": "গাইড",
     "roleAccountant": "হিসাবরক্ষক"
   },
+  "VendorCheckin": {
+    "title": "চেক-ইন স্ক্যান করুন",
+    "subtitle": "অতিথি এসেছেন বলে চিহ্নিত করতে তাঁদের বুকিং QR স্ক্যান করুন, অথবা তাঁদের চেক-ইন কোড পেস্ট করুন।",
+    "manualLabel": "চেক-ইন কোড",
+    "manualPlaceholder": "চেক-ইন কোড পেস্ট করুন",
+    "submit": "অতিথিকে চেক ইন করুন",
+    "submitting": "চেক ইন হচ্ছে…",
+    "scanAgain": "আরেকটি স্ক্যান করুন",
+    "resultCheckedInTitle": "চেক ইন হয়েছে",
+    "resultCheckedInBody": "এই অতিথিকে এসেছেন বলে চিহ্নিত করা হয়েছে।",
+    "resultAlreadyTitle": "ইতিমধ্যে চেক ইন হয়েছে",
+    "resultAlreadyBody": "এই অতিথিকে আগেই এসেছেন বলে চিহ্নিত করা হয়েছিল। কোনও পরিবর্তন হয়নি।",
+    "resultInvalidTitle": "অবৈধ বা মেয়াদোত্তীর্ণ কোড",
+    "resultInvalidBody": "এই চেক-ইন কোডটি অবৈধ, মেয়াদোত্তীর্ণ, অথবা আপনার স্ক্যান করার যোগ্য নয়।",
+    "resultErrorTitle": "কিছু ভুল হয়েছে",
+    "resultErrorBody": "আমরা এই চেক-ইন রেকর্ড করতে পারিনি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+    "emptyTokenError": "প্রথমে একটি চেক-ইন কোড লিখুন।"
+  },
   "VendorQuickActions": {
     "heading": "Quick actions",
     "addExperience": "Add Experience",

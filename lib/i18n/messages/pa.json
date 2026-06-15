@@ -253,6 +253,24 @@
     "roleGuide": "ਗਾਈਡ",
     "roleAccountant": "ਲੇਖਾਕਾਰ"
   },
+  "VendorCheckin": {
+    "title": "ਚੈੱਕ-ਇਨ ਸਕੈਨ ਕਰੋ",
+    "subtitle": "ਮਹਿਮਾਨ ਦੇ ਆਉਣ ਨੂੰ ਨਿਸ਼ਾਨਬੱਧ ਕਰਨ ਲਈ ਉਹਨਾਂ ਦਾ ਬੁਕਿੰਗ QR ਸਕੈਨ ਕਰੋ, ਜਾਂ ਉਹਨਾਂ ਦਾ ਚੈੱਕ-ਇਨ ਕੋਡ ਪੇਸਟ ਕਰੋ।",
+    "manualLabel": "ਚੈੱਕ-ਇਨ ਕੋਡ",
+    "manualPlaceholder": "ਚੈੱਕ-ਇਨ ਕੋਡ ਪੇਸਟ ਕਰੋ",
+    "submit": "ਮਹਿਮਾਨ ਨੂੰ ਚੈੱਕ ਇਨ ਕਰੋ",
+    "submitting": "ਚੈੱਕ ਇਨ ਹੋ ਰਿਹਾ ਹੈ…",
+    "scanAgain": "ਹੋਰ ਸਕੈਨ ਕਰੋ",
+    "resultCheckedInTitle": "ਚੈੱਕ ਇਨ ਹੋ ਗਿਆ",
+    "resultCheckedInBody": "ਇਸ ਮਹਿਮਾਨ ਨੂੰ ਆਇਆ ਹੋਇਆ ਨਿਸ਼ਾਨਬੱਧ ਕਰ ਦਿੱਤਾ ਗਿਆ ਹੈ।",
+    "resultAlreadyTitle": "ਪਹਿਲਾਂ ਹੀ ਚੈੱਕ ਇਨ ਹੋ ਚੁੱਕਾ ਹੈ",
+    "resultAlreadyBody": "ਇਹ ਮਹਿਮਾਨ ਪਹਿਲਾਂ ਹੀ ਆਇਆ ਹੋਇਆ ਨਿਸ਼ਾਨਬੱਧ ਸੀ। ਕੋਈ ਤਬਦੀਲੀ ਨਹੀਂ ਕੀਤੀ ਗਈ।",
+    "resultInvalidTitle": "ਅਵੈਧ ਜਾਂ ਮਿਆਦ-ਪੁੱਗਿਆ ਕੋਡ",
+    "resultInvalidBody": "ਇਹ ਚੈੱਕ-ਇਨ ਕੋਡ ਅਵੈਧ ਹੈ, ਮਿਆਦ ਪੁੱਗ ਚੁੱਕੀ ਹੈ, ਜਾਂ ਤੁਹਾਡੇ ਸਕੈਨ ਕਰਨ ਯੋਗ ਨਹੀਂ ਹੈ।",
+    "resultErrorTitle": "ਕੁਝ ਗਲਤ ਹੋ ਗਿਆ",
+    "resultErrorBody": "ਅਸੀਂ ਇਹ ਚੈੱਕ-ਇਨ ਦਰਜ ਨਹੀਂ ਕਰ ਸਕੇ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "emptyTokenError": "ਪਹਿਲਾਂ ਇੱਕ ਚੈੱਕ-ਇਨ ਕੋਡ ਦਰਜ ਕਰੋ।"
+  },
   "VendorQuickActions": {
     "heading": "Quick actions",
     "addExperience": "Add Experience",

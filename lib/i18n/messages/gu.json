@@ -253,6 +253,24 @@
     "roleGuide": "ગાઇડ",
     "roleAccountant": "એકાઉન્ટન્ટ"
   },
+  "VendorCheckin": {
+    "title": "ચેક-ઇન સ્કેન કરો",
+    "subtitle": "મહેમાન આવ્યા હોવાનું ચિહ્નિત કરવા તેમનો બુકિંગ QR સ્કેન કરો, અથવા તેમનો ચેક-ઇન કોડ પેસ્ટ કરો.",
+    "manualLabel": "ચેક-ઇન કોડ",
+    "manualPlaceholder": "ચેક-ઇન કોડ પેસ્ટ કરો",
+    "submit": "મહેમાનને ચેક ઇન કરો",
+    "submitting": "ચેક ઇન થઈ રહ્યું છે…",
+    "scanAgain": "બીજો સ્કેન કરો",
+    "resultCheckedInTitle": "ચેક ઇન થઈ ગયું",
+    "resultCheckedInBody": "આ મહેમાનને આવ્યા હોવાનું ચિહ્નિત કરવામાં આવ્યું છે.",
+    "resultAlreadyTitle": "પહેલેથી જ ચેક ઇન થઈ ગયું છે",
+    "resultAlreadyBody": "આ મહેમાન પહેલેથી જ આવ્યા હોવાનું ચિહ્નિત હતા. કોઈ ફેરફાર કરવામાં આવ્યો નથી.",
+    "resultInvalidTitle": "અમાન્ય અથવા સમય-સમાપ્ત કોડ",
+    "resultInvalidBody": "આ ચેક-ઇન કોડ અમાન્ય છે, સમય-સમાપ્ત થઈ ગયો છે, અથવા તમારા સ્કેન કરવા યોગ્ય નથી.",
+    "resultErrorTitle": "કંઈક ખોટું થયું",
+    "resultErrorBody": "અમે આ ચેક-ઇન નોંધી શક્યા નહીં. કૃપા કરી ફરી પ્રયાસ કરો.",
+    "emptyTokenError": "પહેલા એક ચેક-ઇન કોડ દાખલ કરો."
+  },
   "VendorQuickActions": {
     "heading": "Quick actions",
     "addExperience": "Add Experience",

@@ -1,17 +1,26 @@
 import type { ReactElement, ReactNode } from 'react'
 
+import { eq } from 'drizzle-orm'
 import { CircleCheck, CircleSlash, Clock, MapPin, TriangleAlert } from 'lucide-react'
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import QRCode from 'qrcode'
 
 import { Badge } from '@/components/ui/badge'
 import { buttonVariants } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { db } from '@/db/client'
+import { availabilitySlots } from '@/db/schema/availability-slots'
+import { bookings } from '@/db/schema/bookings'
 import { auth } from '@/lib/auth'
+import {
+  buildCheckInDeepLink,
+  shouldShowCheckInQr,
+} from '@/lib/bookings/checkin-qr'
 import { loadBookingConfirmation } from '@/lib/bookings/confirmation-loader'
+import { resolveCheckInSecret } from '@/app/vendor/(dashboard)/checkin/checkin-secret'
 
 import {
   getConfirmationPresentation,
@@ -73,6 +82,18 @@ export default async function BookingConfirmationPage({
   const presentation = getConfirmationPresentation(data.state)
   const tone = INDICATOR_TONE[presentation.tone]
   const Indicator = ICON_BY_GLYPH[presentation.icon]
+
+  // Customer-carried check-in QR (issue #06): only for states where arrival is
+  // still meaningful (confirmed / awaiting_completion). The QR encodes a
+  // deep-link `<origin>/vendor/checkin?token=<signed token>` that desk/field
+  // staff scan with any phone camera. Generated server-side as an inline SVG —
+  // no client JS, no external service. Showing the QR does NOT change anything
+  // about the booking; it is a presentation-only voucher artifact.
+  const checkInQrSvg = await buildCheckInQrSvg({
+    bookingId: data.bookingId,
+    state: data.state,
+    requestHeaders: await headers(),
+  })
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
@@ -221,6 +242,28 @@ export default async function BookingConfirmationPage({
         </CardContent>
       </Card>
 
+      {/* Check-in QR (issue #06) — shown only for arrival-relevant states. Staff
+          scan it with any phone camera to mark you arrived; it never changes
+          your booking. */}
+      {checkInQrSvg ? (
+        <Card className="mb-6" data-testid="checkin-qr">
+          <CardHeader>
+            <CardTitle className="text-lg">Check-in QR</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center gap-3">
+            <div
+              className="rounded-lg border bg-white p-3"
+              // Server-rendered inline SVG — no client JS, no external service.
+              dangerouslySetInnerHTML={{ __html: checkInQrSvg }}
+            />
+            <p className="max-w-prose text-center text-sm text-muted-foreground">
+              Show this to staff at the meeting point — they scan it to check you
+              in.
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+
       {/* Cancellation policy + refund-bucket preview (informational). */}
       <Card className="mb-8">
         <CardContent className="pt-6">
@@ -259,6 +302,65 @@ export default async function BookingConfirmationPage({
       </div>
     </main>
   )
+}
+
+/**
+ * Resolve the absolute origin for the QR deep-link. Prefers the configured
+ * `NEXT_PUBLIC_APP_URL` (the canonical public base, used by the sitemap/SEO),
+ * falling back to the forwarded request host so a scanned link points at the
+ * host the customer is actually on.
+ */
+function resolveOrigin(requestHeaders: Headers): string {
+  const configured = process.env.NEXT_PUBLIC_APP_URL
+  if (configured) return configured
+
+  const host = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host')
+  const proto = requestHeaders.get('x-forwarded-proto') ?? 'https'
+  return host ? `${proto}://${host}` : ''
+}
+
+/**
+ * Build the inline SVG check-in QR for a booking, or `null` when it should not
+ * be shown (wrong state, or no resolvable slot end / origin). Server-side only:
+ * the secret is read from env here and the SVG is generated via `qrcode` with no
+ * client JS and no external service.
+ */
+async function buildCheckInQrSvg({
+  bookingId,
+  state,
+  requestHeaders,
+}: {
+  bookingId: string
+  state: string
+  requestHeaders: Headers
+}): Promise<string | null> {
+  if (!shouldShowCheckInQr(state)) return null
+
+  const origin = resolveOrigin(requestHeaders)
+  if (!origin) return null
+
+  // Resolve the booking's slot end for the token TTL (the confirmation loader
+  // does not expose it). A single targeted join.
+  const [slot] = await db
+    .select({ endAt: availabilitySlots.endAt })
+    .from(bookings)
+    .innerJoin(availabilitySlots, eq(availabilitySlots.id, bookings.slotId))
+    .where(eq(bookings.id, bookingId))
+    .limit(1)
+  if (!slot?.endAt) return null
+
+  const url = buildCheckInDeepLink({
+    origin,
+    bookingId,
+    slotEnd: slot.endAt,
+    secret: resolveCheckInSecret(),
+  })
+
+  return QRCode.toString(url, {
+    type: 'svg',
+    margin: 1,
+    errorCorrectionLevel: 'M',
+  })
 }
 
 type TimelineTone = 'success' | 'info' | 'muted'

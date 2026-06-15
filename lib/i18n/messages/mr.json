@@ -253,6 +253,24 @@
     "roleGuide": "मार्गदर्शक",
     "roleAccountant": "लेखापाल"
   },
+  "VendorCheckin": {
+    "title": "चेक-इन स्कॅन करा",
+    "subtitle": "पाहुणे आल्याचे चिन्हांकित करण्यासाठी त्यांचा बुकिंग QR स्कॅन करा, किंवा त्यांचा चेक-इन कोड पेस्ट करा.",
+    "manualLabel": "चेक-इन कोड",
+    "manualPlaceholder": "चेक-इन कोड पेस्ट करा",
+    "submit": "पाहुण्याला चेक इन करा",
+    "submitting": "चेक इन होत आहे…",
+    "scanAgain": "दुसरा स्कॅन करा",
+    "resultCheckedInTitle": "चेक इन झाले",
+    "resultCheckedInBody": "या पाहुण्याला आल्याचे चिन्हांकित केले आहे.",
+    "resultAlreadyTitle": "आधीच चेक इन झाले आहे",
+    "resultAlreadyBody": "हा पाहुणा आधीच आल्याचे चिन्हांकित होता. कोणताही बदल केला नाही.",
+    "resultInvalidTitle": "अवैध किंवा कालबाह्य कोड",
+    "resultInvalidBody": "हा चेक-इन कोड अवैध आहे, कालबाह्य झाला आहे, किंवा तुमच्या स्कॅन करण्यायोग्य नाही.",
+    "resultErrorTitle": "काहीतरी चूक झाली",
+    "resultErrorBody": "आम्ही हे चेक-इन नोंदवू शकलो नाही. कृपया पुन्हा प्रयत्न करा.",
+    "emptyTokenError": "आधी एक चेक-इन कोड प्रविष्ट करा."
+  },
   "VendorQuickActions": {
     "heading": "Quick actions",
     "addExperience": "Add Experience",

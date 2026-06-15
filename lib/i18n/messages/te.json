@@ -253,6 +253,24 @@
     "roleGuide": "గైడ్",
     "roleAccountant": "అకౌంటెంట్"
   },
+  "VendorCheckin": {
+    "title": "చెక్-ఇన్ స్కాన్ చేయండి",
+    "subtitle": "అతిథి వచ్చినట్లు గుర్తించడానికి వారి బుకింగ్ QRను స్కాన్ చేయండి, లేదా వారి చెక్-ఇన్ కోడ్‌ను అతికించండి.",
+    "manualLabel": "చెక్-ఇన్ కోడ్",
+    "manualPlaceholder": "చెక్-ఇన్ కోడ్‌ను అతికించండి",
+    "submit": "అతిథిని చెక్-ఇన్ చేయండి",
+    "submitting": "చెక్-ఇన్ అవుతోంది…",
+    "scanAgain": "మరొకటి స్కాన్ చేయండి",
+    "resultCheckedInTitle": "చెక్-ఇన్ అయింది",
+    "resultCheckedInBody": "ఈ అతిథిని వచ్చినట్లు గుర్తించాం.",
+    "resultAlreadyTitle": "ఇప్పటికే చెక్-ఇన్ అయింది",
+    "resultAlreadyBody": "ఈ అతిథి ఇప్పటికే వచ్చినట్లు గుర్తించబడ్డారు. ఎలాంటి మార్పు చేయలేదు.",
+    "resultInvalidTitle": "చెల్లని లేదా గడువు ముగిసిన కోడ్",
+    "resultInvalidBody": "ఈ చెక్-ఇన్ కోడ్ చెల్లదు, గడువు ముగిసింది, లేదా మీరు స్కాన్ చేయదగినది కాదు.",
+    "resultErrorTitle": "ఏదో తప్పు జరిగింది",
+    "resultErrorBody": "ఈ చెక్-ఇన్‌ను నమోదు చేయలేకపోయాం. దయచేసి మళ్ళీ ప్రయత్నించండి.",
+    "emptyTokenError": "ముందుగా ఒక చెక్-ఇన్ కోడ్‌ను నమోదు చేయండి."
+  },
   "VendorQuickActions": {
     "heading": "Quick actions",
     "addExperience": "Add Experience",

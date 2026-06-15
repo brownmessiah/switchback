@@ -1,6 +1,9 @@
 import { eq } from 'drizzle-orm'
+import { QrCode } from 'lucide-react'
 import { headers } from 'next/headers'
+import Link from 'next/link'
 
+import { buttonVariants } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { db } from '@/db/client'
 import { availabilitySlots, bookings, experiences, users } from '@/db/schema'
@@ -167,8 +170,10 @@ export default async function VendorBookingsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Title row — header action area kept free for a future Scan-QR button
-          (issue 06) without restructuring. */}
+      {/* Title row — the header action slot carries the Scan-QR entry point to
+          the check-in scanner (issue 06). Hardcoded English, matching this
+          page's existing (not-yet-i18n'd) convention; the /vendor/checkin page
+          itself is fully localized. */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="font-heading text-2xl font-semibold tracking-tight">Bookings</h1>
@@ -176,6 +181,13 @@ export default async function VendorBookingsPage() {
             Review and manage incoming bookings
           </p>
         </div>
+        <Link
+          href="/vendor/checkin"
+          className={buttonVariants({ variant: 'outline', className: 'shrink-0' })}
+        >
+          <QrCode aria-hidden="true" />
+          Scan QR
+        </Link>
       </div>
 
       <VendorTableTabs active="bookings" />

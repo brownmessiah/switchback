@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import { VENDOR_NAV_ITEMS } from '@/app/vendor/vendor-nav'
+
 import { EXCLUDED_PREFIXES, shouldExcludeFromI18n } from './routing'
 
 // ---------------------------------------------------------------------------
@@ -22,6 +24,13 @@ describe('shouldExcludeFromI18n()', () => {
 
     it('excludes /vendor/dashboard', () => {
       expect(shouldExcludeFromI18n('/vendor/dashboard')).toBe(true)
+    })
+
+    it('excludes /vendor/analytics', () => {
+      // Regression: /vendor/analytics (issue 01) must bypass i18n rewriting,
+      // else it falls through to the localized public /vendor/[slug] storefront
+      // and renders "Vendor not found" instead of the dashboard surface.
+      expect(shouldExcludeFromI18n('/vendor/analytics')).toBe(true)
     })
 
     it('excludes /vendor/listings', () => {
@@ -148,9 +157,21 @@ describe('shouldExcludeFromI18n()', () => {
     })
   })
 
+  // Future-proof guard: every Vendor dashboard nav destination MUST bypass i18n
+  // rewriting, otherwise it collides with the localized public /vendor/[slug]
+  // storefront. Derived from the nav source of truth so adding a new nav item
+  // without excluding it fails here (caught the /vendor/analytics regression).
+  describe('vendor nav coverage', () => {
+    it('excludes every VENDOR_NAV_ITEMS href', () => {
+      for (const item of VENDOR_NAV_ITEMS) {
+        expect(shouldExcludeFromI18n(item.href)).toBe(true)
+      }
+    })
+  })
+
   describe('EXCLUDED_PREFIXES constant', () => {
-    it('contains all 18 excluded prefixes', () => {
-      expect(EXCLUDED_PREFIXES).toHaveLength(18)
+    it('contains all 19 excluded prefixes', () => {
+      expect(EXCLUDED_PREFIXES).toHaveLength(19)
     })
 
     it('includes /wallet', () => {

@@ -62,3 +62,8 @@ export const vendorTeamMembers = pgTable(
 
 export type VendorTeamMember = typeof vendorTeamMembers.$inferSelect
 export type NewVendorTeamMember = typeof vendorTeamMembers.$inferInsert
+
+/** The stored member role (the enum minus the never-stored `'owner'`). */
+export type VendorMemberRole = (typeof vendorMemberRoleEnum.enumValues)[number]
+/** Member lifecycle status (`'active'` | `'inactive'`). */
+export type VendorMemberStatus = (typeof vendorMemberStatusEnum.enumValues)[number]

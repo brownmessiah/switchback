@@ -18,13 +18,27 @@
  */
 
 import { test, expect } from '../../fixtures/devtools'
-import { getWalletBalanceRupees } from '../../helpers/db-assertions'
+import { getWalletBalanceRupees, grantOutversCredit } from '../../helpers/db-assertions'
 
 const SEED_CUSTOMER = 'u_seed_customer'
 
 test.describe.configure({ mode: 'serial' })
 
 test.describe('Wallet page (/wallet)', () => {
+  // Isolation: the customer E2E project shares ONE seeded customer, and the
+  // revenue-spine checkout spec (customer-flows.spec.ts) legitimately debits
+  // this customer's outvers_credit to ₹0 via applyWalletToCheckout
+  // (app/(app)/checkout/actions.ts — a real ADR-0004 feature). That is correct
+  // product behaviour, not a regression, but it leaves the shared seed customer
+  // with no credit by the time this suite runs → no balance, no ledger grant,
+  // no expiry chip. Restore a deterministic, non-zero, unexpired credit so
+  // every wallet assertion runs against a known baseline regardless of what the
+  // checkout spec did. A single beforeAll suffices (the suite is serial).
+  test.beforeAll(async () => {
+    const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // ~90 days out
+    await grantOutversCredit(SEED_CUSTOMER, 500, expiresAt)
+  })
+
   test('renders both bucket balances with their ADR-0004 labels', async ({ page }) => {
     const response = await page.goto('/wallet')
     // The route must NOT 404 — it is excluded from the i18n proxy.

@@ -86,9 +86,12 @@ test.describe('Vendor Team & Roles', () => {
 
     // The role dropdown offers the four assignable roles — Owner is NOT
     // assignable (it is the implicit account holder, rendered as the top row).
+    // Base UI's Select trigger is `data-slot="select-trigger"` (not role=combobox).
+    // The role select defaults to "Manager"; the sibling status select shows
+    // "Active" — so filter on the default value to pick the role trigger.
     const roleTrigger = modal
-      .getByRole('combobox')
-      .filter({ hasText: /Manager|Booking Staff|Guide|Accountant/ })
+      .locator('[data-slot="select-trigger"]')
+      .filter({ hasText: 'Manager' })
       .first()
     await roleTrigger.click()
     await expect(page.getByRole('option', { name: 'Manager' })).toBeVisible()

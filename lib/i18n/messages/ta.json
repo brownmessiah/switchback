@@ -381,12 +381,12 @@
     "itemList": {
       "name": "{region} இல் சிறந்த {activity} அனுபவங்கள்"
     },
-    "heroTitle": "{region} இல் {activity} — இலவச ரத்து",
+    "heroTitle": "{region} இல் {activity} — நெகிழ்வான ரத்து",
     "heroEyebrow": "தேர்ந்தெடுக்கப்பட்ட சாகசங்கள்",
-    "refundLead": "உங்கள் ஸ்லாட்டுக்கு 24 மணி நேரத்திற்கு முன்பு வரை இலவசமாக ரத்து செய்து முழு பணத்தைத் திரும்பப் பெறுங்கள் — கீழே உள்ள {region} இல் ஒவ்வொரு {activity} அனுபவமும், Outvers இல் புக் செய்யப்பட்டது, இதில் அடங்கும்.",
+    "refundLead": "உங்கள் ஸ்லாட்டுக்கு 24 மணி நேரத்திற்கு முன்பு வரை ரத்து செய்தால் முழு பணத்தைத் திரும்பப் பெறுங்கள் — கீழே உள்ள {region} இல் ஒவ்வொரு {activity} அனுபவமும், Outvers இல் புக் செய்யப்பட்டது, இதில் அடங்கும்.",
     "editorialIntro": "{region} இல் {activity} இன் கையால் சரிபார்க்கப்பட்ட தொகுப்பு, KYC சரிபார்க்கப்பட்ட விற்பனையாளர்களால் மட்டுமே நடத்தப்படுகிறது. வெளிப்படையான விலை, நிகழ்நேர ஸ்லாட் கிடைக்கும் தன்மை, மற்றும் 24 மணி நேரத்திற்குள் பணத்திருப்பி.",
     "trust": {
-      "freeCancellation": "24 மணி நேரம் வரை இலவச ரத்து",
+      "freeCancellation": "24 மணி நேரம் வரை நெகிழ்வான ரத்து",
       "verifiedVendor": "அடையாளம் சரிபார்க்கப்பட்ட விற்பனையாளர்கள்",
       "refundSla": "24 மணி நேர பணத்திருப்பி SLA"
     }
@@ -398,7 +398,7 @@
     },
     "heroEyebrow": "Every region, one place",
     "heroTitle": "{activity} across India",
-    "refundLead": "Cancel free up to 24 hours before your slot for a full refund — every {activity} Experience below, booked on Outvers, is covered.",
+    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {activity} Experience below, booked on Outvers, is covered.",
     "editorialIntro": "A hand-checked collection of {activity} from every region we operate in, run only by KYC-verified Vendors. Compare across destinations, then book with transparent pricing and refunds credited within 24 hours.",
     "regionHint": "Looking for {activity} in a specific destination? Open an Experience to see its region, or browse {activity} by city from each listing.",
     "experiences": {
@@ -422,7 +422,7 @@
       "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
     },
     "trust": {
-      "freeCancellation": "Free cancellation up to 24h",
+      "freeCancellation": "Flexible cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
     },
@@ -442,7 +442,7 @@
     },
     "heroEyebrow": "Curated category",
     "heroTitle": "{category} adventures across India",
-    "refundLead": "Cancel free up to 24 hours before your slot for a full refund — every {category} Experience below, booked on Outvers, is covered.",
+    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {category} Experience below, booked on Outvers, is covered.",
     "editorialIntro": "A hand-checked rollup of {category} adventures from every region we operate in, run only by KYC-verified Vendors. Transparent pricing, real-time slot availability, and refunds credited within 24 hours.",
     "categories": {
       "water": "நீர் விளையாட்டு",
@@ -472,7 +472,7 @@
       "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
     },
     "trust": {
-      "freeCancellation": "Free cancellation up to 24h",
+      "freeCancellation": "Flexible cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
     }
@@ -510,7 +510,7 @@
       "total": "மொத்தம்",
       "partialPay": "இப்போது 25% செலுத்துங்கள், மீதி அனுபவத்திற்கு 24 மணி நேரம் முன்பு.",
       "bookNow": "இப்போது புக் செய்யுங்கள்",
-      "freeCancellation": "இலவச ரத்து · 24 மணி நேர பணத்திருப்பி SLA",
+      "freeCancellation": "நெகிழ்வான ரத்து · 24 மணி நேர பணத்திருப்பி SLA",
       "priceTable": "ஒரு-பங்கேற்பாளர் விலை அட்டவணை",
       "breakdown": "நேரடி விலை விவரம்",
       "advanceDue": "இப்போது செலுத்த வேண்டிய Advance (25%)",
@@ -528,13 +528,13 @@
       "exploreSimilar": "ஒத்த அனுபவங்களை ஆராயுங்கள்"
     },
     "cancellation": {
-      "flexible": "அனுபவத்திற்கு 24 மணி நேரம் முன்பு வரை இலவச ரத்து. 2 மணி நேரத்திற்குள் 50% பணத்திருப்பி. அதன் பிறகு பணத்திருப்பி இல்லை.",
-      "moderate": "அனுபவத்திற்கு 72 மணி நேரம் முன்பு வரை இலவச ரத்து. 24 மணி நேரம் முன்பு வரை 50% பணத்திருப்பி. அதன் பிறகு பணத்திருப்பி இல்லை.",
-      "strict": "அனுபவத்திற்கு 14 நாட்களுக்கு முன்பு வரை இலவச ரத்து. 7 நாட்களுக்கு முன்பு வரை 50% பணத்திருப்பி. அதன் பிறகு பணத்திருப்பி இல்லை.",
+      "flexible": "அனுபவத்திற்கு 24 மணி நேரம் முன்பு வரை ரத்து செய்தால் முழு பணத்திருப்பி. 2 மணி நேரத்திற்குள் 50% பணத்திருப்பி. அதன் பிறகு பணத்திருப்பி இல்லை.",
+      "moderate": "அனுபவத்திற்கு 72 மணி நேரம் முன்பு வரை ரத்து செய்தால் முழு பணத்திருப்பி. 24 மணி நேரம் முன்பு வரை 50% பணத்திருப்பி. அதன் பிறகு பணத்திருப்பி இல்லை.",
+      "strict": "அனுபவத்திற்கு 14 நாட்களுக்கு முன்பு வரை ரத்து செய்தால் முழு பணத்திருப்பி. 7 நாட்களுக்கு முன்பு வரை 50% பணத்திருப்பி. அதன் பிறகு பணத்திருப்பி இல்லை.",
       "fallback": "இந்த அனுபவம் {preset} ரத்து கொள்கையைப் பின்பற்றுகிறது.",
       "nonCancellableBadge": "ரத்து செய்ய முடியாது",
       "nonCancellableDescription": "இந்த அனுபவத்தை ரத்து செய்ய முடியாது — பணம் செலுத்திய பிறகு பணத்திருப்பி இல்லை. விதிவிலக்கான சந்தர்ப்பங்களில் Outvers பணத்திருப்பியைக் கையாளலாம்.",
-      "freeUpToHours": "செயல்பாட்டிற்கு {hours} மணி நேரம் முன்பு வரை இலவச ரத்து"
+      "freeUpToHours": "செயல்பாட்டிற்கு {hours} மணி நேரம் முன்பு வரை ரத்து செய்தால் முழு பணத்திருப்பி"
     },
     "faq": {
       "safetyQuestion": "{title} பாதுகாப்பானதா?",
@@ -587,7 +587,7 @@
       "day": "நாள் {day}"
     },
     "assurance": {
-      "freeCancellation": "அனுபவத்திற்கு 24 மணி நேரம் முன்பு வரை இலவச ரத்து",
+      "freeCancellation": "அனுபவத்திற்கு 24 மணி நேரம் முன்பு வரை நெகிழ்வான ரத்து",
       "verifiedVendor": "அடையாளம் சரிபார்க்கப்பட்ட Vendor",
       "exactRefund": "உறுதிசெய்வதற்கு முன் சரியான பணத்திரும்பல் காட்டப்படுகிறது"
     },
@@ -924,7 +924,7 @@
       "cancelLabel": "நீங்கள் ரத்து செய்கிறீர்கள்",
       "resultLabel": "கணக்கிடப்பட்ட பணத்திரும்பம்",
       "feeLabel": "ரத்து கட்டணம்",
-      "slabFree": "இலவச-ரத்து கால அளவு — முழுப் பணத்திரும்பம்",
+      "slabFree": "முழு-பணத்திருப்பி கால அளவு — முழுப் பணத்திரும்பம்",
       "slabHalf": "பாதி-பணத்திரும்ப கால அளவு — 50% திரும்பப்பெறுதல்",
       "slabNone": "பணத்திரும்பம் இல்லா கால அளவு",
       "promptEmpty": "உங்கள் பணத்திரும்பத்தைப் பார்க்க தொகை மற்றும் இரு தேதிகளையும் உள்ளிடவும்.",
@@ -1269,7 +1269,7 @@
       "breadcrumb": "இடங்கள்",
       "heroEyebrow": "எங்கே செல்வது",
       "heroTitle": "இந்தியா முழுவதும் சாகச இடங்கள்",
-      "heroSubtitle": "இமயமலை கணவாய்கள் முதல் கடற்கரை பவளப்பாறைகள் வரை — Outvers உள்ளடக்கிய ஒவ்வொரு பகுதியையும் பாருங்கள், ஒவ்வொன்றிலும் KYC-சரிபார்க்கப்பட்ட விற்பனையாளர்கள் மற்றும் 24 மணி நேரம் வரை இலவச ரத்து.",
+      "heroSubtitle": "இமயமலை கணவாய்கள் முதல் கடற்கரை பவளப்பாறைகள் வரை — Outvers உள்ளடக்கிய ஒவ்வொரு பகுதியையும் பாருங்கள், ஒவ்வொன்றிலும் KYC-சரிபார்க்கப்பட்ட விற்பனையாளர்கள் மற்றும் 24 மணி நேரம் வரை நெகிழ்வான ரத்து.",
       "regionsHeading": "அனைத்து இடங்கள்",
       "regionCount": "{count, plural, =0 {இன்னும் அனுபவங்கள் இல்லை} one {# அனுபவம்} other {# அனுபவங்கள்}}",
       "exploreCta": "{region} ஐ ஆராயுங்கள்"

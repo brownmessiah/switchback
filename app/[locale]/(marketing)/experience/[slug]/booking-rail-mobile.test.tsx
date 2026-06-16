@@ -44,7 +44,7 @@ function baseProps(overrides: Partial<BookingRailMobileProps> = {}): BookingRail
     participantsLabel: 'Participants',
     totalLabel: 'Total',
     maxParticipants: 12,
-    freeCancellation: 'Free cancellation · 24h refund SLA',
+    freeCancellation: 'Flexible cancellation · 24h refund SLA',
     bookNowLabel: 'Book now',
     checkoutHref: '/checkout?experienceId=exp_1',
     slots: [],

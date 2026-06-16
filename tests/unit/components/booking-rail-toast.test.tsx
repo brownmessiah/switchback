@@ -66,7 +66,7 @@ const baseProps = {
   participantsLabel: 'Participants',
   totalLabel: 'Total',
   maxParticipants: 8,
-  freeCancellation: 'Free cancellation',
+  freeCancellation: 'Flexible cancellation',
   bookNowLabel: 'Book now',
   checkoutHref: '/checkout?experienceId=exp-1',
   slots: [

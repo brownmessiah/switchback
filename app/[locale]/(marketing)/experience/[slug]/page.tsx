@@ -982,8 +982,8 @@ export default async function ExperienceDetailPage({
             {/* Cancellation policy (anchor target #cancellation) — ADR-0005.
                 For a non_cancellable Experience we show a CONSTRAINT badge
                 (destructive tint + Ban icon, never green — the policy is a
-                restriction, not a perk). Otherwise the "Free cancellation up to
-                {hours}h before activity" line, with the hour figure DERIVED from
+                restriction, not a perk). Otherwise the "Full refund if you
+                cancel up to {hours}h before activity" line, with the hour figure DERIVED from
                 PRESET_WINDOWS via lib/payments/cancellation-copy so it can never
                 drift from the refund math (issue #10). */}
             <section id="cancellation">

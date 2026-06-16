@@ -398,7 +398,7 @@
     },
     "heroEyebrow": "Every region, one place",
     "heroTitle": "{activity} across India",
-    "refundLead": "Cancel free up to 24 hours before your slot for a full refund — every {activity} Experience below, booked on Outvers, is covered.",
+    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {activity} Experience below, booked on Outvers, is covered.",
     "editorialIntro": "A hand-checked collection of {activity} from every region we operate in, run only by KYC-verified Vendors. Compare across destinations, then book with transparent pricing and refunds credited within 24 hours.",
     "regionHint": "Looking for {activity} in a specific destination? Open an Experience to see its region, or browse {activity} by city from each listing.",
     "experiences": {
@@ -422,7 +422,7 @@
       "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
     },
     "trust": {
-      "freeCancellation": "Free cancellation up to 24h",
+      "freeCancellation": "Flexible cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
     },
@@ -442,7 +442,7 @@
     },
     "heroEyebrow": "Curated category",
     "heroTitle": "{category} adventures across India",
-    "refundLead": "Cancel free up to 24 hours before your slot for a full refund — every {category} Experience below, booked on Outvers, is covered.",
+    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {category} Experience below, booked on Outvers, is covered.",
     "editorialIntro": "A hand-checked rollup of {category} adventures from every region we operate in, run only by KYC-verified Vendors. Transparent pricing, real-time slot availability, and refunds credited within 24 hours.",
     "categories": {
       "water": "ਜਲ ਖੇਡਾਂ",
@@ -472,7 +472,7 @@
       "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
     },
     "trust": {
-      "freeCancellation": "Free cancellation up to 24h",
+      "freeCancellation": "Flexible cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
     }
@@ -510,7 +510,7 @@
       "total": "ਕੁੱਲ",
       "partialPay": "ਹੁਣੇ 25% ਭੁਗਤਾਨ ਕਰੋ, ਬਾਕੀ ਅਨੁਭਵ ਤੋਂ 24 ਘੰਟੇ ਪਹਿਲਾਂ।",
       "bookNow": "ਹੁਣੇ ਬੁੱਕ ਕਰੋ",
-      "freeCancellation": "ਮੁਫ਼ਤ ਰੱਦ · 24 ਘੰਟੇ ਰਿਫੰਡ SLA",
+      "freeCancellation": "ਲਚਕਦਾਰ ਰੱਦ · 24 ਘੰਟੇ ਰਿਫੰਡ SLA",
       "priceTable": "ਪ੍ਰਤੀ-ਭਾਗੀਦਾਰ ਕੀਮਤ ਸਾਰਣੀ",
       "breakdown": "ਲਾਈਵ ਕੀਮਤ ਵੇਰਵਾ",
       "advanceDue": "ਹੁਣ ਦੇਣਯੋਗ Advance (25%)",
@@ -528,13 +528,13 @@
       "exploreSimilar": "ਮਿਲਦੇ-ਜੁਲਦੇ ਅਨੁਭਵ ਵੇਖੋ"
     },
     "cancellation": {
-      "flexible": "ਅਨੁਭਵ ਤੋਂ 24 ਘੰਟੇ ਪਹਿਲਾਂ ਮੁਫ਼ਤ ਰੱਦ। 2 ਘੰਟਿਆਂ ਵਿੱਚ 50% ਰਿਫੰਡ। ਉਸ ਤੋਂ ਬਾਅਦ ਕੋਈ ਰਿਫੰਡ ਨਹੀਂ।",
-      "moderate": "ਅਨੁਭਵ ਤੋਂ 72 ਘੰਟੇ ਪਹਿਲਾਂ ਤੱਕ ਮੁਫ਼ਤ ਰੱਦ। 24 ਘੰਟੇ ਪਹਿਲਾਂ ਤੱਕ 50% ਰਿਫੰਡ। ਉਸ ਤੋਂ ਬਾਅਦ ਕੋਈ ਰਿਫੰਡ ਨਹੀਂ।",
-      "strict": "ਅਨੁਭਵ ਤੋਂ 14 ਦਿਨ ਪਹਿਲਾਂ ਤੱਕ ਮੁਫ਼ਤ ਰੱਦ। 7 ਦਿਨ ਪਹਿਲਾਂ ਤੱਕ 50% ਰਿਫੰਡ। ਉਸ ਤੋਂ ਬਾਅਦ ਕੋਈ ਰਿਫੰਡ ਨਹੀਂ।",
+      "flexible": "ਅਨੁਭਵ ਤੋਂ 24 ਘੰਟੇ ਪਹਿਲਾਂ ਰੱਦ ਕਰਨ 'ਤੇ ਪੂਰਾ ਰਿਫੰਡ। 2 ਘੰਟਿਆਂ ਵਿੱਚ 50% ਰਿਫੰਡ। ਉਸ ਤੋਂ ਬਾਅਦ ਕੋਈ ਰਿਫੰਡ ਨਹੀਂ।",
+      "moderate": "ਅਨੁਭਵ ਤੋਂ 72 ਘੰਟੇ ਪਹਿਲਾਂ ਤੱਕ ਰੱਦ ਕਰਨ 'ਤੇ ਪੂਰਾ ਰਿਫੰਡ। 24 ਘੰਟੇ ਪਹਿਲਾਂ ਤੱਕ 50% ਰਿਫੰਡ। ਉਸ ਤੋਂ ਬਾਅਦ ਕੋਈ ਰਿਫੰਡ ਨਹੀਂ।",
+      "strict": "ਅਨੁਭਵ ਤੋਂ 14 ਦਿਨ ਪਹਿਲਾਂ ਤੱਕ ਰੱਦ ਕਰਨ 'ਤੇ ਪੂਰਾ ਰਿਫੰਡ। 7 ਦਿਨ ਪਹਿਲਾਂ ਤੱਕ 50% ਰਿਫੰਡ। ਉਸ ਤੋਂ ਬਾਅਦ ਕੋਈ ਰਿਫੰਡ ਨਹੀਂ।",
       "fallback": "ਇਹ ਅਨੁਭਵ {preset} ਰੱਦ ਕਰਨ ਦੀ ਨੀਤੀ ਦੀ ਪਾਲਣਾ ਕਰਦਾ ਹੈ।",
       "nonCancellableBadge": "ਰੱਦ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ",
       "nonCancellableDescription": "ਇਹ ਅਨੁਭਵ ਰੱਦ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ — ਭੁਗਤਾਨ ਤੋਂ ਬਾਅਦ ਕੋਈ ਰਿਫੰਡ ਨਹੀਂ। ਅਸਧਾਰਨ ਮਾਮਲਿਆਂ ਵਿੱਚ Outvers ਫਿਰ ਵੀ ਰਿਫੰਡ ਸੰਭਾਲ ਸਕਦਾ ਹੈ।",
-      "freeUpToHours": "ਗਤੀਵਿਧੀ ਤੋਂ {hours} ਘੰਟੇ ਪਹਿਲਾਂ ਤੱਕ ਮੁਫ਼ਤ ਰੱਦ"
+      "freeUpToHours": "ਗਤੀਵਿਧੀ ਤੋਂ {hours} ਘੰਟੇ ਪਹਿਲਾਂ ਤੱਕ ਰੱਦ ਕਰਨ 'ਤੇ ਪੂਰਾ ਰਿਫੰਡ"
     },
     "faq": {
       "safetyQuestion": "ਕੀ {title} ਸੁਰੱਖਿਅਤ ਹੈ?",
@@ -924,7 +924,7 @@
       "cancelLabel": "ਤੁਸੀਂ ਰੱਦ ਕਰਦੇ ਹੋ",
       "resultLabel": "ਗਣਨਾ ਕੀਤਾ ਰਿਫੰਡ",
       "feeLabel": "ਰੱਦ ਕਰਨ ਦੀ ਫੀਸ",
-      "slabFree": "ਮੁਫ਼ਤ-ਰੱਦ ਮਿਆਦ — ਪੂਰਾ ਰਿਫੰਡ",
+      "slabFree": "ਪੂਰਾ-ਰਿਫੰਡ ਮਿਆਦ — ਪੂਰਾ ਰਿਫੰਡ",
       "slabHalf": "ਅੱਧਾ-ਰਿਫੰਡ ਮਿਆਦ — 50% ਵਾਪਸ",
       "slabNone": "ਕੋਈ-ਰਿਫੰਡ ਨਹੀਂ ਮਿਆਦ",
       "promptEmpty": "ਆਪਣਾ ਰਿਫੰਡ ਦੇਖਣ ਲਈ ਰਕਮ ਅਤੇ ਦੋਵੇਂ ਤਾਰੀਖਾਂ ਭਰੋ।",

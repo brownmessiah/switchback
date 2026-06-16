@@ -42,11 +42,14 @@ export function WishlistButton({
     startTransition(async () => {
       const result = await toggleWishlistAction(experienceId)
       if (!result.ok) {
-        // Roll back the optimistic flip and route to sign-in. A toast explains
-        // why the heart didn't stick (login-gated action — issue 24).
+        // Roll back the optimistic flip, then route to sign-in. A toast
+        // explains why the heart didn't stick (login-gated action — issue 24).
+        // The redirect is deferred so the accessible toast (role=status) is
+        // painted and seen before the Toaster is torn down by navigation —
+        // an immediate push() on the same tick would discard it (issue 24).
         setSaved(!optimistic)
         toast.info(t('toast.signInRequired'))
-        router.push('/sign-in')
+        setTimeout(() => router.push('/sign-in'), 1200)
         return
       }
       setSaved(result.saved)

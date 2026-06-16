@@ -381,12 +381,12 @@
     "itemList": {
       "name": "{region} میں اعلیٰ {activity} تجربات"
     },
-    "heroTitle": "{region} میں {activity} — مفت منسوخی",
+    "heroTitle": "{region} میں {activity} — لچکدار منسوخی",
     "heroEyebrow": "منتخب مہم جوئیاں",
-    "refundLead": "اپنے سلاٹ سے 24 گھنٹے پہلے تک مفت منسوخ کریں اور مکمل رقم واپس پائیں — نیچے {region} میں ہر {activity} تجربہ، جو Outvers پر بک کیا گیا، اس میں شامل ہے۔",
+    "refundLead": "اپنے سلاٹ سے 24 گھنٹے پہلے تک منسوخ کریں تو مکمل رقم واپس پائیں — نیچے {region} میں ہر {activity} تجربہ، جو Outvers پر بک کیا گیا، اس میں شامل ہے۔",
     "editorialIntro": "{region} میں {activity} کا ہاتھ سے جانچا گیا مجموعہ، صرف KYC-تصدیق شدہ بیچنے والوں کے ذریعے چلایا جاتا ہے۔ شفاف قیمت، حقیقی وقت میں سلاٹ دستیابی، اور 24 گھنٹوں میں رقم کی واپسی۔",
     "trust": {
-      "freeCancellation": "24 گھنٹے تک مفت منسوخی",
+      "freeCancellation": "24 گھنٹے تک لچکدار منسوخی",
       "verifiedVendor": "شناخت-تصدیق شدہ بیچنے والے",
       "refundSla": "24 گھنٹے کی رقم واپسی SLA"
     }
@@ -398,7 +398,7 @@
     },
     "heroEyebrow": "Every region, one place",
     "heroTitle": "{activity} across India",
-    "refundLead": "Cancel free up to 24 hours before your slot for a full refund — every {activity} Experience below, booked on Outvers, is covered.",
+    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {activity} Experience below, booked on Outvers, is covered.",
     "editorialIntro": "A hand-checked collection of {activity} from every region we operate in, run only by KYC-verified Vendors. Compare across destinations, then book with transparent pricing and refunds credited within 24 hours.",
     "regionHint": "Looking for {activity} in a specific destination? Open an Experience to see its region, or browse {activity} by city from each listing.",
     "experiences": {
@@ -422,7 +422,7 @@
       "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
     },
     "trust": {
-      "freeCancellation": "Free cancellation up to 24h",
+      "freeCancellation": "Flexible cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
     },
@@ -442,7 +442,7 @@
     },
     "heroEyebrow": "Curated category",
     "heroTitle": "{category} adventures across India",
-    "refundLead": "Cancel free up to 24 hours before your slot for a full refund — every {category} Experience below, booked on Outvers, is covered.",
+    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {category} Experience below, booked on Outvers, is covered.",
     "editorialIntro": "A hand-checked rollup of {category} adventures from every region we operate in, run only by KYC-verified Vendors. Transparent pricing, real-time slot availability, and refunds credited within 24 hours.",
     "categories": {
       "water": "آبی کھیل",
@@ -472,7 +472,7 @@
       "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
     },
     "trust": {
-      "freeCancellation": "Free cancellation up to 24h",
+      "freeCancellation": "Flexible cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
     }
@@ -510,7 +510,7 @@
       "total": "کل",
       "partialPay": "ابھی 25% ادا کریں، بقایا تجربے سے 24 گھنٹے پہلے۔",
       "bookNow": "ابھی بُک کریں",
-      "freeCancellation": "مفت منسوخی · 24 گھنٹے ریفنڈ SLA",
+      "freeCancellation": "لچکدار منسوخی · 24 گھنٹے ریفنڈ SLA",
       "priceTable": "فی شریک قیمت جدول",
       "breakdown": "لائیو قیمت کی تفصیل",
       "advanceDue": "ابھی واجب الادا Advance (25%)",
@@ -528,13 +528,13 @@
       "exploreSimilar": "ملتے جلتے تجربات دیکھیں"
     },
     "cancellation": {
-      "flexible": "تجربے سے 24 گھنٹے پہلے مفت منسوخی۔ 2 گھنٹوں میں 50% ریفنڈ۔ اس کے بعد کوئی ریفنڈ نہیں۔",
-      "moderate": "تجربے سے 72 گھنٹے پہلے تک مفت منسوخی۔ 24 گھنٹے پہلے تک 50% ریفنڈ۔ اس کے بعد کوئی ریفنڈ نہیں۔",
-      "strict": "تجربے سے 14 دن پہلے تک مفت منسوخی۔ 7 دن پہلے تک 50% ریفنڈ۔ اس کے بعد کوئی ریفنڈ نہیں۔",
+      "flexible": "تجربے سے 24 گھنٹے پہلے منسوخ کرنے پر مکمل ریفنڈ۔ 2 گھنٹوں میں 50% ریفنڈ۔ اس کے بعد کوئی ریفنڈ نہیں۔",
+      "moderate": "تجربے سے 72 گھنٹے پہلے تک منسوخ کرنے پر مکمل ریفنڈ۔ 24 گھنٹے پہلے تک 50% ریفنڈ۔ اس کے بعد کوئی ریفنڈ نہیں۔",
+      "strict": "تجربے سے 14 دن پہلے تک منسوخ کرنے پر مکمل ریفنڈ۔ 7 دن پہلے تک 50% ریفنڈ۔ اس کے بعد کوئی ریفنڈ نہیں۔",
       "fallback": "یہ تجربہ {preset} منسوخی پالیسی کی پیروی کرتا ہے۔",
       "nonCancellableBadge": "منسوخ نہیں کیا جا سکتا",
       "nonCancellableDescription": "یہ تجربہ منسوخ نہیں کیا جا سکتا — ادائیگی کے بعد کوئی ریفنڈ نہیں۔ غیر معمولی صورتوں میں Outvers پھر بھی ریفنڈ سنبھال سکتا ہے۔",
-      "freeUpToHours": "سرگرمی سے {hours} گھنٹے پہلے تک مفت منسوخی"
+      "freeUpToHours": "سرگرمی سے {hours} گھنٹے پہلے تک منسوخ کرنے پر مکمل ریفنڈ"
     },
     "faq": {
       "safetyQuestion": "کیا {title} محفوظ ہے؟",
@@ -587,7 +587,7 @@
       "day": "دن {day}"
     },
     "assurance": {
-      "freeCancellation": "تجربے سے 24 گھنٹے پہلے تک مفت منسوخی",
+      "freeCancellation": "تجربے سے 24 گھنٹے پہلے تک لچکدار منسوخی",
       "verifiedVendor": "شناخت-تصدیق شدہ Vendor",
       "exactRefund": "تصدیق سے پہلے درست رقم کی واپسی دکھائی جاتی ہے"
     },
@@ -924,7 +924,7 @@
       "cancelLabel": "آپ منسوخ کرتے ہیں",
       "resultLabel": "حساب شدہ ریفنڈ",
       "feeLabel": "منسوخی فیس",
-      "slabFree": "مفت-منسوخی مدت — مکمل ریفنڈ",
+      "slabFree": "مکمل-ریفنڈ مدت — مکمل ریفنڈ",
       "slabHalf": "نصف-ریفنڈ مدت — 50% واپس",
       "slabNone": "کوئی-ریفنڈ نہیں مدت",
       "promptEmpty": "اپنا ریفنڈ دیکھنے کے لیے رقم اور دونوں تاریخیں درج کریں۔",
@@ -1269,7 +1269,7 @@
       "breadcrumb": "مقامات",
       "heroEyebrow": "کہاں جائیں",
       "heroTitle": "پورے بھارت میں ایڈونچر مقامات",
-      "heroSubtitle": "ہمالیہ کے درّوں سے لے کر ساحلی مرجانی چٹانوں تک — Outvers کے زیرِ احاطہ ہر علاقہ دیکھیں، ہر ایک میں KYC-تصدیق شدہ بیچنے والے اور 24 گھنٹے تک مفت منسوخی۔",
+      "heroSubtitle": "ہمالیہ کے درّوں سے لے کر ساحلی مرجانی چٹانوں تک — Outvers کے زیرِ احاطہ ہر علاقہ دیکھیں، ہر ایک میں KYC-تصدیق شدہ بیچنے والے اور 24 گھنٹے تک لچکدار منسوخی۔",
       "regionsHeading": "تمام مقامات",
       "regionCount": "{count, plural, =0 {ابھی کوئی تجربہ نہیں} one {# تجربہ} other {# تجربات}}",
       "exploreCta": "{region} دریافت کریں"

@@ -45,28 +45,41 @@ describe('cancellation-copy — canonical per-preset source', () => {
   })
 
   describe('vendor-facing English plain-language rule per preset', () => {
-    it('flexible states the 24h free window', () => {
+    it('flexible states the 24h full-refund window in "Full refund" copy', () => {
       expect(CANCELLATION_COPY.flexible.rule).toContain('24')
-      expect(CANCELLATION_COPY.flexible.rule.toLowerCase()).toContain('free cancellation')
+      // CONTEXT.md domain vocabulary: cancellation copy says "Full refund", never
+      // the banned "Free cancellation" phrasing.
+      expect(CANCELLATION_COPY.flexible.rule.toLowerCase()).toContain('full refund')
+      expect(CANCELLATION_COPY.flexible.rule.toLowerCase()).not.toContain(
+        'free cancellation',
+      )
     })
 
     it('moderate states 72h / 3 days — NOT 7 days (the fixed discrepancy)', () => {
       const rule = CANCELLATION_COPY.moderate.rule
       expect(rule).toContain('72')
       expect(rule).not.toContain('7 days')
+      expect(rule.toLowerCase()).not.toContain('free cancellation')
     })
 
-    it('strict states the 14-day free window and the 7-day 50% window', () => {
+    it('strict states the 14-day full-refund window and the 7-day 50% window', () => {
       const rule = CANCELLATION_COPY.strict.rule
       expect(rule).toContain('14')
       expect(rule).toContain('7')
       expect(rule).toContain('50%')
+      expect(rule.toLowerCase()).not.toContain('free cancellation')
     })
 
     it('non_cancellable states no refund after payment', () => {
       const rule = CANCELLATION_COPY.non_cancellable.rule.toLowerCase()
       expect(rule).toContain('non-cancellable')
       expect(rule).toContain('no refund')
+    })
+
+    it('no preset rule contains the banned "Free cancellation" phrase', () => {
+      for (const { rule } of Object.values(CANCELLATION_COPY)) {
+        expect(rule.toLowerCase()).not.toContain('free cancellation')
+      }
     })
   })
 
@@ -84,7 +97,7 @@ describe('cancellation-copy — canonical per-preset source', () => {
     })
   })
 
-  describe('freeCancellationLine — the customer "Free cancellation up to Xh" line', () => {
+  describe('freeCancellationLine — the customer "Full refund if you cancel up to Xh" line', () => {
     it('returns the hour figure for a windowed preset (derived, accurate)', () => {
       expect(freeCancellationLine('flexible')).toEqual({ hours: 24 })
       expect(freeCancellationLine('moderate')).toEqual({ hours: 72 })

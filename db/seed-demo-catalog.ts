@@ -110,7 +110,7 @@ export async function seedDemoCatalog(db: SeedDb): Promise<void> {
         responseTimeSlaScore: variety.responseTimeSlaScore,
         createdAt: variety.createdAt,
         about:
-          'A KYC-verified Outvers operator running certified, safety-first adventures with experienced local guides. Small groups, transparent pricing, free cancellation within policy.',
+          'A KYC-verified Outvers operator running certified, safety-first adventures with experienced local guides. Small groups, transparent pricing, flexible cancellation within policy.',
       })
       .onConflictDoNothing()
   }

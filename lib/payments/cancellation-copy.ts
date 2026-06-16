@@ -49,10 +49,10 @@ export function isNonCancellable(preset: string): boolean {
 }
 
 /**
- * The customer "Free cancellation up to Xh before activity" line input: the
- * derived hour figure for a windowed preset, or null when there is no free
- * window (non_cancellable / unknown) — in which case the caller shows the
- * "Non-cancellable" badge instead.
+ * The customer "Full refund if you cancel up to Xh before activity" line
+ * input: the derived hour figure for a windowed preset, or null when there is
+ * no full-refund window (non_cancellable / unknown) — in which case the caller
+ * shows the "Non-cancellable" badge instead.
  */
 export function freeCancellationLine(preset: string): { hours: number } | null {
   const hours = cancellationFreeHours(preset)
@@ -74,23 +74,23 @@ interface CancellationCopyEntry {
 function flexibleRule(): string {
   const free = PRESET_WINDOWS.flexible.freeHours
   const half = PRESET_WINDOWS.flexible.halfHours
-  return `Free cancellation up to ${free}h before the activity. 50% refund up to ${half}h before. No refund after.`
+  return `Full refund if you cancel up to ${free}h before the activity. 50% refund up to ${half}h before. No refund after.`
 }
 
-/** moderate: 72h (= 3 days) free / 24h 50%. Fixes the legacy "7 days" copy bug. */
+/** moderate: 72h (= 3 days) full-refund window / 24h 50%. Fixes the legacy "7 days" copy bug. */
 function moderateRule(): string {
   const free = PRESET_WINDOWS.moderate.freeHours
   const half = PRESET_WINDOWS.moderate.halfHours
   const freeDays = wholeDays(free)
   const window = freeDays !== null ? `${free}h (${freeDays} days)` : `${free}h`
-  return `Free cancellation up to ${window} before the activity. 50% refund up to ${half}h before. No refund after.`
+  return `Full refund if you cancel up to ${window} before the activity. 50% refund up to ${half}h before. No refund after.`
 }
 
-/** strict: 14 days free / 7 days 50%. */
+/** strict: 14 days full-refund window / 7 days 50%. */
 function strictRule(): string {
   const freeDays = wholeDays(PRESET_WINDOWS.strict.freeHours)
   const halfDays = wholeDays(PRESET_WINDOWS.strict.halfHours)
-  return `Free cancellation up to ${freeDays} days before the activity. 50% refund up to ${halfDays} days before. No refund after.`
+  return `Full refund if you cancel up to ${freeDays} days before the activity. 50% refund up to ${halfDays} days before. No refund after.`
 }
 
 /**

@@ -481,12 +481,12 @@
     "itemList": {
       "name": "Top {activity} Experiences in {region}"
     },
-    "heroTitle": "{activity} in {region} — Free Cancellation",
+    "heroTitle": "{activity} in {region} — Flexible Cancellation",
     "heroEyebrow": "Curated adventures",
-    "refundLead": "Cancel free up to 24 hours before your slot for a full refund — every {activity} Experience in {region} below, booked on Outvers, is covered.",
+    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {activity} Experience in {region} below, booked on Outvers, is covered.",
     "editorialIntro": "A hand-checked collection of {activity} in {region}, run only by KYC-verified Vendors. Transparent pricing, real-time slot availability, and refunds credited within 24 hours.",
     "trust": {
-      "freeCancellation": "Free cancellation up to 24h",
+      "freeCancellation": "Flexible cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
     }
@@ -498,7 +498,7 @@
       "breadcrumb": "Destinations",
       "heroEyebrow": "Where to go",
       "heroTitle": "Adventure destinations across India",
-      "heroSubtitle": "From Himalayan passes to coastal reefs — browse every region Outvers covers, each with KYC-verified Vendors and free cancellation up to 24h.",
+      "heroSubtitle": "From Himalayan passes to coastal reefs — browse every region Outvers covers, each with KYC-verified Vendors and flexible cancellation up to 24h.",
       "regionsHeading": "All destinations",
       "regionCount": "{count, plural, =0 {No experiences yet} one {# experience} other {# experiences}}",
       "exploreCta": "Explore {region}"
@@ -574,7 +574,7 @@
       "total": "Total",
       "partialPay": "Pay 25% now, rest 24h before the experience.",
       "bookNow": "Book now",
-      "freeCancellation": "Free cancellation · 24h refund SLA",
+      "freeCancellation": "Flexible cancellation · 24h refund SLA",
       "priceTable": "Per-participant price table",
       "breakdown": "Live price breakdown",
       "advanceDue": "Advance due now (25%)",
@@ -592,13 +592,13 @@
       "exploreSimilar": "Explore similar experiences"
     },
     "cancellation": {
-      "flexible": "Free cancellation up to 24 hours before the Experience. 50% refund within 2 hours. No refund after.",
-      "moderate": "Free cancellation up to 72 hours before the Experience. 50% refund up to 24 hours before. No refund after.",
-      "strict": "Free cancellation up to 14 days before the Experience. 50% refund up to 7 days before. No refund after.",
+      "flexible": "Full refund if you cancel up to 24 hours before the Experience. 50% refund within 2 hours. No refund after.",
+      "moderate": "Full refund if you cancel up to 72 hours before the Experience. 50% refund up to 24 hours before. No refund after.",
+      "strict": "Full refund if you cancel up to 14 days before the Experience. 50% refund up to 7 days before. No refund after.",
       "fallback": "This Experience follows the {preset} cancellation policy.",
       "nonCancellableBadge": "Non-cancellable",
       "nonCancellableDescription": "This Experience is non-cancellable — no refund after payment. Outvers may still handle exceptional refunds.",
-      "freeUpToHours": "Free cancellation up to {hours}h before the activity"
+      "freeUpToHours": "Full refund if you cancel up to {hours}h before the activity"
     },
     "faq": {
       "safetyQuestion": "Is {title} safe?",
@@ -678,7 +678,7 @@
       "day": "Day {day}"
     },
     "assurance": {
-      "freeCancellation": "Free cancellation up to 24h before",
+      "freeCancellation": "Flexible cancellation up to 24h before",
       "verifiedVendor": "Identity-verified Vendor",
       "exactRefund": "Exact refund shown before you confirm"
     },
@@ -991,7 +991,7 @@
       "cancelLabel": "You cancel on",
       "resultLabel": "Computed refund",
       "feeLabel": "Cancellation fee",
-      "slabFree": "Free-cancellation window — full refund",
+      "slabFree": "Full-refund window — full refund",
       "slabHalf": "Half-refund window — 50% back",
       "slabNone": "No-refund window",
       "promptEmpty": "Enter an amount and both dates to see your refund.",
@@ -1336,7 +1336,7 @@
     },
     "heroEyebrow": "Every region, one place",
     "heroTitle": "{activity} across India",
-    "refundLead": "Cancel free up to 24 hours before your slot for a full refund — every {activity} Experience below, booked on Outvers, is covered.",
+    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {activity} Experience below, booked on Outvers, is covered.",
     "editorialIntro": "A hand-checked collection of {activity} from every region we operate in, run only by KYC-verified Vendors. Compare across destinations, then book with transparent pricing and refunds credited within 24 hours.",
     "regionHint": "Looking for {activity} in a specific destination? Open an Experience to see its region, or browse {activity} by city from each listing.",
     "experiences": {
@@ -1360,7 +1360,7 @@
       "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
     },
     "trust": {
-      "freeCancellation": "Free cancellation up to 24h",
+      "freeCancellation": "Flexible cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
     },
@@ -1380,7 +1380,7 @@
     },
     "heroEyebrow": "Curated category",
     "heroTitle": "{category} adventures across India",
-    "refundLead": "Cancel free up to 24 hours before your slot for a full refund — every {category} Experience below, booked on Outvers, is covered.",
+    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {category} Experience below, booked on Outvers, is covered.",
     "editorialIntro": "A hand-checked rollup of {category} adventures from every region we operate in, run only by KYC-verified Vendors. Transparent pricing, real-time slot availability, and refunds credited within 24 hours.",
     "categories": {
       "water": "Water sports",
@@ -1410,7 +1410,7 @@
       "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
     },
     "trust": {
-      "freeCancellation": "Free cancellation up to 24h",
+      "freeCancellation": "Flexible cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
     }

@@ -98,7 +98,7 @@ interface BookingRailProps {
     /** Already-translated "charged in full now" carve-out notice (issue 13). */
     fullUpfrontNotice: string
   }
-  /** Already-translated "Free cancellation · 24h refund SLA" line. */
+  /** Already-translated "Flexible cancellation · 24h refund SLA" line. */
   freeCancellation: string
   /** Already-translated "Book now" CTA label. */
   bookNowLabel: string

@@ -91,7 +91,7 @@ describe('processRefund (ADRs 0003/0004/0005)', () => {
    */
   async function seedConfirmedBooking(args: {
     hoursAhead: number
-    preset?: 'flexible' | 'moderate' | 'strict'
+    preset?: 'flexible' | 'moderate' | 'strict' | 'non_cancellable'
     grossRupees?: number
   }): Promise<{ bookingId: string; slotId: string }> {
     const startAt = new Date(Date.now() + args.hoursAhead * 60 * 60 * 1000)
@@ -310,6 +310,103 @@ describe('processRefund (ADRs 0003/0004/0005)', () => {
       expect(bookingRow?.state).toBe('disputed')
 
       expect(await readRefundBalance('u_c')).toBe(0)
+    })
+  })
+
+  describe('non_cancellable (ADR-0005 issue #09 — routes to Dispute)', () => {
+    it('routes a CUSTOMER cancellation on a non_cancellable Booking to Dispute — booking.state=disputed (NOT cancelled_by_customer), 0 refund, no refund_requests row, audit dispute.opened', async () => {
+      // T-25h is well inside what would be a generous free window for any
+      // windowed preset — but non_cancellable has no window math: a Customer
+      // cancellation is always 0 refund, full fee held, and routes to the
+      // Dispute queue (ADR-0005 amendment), where Outvers may still grant an
+      // exceptional refund at discretion (ADR-0003).
+      const { bookingId } = await seedConfirmedBooking({
+        hoursAhead: 25,
+        preset: 'non_cancellable',
+      })
+
+      const result = await processRefund(db, { bookingId, actorUserId: 'u_c' })
+
+      expect(result.basis).toBe('non_cancellable')
+      expect(result.refundAmountRupees).toBe(0)
+      expect(result.cancellationFeeRupees).toBe(3000)
+      expect(result.bookingState).toBe('disputed')
+      expect(result.routedToDispute).toBe(true)
+      expect(result.refundRequestId).toBeNull()
+
+      // No refund_requests row — the admin resolution path creates it later.
+      const reqs = await db.select().from(refundRequests)
+      expect(reqs).toHaveLength(0)
+
+      // A dispute.opened audit row must exist (the money-path consumer of the
+      // routesToDispute flag). Without the routing fix this row is absent and
+      // a booking.cancel row is written instead.
+      const disputeAudit = await db
+        .select()
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.action, 'dispute.opened'),
+            eq(auditLogs.entityId, bookingId),
+          ),
+        )
+      expect(disputeAudit).toHaveLength(1)
+      const payload = disputeAudit[0]?.payload as Record<string, unknown>
+      expect(payload.basis).toBe('non_cancellable')
+
+      const [bookingRow] = await db
+        .select()
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+      expect(bookingRow?.state).toBe('disputed')
+
+      // No rupees move on the dispute path.
+      expect(await readRefundBalance('u_c')).toBe(0)
+    })
+
+    it('VENDOR-cancelled non_cancellable Booking still full-refunds (vendor override survives the routing change) — cancelled_by_vendor, NOT routed to dispute', async () => {
+      // The vendor-cancellation override wins before the preset is consulted:
+      // a non_cancellable Booking cancelled by the Vendor is full-refunded
+      // (vendor_cancelled basis → routesToDispute:false → handleInsidePolicy),
+      // proving the routing change did not over-capture the vendor path.
+      const { bookingId } = await seedConfirmedBooking({
+        hoursAhead: 25,
+        preset: 'non_cancellable',
+      })
+
+      const result = await processRefund(db, {
+        bookingId,
+        actorUserId: 'u_v',
+        vendorCancelled: true,
+      })
+
+      expect(result.basis).toBe('vendor_cancelled')
+      expect(result.refundAmountRupees).toBe(3000)
+      expect(result.cancellationFeeRupees).toBe(0)
+      expect(result.bookingState).toBe('cancelled_by_vendor')
+      expect(result.routedToDispute).toBe(false)
+
+      const [reqRow] = await db
+        .select()
+        .from(refundRequests)
+        .where(eq(refundRequests.id, result.refundRequestId!))
+      expect(reqRow?.reason).toBe('vendor_cancelled')
+      expect(reqRow?.state).toBe('credited')
+      expect(reqRow?.amount).toBe('3000.00')
+
+      // No dispute opened on the vendor path.
+      const disputeAudit = await db
+        .select()
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.action, 'dispute.opened'),
+            eq(auditLogs.entityId, bookingId),
+          ),
+        )
+      expect(disputeAudit).toHaveLength(0)
+
+      expect(await readRefundBalance('u_c')).toBe(3000)
     })
   })
 

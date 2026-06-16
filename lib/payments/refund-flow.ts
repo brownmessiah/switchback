@@ -180,8 +180,16 @@ export async function processRefund(
     quote.cancellationFeeRupees * commissionRate,
   )
 
-  // 5. Branch on the policy basis.
-  if (quote.basis === 'outside_policy') {
+  // 5. Branch on the semantic dispute flag the pure quote already sets.
+  // `routesToDispute` is true for `outside_policy` AND for `non_cancellable`
+  // (ADR-0005 amendment 2026-06-16 / issue #09): a Customer cancellation on a
+  // non_cancellable Booking behaves like an outside-policy case and routes to
+  // support as a Dispute (ADR-0003), where Outvers may grant an exceptional
+  // refund at discretion. It is false for vendor_cancelled / free_window /
+  // 50%_window / no_refund_window — all of which still go to handleInsidePolicy
+  // exactly as before, so this change is behaviour-preserving for those four
+  // bases and only adds non_cancellable to the dispute path.
+  if (quote.routesToDispute) {
     return handleOutsidePolicy({
       db,
       booking,
@@ -312,7 +320,10 @@ async function handleOutsidePolicy(branch: BranchArgs): Promise<ProcessRefundRes
     payload: {
       bookingId: booking.id,
       basis: quote.basis,
-      reason: 'outside_policy_cancellation',
+      reason:
+        quote.basis === 'non_cancellable'
+          ? 'non_cancellable_cancellation'
+          : 'outside_policy_cancellation',
       cancellationPresetSnapshot: booking.cancellationPresetSnapshot,
       cancellationFeeRupees: quote.cancellationFeeRupees,
       commissionRateSnapshot: booking.commissionRateSnapshot,

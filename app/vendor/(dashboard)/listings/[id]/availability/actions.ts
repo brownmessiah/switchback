@@ -10,6 +10,7 @@ import { experiences } from '@/db/schema/experiences'
 import { regionClosures } from '@/db/schema/region-closures'
 import { users } from '@/db/schema/users'
 import { auth } from '@/lib/auth'
+import { hasVendorAccess } from '@/lib/auth/permissions'
 import { bracketLabel, computeBalanceDueRupees } from '@/lib/availability/manifest-helpers'
 import { executeBlockDate, executeUnblockDate } from '@/lib/availability/date-blocking'
 import {
@@ -19,7 +20,7 @@ import {
   type CreatePatternInput,
   type UpdatePatternInput,
 } from '@/lib/availability/pattern-crud'
-import { materializeSlots } from '@/lib/availability/slot-materializer'
+import { executeMaterializeSlots } from '@/lib/availability/materialize-core'
 
 // ── Auth helper ─────────────────────────────────────────────────
 
@@ -28,47 +29,69 @@ async function requireAuth(): Promise<string | null> {
   return session?.user?.id ?? null
 }
 
+/**
+ * Permission gate for the availability WRITE actions (issue #03). Resolves the
+ * acting user's Vendor role and authorizes `availability:manage`. Returns the
+ * userId when authorized, or an error envelope when not. The underlying cores
+ * (`executeCreatePattern` etc.) live in `lib/availability/*` — already plain,
+ * db-injected modules — so no core extraction is needed here, only the gate.
+ */
+async function requireAvailabilityManage(): Promise<
+  { userId: string } | { error: string }
+> {
+  const userId = await requireAuth()
+  if (!userId) return { error: 'Sign in to continue.' }
+  if (!(await hasVendorAccess(prodDb, userId, 'availability:manage'))) {
+    return { error: 'You do not have permission to manage availability.' }
+  }
+  return { userId }
+}
+
 // ── Pattern actions ─────────────────────────────────────────────
 
 export async function createPatternAction(input: CreatePatternInput) {
-  const userId = await requireAuth()
-  if (!userId) return { ok: false as const, error: 'Sign in to continue.' }
-  return executeCreatePattern(prodDb, userId, input)
+  const gate = await requireAvailabilityManage()
+  if ('error' in gate) return { ok: false as const, error: gate.error }
+  return executeCreatePattern(prodDb, gate.userId, input)
 }
 
 export async function updatePatternAction(input: UpdatePatternInput) {
-  const userId = await requireAuth()
-  if (!userId) return { ok: false as const, error: 'Sign in to continue.' }
-  return executeUpdatePattern(prodDb, userId, input)
+  const gate = await requireAvailabilityManage()
+  if ('error' in gate) return { ok: false as const, error: gate.error }
+  return executeUpdatePattern(prodDb, gate.userId, input)
 }
 
 export async function deletePatternAction(patternId: string) {
-  const userId = await requireAuth()
-  if (!userId) return { ok: false as const, error: 'Sign in to continue.' }
-  return executeDeletePattern(prodDb, userId, patternId)
+  const gate = await requireAvailabilityManage()
+  if ('error' in gate) return { ok: false as const, error: gate.error }
+  return executeDeletePattern(prodDb, gate.userId, patternId)
 }
 
 // ── Materializer action ─────────────────────────────────────────
 
 export async function materializeSlotsAction(experienceId: string) {
-  const userId = await requireAuth()
-  if (!userId) return { ok: false as const, error: 'Sign in to continue.' }
-  const result = await materializeSlots(prodDb, experienceId)
-  return { ok: true as const, ...result }
+  const gate = await requireAvailabilityManage()
+  if ('error' in gate) return { ok: false as const, error: gate.error }
+  // Ownership pre-check lives in the core: it verifies the GATE-RESOLVED userId
+  // owns `experienceId` before materializing — never the client input alone
+  // (issue #03 review, FIX 3 — closes the cross-vendor write bypass). Mirrors
+  // blockDateAction/unblockDateAction, which pass the gated userId to a lib
+  // that verifies ownership.
+  return executeMaterializeSlots(prodDb, gate.userId, experienceId)
 }
 
 // ── Date blocking actions ───────────────────────────────────────
 
 export async function blockDateAction(experienceId: string, date: string) {
-  const userId = await requireAuth()
-  if (!userId) return { ok: false as const, error: 'Sign in to continue.' }
-  return executeBlockDate(prodDb, userId, experienceId, date)
+  const gate = await requireAvailabilityManage()
+  if ('error' in gate) return { ok: false as const, error: gate.error }
+  return executeBlockDate(prodDb, gate.userId, experienceId, date)
 }
 
 export async function unblockDateAction(experienceId: string, date: string) {
-  const userId = await requireAuth()
-  if (!userId) return { ok: false as const, error: 'Sign in to continue.' }
-  return executeUnblockDate(prodDb, userId, experienceId, date)
+  const gate = await requireAvailabilityManage()
+  if ('error' in gate) return { ok: false as const, error: gate.error }
+  return executeUnblockDate(prodDb, gate.userId, experienceId, date)
 }
 
 // ── Data loaders (for the calendar page) ────────────────────────
@@ -113,6 +136,12 @@ export async function loadSlotsForMonth(experienceId: string, year: number, mont
 export async function loadSlotManifest(experienceId: string, year: number, month: number) {
   const userId = await requireAuth()
   if (!userId) return []
+
+  // Permission gate (issue #03) — the roster is a bookings read; a member must
+  // hold `bookings:read` (Owner/Manager/Booking-Staff/Guide/Accountant) to see
+  // who is coming. Below, the ownership gate still scopes to the Vendor's own
+  // Experiences.
+  if (!(await hasVendorAccess(prodDb, userId, 'bookings:read'))) return []
 
   // Ownership gate — only the owning Vendor may read this Experience's roster.
   const [exp] = await prodDb

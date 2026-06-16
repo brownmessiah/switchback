@@ -2,8 +2,11 @@ import { eq } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 
+import { and } from 'drizzle-orm'
+
 import { db } from '@/db/client'
 import { availabilitySlots, experiences } from '@/db/schema'
+import { experiencePricingVariations } from '@/db/schema/experience-pricing-variations'
 import { auth } from '@/lib/auth'
 
 import { CheckoutForm } from './checkout-form'
@@ -26,6 +29,10 @@ export default async function CheckoutPage({ searchParams }: PageProps) {
   const slotId = typeof params.slotId === 'string' ? params.slotId : null
   const tripGroupId =
     typeof params.tripGroupId === 'string' ? params.tripGroupId : null
+  // Selected pricing variation (issue #08). Carried from the PDP selector; the
+  // SERVER resolves + snapshots its price at Booking-create (the client never
+  // sends a price). An invalid/foreign/inactive id is rejected server-side.
+  const variationId = typeof params.variationId === 'string' ? params.variationId : null
   const participantCount = typeof params.participants === 'string'
     ? parseInt(params.participants, 10)
     : 2
@@ -44,6 +51,38 @@ export default async function CheckoutPage({ searchParams }: PageProps) {
     tier12: Number(experienceRow.pricePerPerson_1_2),
     tier35: Number(experienceRow.pricePerPerson_3_5),
     tier6: Number(experienceRow.pricePerPerson_6_plus),
+  }
+
+  // Resolve the selected pricing variation (issue #08) for DISPLAY. We re-check
+  // it is ACTIVE and belongs to this Experience — a stale/foreign/inactive id
+  // is dropped (treated as standard pricing) here, and createBooking would
+  // reject it server-side anyway. The displayed per-person price is the
+  // variation's; the SERVER snapshots the authoritative value.
+  let selectedVariation: { id: string; name: string; pricePerPersonRupees: number } | null =
+    null
+  if (variationId) {
+    const [variationRow] = await db
+      .select({
+        id: experiencePricingVariations.id,
+        name: experiencePricingVariations.name,
+        pricePerPerson: experiencePricingVariations.pricePerPerson,
+      })
+      .from(experiencePricingVariations)
+      .where(
+        and(
+          eq(experiencePricingVariations.id, variationId),
+          eq(experiencePricingVariations.experienceId, experienceId),
+          eq(experiencePricingVariations.isActive, true),
+        ),
+      )
+      .limit(1)
+    if (variationRow) {
+      selectedVariation = {
+        id: variationRow.id,
+        name: variationRow.name,
+        pricePerPersonRupees: Math.floor(Number(variationRow.pricePerPerson)),
+      }
+    }
   }
 
   // Bound the participant stepper by the selected slot's remaining capacity
@@ -81,6 +120,9 @@ export default async function CheckoutPage({ searchParams }: PageProps) {
         priceTier12={bracketPrices.tier12}
         priceTier35={bracketPrices.tier35}
         priceTier6={bracketPrices.tier6}
+        variationId={selectedVariation?.id ?? null}
+        variationName={selectedVariation?.name ?? null}
+        variationPricePerPerson={selectedVariation?.pricePerPersonRupees ?? null}
         cancellationPreset={experienceRow.cancellationPreset}
         paymentModesAllowed={experienceRow.paymentModesAllowed as string[]}
         customerName={session.user.name ?? null}

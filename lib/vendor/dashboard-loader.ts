@@ -1,4 +1,4 @@
-import { and, count, eq, gte, lt, sql, sum } from 'drizzle-orm'
+import { and, count, eq, gte, sql, sum } from 'drizzle-orm'
 
 import { availabilitySlots } from '@/db/schema/availability-slots'
 import { bookings } from '@/db/schema/bookings'
@@ -15,51 +15,6 @@ export interface DayDataPoint {
 }
 
 /**
- * Action items that need the vendor's attention.
- */
-export interface ActionItem {
-  readonly id: string
-  readonly type: 'unconfirmed_booking' | 'calendar_gap'
-  readonly title: string
-  readonly subtitle: string
-}
-
-/**
- * Ranked growth insight for the C "Insight-First Growth Hub" rail (issue #74).
- *
- * Every insight is derived from REAL aggregated Vendor data — NO ML, NO
- * predictions, NO fabricated signals. An insight that cannot be computed from
- * available data is OMITTED rather than invented.
- *
- *  - `top_performer`       — the Experience with the most Bookings (max count).
- *  - `likely_to_sell_out`  — an upcoming open Availability slot whose remaining
- *                            capacity (`capacity − capacityTaken`) is at/below a
- *                            small threshold, and which already has ≥1 Booking.
- *  - `off_peak_gap`        — an upcoming open Availability slot with zero
- *                            Bookings (mirrors the existing `calendar_gap`).
- */
-export interface Insight {
-  readonly id: string
-  readonly type: 'top_performer' | 'likely_to_sell_out' | 'off_peak_gap'
-  readonly title: string
-  readonly subtitle: string
-  readonly expTitle: string
-  /** Slot the insight points at, or null for `top_performer` (whole-Experience). */
-  readonly slotId: string | null
-  /** Remaining capacity for slot-scoped insights; 0 for `top_performer`. */
-  readonly spotsLeft: number
-  /** Booking count for `top_performer`; 0 for slot-scoped insights. */
-  readonly bookingCount: number
-}
-
-/**
- * Number of remaining spots at/under which an upcoming slot is considered
- * "likely to sell out". Kept small + honest — this is a threshold on real
- * capacity, not a prediction.
- */
-export const SELL_OUT_THRESHOLD = 2
-
-/**
  * Full dashboard stats shape returned by the loader.
  */
 export interface VendorDashboardData {
@@ -73,17 +28,10 @@ export interface VendorDashboardData {
   readonly todayBookings: number
   readonly monthRevenue: number
   readonly slaScore: number
-  readonly pendingActionsCount: number
 
   // 30-day trends
   readonly bookingsTrend: readonly DayDataPoint[]
   readonly revenueTrend: readonly DayDataPoint[]
-
-  // Action items
-  readonly actionItems: readonly ActionItem[]
-
-  // Ranked growth insights (C "Insight-First Growth Hub" rail — issue #74)
-  readonly insights: readonly Insight[]
 
   // Upcoming bookings (existing)
   readonly upcomingBookings: readonly {
@@ -110,8 +58,6 @@ export async function loadVendorDashboard(
   const thirtyDaysAgo = new Date(todayStart)
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-  const ninetyDaysFromNow = new Date(todayStart)
-  ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90)
 
   // Vendor profile
   const [vendor] = await db
@@ -166,93 +112,6 @@ export async function loadVendorDashboard(
         sql`${payments.captureTrigger} <> 'refund_reverse'`,
       ),
     )
-
-  // Pending actions: bookings in 'confirmed' state with slots in the future
-  // that the vendor needs to acknowledge
-  const pendingBookings = await db
-    .select({
-      bookingId: bookings.id,
-      expTitle: experiences.title,
-      slotStart: availabilitySlots.startAt,
-      participantCount: bookings.participantCount,
-    })
-    .from(bookings)
-    .innerJoin(experiences, eq(bookings.experienceId, experiences.id))
-    .innerJoin(availabilitySlots, eq(bookings.slotId, availabilitySlots.id))
-    .where(
-      and(
-        eq(experiences.vendorUserId, vendorUserId),
-        eq(bookings.state, 'confirmed'),
-        gte(availabilitySlots.startAt, now),
-      ),
-    )
-    .orderBy(availabilitySlots.startAt)
-    .limit(10)
-
-  // Calendar gaps: open slots with 0 bookings in the next 90 days
-  const calendarGaps = await db
-    .select({
-      slotId: availabilitySlots.id,
-      startAt: availabilitySlots.startAt,
-      capacity: availabilitySlots.capacity,
-      capacityTaken: availabilitySlots.capacityTaken,
-      expTitle: experiences.title,
-    })
-    .from(availabilitySlots)
-    .innerJoin(experiences, eq(availabilitySlots.experienceId, experiences.id))
-    .where(
-      and(
-        eq(experiences.vendorUserId, vendorUserId),
-        eq(availabilitySlots.status, 'open'),
-        eq(availabilitySlots.capacityTaken, 0),
-        gte(availabilitySlots.startAt, now),
-        lt(availabilitySlots.startAt, ninetyDaysFromNow),
-      ),
-    )
-    .orderBy(availabilitySlots.startAt)
-    .limit(10)
-
-  // ── C "Insight-First Growth Hub" rail (issue #74) — READ-ONLY aggregates ──
-  // Top performer: the Experience with the most Bookings (all-time max count).
-  const topPerformerRows = await db
-    .select({
-      experienceId: bookings.experienceId,
-      expTitle: experiences.title,
-      bookingCount: count(),
-    })
-    .from(bookings)
-    .innerJoin(experiences, eq(bookings.experienceId, experiences.id))
-    .where(eq(experiences.vendorUserId, vendorUserId))
-    .groupBy(bookings.experienceId, experiences.title)
-    .orderBy(sql`count(*) DESC`)
-    .limit(1)
-
-  // Likely to sell out: upcoming OPEN slots near capacity (remaining spots
-  // ≤ threshold) that already carry ≥1 Booking. Real capacity, not prediction.
-  const sellOutRows = await db
-    .select({
-      slotId: availabilitySlots.id,
-      startAt: availabilitySlots.startAt,
-      capacity: availabilitySlots.capacity,
-      capacityTaken: availabilitySlots.capacityTaken,
-      expTitle: experiences.title,
-    })
-    .from(availabilitySlots)
-    .innerJoin(experiences, eq(availabilitySlots.experienceId, experiences.id))
-    .where(
-      and(
-        eq(experiences.vendorUserId, vendorUserId),
-        eq(availabilitySlots.status, 'open'),
-        gte(availabilitySlots.startAt, now),
-        sql`${availabilitySlots.capacityTaken} > 0`,
-        sql`${availabilitySlots.capacity} - ${availabilitySlots.capacityTaken} <= ${SELL_OUT_THRESHOLD}`,
-      ),
-    )
-    .orderBy(
-      sql`${availabilitySlots.capacity} - ${availabilitySlots.capacityTaken} ASC`,
-      availabilitySlots.startAt,
-    )
-    .limit(1)
 
   // 30-day bookings trend (grouped by day)
   const bookingsTrendRaw = await db
@@ -316,31 +175,6 @@ export async function loadVendorDashboard(
   const bookingsTrend = fillDays(thirtyDaysAgo, todayStart, bookingsTrendRaw, 'count')
   const revenueTrend = fillDays(thirtyDaysAgo, todayStart, revenueTrendRaw, 'total')
 
-  // Build action items
-  const actionItems: ActionItem[] = []
-  for (const b of pendingBookings) {
-    actionItems.push({
-      id: b.bookingId,
-      type: 'unconfirmed_booking',
-      title: `Booking for ${b.expTitle}`,
-      subtitle: `${b.participantCount} guests on ${formatDate(b.slotStart)}`,
-    })
-  }
-  for (const g of calendarGaps) {
-    actionItems.push({
-      id: g.slotId,
-      type: 'calendar_gap',
-      title: `No bookings: ${g.expTitle}`,
-      subtitle: `${formatDate(g.startAt)} — ${g.capacity} spots available`,
-    })
-  }
-
-  // Build the ranked growth insights from the REAL aggregates above. Each
-  // insight is OMITTED when its source query returns no row (no fabrication).
-  const insights = rankInsights(
-    buildInsights({ topPerformerRows, sellOutRows, calendarGaps }),
-  )
-
   return {
     ...shapeDashboardStats({
       vendor,
@@ -349,111 +183,12 @@ export async function loadVendorDashboard(
       todayStats,
       monthRevenueResult,
     }),
-    pendingActionsCount: pendingBookings.length,
     bookingsTrend,
     revenueTrend,
-    actionItems,
-    insights,
     upcomingBookings: (upcomingBookings as RawUpcomingBooking[]).map(
       mapUpcomingBooking,
     ),
   }
-}
-
-/** Raw rows feeding the growth-insight builder. */
-interface RawInsightSources {
-  topPerformerRows: readonly {
-    experienceId: string
-    expTitle: string
-    bookingCount: number
-  }[]
-  sellOutRows: readonly {
-    slotId: string
-    startAt: Date
-    capacity: number
-    capacityTaken: number
-    expTitle: string
-  }[]
-  calendarGaps: readonly {
-    slotId: string
-    startAt: Date
-    capacity: number
-    capacityTaken: number
-    expTitle: string
-  }[]
-}
-
-/**
- * Map the raw aggregate rows to the (unranked) insight list. Pure + exported
- * so the omit-when-empty behaviour is unit-testable without a DB. An insight
- * is produced ONLY when its source row exists — never invented.
- */
-export function buildInsights(sources: RawInsightSources): Insight[] {
-  const { topPerformerRows, sellOutRows, calendarGaps } = sources
-  const insights: Insight[] = []
-
-  const top = topPerformerRows[0]
-  if (top && Number(top.bookingCount) > 0) {
-    const bookingCount = Number(top.bookingCount)
-    insights.push({
-      id: `top:${top.experienceId}`,
-      type: 'top_performer',
-      title: `Top performer: ${top.expTitle}`,
-      subtitle: `${bookingCount} booking${bookingCount === 1 ? '' : 's'} — your best seller`,
-      expTitle: top.expTitle,
-      slotId: null,
-      spotsLeft: 0,
-      bookingCount,
-    })
-  }
-
-  const sellOut = sellOutRows[0]
-  if (sellOut) {
-    const spotsLeft = sellOut.capacity - sellOut.capacityTaken
-    insights.push({
-      id: `sellout:${sellOut.slotId}`,
-      type: 'likely_to_sell_out',
-      title: `Likely to sell out: ${sellOut.expTitle}`,
-      subtitle: `${formatDate(sellOut.startAt)} — ${spotsLeft} spot${spotsLeft === 1 ? '' : 's'} left of ${sellOut.capacity}`,
-      expTitle: sellOut.expTitle,
-      slotId: sellOut.slotId,
-      spotsLeft,
-      bookingCount: 0,
-    })
-  }
-
-  const gap = calendarGaps[0]
-  if (gap) {
-    insights.push({
-      id: `gap:${gap.slotId}`,
-      type: 'off_peak_gap',
-      title: `Off-peak gap: ${gap.expTitle}`,
-      subtitle: `${formatDate(gap.startAt)} — no bookings yet, ${gap.capacity} open`,
-      expTitle: gap.expTitle,
-      slotId: gap.slotId,
-      spotsLeft: gap.capacity,
-      bookingCount: 0,
-    })
-  }
-
-  return insights
-}
-
-/**
- * Rank growth insights by actionability:
- *   1. likely_to_sell_out — time-sensitive revenue capture (add slots now)
- *   2. top_performer       — positive leverage signal (lean into a winner)
- *   3. off_peak_gap        — fill latent demand (lower urgency)
- *
- * Pure + stable: only re-orders the insights it is given, never adds any.
- */
-export function rankInsights(insights: readonly Insight[]): Insight[] {
-  const order: Record<Insight['type'], number> = {
-    likely_to_sell_out: 0,
-    top_performer: 1,
-    off_peak_gap: 2,
-  }
-  return [...insights].sort((a, b) => order[a.type] - order[b.type])
 }
 
 /** Raw aggregate rows feeding the stat cards. Any may be undefined when a
@@ -561,15 +296,6 @@ export function fillDays(
     current.setDate(current.getDate() + 1)
   }
   return result
-}
-
-/**
- * Format a slot date for action-item subtitles. Returns an em dash for a
- * missing date. Exported for direct unit testing of the null path.
- */
-export function formatDate(d: Date | null): string {
-  if (!d) return '—'
-  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 }
 
 /**

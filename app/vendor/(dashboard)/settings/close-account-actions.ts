@@ -4,6 +4,7 @@ import { headers } from 'next/headers'
 
 import { db as prodDb } from '@/db/client'
 import { auth } from '@/lib/auth'
+import { hasVendorAccess } from '@/lib/auth/permissions'
 
 import { executeCloseVendorAccount } from './close-account-core'
 import type {
@@ -30,6 +31,11 @@ export async function closeVendorAccountAction(
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) {
     return { ok: false, error: 'Sign in to continue.' }
+  }
+  // Permission: only the Owner may close the account (account:close is an
+  // Owner-only permission — Manager and every member role are denied).
+  if (!(await hasVendorAccess(prodDb, session.user.id, 'account:close'))) {
+    return { ok: false, error: 'Only the account owner can close this account.' }
   }
 
   return executeCloseVendorAccount(prodDb, session.user.id, input)

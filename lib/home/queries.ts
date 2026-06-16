@@ -3,6 +3,7 @@ import { desc, sql } from 'drizzle-orm'
 import { experiences } from '@/db/schema/experiences'
 
 import { loadCardBadgeResolver } from '@/lib/experiences/card-badges'
+import { loadCardFromPriceResolver } from '@/lib/experiences/card-from-price'
 import {
   type CardTrustFields,
   loadTrustBadgeFieldResolver,
@@ -38,6 +39,8 @@ export interface FeaturedExperience extends CardTrustFields {
   title: string
   shortDescription: string | null
   pricePerParticipantRupees: number
+  /** Lowest active pricing-variation entry price (issue #08), or null. */
+  fromPriceRupees: number | null
   regionSlug: string
   activitySlug: string
   coverImageUrl: string | null
@@ -92,10 +95,11 @@ export async function loadHomePageData(db: DBOrTx): Promise<HomePageData> {
     .limit(FEATURED_EXPERIENCES_LIMIT)
 
   const expIds = expRows.map((r) => r.id)
-  const [coverMap, resolveBadges, resolveTrust] = await Promise.all([
+  const [coverMap, resolveBadges, resolveTrust, resolveFromPrice] = await Promise.all([
     loadExperienceCoverMap(db, expIds),
     loadCardBadgeResolver(db, expIds),
     loadTrustBadgeFieldResolver(db, expIds),
+    loadCardFromPriceResolver(db, expIds),
   ])
   const featuredExperiences: FeaturedExperience[] = expRows.map((row) => ({
     id: row.id,
@@ -103,6 +107,9 @@ export async function loadHomePageData(db: DBOrTx): Promise<HomePageData> {
     title: row.title,
     shortDescription: row.shortDescription,
     pricePerParticipantRupees: Math.floor(Number(row.pricePerPerson_1_2)),
+    // "From ₹X" entry price (issue #08) — the card shows it only when strictly
+    // below the base price; bracket-only listings get null → plain price.
+    fromPriceRupees: resolveFromPrice(row.id),
     regionSlug: row.regionSlug,
     activitySlug: row.activitySlug,
     coverImageUrl: coverMap.get(row.id) ?? null,

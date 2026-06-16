@@ -6,6 +6,7 @@ import { db } from '@/db/client'
 import { experiences, mediaAssets } from '@/db/schema'
 import { auth } from '@/lib/auth'
 import { loadItinerary } from '@/lib/experiences/itinerary'
+import { loadPricingVariations } from '@/lib/experiences/pricing-variations-write'
 
 import { ExperienceEditForm } from './experience-edit-form'
 
@@ -41,6 +42,10 @@ export default async function ExperienceEditPage({ params }: EditPageProps) {
   // itinerary editor round-trips the saved steps (ordered by stepOrder).
   const itinerary = await loadItinerary(db, id)
 
+  // Issue #08 — pre-load the pricing variations so the edit form's variation
+  // editor round-trips the saved rows (and keeps their ids for the upsert).
+  const pricingVariations = await loadPricingVariations(db, id)
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
@@ -53,6 +58,7 @@ export default async function ExperienceEditPage({ params }: EditPageProps) {
         experience={experience}
         initialImages={images}
         initialItinerary={itinerary}
+        initialPricingVariations={pricingVariations}
       />
     </div>
   )

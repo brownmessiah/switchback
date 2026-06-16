@@ -94,7 +94,8 @@
           "body": "اس دن کی ملاقات کی جگہ اور حفاظتی تفصیلات کے ساتھ اپنی فوری تصدیق حاصل کریں۔"
         }
       }
-    }
+    },
+    "from": "سے"
   },
   "Metadata": {
     "title": "Outvers — بھارت میں ایڈونچر سرگرمیاں",
@@ -173,7 +174,8 @@
       "payouts": "ادائیگیاں",
       "reviews": "جائزے",
       "messages": "پیغامات",
-      "settings": "ترتیبات"
+      "settings": "ترتیبات",
+      "team": "ٹیم اور کردار"
     }
   },
   "VendorAnalytics": {
@@ -212,6 +214,63 @@
     "experienceColumn": "Experience",
     "bookingsColumn": "Bookings",
     "revenueColumn": "Revenue"
+  },
+  "VendorTeam": {
+    "title": "ٹیم اور کردار",
+    "subtitle": "ان صارفین کا انتظام کریں جو آپ کے وینڈر اکاؤنٹ تک رسائی حاصل کر سکتے ہیں",
+    "addUser": "صارف شامل کریں",
+    "ownerRowLabel": "مالک",
+    "ownerRowYou": "مالک — آپ",
+    "ownerRoleLabel": "مکمل رسائی",
+    "columnName": "نام",
+    "columnEmail": "ای میل",
+    "columnRole": "کردار",
+    "columnStatus": "حیثیت",
+    "columnLastActive": "آخری بار فعال",
+    "columnActions": "اعمال",
+    "empty": "ابھی تک کوئی ٹیم رکن نہیں۔ اپنے وینڈر اکاؤنٹ تک رسائی دینے کے لیے ایک صارف شامل کریں۔",
+    "edit": "ترمیم کریں",
+    "remove": "ہٹائیں",
+    "statusActive": "فعال",
+    "statusInactive": "غیر فعال",
+    "fullNameLabel": "پورا نام",
+    "emailLabel": "ای میل",
+    "phoneLabel": "فون",
+    "phoneOptional": "اختیاری",
+    "roleLabel": "کردار",
+    "statusLabel": "حیثیت",
+    "addUserTitle": "ٹیم رکن شامل کریں",
+    "addUserDescription": "اپنے وینڈر اکاؤنٹ تک رسائی کے لیے کسی کو مدعو کریں۔ وہ اپنے ذاتی اسناد سے سائن ان کرتے ہیں۔",
+    "editTitle": "ٹیم رکن میں ترمیم کریں",
+    "editDescription": "اس رکن کا کردار یا فعال حیثیت تبدیل کریں۔",
+    "cancel": "منسوخ کریں",
+    "save": "محفوظ کریں",
+    "sending": "محفوظ کیا جا رہا ہے…",
+    "removeTitle": "ٹیم رکن ہٹائیں",
+    "removeDescription": "اس سے آپ کے وینڈر اکاؤنٹ تک ان کی رسائی ہٹ جاتی ہے۔ ان کا لاگ ان برقرار رہتا ہے اور آپ بعد میں انہیں دوبارہ مدعو کر سکتے ہیں۔",
+    "removeConfirm": "ہٹائیں",
+    "roleManager": "مینیجر",
+    "roleBookingStaff": "بکنگ عملہ",
+    "roleGuide": "گائیڈ",
+    "roleAccountant": "اکاؤنٹنٹ"
+  },
+  "VendorCheckin": {
+    "title": "چیک ان اسکین کریں",
+    "subtitle": "مہمان کی آمد کو نشان زد کرنے کے لیے ان کا بکنگ QR اسکین کریں، یا ان کا چیک ان کوڈ پیسٹ کریں۔",
+    "manualLabel": "چیک ان کوڈ",
+    "manualPlaceholder": "چیک ان کوڈ پیسٹ کریں",
+    "submit": "مہمان کو چیک ان کریں",
+    "submitting": "چیک ان ہو رہا ہے…",
+    "scanAgain": "ایک اور اسکین کریں",
+    "resultCheckedInTitle": "چیک ان ہو گیا",
+    "resultCheckedInBody": "اس مہمان کو آمد کے طور پر نشان زد کر دیا گیا ہے۔",
+    "resultAlreadyTitle": "پہلے ہی چیک ان ہو چکا ہے",
+    "resultAlreadyBody": "یہ مہمان پہلے ہی آمد کے طور پر نشان زد تھا۔ کوئی تبدیلی نہیں کی گئی۔",
+    "resultInvalidTitle": "غلط یا میعاد ختم شدہ کوڈ",
+    "resultInvalidBody": "یہ چیک ان کوڈ غلط ہے، میعاد ختم ہو چکی ہے، یا آپ کے اسکین کرنے کے قابل نہیں ہے۔",
+    "resultErrorTitle": "کچھ غلط ہو گیا",
+    "resultErrorBody": "ہم یہ چیک ان ریکارڈ نہیں کر سکے۔ براہ کرم دوبارہ کوشش کریں۔",
+    "emptyTokenError": "پہلے ایک چیک ان کوڈ درج کریں۔"
   },
   "VendorQuickActions": {
     "heading": "Quick actions",
@@ -457,7 +516,10 @@
       "advanceDue": "ابھی واجب الادا Advance (25%)",
       "balanceDue": "T-24h پر بقیہ رقم",
       "fullUpfront": "ابھی پوری رقم وصول کی جائے گی (آغاز کے 48 گھنٹوں کے اندر، یا ₹25,000 سے زیادہ ہونے پر)۔",
-      "refundablePointer": "قابل واپسی رقم {preset} منسوخی پالیسی کی پیروی کرتی ہے — اوپر دی گئی منسوخی پالیسی دیکھیں۔"
+      "refundablePointer": "قابل واپسی رقم {preset} منسوخی پالیسی کی پیروی کرتی ہے — اوپر دی گئی منسوخی پالیسی دیکھیں۔",
+      "chooseOption": "ایک آپشن منتخب کریں",
+      "standardOption": "معیاری (گروپ قیمت)",
+      "variationDuration": "· {minutes} منٹ"
     },
     "closure": {
       "heading": "فی الحال بند ہے",
@@ -467,9 +529,12 @@
     },
     "cancellation": {
       "flexible": "تجربے سے 24 گھنٹے پہلے مفت منسوخی۔ 2 گھنٹوں میں 50% ریفنڈ۔ اس کے بعد کوئی ریفنڈ نہیں۔",
-      "moderate": "7 دن پہلے مفت منسوخی۔ 48 گھنٹوں میں 50% ریفنڈ۔ اس کے بعد کوئی ریفنڈ نہیں۔",
-      "strict": "7 دن پہلے 50% ریفنڈ۔ اس کے بعد کوئی ریفنڈ نہیں۔",
-      "fallback": "یہ تجربہ {preset} منسوخی پالیسی کی پیروی کرتا ہے۔"
+      "moderate": "تجربے سے 72 گھنٹے پہلے تک مفت منسوخی۔ 24 گھنٹے پہلے تک 50% ریفنڈ۔ اس کے بعد کوئی ریفنڈ نہیں۔",
+      "strict": "تجربے سے 14 دن پہلے تک مفت منسوخی۔ 7 دن پہلے تک 50% ریفنڈ۔ اس کے بعد کوئی ریفنڈ نہیں۔",
+      "fallback": "یہ تجربہ {preset} منسوخی پالیسی کی پیروی کرتا ہے۔",
+      "nonCancellableBadge": "منسوخ نہیں کیا جا سکتا",
+      "nonCancellableDescription": "یہ تجربہ منسوخ نہیں کیا جا سکتا — ادائیگی کے بعد کوئی ریفنڈ نہیں۔ غیر معمولی صورتوں میں Outvers پھر بھی ریفنڈ سنبھال سکتا ہے۔",
+      "freeUpToHours": "سرگرمی سے {hours} گھنٹے پہلے تک مفت منسوخی"
     },
     "faq": {
       "safetyQuestion": "کیا {title} محفوظ ہے؟",

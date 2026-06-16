@@ -98,7 +98,7 @@ export const refundRequests = pgTable(
     // audit trail that backs a tax-authority dispute.
     check(
       'valid_cancellation_preset_snapshot',
-      sql`${t.cancellationPresetSnapshot} IN ('flexible','moderate','strict','custom')`,
+      sql`${t.cancellationPresetSnapshot} IN ('flexible','moderate','strict','non_cancellable','custom')`,
     ),
     check(
       'valid_policy_window_basis_snapshot',

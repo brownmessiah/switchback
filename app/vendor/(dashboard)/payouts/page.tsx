@@ -17,6 +17,7 @@ import {
 import { db } from '@/db/client'
 import { availabilitySlots, bookings, experiences, vendorProfiles } from '@/db/schema'
 import { auth } from '@/lib/auth'
+import { requireVendorAccess } from '@/lib/auth/permissions'
 import { computeVendorNetPayout } from '@/lib/payments/payout-calculator'
 import {
   groupBookingsIntoPayoutCycles,
@@ -106,6 +107,12 @@ const PAYOUT_CYCLE_COLUMNS: ReadonlyArray<
 export default async function VendorPayoutsPage() {
   const session = await auth.api.getSession({ headers: await headers() })
   const userId = session!.user.id
+
+  // Permission gate (issue #03 review, FIX 1) — the layout only enforces
+  // `bookings:read` (held by every Vendor role), so payouts-read denial (Guide
+  // and Booking Staff have no `payouts:read`) must be enforced HERE at the
+  // route. Throwing variant → `notFound()`, matching the layout's gate call.
+  await requireVendorAccess(db, userId, 'payouts:read')
 
   const [vendor] = await db
     .select()

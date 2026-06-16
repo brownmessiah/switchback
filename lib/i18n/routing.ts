@@ -28,6 +28,7 @@ export const routing = defineRouting({
 export const EXCLUDED_PREFIXES = [
   '/admin',
   '/vendor/analytics',
+  '/vendor/checkin',
   '/vendor/dashboard',
   '/vendor/listings',
   '/vendor/bookings',
@@ -36,6 +37,7 @@ export const EXCLUDED_PREFIXES = [
   '/vendor/payouts',
   '/vendor/reviews',
   '/vendor/settings',
+  '/vendor/team',
   '/dashboard',
   '/wallet',
   '/support',

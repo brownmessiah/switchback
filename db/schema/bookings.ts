@@ -121,6 +121,12 @@ export const bookings = pgTable(
     commissionRateSnapshot: numeric('commission_rate_snapshot', { precision: 5, scale: 2 }).notNull(),
     commissionBasisSnapshot: text('commission_basis_snapshot').notNull(),
     cancellationPresetSnapshot: text('cancellation_preset_snapshot').notNull(),
+    // ADR-0005 revision 2026-06-16 (issue #09): the Experience's reschedule
+    // right, snapshotted at create. Locked like cancellation_preset_snapshot —
+    // a later change to experiences.reschedule_allowed never alters this row.
+    rescheduleAllowedSnapshot: boolean('reschedule_allowed_snapshot')
+      .default(true)
+      .notNull(),
     tdsAmountSnapshot: numeric('tds_amount_snapshot', { precision: 14, scale: 2 })
       .default('0.00')
       .notNull(),
@@ -173,6 +179,12 @@ export const bookings = pgTable(
       .default(sql`now()`)
       .notNull(),
     completedAt: timestamp('completed_at', { withTimezone: true }),
+    // Arrival timestamp set by the QR check-in flow (issue #06). This is a NEW
+    // timestamp field, NOT a lifecycle state — `state` is UNCHANGED by check-in
+    // (ADR-0003 untouched). Nullable: null until the customer is scanned in;
+    // set once, never overwritten (idempotent re-scan). Completion still flows
+    // exclusively through the existing mark-complete / auto-complete path.
+    checkedInAt: timestamp('checked_in_at', { withTimezone: true }),
     // True if Completion was triggered by the end_at + 24h auto-transition
     // (per ADR-0003 — used for Vendor-attestation-laziness SLA tracking).
     autoCompleted: boolean('auto_completed').default(false).notNull(),

@@ -5,6 +5,7 @@ import { auditLogs } from '@/db/schema/audit-logs'
 import { availabilitySlots } from '@/db/schema/availability-slots'
 import { bookings } from '@/db/schema/bookings'
 import { commissionTiers } from '@/db/schema/commission-tiers'
+import { experiencePricingVariations } from '@/db/schema/experience-pricing-variations'
 import { experiences } from '@/db/schema/experiences'
 import { pricingTiers } from '@/db/schema/pricing-tiers'
 import { tripGroups } from '@/db/schema/trip-groups'
@@ -816,6 +817,263 @@ describe('createBooking (ADRs 0001/0002/0003/0005/0008/0011/0016)', () => {
       // Snapshot is frozen at the booking-time value.
       expect(row?.pricePerParticipantSnapshot).toBe('999.00')
       expect(row?.pricingBasisSnapshot).toBe('pricing_tier:monsoon_2026')
+    })
+  })
+
+  // ── Selected pricing variation (ADR-0011 revision 2026-06-16, issue #07) ──
+  //
+  // A valid ACTIVE variation is arm 0 (top precedence) and its price flows into
+  // the SAME snapshot columns as every other arm — so the existing
+  // snapshot-immutability machinery protects it. An invalid (inactive /
+  // foreign / unknown) variationId is REJECTED inside the transaction, which
+  // rolls back: no booking, no capacity decrement.
+  describe('pricing variation snapshot (ADR-0011 revision, issue #07)', () => {
+    beforeEach(async () => {
+      // Sibling suites mutate the shared Vendor; reset to a clean identity tier.
+      await db
+        .update(vendorProfiles)
+        .set({ kycTier: 'identity', pan: 'ABCDE1234F', taxpayerType: null })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+    })
+
+    async function freshSlot(daysAhead: number): Promise<string> {
+      const { startAt, endAt } = futureSingleDaySlot(daysAhead)
+      const [slot] = await db
+        .insert(availabilitySlots)
+        .values({ experienceId, startAt, endAt, capacity: 8 })
+        .returning({ id: availabilitySlots.id })
+      return slot!.id
+    }
+
+    async function seedVariation(values: {
+      name: string
+      pricePerPerson: string
+      isActive?: boolean
+      experienceId?: string
+    }): Promise<string> {
+      const [v] = await db
+        .insert(experiencePricingVariations)
+        .values({
+          experienceId: values.experienceId ?? experienceId,
+          name: values.name,
+          pricePerPerson: values.pricePerPerson,
+          isActive: values.isActive ?? true,
+        })
+        .returning({ id: experiencePricingVariations.id })
+      return v!.id
+    }
+
+    it('a valid active variation price WINS over an active pricing_tier and is snapshotted', async () => {
+      // A tier window that would otherwise fire over the 1_2 bracket.
+      const start = new Date(Date.now() - 24 * 60 * 60 * 1000)
+      const end = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)
+      await db.insert(pricingTiers).values({
+        name: 'monsoon_2026',
+        startAt: start,
+        endAt: end,
+        pricePerPersonOverride: '999.00',
+        reason: 'Monsoon promo',
+        createdByAdminUserId: 'u_v',
+      })
+      const variationId = await seedVariation({
+        name: 'Private session',
+        pricePerPerson: '5000.00',
+      })
+
+      const r = await createBooking(db, {
+        ...defaultInput(),
+        participantCount: 2,
+        variationId,
+      })
+      const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
+      // Variation (5000) beats the tier (999) and the 1_2 bracket (1500).
+      expect(row?.pricePerParticipantSnapshot).toBe('5000.00')
+      expect(row?.pricingBasisSnapshot).toBe(`pricing_variation:${variationId}`)
+      // gross = 5000 × 2 = 10000.
+      expect(row?.grossTotalSnapshot).toBe('10000.00')
+    })
+
+    it('does NOT re-resolve when the variation price changes after booking (snapshot immutability)', async () => {
+      const variationId = await seedVariation({
+        name: 'Sunrise batch',
+        pricePerPerson: '5000.00',
+      })
+      const r = await createBooking(db, {
+        ...defaultInput(),
+        participantCount: 2,
+        variationId,
+      })
+
+      // Mutate the variation price AFTER the booking is created.
+      await db
+        .update(experiencePricingVariations)
+        .set({ pricePerPerson: '111.00' })
+        .where(eq(experiencePricingVariations.id, variationId))
+
+      const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
+      // Snapshot is frozen at the booking-time variation price — unchanged.
+      expect(row?.pricePerParticipantSnapshot).toBe('5000.00')
+      expect(row?.pricingBasisSnapshot).toBe(`pricing_variation:${variationId}`)
+      expect(row?.grossTotalSnapshot).toBe('10000.00')
+    })
+
+    it('decrements slot capacity identically whether or not a variation is selected', async () => {
+      // Without a variation.
+      const slotNoVar = await freshSlot(8)
+      await createBooking(db, {
+        ...defaultInput(),
+        slotId: slotNoVar,
+        participantCount: 3,
+      })
+      const [a] = await db
+        .select()
+        .from(availabilitySlots)
+        .where(eq(availabilitySlots.id, slotNoVar))
+      expect(a?.capacityTaken).toBe(3)
+
+      // With a variation — same participantCount, same decrement. Capacity is a
+      // property of the slot, NOT the variation (ADR-0011).
+      const variationId = await seedVariation({
+        name: 'With gear',
+        pricePerPerson: '5000.00',
+      })
+      const slotWithVar = await freshSlot(9)
+      await createBooking(db, {
+        ...defaultInput(),
+        slotId: slotWithVar,
+        participantCount: 3,
+        variationId,
+      })
+      const [b] = await db
+        .select()
+        .from(availabilitySlots)
+        .where(eq(availabilitySlots.id, slotWithVar))
+      expect(b?.capacityTaken).toBe(3)
+    })
+
+    it('rejects an INACTIVE variation and leaves no booking / no capacity decrement', async () => {
+      const inactiveId = await seedVariation({
+        name: 'Retired option',
+        pricePerPerson: '5000.00',
+        isActive: false,
+      })
+      await expect(
+        createBooking(db, {
+          ...defaultInput(),
+          participantCount: 2,
+          variationId: inactiveId,
+        }),
+      ).rejects.toThrow(/not active/i)
+
+      // Transaction rolled back: no booking row, slot untouched.
+      const allBookings = await db.select().from(bookings)
+      expect(allBookings).toHaveLength(0)
+      const [slot] = await db
+        .select()
+        .from(availabilitySlots)
+        .where(eq(availabilitySlots.id, slotId))
+      expect(slot?.capacityTaken).toBe(0)
+    })
+
+    it('rejects a variation belonging to ANOTHER experience (rolls back)', async () => {
+      const [otherExp] = await db
+        .insert(experiences)
+        .values({
+          vendorUserId: 'u_v',
+          slug: 'kayak-day',
+          title: 'Kayak Day',
+          cancellationPreset: 'flexible',
+          paymentModesAllowed: ['full_upfront'],
+          pricePerPerson_1_2: '3000.00',
+          pricePerPerson_3_5: '2500.00',
+          pricePerPerson_6_plus: '2000.00',
+          regionSlug: 'rishikesh',
+          activitySlug: 'kayaking',
+        })
+        .returning({ id: experiences.id })
+      const foreignId = await seedVariation({
+        name: 'Foreign',
+        pricePerPerson: '4000.00',
+        experienceId: otherExp!.id,
+      })
+
+      await expect(
+        createBooking(db, {
+          ...defaultInput(),
+          participantCount: 2,
+          variationId: foreignId,
+        }),
+      ).rejects.toThrow(/not valid for experience/i)
+
+      const ourBookings = await db
+        .select()
+        .from(bookings)
+        .where(eq(bookings.experienceId, experienceId))
+      expect(ourBookings).toHaveLength(0)
+      const [slot] = await db
+        .select()
+        .from(availabilitySlots)
+        .where(eq(availabilitySlots.id, slotId))
+      expect(slot?.capacityTaken).toBe(0)
+    })
+  })
+
+  // ── Cancellation snapshot: preset + reschedule (ADR-0005 revision, issue #09) ──
+  //
+  // Both the cancellation preset (already snapshotted) and the new
+  // reschedule_allowed flag are locked onto the Booking at create. A later
+  // change to the Experience's preset / flag never alters an existing Booking —
+  // the snapshot rule that protects the money path also protects the
+  // cancellation rights the refund math reads from.
+  describe('cancellation snapshot immutability (ADR-0005 revision, issue #09)', () => {
+    beforeEach(async () => {
+      // Sibling suites mutate the shared Vendor; reset to a clean identity tier.
+      await db
+        .update(vendorProfiles)
+        .set({ kycTier: 'identity', pan: 'ABCDE1234F', taxpayerType: null })
+        .where(eq(vendorProfiles.userId, 'u_v'))
+    })
+
+    it('snapshots non_cancellable preset + reschedule_allowed=false at create', async () => {
+      // Re-create the seeded Experience as non_cancellable with reschedule OFF.
+      await db
+        .update(experiences)
+        .set({ cancellationPreset: 'non_cancellable', rescheduleAllowed: false })
+        .where(eq(experiences.id, experienceId))
+
+      const r = await createBooking(db, defaultInput())
+      const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
+      expect(row?.cancellationPresetSnapshot).toBe('non_cancellable')
+      expect(row?.rescheduleAllowedSnapshot).toBe(false)
+    })
+
+    it('defaults reschedule_allowed snapshot to true for the seeded (flexible) Experience', async () => {
+      // The seeded Experience does not set rescheduleAllowed, so the column
+      // default (true) holds and is snapshotted as true.
+      const r = await createBooking(db, defaultInput())
+      const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
+      expect(row?.cancellationPresetSnapshot).toBe('flexible')
+      expect(row?.rescheduleAllowedSnapshot).toBe(true)
+    })
+
+    it('does NOT re-resolve the preset / reschedule snapshot when the Experience changes after booking', async () => {
+      // Book against non_cancellable + reschedule OFF.
+      await db
+        .update(experiences)
+        .set({ cancellationPreset: 'non_cancellable', rescheduleAllowed: false })
+        .where(eq(experiences.id, experienceId))
+      const r = await createBooking(db, defaultInput())
+
+      // Now FLIP the Experience's policy AFTER the booking is created.
+      await db
+        .update(experiences)
+        .set({ cancellationPreset: 'flexible', rescheduleAllowed: true })
+        .where(eq(experiences.id, experienceId))
+
+      // Re-read the Booking: its snapshots are frozen at booking-time values.
+      const [row] = await db.select().from(bookings).where(eq(bookings.id, r.bookingId))
+      expect(row?.cancellationPresetSnapshot).toBe('non_cancellable')
+      expect(row?.rescheduleAllowedSnapshot).toBe(false)
     })
   })
 

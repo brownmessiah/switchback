@@ -317,6 +317,179 @@ export function ItineraryEditor({ steps, onChange }: ItineraryEditorProps) {
   )
 }
 
+// ── Repeatable pricing-variation editor (issue #08) ──────────────────────────
+
+const MAX_PRICING_VARIATIONS = 20
+
+/** A single editable pricing variation row, mirroring `ListingFormValues`. */
+export interface PricingVariationRow {
+  /** Existing-row id (edit). Absent on a freshly-added row. */
+  id?: string
+  name: string
+  description: string
+  /** Raw input string; coerced server-side. numeric(12,2). */
+  pricePerPerson: string
+  /** Raw input string; coerced to a number / null on submit. */
+  durationMinutes: string
+  isActive: boolean
+}
+
+interface PricingVariationsEditorProps {
+  variations: PricingVariationRow[]
+  onChange: (next: PricingVariationRow[]) => void
+}
+
+/**
+ * Repeatable pricing-variation rows (ADR-0011 revision 2026-06-16, issue #08):
+ * a Vendor offers distinct priced options on one Experience ("Sunrise batch",
+ * "Private session") alongside the Group-size base price. Each row carries a
+ * name, optional description, price per person, optional duration, and an
+ * active toggle. Capped at 20 (the shared Zod bound). Empty / unnamed rows are
+ * dropped by the submit mapper; the per-field bounds are re-checked server-side.
+ *
+ * Hardcoded English — the vendor dashboard is an internal noindex surface that
+ * is NOT next-intl-wired (same convention as the rest of these editors).
+ */
+export function PricingVariationsEditor({
+  variations,
+  onChange,
+}: PricingVariationsEditorProps) {
+  function addRow() {
+    if (variations.length >= MAX_PRICING_VARIATIONS) return
+    onChange([
+      ...variations,
+      { name: '', description: '', pricePerPerson: '', durationMinutes: '', isActive: true },
+    ])
+  }
+
+  function removeRow(index: number) {
+    onChange(variations.filter((_, i) => i !== index))
+  }
+
+  function patchRow(index: number, patch: Partial<PricingVariationRow>) {
+    onChange(variations.map((v, i) => (i === index ? { ...v, ...patch } : v)))
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <Label>Pricing variations</Label>
+          <p className="text-xs text-muted-foreground">
+            Optional priced options (e.g. &ldquo;Sunrise batch&rdquo;, &ldquo;With gear
+            rental&rdquo;). An active variation can stand in for the base price.
+          </p>
+        </div>
+        <span className="text-xs tabular-nums text-muted-foreground">
+          {variations.length} / {MAX_PRICING_VARIATIONS}
+        </span>
+      </div>
+
+      {variations.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          No variations yet. Add one to offer a distinct priced option on this experience.
+        </p>
+      )}
+
+      <ol className="space-y-3">
+        {variations.map((variation, index) => (
+          <li
+            key={variation.id ?? index}
+            data-testid="pricing-variation-row"
+            className="space-y-3 rounded-[var(--radius-card)] border bg-surface-2 p-3"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium tabular-nums text-muted-foreground">
+                Variation {index + 1}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => removeRow(index)}
+                aria-label={`Remove variation ${index + 1}`}
+              >
+                <Trash2 aria-hidden="true" className="size-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor={`variation-name-${index}`}>Name</Label>
+              <Input
+                id={`variation-name-${index}`}
+                value={variation.name}
+                maxLength={120}
+                placeholder="e.g. Sunrise batch"
+                onChange={(e) => patchRow(index, { name: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor={`variation-desc-${index}`}>Description (optional)</Label>
+              <Textarea
+                id={`variation-desc-${index}`}
+                value={variation.description}
+                maxLength={600}
+                rows={2}
+                placeholder="What's different about this option…"
+                onChange={(e) => patchRow(index, { description: e.target.value })}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor={`variation-price-${index}`}>Price per person (₹)</Label>
+                <Input
+                  id={`variation-price-${index}`}
+                  type="number"
+                  min={1}
+                  className="tabular-nums"
+                  value={variation.pricePerPerson}
+                  placeholder="1800"
+                  onChange={(e) => patchRow(index, { pricePerPerson: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor={`variation-duration-${index}`}>Duration (min, optional)</Label>
+                <Input
+                  id={`variation-duration-${index}`}
+                  type="number"
+                  min={1}
+                  className="tabular-nums"
+                  value={variation.durationMinutes}
+                  placeholder="90"
+                  onChange={(e) => patchRow(index, { durationMinutes: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={variation.isActive}
+                onChange={(e) => patchRow(index, { isActive: e.target.checked })}
+                className="rounded border-input"
+              />
+              Active (offered to customers)
+            </label>
+          </li>
+        ))}
+      </ol>
+
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={addRow}
+        disabled={variations.length >= MAX_PRICING_VARIATIONS}
+      >
+        <Plus aria-hidden="true" className="size-4" />
+        Add variation
+      </Button>
+    </div>
+  )
+}
+
 // ── Multi-select checkbox group (languages, season months) ───────────────────
 
 interface CheckboxGroupProps<T extends string | number> {

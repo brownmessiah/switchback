@@ -312,6 +312,173 @@ describe('quoteRefund (ADR-0005)', () => {
     })
   })
 
+  // ── non_cancellable preset (ADR-0005 revision 2026-06-16, issue #09) ──
+  //
+  // The fourth named preset. Its refund function ALWAYS returns 0 — there is no
+  // window in which any refund is owed. A Customer cancellation attempt behaves
+  // like an outside-policy case: basis 'non_cancellable', full fee held, routes
+  // to the Dispute queue (ADR-0003). The vendorCancelled invariant still wins
+  // first — a Vendor-cancelled non_cancellable Booking is still full-refunded.
+  describe('non_cancellable preset', () => {
+    it('refunds 0 far before start (where flexible/moderate/strict would all be in the free window)', () => {
+      const r = quoteRefund({
+        preset: 'non_cancellable',
+        startAt,
+        cancellationAt: daysBefore(30),
+        bookingTotalRupees: 3000,
+      })
+      expect(r.refundAmountRupees).toBe(0)
+      expect(r.cancellationFeeRupees).toBe(3000)
+      expect(r.basis).toBe('non_cancellable')
+      expect(r.routesToDispute).toBe(true)
+    })
+
+    it('refunds 0 just before start', () => {
+      const r = quoteRefund({
+        preset: 'non_cancellable',
+        startAt,
+        cancellationAt: hoursBefore(1),
+        bookingTotalRupees: 3000,
+      })
+      expect(r.refundAmountRupees).toBe(0)
+      expect(r.cancellationFeeRupees).toBe(3000)
+      expect(r.basis).toBe('non_cancellable')
+      expect(r.routesToDispute).toBe(true)
+    })
+
+    it('refunds 0 inside every window where flexible/moderate/strict WOULD refund', () => {
+      // These are timestamps that yield a non-zero refund under at least one of
+      // the three windowed presets — prove non_cancellable is 0 at all of them.
+      const provingTimestamps = [
+        daysBefore(20), // strict free window (>= T-14d)
+        daysBefore(10), // strict 50% window (>= T-7d)
+        hoursBefore(72), // moderate free window (>= T-72h)
+        hoursBefore(48), // moderate 50% window (>= T-24h) / flexible 50%
+        hoursBefore(24), // flexible free window (>= T-24h) / moderate 50% boundary
+        hoursBefore(12), // flexible 50% window (>= T-2h)
+        hoursBefore(2), // flexible 50% boundary (inclusive)
+      ]
+      for (const cancellationAt of provingTimestamps) {
+        const r = quoteRefund({
+          preset: 'non_cancellable',
+          startAt,
+          cancellationAt,
+          bookingTotalRupees: 5000,
+        })
+        expect(r.refundAmountRupees).toBe(0)
+        expect(r.cancellationFeeRupees).toBe(5000)
+        expect(r.basis).toBe('non_cancellable')
+        expect(r.routesToDispute).toBe(true)
+      }
+    })
+
+    it('refunds 0 even on a zero-total (free) booking with basis non_cancellable', () => {
+      const r = quoteRefund({
+        preset: 'non_cancellable',
+        startAt,
+        cancellationAt: daysBefore(30),
+        bookingTotalRupees: 0,
+      })
+      expect(r.refundAmountRupees).toBe(0)
+      expect(r.cancellationFeeRupees).toBe(0)
+      expect(r.basis).toBe('non_cancellable')
+      expect(r.routesToDispute).toBe(true)
+    })
+
+    it('still full-refunds when the VENDOR cancels (vendorCancelled wins before the preset)', () => {
+      const r = quoteRefund({
+        preset: 'non_cancellable',
+        startAt,
+        cancellationAt: hoursBefore(1),
+        bookingTotalRupees: 3000,
+        vendorCancelled: true,
+      })
+      expect(r.refundAmountRupees).toBe(3000)
+      expect(r.cancellationFeeRupees).toBe(0)
+      expect(r.basis).toBe('vendor_cancelled')
+      expect(r.routesToDispute).toBe(false)
+    })
+
+    it('still full-refunds when the VENDOR cancels past start_at', () => {
+      const r = quoteRefund({
+        preset: 'non_cancellable',
+        startAt,
+        cancellationAt: new Date(startAt.getTime() + 3_600_000),
+        bookingTotalRupees: 3000,
+        vendorCancelled: true,
+      })
+      expect(r.refundAmountRupees).toBe(3000)
+      expect(r.basis).toBe('vendor_cancelled')
+    })
+  })
+
+  // ── reschedule_allowed echoed on the quote (ADR-0005 revision, issue #09) ──
+  //
+  // The flag is a property carried ALONGSIDE the refund math, not an input to
+  // it. quoteRefund echoes whatever it is given (defaulting false), so issue 10
+  // can read "reschedule allowed" from the same place as the refund figure.
+  describe('rescheduleAllowed echo', () => {
+    it('defaults rescheduleAllowed to false when not supplied', () => {
+      const r = quoteRefund({
+        preset: 'flexible',
+        startAt,
+        cancellationAt: hoursBefore(48),
+        bookingTotalRupees: 3000,
+      })
+      expect(r.rescheduleAllowed).toBe(false)
+    })
+
+    it('echoes rescheduleAllowed=true unchanged across all four presets without altering the refund math', () => {
+      // Flexible free window (refund 3000), unaffected by the flag.
+      const flex = quoteRefund({
+        preset: 'flexible',
+        startAt,
+        cancellationAt: hoursBefore(48),
+        bookingTotalRupees: 3000,
+        rescheduleAllowed: true,
+      })
+      expect(flex.rescheduleAllowed).toBe(true)
+      expect(flex.refundAmountRupees).toBe(3000)
+      expect(flex.basis).toBe('free_window')
+
+      // non_cancellable still 0 — the flag is orthogonal to the refund amount.
+      const nonCancellable = quoteRefund({
+        preset: 'non_cancellable',
+        startAt,
+        cancellationAt: daysBefore(30),
+        bookingTotalRupees: 3000,
+        rescheduleAllowed: true,
+      })
+      expect(nonCancellable.rescheduleAllowed).toBe(true)
+      expect(nonCancellable.refundAmountRupees).toBe(0)
+      expect(nonCancellable.basis).toBe('non_cancellable')
+    })
+
+    it('echoes rescheduleAllowed=false explicitly', () => {
+      const r = quoteRefund({
+        preset: 'strict',
+        startAt,
+        cancellationAt: daysBefore(20),
+        bookingTotalRupees: 20000,
+        rescheduleAllowed: false,
+      })
+      expect(r.rescheduleAllowed).toBe(false)
+    })
+
+    it('echoes rescheduleAllowed on the vendor-cancelled branch', () => {
+      const r = quoteRefund({
+        preset: 'flexible',
+        startAt,
+        cancellationAt: hoursBefore(1),
+        bookingTotalRupees: 3000,
+        vendorCancelled: true,
+        rescheduleAllowed: true,
+      })
+      expect(r.rescheduleAllowed).toBe(true)
+      expect(r.basis).toBe('vendor_cancelled')
+    })
+  })
+
   describe('invalid input', () => {
     it('rejects negative bookingTotalRupees', () => {
       expect(() =>

@@ -61,6 +61,13 @@ describe('shouldExcludeFromI18n()', () => {
       expect(shouldExcludeFromI18n('/vendor/payouts')).toBe(true)
     })
 
+    it('excludes /vendor/checkin', () => {
+      // Issue #06: the QR scanner route (the customer's ?token= deep-link target)
+      // must bypass i18n, else the scanned link 404s on the public
+      // /vendor/[slug] storefront. Middleware passes the bare pathname (no query).
+      expect(shouldExcludeFromI18n('/vendor/checkin')).toBe(true)
+    })
+
     it('excludes /vendor/reviews', () => {
       expect(shouldExcludeFromI18n('/vendor/reviews')).toBe(true)
     })
@@ -170,8 +177,20 @@ describe('shouldExcludeFromI18n()', () => {
   })
 
   describe('EXCLUDED_PREFIXES constant', () => {
-    it('contains all 19 excluded prefixes', () => {
-      expect(EXCLUDED_PREFIXES).toHaveLength(19)
+    it('contains all 21 excluded prefixes', () => {
+      expect(EXCLUDED_PREFIXES).toHaveLength(21)
+    })
+
+    it('includes /vendor/team', () => {
+      // Issue #05: without this the route is locale-rewritten to the public
+      // /vendor/[slug] storefront and 404s (the gotcha that bit prior batches).
+      expect(EXCLUDED_PREFIXES).toContain('/vendor/team')
+    })
+
+    it('includes /vendor/checkin', () => {
+      // Issue #06: the QR scanner route must bypass i18n rewriting, else it
+      // falls through to the localized public /vendor/[slug] storefront and 404s.
+      expect(EXCLUDED_PREFIXES).toContain('/vendor/checkin')
     })
 
     it('includes /wallet', () => {

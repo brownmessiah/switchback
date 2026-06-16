@@ -1,5 +1,6 @@
 import { and, eq, gt, lte, sql } from 'drizzle-orm'
 
+import { experiencePricingVariations } from '@/db/schema/experience-pricing-variations'
 import { experiences } from '@/db/schema/experiences'
 import { pricingTiers } from '@/db/schema/pricing-tiers'
 
@@ -11,8 +12,8 @@ import type { DBOrTx } from './commission-resolver'
  *
  * `pricePerParticipant` is numeric(12,2) as a string — never JS floats.
  * `basis` is the audit label identifying which arm fired
- * (`pricing_tier:<name>` | `experience_bracket:1_2` | `experience_bracket:3_5`
- *  | `experience_bracket:6_plus`).
+ * (`pricing_variation:<id>` | `pricing_tier:<name>` | `experience_bracket:1_2`
+ *  | `experience_bracket:3_5` | `experience_bracket:6_plus`).
  */
 export interface ResolvedPricing {
   pricePerParticipant: string
@@ -23,13 +24,24 @@ interface ResolvePricingArgs {
   experienceId: string
   participantCount: number
   now?: Date
+  /**
+   * Optional Customer-selected pricing variation (ADR-0011 revision
+   * 2026-06-16, issue #07). When supplied it MUST be a valid, ACTIVE variation
+   * belonging to `experienceId` — an unknown / foreign / inactive id is
+   * REJECTED (throws), never silently downgraded to the tier/bracket chain.
+   * On success the variation's `price_per_person` is the resolved price.
+   */
+  variationId?: string
 }
 
 /**
  * Resolve the per-participant price that applies to a Booking on the
  * given Experience for the given participant count as of `now`. Walks
- * the chain per ADR-0011:
+ * the chain per ADR-0011 (revision 2026-06-16):
  *
+ *   0. Selected pricing variation (experience_pricing_variations; when a valid
+ *      ACTIVE variationId belonging to the Experience is supplied — TOP
+ *      precedence; an invalid id is REJECTED, not downgraded). (issue #07)
  *   1. Active pricing tier (pricing_tiers; most-recently-created among
  *      matches; scope-filtered by category/vendor/experience).
  *   2. Slot-specific override (NOT YET IMPLEMENTED; v1.x).
@@ -70,6 +82,39 @@ export async function resolvePricing(
 
   if (!exp) {
     throw new Error(`Experience ${experienceId} not found`)
+  }
+
+  // 0. Selected pricing variation — TOP precedence (ADR-0011 revision
+  // 2026-06-16, issue #07). When a variationId is supplied it MUST be a valid,
+  // ACTIVE variation belonging to this Experience: an unknown / foreign /
+  // inactive id is REJECTED (throw) so a Customer who selected a specific
+  // priced option never silently pays a different resolved price. The
+  // variation's price wins over every lower arm and is snapshotted by the
+  // caller. Variations share the slot's capacity — no capacity logic here.
+  if (args.variationId !== undefined) {
+    const [variation] = await db
+      .select({
+        id: experiencePricingVariations.id,
+        experienceId: experiencePricingVariations.experienceId,
+        pricePerPerson: experiencePricingVariations.pricePerPerson,
+        isActive: experiencePricingVariations.isActive,
+      })
+      .from(experiencePricingVariations)
+      .where(eq(experiencePricingVariations.id, args.variationId))
+      .limit(1)
+
+    if (!variation || variation.experienceId !== experienceId) {
+      throw new Error(
+        `Pricing variation ${args.variationId} is not valid for experience ${experienceId}`,
+      )
+    }
+    if (!variation.isActive) {
+      throw new Error(`Pricing variation ${args.variationId} is not active`)
+    }
+    return {
+      pricePerParticipant: variation.pricePerPerson,
+      basis: `pricing_variation:${variation.id}`,
+    }
   }
 
   // 1. Pricing tier override — most recently created matching tier wins.

@@ -7,13 +7,19 @@ import { ImageUpload, type UploadedImage } from '@/components/image-upload'
 import { toast } from '@/lib/toast'
 import type { Experience } from '@/db/schema/experiences'
 import type { ExperienceItineraryStep } from '@/db/schema/experience-itinerary-steps'
+import type { ExperiencePricingVariation } from '@/db/schema/experience-pricing-variations'
 
 import {
   ListingFormStepper,
+  toPricingVariationsSubmit,
   toStructuredSubmitFields,
   type ListingFormValues,
 } from '../../listing-form-stepper'
-import type { DifficultyValue, StructuredItineraryStep } from '../../structured-fields'
+import type {
+  DifficultyValue,
+  PricingVariationRow,
+  StructuredItineraryStep,
+} from '../../structured-fields'
 import {
   deleteExperienceImageAction,
   updateExperienceAction,
@@ -24,12 +30,14 @@ interface ExperienceEditFormProps {
   experience: Experience
   initialImages: readonly UploadedImage[]
   initialItinerary?: readonly ExperienceItineraryStep[]
+  initialPricingVariations?: readonly ExperiencePricingVariation[]
 }
 
 export function ExperienceEditForm({
   experience,
   initialImages,
   initialItinerary = [],
+  initialPricingVariations = [],
 }: ExperienceEditFormProps) {
   const router = useRouter()
   const [images, setImages] = useState<UploadedImage[]>([...initialImages])
@@ -78,6 +86,9 @@ export function ExperienceEditForm({
     price35: String(experience.pricePerPerson_3_5),
     price6: String(experience.pricePerPerson_6_plus),
     cancellationPreset: experience.cancellationPreset,
+    // ADR-0005 revision 2026-06-16 (issue #09/#10) — load the saved reschedule
+    // right so the toggle round-trips on edit (column defaults true).
+    rescheduleAllowed: experience.rescheduleAllowed,
     paymentModes: [...experience.paymentModesAllowed],
     isCombo: experience.isCombo,
     requiredPermits: [...experience.requiredPermits],
@@ -103,6 +114,18 @@ export function ExperienceEditForm({
         durationMinutes: s.durationMinutes,
       }),
     ),
+    // Issue #08 — seed the variation editor from the saved rows, keeping each
+    // row's id so the upsert updates in place rather than duplicating.
+    pricingVariations: initialPricingVariations.map(
+      (v): PricingVariationRow => ({
+        id: v.id,
+        name: v.name,
+        description: v.description ?? '',
+        pricePerPerson: v.pricePerPerson,
+        durationMinutes: v.durationMinutes != null ? String(v.durationMinutes) : '',
+        isActive: v.isActive,
+      }),
+    ),
   }
 
   async function handleSubmit(values: ListingFormValues) {
@@ -114,10 +137,16 @@ export function ExperienceEditForm({
       longDescription: values.longDescription || null,
       activitySlug: values.activity,
       regionSlug: values.region,
-      pricePerPerson_1_2: Number(values.price12),
-      pricePerPerson_3_5: Number(values.price35),
-      pricePerPerson_6_plus: Number(values.price6),
+      // Base price is optional (issue #08) — send undefined when blank so the
+      // active variations carry the price instead of coercing NaN.
+      pricePerPerson_1_2: values.price12 ? Number(values.price12) : undefined,
+      pricePerPerson_3_5: values.price35 ? Number(values.price35) : undefined,
+      pricePerPerson_6_plus: values.price6 ? Number(values.price6) : undefined,
       cancellationPreset: values.cancellationPreset,
+      // ADR-0005 revision 2026-06-16 (issue #09/#10) — thread the reschedule
+      // right; the update core persists it.
+      rescheduleAllowed: values.rescheduleAllowed,
+      pricingVariations: toPricingVariationsSubmit(values),
       paymentModesAllowed: values.paymentModes as (
         | 'full_upfront'
         | 'partial_pay'

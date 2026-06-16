@@ -8,7 +8,7 @@ import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 import {
   executeUpdateBusinessDetails,
   executeUpdatePayoutMethod,
-} from './actions'
+} from './settings-cores'
 
 describe('executeUpdateBusinessDetails', () => {
   let db: TestDB

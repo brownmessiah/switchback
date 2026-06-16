@@ -7,6 +7,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import {
   Activity,
   Baby,
+  Ban,
   CalendarRange,
   CircleCheck,
   Clock,
@@ -38,6 +39,7 @@ import { auth } from '@/lib/auth'
 import { env } from '@/lib/env'
 import { isInWishlist } from '@/lib/wishlist/wishlist'
 import { loadExperienceDetail } from '@/lib/experiences/detail-loader'
+import { freeCancellationLine, isNonCancellable } from '@/lib/payments/cancellation-copy'
 import { loadSimilarExperiences } from '@/lib/experiences/similar'
 import { formatDuration, formatSeason } from '@/lib/experiences/structured-schema'
 import { ExperienceCard } from '@/components/experience-card'
@@ -467,6 +469,27 @@ export default async function ExperienceDetailPage({
       { label: t('pricing.tier3_5'), priceRupees: detail.pricePerPerson_3_5 },
       { label: t('pricing.tier6Plus'), priceRupees: detail.pricePerPerson_6_plus },
     ],
+    // Active pricing variations (issue #08) — the selector + labels are passed
+    // only when the Experience has ≥1 active variation; the rail renders no
+    // selector otherwise (brackets behave exactly as before). The name +
+    // description are Vendor-authored listing content; the surrounding chrome is
+    // translated.
+    variations: detail.activeVariations.map((v) => ({
+      id: v.id,
+      name: v.name,
+      description: v.description,
+      priceRupees: v.pricePerPersonRupees,
+      durationMinutes: v.durationMinutes,
+    })),
+    variationLabels:
+      detail.activeVariations.length > 0
+        ? {
+            heading: t('pricing.chooseOption'),
+            standardOption: t('pricing.standardOption'),
+            perPerson: t('pricing.perPerson'),
+            durationSuffix: t('pricing.variationDuration', { minutes: '{minutes}' }),
+          }
+        : undefined,
     perPersonLabel: t('pricing.perPerson'),
     participantsLabel: t('pricing.participants'),
     totalLabel: t('pricing.total'),
@@ -956,20 +979,50 @@ export default async function ExperienceDetailPage({
               </section>
             )}
 
-            {/* Cancellation policy (anchor target #cancellation) — ADR-0005. */}
+            {/* Cancellation policy (anchor target #cancellation) — ADR-0005.
+                For a non_cancellable Experience we show a CONSTRAINT badge
+                (destructive tint + Ban icon, never green — the policy is a
+                restriction, not a perk). Otherwise the "Free cancellation up to
+                {hours}h before activity" line, with the hour figure DERIVED from
+                PRESET_WINDOWS via lib/payments/cancellation-copy so it can never
+                drift from the refund math (issue #10). */}
             <section id="cancellation">
               <h2 className="mb-3 font-heading text-h2 font-semibold tracking-tight">
                 {t('sections.cancellationPolicy')}
               </h2>
               <div className="rounded-[var(--radius-card)] border bg-muted/50 p-4">
-                <Badge variant="success" className="mb-2 capitalize">
-                  <CircleCheck aria-hidden="true" />
-                  {detail.cancellationPreset}
-                </Badge>
-                <p className="text-sm text-muted-foreground">
-                  {cancellationDescriptions[detail.cancellationPreset] ??
-                    t('cancellation.fallback', { preset: detail.cancellationPreset })}
-                </p>
+                {isNonCancellable(detail.cancellationPreset) ? (
+                  <>
+                    <Badge variant="destructive" className="mb-2">
+                      <Ban aria-hidden="true" />
+                      {t('cancellation.nonCancellableBadge')}
+                    </Badge>
+                    <p className="text-sm text-muted-foreground">
+                      {t('cancellation.nonCancellableDescription')}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    {(() => {
+                      const line = freeCancellationLine(detail.cancellationPreset)
+                      return line ? (
+                        <Badge variant="success" className="mb-2">
+                          <CircleCheck aria-hidden="true" />
+                          {t('cancellation.freeUpToHours', { hours: line.hours })}
+                        </Badge>
+                      ) : (
+                        <Badge variant="success" className="mb-2 capitalize">
+                          <CircleCheck aria-hidden="true" />
+                          {detail.cancellationPreset}
+                        </Badge>
+                      )
+                    })()}
+                    <p className="text-sm text-muted-foreground">
+                      {cancellationDescriptions[detail.cancellationPreset] ??
+                        t('cancellation.fallback', { preset: detail.cancellationPreset })}
+                    </p>
+                  </>
+                )}
               </div>
             </section>
 

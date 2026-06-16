@@ -432,6 +432,35 @@ export async function getExperienceByTitle(
   })
 }
 
+/**
+ * Fetch a vendor's most-recently-created Experience's cancellation policy +
+ * reschedule snapshot (issue #10) — asserts the form's preset radio + reschedule
+ * toggle persisted onto the row.
+ */
+export async function getExperienceCancellationByTitle(
+  vendorUserId: string,
+  title: string,
+): Promise<{ cancellationPreset: string; rescheduleAllowed: boolean } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { cancellation_preset: string; reschedule_allowed: boolean }[]
+    >`
+      SELECT cancellation_preset, reschedule_allowed
+      FROM experiences
+      WHERE vendor_user_id = ${vendorUserId}
+        AND title = ${title}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    const row = rows[0]
+    if (!row) return null
+    return {
+      cancellationPreset: row.cancellation_preset,
+      rescheduleAllowed: row.reschedule_allowed,
+    }
+  })
+}
+
 /** Fetch an Experience by id (for reload / price-survives assertions). */
 export async function getExperienceById(
   experienceId: string,
@@ -468,6 +497,39 @@ export async function getExperienceById(
       pricePerPerson_6_plus: Math.floor(Number(row.price_per_person_6_plus)),
       vendorUserId: row.vendor_user_id,
     }
+  })
+}
+
+/**
+ * Active pricing variations for an Experience (issue #08 E2E assertions),
+ * ordered by creation. Returns the name + per-person price (whole rupees) +
+ * active flag so a spec can assert the form persisted them.
+ */
+export interface PricingVariationRow {
+  id: string
+  name: string
+  pricePerPerson: number
+  isActive: boolean
+}
+
+export async function getPricingVariationsForExperience(
+  experienceId: string,
+): Promise<PricingVariationRow[]> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { id: string; name: string; price_per_person: string; is_active: boolean }[]
+    >`
+      SELECT id, name, price_per_person, is_active
+      FROM experience_pricing_variations
+      WHERE experience_id = ${experienceId}
+      ORDER BY created_at ASC
+    `
+    return rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      pricePerPerson: Math.floor(Number(r.price_per_person)),
+      isActive: r.is_active,
+    }))
   })
 }
 

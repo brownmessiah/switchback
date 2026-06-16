@@ -228,6 +228,53 @@ describe('ExperienceCard compare toggle (issue 20, D10)', () => {
   })
 })
 
+describe('ExperienceCard "From ₹X" price (issue #08)', () => {
+  it('renders "From ₹{lowest}" when a from-price is provided', () => {
+    render(
+      <ExperienceCard
+        experience={{ ...base, pricePerParticipantRupees: 2500, fromPriceRupees: 1800 }}
+      />,
+    )
+    // The mocked t() returns the key 'from' verbatim, followed by the price.
+    expect(screen.getByText('from')).toBeTruthy()
+    expect(screen.getByText(/1,800/)).toBeTruthy()
+  })
+
+  it('shows the variation from-price, NOT the base, when both are present', () => {
+    render(
+      <ExperienceCard
+        experience={{ ...base, pricePerParticipantRupees: 2500, fromPriceRupees: 1800 }}
+      />,
+    )
+    expect(screen.getByText(/1,800/)).toBeTruthy()
+    expect(screen.queryByText(/2,500/)).toBeNull()
+  })
+
+  it('renders the plain base/bracket price (no "From") when no from-price is set', () => {
+    render(
+      <ExperienceCard
+        experience={{ ...base, pricePerParticipantRupees: 1500 }}
+      />,
+    )
+    // Bracket-only experiences display EXACTLY as before: no "From" prefix.
+    expect(screen.queryByText('from')).toBeNull()
+    expect(screen.getByText(/1,500/)).toBeTruthy()
+    expect(screen.getByText('/ person')).toBeTruthy()
+  })
+
+  it('does NOT prefix "From" when the from-price equals the base price', () => {
+    // When the lowest active variation is the same as the base, there is no
+    // cheaper entry point to advertise — render the plain price.
+    render(
+      <ExperienceCard
+        experience={{ ...base, pricePerParticipantRupees: 1500, fromPriceRupees: 1500 }}
+      />,
+    )
+    expect(screen.queryByText('from')).toBeNull()
+    expect(screen.getByText(/1,500/)).toBeTruthy()
+  })
+})
+
 describe('ExperienceCard bare card (no new data)', () => {
   it('renders no difficulty, social-proof, or rating when none are passed', () => {
     const { container } = render(<ExperienceCard experience={base} />)

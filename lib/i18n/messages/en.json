@@ -94,7 +94,8 @@
       "moderate": "Moderate",
       "challenging": "Challenging",
       "extreme": "Extreme"
-    }
+    },
+    "from": "From"
   },
   "HomeSearch": {
     "single": {
@@ -273,7 +274,8 @@
       "payouts": "Payouts",
       "reviews": "Reviews",
       "messages": "Messages",
-      "settings": "Settings"
+      "settings": "Settings",
+      "team": "Team & Roles"
     }
   },
   "VendorAnalytics": {
@@ -312,6 +314,63 @@
     "experienceColumn": "Experience",
     "bookingsColumn": "Bookings",
     "revenueColumn": "Revenue"
+  },
+  "VendorTeam": {
+    "title": "Team & Roles",
+    "subtitle": "Manage users who can access your vendor account",
+    "addUser": "Add User",
+    "ownerRowLabel": "Owner",
+    "ownerRowYou": "Owner — you",
+    "ownerRoleLabel": "Full access",
+    "columnName": "Name",
+    "columnEmail": "Email",
+    "columnRole": "Role",
+    "columnStatus": "Status",
+    "columnLastActive": "Last active",
+    "columnActions": "Actions",
+    "empty": "No team members yet. Add a user to give them access to your vendor account.",
+    "edit": "Edit",
+    "remove": "Remove",
+    "statusActive": "Active",
+    "statusInactive": "Inactive",
+    "fullNameLabel": "Full name",
+    "emailLabel": "Email",
+    "phoneLabel": "Phone",
+    "phoneOptional": "Optional",
+    "roleLabel": "Role",
+    "statusLabel": "Status",
+    "addUserTitle": "Add a team member",
+    "addUserDescription": "Invite someone to access your vendor account. They sign in with their own credentials.",
+    "editTitle": "Edit team member",
+    "editDescription": "Change this member’s role or active status.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "sending": "Saving…",
+    "removeTitle": "Remove team member",
+    "removeDescription": "This removes their access to your vendor account. Their login is untouched and you can re-invite them later.",
+    "removeConfirm": "Remove",
+    "roleManager": "Manager",
+    "roleBookingStaff": "Booking Staff",
+    "roleGuide": "Guide",
+    "roleAccountant": "Accountant"
+  },
+  "VendorCheckin": {
+    "title": "Scan check-in",
+    "subtitle": "Scan a guest's booking QR, or paste their check-in code, to mark them arrived.",
+    "manualLabel": "Check-in code",
+    "manualPlaceholder": "Paste the check-in code",
+    "submit": "Check in guest",
+    "submitting": "Checking in…",
+    "scanAgain": "Scan another",
+    "resultCheckedInTitle": "Checked in",
+    "resultCheckedInBody": "This guest has been marked as arrived.",
+    "resultAlreadyTitle": "Already checked in",
+    "resultAlreadyBody": "This guest was already marked as arrived. No change made.",
+    "resultInvalidTitle": "Invalid or expired code",
+    "resultInvalidBody": "This check-in code is invalid, expired, or not yours to scan.",
+    "resultErrorTitle": "Something went wrong",
+    "resultErrorBody": "We couldn't record this check-in. Please try again.",
+    "emptyTokenError": "Enter a check-in code first."
   },
   "VendorQuickActions": {
     "heading": "Quick actions",
@@ -521,7 +580,10 @@
       "advanceDue": "Advance due now (25%)",
       "balanceDue": "Balance at T-24h",
       "refundablePointer": "Refundable amount follows the {preset} cancellation policy — see the cancellation policy above.",
-      "fullUpfront": "Charged in full now (within 48 hours of the start, or above ₹25,000)."
+      "fullUpfront": "Charged in full now (within 48 hours of the start, or above ₹25,000).",
+      "chooseOption": "Choose an option",
+      "standardOption": "Standard (group pricing)",
+      "variationDuration": "· {minutes} min"
     },
     "closure": {
       "heading": "Currently closed",
@@ -533,7 +595,10 @@
       "flexible": "Free cancellation up to 24 hours before the Experience. 50% refund within 2 hours. No refund after.",
       "moderate": "Free cancellation up to 72 hours before the Experience. 50% refund up to 24 hours before. No refund after.",
       "strict": "Free cancellation up to 14 days before the Experience. 50% refund up to 7 days before. No refund after.",
-      "fallback": "This Experience follows the {preset} cancellation policy."
+      "fallback": "This Experience follows the {preset} cancellation policy.",
+      "nonCancellableBadge": "Non-cancellable",
+      "nonCancellableDescription": "This Experience is non-cancellable — no refund after payment. Outvers may still handle exceptional refunds.",
+      "freeUpToHours": "Free cancellation up to {hours}h before the activity"
     },
     "faq": {
       "safetyQuestion": "Is {title} safe?",

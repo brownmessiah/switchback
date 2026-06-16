@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 
 import {
   ListingFormStepper,
+  toPricingVariationsSubmit,
   toStructuredSubmitFields,
   type ListingFormValues,
 } from '../listing-form-stepper'
@@ -20,7 +21,10 @@ const INITIAL_VALUES: ListingFormValues = {
   price12: '',
   price35: '',
   price6: '',
-  cancellationPreset: 'flexible',
+  // PRD default for a NEW Experience: the Moderate-equivalent preset, reschedule
+  // ON (ADR-0005 revision 2026-06-16, issue #09/#10).
+  cancellationPreset: 'moderate',
+  rescheduleAllowed: true,
   paymentModes: ['full_upfront', 'partial_pay'],
   isCombo: false,
   requiredPermits: [],
@@ -38,6 +42,7 @@ const INITIAL_VALUES: ListingFormValues = {
   exclusions: [],
   whatToBring: [],
   itinerary: [],
+  pricingVariations: [],
 }
 
 export default function NewListingPage() {
@@ -50,10 +55,22 @@ export default function NewListingPage() {
       shortDescription: values.shortDescription || null,
       activitySlug: values.activity,
       regionSlug: values.region,
-      pricePerPerson_1_2: Number(values.price12),
+      // Base price is optional (issue #08) — send undefined when blank so the
+      // server can rely on the active variations instead of coercing NaN.
+      pricePerPerson_1_2: values.price12 ? Number(values.price12) : undefined,
       pricePerPerson_3_5: values.price35 ? Number(values.price35) : undefined,
       pricePerPerson_6_plus: values.price6 ? Number(values.price6) : undefined,
-      cancellationPreset: values.cancellationPreset as 'flexible' | 'moderate' | 'strict',
+      // ADR-0005 revision 2026-06-16 (issue #09) — create accepts the four named
+      // presets; `custom` stays admin-gated (edit-only). The picker UI is #10.
+      cancellationPreset: values.cancellationPreset as
+        | 'flexible'
+        | 'moderate'
+        | 'strict'
+        | 'non_cancellable',
+      // ADR-0005 revision 2026-06-16 (issue #09/#10) — thread the reschedule
+      // right; the create core persists it (PRD default ON when omitted).
+      rescheduleAllowed: values.rescheduleAllowed,
+      pricingVariations: toPricingVariationsSubmit(values),
       ...structured,
     })
 

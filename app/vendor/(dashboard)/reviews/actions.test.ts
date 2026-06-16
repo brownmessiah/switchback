@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+
 import { eq, sql } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
@@ -7,9 +10,11 @@ import { experiences } from '@/db/schema/experiences'
 import { reviews } from '@/db/schema/reviews'
 import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
+import { vendorTeamMembers } from '@/db/schema/vendor-team-members'
+import { hasVendorAccess } from '@/lib/auth/permissions'
 import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 
-import { executeSubmitVendorResponse } from './actions'
+import { executeSubmitVendorResponse } from './review-cores'
 import { computeAverageRating } from './utils'
 
 describe('executeSubmitVendorResponse', () => {
@@ -234,6 +239,95 @@ describe('executeSubmitVendorResponse', () => {
     )
 
     expect(result.ok).toBe(false)
+  })
+})
+
+/**
+ * FIX 4 (issue #03 review) — `submitVendorResponseAction` posts a PUBLIC vendor
+ * response (a WRITE), so it must gate on `bookings:manage`, NOT `bookings:read`.
+ * `bookings:read` is held by Guide + Accountant, who must NOT be able to post a
+ * response. The gate lives in a `'use server'` module that reads the session,
+ * so the contract is locked two ways: the matrix resolution (which roles hold
+ * `bookings:manage`) + a source-level guard that the action gates on
+ * `bookings:manage` and never reverts to `bookings:read`.
+ */
+describe('submitVendorResponse permission contract (FIX 4)', () => {
+  let db: TestDB
+  let teardown: () => Promise<void>
+
+  beforeAll(async () => {
+    const setup = await setupTestDb()
+    db = setup.db
+    teardown = setup.teardown
+  })
+
+  afterAll(async () => {
+    await teardown()
+  })
+
+  beforeEach(async () => {
+    await db.execute(
+      sql`TRUNCATE TABLE vendor_team_members, vendor_profiles, users CASCADE`,
+    )
+  })
+
+  async function seedOwner(): Promise<void> {
+    await db.insert(users).values({ id: 'u_owner', email: 'owner-rev@test.com' })
+    await db.insert(vendorProfiles).values({
+      userId: 'u_owner',
+      businessName: 'Reviews Perm Vendor',
+      slug: 'reviews-perm-vendor',
+    })
+  }
+
+  async function seedMember(
+    memberId: string,
+    role: 'manager' | 'booking_staff' | 'guide' | 'accountant',
+  ): Promise<void> {
+    await db.insert(users).values({ id: memberId, email: `${memberId}@test.com` })
+    await db.insert(vendorTeamMembers).values({
+      vendorUserId: 'u_owner',
+      memberUserId: memberId,
+      role,
+      status: 'active',
+    })
+  }
+
+  it('owner + manager + booking_staff can post a review response (bookings:manage)', async () => {
+    await seedOwner()
+    await seedMember('u_mgr', 'manager')
+    await seedMember('u_bs', 'booking_staff')
+    expect(await hasVendorAccess(db, 'u_owner', 'bookings:manage')).toBe(true)
+    expect(await hasVendorAccess(db, 'u_mgr', 'bookings:manage', 'u_owner')).toBe(true)
+    expect(await hasVendorAccess(db, 'u_bs', 'bookings:manage', 'u_owner')).toBe(true)
+  })
+
+  it('guide CANNOT post a review response (has bookings:read, not bookings:manage)', async () => {
+    await seedOwner()
+    await seedMember('u_guide', 'guide')
+    // The old (wrong) gate would have let a guide through on bookings:read.
+    expect(await hasVendorAccess(db, 'u_guide', 'bookings:read', 'u_owner')).toBe(true)
+    expect(await hasVendorAccess(db, 'u_guide', 'bookings:manage', 'u_owner')).toBe(false)
+  })
+
+  it('accountant CANNOT post a review response (read-only)', async () => {
+    await seedOwner()
+    await seedMember('u_acc', 'accountant')
+    expect(await hasVendorAccess(db, 'u_acc', 'bookings:read', 'u_owner')).toBe(true)
+    expect(await hasVendorAccess(db, 'u_acc', 'bookings:manage', 'u_owner')).toBe(false)
+  })
+
+  it("the action source gates on 'bookings:manage' (never 'bookings:read')", () => {
+    const source = readFileSync(
+      resolve(process.cwd(), 'app/vendor/(dashboard)/reviews/actions.ts'),
+      'utf-8',
+    )
+    expect(source).toContain(
+      "hasVendorAccess(prodDb, session.user.id, 'bookings:manage')",
+    )
+    expect(source).not.toContain(
+      "hasVendorAccess(prodDb, session.user.id, 'bookings:read')",
+    )
   })
 })
 

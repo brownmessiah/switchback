@@ -6,13 +6,17 @@ import { experiences } from '@/db/schema/experiences'
 import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { loadItinerary } from '@/lib/experiences/itinerary'
+import {
+  loadPricingVariations,
+  replacePricingVariations,
+} from '@/lib/experiences/pricing-variations-write'
 import type { MeiliLike } from '@/lib/search/meilisearch-client'
 import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 
 import {
   executeUpdateExperience,
   type UpdateExperienceInput,
-} from './actions'
+} from './update-core'
 
 /**
  * A capturing Meilisearch stub honouring the indexer surface, so the edit
@@ -241,6 +245,43 @@ describe('executeUpdateExperience', () => {
       expect(updated.isCombo).toBe(false)
       expect(updated.requiredPermits).toEqual(['forest_department'])
       expect(updated.requiresSafetyStack).toBe(true)
+    })
+
+    it('accepts the non_cancellable preset and persists reschedule_allowed=false (issue #09)', async () => {
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        validInput({ cancellationPreset: 'non_cancellable', rescheduleAllowed: false }),
+      )
+      expect(result.ok).toBe(true)
+
+      const [updated] = await db
+        .select()
+        .from(experiences)
+        .where(eq(experiences.id, experienceId))
+      expect(updated.cancellationPreset).toBe('non_cancellable')
+      expect(updated.rescheduleAllowed).toBe(false)
+    })
+
+    it('round-trips reschedule_allowed=true on edit (issue #09)', async () => {
+      // Start the seeded Experience at reschedule OFF, then turn it back ON.
+      await db
+        .update(experiences)
+        .set({ rescheduleAllowed: false })
+        .where(eq(experiences.id, experienceId))
+
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        validInput({ rescheduleAllowed: true }),
+      )
+      expect(result.ok).toBe(true)
+
+      const [updated] = await db
+        .select()
+        .from(experiences)
+        .where(eq(experiences.id, experienceId))
+      expect(updated.rescheduleAllowed).toBe(true)
     })
 
     it('preserves slug when updating other fields', async () => {
@@ -732,6 +773,117 @@ describe('executeUpdateExperience', () => {
       expect(doc.durationMinutes).toBe(480)
       expect(doc.maxGroupSize).toBe(6)
       expect(doc.seasonMonths).toEqual([6, 7, 8])
+    })
+  })
+
+  describe('pricing variations (issue #08)', () => {
+    it('inserts new pricing variations on edit', async () => {
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        validInput({
+          pricingVariations: [
+            { name: 'Sunrise', description: null, pricePerPerson: '1800.00', durationMinutes: 90, isActive: true },
+            { name: 'Private', description: 'solo', pricePerPerson: '4200.00', durationMinutes: null, isActive: false },
+          ],
+        }),
+      )
+      expect(result.ok).toBe(true)
+      const rows = await loadPricingVariations(db, experienceId)
+      expect(rows.map((r) => r.name).sort()).toEqual(['Private', 'Sunrise'])
+    })
+
+    it('updates an existing variation and deletes the removed one', async () => {
+      // Seed two variations first.
+      await db.transaction((tx) =>
+        replacePricingVariations(tx, experienceId, [
+          { name: 'Keep', description: null, pricePerPerson: '1000.00', durationMinutes: null, isActive: true },
+          { name: 'Drop', description: null, pricePerPerson: '2000.00', durationMinutes: null, isActive: true },
+        ]),
+      )
+      const seeded = await loadPricingVariations(db, experienceId)
+      const keepId = seeded.find((r) => r.name === 'Keep')!.id
+
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        validInput({
+          pricingVariations: [
+            { id: keepId, name: 'Keep repriced', description: null, pricePerPerson: '1250.00', durationMinutes: null, isActive: true },
+          ],
+        }),
+      )
+      expect(result.ok).toBe(true)
+      const rows = await loadPricingVariations(db, experienceId)
+      expect(rows).toHaveLength(1)
+      expect(rows[0]!.id).toBe(keepId)
+      expect(rows[0]!.name).toBe('Keep repriced')
+      expect(rows[0]!.pricePerPerson).toBe('1250.00')
+    })
+
+    it("cannot update a variation id belonging to ANOTHER experience (ownership)", async () => {
+      // A second experience owned by the SAME vendor, with its own variation.
+      const [other] = await db
+        .insert(experiences)
+        .values({
+          vendorUserId: 'u_vendor_edit',
+          slug: 'other-exp-for-pv',
+          title: 'Other Exp',
+          cancellationPreset: 'flexible',
+          paymentModesAllowed: ['full_upfront'],
+          pricePerPerson_1_2: '1500',
+          pricePerPerson_3_5: '1300',
+          pricePerPerson_6_plus: '1100',
+          regionSlug: 'rishikesh',
+          activitySlug: 'rafting',
+        })
+        .returning({ id: experiences.id })
+      await db.transaction((tx) =>
+        replacePricingVariations(tx, other!.id, [
+          { name: 'Foreign', description: null, pricePerPerson: '5000.00', durationMinutes: null, isActive: true },
+        ]),
+      )
+      const foreignId = (await loadPricingVariations(db, other!.id))[0]!.id
+
+      // The edited experience tries to update the OTHER experience's variation id.
+      const result = await executeUpdateExperience(
+        db,
+        'u_vendor_edit',
+        validInput({
+          pricingVariations: [
+            { id: foreignId, name: 'hijack', description: null, pricePerPerson: '1.00', durationMinutes: null, isActive: true },
+          ],
+        }),
+      )
+      expect(result.ok).toBe(true)
+
+      // The foreign variation is untouched and still owned by the other exp.
+      const foreignRows = await loadPricingVariations(db, other!.id)
+      expect(foreignRows).toHaveLength(1)
+      expect(foreignRows[0]!.id).toBe(foreignId)
+      expect(foreignRows[0]!.name).toBe('Foreign')
+      expect(foreignRows[0]!.pricePerPerson).toBe('5000.00')
+
+      // The edited experience got its OWN fresh row instead (different id).
+      const ownRows = await loadPricingVariations(db, experienceId)
+      expect(ownRows).toHaveLength(1)
+      expect(ownRows[0]!.id).not.toBe(foreignId)
+      expect(ownRows[0]!.name).toBe('hijack')
+    })
+
+    it('leaves variations untouched when the form omits the field', async () => {
+      await db.transaction((tx) =>
+        replacePricingVariations(tx, experienceId, [
+          { name: 'Existing', description: null, pricePerPerson: '1000.00', durationMinutes: null, isActive: true },
+        ]),
+      )
+      // A partial edit that never opened the pricing section: pricingVariations
+      // is undefined → existing rows are preserved (NOT cleared).
+      const result = await executeUpdateExperience(db, 'u_vendor_edit', validInput())
+      expect(result.ok).toBe(true)
+      const rows = await loadPricingVariations(db, experienceId)
+      expect(rows).toHaveLength(1)
+      expect(rows[0]!.name).toBe('Existing')
     })
   })
 })

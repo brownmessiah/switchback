@@ -12,21 +12,17 @@ import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 
 import {
   fillDays,
-  formatDate,
   loadVendorDashboard,
   mapUpcomingBooking,
-  rankInsights,
   shapeDashboardStats,
   slaColor,
   verifiedVendorBadgeLabel,
-  type Insight,
 } from './dashboard-loader'
 
 describe('loadVendorDashboard', () => {
   let db: TestDB
   let teardown: () => Promise<void>
   let experienceId: string
-  let slotId: string
   let futureSlotId: string
 
   beforeAll(async () => {
@@ -89,17 +85,15 @@ describe('loadVendorDashboard', () => {
     const pastDateEnd = new Date(pastDate)
     pastDateEnd.setHours(pastDateEnd.getHours() + 2)
 
-    const [pastSlot] = await db
-      .insert(availabilitySlots)
-      .values({
-        experienceId,
-        startAt: pastDate,
-        endAt: pastDateEnd,
-        capacity: 8,
-        capacityTaken: 2,
-      })
-      .returning({ id: availabilitySlots.id })
-    slotId = pastSlot!.id
+    // A past slot with prior bookings — historical seed data so the loader's
+    // all-time stats and trend queries exercise real rows, not an empty table.
+    await db.insert(availabilitySlots).values({
+      experienceId,
+      startAt: pastDate,
+      endAt: pastDateEnd,
+      capacity: 8,
+      capacityTaken: 2,
+    })
 
     // Future slot (today + 10 days)
     const futureDate = new Date()
@@ -131,11 +125,27 @@ describe('loadVendorDashboard', () => {
     expect(result.todayBookings).toBe(0)
     expect(result.monthRevenue).toBe(0)
     expect(result.slaScore).toBe(92.5)
-    expect(result.pendingActionsCount).toBe(0)
     expect(result.bookingsTrend).toHaveLength(31) // 30 days + today
     expect(result.revenueTrend).toHaveLength(31)
-    expect(result.actionItems.length).toBeGreaterThanOrEqual(0)
     expect(result.upcomingBookings).toHaveLength(0)
+  })
+
+  it('always returns both trend series as full 31-day windows (regression)', async () => {
+    // Regression guard for the dashboard-simplification prune: the Insights
+    // rail / Action-items panel / Pending-actions KPI were removed, but the
+    // two trend charts remain — their data sources must keep flowing. Even a
+    // vendor with zero bookings/payments gets a contiguous 31-day series
+    // (30 days back + today) so both charts always render.
+    const result = await loadVendorDashboard(db, 'u_v')
+
+    expect(result.bookingsTrend).toHaveLength(31)
+    expect(result.revenueTrend).toHaveLength(31)
+
+    // Each point is a well-formed { date, value } pair (YYYY-MM-DD + number).
+    for (const point of [...result.bookingsTrend, ...result.revenueTrend]) {
+      expect(point.date).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+      expect(typeof point.value).toBe('number')
+    }
   })
 
   it('counts today bookings correctly', async () => {
@@ -237,45 +247,6 @@ describe('loadVendorDashboard', () => {
     expect(nonZeroDays[0]!.value).toBe(1)
   })
 
-  it('includes calendar gaps as action items', async () => {
-    // futureSlotId already has capacityTaken=0, should be a gap
-    const result = await loadVendorDashboard(db, 'u_v')
-
-    const gaps = result.actionItems.filter((a) => a.type === 'calendar_gap')
-    expect(gaps.length).toBeGreaterThanOrEqual(1)
-    expect(gaps[0]!.title).toContain('No bookings')
-    expect(gaps[0]!.title).toContain('Paragliding in Manali')
-  })
-
-  it('includes pending bookings as action items', async () => {
-    // Insert a confirmed booking on the future slot
-    await db.insert(bookings).values({
-      customerUserId: 'u_c',
-      experienceId,
-      slotId: futureSlotId,
-      participantCount: 3,
-      state: 'confirmed',
-      paymentMode: 'full_upfront',
-      grossTotalSnapshot: '15000.00',
-      pricePerParticipantSnapshot: '5000.00',
-      pricingBasisSnapshot: 'per_person',
-      commissionRateSnapshot: '20.00',
-      commissionBasisSnapshot: 'vendor_base',
-      cancellationPresetSnapshot: 'moderate',
-      tdsAmountSnapshot: '15.00',
-      confirmedAt: new Date(),
-    })
-
-    const result = await loadVendorDashboard(db, 'u_v')
-
-    expect(result.pendingActionsCount).toBe(1)
-    const bookingActions = result.actionItems.filter(
-      (a) => a.type === 'unconfirmed_booking',
-    )
-    expect(bookingActions).toHaveLength(1)
-    expect(bookingActions[0]!.subtitle).toContain('3 guests')
-  })
-
   it('excludes refund_reverse from month revenue', async () => {
     const [booking] = await db
       .insert(bookings)
@@ -345,133 +316,6 @@ describe('loadVendorDashboard', () => {
     expect(result.slaScore).toBe(100)
     expect(result.listingsCount).toBe(0)
     expect(result.totalBookings).toBe(0)
-  })
-
-  // ── C "Insight-First Growth Hub" rail (issue #74) ─────────────────────────
-  // Every insight is computed from REAL aggregated vendor data — no ML, no
-  // fabricated signals. These integration tests pin the exact derivation.
-
-  it('top_performer insight is the experience with the most bookings', async () => {
-    // A SECOND experience with FEWER bookings than the seeded one, so the
-    // max-by-booking-count pick is unambiguous.
-    const [exp2] = await db
-      .insert(experiences)
-      .values({
-        vendorUserId: 'u_v',
-        slug: 'kayaking-rishikesh',
-        title: 'Kayaking in Rishikesh',
-        cancellationPreset: 'moderate',
-        paymentModesAllowed: ['full_upfront'],
-        pricePerPerson_1_2: '2000.00',
-        pricePerPerson_3_5: '1800.00',
-        pricePerPerson_6_plus: '1600.00',
-        regionSlug: 'rishikesh',
-        activitySlug: 'kayaking',
-        status: 'published',
-      })
-      .returning({ id: experiences.id })
-    const exp2Id = exp2!.id
-
-    const [exp2Slot] = await db
-      .insert(availabilitySlots)
-      .values({
-        experienceId: exp2Id,
-        startAt: new Date(Date.now() + 12 * 86_400_000),
-        endAt: new Date(Date.now() + 12 * 86_400_000 + 7_200_000),
-        capacity: 8,
-        capacityTaken: 1,
-      })
-      .returning({ id: availabilitySlots.id })
-
-    const baseBooking = {
-      customerUserId: 'u_c',
-      paymentMode: 'full_upfront' as const,
-      pricePerParticipantSnapshot: '5000.00',
-      pricingBasisSnapshot: 'per_person',
-      commissionRateSnapshot: '20.00',
-      commissionBasisSnapshot: 'vendor_base',
-      cancellationPresetSnapshot: 'moderate',
-      tdsAmountSnapshot: '10.00',
-      confirmedAt: new Date(),
-    }
-
-    // 3 bookings on the FIRST experience (Paragliding in Manali).
-    for (let i = 0; i < 3; i++) {
-      await db.insert(bookings).values({
-        ...baseBooking,
-        experienceId,
-        slotId: futureSlotId,
-        participantCount: 1,
-        state: 'confirmed',
-        grossTotalSnapshot: '5000.00',
-      })
-    }
-    // 1 booking on the SECOND experience.
-    await db.insert(bookings).values({
-      ...baseBooking,
-      experienceId: exp2Id,
-      slotId: exp2Slot!.id,
-      participantCount: 1,
-      state: 'confirmed',
-      grossTotalSnapshot: '2000.00',
-    })
-
-    const result = await loadVendorDashboard(db, 'u_v')
-
-    const top = result.insights.find((i) => i.type === 'top_performer')
-    expect(top).toBeDefined()
-    expect(top!.expTitle).toBe('Paragliding in Manali')
-    expect(top!.bookingCount).toBe(3)
-  })
-
-  it('likely_to_sell_out insight surfaces upcoming slots near capacity', async () => {
-    // A future slot at 7/8 capacity (1 spot left) — near sell-out.
-    const nearFull = new Date(Date.now() + 14 * 86_400_000)
-    const [nearFullSlot] = await db
-      .insert(availabilitySlots)
-      .values({
-        experienceId,
-        startAt: nearFull,
-        endAt: new Date(nearFull.getTime() + 7_200_000),
-        capacity: 8,
-        capacityTaken: 7,
-      })
-      .returning({ id: availabilitySlots.id })
-
-    const result = await loadVendorDashboard(db, 'u_v')
-
-    const sellOut = result.insights.find((i) => i.type === 'likely_to_sell_out')
-    expect(sellOut).toBeDefined()
-    expect(sellOut!.slotId).toBe(nearFullSlot!.id)
-    expect(sellOut!.spotsLeft).toBe(1)
-    expect(sellOut!.expTitle).toBe('Paragliding in Manali')
-  })
-
-  it('off_peak_gap insight surfaces upcoming zero-booked slots', async () => {
-    // futureSlotId (seeded in beforeEach) has capacityTaken=0 → an off-peak gap.
-    const result = await loadVendorDashboard(db, 'u_v')
-
-    const gap = result.insights.find((i) => i.type === 'off_peak_gap')
-    expect(gap).toBeDefined()
-    expect(gap!.slotId).toBe(futureSlotId)
-    expect(gap!.expTitle).toBe('Paragliding in Manali')
-  })
-
-  it('omits insights that cannot be computed (vendor with no bookings/slots)', async () => {
-    // A vendor with a profile but NO experiences, slots, or bookings: every
-    // insight is non-derivable, so the rail must be empty (no fabrication).
-    await db.insert(users).values({ id: 'u_empty', email: 'empty@test.com', name: 'Empty' })
-    await db.insert(vendorProfiles).values({
-      userId: 'u_empty',
-      businessName: 'Empty Co',
-      slug: 'empty-co',
-      kycTier: 'business',
-      responseTimeSlaScore: '100.00',
-      commissionRate: '20.00',
-    })
-
-    const result = await loadVendorDashboard(db, 'u_empty')
-    expect(result.insights).toHaveLength(0)
   })
 })
 
@@ -563,17 +407,6 @@ describe('fillDays', () => {
   })
 })
 
-describe('formatDate', () => {
-  it('returns an em dash for a null date', () => {
-    expect(formatDate(null)).toBe('—')
-  })
-
-  it('formats a real date in en-IN day/month form', () => {
-    const formatted = formatDate(new Date('2026-03-15T00:00:00Z'))
-    expect(formatted).toMatch(/Mar/)
-  })
-})
-
 describe('slaColor', () => {
   it('returns green for score >= 90', () => {
     expect(slaColor(90)).toBe('green')
@@ -591,54 +424,6 @@ describe('slaColor', () => {
     expect(slaColor(0)).toBe('red')
     expect(slaColor(50)).toBe('red')
     expect(slaColor(69.99)).toBe('red')
-  })
-})
-
-describe('rankInsights', () => {
-  const sellOut: Insight = {
-    id: 's1',
-    type: 'likely_to_sell_out',
-    title: 'Likely to sell out',
-    subtitle: '1 spot left',
-    expTitle: 'Scuba',
-    slotId: 'slot1',
-    spotsLeft: 1,
-    bookingCount: 0,
-  }
-  const topPerformer: Insight = {
-    id: 't1',
-    type: 'top_performer',
-    title: 'Top performer',
-    subtitle: '5 bookings',
-    expTitle: 'Paragliding',
-    slotId: null,
-    spotsLeft: 0,
-    bookingCount: 5,
-  }
-  const offPeak: Insight = {
-    id: 'g1',
-    type: 'off_peak_gap',
-    title: 'Off-peak gap',
-    subtitle: 'no bookings',
-    expTitle: 'Camping',
-    slotId: 'slot2',
-    spotsLeft: 8,
-    bookingCount: 0,
-  }
-
-  it('ranks likely_to_sell_out first, then top_performer, then off_peak_gap', () => {
-    // Pass in deliberately shuffled order; ranking must be deterministic.
-    const ranked = rankInsights([offPeak, topPerformer, sellOut])
-    expect(ranked.map((i) => i.type)).toEqual([
-      'likely_to_sell_out',
-      'top_performer',
-      'off_peak_gap',
-    ])
-  })
-
-  it('preserves only the insights it is given (no fabrication)', () => {
-    expect(rankInsights([])).toEqual([])
-    expect(rankInsights([topPerformer]).map((i) => i.type)).toEqual(['top_performer'])
   })
 })
 

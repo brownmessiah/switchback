@@ -26,12 +26,25 @@ import {
 
 import { BookingCalendar, type BookingCalendarLabels } from './booking-calendar'
 import { TimeSlotList } from './time-slot-list'
-import type { BookingRailBracket, BookingRailClosure } from './booking-rail'
+import type {
+  BookingRailBracket,
+  BookingRailClosure,
+  BookingRailVariation,
+  BookingRailVariationLabels,
+} from './booking-rail'
 
 export interface BookingRailInteractiveProps {
   priceTableLabel: string
   /** Ordered 1-2 / 3-5 / 6+ brackets (already-translated labels + prices). */
   brackets: ReadonlyArray<BookingRailBracket>
+  /**
+   * Active pricing variations (issue #08). When non-empty the rail renders a
+   * selector; selecting one drives the per-person price + the submitted
+   * `variationId`. Empty / absent → no selector, brackets render as before.
+   */
+  variations?: ReadonlyArray<BookingRailVariation>
+  /** Already-translated variation-selector labels (present when variations exist). */
+  variationLabels?: BookingRailVariationLabels
   perPersonLabel: string
   /** Already-translated "Participants" selector label. */
   participantsLabel: string
@@ -105,6 +118,8 @@ function formatRupees(amount: number): string {
 export function BookingRailInteractive({
   priceTableLabel,
   brackets,
+  variations,
+  variationLabels,
   perPersonLabel,
   participantsLabel,
   totalLabel,
@@ -146,6 +161,16 @@ export function BookingRailInteractive({
   const [count, setCount] = useState(1)
   const disabled = Boolean(closure)
 
+  // Pricing-variation selection (issue #08). `null` = the standard group-pricing
+  // option (the brackets drive the price). When a variation is selected its flat
+  // per-person price replaces the bracket price and its id is submitted as
+  // `variationId` — the SERVER resolves + snapshots the authoritative price.
+  const activeVariations = variations ?? []
+  const hasVariations = activeVariations.length > 0
+  const [selectedVariationId, setSelectedVariationId] = useState<string | null>(null)
+  const selectedVariation =
+    activeVariations.find((v) => v.id === selectedVariationId) ?? null
+
   const selectedSlot = slots.find((s) => s.id === selectedSlotId) ?? null
   const slotRemaining = selectedSlot?.remaining ?? max
   const maxForSlot = Math.max(1, maxBookableParticipants(slotRemaining, max))
@@ -157,7 +182,18 @@ export function BookingRailInteractive({
     p35: brackets[1]?.priceRupees ?? brackets[0]?.priceRupees ?? 0,
     p6: brackets[2]?.priceRupees ?? brackets[0]?.priceRupees ?? 0,
   }
-  const price = computeBookingPrice(count, prices)
+  // When a variation is selected, its flat per-person price replaces the
+  // bracket price (issue #08). We feed that flat price into all three bracket
+  // slots so the Partial-pay Advance/balance split still derives from the same
+  // pure helper (the variation is flat per-person — no group-size laddering).
+  const effectivePrices: BracketPrices = selectedVariation
+    ? {
+        p12: selectedVariation.priceRupees,
+        p35: selectedVariation.priceRupees,
+        p6: selectedVariation.priceRupees,
+      }
+    : prices
+  const price = computeBookingPrice(count, effectivePrices)
   const activeBracket = bracketKeyFor(count)
   const bracketKeys = ['1_2', '3_5', '6_plus'] as const
 
@@ -198,7 +234,12 @@ export function BookingRailInteractive({
   const dec = () => setCount((c) => Math.max(1, c - 1))
   const inc = () => setCount((c) => Math.min(maxForSlot, c + 1))
   const slotParam = selectedSlotId ? `&slotId=${selectedSlotId}` : ''
-  const href = `${checkoutHref}${slotParam}&participants=${count}`
+  // Carry the selected variation (issue #08). The client passes ONLY the id —
+  // never a price — and the server resolves + snapshots the authoritative price.
+  const variationParam = selectedVariation
+    ? `&variationId=${encodeURIComponent(selectedVariation.id)}`
+    : ''
+  const href = `${checkoutHref}${slotParam}&participants=${count}${variationParam}`
 
   // `.min-tap` (Foundation A) raises the hit area to the 44px coarse-pointer
   // floor (DESIGN.md §8.2) on touch, leaving the fine-pointer 36px paint intact.
@@ -212,7 +253,10 @@ export function BookingRailInteractive({
     <div className="space-y-4">
       {/* Per-participant Group-size bracket price table (ADR-0011). The bracket
           the current count falls into is highlighted so the selector and the
-          table read as one control. */}
+          table read as one control. Hidden when a pricing variation is selected
+          (issue #08): the variation's flat per-person price replaces the
+          group-size brackets, so showing the bracket ladder would mislead. */}
+      {!selectedVariation && (
       <div>
         <p className="mb-2 text-xs text-muted-foreground">{priceTableLabel}</p>
         {/* No aria-label here: the visible caption above already labels the
@@ -249,6 +293,92 @@ export function BookingRailInteractive({
           })}
         </dl>
       </div>
+      )}
+
+      {/* Pricing-variation selector (issue #08) — shown ONLY when the Experience
+          has active variations. Selecting one drives the per-person price + the
+          submitted variationId; the SERVER resolves + snapshots the price. The
+          default "Standard (group pricing)" option keeps the bracket flow. */}
+      {hasVariations && variationLabels && (
+        <fieldset className="space-y-2">
+          <legend className="mb-1 text-xs font-medium text-foreground">
+            {variationLabels.heading}
+          </legend>
+          <div className="space-y-2">
+            {/* Standard / group-pricing option (no variationId). */}
+            <label
+              className={cn(
+                'flex cursor-pointer items-center justify-between gap-3 rounded-[var(--radius-md)] border p-2.5 text-sm',
+                selectedVariationId === null
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border',
+              )}
+            >
+              <span className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="pricing-variation"
+                  className="size-4"
+                  checked={selectedVariationId === null}
+                  disabled={disabled}
+                  onChange={() => setSelectedVariationId(null)}
+                  aria-label={variationLabels.standardOption}
+                />
+                <span className="font-medium">{variationLabels.standardOption}</span>
+              </span>
+            </label>
+
+            {activeVariations.map((variation) => {
+              const checked = selectedVariationId === variation.id
+              const durationSuffix =
+                variation.durationMinutes != null
+                  ? ` ${variationLabels.durationSuffix.replace(
+                      '{minutes}',
+                      String(variation.durationMinutes),
+                    )}`
+                  : ''
+              return (
+                <label
+                  key={variation.id}
+                  className={cn(
+                    'flex cursor-pointer items-start justify-between gap-3 rounded-[var(--radius-md)] border p-2.5 text-sm',
+                    checked ? 'border-primary bg-primary/5' : 'border-border',
+                  )}
+                >
+                  <span className="flex items-start gap-2">
+                    <input
+                      type="radio"
+                      name="pricing-variation"
+                      className="mt-0.5 size-4 shrink-0"
+                      checked={checked}
+                      disabled={disabled}
+                      onChange={() => setSelectedVariationId(variation.id)}
+                      aria-label={variation.name}
+                    />
+                    <span>
+                      <span className="block font-medium">{variation.name}</span>
+                      {variation.description && (
+                        <span className="block text-xs text-muted-foreground">
+                          {variation.description}
+                        </span>
+                      )}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-right tabular-nums">
+                    <span className="font-semibold">
+                      ₹{formatRupees(variation.priceRupees)}
+                    </span>
+                    <span className="ml-1 text-xs font-normal text-muted-foreground">
+                      {perPersonLabel}
+                      {durationSuffix}
+                    </span>
+                  </span>
+                </label>
+              )
+            })}
+          </div>
+        </fieldset>
+      )}
 
       {/* Participant stepper — drives the bracket + the live breakdown. */}
       <div className="flex items-center justify-between gap-3">

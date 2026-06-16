@@ -5,7 +5,7 @@ import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 
-import { executeCreateVendorProfile } from './actions'
+import { executeCreateVendorProfile } from './onboarding-core'
 
 describe('executeCreateVendorProfile', () => {
   let db: TestDB

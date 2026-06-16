@@ -2,6 +2,8 @@ import { eq, sql } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import { availabilitySlots } from '@/db/schema/availability-slots'
+import { bookings } from '@/db/schema/bookings'
+import { experiencePricingVariations } from '@/db/schema/experience-pricing-variations'
 import { experiences } from '@/db/schema/experiences'
 import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
@@ -276,5 +278,60 @@ describe('executeStartCheckout (Task 20)', () => {
     expect(result.ok).toBe(false)
     if (result.ok) throw new Error('unreachable')
     expect(result.error).toBe('rnpl_deferred')
+  })
+
+  // ---- Pricing variation threads to createBooking + snapshots its price (#08) ----
+  it('snapshots the SELECTED variation price (not the bracket) end-to-end', async () => {
+    // An active variation priced distinctly from every Group-size bracket.
+    const [variation] = await db
+      .insert(experiencePricingVariations)
+      .values({
+        experienceId,
+        name: 'Private session',
+        pricePerPerson: '3333.00',
+        isActive: true,
+      })
+      .returning({ id: experiencePricingVariations.id })
+
+    const result = await executeStartCheckout(
+      db,
+      makeInput({ participantCount: 2, variationId: variation!.id }),
+    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) throw new Error('unreachable')
+
+    const [bookingRow] = await db
+      .select({
+        snapshot: bookings.pricePerParticipantSnapshot,
+        basis: bookings.pricingBasisSnapshot,
+      })
+      .from(bookings)
+      .where(eq(bookings.id, result.bookingId))
+
+    // The SERVER resolved + snapshotted the variation price — NOT the 1-2
+    // bracket (2000) for a 2-person booking. The client never sent a price.
+    expect(Number(bookingRow!.snapshot)).toBe(3333)
+    expect(bookingRow!.basis).toBe(`pricing_variation:${variation!.id}`)
+    // 2 participants × 3333 = 6666 → full upfront charge.
+    expect(result.amountRupees).toBe(6666)
+  })
+
+  it('rejects a checkout whose variationId is INACTIVE (server guard, #08)', async () => {
+    const [variation] = await db
+      .insert(experiencePricingVariations)
+      .values({
+        experienceId,
+        name: 'Retired option',
+        pricePerPerson: '2500.00',
+        isActive: false,
+      })
+      .returning({ id: experiencePricingVariations.id })
+
+    const result = await executeStartCheckout(
+      db,
+      makeInput({ variationId: variation!.id }),
+    )
+    // resolvePricing THROWS on an inactive variation → no booking is created.
+    expect(result.ok).toBe(false)
   })
 })

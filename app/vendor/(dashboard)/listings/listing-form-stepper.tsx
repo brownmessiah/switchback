@@ -31,7 +31,13 @@ import {
 } from '@/lib/vendor/listing-completeness'
 import { listActivities } from '@/lib/activities/registry'
 import { listRegions } from '@/lib/regions/registry'
+import {
+  CANCELLATION_COPY,
+  type CancellationCopyPreset,
+} from '@/lib/payments/cancellation-copy'
 import type { GuideLanguage } from '@/lib/experiences/structured-schema'
+
+import { hasAtLeastOnePrice } from '@/lib/vendor/listing-price-validation'
 
 import {
   CheckboxGroup,
@@ -39,8 +45,10 @@ import {
   ItineraryEditor,
   LANGUAGE_OPTIONS,
   MONTHS,
+  PricingVariationsEditor,
   StringListEditor,
   type DifficultyValue,
+  type PricingVariationRow,
   type StructuredItineraryStep,
 } from './structured-fields'
 
@@ -75,7 +83,34 @@ export const PERMITS = [
   'adventure_sports_license',
 ] as const
 
-export type CancellationPreset = 'flexible' | 'moderate' | 'strict' | 'custom'
+// ADR-0005 revision 2026-06-16 (issue #09): `non_cancellable` joins the preset
+// union so the form value contract round-trips it from the DB row. The preset
+// PICKER UI + the per-preset plain-language line are wired in issue #10.
+export type CancellationPreset =
+  | 'flexible'
+  | 'moderate'
+  | 'strict'
+  | 'non_cancellable'
+  | 'custom'
+
+// The four named presets the Vendor picks from, in display order (ADR-0005:
+// Flexible → Moderate → Strict → Non-cancellable). `custom` is admin-gated and
+// NOT part of this radio set; it is preserved as an edit-only addendum below.
+// Each preset's plain-language rule is sourced from the single CANCELLATION_COPY
+// constant so the form and the customer detail can never drift (ADR-0005 wedge).
+const CANCELLATION_PRESET_ORDER: readonly CancellationCopyPreset[] = [
+  'flexible',
+  'moderate',
+  'strict',
+  'non_cancellable',
+] as const
+
+const CANCELLATION_PRESET_TITLE: Record<CancellationCopyPreset, string> = {
+  flexible: 'Flexible',
+  moderate: 'Moderate',
+  strict: 'Strict',
+  non_cancellable: 'Non-cancellable',
+}
 
 // The platform's single default commission rate (ADR-0008 /
 // PLATFORM_DEFAULT_COMMISSION_RATE = '20.00'). Shown transparently as a trust
@@ -95,6 +130,10 @@ export interface ListingFormValues {
   price35: string
   price6: string
   cancellationPreset: CancellationPreset
+  // ADR-0005 revision 2026-06-16 (issue #09/#10) — per-Experience reschedule
+  // right (PRD default ON). Threaded form→action; the create/edit cores persist
+  // it (the DB column also defaults true).
+  rescheduleAllowed: boolean
   paymentModes: string[]
   isCombo: boolean
   requiredPermits: string[]
@@ -115,6 +154,10 @@ export interface ListingFormValues {
   exclusions: string[]
   whatToBring: string[]
   itinerary: StructuredItineraryStep[]
+  // ── Named pricing variations (ADR-0011 revision 2026-06-16, issue #08) ──────
+  // Each row is a distinct priced option offered alongside the Group-size base
+  // price. Scalars stay as raw input strings (coerced in the submit mapper).
+  pricingVariations: PricingVariationRow[]
 }
 
 export interface ListingSubmitResult {
@@ -232,6 +275,39 @@ export function toStructuredSubmitFields(values: ListingFormValues): StructuredS
   }
 }
 
+/**
+ * A coerced pricing variation as the create/edit actions expect it: numeric
+ * price as a string (numeric(12,2)), duration as a number/null, optional id.
+ * Empty / unnamed / unpriced rows are dropped before submit — a half-typed row
+ * is never persisted. The shared Zod schema is the authoritative bound check.
+ */
+export interface PricingVariationSubmit {
+  id?: string
+  name: string
+  description: string | null
+  pricePerPerson: string
+  durationMinutes: number | null
+  isActive: boolean
+}
+
+export function toPricingVariationsSubmit(
+  values: ListingFormValues,
+): PricingVariationSubmit[] {
+  return values.pricingVariations
+    .filter((v) => v.name.trim() !== '' && v.pricePerPerson.trim() !== '')
+    .map((v) => {
+      const duration = v.durationMinutes.trim()
+      return {
+        ...(v.id ? { id: v.id } : {}),
+        name: v.name.trim(),
+        description: v.description.trim() === '' ? null : v.description.trim(),
+        pricePerPerson: v.pricePerPerson.trim(),
+        durationMinutes: duration === '' ? null : Number(duration),
+        isActive: v.isActive,
+      }
+    })
+}
+
 export function ListingFormStepper({
   mode,
   initialValues,
@@ -292,8 +368,19 @@ export function ListingFormStepper({
       if (!values.region) return 'Choose a region to continue.'
     }
     if (id === 'pricing') {
-      if (!isPositive(values.price12)) {
-        return 'Enter a positive price for the 1-2 guests bracket.'
+      // The KEY rule (issue #08): a base (1-2) price OR ≥1 ACTIVE pricing
+      // variation must exist. A blank base is allowed only when an active
+      // variation carries the price.
+      if (
+        !hasAtLeastOnePrice({
+          basePrice: values.price12,
+          variations: values.pricingVariations,
+        })
+      ) {
+        return 'Add a base price or at least one active pricing variation.'
+      }
+      if (values.price12 && !isPositive(values.price12)) {
+        return 'The 1-2 guests price must be a positive amount.'
       }
       if (values.price35 && !isPositive(values.price35)) {
         return 'The 3-5 guests price must be a positive amount.'
@@ -615,7 +702,6 @@ export function ListingFormStepper({
                   onChange={(e) => update('price12', e.target.value)}
                   placeholder="2500"
                   min={1}
-                  required
                 />
                 <p className="text-xs text-muted-foreground">/ person</p>
               </div>
@@ -651,6 +737,17 @@ export function ListingFormStepper({
                 If left blank, 3-5 and 6+ prices default to the 1-2 price.
               </p>
             )}
+
+            {/* ── Pricing variations (issue #08) ─────────────────────────────
+                Distinct priced options offered alongside the brackets. At least
+                one active variation OR a base price is required (validated on
+                Continue / Save). */}
+            <div className="border-t pt-4">
+              <PricingVariationsEditor
+                variations={values.pricingVariations}
+                onChange={(next) => update('pricingVariations', next)}
+              />
+            </div>
           </CardContent>
         </Card>
       )}
@@ -665,33 +762,100 @@ export function ListingFormStepper({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label>Cancellation policy</Label>
-              <Select
-                value={values.cancellationPreset}
-                onValueChange={(v) =>
-                  update('cancellationPreset', (v ?? 'flexible') as CancellationPreset)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="flexible">
-                    Flexible — free cancellation up to 24h before
-                  </SelectItem>
-                  <SelectItem value="moderate">
-                    Moderate — free cancellation up to 7 days before
-                  </SelectItem>
-                  <SelectItem value="strict">
-                    Strict — 50% refund up to 7 days before
-                  </SelectItem>
-                  {mode === 'edit' && (
-                    <SelectItem value="custom">Custom — requires admin approval</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Cancellation policy — preset radios (ADR-0005). Each option shows
+                its plain-language rule from the single CANCELLATION_COPY source,
+                so the form and the customer detail render identical figures.
+                NO free-form refund-number inputs (the transparency wedge). */}
+            <fieldset className="space-y-3" role="radiogroup" aria-label="Cancellation policy">
+              <legend className="text-sm font-medium">Cancellation policy</legend>
+              <div className="space-y-2">
+                {CANCELLATION_PRESET_ORDER.map((preset) => {
+                  const checked = values.cancellationPreset === preset
+                  const isNonCancel = preset === 'non_cancellable'
+                  return (
+                    <label
+                      key={preset}
+                      className={[
+                        'flex cursor-pointer gap-3 rounded-[var(--radius-md)] border p-3 transition-colors',
+                        checked ? 'border-primary bg-primary/5' : 'border-input hover:bg-muted/50',
+                      ].join(' ')}
+                    >
+                      <input
+                        type="radio"
+                        name="cancellationPreset"
+                        value={preset}
+                        checked={checked}
+                        onChange={() =>
+                          update('cancellationPreset', preset as CancellationPreset)
+                        }
+                        className="mt-0.5 size-4 shrink-0 border-input"
+                      />
+                      <span className="space-y-1">
+                        <span className="block text-sm font-medium">
+                          {CANCELLATION_PRESET_TITLE[preset]}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          {CANCELLATION_COPY[preset].rule}
+                        </span>
+                        {isNonCancel && (
+                          <span className="block text-xs text-muted-foreground">
+                            Customers cannot cancel after payment. Outvers may still handle
+                            exceptional refunds.
+                          </span>
+                        )}
+                      </span>
+                    </label>
+                  )
+                })}
+
+                {/* `custom` stays admin-gated and edit-only (ADR-0005). It is a
+                    distinct, pre-existing path — surfaced as a radio here so a
+                    Vendor whose listing already carries it can keep it, but it is
+                    not part of the standard four-preset set above. */}
+                {mode === 'edit' && (
+                  <label
+                    className={[
+                      'flex cursor-pointer gap-3 rounded-[var(--radius-md)] border p-3 transition-colors',
+                      values.cancellationPreset === 'custom'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-input hover:bg-muted/50',
+                    ].join(' ')}
+                  >
+                    <input
+                      type="radio"
+                      name="cancellationPreset"
+                      value="custom"
+                      checked={values.cancellationPreset === 'custom'}
+                      onChange={() => update('cancellationPreset', 'custom')}
+                      className="mt-0.5 size-4 shrink-0 border-input"
+                    />
+                    <span className="space-y-1">
+                      <span className="block text-sm font-medium">Custom</span>
+                      <span className="block text-xs text-muted-foreground">
+                        Requires admin approval.
+                      </span>
+                    </span>
+                  </label>
+                )}
+              </div>
+            </fieldset>
+
+            {/* Reschedule-allowed toggle (ADR-0005 revision, issue #09/#10).
+                PRD default ON. Snapshotted onto the Booking at create. */}
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={values.rescheduleAllowed}
+                onChange={(e) => update('rescheduleAllowed', e.target.checked)}
+                className="mt-0.5 rounded border-input"
+              />
+              <span>
+                <span className="font-medium">Reschedule allowed</span>
+                <span className="block text-xs text-muted-foreground">
+                  Customers may request to move a Booking to a different slot.
+                </span>
+              </span>
+            </label>
 
             <div className="space-y-2">
               <p className="text-sm font-medium">Payment modes</p>

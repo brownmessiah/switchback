@@ -5,6 +5,9 @@ import { notFound } from 'next/navigation'
 import type * as schema from '@/db/schema'
 import { adminProfiles } from '@/db/schema/admin-profiles'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
+import { vendorTeamMembers } from '@/db/schema/vendor-team-members'
+
+import { can, type VendorPermission, type VendorRole } from './vendor-permissions'
 
 /**
  * Drizzle db or transaction handle. Same shape as DBOrTx in
@@ -134,4 +137,103 @@ export async function requireVendorProfile(
     const { redirect } = await import('next/navigation')
     redirect('/vendor/onboarding')
   }
+}
+
+// ── Vendor team-member access gate (ADR-0006 rev 2026-06-15, issue #03) ──
+//
+// The Vendor analogue of the admin gate above. `resolveVendorRole` answers
+// "what role does `actingUserId` hold on the `vendorUserId` account?", then
+// `requireVendorAccess` (throwing — for reads) and `hasVendorAccess` (boolean
+// — for Server Actions) authorize against the pure matrix in
+// `./vendor-permissions`. Owner is implicit (resolved from `vendor_profiles`,
+// `closed_at IS NULL`), never a `vendor_team_members` row. Inactive members
+// and non-members resolve to null (denied).
+
+export type { VendorPermission, VendorRole } from './vendor-permissions'
+
+/**
+ * Resolve the Vendor-side role that `actingUserId` holds on the Vendor account
+ * identified by `vendorUserId`.
+ *
+ *   1. `actingUserId === vendorUserId` AND an ACTIVE vendor_profiles row
+ *      (closed_at IS NULL) → `'owner'` (Owner is implicit, never stored).
+ *   2. else an ACTIVE vendor_team_members row for (vendorUserId, actingUserId)
+ *      → its `role`.
+ *   3. else `null` (denied). An INACTIVE member resolves to null — the
+ *      mechanism for deactivation-without-deletion (ADR-0006 Story 36).
+ *
+ * For today's single-seat routes `vendorUserId === actingUserId`, so this
+ * always resolves to Owner = full access → zero behavior change.
+ */
+export async function resolveVendorRole(
+  db: DBOrTx,
+  vendorUserId: string,
+  actingUserId: string,
+): Promise<VendorRole | null> {
+  if (actingUserId === vendorUserId) {
+    const [vendor] = await db
+      .select({ userId: vendorProfiles.userId })
+      .from(vendorProfiles)
+      .where(and(eq(vendorProfiles.userId, vendorUserId), isNull(vendorProfiles.closedAt)))
+      .limit(1)
+
+    if (vendor) return 'owner'
+    // Fall through: a closed/absent profile is not an owner; the acting user
+    // may still be a team member of someone else's account (not this one).
+  }
+
+  const [member] = await db
+    .select({ role: vendorTeamMembers.role })
+    .from(vendorTeamMembers)
+    .where(
+      and(
+        eq(vendorTeamMembers.vendorUserId, vendorUserId),
+        eq(vendorTeamMembers.memberUserId, actingUserId),
+        eq(vendorTeamMembers.status, 'active'),
+      ),
+    )
+    .limit(1)
+
+  return member?.role ?? null
+}
+
+/**
+ * Verify that `actingUserId` may perform `permission` on the `vendorUserId`
+ * account; throws Next.js `notFound()` if denied. The throwing variant for
+ * page/layout/Server-Component reads (mirrors {@link requirePermission}).
+ *
+ * `vendorUserId` defaults to `actingUserId` (the single-seat case: a Vendor
+ * accesses their own account).
+ */
+export async function requireVendorAccess(
+  db: DBOrTx,
+  actingUserId: string,
+  permission: VendorPermission,
+  vendorUserId: string = actingUserId,
+): Promise<void> {
+  const role = await resolveVendorRole(db, vendorUserId, actingUserId)
+  if (!role || !can(role, permission)) {
+    notFound()
+  }
+}
+
+/**
+ * Non-throwing variant of {@link requireVendorAccess} for use inside Vendor
+ * Server Actions (write boundary), which return a typed result envelope rather
+ * than calling `notFound()` (mirrors {@link hasAdminPermission}).
+ *
+ * `vendorUserId` defaults to `actingUserId` (single-seat case).
+ *
+ * @returns `true` if `actingUserId` holds `permission` on the account,
+ *          `false` otherwise (no role resolved, or permission denied).
+ */
+export async function hasVendorAccess(
+  db: DBOrTx,
+  actingUserId: string,
+  permission: VendorPermission,
+  vendorUserId: string = actingUserId,
+): Promise<boolean> {
+  const role = await resolveVendorRole(db, vendorUserId, actingUserId)
+  if (!role) return false
+  return can(role, permission)
 }

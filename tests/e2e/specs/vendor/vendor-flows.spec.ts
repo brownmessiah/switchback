@@ -1490,7 +1490,7 @@ async function gotoCalendarMonth(
 // 6. Bookings page — smoke test
 // ---------------------------------------------------------------------------
 test.describe('Vendor bookings', () => {
-  test('loads bookings page with heading and table structure', async ({
+  test('loads decluttered bookings page: title, summary cards, status tabs, clean card + detail drawer', async ({
     page,
   }) => {
     const response = await page.goto('/vendor/bookings')
@@ -1500,8 +1500,10 @@ test.describe('Vendor bookings', () => {
     await expect(h1).toBeVisible()
     await expect(h1).toContainText('Bookings')
 
-    // Count subtitle is visible
-    await expect(page.getByText(/\d+ booking/)).toBeVisible()
+    // ── #02: exact subtitle.
+    await expect(
+      page.getByText('Review and manage incoming bookings'),
+    ).toBeVisible()
 
     // ── #80 variant B (tri-tab shell): the shared Bookings · Payouts · Reviews
     //    nav is present, with Bookings as the active tab on this route.
@@ -1519,17 +1521,43 @@ test.describe('Vendor bookings', () => {
       tabs.getByRole('link', { name: /Bookings/i }),
     ).toHaveAttribute('aria-current', 'page')
 
-    // ── #80: the A3 bookings table is widened to Gross · Commission · Net
-    //    (the as-is "no commission/net" defect). At least one booking row, and
-    //    each carries a Commission + Net cell with tabular figures.
+    // ── #02: four status summary cards (Pending / Confirmed / Completed /
+    //    Cancelled), each carrying a numeric count.
+    const summaryCards = page.getByTestId('bookings-summary-cards')
+    await expect(summaryCards).toBeVisible()
+    for (const bucket of ['pending', 'confirmed', 'completed', 'cancelled']) {
+      await expect(
+        summaryCards.locator(`[data-summary-bucket="${bucket}"]`),
+      ).toBeVisible()
+    }
+
+    // ── #02: status filter tab row incl. "All". Switch to "All" so a booking
+    //    row is visible regardless of which bucket the seeded data lands in.
+    const statusTabs = page.getByTestId('bookings-status-tabs')
+    await expect(statusTabs).toBeVisible()
+    await statusTabs.locator('[data-status-tab="all"]').click()
+
+    // ── #02: each booking renders as ONE clean horizontal card — NO
+    //    gross/commission/net columns on the list itself (that trail moved to
+    //    the drawer). The card shows essentials + a status badge.
     const bookingRows = page.getByTestId('booking-row')
     expect(await bookingRows.count()).toBeGreaterThanOrEqual(1)
     const firstRow = bookingRows.first()
-    await expect(firstRow.getByTestId('booking-gross')).toContainText('₹')
-    await expect(firstRow.getByTestId('booking-commission')).toContainText('₹')
-    await expect(firstRow.getByTestId('booking-net')).toContainText('₹')
-    // Money cells use tabular figures (DESIGN.md money-path requirement).
-    await expect(firstRow.getByTestId('booking-net')).toHaveClass(/tabular-nums/)
+    await expect(firstRow.getByTestId('booking-status')).toBeVisible()
+    // The deduction trail is NOT on the list card.
+    await expect(firstRow.getByTestId('booking-payout-trail')).toHaveCount(0)
+
+    // ── #02: "View Details" opens a drawer carrying the full payout trail
+    //    (Gross → Commission → GST → TDS → TCS → Net), re-derived via the
+    //    payout calculator — the only place the trail appears now.
+    await firstRow.getByTestId('view-details-button').click()
+    const drawer = page.getByTestId('booking-detail-drawer')
+    await expect(drawer).toBeVisible()
+    const trail = drawer.getByTestId('booking-payout-trail')
+    await expect(trail).toBeVisible()
+    await expect(trail.getByText('Gross Total')).toBeVisible()
+    await expect(trail.getByText('Net Payout')).toBeVisible()
+    await expect(trail).toContainText('₹')
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/vendor-bookings.png',
@@ -2052,15 +2080,16 @@ test.describe('Vendor booking management (#19)', () => {
       page.getByText(new RegExp(`${slaScore.toFixed(1)}%`)),
     ).toBeVisible()
 
-    // ── C "Insight-First Growth Hub" rail (#74) — REAL-data insights ──────
     // A1: the business verified-Vendor badge surfaces (business KYC tier).
     await expect(page.getByTestId('verified-vendor-badge')).toBeVisible()
 
-    // C: the ranked Insights rail renders with at least the top-performer
-    // insight — the business Vendor owns ≥5 Bookings across Experiences, so a
-    // most-booked Experience is always derivable (no fabrication).
-    await expect(page.getByTestId('insights-rail')).toBeVisible()
-    await expect(page.getByTestId('insight-top_performer')).toBeVisible()
+    // Issue #01 (dashboard simplification): the Insights rail, Action-items
+    // panel, and Pending-actions KPI were removed. The two trend charts remain
+    // as the core operational signal and must still render.
+    await expect(page.getByText('Bookings (last 30 days)')).toBeVisible()
+    await expect(page.getByText('Revenue (last 30 days)')).toBeVisible()
+    // The removed Pending-actions KPI must no longer be on the overview.
+    await expect(page.getByText('Pending actions')).toHaveCount(0)
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/vendor-dashboard-stats.png',

@@ -9,11 +9,12 @@
  *   (b) DIFFERENT activities in the SAME region,
  *   (c) popular beginner-friendly (easy) alternatives.
  *
- * Asserted on the seeded Rishikesh rafting PDP. Under the demo catalog
- * (db/data/demo-catalog.ts) Rishikesh has rafting + trekking + rock-climbing,
- * and Manali has its own rafting listing — so the rafting PDP shows BOTH a
+ * Asserted on the seeded Rishikesh rafting PDP (`rishikesh-rafting-grade-iii`,
+ * db/seed.ts). The e2e catalog (db/seed-extras.ts) gives Rishikesh rafting +
+ * bungee + camping + kayaking, and Leh-Ladakh has its own rafting listing
+ * (`leh-ladakh-rafting-zanskar-grade-iv`) — so the rafting PDP shows BOTH a
  * same-region different-activity card AND the same-activity-different-region
- * ("rafting in Manali") card, matching the acceptance criterion.
+ * (Zanskar rafting) card, matching the acceptance criterion.
  *
  * Empty-safety (section hidden when the loader returns no candidate) is pinned
  * deterministically in the loader unit test (lib/experiences/similar.test.ts:
@@ -25,8 +26,8 @@
 
 import { test, expect } from '../../fixtures/devtools'
 
-// The seeded Rishikesh rafting Experience (demo catalog).
-const PDP = '/experience/rishikesh-shivpuri-nim-beach-16km-rafting'
+// The seeded Rishikesh rafting Experience (db/seed.ts).
+const PDP = '/experience/rishikesh-rafting-grade-iii'
 
 test.describe('PDP "Similar experiences" (issue 16)', () => {
   test('renders the section with a heading and at least one card', async ({
@@ -53,22 +54,22 @@ test.describe('PDP "Similar experiences" (issue 16)', () => {
     const section = page.locator('[data-testid="similar-experiences"]')
     await expect(section).toBeVisible()
 
-    // (a) same activity (rafting), different region — "rafting in Manali".
+    // (a) same activity (rafting), different region — Zanskar rafting (Leh-Ladakh).
     await expect(
-      section.locator('a[href="/experience/manali-beas-rafting-pirdi-jhiri"]'),
+      section.locator(
+        'a[href="/experience/leh-ladakh-rafting-zanskar-grade-iv"]',
+      ),
     ).toBeVisible()
 
     // (b) same region (Rishikesh), different activity — a non-rafting Rishikesh card.
     const sameRegionDifferentActivity = section
       .locator('a[href^="/experience/rishikesh-"]')
-      .filter({ hasText: /trek|rapp|rock|climb/i })
+      .filter({ hasText: /kayak|bungee|camping/i })
     expect(await sameRegionDifferentActivity.count()).toBeGreaterThan(0)
 
     // The current Experience is NEVER recommended to itself.
     await expect(
-      section.locator(
-        'a[href="/experience/rishikesh-shivpuri-nim-beach-16km-rafting"]',
-      ),
+      section.locator('a[href="/experience/rishikesh-rafting-grade-iii"]'),
     ).toHaveCount(0)
   })
 

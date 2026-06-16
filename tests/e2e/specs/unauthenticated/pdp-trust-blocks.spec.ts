@@ -53,20 +53,28 @@ test.describe('PDP trust/clarity blocks (issue 13)', () => {
     await expect(section).toContainText('instantly')
   })
 
-  test('the booking box shows Advance, balance, and a refundable/cancellation pointer', async ({
-    page,
-  }) => {
-    await page.goto(PDP)
+  // The decision-complete booking Card is the `lg`-only desktop side-rail
+  // (`#booking` is `hidden lg:block`, ADR-0018 / DESIGN.md §8.4); the mobile /
+  // tablet tier is served by a bottom-bar → Sheet. Pin a desktop viewport so
+  // the side-rail breakdown is visible.
+  test.describe('desktop booking side-rail', () => {
+    test.use({ viewport: { width: 1280, height: 900 } })
 
-    // The desktop sticky side-rail carries the live breakdown.
-    const rail = page.locator('#booking')
-    await expect(rail).toBeVisible()
+    test('the booking box shows Advance, balance, and a refundable/cancellation pointer', async ({
+      page,
+    }) => {
+      await page.goto(PDP)
 
-    // Advance (25%) + balance (T-24h) split is shown for the partial-pay listing.
-    await expect(rail.getByText(/Advance due now/i)).toBeVisible()
-    await expect(rail.getByText(/Balance at T-24h/i)).toBeVisible()
-    // Refundable amount points to the cancellation policy (no fabricated number,
-    // and never "Free cancellation" vocabulary drift).
-    await expect(rail.getByText(/cancellation policy/i).first()).toBeVisible()
+      // The desktop sticky side-rail carries the live breakdown.
+      const rail = page.locator('#booking')
+      await expect(rail).toBeVisible()
+
+      // Advance (25%) + balance (T-24h) split is shown for the partial-pay listing.
+      await expect(rail.getByText(/Advance due now/i)).toBeVisible()
+      await expect(rail.getByText(/Balance at T-24h/i)).toBeVisible()
+      // Refundable amount points to the cancellation policy (no fabricated number,
+      // and never "Free cancellation" vocabulary drift).
+      await expect(rail.getByText(/cancellation policy/i).first()).toBeVisible()
+    })
   })
 })

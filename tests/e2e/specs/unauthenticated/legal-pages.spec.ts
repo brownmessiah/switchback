@@ -48,10 +48,11 @@ test.describe('Legal pages — public, crawlable, pending-review drafts', () => 
       ).toBeVisible()
 
       // Indexable: no robots noindex in the served HTML, and the title is
-      // server-rendered (crawlable).
+      // server-rendered (crawlable). The raw HTML HTML-escapes "&" → "&amp;"
+      // (e.g. "Refund & Cancellation Policy"), so unescape before comparing.
       const html = await response!.text()
       expect(html).not.toMatch(/<meta[^>]+name=["']robots["'][^>]*noindex/i)
-      expect(html).toContain(title)
+      expect(html.replace(/&amp;/g, '&')).toContain(title)
 
       // BreadcrumbList JSON-LD emitted.
       const ld = page.locator('script[type="application/ld+json"]')
@@ -80,9 +81,14 @@ test.describe('Legal pages — public, crawlable, pending-review drafts', () => 
     page,
   }) => {
     await page.goto('/refund-cancellation')
-    await expect(
-      page.getByRole('link', { name: /cancellation policy/i }).first(),
-    ).toHaveAttribute('href', '/cancellation-policy')
+    // The CTA copy is "See the full policy and refund calculator"; locate it by
+    // its canonical href so a copy tweak does not break the link assertion.
+    const calculatorLink = page.locator('a[href="/cancellation-policy"]')
+    await expect(calculatorLink.first()).toBeVisible()
+    await expect(calculatorLink.first()).toHaveAttribute(
+      'href',
+      '/cancellation-policy',
+    )
   })
 
   test('all four legal routes are in the en sitemap', async ({ page }) => {

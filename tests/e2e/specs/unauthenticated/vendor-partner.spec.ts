@@ -77,11 +77,11 @@ test.describe('/vendor-partner — public partner page', () => {
     ).toHaveAttribute('href', '/vendor-partner')
   })
 
-  test('hero "List Your Experience" CTA routes to /vendor-partner', async ({ page }) => {
-    await page.goto('/')
-    const cta = page.getByRole('link', { name: 'List Your Experience' })
-    await expect(cta).toHaveAttribute('href', '/vendor-partner')
-  })
+  // (The home page no longer carries a hero "List Your Experience" CTA — the
+  // redesign moved the supply-side CTA permanently into the header
+  // (components/site-header.tsx) and footer, both asserted by the
+  // "nav + footer …" test above. The old hero-CTA assertion was stale and is
+  // fully covered there, so it is removed.)
 
   test('is indexable (no noindex), in the en sitemap, and not robots-disallowed', async ({
     page,

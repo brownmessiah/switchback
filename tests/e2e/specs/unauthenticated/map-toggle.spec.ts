@@ -56,8 +56,12 @@ test.describe('List/map toggle + Leaflet map (issue 11)', () => {
 
     const map = page.getByTestId('experience-map')
     await expect(map).toBeVisible()
-    // At least one price pin is rendered (the seeded rishikesh inventory).
-    await expect(map.locator('.experience-price-pin').first()).toBeVisible()
+    // At least one price pin is rendered (the seeded rishikesh inventory). The
+    // Leaflet marker (`.experience-price-pin`) is a 0×0 divIcon, so assert on
+    // its visible label child (components/maps/experience-map.tsx).
+    await expect(
+      map.locator('.experience-price-pin__label').first(),
+    ).toBeVisible()
 
     // Honest, city-level disclaimer is present (coordinate honesty, D0).
     await expect(page.getByTestId('map-city-level-note')).toBeVisible()
@@ -71,8 +75,10 @@ test.describe('List/map toggle + Leaflet map (issue 11)', () => {
     const map = page.getByTestId('experience-map')
     await expect(map).toBeVisible()
 
-    // Click the first price pin to open its popup mini-card.
-    await map.locator('.experience-price-pin').first().click()
+    // Click the first price pin to open its popup mini-card. The marker is a
+    // 0×0 divIcon, so click its visible label child — the click bubbles to the
+    // Leaflet marker and opens the popup.
+    await map.locator('.experience-price-pin__label').first().click()
 
     const miniCard = page.getByTestId('map-mini-card')
     await expect(miniCard).toBeVisible()

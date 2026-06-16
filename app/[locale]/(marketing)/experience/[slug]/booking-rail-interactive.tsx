@@ -139,10 +139,25 @@ export function BookingRailInteractive({
 
   // Surface a single error toast on mount when the Availability feed failed to
   // load (issue 24). The pickers still render with whatever slots resolved.
+  //
+  // a11y (ADR-0018): a load failure deserves ASSERTIVE urgency. sonner's only
+  // live region is the container's `aria-live="polite"` and it exposes no
+  // per-toast role/assertive option (v2), so we render the message body as its
+  // own `role="alert"` element — screen readers interrupt, and the toast is
+  // discoverable via `getByRole('alert')`. The toast chrome (close button,
+  // styling) is unchanged.
+  //
+  // The toast is deferred to a macrotask: this island's mount `useEffect` can
+  // run BEFORE the root-layout <Toaster> subscribes to sonner's ToastState on
+  // first hydration, in which case a synchronous `toast.error()` is enqueued
+  // with no subscriber and silently dropped. Firing it on the next tick lets the
+  // Toaster subscribe first, so the on-mount error reliably paints.
   useEffect(() => {
-    if (availabilityError) {
-      toast.error(toastLabels.availabilityError)
-    }
+    if (!availabilityError) return
+    const id = setTimeout(() => {
+      toast.error(<span role="alert">{toastLabels.availabilityError}</span>)
+    }, 0)
+    return () => clearTimeout(id)
   }, [availabilityError, toastLabels.availabilityError])
   const max = Math.max(1, maxParticipants)
   const byDate = slotsByDate(slots)

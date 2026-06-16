@@ -432,12 +432,6 @@ test.describe('Revenue spine: checkout → confirmation', () => {
   test('completes a partial-pay checkout and locks all booking invariants', async ({
     page,
   }) => {
-    // Capacity baseline before the booking, for the decrement assertion.
-    const slotBefore = await getOpenSlotForExperienceSlug(RAFTING_SLUG)
-    expect(slotBefore, 'seeded rafting slot must exist').toBeTruthy()
-    const capacityTakenBefore = (await getSlotCapacity(slotBefore!.slotId))!
-      .capacityTaken
-
     // Browser-side Razorpay mock — fires handler.success on open().
     await mockRazorpayCheckout(page)
 
@@ -452,18 +446,57 @@ test.describe('Revenue spine: checkout → confirmation', () => {
     await raftingLink.click()
     await expect(page.locator('h1')).toBeVisible()
 
-    // Book now → checkout.
-    const bookNow = page.locator('a:has-text("Book now")')
+    // The partial-pay worked example (ADR-0001) requires a slot ≥48h out — a
+    // <48h slot is coerced to full_upfront. The rich seeded calendar (~90 days)
+    // surfaces near-term dates too, and the rail auto-selects the FIRST bookable
+    // date, which can be <48h away. Drive the desktop rail's calendar to the
+    // furthest-out available day + its first time slot (guaranteed ≥48h),
+    // mirroring the PDP trust-rail spec, so the booking is genuinely partial-pay.
+    const rail = page.locator('#booking')
+    await expect(rail).toBeVisible()
+    await rail
+      .getByTestId('booking-calendar')
+      .locator('button[data-testid^="cal-day-"]:not([disabled])')
+      .last()
+      .click()
+    await rail
+      .getByTestId('time-slot-list')
+      .locator('button[data-testid^="time-slot-"]:not([disabled])')
+      .first()
+      .click()
+
+    // The booking slot is whichever the rail has selected, carried in the
+    // "Book now" href. With the rich seeded calendar the UI-selected slot is NOT
+    // the earliest-open slot a DB query would return, so derive the baseline
+    // from the SAME slot the UI is about to book — read it from the href, then
+    // snapshot its capacity. This ties the decrement assertion to the exact slot
+    // the booking lands on (a stronger invariant than a separate query).
+    const bookNow = rail.locator('a:has-text("Book now")')
     await expect(bookNow).toBeVisible()
+    const bookNowHref = await bookNow.getAttribute('href')
+    expect(bookNowHref, 'Book now must carry a slotId').toBeTruthy()
+    const selectedSlotId = new URL(bookNowHref!, 'http://localhost').searchParams.get(
+      'slotId',
+    )
+    expect(selectedSlotId, 'Book now href must include a slotId').toBeTruthy()
+    const capacityTakenBefore = (await getSlotCapacity(selectedSlotId!))!
+      .capacityTaken
+
+    // Book now → checkout.
     await bookNow.click()
     await expect(page.locator('h1')).toContainText('Checkout')
 
     // Worked example surfaced in the UI's persistent order-summary rail:
     // ₹1,500 total, ₹375 due now (1 participant — the rail's default count).
-    // The rail is visible on BOTH steps.
-    await expect(page.getByText('Order summary')).toBeVisible()
+    // The rail is visible on BOTH steps. The checkout renders TWO summaries — a
+    // `md:hidden` mobile hoist (DOM-first) and the `hidden md:block` desktop
+    // "Order summary" aside — so a page-wide `.first()` resolves to the hidden
+    // mobile total at this desktop viewport. Scope the Total assertion to the
+    // visible desktop aside so it targets the rendered instance.
+    const orderSummary = page.locator('aside[aria-label="Order summary"]')
+    await expect(orderSummary).toBeVisible()
     await expect(
-      page.getByText(`₹${EXPECTED_GROSS.toLocaleString('en-IN')}`).first(),
+      orderSummary.getByText(`₹${EXPECTED_GROSS.toLocaleString('en-IN')}`).first(),
     ).toBeVisible()
 
     // Guided-stepper (#70 / Direction A): Pay lives on STEP 2. The Revenue-spine
@@ -497,7 +530,7 @@ test.describe('Revenue spine: checkout → confirmation', () => {
     const booking = await getBooking(bookingId)
     expect(booking, 'booking row must exist').toBeTruthy()
     expect(booking!.customerUserId).toBe('u_seed_customer')
-    expect(booking!.slotId).toBe(slotBefore!.slotId)
+    expect(booking!.slotId).toBe(selectedSlotId)
     expect(booking!.participantCount).toBe(DEFAULT_PARTICIPANTS)
     expect(booking!.state).toBe('confirmed')
 
@@ -513,7 +546,7 @@ test.describe('Revenue spine: checkout → confirmation', () => {
     expect(booking!.commissionBasisSnapshot.length).toBeGreaterThan(0)
 
     // ── DB invariant 3: Capacity decremented atomically ──
-    const slotAfter = await getSlotCapacity(slotBefore!.slotId)
+    const slotAfter = await getSlotCapacity(selectedSlotId!)
     expect(slotAfter!.capacityTaken).toBe(
       capacityTakenBefore + DEFAULT_PARTICIPANTS,
     )

@@ -35,9 +35,15 @@ test.describe('Toast system (public surface)', () => {
     await expect(heart).toBeVisible()
     await heart.click()
 
-    // Accessible, polite info toast (role=status) — sonner announces it and
-    // gives it a dismiss button.
-    const toast = page.getByRole('status').filter({ hasText: /sign in/i }).first()
+    // Accessible info toast. sonner announces toasts through its single
+    // `aria-live="polite"` region (the container <section>); the individual
+    // toast <li> carries `[data-sonner-toast]` but no `role`, so a
+    // `getByRole('status')` would match nothing. Assert the sign-in copy on the
+    // sonner toast element itself (mirrors customer/toast.spec.ts).
+    const toast = page
+      .locator('[data-sonner-toast]')
+      .filter({ hasText: /sign in/i })
+      .first()
     await expect(toast).toBeVisible()
   })
 

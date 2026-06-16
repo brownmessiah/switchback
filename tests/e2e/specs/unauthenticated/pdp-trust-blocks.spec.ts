@@ -69,6 +69,24 @@ test.describe('PDP trust/clarity blocks (issue 13)', () => {
       const rail = page.locator('#booking')
       await expect(rail).toBeVisible()
 
+      // The rail only shows the 25% Advance / T-24h balance split when the
+      // SELECTED slot is ≥48h out — ADR-0001's carve-out (resolveDisplaySplit)
+      // coerces a <48h slot to full-upfront (Advance == Total, no balance line).
+      // The seed's soonest bookable date can be <48h away, so drive the date
+      // picker to the furthest-out available day (guaranteed ≥48h) + its first
+      // time slot FIRST, then assert the split (mirrors public-pages.spec.ts).
+      const availableDay = rail
+        .getByTestId('booking-calendar')
+        .locator('button[data-testid^="cal-day-"]:not([disabled])')
+        .last()
+      await availableDay.click()
+
+      const availableSlot = rail
+        .getByTestId('time-slot-list')
+        .locator('button[data-testid^="time-slot-"]:not([disabled])')
+        .first()
+      await availableSlot.click()
+
       // Advance (25%) + balance (T-24h) split is shown for the partial-pay listing.
       await expect(rail.getByText(/Advance due now/i)).toBeVisible()
       await expect(rail.getByText(/Balance at T-24h/i)).toBeVisible()

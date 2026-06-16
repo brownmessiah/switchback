@@ -119,10 +119,14 @@ test.describe('Contact form', () => {
   test('happy path: submit creates a support_ticket and shows success', async ({ page }) => {
     await page.goto('/contact')
 
-    await page.locator('input[name="name"]').fill('Happy Path Tester')
-    await page.locator('input[name="email"]').fill(EMAIL)
-    await page.locator('input[name="subject"]').fill(SUBJECT)
-    await page
+    // `input[name="email"]` (and any field also present in the footer newsletter
+    // form) is ambiguous page-wide, so scope every field lookup to the contact
+    // form (data-testid="contact-form").
+    const form = page.getByTestId('contact-form')
+    await form.locator('input[name="name"]').fill('Happy Path Tester')
+    await form.locator('input[name="email"]').fill(EMAIL)
+    await form.locator('input[name="subject"]').fill(SUBJECT)
+    await form
       .locator('textarea[name="message"]')
       .fill('I have a question about my upcoming rafting Booking and the refund window.')
 

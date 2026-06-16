@@ -13,8 +13,6 @@ import {
   type GrantCreditResult,
 } from './grant-logic'
 
-export type { GrantCreditResult } from './grant-logic'
-
 // ── Server Action wrapper (Next.js boundary) ────────────────────────
 
 export async function adminGrantCredit(

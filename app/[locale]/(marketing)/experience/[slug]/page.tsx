@@ -1175,7 +1175,16 @@ export async function generateMetadata({ params }: PageProps) {
   const { locale, slug } = await params
   const result = await loadExperienceDetail(db, { lng: 'en', slug })
 
-  if (!result || result.type !== 'found') {
+  // A genuinely missing slug → notFound() here so the 404 HTTP status is set in
+  // generateMetadata (resolved BEFORE the page body / loading.tsx Suspense shell
+  // streams a 200 — a streamed status can't be changed afterwards). See
+  // next/dist/docs .../file-conventions/loading.md "Status Codes".
+  if (!result) notFound()
+
+  // A slug-alias hit (result.type === 'redirect') is NOT a 404 — the page body
+  // issues a redirect() to the canonical slug. Return placeholder metadata and
+  // let that redirect run (do not notFound() it).
+  if (result.type !== 'found') {
     const tCommon = await getTranslations({ locale, namespace: 'Common' })
     return {
       title: tCommon('notFound'),

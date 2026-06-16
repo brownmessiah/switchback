@@ -33,6 +33,14 @@ import { touristDestination } from '@/lib/seo/schemas/tourist-destination'
 
 export const revalidate = 60
 
+// The region slug space is a CLOSED registry (listRegions()). dynamicParams=false
+// makes any slug NOT in the registry 404 at the ROUTING level — before any
+// render or stream — the only way to return a TRUE 404 status (a streamed
+// loading shell would otherwise flush a 200 that a later notFound() can't
+// change). The loading.tsx skeleton stays for VALID slugs. See next/dist/docs
+// .../functions/generate-static-params.md.
+export const dynamicParams = false
+
 interface PageProps {
   params: Promise<{ locale: string; slug: string }>
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -334,14 +342,10 @@ export default async function RegionLandingPage({
 export async function generateMetadata({ params }: PageProps) {
   const { locale, slug } = await params
   const data = await loadRegionLanding(db, slug)
-  if (!data) {
-    const tCommon = await getTranslations({ locale, namespace: 'Common' })
-    return {
-      title: tCommon('notFound'),
-      description: '',
-      alternates: { canonical: '' },
-    }
-  }
+  // notFound() here sets the 404 HTTP status pre-stream (generateMetadata
+  // resolves before the loading.tsx Suspense shell flushes a 200). See
+  // next/dist/docs .../file-conventions/loading.md "Status Codes".
+  if (!data) notFound()
   const t = await getTranslations({ locale, namespace: 'DestinationsPage' })
   const regionName = data.region.displayName.en
   const stateName = data.region.state

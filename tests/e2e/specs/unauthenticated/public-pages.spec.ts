@@ -1155,7 +1155,13 @@ test.describe('Sign-in page', () => {
     // present in the DOM (progressive disclosure is client-side only — there
     // is no server "does this email exist" check). (DevTools fixture also
     // gates console + axe over the split-screen layout.)
-    await expect(page.locator('form')).toBeVisible()
+    // Scope to the sign-in form specifically: the page ALSO renders the footer
+    // newsletter form (data-testid="newsletter-form"), so a bare locator('form')
+    // matches two elements → strict-mode violation. The sign-in form is the one
+    // containing the email input.
+    await expect(
+      page.locator('form').filter({ has: page.locator('input#email[type="email"]') }),
+    ).toBeVisible()
     await expect(page.locator('input#email[type="email"]')).toBeVisible()
     await expect(page.getByTestId('continue-step1')).toBeVisible()
     await expect(page.locator('input#password')).toHaveCount(0)

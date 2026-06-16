@@ -28,10 +28,11 @@ function formatDate(date: Date | null, locale: string): string {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale, slug } = await params
   const post = await getPublishedBlogPostBySlug(db, slug)
-  if (!post) {
-    const tCommon = await getTranslations({ locale, namespace: 'Common' })
-    return { title: tCommon('notFound'), description: '', alternates: { canonical: '' } }
-  }
+  // notFound() here sets the 404 HTTP status pre-stream (generateMetadata
+  // resolves before the page body / any Suspense shell flushes a 200). A
+  // missing OR draft post returns null → true 404. See next/dist/docs
+  // .../file-conventions/loading.md "Status Codes".
+  if (!post) notFound()
   return {
     title: post.title,
     description: post.excerpt ?? '',

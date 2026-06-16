@@ -30,6 +30,17 @@ import { itemList } from '@/lib/seo/schemas/item-list'
 
 export const revalidate = 60
 
+// The activity slug space is a CLOSED controlled vocabulary (the activity
+// registry). dynamicParams=false makes any slug NOT enumerated by
+// generateStaticParams 404 at the ROUTING level — before any render or stream —
+// which is the only way to return a TRUE 404 HTTP status here. (A route-level
+// loading.tsx / Suspense boundary otherwise streams a 200 shell first, and a
+// streamed status can't be changed by a later notFound() — a soft-404.) See
+// next/dist/docs .../functions/generate-static-params.md ("only paths provided
+// by generateStaticParams will be served, and unspecified routes will 404").
+// The loading.tsx skeleton stays for VALID slugs (they still render + stream).
+export const dynamicParams = false
+
 interface PageProps {
   params: Promise<{ locale: string; slug: string }>
 }
@@ -311,14 +322,13 @@ export default async function ActivityLandingPage({
 export async function generateMetadata({ params }: PageProps) {
   const { locale, slug } = await params
   const data = await loadActivityLanding(db, slug)
-  if (!data) {
-    const tCommon = await getTranslations({ locale, namespace: 'Common' })
-    return {
-      title: tCommon('notFound'),
-      description: '',
-      alternates: { canonical: '' },
-    }
-  }
+  // notFound() here (not a "not found" title) so the 404 HTTP status is set in
+  // generateMetadata — which Next.js resolves BEFORE the page body / loading.tsx
+  // Suspense shell streams. A streamed 200 shell can't have its status changed
+  // afterwards (a soft-404). See next/dist/docs .../file-conventions/loading.md
+  // "Status Codes": "ensure the resource exists before the response body is
+  // streamed, so that the server can set the HTTP status code."
+  if (!data) notFound()
   const t = await getTranslations({ locale, namespace: 'ActivitiesPage' })
   const activityDisplay = data.activity.displayName.en
   return {

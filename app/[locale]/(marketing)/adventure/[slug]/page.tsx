@@ -278,14 +278,10 @@ export default async function ActivityCityCollectionPage({
 export async function generateMetadata({ params }: PageProps) {
   const { locale, slug } = await params
   const data = await loadActivityCityCollection(db, { lng: 'en', slug })
-  if (!data) {
-    const tCommon = await getTranslations({ locale, namespace: 'Common' })
-    return {
-      title: tCommon('notFound'),
-      description: '',
-      alternates: { canonical: '' },
-    }
-  }
+  // notFound() here sets the 404 HTTP status pre-stream (generateMetadata
+  // resolves before the page body / loading shell flushes a 200). See
+  // next/dist/docs .../file-conventions/loading.md "Status Codes".
+  if (!data) notFound()
   const t = await getTranslations({ locale, namespace: 'AdventurePage' })
   const activityDisplay = data.activity.displayName.en
   const regionDisplay = data.region.displayName.en

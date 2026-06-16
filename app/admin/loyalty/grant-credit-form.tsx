@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-import { adminGrantCredit, type GrantCreditResult } from './actions'
+import { adminGrantCredit } from './actions'
+import { type GrantCreditResult } from './grant-logic'
 
 type BalanceType = 'outvers_credit' | 'refund_balance'
 

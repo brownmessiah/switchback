@@ -11,8 +11,6 @@ import {
   type CreateVendorProfileResult,
 } from './onboarding-core'
 
-export type { CreateVendorProfileInput, CreateVendorProfileResult }
-
 // ── Server action wrapper (auth layer) ──────────────────────────────
 
 /**

@@ -17,14 +17,6 @@ import type {
   UpdatePayoutMethodResult,
 } from './settings-cores'
 
-// Re-export the types so the page + form keep a single import surface.
-export type {
-  UpdateBusinessDetailsInput,
-  UpdateBusinessDetailsResult,
-  UpdatePayoutMethodInput,
-  UpdatePayoutMethodResult,
-}
-
 /**
  * Server Action wrappers (auth layer). Each derives the Vendor identity from
  * the session and gates with `hasVendorAccess` before delegating to the

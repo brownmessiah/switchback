@@ -17,9 +17,6 @@ import type {
   VendorCancelResult,
 } from './action-cores'
 
-// Re-export the result types so callers keep a single import surface.
-export type { MarkCompleteResult, MarkNoShowResult, VendorCancelResult }
-
 /**
  * Server Action wrappers (auth layer) — the ONLY public entry points for
  * vendor booking management. Every exported async function here derives the

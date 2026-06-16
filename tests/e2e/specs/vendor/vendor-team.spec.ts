@@ -68,18 +68,25 @@ test.describe('Vendor Team & Roles', () => {
 
     await page.getByRole('button', { name: /Add User/i }).first().click()
 
+    // Scope ALL field assertions to the Add-User dialog. `getByLabel('Email')`
+    // is too broad page-wide — it also matches the footer newsletter input and
+    // the support@outvers.com mailto link — so every field locator below is
+    // anchored to the modal's `role="dialog"`.
+    const modal = page.getByRole('dialog')
+    await expect(modal).toBeVisible()
+
     // Modal title + the collected fields.
     await expect(
-      page.getByRole('heading', { name: 'Add a team member' }),
+      modal.getByRole('heading', { name: 'Add a team member' }),
     ).toBeVisible()
-    await expect(page.getByLabel('Full name')).toBeVisible()
-    await expect(page.getByLabel('Email')).toBeVisible()
+    await expect(modal.getByLabel('Full name')).toBeVisible()
+    await expect(modal.getByLabel('Email')).toBeVisible()
     // Phone is labelled with an "(Optional)" suffix.
-    await expect(page.getByLabel(/Phone/i)).toBeVisible()
+    await expect(modal.getByLabel(/Phone/i)).toBeVisible()
 
     // The role dropdown offers the four assignable roles — Owner is NOT
     // assignable (it is the implicit account holder, rendered as the top row).
-    const roleTrigger = page
+    const roleTrigger = modal
       .getByRole('combobox')
       .filter({ hasText: /Manager|Booking Staff|Guide|Accountant/ })
       .first()
@@ -101,7 +108,12 @@ test.describe('Vendor Team & Roles', () => {
     // /vendor/[slug] storefront.
     await page.locator('a[href="/vendor/team"]').first().click()
     await page.waitForURL(/\/vendor\/team/)
-    await expect(page.locator('h1')).toContainText('Team & Roles')
+    // Precise heading locator: a bare `locator('h1')` matches BOTH the Team &
+    // Roles page heading and the (briefly co-mounted) Dashboard heading during
+    // the client transition. Target the level-1 heading by its accessible name.
+    await expect(
+      page.getByRole('heading', { name: 'Team & Roles', level: 1 }),
+    ).toBeVisible()
   })
 })
 

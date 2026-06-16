@@ -67,7 +67,12 @@ test.describe('Cancellation policy — vendor form', () => {
     await page.goto('/vendor/listings/new')
     await expect(page.locator('h1')).toContainText('Create listing')
 
-    // Details
+    // Details — open the activity Select via its trigger, pick a real activity,
+    // then the region Select. Each option is scoped to the OPEN listbox via a
+    // hasText filter; a bare `.first()` is fragile because Radix keeps the
+    // just-closed activity dropdown's items mounted during its exit animation,
+    // so `.first()` can resolve to a hidden stale option and hang (mirrors the
+    // canonical create-experience pattern in vendor-flows.spec.ts).
     await page.fill('#title', title)
     const activityTrigger = page
       .locator('[data-slot="select-trigger"]')
@@ -78,7 +83,7 @@ test.describe('Cancellation policy — vendor form', () => {
       .locator('[data-slot="select-trigger"]')
       .filter({ hasText: 'Select region' })
     await regionTrigger.click()
-    await page.locator('[data-slot="select-item"]').first().click()
+    await page.locator('[data-slot="select-item"]').filter({ hasText: 'Manali' }).click()
     await page.getByRole('button', { name: 'Continue' }).click()
 
     // Pricing — a base price so the listing is valid.

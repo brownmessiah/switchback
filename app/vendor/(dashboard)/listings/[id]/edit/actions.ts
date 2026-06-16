@@ -18,10 +18,6 @@ import type {
   UploadImageResult,
 } from './update-core'
 
-// Re-export the types (type-only, erased at build) so existing importers and
-// the form keep a single import surface. The cores live in ./update-core.
-export type { UpdateExperienceInput, UpdateExperienceOpts } from './update-core'
-
 /**
  * Server Action wrappers (auth layer). Each derives the Vendor identity from
  * the session and gates with `hasVendorAccess` before delegating to the

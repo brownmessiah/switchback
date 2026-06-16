@@ -7,9 +7,7 @@ import { auth } from '@/lib/auth'
 import { hasVendorAccess } from '@/lib/auth/permissions'
 
 import { executeSubmitVendorResponse } from './review-cores'
-import type { VendorResponseInput, VendorResponseResult } from './review-cores'
-
-export type { VendorResponseInput, VendorResponseResult }
+import type { VendorResponseResult } from './review-cores'
 
 /**
  * Server Action wrapper (auth layer). Derives the Vendor identity from the

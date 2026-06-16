@@ -9,11 +9,6 @@ import { hasVendorAccess } from '@/lib/auth/permissions'
 import { executeCreateExperience } from './create-core'
 import type { CreateExperienceInput, CreateExperienceResult } from './create-core'
 
-// Re-export the type (type-only, erased at build) so the page + tests share a
-// single import surface. The schema VALUE stays in ./schema, the core in
-// ./create-core.
-export type { CreateExperienceInput } from './create-core'
-
 /**
  * Server Action wrapper (auth layer). Derives the Vendor identity from the
  * session and gates with `hasVendorAccess` before delegating to the

@@ -1061,7 +1061,7 @@ export default async function ExperienceDetailPage({
                 reviews={experienceReviews}
                 locale={locale}
                 monthNames={reviewMonthNames}
-                travelledInLabel={t('reviews.travelledIn')}
+                travelledInLabel={t.raw('reviews.travelledIn')}
                 verifiedLabel={t('reviews.verified')}
                 groupTypeLabels={{
                   solo: t('reviews.groupType.solo'),
@@ -1077,7 +1077,7 @@ export default async function ExperienceDetailPage({
                   lowest: t('reviews.sort.lowest'),
                 }}
                 emptyLabel={t('reviews.empty')}
-                summaryLabel={t('reviews.summary')}
+                summaryLabel={t.raw('reviews.summary')}
                 withPhotosLabel={t('reviews.withPhotos')}
               />
             </section>

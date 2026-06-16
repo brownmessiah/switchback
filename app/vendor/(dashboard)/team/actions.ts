@@ -53,6 +53,14 @@ async function gate(): Promise<
   if (!session?.user) {
     return { ok: false, result: { ok: false, error: 'Not authenticated.' } }
   }
+  // INTENTIONAL: no resolved-shop arg (issue #11). `team:manage` is owner-only
+  // and `hasVendorAccess` defaults `vendorUserId` to the acting id, so this
+  // checks "is the session user the OWNER of their OWN account?". A non-owner
+  // member never resolves to `owner` on their own id → denied. The implicit
+  // self-scope is the safety; the session id is then passed downstream AS the
+  // `vendorUserId` (owner manages their own account), never a client value. Do
+  // NOT pass a resolved shop here — that would admit a member of the shop into
+  // an owner-only action.
   if (!(await hasVendorAccess(prodDb, session.user.id, 'team:manage'))) {
     return {
       ok: false,

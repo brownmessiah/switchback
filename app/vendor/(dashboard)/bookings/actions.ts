@@ -1,10 +1,7 @@
 'use server'
 
-import { headers } from 'next/headers'
-
 import { db as prodDb } from '@/db/client'
-import { auth } from '@/lib/auth'
-import { hasVendorAccess } from '@/lib/auth/permissions'
+import { requireVendorActionContext } from '@/lib/vendor/acting-context'
 
 import {
   executeMarkCompleteAction,
@@ -19,51 +16,49 @@ import type {
 
 /**
  * Server Action wrappers (auth layer) — the ONLY public entry points for
- * vendor booking management. Every exported async function here derives the
- * Vendor identity from the session and gates with `hasVendorAccess` BEFORE
- * delegating to the db-injected core in ./action-cores (issue #03). The cores
- * are NOT exported from this `'use server'` file precisely so they are not
- * registered as auth-bypassing endpoints that take an arbitrary vendorUserId.
+ * vendor booking management. Each resolves the acting Vendor context and gates
+ * `bookings:manage` against the RESOLVED shop (issue #11) BEFORE delegating to
+ * the db-injected core in ./action-cores (issue #03). The cores are NOT exported
+ * from this `'use server'` file precisely so they are not registered as
+ * auth-bypassing endpoints that take an arbitrary vendorUserId.
+ *
+ * Two-id split (§5): the core's `vendorUserId` arg is the SHOP (ownership /
+ * SLA target), while `actingUserId` is the acting human (audit actor / refund
+ * `requestedByUserId`), so a member's action is attributed to them but scoped
+ * to the account they belong to.
  *
  * Permission: marking complete / cancelling / no-show are booking management →
  * `bookings:manage`.
  */
 
+const DENIED = 'You do not have permission to manage bookings.'
+
 export async function markCompleteAction(
   bookingId: string,
 ): Promise<MarkCompleteResult> {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) {
-    return { ok: false, error: 'Sign in to continue.' }
+  const gate = await requireVendorActionContext('bookings:manage', DENIED)
+  if ('error' in gate) {
+    return { ok: false, error: gate.error }
   }
-  if (!(await hasVendorAccess(prodDb, session.user.id, 'bookings:manage'))) {
-    return { ok: false, error: 'You do not have permission to manage bookings.' }
-  }
-  return executeMarkCompleteAction(prodDb, session.user.id, { bookingId })
+  return executeMarkCompleteAction(prodDb, gate.shop, { bookingId }, gate.acting)
 }
 
 export async function vendorCancelAction(
   input: { bookingId: string; reason: string },
 ): Promise<VendorCancelResult> {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) {
-    return { ok: false, error: 'Sign in to continue.' }
+  const gate = await requireVendorActionContext('bookings:manage', DENIED)
+  if ('error' in gate) {
+    return { ok: false, error: gate.error }
   }
-  if (!(await hasVendorAccess(prodDb, session.user.id, 'bookings:manage'))) {
-    return { ok: false, error: 'You do not have permission to manage bookings.' }
-  }
-  return executeVendorCancelAction(prodDb, session.user.id, input)
+  return executeVendorCancelAction(prodDb, gate.shop, input, gate.acting)
 }
 
 export async function markNoShowAction(
   bookingId: string,
 ): Promise<MarkNoShowResult> {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) {
-    return { ok: false, error: 'Sign in to continue.' }
+  const gate = await requireVendorActionContext('bookings:manage', DENIED)
+  if ('error' in gate) {
+    return { ok: false, error: gate.error }
   }
-  if (!(await hasVendorAccess(prodDb, session.user.id, 'bookings:manage'))) {
-    return { ok: false, error: 'You do not have permission to manage bookings.' }
-  }
-  return executeMarkNoShowAction(prodDb, session.user.id, { bookingId })
+  return executeMarkNoShowAction(prodDb, gate.shop, { bookingId }, gate.acting)
 }

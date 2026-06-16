@@ -8,6 +8,7 @@ import { ResponsiveTable } from '@/components/ui/responsive-table'
 import { db } from '@/db/client'
 import { auth } from '@/lib/auth'
 import { requireVendorAccess } from '@/lib/auth/permissions'
+import { getActingVendorContext } from '@/lib/vendor/acting-context'
 import { bookingStatusBadge } from '@/lib/bookings/booking-status-badge'
 import {
   type BookingStatusCount,
@@ -37,15 +38,20 @@ import { TrendChart } from '../dashboard/dashboard-charts'
  */
 export default async function VendorAnalyticsPage() {
   const session = await auth.api.getSession({ headers: await headers() })
-  const userId = session!.user.id
+  const acting = session!.user.id
 
-  // Permission gate (issue #03 review, FIX 1) — the layout only enforces
-  // `bookings:read` (held by every Vendor role), so analytics-read denial
-  // (Guide has no `analytics:read`) must be enforced HERE at the route.
-  // Throwing variant → `notFound()`, matching the layout's gate call.
-  await requireVendorAccess(db, userId, 'analytics:read')
+  // Resolve the acting shop (issue #11): owner → own account; member → the shop
+  // they belong to. Analytics is keyed on the resolved `shop`, NOT the session
+  // id (a member's own id would be an empty self-shop).
+  const { vendorUserId: shop } = await getActingVendorContext()
 
-  const data = await loadVendorAnalytics(db, userId)
+  // Permission gate (issue #03 review, FIX 1) — the layout admits every active
+  // member, so analytics-read denial (Guide has no `analytics:read`) must be
+  // enforced HERE at the route, against the RESOLVED shop. Throwing variant →
+  // `notFound()`, matching the layout's gate call.
+  await requireVendorAccess(db, acting, 'analytics:read', shop)
+
+  const data = await loadVendorAnalytics(db, shop)
   const t = await getTranslations('VendorAnalytics')
   // Reuse the shared, already-translated Booking-state labels (the BookingStatus
   // namespace exists in every locale) rather than re-authoring state vocab.

@@ -18,6 +18,7 @@ import { db } from '@/db/client'
 import { availabilitySlots, bookings, experiences, vendorProfiles } from '@/db/schema'
 import { auth } from '@/lib/auth'
 import { requireVendorAccess } from '@/lib/auth/permissions'
+import { getActingVendorContext } from '@/lib/vendor/acting-context'
 import { computeVendorNetPayout } from '@/lib/payments/payout-calculator'
 import {
   groupBookingsIntoPayoutCycles,
@@ -106,18 +107,24 @@ const PAYOUT_CYCLE_COLUMNS: ReadonlyArray<
 
 export default async function VendorPayoutsPage() {
   const session = await auth.api.getSession({ headers: await headers() })
-  const userId = session!.user.id
+  const acting = session!.user.id
 
-  // Permission gate (issue #03 review, FIX 1) — the layout only enforces
-  // `bookings:read` (held by every Vendor role), so payouts-read denial (Guide
-  // and Booking Staff have no `payouts:read`) must be enforced HERE at the
-  // route. Throwing variant → `notFound()`, matching the layout's gate call.
-  await requireVendorAccess(db, userId, 'payouts:read')
+  // Resolve the acting shop (issue #11): owner → own account; member → the shop
+  // they belong to. Payouts (the earnings ledger) is keyed on the resolved
+  // `shop`, NOT the session id — both the profile and the earning-Bookings
+  // queries below scope to `shop`.
+  const { vendorUserId: shop } = await getActingVendorContext()
+
+  // Permission gate (issue #03 review, FIX 1) — the layout admits every active
+  // member, so payouts-read denial (Guide and Booking Staff have no
+  // `payouts:read`) must be enforced HERE at the route, against the RESOLVED
+  // shop. Throwing variant → `notFound()`, matching the layout's gate call.
+  await requireVendorAccess(db, acting, 'payouts:read', shop)
 
   const [vendor] = await db
     .select()
     .from(vendorProfiles)
-    .where(eq(vendorProfiles.userId, userId))
+    .where(eq(vendorProfiles.userId, shop))
     .limit(1)
 
   const completedBookings = await db
@@ -141,7 +148,7 @@ export default async function VendorPayoutsPage() {
     .leftJoin(availabilitySlots, eq(bookings.slotId, availabilitySlots.id))
     .where(
       and(
-        eq(experiences.vendorUserId, userId),
+        eq(experiences.vendorUserId, shop),
         inArray(bookings.state, ['completed', 'awaiting_completion']),
       ),
     )

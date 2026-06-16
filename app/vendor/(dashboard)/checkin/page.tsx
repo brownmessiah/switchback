@@ -1,9 +1,11 @@
-import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 
 import { db } from '@/db/client'
-import { auth } from '@/lib/auth'
 import { requireVendorAccess } from '@/lib/auth/permissions'
+import {
+  getActingVendorContext,
+  getCachedSession,
+} from '@/lib/vendor/acting-context'
 
 import { CheckInScanner } from './checkin-scanner'
 
@@ -26,13 +28,23 @@ export default async function VendorCheckinPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const session = await auth.api.getSession({ headers: await headers() })
+  // Single session read (issue #11 FIX 4): `getCachedSession` is `cache()`-
+  // wrapped, so this read and the one inside `getActingVendorContext` below
+  // collapse to ONE memoized call — no redundant double session read.
+  const session = await getCachedSession()
   if (!session?.user) notFound()
-  const userId = session.user.id
+  const acting = session.user.id
 
-  // Read gate: a user reaching the scanner must hold bookings:checkin on their
-  // own account. Throwing variant → notFound() on denial.
-  await requireVendorAccess(db, userId, 'bookings:checkin')
+  // Resolve the acting shop (issue #11): owner → own account; member (Guide /
+  // Booking Staff / Manager) → the shop they belong to.
+  const { vendorUserId: shop } = await getActingVendorContext()
+
+  // Read gate: reaching the scanner requires bookings:checkin on the RESOLVED
+  // shop (a Guide of the shop passes; an Accountant does not). Throwing variant
+  // → notFound() on denial. The recordCheckIn WRITE additionally re-authorizes
+  // against the SCANNED booking's own vendor account (per-booking authz in
+  // checkin-core.ts), so this page gate is the read-bound only.
+  await requireVendorAccess(db, acting, 'bookings:checkin', shop)
 
   const params = await searchParams
   const rawToken = params.token

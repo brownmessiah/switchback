@@ -9,7 +9,6 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import Link from 'next/link'
-import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 
 import { Badge } from '@/components/ui/badge'
@@ -24,7 +23,7 @@ import {
   refundRequests,
   users,
 } from '@/db/schema'
-import { auth } from '@/lib/auth'
+import { getActingVendorContext } from '@/lib/vendor/acting-context'
 import {
   buildBookingTimeline,
   type TimelineNode,
@@ -107,11 +106,12 @@ interface BookingDetailPageProps {
 
 export default async function BookingDetailPage({ params }: BookingDetailPageProps) {
   const { id } = await params
-  const session = await auth.api.getSession({ headers: await headers() })
-  const userId = session!.user.id
+  // Resolve the acting shop (issue #11): the booking detail is visible only if
+  // its Experience belongs to the resolved shop (not the session id).
+  const { vendorUserId } = await getActingVendorContext()
 
   // Fetch the booking joined with experience, customer, slot — only if
-  // the booking's experience belongs to the authenticated Vendor.
+  // the booking's experience belongs to the acting Vendor account.
   const [booking] = await db
     .select({
       id: bookings.id,
@@ -148,7 +148,7 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
     .where(
       and(
         eq(bookings.id, id),
-        eq(experiences.vendorUserId, userId),
+        eq(experiences.vendorUserId, vendorUserId),
       ),
     )
     .limit(1)

@@ -73,6 +73,10 @@ export async function executeMarkComplete(
   db: DBOrTx,
   bookingId: string,
   vendorUserId: string,
+  // issue #11 §5 — the acting human (audit actor). Defaults to the shop owner
+  // for the single-seat path (back-compat); a member passes their own id so the
+  // audit row attributes the action to the human, not the account.
+  actingUserId: string = vendorUserId,
 ): Promise<MarkCompleteResult> {
   // 1. Fetch booking + verify existence
   const [booking] = await db
@@ -124,15 +128,16 @@ export async function executeMarkComplete(
     })
     .where(eq(bookings.id, bookingId))
 
-  // 5. Audit log
+  // 5. Audit log. Actor = the acting human (§5); the shop is in the payload.
   await writeAuditLog(db, {
-    actorUserId: vendorUserId,
+    actorUserId: actingUserId,
     action: 'booking.mark_complete',
     entityType: 'booking',
     entityId: bookingId,
     payload: {
       bookingId,
       vendorUserId,
+      actingUserId,
       previousState: 'awaiting_completion',
       newState: 'completed',
       completedAt: now.toISOString(),
@@ -176,6 +181,11 @@ export async function executeVendorCancel(
   bookingId: string,
   vendorUserId: string,
   reason: string,
+  // issue #11 §5 — the acting human (audit actor + refund requestedByUserId).
+  // Defaults to the shop owner (single-seat back-compat); a member passes their
+  // own id so the action is attributed to them, while ownership + the SLA
+  // penalty stay on the shop.
+  actingUserId: string = vendorUserId,
 ): Promise<VendorCancelResult> {
   // 0. Reason is mandatory
   const trimmedReason = reason.trim()
@@ -245,7 +255,8 @@ export async function executeVendorCancel(
     .insert(refundRequests)
     .values({
       bookingId: booking.id,
-      requestedByUserId: vendorUserId,
+      // §5 — the refund is attributed to the acting human, not the shop.
+      requestedByUserId: actingUserId,
       reason: 'vendor_cancelled',
       destination: 'refund_balance',
       state: 'credited',
@@ -288,15 +299,16 @@ export async function executeVendorCancel(
 
   const slaScoreAfter = vendorRow?.slaScore ?? '0.00'
 
-  // 7. Audit log
+  // 7. Audit log. Actor = the acting human (§5); the shop is in the payload.
   await writeAuditLog(db, {
-    actorUserId: vendorUserId,
+    actorUserId: actingUserId,
     action: 'booking.vendor_cancel',
     entityType: 'booking',
     entityId: bookingId,
     payload: {
       bookingId,
       vendorUserId,
+      actingUserId,
       previousState: booking.state,
       newState: 'cancelled_by_vendor',
       reason: trimmedReason,
@@ -346,6 +358,9 @@ export async function executeMarkNoShow(
   bookingId: string,
   vendorUserId: string,
   opts: { now?: Date } = {},
+  // issue #11 §5 — the acting human (audit actor). Defaults to the shop owner
+  // (single-seat back-compat); a member passes their own id.
+  actingUserId: string = vendorUserId,
 ): Promise<MarkNoShowResult> {
   const now = opts.now ?? new Date()
 
@@ -415,15 +430,16 @@ export async function executeMarkNoShow(
     .set({ state: 'no_show', updatedAt: sql`now()` })
     .where(eq(bookings.id, bookingId))
 
-  // 6. Audit log
+  // 6. Audit log. Actor = the acting human (§5); the shop is in the payload.
   await writeAuditLog(db, {
-    actorUserId: vendorUserId,
+    actorUserId: actingUserId,
     action: 'booking.mark_no_show',
     entityType: 'booking',
     entityId: bookingId,
     payload: {
       bookingId,
       vendorUserId,
+      actingUserId,
       previousState,
       newState: 'no_show',
       noShowAt: now.toISOString(),

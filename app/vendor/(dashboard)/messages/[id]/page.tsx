@@ -78,6 +78,13 @@ async function loadBookingContext(
 
 export default async function VendorMessageThreadPage({ params }: PageProps) {
   const { id } = await params
+
+  // The acting human's id, for "isMe" bubble alignment only. The conversation
+  // load + read-marking + send are all scoped to the acting user's RESOLVED
+  // shop server-side (issue #11): `getConversationMessages` returns null when
+  // the conversation is not owned by the resolved shop, so a member (or anyone)
+  // cannot open another shop's conversation by guessing the UUID — the page
+  // `notFound()`s. The message sender is always derived server-side on send.
   const session = await auth.api.getSession({ headers: await headers() })
   const userId = session!.user.id
 
@@ -87,19 +94,22 @@ export default async function VendorMessageThreadPage({ params }: PageProps) {
   }
 
   // Mark unread messages as read (messages sent by the other party).
-  await markConversationMessagesRead(id, userId)
+  // Scoped to the acting shop inside the action (no-op when not owned).
+  await markConversationMessagesRead(id)
 
-  // Left pane: the same inbox list the `/vendor/messages` route renders.
-  const conversations = await getVendorConversations(userId)
+  // Left pane: the same inbox list the `/vendor/messages` route renders,
+  // scoped to the resolved shop.
+  const conversations = await getVendorConversations()
   // Right-pane Booking context header (omitted when not Booking-tied).
   const bookingContext = await loadBookingContext(id)
 
   // First-response SLA, derived purely from the messages already loaded
-  // (conversation createdAt vs the vendor's first reply — the schema's
-  // documented SLA basis). No extra query, no action change. Omitted when
-  // the vendor has not yet replied.
+  // (conversation createdAt vs the vendor side's first reply — the schema's
+  // documented SLA basis). The vendor side is any sender that is NOT the
+  // conversation's customer (the Owner OR any team member now that members can
+  // reply — issue #11), so the SLA still fires on the first vendor-side reply.
   const vendorFirstReply = data.messages.find(
-    (m) => m.senderUserId === data.conversation.vendorUserId,
+    (m) => m.senderUserId !== data.conversation.customerUserId,
   )
   const firstResponseMs = vendorFirstReply
     ? new Date(vendorFirstReply.createdAt).getTime() -

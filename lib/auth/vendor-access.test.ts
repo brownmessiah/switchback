@@ -324,20 +324,23 @@ describe('analytics/payouts read-gate resolution (FIX 1, ADR-0006)', () => {
   // the narrower gate (the layout enforces just `bookings:read`). These guards
   // lock in that the analytics + payouts pages call `requireVendorAccess` with
   // the right permission — without them the denies are unenforced.
-  it('analytics page gates on analytics:read (route enforcement)', () => {
+  // Issue #11 — the gate now keys on the RESOLVED shop (the explicit 4th arg),
+  // with `acting` (the session user) as the acting-user arg, so a member is
+  // authorized against the account they belong to, not their own id.
+  it('analytics page gates on analytics:read for the resolved shop (route enforcement)', () => {
     const source = readFileSync(
       resolve(process.cwd(), 'app/vendor/(dashboard)/analytics/page.tsx'),
       'utf-8',
     )
-    expect(source).toContain("requireVendorAccess(db, userId, 'analytics:read')")
+    expect(source).toContain("requireVendorAccess(db, acting, 'analytics:read', shop)")
   })
 
-  it('payouts page gates on payouts:read (route enforcement)', () => {
+  it('payouts page gates on payouts:read for the resolved shop (route enforcement)', () => {
     const source = readFileSync(
       resolve(process.cwd(), 'app/vendor/(dashboard)/payouts/page.tsx'),
       'utf-8',
     )
-    expect(source).toContain("requireVendorAccess(db, userId, 'payouts:read')")
+    expect(source).toContain("requireVendorAccess(db, acting, 'payouts:read', shop)")
   })
 })
 

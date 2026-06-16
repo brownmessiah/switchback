@@ -1,10 +1,7 @@
 'use server'
 
-import { headers } from 'next/headers'
-
 import { db as prodDb } from '@/db/client'
-import { auth } from '@/lib/auth'
-import { hasVendorAccess } from '@/lib/auth/permissions'
+import { requireVendorActionContext } from '@/lib/vendor/acting-context'
 
 import {
   executeDeleteExperienceImage,
@@ -19,38 +16,36 @@ import type {
 } from './update-core'
 
 /**
- * Server Action wrappers (auth layer). Each derives the Vendor identity from
- * the session and gates with `hasVendorAccess` before delegating to the
- * db-injected core in ./update-core (issue #03). The cores are NOT exported
- * from this `'use server'` file (IDOR avoidance).
+ * Server Action wrappers (auth layer). Each resolves the acting Vendor context
+ * and gates `experiences:manage` against the RESOLVED shop (issue #11) before
+ * delegating to the db-injected core in ./update-core (issue #03). The cores'
+ * `userId` (ownership) arg is the SHOP; the `actingUserId` arg is the human
+ * (audit / `uploadedBy`, §5). The cores are NOT exported from this `'use server'`
+ * file (IDOR avoidance).
  *
  * Permission: editing an Experience and managing its images is
  * `experiences:manage`.
  */
 
+const DENIED = 'You do not have permission to manage experiences.'
+
 export async function updateExperienceAction(
   input: UpdateExperienceInput,
 ): Promise<UpdateExperienceResult> {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) {
-    return { ok: false, error: 'Sign in to continue.' }
-  }
-  if (!(await hasVendorAccess(prodDb, session.user.id, 'experiences:manage'))) {
-    return { ok: false, error: 'You do not have permission to manage experiences.' }
+  const gate = await requireVendorActionContext('experiences:manage', DENIED)
+  if ('error' in gate) {
+    return { ok: false, error: gate.error }
   }
 
-  return executeUpdateExperience(prodDb, session.user.id, input)
+  return executeUpdateExperience(prodDb, gate.shop, input, {}, gate.acting)
 }
 
 export async function uploadExperienceImageAction(
   formData: FormData,
 ): Promise<UploadImageResult> {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) {
-    return { ok: false, error: 'Sign in to continue.' }
-  }
-  if (!(await hasVendorAccess(prodDb, session.user.id, 'experiences:manage'))) {
-    return { ok: false, error: 'You do not have permission to manage experiences.' }
+  const gate = await requireVendorActionContext('experiences:manage', DENIED)
+  if ('error' in gate) {
+    return { ok: false, error: gate.error }
   }
 
   const file = formData.get('file') as File | null
@@ -60,19 +55,22 @@ export async function uploadExperienceImageAction(
     return { ok: false, error: 'File and experience ID are required.' }
   }
 
-  return executeUploadExperienceImage(prodDb, session.user.id, { file, experienceId })
+  return executeUploadExperienceImage(
+    prodDb,
+    gate.shop,
+    { file, experienceId },
+    gate.acting,
+  )
 }
 
 export async function deleteExperienceImageAction(
   assetId: string,
 ): Promise<DeleteImageResult> {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) {
-    return { ok: false, error: 'Sign in to continue.' }
-  }
-  if (!(await hasVendorAccess(prodDb, session.user.id, 'experiences:manage'))) {
-    return { ok: false, error: 'You do not have permission to manage experiences.' }
+  const gate = await requireVendorActionContext('experiences:manage', DENIED)
+  if ('error' in gate) {
+    return { ok: false, error: gate.error }
   }
 
-  return executeDeleteExperienceImage(prodDb, session.user.id, assetId)
+  // The core keys ownership on the parent Experience's shop (#18 mandatory fix).
+  return executeDeleteExperienceImage(prodDb, gate.shop, assetId)
 }

@@ -1,23 +1,30 @@
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 
-import { db } from '@/db/client'
 import { auth } from '@/lib/auth'
-import { requireVendorAccess, requireVendorProfile } from '@/lib/auth/permissions'
+import { getActingVendorContext } from '@/lib/vendor/acting-context'
 
 import { VendorSidebar } from '../vendor-sidebar'
 
 /**
  * Layout for the authenticated vendor dashboard surface.
  *
- * Gates on the existence of a `vendor_profiles` row (ADR-0006): a
- * signed-up user without a profile is redirected to /vendor/onboarding.
- * Onboarding lives OUTSIDE this route group, so it is not subject to
- * this gate (which would otherwise loop indefinitely).
+ * Resolves the acting Vendor context ONCE (issue #11, single-account model):
+ * `getActingVendorContext` admits the Owner (own active `vendor_profiles` row,
+ * ADR-0006) AND any active team member (resolved to the shop they belong to),
+ * and redirects a profile-less non-member — or a closed-only profile with no
+ * active membership — to /vendor/onboarding. Onboarding lives OUTSIDE this
+ * route group, so the redirect does not loop.
  *
- * Auth (session presence) is already enforced by the parent
- * `app/vendor/layout.tsx`; we re-read the session here only to obtain
- * the user id + display name for the gate and sidebar.
+ * This subsumes the prior owner-only `requireVendorProfile` gate (#04/#05) and
+ * the `bookings:read` belonging-bound (#03): an admitted context already proves
+ * an active owner/member role; per-route gates still enforce narrower
+ * permissions. For the single-seat Owner the resolved `vendorUserId` equals the
+ * session id → zero behavior change.
+ *
+ * Auth (session presence) is also enforced by the parent `app/vendor/layout.tsx`;
+ * we re-read the session here only for the sidebar display name (the `cache()`
+ * wrapper dedups the session read with the gate's own).
  */
 export default async function VendorDashboardLayout({
   children,
@@ -29,21 +36,12 @@ export default async function VendorDashboardLayout({
     redirect('/sign-in')
   }
 
-  // Gate 1: user must have an active vendor_profiles row. Redirects to
-  // /vendor/onboarding if no vendor profile exists (per ADR-0006). This
-  // handles the Owner-without-profile path (onboarding lives OUTSIDE this
-  // route group, so the redirect does not loop).
-  // TODO(#04): admit active team members + resolve acting vendor context
-  // (multi-seat context-resolution is issue #04's deliberate design).
-  await requireVendorProfile(db, session.user.id)
-
-  // Gate 2 (issue #03): the acting user must resolve to an active member/owner
-  // role with at least read access. `bookings:read` is held by every valid
-  // Vendor role (Owner, Manager, Booking Staff, Guide, Accountant), so this is
-  // the minimal "you belong to this Vendor account" bound. For today's
-  // single-seat case the Owner resolves and passes → zero behavior change;
-  // an inactive/non-member is denied (notFound) rather than seeing the shell.
-  await requireVendorAccess(db, session.user.id, 'bookings:read')
+  // Single gate (issue #11): resolve { vendorUserId (shop), role }. Owner →
+  // admitted (vendorUserId === session.user.id). Active member → admitted on
+  // the shop they belong to. None → redirect to /vendor/onboarding (inside the
+  // resolver). The resolved `role` drives sidebar nav-gating (§6); every route
+  // re-enforces its own permission gate regardless of which links are shown.
+  const { role } = await getActingVendorContext()
 
   // flex-col on mobile so the sticky mobile header bar (a VendorSidebar child)
   // stacks full-width on top instead of sitting as a row sibling that eats the
@@ -52,7 +50,7 @@ export default async function VendorDashboardLayout({
   // via md:block).
   return (
     <div className="flex min-h-[80vh] flex-col md:flex-row">
-      <VendorSidebar userName={session.user.name ?? 'Vendor'} />
+      <VendorSidebar userName={session.user.name ?? 'Vendor'} role={role} />
       {/* min-w-0 lets wide tables scroll inside their own overflow-x-auto wrapper
           instead of stretching the whole shell past the viewport (mirrors the
           admin shell fix). */}

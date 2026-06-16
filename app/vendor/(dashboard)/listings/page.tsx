@@ -6,7 +6,6 @@ import {
   Clock,
   PauseCircle,
 } from 'lucide-react'
-import { headers } from 'next/headers'
 import Link from 'next/link'
 
 import { Badge } from '@/components/ui/badge'
@@ -18,7 +17,7 @@ import {
 } from '@/components/ui/responsive-table'
 import { db } from '@/db/client'
 import { experiences, mediaAssets } from '@/db/schema'
-import { auth } from '@/lib/auth'
+import { getActingVendorContext } from '@/lib/vendor/acting-context'
 import { computeListingCompleteness } from '@/lib/vendor/listing-completeness'
 
 import { CompletenessRing } from './completeness-ring'
@@ -82,8 +81,9 @@ interface VendorListingsPageProps {
 export default async function VendorListingsPage({
   searchParams,
 }: VendorListingsPageProps) {
-  const session = await auth.api.getSession({ headers: await headers() })
-  const userId = session!.user.id
+  // Resolve the acting shop (issue #11): listings are the shop's Experiences,
+  // keyed on the resolved `vendorUserId` (not the session id).
+  const { vendorUserId } = await getActingVendorContext()
 
   const params = await searchParams
   const statusFilter = parseStatus(params.status)
@@ -106,7 +106,7 @@ export default async function VendorListingsPage({
       createdAt: experiences.createdAt,
     })
     .from(experiences)
-    .where(eq(experiences.vendorUserId, userId))
+    .where(eq(experiences.vendorUserId, vendorUserId))
 
   // Count media assets per Experience in one grouped query, then join in
   // memory — a listing with ≥1 photo counts the `imageCount` field as filled.

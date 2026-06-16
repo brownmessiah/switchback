@@ -1,10 +1,7 @@
 'use server'
 
-import { headers } from 'next/headers'
-
 import { db as prodDb } from '@/db/client'
-import { auth } from '@/lib/auth'
-import { hasVendorAccess } from '@/lib/auth/permissions'
+import { requireVendorActionContext } from '@/lib/vendor/acting-context'
 
 import { executeCloseVendorAccount } from './close-account-core'
 import type {
@@ -28,15 +25,17 @@ import type {
 export async function closeVendorAccountAction(
   input: CloseVendorAccountInput,
 ): Promise<CloseVendorAccountResult> {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) {
-    return { ok: false, error: 'Sign in to continue.' }
-  }
   // Permission: only the Owner may close the account (account:close is an
-  // Owner-only permission — Manager and every member role are denied).
-  if (!(await hasVendorAccess(prodDb, session.user.id, 'account:close'))) {
-    return { ok: false, error: 'Only the account owner can close this account.' }
+  // Owner-only permission — Manager and every member role are denied). The gate
+  // resolves the acting shop; since account:close is owner-only, the resolved
+  // shop is the acting owner's own account (acting === shop here).
+  const gate = await requireVendorActionContext(
+    'account:close',
+    'Only the account owner can close this account.',
+  )
+  if ('error' in gate) {
+    return { ok: false, error: gate.error }
   }
 
-  return executeCloseVendorAccount(prodDb, session.user.id, input)
+  return executeCloseVendorAccount(prodDb, gate.shop, input, gate.acting)
 }

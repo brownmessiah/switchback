@@ -38,7 +38,7 @@ interface MessageThreadProps {
   readonly firstResponseMs: number | null
   /** Pinned Booking context; null when the Conversation is not Booking-tied. */
   readonly bookingContext: BookingContext | null
-  readonly initialMessages: MessageRow[]
+  readonly initialMessages: readonly MessageRow[]
 }
 
 function formatTime(date: Date | string): string {
@@ -97,7 +97,13 @@ export function MessageThread({
 
     setSending(true)
     try {
-      const result = await sendMessageAction(conversationId, currentUserId, body)
+      // The sender is derived server-side from the session (issue #11) — the
+      // client no longer passes a sender id. The action returns a typed
+      // envelope; only append optimistically on success.
+      const result = await sendMessageAction(conversationId, body)
+      if (!result.ok) {
+        return
+      }
 
       // Optimistically add the message
       setLocalMessages((prev) => [

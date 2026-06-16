@@ -652,4 +652,100 @@ describe('vendor booking actions (ADR-0003)', () => {
       expect(payload.newState).toBe('no_show')
     })
   })
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Two-id audit split (issue #11 §5) — ownership/SLA = SHOP, audit actor =
+  // the ACTING member. A member acts ON the shop's booking; the audit row +
+  // refund requestedByUserId must record the human, the SLA penalty + booking
+  // ownership the shop.
+  // ═══════════════════════════════════════════════════════════════════
+
+  describe('two-id audit split (issue #11 §5)', () => {
+    it('mark-complete: actorUserId records the acting member, ownership keys on the shop', async () => {
+      const { bookingId } = await seedBooking({ state: 'awaiting_completion' })
+
+      // shop = 'u_v', acting member = 'u_other_v' standing in for a member.
+      await executeMarkComplete(db, bookingId, 'u_v', 'u_other_v')
+
+      const [row] = await db
+        .select()
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.action, 'booking.mark_complete'),
+            eq(auditLogs.entityId, bookingId),
+          ),
+        )
+      // Audit actor is the ACTING human, not the shop.
+      expect(row?.actorUserId).toBe('u_other_v')
+      const payload = row?.payload as Record<string, unknown>
+      // The shop (scope) is still recorded in the payload.
+      expect(payload.vendorUserId).toBe('u_v')
+
+      // Booking actually transitioned (ownership check passed against the shop).
+      const [b] = await db
+        .select({ state: bookings.state })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+      expect(b?.state).toBe('completed')
+    })
+
+    it('mark-complete: defaults the audit actor to the shop when actingUserId is omitted (back-compat)', async () => {
+      const { bookingId } = await seedBooking({ state: 'awaiting_completion' })
+      await executeMarkComplete(db, bookingId, 'u_v')
+      const [row] = await db
+        .select()
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.action, 'booking.mark_complete'),
+            eq(auditLogs.entityId, bookingId),
+          ),
+        )
+      expect(row?.actorUserId).toBe('u_v')
+    })
+
+    it('vendor-cancel: audit actor + refund requestedByUserId = acting member; SLA penalty hits the shop', async () => {
+      const { bookingId } = await seedBooking({ state: 'confirmed', grossRupees: 4000 })
+
+      await executeVendorCancel(db, bookingId, 'u_v', 'weather', 'u_other_v')
+
+      const [audit] = await db
+        .select()
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.action, 'booking.vendor_cancel'),
+            eq(auditLogs.entityId, bookingId),
+          ),
+        )
+      expect(audit?.actorUserId).toBe('u_other_v')
+
+      const [refund] = await db
+        .select({ requestedByUserId: refundRequests.requestedByUserId })
+        .from(refundRequests)
+        .where(eq(refundRequests.bookingId, bookingId))
+      // The refund is attributed to the acting human.
+      expect(refund?.requestedByUserId).toBe('u_other_v')
+
+      // SLA penalty applied to the SHOP's profile (u_v), not the acting member.
+      const shopScore = await readSlaScore('u_v')
+      expect(Number(shopScore)).toBeLessThan(100)
+    })
+
+    it('mark-no-show: audit actor records the acting member, ownership keys on the shop', async () => {
+      const { bookingId } = await seedBooking({ state: 'confirmed', past: true })
+      await executeMarkNoShow(db, bookingId, 'u_v', {}, 'u_other_v')
+      const [row] = await db
+        .select()
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.action, 'booking.mark_no_show'),
+            eq(auditLogs.entityId, bookingId),
+          ),
+        )
+      expect(row?.actorUserId).toBe('u_other_v')
+    })
+  })
 })

@@ -1,7 +1,6 @@
 import { desc, eq } from 'drizzle-orm'
 import { Star } from 'lucide-react'
 import Link from 'next/link'
-import { headers } from 'next/headers'
 
 import { ReviewStars } from '@/components/reviews/review-stars'
 import { Button } from '@/components/ui/button'
@@ -13,7 +12,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { db } from '@/db/client'
 import { experiences, reviews, users } from '@/db/schema'
-import { auth } from '@/lib/auth'
+import { getActingVendorContext } from '@/lib/vendor/acting-context'
 
 import { VendorTableTabs } from '../vendor-table-tabs'
 
@@ -21,8 +20,9 @@ import { computeAverageRating } from './utils'
 import { VendorResponseForm } from './vendor-response-form'
 
 export default async function VendorReviewsPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
-  const userId = session!.user.id
+  // Resolve the acting shop (issue #11): reviews are scoped to the shop's
+  // Experiences, keyed on the resolved `vendorUserId` (not the session id).
+  const { vendorUserId } = await getActingVendorContext()
 
   const rows = await db
     .select({
@@ -39,7 +39,7 @@ export default async function VendorReviewsPage() {
     .from(reviews)
     .innerJoin(users, eq(reviews.customerUserId, users.id))
     .innerJoin(experiences, eq(reviews.experienceId, experiences.id))
-    .where(eq(reviews.vendorUserId, userId))
+    .where(eq(reviews.vendorUserId, vendorUserId))
     .orderBy(desc(reviews.createdAt))
 
   const avgRating = await computeAverageRating(rows.map((r) => r.rating))

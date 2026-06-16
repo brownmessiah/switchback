@@ -318,16 +318,16 @@ describe('submitVendorResponse permission contract (FIX 4)', () => {
   })
 
   it("the action source gates on 'bookings:manage' (never 'bookings:read')", () => {
+    // Issue #11 — the action now gates via `requireVendorActionContext`, which
+    // resolves the acting shop and authorizes the permission against it (so a
+    // member responds on behalf of the account they belong to). The intent is
+    // unchanged: it must gate on `bookings:manage`, never `bookings:read`.
     const source = readFileSync(
       resolve(process.cwd(), 'app/vendor/(dashboard)/reviews/actions.ts'),
       'utf-8',
     )
-    expect(source).toContain(
-      "hasVendorAccess(prodDb, session.user.id, 'bookings:manage')",
-    )
-    expect(source).not.toContain(
-      "hasVendorAccess(prodDb, session.user.id, 'bookings:read')",
-    )
+    expect(source).toContain("requireVendorActionContext(\n    'bookings:manage'")
+    expect(source).not.toContain("'bookings:read'")
   })
 })
 

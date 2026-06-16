@@ -1,10 +1,9 @@
 import { eq } from 'drizzle-orm'
-import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 
 import { db } from '@/db/client'
 import { experiences, mediaAssets } from '@/db/schema'
-import { auth } from '@/lib/auth'
+import { getActingVendorContext } from '@/lib/vendor/acting-context'
 import { loadItinerary } from '@/lib/experiences/itinerary'
 import { loadPricingVariations } from '@/lib/experiences/pricing-variations-write'
 
@@ -16,8 +15,9 @@ interface EditPageProps {
 
 export default async function ExperienceEditPage({ params }: EditPageProps) {
   const { id } = await params
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) notFound()
+  // Resolve the acting shop (issue #11): the edit form is visible only if the
+  // Experience belongs to the resolved shop (not the session id).
+  const { vendorUserId: shop } = await getActingVendorContext()
 
   const [experience] = await db
     .select()
@@ -25,7 +25,7 @@ export default async function ExperienceEditPage({ params }: EditPageProps) {
     .where(eq(experiences.id, id))
     .limit(1)
 
-  if (!experience || experience.vendorUserId !== session.user.id) {
+  if (!experience || experience.vendorUserId !== shop) {
     notFound()
   }
 

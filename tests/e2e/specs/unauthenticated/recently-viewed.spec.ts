@@ -42,6 +42,29 @@ async function twoPublishedSlugs(page: import('@playwright/test').Page): Promise
   return [slugs[0]!, slugs[1]!]
 }
 
+/**
+ * Wait until the client recorder has persisted at least `min` slugs to
+ * localStorage. The recorder writes in a post-hydration client effect, so a PDP
+ * navigation that asserts only on the server-rendered <h1> can race ahead of
+ * the write — wait on the storage itself before navigating away.
+ */
+async function waitForRecorded(
+  page: import('@playwright/test').Page,
+  min: number,
+): Promise<void> {
+  await page.waitForFunction(
+    ({ key, min }) => {
+      try {
+        const v = JSON.parse(localStorage.getItem(key) ?? '[]')
+        return Array.isArray(v) && v.length >= min
+      } catch {
+        return false
+      }
+    },
+    { key: STORAGE_KEY, min },
+  )
+}
+
 test.describe('Recently-viewed rail (issue 12, logged-out)', () => {
   test('the rail is hidden when nothing has been viewed', async ({ page }) => {
     await page.goto('/')
@@ -58,6 +81,7 @@ test.describe('Recently-viewed rail (issue 12, logged-out)', () => {
     await expect(page.locator('h1')).toBeVisible()
     await page.goto(`/experience/${second}`)
     await expect(page.locator('h1')).toBeVisible()
+    await waitForRecorded(page, 2)
 
     // On the home page the rail now resolves both viewed slugs (client effect
     // → gated server action), most-recent-first.
@@ -88,6 +112,7 @@ test.describe('Recently-viewed rail (issue 12, logged-out)', () => {
     const [first] = await twoPublishedSlugs(page)
     await page.goto(`/experience/${first}`)
     await expect(page.locator('h1')).toBeVisible()
+    await waitForRecorded(page, 1)
 
     await page.goto('/search')
     await expect(page.getByTestId(RAIL)).toBeVisible()

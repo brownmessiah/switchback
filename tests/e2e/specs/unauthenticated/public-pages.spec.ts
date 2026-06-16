@@ -1159,13 +1159,17 @@ test.describe('Sign-in page', () => {
     // newsletter form (data-testid="newsletter-form"), so a bare locator('form')
     // matches two elements → strict-mode violation. The sign-in form is the one
     // containing the email input.
-    await expect(
-      page.locator('form').filter({ has: page.locator('input#email[type="email"]') }),
-    ).toBeVisible()
+    const signInForm = page
+      .locator('form')
+      .filter({ has: page.locator('input#email[type="email"]') })
+    await expect(signInForm).toBeVisible()
     await expect(page.locator('input#email[type="email"]')).toBeVisible()
     await expect(page.getByTestId('continue-step1')).toBeVisible()
     await expect(page.locator('input#password')).toHaveCount(0)
-    await expect(page.locator('button[type="submit"]')).toHaveCount(0)
+    // Scope the submit-button assertion to the sign-in form — the page ALSO
+    // renders the footer newsletter form, which has its own submit button, so a
+    // page-wide locator('button[type="submit"]') would match it (strict-mode/count).
+    await expect(signInForm.locator('button[type="submit"]')).toHaveCount(0)
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/sign-in.png',
@@ -1179,7 +1183,8 @@ test.describe('Sign-in page', () => {
     await page.getByTestId('continue-step1').click()
 
     await expect(page.locator('input#password[type="password"]')).toBeVisible()
-    await expect(page.locator('button[type="submit"]')).toBeVisible()
+    // Scope to the sign-in form — the footer newsletter form also has a submit.
+    await expect(signInForm.locator('button[type="submit"]')).toBeVisible()
     await expect(page.locator('input#email[type="email"]')).toBeVisible()
 
     await page.screenshot({

@@ -1,10 +1,11 @@
-import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 
 import { db } from '@/db/client'
-import { auth } from '@/lib/auth'
 import { requireVendorAccess } from '@/lib/auth/permissions'
-import { getActingVendorContext } from '@/lib/vendor/acting-context'
+import {
+  getActingVendorContext,
+  getCachedSession,
+} from '@/lib/vendor/acting-context'
 
 import { CheckInScanner } from './checkin-scanner'
 
@@ -27,7 +28,10 @@ export default async function VendorCheckinPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const session = await auth.api.getSession({ headers: await headers() })
+  // Single session read (issue #11 FIX 4): `getCachedSession` is `cache()`-
+  // wrapped, so this read and the one inside `getActingVendorContext` below
+  // collapse to ONE memoized call — no redundant double session read.
+  const session = await getCachedSession()
   if (!session?.user) notFound()
   const acting = session.user.id
 

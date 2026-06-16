@@ -1,18 +1,19 @@
 import { MessagesSquare } from 'lucide-react'
-import { headers } from 'next/headers'
 
 import { Card, CardContent } from '@/components/ui/card'
-import { auth } from '@/lib/auth'
 import { getVendorConversations } from '@/lib/notifications/messaging-actions'
 
 import { ConversationList } from './conversation-list'
 import { SplitView } from './split-view'
 
+/**
+ * Vendor inbox. The conversation list is scoped to the acting user's RESOLVED
+ * shop (issue #11): `getVendorConversations` derives the session + resolves the
+ * shop server-side, so a team member sees the SHOP's conversations (not an
+ * empty self-inbox) and never another shop's.
+ */
 export default async function VendorMessagesPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
-  const userId = session!.user.id
-
-  const conversations = await getVendorConversations(userId)
+  const conversations = await getVendorConversations()
 
   return (
     <div className="space-y-6">

@@ -30,6 +30,16 @@ export default async function VendorTeamPage() {
   const userId = session!.user.id
 
   // Owner-only gate. Throwing variant → notFound() on denial.
+  //
+  // INTENTIONAL: no resolved-shop arg here (issue #11). `team:manage` is
+  // owner-only (only the Owner role holds it, via the `'*'` wildcard), and
+  // `requireVendorAccess` defaults `vendorUserId` to `actingUserId` — so this
+  // checks "is the acting user the OWNER of their OWN account?". A non-owner
+  // member resolves to a member role on someone else's shop, never `owner` on
+  // their own id, so they fail this gate (→ notFound()). The implicit
+  // self-scope is precisely what keeps non-owner members out; do NOT pass a
+  // resolved shop here (that would let a member of the shop pass an owner-only
+  // gate).
   await requireVendorAccess(db, userId, 'team:manage')
 
   const t = await getTranslations('VendorTeam')

@@ -31,9 +31,21 @@ import { can } from '@/lib/auth/vendor-permissions'
  * active membership) → `resolveActingVendorContext` itself redirects to
  * /vendor/onboarding.
  */
+/**
+ * Per-request memoized session read (issue #11). Wrapping `auth.api.getSession`
+ * in `cache()` lets a page that needs BOTH the acting human's id AND the
+ * resolved Vendor context read the session exactly ONCE — the explicit read in
+ * the page and the internal read in `getActingVendorContext` collapse to a
+ * single memoized call (e.g. `/vendor/checkin`, which needs `acting` for the
+ * audit/gate actor AND `shop` for the scope).
+ */
+export const getCachedSession = cache(
+  async () => auth.api.getSession({ headers: await headers() }),
+)
+
 export const getActingVendorContext = cache(
   async (): Promise<ActingVendorContext> => {
-    const session = await auth.api.getSession({ headers: await headers() })
+    const session = await getCachedSession()
     if (!session?.user) {
       redirect('/sign-in')
     }

@@ -39,12 +39,17 @@ test.describe('Wallet page (/wallet)', () => {
     await expect(creditCard).toContainText('Outvers credit')
     await expect(refundCard).toContainText('Refund balance')
 
-    // Outvers credit is never mutated by other specs → assert exactly.
+    // The Outvers-credit card renders the live DB balance exactly. Note: the
+    // balance is debitable — a completed checkout applies wallet credit via
+    // applyWalletToCheckout (app/(app)/checkout/actions.ts), so the revenue-spine
+    // checkout spec earlier in the customer run may have drawn it down to ₹0.
+    // We therefore assert render==DB (the real contract) and a non-negative
+    // balance; the seeded credit GRANT's existence is covered by the ledger test.
     const creditRupees = await getWalletBalanceRupees(SEED_CUSTOMER, 'outvers_credit')
     await expect(creditCard.getByTestId('wallet-amount-outvers_credit')).toHaveText(
       `₹${creditRupees.toLocaleString('en-IN')}`,
     )
-    expect(creditRupees).toBeGreaterThan(0)
+    expect(creditRupees).toBeGreaterThanOrEqual(0)
 
     // Refund balance only grows (parallel cancels credit it) → monotonic.
     const refundText = await refundCard

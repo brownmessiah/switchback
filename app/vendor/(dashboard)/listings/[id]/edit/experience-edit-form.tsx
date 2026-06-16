@@ -86,6 +86,9 @@ export function ExperienceEditForm({
     price35: String(experience.pricePerPerson_3_5),
     price6: String(experience.pricePerPerson_6_plus),
     cancellationPreset: experience.cancellationPreset,
+    // ADR-0005 revision 2026-06-16 (issue #09/#10) — load the saved reschedule
+    // right so the toggle round-trips on edit (column defaults true).
+    rescheduleAllowed: experience.rescheduleAllowed,
     paymentModes: [...experience.paymentModesAllowed],
     isCombo: experience.isCombo,
     requiredPermits: [...experience.requiredPermits],
@@ -140,6 +143,9 @@ export function ExperienceEditForm({
       pricePerPerson_3_5: values.price35 ? Number(values.price35) : undefined,
       pricePerPerson_6_plus: values.price6 ? Number(values.price6) : undefined,
       cancellationPreset: values.cancellationPreset,
+      // ADR-0005 revision 2026-06-16 (issue #09/#10) — thread the reschedule
+      // right; the update core persists it.
+      rescheduleAllowed: values.rescheduleAllowed,
       pricingVariations: toPricingVariationsSubmit(values),
       paymentModesAllowed: values.paymentModes as (
         | 'full_upfront'

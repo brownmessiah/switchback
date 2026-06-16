@@ -432,6 +432,35 @@ export async function getExperienceByTitle(
   })
 }
 
+/**
+ * Fetch a vendor's most-recently-created Experience's cancellation policy +
+ * reschedule snapshot (issue #10) — asserts the form's preset radio + reschedule
+ * toggle persisted onto the row.
+ */
+export async function getExperienceCancellationByTitle(
+  vendorUserId: string,
+  title: string,
+): Promise<{ cancellationPreset: string; rescheduleAllowed: boolean } | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { cancellation_preset: string; reschedule_allowed: boolean }[]
+    >`
+      SELECT cancellation_preset, reschedule_allowed
+      FROM experiences
+      WHERE vendor_user_id = ${vendorUserId}
+        AND title = ${title}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `
+    const row = rows[0]
+    if (!row) return null
+    return {
+      cancellationPreset: row.cancellation_preset,
+      rescheduleAllowed: row.reschedule_allowed,
+    }
+  })
+}
+
 /** Fetch an Experience by id (for reload / price-survives assertions). */
 export async function getExperienceById(
   experienceId: string,

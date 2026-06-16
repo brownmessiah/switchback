@@ -52,7 +52,10 @@ export interface QuoteRefundArgs {
 // exactly T-24h on Flexible is in the free window.
 // `non_cancellable` is deliberately ABSENT from this table — it has no window
 // math (always 0). `custom` is likewise absent (admin-defined table, throws).
-const PRESET_WINDOWS: Record<
+// Exported so the plain-language copy source (lib/payments/cancellation-copy.ts,
+// issue #10) DERIVES its hour/day figures from the SAME numbers the refund math
+// uses — the rendered policy line can never drift from what is actually refunded.
+export const PRESET_WINDOWS: Record<
   Exclude<CancellationPreset, 'custom' | 'non_cancellable'>,
   { freeHours: number; halfHours: number }
 > = {

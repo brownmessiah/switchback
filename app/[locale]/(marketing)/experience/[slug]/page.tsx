@@ -7,6 +7,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import {
   Activity,
   Baby,
+  Ban,
   CalendarRange,
   CircleCheck,
   Clock,
@@ -38,6 +39,7 @@ import { auth } from '@/lib/auth'
 import { env } from '@/lib/env'
 import { isInWishlist } from '@/lib/wishlist/wishlist'
 import { loadExperienceDetail } from '@/lib/experiences/detail-loader'
+import { freeCancellationLine, isNonCancellable } from '@/lib/payments/cancellation-copy'
 import { loadSimilarExperiences } from '@/lib/experiences/similar'
 import { formatDuration, formatSeason } from '@/lib/experiences/structured-schema'
 import { ExperienceCard } from '@/components/experience-card'
@@ -977,20 +979,50 @@ export default async function ExperienceDetailPage({
               </section>
             )}
 
-            {/* Cancellation policy (anchor target #cancellation) — ADR-0005. */}
+            {/* Cancellation policy (anchor target #cancellation) — ADR-0005.
+                For a non_cancellable Experience we show a CONSTRAINT badge
+                (destructive tint + Ban icon, never green — the policy is a
+                restriction, not a perk). Otherwise the "Free cancellation up to
+                {hours}h before activity" line, with the hour figure DERIVED from
+                PRESET_WINDOWS via lib/payments/cancellation-copy so it can never
+                drift from the refund math (issue #10). */}
             <section id="cancellation">
               <h2 className="mb-3 font-heading text-h2 font-semibold tracking-tight">
                 {t('sections.cancellationPolicy')}
               </h2>
               <div className="rounded-[var(--radius-card)] border bg-muted/50 p-4">
-                <Badge variant="success" className="mb-2 capitalize">
-                  <CircleCheck aria-hidden="true" />
-                  {detail.cancellationPreset}
-                </Badge>
-                <p className="text-sm text-muted-foreground">
-                  {cancellationDescriptions[detail.cancellationPreset] ??
-                    t('cancellation.fallback', { preset: detail.cancellationPreset })}
-                </p>
+                {isNonCancellable(detail.cancellationPreset) ? (
+                  <>
+                    <Badge variant="destructive" className="mb-2">
+                      <Ban aria-hidden="true" />
+                      {t('cancellation.nonCancellableBadge')}
+                    </Badge>
+                    <p className="text-sm text-muted-foreground">
+                      {t('cancellation.nonCancellableDescription')}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    {(() => {
+                      const line = freeCancellationLine(detail.cancellationPreset)
+                      return line ? (
+                        <Badge variant="success" className="mb-2">
+                          <CircleCheck aria-hidden="true" />
+                          {t('cancellation.freeUpToHours', { hours: line.hours })}
+                        </Badge>
+                      ) : (
+                        <Badge variant="success" className="mb-2 capitalize">
+                          <CircleCheck aria-hidden="true" />
+                          {detail.cancellationPreset}
+                        </Badge>
+                      )
+                    })()}
+                    <p className="text-sm text-muted-foreground">
+                      {cancellationDescriptions[detail.cancellationPreset] ??
+                        t('cancellation.fallback', { preset: detail.cancellationPreset })}
+                    </p>
+                  </>
+                )}
               </div>
             </section>
 

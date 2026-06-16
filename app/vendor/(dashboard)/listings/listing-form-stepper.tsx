@@ -31,6 +31,10 @@ import {
 } from '@/lib/vendor/listing-completeness'
 import { listActivities } from '@/lib/activities/registry'
 import { listRegions } from '@/lib/regions/registry'
+import {
+  CANCELLATION_COPY,
+  type CancellationCopyPreset,
+} from '@/lib/payments/cancellation-copy'
 import type { GuideLanguage } from '@/lib/experiences/structured-schema'
 
 import { hasAtLeastOnePrice } from '@/lib/vendor/listing-price-validation'
@@ -89,6 +93,25 @@ export type CancellationPreset =
   | 'non_cancellable'
   | 'custom'
 
+// The four named presets the Vendor picks from, in display order (ADR-0005:
+// Flexible → Moderate → Strict → Non-cancellable). `custom` is admin-gated and
+// NOT part of this radio set; it is preserved as an edit-only addendum below.
+// Each preset's plain-language rule is sourced from the single CANCELLATION_COPY
+// constant so the form and the customer detail can never drift (ADR-0005 wedge).
+const CANCELLATION_PRESET_ORDER: readonly CancellationCopyPreset[] = [
+  'flexible',
+  'moderate',
+  'strict',
+  'non_cancellable',
+] as const
+
+const CANCELLATION_PRESET_TITLE: Record<CancellationCopyPreset, string> = {
+  flexible: 'Flexible',
+  moderate: 'Moderate',
+  strict: 'Strict',
+  non_cancellable: 'Non-cancellable',
+}
+
 // The platform's single default commission rate (ADR-0008 /
 // PLATFORM_DEFAULT_COMMISSION_RATE = '20.00'). Shown transparently as a trust
 // line BEFORE the final step (DESIGN.md B5). A static disclosure, not a
@@ -107,6 +130,10 @@ export interface ListingFormValues {
   price35: string
   price6: string
   cancellationPreset: CancellationPreset
+  // ADR-0005 revision 2026-06-16 (issue #09/#10) — per-Experience reschedule
+  // right (PRD default ON). Threaded form→action; the create/edit cores persist
+  // it (the DB column also defaults true).
+  rescheduleAllowed: boolean
   paymentModes: string[]
   isCombo: boolean
   requiredPermits: string[]
@@ -735,33 +762,100 @@ export function ListingFormStepper({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label>Cancellation policy</Label>
-              <Select
-                value={values.cancellationPreset}
-                onValueChange={(v) =>
-                  update('cancellationPreset', (v ?? 'flexible') as CancellationPreset)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="flexible">
-                    Flexible — free cancellation up to 24h before
-                  </SelectItem>
-                  <SelectItem value="moderate">
-                    Moderate — free cancellation up to 7 days before
-                  </SelectItem>
-                  <SelectItem value="strict">
-                    Strict — 50% refund up to 7 days before
-                  </SelectItem>
-                  {mode === 'edit' && (
-                    <SelectItem value="custom">Custom — requires admin approval</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Cancellation policy — preset radios (ADR-0005). Each option shows
+                its plain-language rule from the single CANCELLATION_COPY source,
+                so the form and the customer detail render identical figures.
+                NO free-form refund-number inputs (the transparency wedge). */}
+            <fieldset className="space-y-3" role="radiogroup" aria-label="Cancellation policy">
+              <legend className="text-sm font-medium">Cancellation policy</legend>
+              <div className="space-y-2">
+                {CANCELLATION_PRESET_ORDER.map((preset) => {
+                  const checked = values.cancellationPreset === preset
+                  const isNonCancel = preset === 'non_cancellable'
+                  return (
+                    <label
+                      key={preset}
+                      className={[
+                        'flex cursor-pointer gap-3 rounded-[var(--radius-md)] border p-3 transition-colors',
+                        checked ? 'border-primary bg-primary/5' : 'border-input hover:bg-muted/50',
+                      ].join(' ')}
+                    >
+                      <input
+                        type="radio"
+                        name="cancellationPreset"
+                        value={preset}
+                        checked={checked}
+                        onChange={() =>
+                          update('cancellationPreset', preset as CancellationPreset)
+                        }
+                        className="mt-0.5 size-4 shrink-0 border-input"
+                      />
+                      <span className="space-y-1">
+                        <span className="block text-sm font-medium">
+                          {CANCELLATION_PRESET_TITLE[preset]}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          {CANCELLATION_COPY[preset].rule}
+                        </span>
+                        {isNonCancel && (
+                          <span className="block text-xs text-muted-foreground">
+                            Customers cannot cancel after payment. Outvers may still handle
+                            exceptional refunds.
+                          </span>
+                        )}
+                      </span>
+                    </label>
+                  )
+                })}
+
+                {/* `custom` stays admin-gated and edit-only (ADR-0005). It is a
+                    distinct, pre-existing path — surfaced as a radio here so a
+                    Vendor whose listing already carries it can keep it, but it is
+                    not part of the standard four-preset set above. */}
+                {mode === 'edit' && (
+                  <label
+                    className={[
+                      'flex cursor-pointer gap-3 rounded-[var(--radius-md)] border p-3 transition-colors',
+                      values.cancellationPreset === 'custom'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-input hover:bg-muted/50',
+                    ].join(' ')}
+                  >
+                    <input
+                      type="radio"
+                      name="cancellationPreset"
+                      value="custom"
+                      checked={values.cancellationPreset === 'custom'}
+                      onChange={() => update('cancellationPreset', 'custom')}
+                      className="mt-0.5 size-4 shrink-0 border-input"
+                    />
+                    <span className="space-y-1">
+                      <span className="block text-sm font-medium">Custom</span>
+                      <span className="block text-xs text-muted-foreground">
+                        Requires admin approval.
+                      </span>
+                    </span>
+                  </label>
+                )}
+              </div>
+            </fieldset>
+
+            {/* Reschedule-allowed toggle (ADR-0005 revision, issue #09/#10).
+                PRD default ON. Snapshotted onto the Booking at create. */}
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={values.rescheduleAllowed}
+                onChange={(e) => update('rescheduleAllowed', e.target.checked)}
+                className="mt-0.5 rounded border-input"
+              />
+              <span>
+                <span className="font-medium">Reschedule allowed</span>
+                <span className="block text-xs text-muted-foreground">
+                  Customers may request to move a Booking to a different slot.
+                </span>
+              </span>
+            </label>
 
             <div className="space-y-2">
               <p className="text-sm font-medium">Payment modes</p>

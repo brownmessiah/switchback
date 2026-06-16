@@ -21,7 +21,10 @@ const INITIAL_VALUES: ListingFormValues = {
   price12: '',
   price35: '',
   price6: '',
-  cancellationPreset: 'flexible',
+  // PRD default for a NEW Experience: the Moderate-equivalent preset, reschedule
+  // ON (ADR-0005 revision 2026-06-16, issue #09/#10).
+  cancellationPreset: 'moderate',
+  rescheduleAllowed: true,
   paymentModes: ['full_upfront', 'partial_pay'],
   isCombo: false,
   requiredPermits: [],
@@ -64,6 +67,9 @@ export default function NewListingPage() {
         | 'moderate'
         | 'strict'
         | 'non_cancellable',
+      // ADR-0005 revision 2026-06-16 (issue #09/#10) — thread the reschedule
+      // right; the create core persists it (PRD default ON when omitted).
+      rescheduleAllowed: values.rescheduleAllowed,
       pricingVariations: toPricingVariationsSubmit(values),
       ...structured,
     })

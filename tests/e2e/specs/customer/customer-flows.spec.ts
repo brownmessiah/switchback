@@ -52,13 +52,23 @@ const KAYAKING_SLUG = 'rishikesh-kayaking-introduction'
 // Seeded flagship rafting Experience — see db/seed.ts.
 //   pricePerPerson_1_2 = ₹1,500; slot T+7d (>48h out), capacity 8.
 //   paymentModesAllowed = ['full_upfront', 'partial_pay'].
-// At 2 participants: gross = ₹3,000 (≤ ₹25,000) AND ≥ 48h out
-//   → partial pay: 25% Advance = ₹750 captured now, ₹2,250 scheduled T-24h.
+//
+// PARTICIPANT COUNT: the booking-rail participant stepper DEFAULTS to 1
+// (booking-rail-interactive.tsx: `useState(1)`), and the "Book now" CTA carries
+// that count through as `&participants=1`. The revenue-spine + keyboard specs
+// click "Book now" WITHOUT touching the stepper, so the count under test is 1 —
+// not 2 (the checkout page's no-count fallback, which "Book now" never hits
+// because it always supplies an explicit count). All totals below derive from
+// the seed price × that count so the assertions track real data, not a guess.
+//
+// At 1 participant: gross = ₹1,500 (≤ ₹25,000) AND ≥ 48h out
+//   → partial pay: 25% Advance = ₹375 captured now, ₹1,125 scheduled T-24h.
 const RAFTING_SLUG = 'rishikesh-rafting-grade-iii'
 const RAFTING_PRICE_1_2 = 1500
-const DEFAULT_PARTICIPANTS = 2
-const EXPECTED_GROSS = RAFTING_PRICE_1_2 * DEFAULT_PARTICIPANTS // 3000
-const EXPECTED_ADVANCE = Math.floor(EXPECTED_GROSS * 0.25) // 750
+// Booking-rail default participant count carried by the "Book now" CTA.
+const DEFAULT_PARTICIPANTS = 1
+const EXPECTED_GROSS = RAFTING_PRICE_1_2 * DEFAULT_PARTICIPANTS // 1500
+const EXPECTED_ADVANCE = Math.floor(EXPECTED_GROSS * 0.25) // 375
 
 // ---------------------------------------------------------------------------
 // 1. Dashboard loads
@@ -449,7 +459,8 @@ test.describe('Revenue spine: checkout → confirmation', () => {
     await expect(page.locator('h1')).toContainText('Checkout')
 
     // Worked example surfaced in the UI's persistent order-summary rail:
-    // ₹3,000 total, ₹750 due now. The rail is visible on BOTH steps.
+    // ₹1,500 total, ₹375 due now (1 participant — the rail's default count).
+    // The rail is visible on BOTH steps.
     await expect(page.getByText('Order summary')).toBeVisible()
     await expect(
       page.getByText(`₹${EXPECTED_GROSS.toLocaleString('en-IN')}`).first(),
@@ -518,8 +529,8 @@ test.describe('Revenue spine: checkout → confirmation', () => {
     expect(payload!.captureTrigger).toBe('booking_create')
     expect(payload!.coercedUnder48h).toBe(false)
     expect(Math.floor(Number(payload!.grossRupees))).toBe(EXPECTED_GROSS)
-    // Worked example: gross ₹3,000 (≤ ₹25,000, ≥48h out) → partial_pay, with the
-    // 25% Advance (₹750) asserted on the pay button above and the ₹2,250 balance
+    // Worked example: gross ₹1,500 (≤ ₹25,000, ≥48h out) → partial_pay, with the
+    // 25% Advance (₹375) asserted on the pay button above and the ₹1,125 balance
     // scheduled for T-24h. (No constant-vs-constant assertion — that proves nothing.)
   })
 })
@@ -768,9 +779,12 @@ test.describe('Checkout validation', () => {
     await payButton.click()
 
     // Specific, actionable field error — NOT a generic "unexpected error".
-    const errorMessage = page.getByText(
-      /select an available date and slot/i,
-    )
+    // Scope to the page body (<main>): the same copy also fires as a sonner
+    // toast in the aria-live region, so an unscoped getByText resolves to two
+    // nodes (strict-mode violation). The in-page error is the contract here.
+    const errorMessage = page
+      .getByRole('main')
+      .getByText(/select an available date and slot/i)
     await expect(errorMessage).toBeVisible({ timeout: 10_000 })
     await expect(
       page.getByText('An unexpected error occurred'),

@@ -9,12 +9,15 @@ import {
   type PortalNavVariant,
 } from '@/components/portal-nav-drawer'
 import { ThemeToggle } from '@/components/theme-toggle'
+import type { VendorRole } from '@/lib/auth/vendor-permissions'
 import { cn } from '@/lib/utils'
 
-import { VENDOR_NAV_ITEMS } from './vendor-nav'
+import { visibleVendorNavItems, type VendorNavItem } from './vendor-nav'
 
 interface VendorSidebarProps {
   readonly userName: string
+  /** The acting user's resolved role (issue #11) — drives nav-gating. */
+  readonly role: VendorRole
 }
 
 // ──────────────────────────────────────────────────
@@ -24,9 +27,11 @@ interface VendorSidebarProps {
 function SidebarContent({
   variant,
   onNavigate,
+  items,
 }: {
   readonly variant: PortalNavVariant
   readonly onNavigate?: () => void
+  readonly items: readonly VendorNavItem[]
 }) {
   const pathname = usePathname()
   const t = useTranslations('VendorNav')
@@ -40,7 +45,7 @@ function SidebarContent({
   return (
     <div className="flex h-full flex-col">
       <nav className="flex-1 space-y-1 px-3 py-4">
-        {VENDOR_NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const active = pathname.startsWith(item.href)
           return (
             <Link
@@ -111,11 +116,15 @@ function SidebarContent({
  * **icons+labels at `lg`** (`w-64`); the drawer always shows icons+labels
  * (DESIGN.md §8.3 / §8.5, ADR-0018).
  */
-export function VendorSidebar({ userName }: VendorSidebarProps) {
+export function VendorSidebar({ userName, role }: VendorSidebarProps) {
   const t = useTranslations('VendorNav')
   const tNav = useTranslations('Nav')
 
   const portalTitle = t('portalTitle')
+
+  // Role-gated nav (issue #11 §6) — hide links the role can't use. Computed
+  // from the pure `can(role, perm)` matrix; UX only, every route re-gates.
+  const items = visibleVendorNavItems(role)
 
   return (
     <PortalNavDrawer
@@ -141,7 +150,7 @@ export function VendorSidebar({ userName }: VendorSidebarProps) {
       )}
     >
       {({ variant, onNavigate }) => (
-        <SidebarContent variant={variant} onNavigate={onNavigate} />
+        <SidebarContent variant={variant} onNavigate={onNavigate} items={items} />
       )}
     </PortalNavDrawer>
   )

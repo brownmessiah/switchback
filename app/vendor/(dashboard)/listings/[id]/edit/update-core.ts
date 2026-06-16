@@ -50,6 +50,10 @@ export async function executeUpdateExperience(
   userId: string,
   input: UpdateExperienceInput,
   opts: UpdateExperienceOpts = {},
+  // issue #11 §5 — the acting human (audit actor on the tier-cap-rejected path).
+  // Ownership keys on `userId` (the SHOP); the audit records the human. Defaults
+  // to the shop (single-seat back-compat).
+  actingUserId: string = userId,
 ): Promise<UpdateExperienceResult> {
   const parsed = updateExperienceSchema.safeParse(input)
   if (!parsed.success) {
@@ -131,13 +135,15 @@ export async function executeUpdateExperience(
       // ADR-0007 — record the tier-cap rejection in audit_logs (the publish
       // and booking-create paths do the same) before refusing the edit.
       await writeAuditLog(db, {
-        actorUserId: userId,
+        actorUserId: actingUserId,
         action: 'vendor.experience.tier_cap_rejected',
         entityType: 'experience',
         entityId: data.id,
         payload: {
           code: tierCheck.code,
           reason: tierCheck.reason,
+          vendorUserId: userId,
+          actingUserId,
         },
       })
       return { ok: false, error: tierCheck.reason }
@@ -254,6 +260,9 @@ export async function executeUploadExperienceImage(
   db: DBOrTx,
   userId: string,
   input: { file: File; experienceId: string },
+  // issue #11 §5 — the acting human. Ownership keys on `userId` (the SHOP);
+  // `uploadedBy` records the human who uploaded. Defaults to the shop.
+  actingUserId: string = userId,
 ): Promise<UploadImageResult> {
   const { file, experienceId } = input
 
@@ -265,7 +274,7 @@ export async function executeUploadExperienceImage(
     return { ok: false, error: 'File size must be under 10 MB.' }
   }
 
-  // Verify ownership
+  // Verify ownership — the Experience must belong to the acting SHOP.
   const [existing] = await db
     .select({ vendorUserId: experiences.vendorUserId })
     .from(experiences)
@@ -286,7 +295,8 @@ export async function executeUploadExperienceImage(
     const [asset] = await db
       .insert(mediaAssets)
       .values({
-        uploadedBy: userId,
+        // §5 — record the acting human who uploaded, not the shop.
+        uploadedBy: actingUserId,
         storageKey,
         url,
         contentType: file.type,
@@ -310,20 +320,36 @@ export async function executeDeleteExperienceImage(
   userId: string,
   assetId: string,
 ): Promise<DeleteImageResult> {
+  // issue #11 §5 / #18 (MANDATORY fix) — ownership keys on the PARENT
+  // Experience's `vendorUserId` (= the acting SHOP, the `userId` arg), NOT on
+  // `media_assets.uploadedBy`. Keying on `uploadedBy` was a real bug: a member
+  // could only delete images THEY uploaded and could not delete the owner's
+  // (and vice-versa). We resolve the asset, then its parent Experience, and
+  // scope deletion to the shop that owns the listing. (Two queries rather than
+  // a join because `media_assets.entity_id` is `text` and `experiences.id` is
+  // `uuid` — the polymorphic FK has no common SQL type to join on.)
   const [asset] = await db
     .select({
       id: mediaAssets.id,
       storageKey: mediaAssets.storageKey,
-      uploadedBy: mediaAssets.uploadedBy,
+      entityType: mediaAssets.entityType,
+      entityId: mediaAssets.entityId,
     })
     .from(mediaAssets)
     .where(eq(mediaAssets.id, assetId))
     .limit(1)
 
-  if (!asset) {
+  if (!asset || asset.entityType !== 'experience') {
     return { ok: false, error: 'Image not found.' }
   }
-  if (asset.uploadedBy !== userId) {
+
+  const [parent] = await db
+    .select({ vendorUserId: experiences.vendorUserId })
+    .from(experiences)
+    .where(eq(experiences.id, asset.entityId))
+    .limit(1)
+
+  if (!parent || parent.vendorUserId !== userId) {
     return { ok: false, error: 'Not authorized to delete this image.' }
   }
 

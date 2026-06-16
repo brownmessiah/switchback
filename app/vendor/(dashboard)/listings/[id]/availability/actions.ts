@@ -10,7 +10,7 @@ import { experiences } from '@/db/schema/experiences'
 import { regionClosures } from '@/db/schema/region-closures'
 import { users } from '@/db/schema/users'
 import { auth } from '@/lib/auth'
-import { hasVendorAccess } from '@/lib/auth/permissions'
+import { hasVendorAccess, resolveActingVendorScope } from '@/lib/auth/permissions'
 import { bracketLabel, computeBalanceDueRupees } from '@/lib/availability/manifest-helpers'
 import { executeBlockDate, executeUnblockDate } from '@/lib/availability/date-blocking'
 import {
@@ -30,21 +30,28 @@ async function requireAuth(): Promise<string | null> {
 }
 
 /**
- * Permission gate for the availability WRITE actions (issue #03). Resolves the
- * acting user's Vendor role and authorizes `availability:manage`. Returns the
- * userId when authorized, or an error envelope when not. The underlying cores
- * (`executeCreatePattern` etc.) live in `lib/availability/*` — already plain,
- * db-injected modules — so no core extraction is needed here, only the gate.
+ * Permission gate for the availability WRITE actions (issue #03 / #11). Resolves
+ * the acting user's Vendor SHOP + role (single-account model, issue #11) and
+ * authorizes `availability:manage`. Returns `{ actingUserId, vendorUserId, role }`
+ * when authorized, or an error envelope when not.
+ *
+ * The cores (`executeCreatePattern` etc.) verify the passed userId owns the
+ * Experience, so they must receive the SHOP (`vendorUserId`), NOT the acting
+ * member's own id — a member manages availability on the account they belong to.
  */
 async function requireAvailabilityManage(): Promise<
-  { userId: string } | { error: string }
+  { actingUserId: string; vendorUserId: string; role: string } | { error: string }
 > {
-  const userId = await requireAuth()
-  if (!userId) return { error: 'Sign in to continue.' }
-  if (!(await hasVendorAccess(prodDb, userId, 'availability:manage'))) {
+  const actingUserId = await requireAuth()
+  if (!actingUserId) return { error: 'Sign in to continue.' }
+  const scope = await resolveActingVendorScope(prodDb, actingUserId)
+  if (!scope) {
     return { error: 'You do not have permission to manage availability.' }
   }
-  return { userId }
+  if (!(await hasVendorAccess(prodDb, actingUserId, 'availability:manage', scope.vendorUserId))) {
+    return { error: 'You do not have permission to manage availability.' }
+  }
+  return { actingUserId, vendorUserId: scope.vendorUserId, role: scope.role }
 }
 
 // ── Pattern actions ─────────────────────────────────────────────
@@ -52,19 +59,19 @@ async function requireAvailabilityManage(): Promise<
 export async function createPatternAction(input: CreatePatternInput) {
   const gate = await requireAvailabilityManage()
   if ('error' in gate) return { ok: false as const, error: gate.error }
-  return executeCreatePattern(prodDb, gate.userId, input)
+  return executeCreatePattern(prodDb, gate.vendorUserId, input)
 }
 
 export async function updatePatternAction(input: UpdatePatternInput) {
   const gate = await requireAvailabilityManage()
   if ('error' in gate) return { ok: false as const, error: gate.error }
-  return executeUpdatePattern(prodDb, gate.userId, input)
+  return executeUpdatePattern(prodDb, gate.vendorUserId, input)
 }
 
 export async function deletePatternAction(patternId: string) {
   const gate = await requireAvailabilityManage()
   if ('error' in gate) return { ok: false as const, error: gate.error }
-  return executeDeletePattern(prodDb, gate.userId, patternId)
+  return executeDeletePattern(prodDb, gate.vendorUserId, patternId)
 }
 
 // ── Materializer action ─────────────────────────────────────────
@@ -72,12 +79,12 @@ export async function deletePatternAction(patternId: string) {
 export async function materializeSlotsAction(experienceId: string) {
   const gate = await requireAvailabilityManage()
   if ('error' in gate) return { ok: false as const, error: gate.error }
-  // Ownership pre-check lives in the core: it verifies the GATE-RESOLVED userId
+  // Ownership pre-check lives in the core: it verifies the GATE-RESOLVED SHOP
   // owns `experienceId` before materializing — never the client input alone
   // (issue #03 review, FIX 3 — closes the cross-vendor write bypass). Mirrors
-  // blockDateAction/unblockDateAction, which pass the gated userId to a lib
-  // that verifies ownership.
-  return executeMaterializeSlots(prodDb, gate.userId, experienceId)
+  // blockDateAction/unblockDateAction, which pass the gated shop to a lib that
+  // verifies ownership.
+  return executeMaterializeSlots(prodDb, gate.vendorUserId, experienceId)
 }
 
 // ── Date blocking actions ───────────────────────────────────────
@@ -85,13 +92,13 @@ export async function materializeSlotsAction(experienceId: string) {
 export async function blockDateAction(experienceId: string, date: string) {
   const gate = await requireAvailabilityManage()
   if ('error' in gate) return { ok: false as const, error: gate.error }
-  return executeBlockDate(prodDb, gate.userId, experienceId, date)
+  return executeBlockDate(prodDb, gate.vendorUserId, experienceId, date)
 }
 
 export async function unblockDateAction(experienceId: string, date: string) {
   const gate = await requireAvailabilityManage()
   if ('error' in gate) return { ok: false as const, error: gate.error }
-  return executeUnblockDate(prodDb, gate.userId, experienceId, date)
+  return executeUnblockDate(prodDb, gate.vendorUserId, experienceId, date)
 }
 
 // ── Data loaders (for the calendar page) ────────────────────────
@@ -134,22 +141,27 @@ export async function loadSlotsForMonth(experienceId: string, year: number, mont
  * returned as null and omitted in the UI rather than invented.
  */
 export async function loadSlotManifest(experienceId: string, year: number, month: number) {
-  const userId = await requireAuth()
-  if (!userId) return []
+  const actingUserId = await requireAuth()
+  if (!actingUserId) return []
+
+  // Resolve the acting shop (issue #11): the roster is scoped to the shop's
+  // Experiences. A member reads the manifest for the account they belong to.
+  const scope = await resolveActingVendorScope(prodDb, actingUserId)
+  if (!scope) return []
+  const shop = scope.vendorUserId
 
   // Permission gate (issue #03) — the roster is a bookings read; a member must
-  // hold `bookings:read` (Owner/Manager/Booking-Staff/Guide/Accountant) to see
-  // who is coming. Below, the ownership gate still scopes to the Vendor's own
-  // Experiences.
-  if (!(await hasVendorAccess(prodDb, userId, 'bookings:read'))) return []
+  // hold `bookings:read` on the RESOLVED shop (Owner/Manager/Booking-Staff/
+  // Guide/Accountant all do) to see who is coming.
+  if (!(await hasVendorAccess(prodDb, actingUserId, 'bookings:read', shop))) return []
 
-  // Ownership gate — only the owning Vendor may read this Experience's roster.
+  // Ownership gate — the Experience must belong to the acting shop.
   const [exp] = await prodDb
     .select({ vendorUserId: experiences.vendorUserId })
     .from(experiences)
     .where(eq(experiences.id, experienceId))
     .limit(1)
-  if (!exp || exp.vendorUserId !== userId) return []
+  if (!exp || exp.vendorUserId !== shop) return []
 
   const start = new Date(Date.UTC(year, month, 1))
   const end = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999))

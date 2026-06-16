@@ -1,10 +1,7 @@
 'use server'
 
-import { headers } from 'next/headers'
-
 import { db as prodDb } from '@/db/client'
-import { auth } from '@/lib/auth'
-import { hasVendorAccess } from '@/lib/auth/permissions'
+import { requireVendorActionContext } from '@/lib/vendor/acting-context'
 
 import {
   executeUpdateBusinessDetails,
@@ -18,41 +15,42 @@ import type {
 } from './settings-cores'
 
 /**
- * Server Action wrappers (auth layer). Each derives the Vendor identity from
- * the session and gates with `hasVendorAccess` before delegating to the
- * db-injected core in ./settings-cores (issue #03). The cores are NOT exported
- * from this `'use server'` file (IDOR avoidance).
+ * Server Action wrappers (auth layer). Each resolves the acting Vendor context
+ * and gates against the RESOLVED shop (issue #11) before delegating to the
+ * db-injected core in ./settings-cores (issue #03). The cores' `vendorUserId`
+ * arg is the SHOP (ownership scope). The cores are NOT exported from this
+ * `'use server'` file (IDOR avoidance).
  *
  * Permissions:
  *  - business details (name/slug/about, the profile & business surface) →
  *    `kyc:manage`.
- *  - payout method (bank/UPI destination) → `bank:manage`.
+ *  - payout method (bank/UPI destination) → `bank:manage` (Owner-only).
  */
 
 export async function updateBusinessDetailsAction(
   input: UpdateBusinessDetailsInput,
 ): Promise<UpdateBusinessDetailsResult> {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) {
-    return { ok: false, error: 'Sign in to continue.' }
-  }
-  if (!(await hasVendorAccess(prodDb, session.user.id, 'kyc:manage'))) {
-    return { ok: false, error: 'You do not have permission to edit business details.' }
+  const gate = await requireVendorActionContext(
+    'kyc:manage',
+    'You do not have permission to edit business details.',
+  )
+  if ('error' in gate) {
+    return { ok: false, error: gate.error }
   }
 
-  return executeUpdateBusinessDetails(prodDb, session.user.id, input)
+  return executeUpdateBusinessDetails(prodDb, gate.shop, input)
 }
 
 export async function updatePayoutMethodAction(
   input: UpdatePayoutMethodInput,
 ): Promise<UpdatePayoutMethodResult> {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) {
-    return { ok: false, error: 'Sign in to continue.' }
-  }
-  if (!(await hasVendorAccess(prodDb, session.user.id, 'bank:manage'))) {
-    return { ok: false, error: 'You do not have permission to edit bank details.' }
+  const gate = await requireVendorActionContext(
+    'bank:manage',
+    'You do not have permission to edit bank details.',
+  )
+  if ('error' in gate) {
+    return { ok: false, error: gate.error }
   }
 
-  return executeUpdatePayoutMethod(prodDb, session.user.id, input)
+  return executeUpdatePayoutMethod(prodDb, gate.shop, input)
 }

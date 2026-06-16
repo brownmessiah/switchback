@@ -1,11 +1,10 @@
 import { AlertTriangle, CheckCircle2, ShieldCheck, TriangleAlert } from 'lucide-react'
-import { headers } from 'next/headers'
 
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ResponsiveTable } from '@/components/ui/responsive-table'
 import { db } from '@/db/client'
-import { auth } from '@/lib/auth'
+import { getActingVendorContext } from '@/lib/vendor/acting-context'
 import {
   loadVendorDashboard,
   slaColor,
@@ -27,10 +26,12 @@ const SLA_BADGE = {
 } as const
 
 export default async function VendorDashboardPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
-  const userId = session!.user.id
+  // Resolve the acting shop (issue #11). Owner → own account; member → the shop
+  // they belong to. The dashboard is keyed on the resolved `vendorUserId`, NOT
+  // the session id (which for a member would be an empty self-shop).
+  const { vendorUserId } = await getActingVendorContext()
 
-  const data = await loadVendorDashboard(db, userId)
+  const data = await loadVendorDashboard(db, vendorUserId)
 
   const slaColorKey = slaColor(data.slaScore)
   const slaBadge = SLA_BADGE[slaColorKey]

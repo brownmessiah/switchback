@@ -1,4 +1,4 @@
-import { and, eq, isNull, type ExtractTablesWithRelations } from 'drizzle-orm'
+import { and, asc, eq, isNull, type ExtractTablesWithRelations } from 'drizzle-orm'
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core'
 import { notFound } from 'next/navigation'
 
@@ -195,6 +195,106 @@ export async function resolveVendorRole(
     .limit(1)
 
   return member?.role ?? null
+}
+
+/**
+ * The resolved Vendor context for an acting human (issue #11): which Vendor
+ * account ("shop") they are acting on, and the role they hold there.
+ */
+export interface ActingVendorContext {
+  /** The Vendor account being acted on (= `vendor_profiles.user_id`). */
+  vendorUserId: string
+  /** The acting user's role on that account. */
+  role: VendorRole
+}
+
+/**
+ * Resolve the single Vendor account + role an acting human operates as, WITHOUT
+ * redirecting (issue #11). Returns `null` when there is no active context —
+ * the variant Server Actions use to map "no context" to a typed error envelope
+ * (the throwing/redirecting {@link resolveActingVendorContext} wraps this for
+ * page/layout reads).
+ *
+ * The vendor surface historically assumed "logged-in user = shop owner" (every
+ * loader/action used `session.user.id` AS the Vendor-account id). This resolves
+ * the acting user's `{ vendorUserId, role }` ONCE so members can log in and the
+ * resolved `vendorUserId` is threaded through the surface in place of the
+ * session id, while every gate keys on the resolved `role`.
+ *
+ * Precedence (single-account model, NO switcher — the switcher is v2 and this
+ * function is the seam):
+ *   1. **Owner** — if the acting user owns an ACTIVE `vendor_profiles` row
+ *      (closed_at IS NULL), they act on their OWN account as `owner`. Owner
+ *      wins even if they are also a member of another account.
+ *   2. **Single membership** — else the earliest-invited ACTIVE
+ *      `vendor_team_members` row (deterministic `invited_at ASC, vendor_user_id
+ *      ASC` tie-break for the rare multi-membership case) → that shop + role.
+ *   3. **None** → `null` (a profile-less non-member, OR a closed-only profile
+ *      with no active membership).
+ *
+ * For the single-seat owner this resolves to `{ vendorUserId: actingUserId,
+ * role: 'owner' }` — zero behavior change.
+ */
+export async function resolveActingVendorScope(
+  db: DBOrTx,
+  actingUserId: string,
+): Promise<ActingVendorContext | null> {
+  // 1. Owner of an active own profile takes precedence.
+  const ownRole = await resolveVendorRole(db, actingUserId, actingUserId)
+  if (ownRole === 'owner') {
+    return { vendorUserId: actingUserId, role: 'owner' }
+  }
+
+  // 2. Earliest-invited ACTIVE membership (deterministic tie-break). NULLS in
+  //    invited_at sort LAST in Postgres ASC, so the vendor_user_id ASC arm is
+  //    the stable fallback when invited_at is absent on both rows.
+  const [member] = await db
+    .select({
+      vendorUserId: vendorTeamMembers.vendorUserId,
+      role: vendorTeamMembers.role,
+    })
+    .from(vendorTeamMembers)
+    .where(
+      and(
+        eq(vendorTeamMembers.memberUserId, actingUserId),
+        eq(vendorTeamMembers.status, 'active'),
+      ),
+    )
+    .orderBy(asc(vendorTeamMembers.invitedAt), asc(vendorTeamMembers.vendorUserId))
+    .limit(1)
+
+  if (member && member.role !== 'owner') {
+    // `role` is the stored enum (`'owner'` is never a row — DB CHECK + invite
+    // flow guarantee it); the guard narrows the type and is defense-in-depth.
+    return { vendorUserId: member.vendorUserId, role: member.role }
+  }
+
+  // 3. None — no active account context.
+  return null
+}
+
+/**
+ * Page/layout variant of {@link resolveActingVendorScope}: redirects to
+ * `/vendor/onboarding` when there is no active context (mirrors
+ * {@link requireVendorProfile}; the redirect throws), otherwise returns the
+ * resolved `{ vendorUserId, role }`. This is what the `(dashboard)` layout and
+ * every page call.
+ */
+export async function resolveActingVendorContext(
+  db: DBOrTx,
+  actingUserId: string,
+): Promise<ActingVendorContext> {
+  const scope = await resolveActingVendorScope(db, actingUserId)
+  if (scope) return scope
+
+  // No active account context. Redirect to onboarding (same dynamic import
+  // pattern as requireVendorProfile so unit tests that never hit this branch
+  // don't pull next/navigation; the redirect function throws).
+  const { redirect } = await import('next/navigation')
+  redirect('/vendor/onboarding')
+  // `redirect` throws (NEXT_REDIRECT) and never returns; this is unreachable
+  // and exists only so the function's non-undefined return type type-checks.
+  throw new Error('unreachable: redirect did not throw')
 }
 
 /**

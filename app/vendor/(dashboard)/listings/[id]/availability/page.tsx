@@ -1,11 +1,10 @@
 import { eq } from 'drizzle-orm'
-import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 
 import { db } from '@/db/client'
 import { availabilityPatterns } from '@/db/schema/availability-patterns'
 import { experiences } from '@/db/schema/experiences'
-import { auth } from '@/lib/auth'
+import { getActingVendorContext } from '@/lib/vendor/acting-context'
 
 import { AvailabilityManager } from './availability-manager'
 
@@ -15,8 +14,9 @@ interface AvailabilityPageProps {
 
 export default async function AvailabilityPage({ params }: AvailabilityPageProps) {
   const { id } = await params
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) notFound()
+  // Resolve the acting shop (issue #11): the availability manager is visible
+  // only if the Experience belongs to the resolved shop (not the session id).
+  const { vendorUserId: shop } = await getActingVendorContext()
 
   const [experience] = await db
     .select({
@@ -29,7 +29,7 @@ export default async function AvailabilityPage({ params }: AvailabilityPageProps
     .where(eq(experiences.id, id))
     .limit(1)
 
-  if (!experience || experience.vendorUserId !== session.user.id) {
+  if (!experience || experience.vendorUserId !== shop) {
     notFound()
   }
 

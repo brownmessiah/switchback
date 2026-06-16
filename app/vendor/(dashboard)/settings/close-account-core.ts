@@ -165,6 +165,10 @@ export async function executeCloseVendorAccount(
   db: DBOrTx,
   vendorUserId: string,
   input: CloseVendorAccountInput,
+  // issue #11 §5 — the acting human (audit actor). `account:close` is
+  // Owner-only, so in practice `actingUserId === vendorUserId`; the param exists
+  // for symmetry with the other money-path cores and defaults to the shop.
+  actingUserId: string = vendorUserId,
 ): Promise<CloseVendorAccountResult> {
   // 1. Reload the row + idempotent already-closed bail.
   const [vendor] = await db
@@ -215,7 +219,7 @@ export async function executeCloseVendorAccount(
       .where(eq(vendorProfiles.userId, vendorUserId))
 
     await writeAuditLog(tx, {
-      actorUserId: vendorUserId,
+      actorUserId: actingUserId,
       action: 'vendor.profile.closed',
       entityType: 'vendor_profile',
       entityId: vendorUserId,

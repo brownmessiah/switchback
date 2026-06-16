@@ -48,7 +48,7 @@ afterEach(() => {
 describe('VendorSidebar i18n', () => {
   it('renders English nav labels when locale is en', () => {
     renderWithIntl(
-      <VendorSidebar userName="Test Vendor" />,
+      <VendorSidebar userName="Test Vendor" role="owner" />,
       { locale: 'en', messages: enMessages },
     )
 
@@ -59,7 +59,7 @@ describe('VendorSidebar i18n', () => {
 
   it('renders Hindi nav labels when locale is hi', () => {
     renderWithIntl(
-      <VendorSidebar userName="Test Vendor" />,
+      <VendorSidebar userName="Test Vendor" role="owner" />,
       { locale: 'hi', messages: hiMessages },
     )
 
@@ -70,7 +70,7 @@ describe('VendorSidebar i18n', () => {
 
   it('renders portal title from translations', () => {
     renderWithIntl(
-      <VendorSidebar userName="Test Vendor" />,
+      <VendorSidebar userName="Test Vendor" role="owner" />,
       { locale: 'hi', messages: hiMessages },
     )
 
@@ -80,7 +80,7 @@ describe('VendorSidebar i18n', () => {
 
   it('renders complete setup CTA from translations', () => {
     renderWithIntl(
-      <VendorSidebar userName="Test Vendor" />,
+      <VendorSidebar userName="Test Vendor" role="owner" />,
       { locale: 'hi', messages: hiMessages },
     )
 
@@ -96,7 +96,7 @@ describe('VendorSidebar i18n', () => {
     // redirects straight back — making the CTA a silent no-op. The actionable
     // "finish your setup" step is KYC verification at /vendor/settings#verification.
     renderWithIntl(
-      <VendorSidebar userName="Test Vendor" />,
+      <VendorSidebar userName="Test Vendor" role="owner" />,
       { locale: 'en', messages: enMessages },
     )
 
@@ -111,7 +111,7 @@ describe('VendorSidebar i18n', () => {
     // The shared PortalNavDrawer mounts a Sheet trigger (the hamburger) labelled
     // from Nav.openMenu — present in the DOM even though it is CSS-hidden at md+.
     renderWithIntl(
-      <VendorSidebar userName="Test Vendor" />,
+      <VendorSidebar userName="Test Vendor" role="owner" />,
       { locale: 'en', messages: enMessages },
     )
 
@@ -122,10 +122,27 @@ describe('VendorSidebar i18n', () => {
 
   it('renders the vendor display name in the rail header', () => {
     renderWithIntl(
-      <VendorSidebar userName="Acme Adventures" />,
+      <VendorSidebar userName="Acme Adventures" role="owner" />,
       { locale: 'en', messages: enMessages },
     )
 
     expect(screen.getByText('Acme Adventures')).toBeInTheDocument()
+  })
+
+  it('hides role-gated nav links for a Guide (issue #11 §6)', () => {
+    // A Guide holds only bookings:read + bookings:checkin, so Analytics,
+    // Payouts, Listings, and Team & Roles links are hidden from the sidebar.
+    // Bookings + Dashboard (always-visible) remain. UX defense-in-depth only.
+    renderWithIntl(
+      <VendorSidebar userName="Guide User" role="guide" />,
+      { locale: 'en', messages: enMessages },
+    )
+
+    expect(screen.getByText('Dashboard')).toBeInTheDocument()
+    expect(screen.getByText('Bookings')).toBeInTheDocument()
+    expect(screen.queryByText('Analytics')).not.toBeInTheDocument()
+    expect(screen.queryByText('Payouts')).not.toBeInTheDocument()
+    expect(screen.queryByText('Listings')).not.toBeInTheDocument()
+    expect(screen.queryByText('Team & Roles')).not.toBeInTheDocument()
   })
 })

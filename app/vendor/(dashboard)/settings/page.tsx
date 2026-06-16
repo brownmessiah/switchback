@@ -1,9 +1,8 @@
 import { eq } from 'drizzle-orm'
-import { headers } from 'next/headers'
 
 import { db } from '@/db/client'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
-import { auth } from '@/lib/auth'
+import { getActingVendorContext } from '@/lib/vendor/acting-context'
 
 import { BusinessDetailsForm } from './business-details-form'
 import {
@@ -28,13 +27,16 @@ import { SettingsAnchorNav } from './settings-anchor-nav'
  * countdown object inside the payout section — see `payout-method-form.tsx`.
  */
 export default async function VendorSettingsPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
-  const userId = session!.user.id
+  // Resolve the acting shop (issue #11): settings show the shop's profile,
+  // payout method, and verification, keyed on the resolved `vendorUserId`. A
+  // member sees their account's settings (per-section actions still gate the
+  // narrower write permissions — only the Owner can edit bank / close).
+  const { vendorUserId } = await getActingVendorContext()
 
   const [vendor] = await db
     .select()
     .from(vendorProfiles)
-    .where(eq(vendorProfiles.userId, userId))
+    .where(eq(vendorProfiles.userId, vendorUserId))
     .limit(1)
 
   if (!vendor) {
@@ -48,8 +50,8 @@ export default async function VendorSettingsPage() {
   // the count of Experiences that closure WILL archive (status != 'archived',
   // matching the archive query) for the dialog consequence copy. Never trusted
   // from the client (issue 06).
-  const eligibility = await getVendorClosureEligibility(db, userId)
-  const archivableExperienceCount = await getArchivableExperienceCount(db, userId)
+  const eligibility = await getVendorClosureEligibility(db, vendorUserId)
+  const archivableExperienceCount = await getArchivableExperienceCount(db, vendorUserId)
 
   const sections = [
     { id: 'business-details', label: 'Business details' },

@@ -57,6 +57,9 @@ export async function executeMarkCompleteAction(
   database: DBOrTx,
   vendorUserId: string,
   input: { bookingId: string },
+  // issue #11 §5 — the acting human (audit actor). Defaults to the shop
+  // (single-seat back-compat); the Server Action wrapper passes the member.
+  actingUserId: string = vendorUserId,
 ): Promise<MarkCompleteResult> {
   const parsed = markCompleteSchema.safeParse(input)
   if (!parsed.success) {
@@ -65,7 +68,7 @@ export async function executeMarkCompleteAction(
 
   try {
     const result = await database.transaction(async (tx) =>
-      executeMarkComplete(tx, parsed.data.bookingId, vendorUserId),
+      executeMarkComplete(tx, parsed.data.bookingId, vendorUserId, actingUserId),
     )
     return { ok: true, bookingId: result.bookingId }
   } catch (err) {
@@ -80,6 +83,8 @@ export async function executeVendorCancelAction(
   database: DBOrTx,
   vendorUserId: string,
   input: { bookingId: string; reason: string },
+  // issue #11 §5 — the acting human (audit actor + refund requestedByUserId).
+  actingUserId: string = vendorUserId,
 ): Promise<VendorCancelResult> {
   const parsed = vendorCancelSchema.safeParse(input)
   if (!parsed.success) {
@@ -88,7 +93,13 @@ export async function executeVendorCancelAction(
 
   try {
     const result = await database.transaction(async (tx) =>
-      executeVendorCancel(tx, parsed.data.bookingId, vendorUserId, parsed.data.reason),
+      executeVendorCancel(
+        tx,
+        parsed.data.bookingId,
+        vendorUserId,
+        parsed.data.reason,
+        actingUserId,
+      ),
     )
     return {
       ok: true,
@@ -107,6 +118,8 @@ export async function executeMarkNoShowAction(
   database: DBOrTx,
   vendorUserId: string,
   input: { bookingId: string },
+  // issue #11 §5 — the acting human (audit actor).
+  actingUserId: string = vendorUserId,
 ): Promise<MarkNoShowResult> {
   const parsed = markNoShowSchema.safeParse(input)
   if (!parsed.success) {
@@ -115,7 +128,7 @@ export async function executeMarkNoShowAction(
 
   try {
     const result = await database.transaction(async (tx) =>
-      executeMarkNoShow(tx, parsed.data.bookingId, vendorUserId),
+      executeMarkNoShow(tx, parsed.data.bookingId, vendorUserId, {}, actingUserId),
     )
     return { ok: true, bookingId: result.bookingId }
   } catch (err) {

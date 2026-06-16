@@ -1,13 +1,12 @@
 import { eq } from 'drizzle-orm'
 import { QrCode } from 'lucide-react'
-import { headers } from 'next/headers'
 import Link from 'next/link'
 
 import { buttonVariants } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { db } from '@/db/client'
 import { availabilitySlots, bookings, experiences, users } from '@/db/schema'
-import { auth } from '@/lib/auth'
+import { getActingVendorContext } from '@/lib/vendor/acting-context'
 import { bookingStatusBadge } from '@/lib/bookings/booking-status-badge'
 import { type BookingState } from '@/lib/bookings/state-machine'
 import { computeVendorNetPayout } from '@/lib/payments/payout-calculator'
@@ -92,8 +91,9 @@ const SUMMARY_CARDS: ReadonlyArray<{
 ]
 
 export default async function VendorBookingsPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
-  const userId = session!.user.id
+  // Resolve the acting shop (issue #11): bookings are scoped to the shop's
+  // Experiences, keyed on the resolved `vendorUserId` (not the session id).
+  const { vendorUserId } = await getActingVendorContext()
 
   const rawRows = withSlotEnded(
     await db
@@ -118,7 +118,7 @@ export default async function VendorBookingsPage() {
     .innerJoin(experiences, eq(bookings.experienceId, experiences.id))
     .innerJoin(users, eq(bookings.customerUserId, users.id))
     .leftJoin(availabilitySlots, eq(bookings.slotId, availabilitySlots.id))
-    .where(eq(experiences.vendorUserId, userId))
+    .where(eq(experiences.vendorUserId, vendorUserId))
     .orderBy(bookings.createdAt),
   )
 

@@ -289,7 +289,7 @@ export function CheckoutForm({
             <div className="flex items-center gap-2 pt-1">
               <Badge variant="success">
                 <CheckCircle2 aria-hidden="true" />
-                Free cancellation
+                Flexible cancellation
               </Badge>
             </div>
           </CardContent>
@@ -571,7 +571,7 @@ export function CheckoutForm({
             <div className="flex items-center gap-2 pt-1">
               <Badge variant="success">
                 <CheckCircle2 aria-hidden="true" />
-                Free cancellation
+                Flexible cancellation
               </Badge>
             </div>
           </CardContent>

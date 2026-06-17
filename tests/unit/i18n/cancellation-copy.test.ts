@@ -7,11 +7,16 @@ import { glob } from 'glob'
  * Customer-facing cancellation badge/line copy parity (issue #10).
  *
  * The Experience detail shows EITHER a "Non-cancellable" badge (when the preset
- * is non_cancellable) OR a "Free cancellation up to {hours}h before activity"
- * line. Both strings are customer-facing — they must exist in EVERY locale, be
- * non-empty, and (for the prose keys) carry a REAL native translation, not an en
- * copy (issue-05 precedent: non-en ≠ en). The {hours} numeric placeholder must
- * survive in every locale so next-intl can interpolate the derived figure.
+ * is non_cancellable) OR a "Full refund if you cancel up to {hours}h before
+ * activity" line. Both strings are customer-facing — they must exist in EVERY
+ * locale, be non-empty, and (for the prose keys) carry a REAL native
+ * translation, not an en copy (issue-05 precedent: non-en ≠ en). The {hours}
+ * numeric placeholder must survive in every locale so next-intl can interpolate
+ * the derived figure.
+ *
+ * CONTEXT.md domain vocabulary forbids the "Free cancellation" phrase in any
+ * user-facing string — the freeUpToHours line is "Full refund if you cancel
+ * up to …", never "Free cancellation". This suite also guards that ban.
  */
 
 const ROOT = resolve(__dirname, '../../..')
@@ -68,6 +73,16 @@ describe('cancellation badge/line customer copy parity (issue #10)', () => {
       const v = get(json, PLACEHOLDER_KEY)
       expect(typeof v).toBe('string')
       expect(v as string).toContain('{hours}')
+    })
+  }
+
+  // CONTEXT.md ban: no customer-facing cancellation prose may use the English
+  // "Free cancellation" phrase (en is reworded to "Full refund if you cancel
+  // up to …"; non-en locales carry the equivalent without the banned phrase).
+  for (const { locale, json } of files) {
+    it(`${locale}.json freeUpToHours does not use the banned "Free cancellation" phrase`, () => {
+      const v = get(json, PLACEHOLDER_KEY) as string
+      expect(v.toLowerCase()).not.toContain('free cancellation')
     })
   }
 })

@@ -119,9 +119,10 @@ test.describe('Cancellation policy — customer detail', () => {
     const section = page.locator('#cancellation')
     await expect(section).toBeVisible()
 
-    // Either the "Free cancellation up to Xh" line (windowed preset) or the
-    // Non-cancellable badge — both sourced from the single copy constant.
+    // Either the "Full refund if you cancel up to Xh…" line (windowed preset) or
+    // the Non-cancellable badge — both sourced from the single copy constant.
+    // (Copy uses "Full refund", never the banned "Free cancellation" — CONTEXT.md.)
     const text = (await section.innerText()).toLowerCase()
-    expect(/free cancellation up to \d+h|non-cancellable/.test(text)).toBe(true)
+    expect(/full refund if you cancel up to \d+h|non-cancellable/.test(text)).toBe(true)
   })
 })

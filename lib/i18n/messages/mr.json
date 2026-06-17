@@ -381,12 +381,12 @@
     "itemList": {
       "name": "{region} मधील अग्रगण्य {activity} अनुभव"
     },
-    "heroTitle": "{region} मध्ये {activity} — मोफत रद्द",
+    "heroTitle": "{region} मध्ये {activity} — लवचिक रद्द",
     "heroEyebrow": "निवडक साहस",
-    "refundLead": "तुमच्या स्लॉटच्या 24 तास आधीपर्यंत मोफत रद्द करा आणि पूर्ण परतावा मिळवा — खालील {region} मधील प्रत्येक {activity} अनुभव, Outvers वर बुक केलेला, यात समाविष्ट आहे.",
+    "refundLead": "तुमच्या स्लॉटच्या 24 तास आधीपर्यंत रद्द केल्यास पूर्ण परतावा मिळवा — खालील {region} मधील प्रत्येक {activity} अनुभव, Outvers वर बुक केलेला, यात समाविष्ट आहे.",
     "editorialIntro": "{region} मधील {activity} चा हाताने तपासलेला संग्रह, फक्त KYC-सत्यापित विक्रेत्यांद्वारे चालवला जातो. पारदर्शक किंमत, रिअल-टाइम स्लॉट उपलब्धता, आणि 24 तासांत परतावा.",
     "trust": {
-      "freeCancellation": "24 तासांपर्यंत मोफत रद्द",
+      "freeCancellation": "24 तासांपर्यंत लवचिक रद्द",
       "verifiedVendor": "ओळख-सत्यापित विक्रेते",
       "refundSla": "24-तास परतावा SLA"
     }
@@ -398,7 +398,7 @@
     },
     "heroEyebrow": "Every region, one place",
     "heroTitle": "{activity} across India",
-    "refundLead": "Cancel free up to 24 hours before your slot for a full refund — every {activity} Experience below, booked on Outvers, is covered.",
+    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {activity} Experience below, booked on Outvers, is covered.",
     "editorialIntro": "A hand-checked collection of {activity} from every region we operate in, run only by KYC-verified Vendors. Compare across destinations, then book with transparent pricing and refunds credited within 24 hours.",
     "regionHint": "Looking for {activity} in a specific destination? Open an Experience to see its region, or browse {activity} by city from each listing.",
     "experiences": {
@@ -422,7 +422,7 @@
       "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
     },
     "trust": {
-      "freeCancellation": "Free cancellation up to 24h",
+      "freeCancellation": "Flexible cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
     },
@@ -442,7 +442,7 @@
     },
     "heroEyebrow": "Curated category",
     "heroTitle": "{category} adventures across India",
-    "refundLead": "Cancel free up to 24 hours before your slot for a full refund — every {category} Experience below, booked on Outvers, is covered.",
+    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {category} Experience below, booked on Outvers, is covered.",
     "editorialIntro": "A hand-checked rollup of {category} adventures from every region we operate in, run only by KYC-verified Vendors. Transparent pricing, real-time slot availability, and refunds credited within 24 hours.",
     "categories": {
       "water": "जल क्रीडा",
@@ -472,7 +472,7 @@
       "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
     },
     "trust": {
-      "freeCancellation": "Free cancellation up to 24h",
+      "freeCancellation": "Flexible cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
     }
@@ -510,7 +510,7 @@
       "total": "एकूण",
       "partialPay": "आता 25% भरा, उर्वरित अनुभवाच्या 24 तास आधी.",
       "bookNow": "आता बुक करा",
-      "freeCancellation": "मोफत रद्दीकरण · 24 तास परतावा SLA",
+      "freeCancellation": "लवचिक रद्दीकरण · 24 तास परतावा SLA",
       "priceTable": "प्रति-सहभागी किंमत सारणी",
       "breakdown": "थेट किंमत तपशील",
       "advanceDue": "आता देय Advance (25%)",
@@ -528,13 +528,13 @@
       "exploreSimilar": "तत्सम अनुभव पाहा"
     },
     "cancellation": {
-      "flexible": "अनुभवाच्या 24 तास आधी मोफत रद्दीकरण. 2 तासांत 50% परतावा. त्यानंतर परतावा नाही.",
-      "moderate": "अनुभवाच्या 72 तास आधीपर्यंत मोफत रद्दीकरण. 24 तास आधीपर्यंत 50% परतावा. त्यानंतर परतावा नाही.",
-      "strict": "अनुभवाच्या 14 दिवस आधीपर्यंत मोफत रद्दीकरण. 7 दिवस आधीपर्यंत 50% परतावा. त्यानंतर परतावा नाही.",
+      "flexible": "अनुभवाच्या 24 तास आधी रद्द केल्यास पूर्ण परतावा. 2 तासांत 50% परतावा. त्यानंतर परतावा नाही.",
+      "moderate": "अनुभवाच्या 72 तास आधीपर्यंत रद्द केल्यास पूर्ण परतावा. 24 तास आधीपर्यंत 50% परतावा. त्यानंतर परतावा नाही.",
+      "strict": "अनुभवाच्या 14 दिवस आधीपर्यंत रद्द केल्यास पूर्ण परतावा. 7 दिवस आधीपर्यंत 50% परतावा. त्यानंतर परतावा नाही.",
       "fallback": "हा अनुभव {preset} रद्दीकरण धोरणाचे पालन करतो.",
       "nonCancellableBadge": "रद्द करता येणार नाही",
       "nonCancellableDescription": "हा अनुभव रद्द करता येणार नाही — पेमेंटनंतर परतावा नाही. अपवादात्मक प्रकरणांमध्ये Outvers तरीही परतावा हाताळू शकते.",
-      "freeUpToHours": "क्रियाकलापाच्या {hours} तास आधीपर्यंत मोफत रद्दीकरण"
+      "freeUpToHours": "क्रियाकलापाच्या {hours} तास आधीपर्यंत रद्द केल्यास पूर्ण परतावा"
     },
     "faq": {
       "safetyQuestion": "{title} सुरक्षित आहे का?",
@@ -587,7 +587,7 @@
       "day": "दिवस {day}"
     },
     "assurance": {
-      "freeCancellation": "अनुभवाच्या 24 तास आधीपर्यंत मोफत रद्द",
+      "freeCancellation": "अनुभवाच्या 24 तास आधीपर्यंत लवचिक रद्द",
       "verifiedVendor": "ओळख-पडताळणी केलेला Vendor",
       "exactRefund": "पुष्टी करण्यापूर्वी अचूक परतावा दर्शविला जातो"
     },
@@ -924,7 +924,7 @@
       "cancelLabel": "तुम्ही रद्द करता",
       "resultLabel": "गणना केलेला परतावा",
       "feeLabel": "रद्दीकरण शुल्क",
-      "slabFree": "मोफत-रद्दीकरण कालावधी — पूर्ण परतावा",
+      "slabFree": "पूर्ण-परतावा कालावधी — पूर्ण परतावा",
       "slabHalf": "अर्धा-परतावा कालावधी — 50% परत",
       "slabNone": "परतावा-नसलेला कालावधी",
       "promptEmpty": "तुमचा परतावा पाहण्यासाठी रक्कम आणि दोन्ही तारखा भरा.",
@@ -1269,7 +1269,7 @@
       "breadcrumb": "ठिकाणे",
       "heroEyebrow": "कुठे जायचे",
       "heroTitle": "भारतभर साहसी ठिकाणे",
-      "heroSubtitle": "हिमालयी खिंडींपासून किनारपट्टीवरील प्रवाळ खडकांपर्यंत — Outvers कव्हर करत असलेला प्रत्येक प्रदेश पाहा, प्रत्येकात KYC-सत्यापित विक्रेते आणि 24 तासांपर्यंत मोफत रद्द.",
+      "heroSubtitle": "हिमालयी खिंडींपासून किनारपट्टीवरील प्रवाळ खडकांपर्यंत — Outvers कव्हर करत असलेला प्रत्येक प्रदेश पाहा, प्रत्येकात KYC-सत्यापित विक्रेते आणि 24 तासांपर्यंत लवचिक रद्द.",
       "regionsHeading": "सर्व ठिकाणे",
       "regionCount": "{count, plural, =0 {अद्याप कोणतेही अनुभव नाहीत} one {# अनुभव} other {# अनुभव}}",
       "exploreCta": "{region} शोधा"

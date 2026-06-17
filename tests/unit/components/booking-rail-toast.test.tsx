@@ -1,4 +1,5 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { isValidElement, type ReactElement, type ReactNode } from 'react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -66,7 +67,7 @@ const baseProps = {
   participantsLabel: 'Participants',
   totalLabel: 'Total',
   maxParticipants: 8,
-  freeCancellation: 'Free cancellation',
+  freeCancellation: 'Flexible cancellation',
   bookNowLabel: 'Book now',
   checkoutHref: '/checkout?experienceId=exp-1',
   slots: [
@@ -114,15 +115,29 @@ describe('BookingRailInteractive — booking-flow toasts (issue 24)', () => {
     expect(toast.info).toHaveBeenCalledWith('Taking you to checkout')
   })
 
-  it('fires an error toast on mount when availability failed to load', () => {
+  it('fires an ASSERTIVE error toast on mount when availability failed to load', async () => {
     render(<BookingRailInteractive {...baseProps} availabilityError />)
-    expect(toast.error).toHaveBeenCalledWith(
-      "We couldn't load availability. Please refresh.",
-    )
+
+    // The on-mount toast is deferred a macrotask so the root <Toaster>
+    // subscribes to sonner's ToastState before it fires (otherwise the toast is
+    // enqueued with no subscriber on first hydration and silently dropped).
+    await waitFor(() => expect(toast.error).toHaveBeenCalledTimes(1))
+
+    // a11y (ADR-0018): a load failure is rendered as an assertive `role="alert"`
+    // element (sonner's container is only `aria-live="polite"` and exposes no
+    // per-toast role option), carrying the same copy so screen readers
+    // interrupt and the toast is reachable via getByRole('alert').
+    const arg = toast.error.mock.calls[0][0]
+    expect(isValidElement(arg)).toBe(true)
+    const el = arg as ReactElement<{ role?: string; children?: ReactNode }>
+    expect(el.props.role).toBe('alert')
+    expect(el.props.children).toBe("We couldn't load availability. Please refresh.")
   })
 
-  it('does NOT fire an availability error toast when availability loaded fine', () => {
+  it('does NOT fire an availability error toast when availability loaded fine', async () => {
     render(<BookingRailInteractive {...baseProps} />)
+    // Give the deferred mount effect a tick to (not) fire.
+    await new Promise((r) => setTimeout(r, 10))
     expect(toast.error).not.toHaveBeenCalled()
   })
 })

@@ -27,6 +27,8 @@
 
 import { and, eq, inArray, like } from 'drizzle-orm'
 
+import { IDENTITY_MAX_PARTICIPANTS_PER_SLOT } from '@/lib/kyc/tier-caps'
+
 import { db } from './client'
 import { seedDefaultAvailability } from './seed-availability'
 import { DEMO_PASSWORD, seedDemoPasswords } from './seed-demo-passwords'
@@ -841,8 +843,23 @@ async function seed(): Promise<void> {
   // slots it used to). Idempotent + additive (ON CONFLICT DO NOTHING) — the
   // dedicated demo/E2E slots seeded elsewhere are never disturbed. Vendors can
   // still author their own patterns via the availability manager.
+  //
+  // Slot capacity MUST respect the owning Vendor's KYC-tier cap (ADR vendor
+  // verification / lib/kyc/tier-caps.ts): phone- and identity-tier Vendors may
+  // host at most IDENTITY_MAX_PARTICIPANTS_PER_SLOT per slot. Seeding the
+  // helper's default (10) for an identity-tier Experience produced over-cap
+  // slots that `createBooking`'s tier-cap guardrail rejected — silently
+  // breaking the entire revenue spine on the flagship rafting fixture (an
+  // identity-tier listing). Map each Experience → its Vendor tier and clamp.
+  const kycTierByVendorId = new Map(VENDORS.map((v) => [v.userId, v.kycTier]))
+  const vendorIdBySlug = new Map(EXPERIENCES.map((e) => [e.slug, e.vendorUserId]))
   for (const exp of allExperiences) {
-    await seedDefaultAvailability(db, exp.id)
+    const tier = kycTierByVendorId.get(vendorIdBySlug.get(exp.slug) ?? '')
+    // Business tier is unrestricted → keep the helper's richer default; phone /
+    // identity (and any unmapped fixture) clamp to the identity per-slot cap.
+    const capacity =
+      tier === 'business' ? undefined : IDENTITY_MAX_PARTICIPANTS_PER_SLOT
+    await seedDefaultAvailability(db, exp.id, { capacity })
   }
 
   // ----- STRUCTURED ITINERARY (ADR-0017) — only the flagged fixture row -----

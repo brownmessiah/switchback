@@ -340,10 +340,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     .where(eq(vendorProfiles.slug, slug))
     .limit(1)
 
-  if (!vendor) {
-    const t = await getTranslations({ locale, namespace: 'VendorPage' })
-    return { title: t('metadata.notFound') }
-  }
+  // notFound() here sets the 404 HTTP status pre-stream (generateMetadata
+  // resolves before the page body / any Suspense shell flushes a 200). See
+  // next/dist/docs .../file-conventions/loading.md "Status Codes".
+  if (!vendor) notFound()
 
   const t = await getTranslations({ locale, namespace: 'VendorPage' })
 

@@ -32,8 +32,15 @@ test.describe('Wishlist add toast (customer)', () => {
     await heart.click()
     await expect(heart).toHaveAttribute('data-saved', 'true')
 
-    // Accessible success toast (role=status) confirming the wishlist add.
-    const toast = page.getByRole('status').filter({ hasText: /wishlist/i }).first()
+    // Accessible success toast confirming the wishlist add. sonner announces
+    // toasts through its single `aria-live="polite"` region — the individual
+    // toast <li> carries `[data-sonner-toast]` but no `role`, so the previous
+    // `getByRole('status')` matched nothing. Assert the success copy ("Saved to
+    // your wishlist.") on the sonner toast element itself.
+    const toast = page
+      .locator('[data-sonner-toast]')
+      .filter({ hasText: /wishlist/i })
+      .first()
     await expect(toast).toBeVisible()
 
     // Clean up — toggle back off so the spec is idempotent (also fires a toast).

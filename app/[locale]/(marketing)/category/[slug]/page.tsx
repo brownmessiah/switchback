@@ -26,6 +26,15 @@ import { itemList } from '@/lib/seo/schemas/item-list'
 
 export const revalidate = 60
 
+// The category slug space is closed: only NON-EMPTY categories are enumerated
+// by generateStaticParams (the empty `urban` category is excluded by
+// listCategories()). dynamicParams=false makes any other slug — including
+// `urban` and unknown categories — 404 at the ROUTING level (before any render
+// or stream), the only way to return a TRUE 404 status (a streamed loading
+// shell would otherwise flush a 200 that a later notFound() can't change). See
+// next/dist/docs .../functions/generate-static-params.md.
+export const dynamicParams = false
+
 interface PageProps {
   params: Promise<{ locale: string; slug: string }>
 }
@@ -274,14 +283,10 @@ export default async function CategoryLandingPage({
 export async function generateMetadata({ params }: PageProps) {
   const { locale, slug } = await params
   const data = await loadCategoryLanding(db, slug)
-  if (!data) {
-    const tCommon = await getTranslations({ locale, namespace: 'Common' })
-    return {
-      title: tCommon('notFound'),
-      description: '',
-      alternates: { canonical: '' },
-    }
-  }
+  // notFound() here sets the 404 HTTP status pre-stream (generateMetadata
+  // resolves before the loading.tsx Suspense shell flushes a 200). See
+  // next/dist/docs .../file-conventions/loading.md "Status Codes".
+  if (!data) notFound()
   const t = await getTranslations({ locale, namespace: 'CategoryPage' })
   const categoryDisplay = t(`categories.${data.category}`)
   return {

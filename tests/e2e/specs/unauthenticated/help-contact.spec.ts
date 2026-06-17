@@ -97,27 +97,36 @@ test.describe('Contact form', () => {
   test('invalid email shows a field error and does NOT submit', async ({ page }) => {
     await page.goto('/contact')
 
-    await page.locator('input[name="name"]').fill('Error Path Tester')
-    await page.locator('input[name="email"]').fill('not-an-email')
-    await page.locator('input[name="subject"]').fill('Invalid email subject')
-    await page
+    // `input[name="email"]` also matches the footer newsletter form, so scope
+    // every field lookup to the contact form (data-testid="contact-form").
+    const form = page.getByTestId('contact-form')
+    await form.locator('input[name="name"]').fill('Error Path Tester')
+    await form.locator('input[name="email"]').fill('not-an-email')
+    await form.locator('input[name="subject"]').fill('Invalid email subject')
+    await form
       .locator('textarea[name="message"]')
       .fill('This message is long enough to pass the length check.')
 
     await page.getByTestId('contact-submit').click()
 
     // An email field error is shown; success state never appears.
-    await expect(page.getByText('valid email address', { exact: false })).toBeVisible()
+    await expect(
+      form.getByText('valid email address', { exact: false }),
+    ).toBeVisible()
     await expect(page.getByTestId('contact-success')).toHaveCount(0)
   })
 
   test('happy path: submit creates a support_ticket and shows success', async ({ page }) => {
     await page.goto('/contact')
 
-    await page.locator('input[name="name"]').fill('Happy Path Tester')
-    await page.locator('input[name="email"]').fill(EMAIL)
-    await page.locator('input[name="subject"]').fill(SUBJECT)
-    await page
+    // `input[name="email"]` (and any field also present in the footer newsletter
+    // form) is ambiguous page-wide, so scope every field lookup to the contact
+    // form (data-testid="contact-form").
+    const form = page.getByTestId('contact-form')
+    await form.locator('input[name="name"]').fill('Happy Path Tester')
+    await form.locator('input[name="email"]').fill(EMAIL)
+    await form.locator('input[name="subject"]').fill(SUBJECT)
+    await form
       .locator('textarea[name="message"]')
       .fill('I have a question about my upcoming rafting Booking and the refund window.')
 

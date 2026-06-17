@@ -381,12 +381,12 @@
     "itemList": {
       "name": "{region} లో అగ్ర {activity} అనుభవాలు"
     },
-    "heroTitle": "{region} లో {activity} — ఉచిత రద్దు",
+    "heroTitle": "{region} లో {activity} — సౌకర్యవంతమైన రద్దు",
     "heroEyebrow": "క్యూరేటెడ్ సాహసాలు",
-    "refundLead": "మీ స్లాట్‌కు 24 గంటల ముందు వరకు ఉచితంగా రద్దు చేసి పూర్తి రీఫండ్ పొందండి — క్రింద ఉన్న {region} లో ప్రతి {activity} అనుభవం, Outvers లో బుక్ చేయబడింది, దీనిలో ఉంటుంది.",
+    "refundLead": "మీ స్లాట్‌కు 24 గంటల ముందు వరకు రద్దు చేస్తే పూర్తి రీఫండ్ పొందండి — క్రింద ఉన్న {region} లో ప్రతి {activity} అనుభవం, Outvers లో బుక్ చేయబడింది, దీనిలో ఉంటుంది.",
     "editorialIntro": "{region} లో {activity} యొక్క చేతితో-తనిఖీ చేయబడిన సేకరణ, KYC-ధృవీకరించబడిన విక్రేతలచే మాత్రమే నిర్వహించబడుతుంది. పారదర్శక ధర, రియల్-టైమ్ స్లాట్ లభ్యత, మరియు 24 గంటల్లో రీఫండ్.",
     "trust": {
-      "freeCancellation": "24 గంటల వరకు ఉచిత రద్దు",
+      "freeCancellation": "24 గంటల వరకు సౌకర్యవంతమైన రద్దు",
       "verifiedVendor": "గుర్తింపు-ధృవీకరించబడిన విక్రేతలు",
       "refundSla": "24 గంటల రీఫండ్ SLA"
     }
@@ -398,7 +398,7 @@
     },
     "heroEyebrow": "Every region, one place",
     "heroTitle": "{activity} across India",
-    "refundLead": "Cancel free up to 24 hours before your slot for a full refund — every {activity} Experience below, booked on Outvers, is covered.",
+    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {activity} Experience below, booked on Outvers, is covered.",
     "editorialIntro": "A hand-checked collection of {activity} from every region we operate in, run only by KYC-verified Vendors. Compare across destinations, then book with transparent pricing and refunds credited within 24 hours.",
     "regionHint": "Looking for {activity} in a specific destination? Open an Experience to see its region, or browse {activity} by city from each listing.",
     "experiences": {
@@ -422,7 +422,7 @@
       "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
     },
     "trust": {
-      "freeCancellation": "Free cancellation up to 24h",
+      "freeCancellation": "Flexible cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
     },
@@ -442,7 +442,7 @@
     },
     "heroEyebrow": "Curated category",
     "heroTitle": "{category} adventures across India",
-    "refundLead": "Cancel free up to 24 hours before your slot for a full refund — every {category} Experience below, booked on Outvers, is covered.",
+    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {category} Experience below, booked on Outvers, is covered.",
     "editorialIntro": "A hand-checked rollup of {category} adventures from every region we operate in, run only by KYC-verified Vendors. Transparent pricing, real-time slot availability, and refunds credited within 24 hours.",
     "categories": {
       "water": "నీటి క్రీడలు",
@@ -472,7 +472,7 @@
       "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
     },
     "trust": {
-      "freeCancellation": "Free cancellation up to 24h",
+      "freeCancellation": "Flexible cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
     }
@@ -510,7 +510,7 @@
       "total": "మొత్తం",
       "partialPay": "ఇప్పుడు 25% చెల్లించండి, మిగిలినది అనుభవానికి 24 గంటల ముందు.",
       "bookNow": "ఇప్పుడే బుక్ చేయండి",
-      "freeCancellation": "ఉచిత రద్దు · 24 గంటల రీఫండ్ SLA",
+      "freeCancellation": "సౌకర్యవంతమైన రద్దు · 24 గంటల రీఫండ్ SLA",
       "priceTable": "ఒక్కో-పాల్గొనేవారి ధర పట్టిక",
       "breakdown": "ప్రత్యక్ష ధర వివరణ",
       "advanceDue": "ఇప్పుడు చెల్లించాల్సిన Advance (25%)",
@@ -528,13 +528,13 @@
       "exploreSimilar": "సారూప్య అనుభవాలను అన్వేషించండి"
     },
     "cancellation": {
-      "flexible": "అనుభవానికి 24 గంటల ముందు ఉచిత రద్దు. 2 గంటల్లో 50% రీఫండ్. ఆ తర్వాత రీఫండ్ లేదు.",
-      "moderate": "అనుభవానికి 72 గంటల ముందు వరకు ఉచిత రద్దు. 24 గంటల ముందు వరకు 50% రీఫండ్. ఆ తర్వాత రీఫండ్ లేదు.",
-      "strict": "అనుభవానికి 14 రోజుల ముందు వరకు ఉచిత రద్దు. 7 రోజుల ముందు వరకు 50% రీఫండ్. ఆ తర్వాత రీఫండ్ లేదు.",
+      "flexible": "అనుభవానికి 24 గంటల ముందు రద్దు చేస్తే పూర్తి రీఫండ్. 2 గంటల్లో 50% రీఫండ్. ఆ తర్వాత రీఫండ్ లేదు.",
+      "moderate": "అనుభవానికి 72 గంటల ముందు వరకు రద్దు చేస్తే పూర్తి రీఫండ్. 24 గంటల ముందు వరకు 50% రీఫండ్. ఆ తర్వాత రీఫండ్ లేదు.",
+      "strict": "అనుభవానికి 14 రోజుల ముందు వరకు రద్దు చేస్తే పూర్తి రీఫండ్. 7 రోజుల ముందు వరకు 50% రీఫండ్. ఆ తర్వాత రీఫండ్ లేదు.",
       "fallback": "ఈ అనుభవం {preset} రద్దు పాలసీని అనుసరిస్తుంది.",
       "nonCancellableBadge": "రద్దు చేయలేరు",
       "nonCancellableDescription": "ఈ అనుభవాన్ని రద్దు చేయలేరు — చెల్లింపు తర్వాత రీఫండ్ లేదు. అసాధారణ సందర్భాల్లో Outvers ఇంకా రీఫండ్‌ను నిర్వహించవచ్చు.",
-      "freeUpToHours": "కార్యకలాపానికి {hours} గంటల ముందు వరకు ఉచిత రద్దు"
+      "freeUpToHours": "కార్యకలాపానికి {hours} గంటల ముందు వరకు రద్దు చేస్తే పూర్తి రీఫండ్"
     },
     "faq": {
       "safetyQuestion": "{title} సురక్షితమా?",
@@ -587,7 +587,7 @@
       "day": "రోజు {day}"
     },
     "assurance": {
-      "freeCancellation": "అనుభవానికి 24 గంటల ముందు వరకు ఉచిత రద్దు",
+      "freeCancellation": "అనుభవానికి 24 గంటల ముందు వరకు సౌకర్యవంతమైన రద్దు",
       "verifiedVendor": "గుర్తింపు-ధృవీకరించబడిన Vendor",
       "exactRefund": "నిర్ధారించే ముందు ఖచ్చితమైన రీఫండ్ చూపబడుతుంది"
     },
@@ -924,7 +924,7 @@
       "cancelLabel": "మీరు రద్దు చేస్తారు",
       "resultLabel": "గణించిన రీఫండ్",
       "feeLabel": "రద్దు రుసుము",
-      "slabFree": "ఉచిత-రద్దు వ్యవధి — పూర్తి రీఫండ్",
+      "slabFree": "పూర్తి-రీఫండ్ వ్యవధి — పూర్తి రీఫండ్",
       "slabHalf": "సగం-రీఫండ్ వ్యవధి — 50% తిరిగి",
       "slabNone": "రీఫండ్ లేని వ్యవధి",
       "promptEmpty": "మీ రీఫండ్‌ను చూడటానికి మొత్తం మరియు రెండు తేదీలను నమోదు చేయండి.",
@@ -1269,7 +1269,7 @@
       "breadcrumb": "గమ్యస్థానాలు",
       "heroEyebrow": "ఎక్కడికి వెళ్లాలి",
       "heroTitle": "భారతదేశం అంతటా అడ్వెంచర్ గమ్యస్థానాలు",
-      "heroSubtitle": "హిమాలయ కనుమల నుండి తీర పగడపు దిబ్బల వరకు — Outvers కవర్ చేసే ప్రతి ప్రాంతాన్ని చూడండి, ప్రతిదానిలో KYC-ధృవీకరించబడిన విక్రేతలు మరియు 24 గంటల వరకు ఉచిత రద్దు.",
+      "heroSubtitle": "హిమాలయ కనుమల నుండి తీర పగడపు దిబ్బల వరకు — Outvers కవర్ చేసే ప్రతి ప్రాంతాన్ని చూడండి, ప్రతిదానిలో KYC-ధృవీకరించబడిన విక్రేతలు మరియు 24 గంటల వరకు సౌకర్యవంతమైన రద్దు.",
       "regionsHeading": "అన్ని గమ్యస్థానాలు",
       "regionCount": "{count, plural, =0 {ఇంకా అనుభవాలు లేవు} one {# అనుభవం} other {# అనుభవాలు}}",
       "exploreCta": "{region} అన్వేషించండి"

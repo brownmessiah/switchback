@@ -381,12 +381,12 @@
     "itemList": {
       "name": "{region}માં ટોચના {activity} અનુભવો"
     },
-    "heroTitle": "{region} માં {activity} — મફત રદ",
+    "heroTitle": "{region} માં {activity} — લવચીક રદ",
     "heroEyebrow": "પસંદ કરેલા સાહસો",
-    "refundLead": "તમારા સ્લોટના 24 કલાક પહેલાં સુધી મફત રદ કરો અને સંપૂર્ણ રિફંડ મેળવો — નીચે {region} માં દરેક {activity} અનુભવ, Outvers પર બુક કરેલ, આમાં સામેલ છે.",
+    "refundLead": "તમારા સ્લોટના 24 કલાક પહેલાં સુધી રદ કરો તો સંપૂર્ણ રિફંડ મેળવો — નીચે {region} માં દરેક {activity} અનુભવ, Outvers પર બુક કરેલ, આમાં સામેલ છે.",
     "editorialIntro": "{region} માં {activity} નો હાથથી ચકાસેલ સંગ્રહ, ફક્ત KYC-ચકાસાયેલ વિક્રેતાઓ દ્વારા ચલાવવામાં આવે છે. પારદર્શક કિંમત, રીઅલ-ટાઇમ સ્લોટ ઉપલબ્ધતા, અને 24 કલાકમાં રિફંડ.",
     "trust": {
-      "freeCancellation": "24 કલાક સુધી મફત રદ",
+      "freeCancellation": "24 કલાક સુધી લવચીક રદ",
       "verifiedVendor": "ઓળખ-ચકાસાયેલ વિક્રેતાઓ",
       "refundSla": "24-કલાક રિફંડ SLA"
     }
@@ -398,7 +398,7 @@
     },
     "heroEyebrow": "Every region, one place",
     "heroTitle": "{activity} across India",
-    "refundLead": "Cancel free up to 24 hours before your slot for a full refund — every {activity} Experience below, booked on Outvers, is covered.",
+    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {activity} Experience below, booked on Outvers, is covered.",
     "editorialIntro": "A hand-checked collection of {activity} from every region we operate in, run only by KYC-verified Vendors. Compare across destinations, then book with transparent pricing and refunds credited within 24 hours.",
     "regionHint": "Looking for {activity} in a specific destination? Open an Experience to see its region, or browse {activity} by city from each listing.",
     "experiences": {
@@ -422,7 +422,7 @@
       "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
     },
     "trust": {
-      "freeCancellation": "Free cancellation up to 24h",
+      "freeCancellation": "Flexible cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
     },
@@ -442,7 +442,7 @@
     },
     "heroEyebrow": "Curated category",
     "heroTitle": "{category} adventures across India",
-    "refundLead": "Cancel free up to 24 hours before your slot for a full refund — every {category} Experience below, booked on Outvers, is covered.",
+    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {category} Experience below, booked on Outvers, is covered.",
     "editorialIntro": "A hand-checked rollup of {category} adventures from every region we operate in, run only by KYC-verified Vendors. Transparent pricing, real-time slot availability, and refunds credited within 24 hours.",
     "categories": {
       "water": "જળ રમતો",
@@ -472,7 +472,7 @@
       "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
     },
     "trust": {
-      "freeCancellation": "Free cancellation up to 24h",
+      "freeCancellation": "Flexible cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
     }
@@ -510,7 +510,7 @@
       "total": "કુલ",
       "partialPay": "25% અત્યારે ચૂકવો, બાકીનું અનુભવના 24 કલાક પહેલાં.",
       "bookNow": "અત્યારે બુક કરો",
-      "freeCancellation": "મફત કેન્સલેશન · 24-કલાક રિફંડ SLA",
+      "freeCancellation": "લવચીક કેન્સલેશન · 24-કલાક રિફંડ SLA",
       "priceTable": "પ્રતિ-સહભાગી કિંમત કોષ્ટક",
       "breakdown": "જીવંત કિંમત વિગત",
       "advanceDue": "હમણાં ચૂકવવાપાત્ર Advance (25%)",
@@ -528,13 +528,13 @@
       "exploreSimilar": "સમાન અનુભવો જુઓ"
     },
     "cancellation": {
-      "flexible": "અનુભવના 24 કલાક પહેલાં સુધી મફત કેન્સલેશન. 2 કલાકમાં 50% રિફંડ. ત્યાર પછી કોઈ રિફંડ નહીં.",
-      "moderate": "અનુભવના 72 કલાક પહેલાં સુધી મફત કેન્સલેશન. 24 કલાક પહેલાં સુધી 50% રિફંડ. ત્યાર પછી કોઈ રિફંડ નહીં.",
-      "strict": "અનુભવના 14 દિવસ પહેલાં સુધી મફત કેન્સલેશન. 7 દિવસ પહેલાં સુધી 50% રિફંડ. ત્યાર પછી કોઈ રિફંડ નહીં.",
+      "flexible": "અનુભવના 24 કલાક પહેલાં સુધી રદ કરો તો સંપૂર્ણ રિફંડ. 2 કલાકમાં 50% રિફંડ. ત્યાર પછી કોઈ રિફંડ નહીં.",
+      "moderate": "અનુભવના 72 કલાક પહેલાં સુધી રદ કરો તો સંપૂર્ણ રિફંડ. 24 કલાક પહેલાં સુધી 50% રિફંડ. ત્યાર પછી કોઈ રિફંડ નહીં.",
+      "strict": "અનુભવના 14 દિવસ પહેલાં સુધી રદ કરો તો સંપૂર્ણ રિફંડ. 7 દિવસ પહેલાં સુધી 50% રિફંડ. ત્યાર પછી કોઈ રિફંડ નહીં.",
       "fallback": "આ અનુભવ {preset} કેન્સલેશન નીતિ અનુસરે છે.",
       "nonCancellableBadge": "રદ કરી શકાતું નથી",
       "nonCancellableDescription": "આ અનુભવ રદ કરી શકાતો નથી — ચુકવણી પછી કોઈ રિફંડ નહીં. અપવાદરૂપ કિસ્સાઓમાં Outvers હજુ પણ રિફંડ સંભાળી શકે છે.",
-      "freeUpToHours": "પ્રવૃત્તિના {hours} કલાક પહેલાં સુધી મફત કેન્સલેશન"
+      "freeUpToHours": "પ્રવૃત્તિના {hours} કલાક પહેલાં સુધી રદ કરો તો સંપૂર્ણ રિફંડ"
     },
     "faq": {
       "safetyQuestion": "{title} સુરક્ષિત છે?",
@@ -587,7 +587,7 @@
       "day": "દિવસ {day}"
     },
     "assurance": {
-      "freeCancellation": "અનુભવના 24 કલાક પહેલાં સુધી મફત રદ",
+      "freeCancellation": "અનુભવના 24 કલાક પહેલાં સુધી લવચીક રદ",
       "verifiedVendor": "ઓળખ-ચકાસાયેલ Vendor",
       "exactRefund": "પુષ્ટિ કરતા પહેલાં ચોક્કસ રિફંડ બતાવાય છે"
     },
@@ -924,7 +924,7 @@
       "cancelLabel": "તમે રદ કરો છો",
       "resultLabel": "ગણતરી કરેલ રિફંડ",
       "feeLabel": "રદ કરવાની ફી",
-      "slabFree": "મફત-રદ સમયગાળો — સંપૂર્ણ રિફંડ",
+      "slabFree": "સંપૂર્ણ-રિફંડ સમયગાળો — સંપૂર્ણ રિફંડ",
       "slabHalf": "અડધો-રિફંડ સમયગાળો — 50% પાછું",
       "slabNone": "કોઈ-રિફંડ નહીં સમયગાળો",
       "promptEmpty": "તમારું રિફંડ જોવા માટે રકમ અને બંને તારીખો દાખલ કરો.",
@@ -1269,7 +1269,7 @@
       "breadcrumb": "સ્થળો",
       "heroEyebrow": "ક્યાં જવું",
       "heroTitle": "ભારતભરમાં સાહસિક સ્થળો",
-      "heroSubtitle": "હિમાલયના ઘાટથી દરિયાકાંઠાના પરવાળાના ખડકો સુધી — Outvers આવરી લેતો દરેક પ્રદેશ જુઓ, દરેકમાં KYC-ચકાસાયેલ વિક્રેતાઓ અને 24 કલાક સુધી મફત રદ.",
+      "heroSubtitle": "હિમાલયના ઘાટથી દરિયાકાંઠાના પરવાળાના ખડકો સુધી — Outvers આવરી લેતો દરેક પ્રદેશ જુઓ, દરેકમાં KYC-ચકાસાયેલ વિક્રેતાઓ અને 24 કલાક સુધી લવચીક રદ.",
       "regionsHeading": "બધા સ્થળો",
       "regionCount": "{count, plural, =0 {હજુ સુધી કોઈ અનુભવ નથી} one {# અનુભવ} other {# અનુભવો}}",
       "exploreCta": "{region} અન્વેષણ કરો"

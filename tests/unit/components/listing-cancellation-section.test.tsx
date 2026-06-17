@@ -116,9 +116,13 @@ describe('Cancellation policy section (vendor form, issue #10)', () => {
 
   it('exposes NO free-form refund-number input (wedge preserved)', () => {
     renderOnPolicyStep()
-    // No spinbutton/number inputs in the cancellation section — the only numeric
-    // figures are inside the constant-driven preset rules, not editable fields.
-    expect(screen.queryByLabelText(/refund.*%/i)).toBeNull()
-    expect(screen.queryByLabelText(/free.*hours/i)).toBeNull()
+    // The constant-driven wedge: the only numeric refund figures live inside the
+    // fixed preset rules (rendered as radio-label text), never as editable
+    // fields. Assert there is NO number/spinbutton input anywhere on the Policy
+    // step — a label-text regex would spuriously match the rule prose ("Full
+    // refund … 50% refund …"), so we check input roles/types directly.
+    expect(screen.queryByRole('spinbutton')).toBeNull()
+    const numberInputs = document.querySelectorAll('input[type="number"]')
+    expect(numberInputs.length).toBe(0)
   })
 })

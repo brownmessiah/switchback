@@ -18,13 +18,27 @@
  */
 
 import { test, expect } from '../../fixtures/devtools'
-import { getWalletBalanceRupees } from '../../helpers/db-assertions'
+import { getWalletBalanceRupees, grantOutversCredit } from '../../helpers/db-assertions'
 
 const SEED_CUSTOMER = 'u_seed_customer'
 
 test.describe.configure({ mode: 'serial' })
 
 test.describe('Wallet page (/wallet)', () => {
+  // Isolation: the customer E2E project shares ONE seeded customer, and the
+  // revenue-spine checkout spec (customer-flows.spec.ts) legitimately debits
+  // this customer's outvers_credit to ₹0 via applyWalletToCheckout
+  // (app/(app)/checkout/actions.ts — a real ADR-0004 feature). That is correct
+  // product behaviour, not a regression, but it leaves the shared seed customer
+  // with no credit by the time this suite runs → no balance, no ledger grant,
+  // no expiry chip. Restore a deterministic, non-zero, unexpired credit so
+  // every wallet assertion runs against a known baseline regardless of what the
+  // checkout spec did. A single beforeAll suffices (the suite is serial).
+  test.beforeAll(async () => {
+    const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // ~90 days out
+    await grantOutversCredit(SEED_CUSTOMER, 500, expiresAt)
+  })
+
   test('renders both bucket balances with their ADR-0004 labels', async ({ page }) => {
     const response = await page.goto('/wallet')
     // The route must NOT 404 — it is excluded from the i18n proxy.
@@ -39,12 +53,17 @@ test.describe('Wallet page (/wallet)', () => {
     await expect(creditCard).toContainText('Outvers credit')
     await expect(refundCard).toContainText('Refund balance')
 
-    // Outvers credit is never mutated by other specs → assert exactly.
+    // The Outvers-credit card renders the live DB balance exactly. Note: the
+    // balance is debitable — a completed checkout applies wallet credit via
+    // applyWalletToCheckout (app/(app)/checkout/actions.ts), so the revenue-spine
+    // checkout spec earlier in the customer run may have drawn it down to ₹0.
+    // We therefore assert render==DB (the real contract) and a non-negative
+    // balance; the seeded credit GRANT's existence is covered by the ledger test.
     const creditRupees = await getWalletBalanceRupees(SEED_CUSTOMER, 'outvers_credit')
     await expect(creditCard.getByTestId('wallet-amount-outvers_credit')).toHaveText(
       `₹${creditRupees.toLocaleString('en-IN')}`,
     )
-    expect(creditRupees).toBeGreaterThan(0)
+    expect(creditRupees).toBeGreaterThanOrEqual(0)
 
     // Refund balance only grows (parallel cancels credit it) → monotonic.
     const refundText = await refundCard

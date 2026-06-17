@@ -15,7 +15,6 @@
  *   - TripGroups (ADR-0009): group convening / chat / itinerary
  *   - Channel manager (ADR-0014): Bokun / FareHarbor sync
  *   - Partner API
- *   - Wishlist
  *   - Gift experiences
  *   - RNPL — reserve-now-pay-later (ADR-0002): schema-named, booking flow
  *     REJECTS it; NEVER render an RNPL tile / badge in v1
@@ -245,36 +244,41 @@ test.describe('RNPL degrades gracefully — no tile / badge on the PDP', () => {
 })
 
 // ---------------------------------------------------------------------------
-// 4. Footer affordances: built ones link; unbuilt ones degrade gracefully.
+// 4. Footer affordances: built ones link.
 //
 //    Issue 07 SHIPPED /help + /contact, so Help centre / Contact us are now
-//    REAL links (no "(soon)" suffix) that resolve 200. Vendor KYC remains
-//    intentionally unbuilt and renders as plain <span> text labelled "(soon)"
-//    — a graceful coming-soon state, not a dead <a href> 404.
+//    REAL links (no "(soon)" suffix) that resolve 200. (The redesigned footer
+//    no longer renders a "Vendor KYC (soon)" stub at all — owner-approved:
+//    omitting an unbuilt affordance is itself a valid graceful degradation, so
+//    there is nothing to assert about it.)
+//
+//    "Contact us" appears twice — under the Support column inside the footer
+//    nav AND in the standalone Contact column (components/site-footer.tsx) — so
+//    the link assertion is scoped to the footer navigation landmark + .first().
 // ---------------------------------------------------------------------------
 test.describe('Footer affordances degrade gracefully', () => {
-  test('Help centre / Contact us are live links; Vendor KYC stays a non-link "(soon)" stub', async ({
+  test('Help centre / Contact us are live links to /help and /contact', async ({
     page,
   }) => {
     await gotoWarm(page, '/')
     const footer = page.locator('footer')
     await expect(footer).toBeVisible()
+    const footerNav = footer.getByRole('navigation', {
+      name: 'Footer navigation',
+    })
 
     // Help centre + Contact us are now built — real links to /help and /contact,
     // with the "(soon)" suffix dropped.
-    const helpLink = footer.getByRole('link', { name: 'Help centre', exact: true })
-    const contactLink = footer.getByRole('link', { name: 'Contact us', exact: true })
+    const helpLink = footerNav
+      .getByRole('link', { name: 'Help centre', exact: true })
+      .first()
+    const contactLink = footerNav
+      .getByRole('link', { name: 'Contact us', exact: true })
+      .first()
     await expect(helpLink).toBeVisible()
     await expect(contactLink).toBeVisible()
     await expect(helpLink).toHaveAttribute('href', /\/help$/)
     await expect(contactLink).toHaveAttribute('href', /\/contact$/)
-
-    // Vendor KYC is still unbuilt: rendered as a non-link "(soon)" stub, never a
-    // dead anchor.
-    const kycStub = footer.getByText('Vendor KYC (soon)', { exact: true })
-    await expect(kycStub).toBeVisible()
-    const isAnchor = await kycStub.evaluate((el) => el.closest('a') !== null)
-    expect(isAnchor, '"Vendor KYC (soon)" must not be a dead link').toBe(false)
   })
 })
 
@@ -288,8 +292,6 @@ test.describe('Footer affordances degrade gracefully', () => {
 // ---------------------------------------------------------------------------
 test.describe('No interactive controls for out-of-scope features', () => {
   const FORBIDDEN_CONTROL_NAMES: readonly RegExp[] = [
-    /add to wishlist/i,
-    /save to wishlist/i,
     /gift this/i,
     /send as a gift/i,
     /\bsos\b/i,

@@ -381,12 +381,12 @@
     "itemList": {
       "name": "{region} ನಲ್ಲಿ ಅಗ್ರ {activity} ಅನುಭವಗಳು"
     },
-    "heroTitle": "{region} ನಲ್ಲಿ {activity} — ಉಚಿತ ರದ್ದತಿ",
+    "heroTitle": "{region} ನಲ್ಲಿ {activity} — ಹೊಂದಿಕೊಳ್ಳುವ ರದ್ದತಿ",
     "heroEyebrow": "ಆಯ್ದ ಸಾಹಸಗಳು",
-    "refundLead": "ನಿಮ್ಮ ಸ್ಲಾಟ್‌ಗೆ 24 ಗಂಟೆಗಳ ಮೊದಲು ಉಚಿತವಾಗಿ ರದ್ದುಗೊಳಿಸಿ ಮತ್ತು ಪೂರ್ಣ ಮರುಪಾವತಿ ಪಡೆಯಿರಿ — ಕೆಳಗಿನ {region} ನಲ್ಲಿ ಪ್ರತಿ {activity} ಅನುಭವ, Outvers ನಲ್ಲಿ ಬುಕ್ ಮಾಡಲಾಗಿದೆ, ಇದರಲ್ಲಿ ಸೇರಿದೆ.",
+    "refundLead": "ನಿಮ್ಮ ಸ್ಲಾಟ್‌ಗೆ 24 ಗಂಟೆಗಳ ಮೊದಲು ರದ್ದುಗೊಳಿಸಿದರೆ ಪೂರ್ಣ ಮರುಪಾವತಿ ಪಡೆಯಿರಿ — ಕೆಳಗಿನ {region} ನಲ್ಲಿ ಪ್ರತಿ {activity} ಅನುಭವ, Outvers ನಲ್ಲಿ ಬುಕ್ ಮಾಡಲಾಗಿದೆ, ಇದರಲ್ಲಿ ಸೇರಿದೆ.",
     "editorialIntro": "{region} ನಲ್ಲಿ {activity} ನ ಕೈಯಿಂದ ಪರಿಶೀಲಿಸಿದ ಸಂಗ್ರಹ, ಕೇವಲ KYC-ಪರಿಶೀಲಿತ ಮಾರಾಟಗಾರರಿಂದ ನಡೆಸಲ್ಪಡುತ್ತದೆ. ಪಾರದರ್ಶಕ ಬೆಲೆ, ರಿಯಲ್-ಟೈಮ್ ಸ್ಲಾಟ್ ಲಭ್ಯತೆ, ಮತ್ತು 24 ಗಂಟೆಗಳಲ್ಲಿ ಮರುಪಾವತಿ.",
     "trust": {
-      "freeCancellation": "24 ಗಂಟೆಗಳವರೆಗೆ ಉಚಿತ ರದ್ದತಿ",
+      "freeCancellation": "24 ಗಂಟೆಗಳವರೆಗೆ ಹೊಂದಿಕೊಳ್ಳುವ ರದ್ದತಿ",
       "verifiedVendor": "ಗುರುತು-ಪರಿಶೀಲಿತ ಮಾರಾಟಗಾರರು",
       "refundSla": "24-ಗಂಟೆ ಮರುಪಾವತಿ SLA"
     }
@@ -398,7 +398,7 @@
     },
     "heroEyebrow": "Every region, one place",
     "heroTitle": "{activity} across India",
-    "refundLead": "Cancel free up to 24 hours before your slot for a full refund — every {activity} Experience below, booked on Outvers, is covered.",
+    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {activity} Experience below, booked on Outvers, is covered.",
     "editorialIntro": "A hand-checked collection of {activity} from every region we operate in, run only by KYC-verified Vendors. Compare across destinations, then book with transparent pricing and refunds credited within 24 hours.",
     "regionHint": "Looking for {activity} in a specific destination? Open an Experience to see its region, or browse {activity} by city from each listing.",
     "experiences": {
@@ -422,7 +422,7 @@
       "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
     },
     "trust": {
-      "freeCancellation": "Free cancellation up to 24h",
+      "freeCancellation": "Flexible cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
     },
@@ -442,7 +442,7 @@
     },
     "heroEyebrow": "Curated category",
     "heroTitle": "{category} adventures across India",
-    "refundLead": "Cancel free up to 24 hours before your slot for a full refund — every {category} Experience below, booked on Outvers, is covered.",
+    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {category} Experience below, booked on Outvers, is covered.",
     "editorialIntro": "A hand-checked rollup of {category} adventures from every region we operate in, run only by KYC-verified Vendors. Transparent pricing, real-time slot availability, and refunds credited within 24 hours.",
     "categories": {
       "water": "ಜಲ ಕ್ರೀಡೆ",
@@ -472,7 +472,7 @@
       "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
     },
     "trust": {
-      "freeCancellation": "Free cancellation up to 24h",
+      "freeCancellation": "Flexible cancellation up to 24h",
       "verifiedVendor": "Identity-verified Vendors",
       "refundSla": "24-hour refund SLA"
     }
@@ -510,7 +510,7 @@
       "total": "ಒಟ್ಟು",
       "partialPay": "ಈಗ 25% ಪಾವತಿಸಿ, ಉಳಿದದ್ದು ಅನುಭವಕ್ಕೆ 24 ಗಂಟೆ ಮೊದಲು.",
       "bookNow": "ಈಗ ಬುಕ್ ಮಾಡಿ",
-      "freeCancellation": "ಉಚಿತ ರದ್ದತಿ · 24 ಗಂಟೆ ಮರುಪಾವತಿ SLA",
+      "freeCancellation": "ಹೊಂದಿಕೊಳ್ಳುವ ರದ್ದತಿ · 24 ಗಂಟೆ ಮರುಪಾವತಿ SLA",
       "priceTable": "ಪ್ರತಿ-ಭಾಗವಹಿಸುವವರ ಬೆಲೆ ಕೋಷ್ಟಕ",
       "breakdown": "ನೇರ ಬೆಲೆ ವಿವರ",
       "advanceDue": "ಈಗ ಪಾವತಿಸಬೇಕಾದ Advance (25%)",
@@ -528,13 +528,13 @@
       "exploreSimilar": "ಹೋಲುವ ಅನುಭವಗಳನ್ನು ಅನ್ವೇಷಿಸಿ"
     },
     "cancellation": {
-      "flexible": "ಅನುಭವಕ್ಕೆ 24 ಗಂಟೆ ಮೊದಲು ಉಚಿತ ರದ್ದತಿ. 2 ಗಂಟೆಯೊಳಗೆ 50% ಮರುಪಾವತಿ. ನಂತರ ಮರುಪಾವತಿ ಇಲ್ಲ.",
-      "moderate": "ಅನುಭವಕ್ಕೆ 72 ಗಂಟೆ ಮೊದಲು ವರೆಗೆ ಉಚಿತ ರದ್ದತಿ. 24 ಗಂಟೆ ಮೊದಲು ವರೆಗೆ 50% ಮರುಪಾವತಿ. ನಂತರ ಮರುಪಾವತಿ ಇಲ್ಲ.",
-      "strict": "ಅನುಭವಕ್ಕೆ 14 ದಿನ ಮೊದಲು ವರೆಗೆ ಉಚಿತ ರದ್ದತಿ. 7 ದಿನ ಮೊದಲು ವರೆಗೆ 50% ಮರುಪಾವತಿ. ನಂತರ ಮರುಪಾವತಿ ಇಲ್ಲ.",
+      "flexible": "ಅನುಭವಕ್ಕೆ 24 ಗಂಟೆ ಮೊದಲು ರದ್ದುಗೊಳಿಸಿದರೆ ಪೂರ್ಣ ಮರುಪಾವತಿ. 2 ಗಂಟೆಯೊಳಗೆ 50% ಮರುಪಾವತಿ. ನಂತರ ಮರುಪಾವತಿ ಇಲ್ಲ.",
+      "moderate": "ಅನುಭವಕ್ಕೆ 72 ಗಂಟೆ ಮೊದಲು ವರೆಗೆ ರದ್ದುಗೊಳಿಸಿದರೆ ಪೂರ್ಣ ಮರುಪಾವತಿ. 24 ಗಂಟೆ ಮೊದಲು ವರೆಗೆ 50% ಮರುಪಾವತಿ. ನಂತರ ಮರುಪಾವತಿ ಇಲ್ಲ.",
+      "strict": "ಅನುಭವಕ್ಕೆ 14 ದಿನ ಮೊದಲು ವರೆಗೆ ರದ್ದುಗೊಳಿಸಿದರೆ ಪೂರ್ಣ ಮರುಪಾವತಿ. 7 ದಿನ ಮೊದಲು ವರೆಗೆ 50% ಮರುಪಾವತಿ. ನಂತರ ಮರುಪಾವತಿ ಇಲ್ಲ.",
       "fallback": "ಈ ಅನುಭವ {preset} ರದ್ದತಿ ನೀತಿಯನ್ನು ಅನುಸರಿಸುತ್ತದೆ.",
       "nonCancellableBadge": "ರದ್ದುಗೊಳಿಸಲಾಗದು",
       "nonCancellableDescription": "ಈ ಅನುಭವವನ್ನು ರದ್ದುಗೊಳಿಸಲಾಗದು — ಪಾವತಿಯ ನಂತರ ಮರುಪಾವತಿ ಇಲ್ಲ. ಅಸಾಧಾರಣ ಸಂದರ್ಭಗಳಲ್ಲಿ Outvers ಇನ್ನೂ ಮರುಪಾವತಿಯನ್ನು ನಿರ್ವಹಿಸಬಹುದು.",
-      "freeUpToHours": "ಚಟುವಟಿಕೆಗೆ {hours} ಗಂಟೆ ಮೊದಲು ವರೆಗೆ ಉಚಿತ ರದ್ದತಿ"
+      "freeUpToHours": "ಚಟುವಟಿಕೆಗೆ {hours} ಗಂಟೆ ಮೊದಲು ವರೆಗೆ ರದ್ದುಗೊಳಿಸಿದರೆ ಪೂರ್ಣ ಮರುಪಾವತಿ"
     },
     "faq": {
       "safetyQuestion": "{title} ಸುರಕ್ಷಿತವೇ?",
@@ -587,7 +587,7 @@
       "day": "ದಿನ {day}"
     },
     "assurance": {
-      "freeCancellation": "ಅನುಭವಕ್ಕೆ 24 ಗಂಟೆಗಳ ಮೊದಲು ವರೆಗೆ ಉಚಿತ ರದ್ದತಿ",
+      "freeCancellation": "ಅನುಭವಕ್ಕೆ 24 ಗಂಟೆಗಳ ಮೊದಲು ವರೆಗೆ ಹೊಂದಿಕೊಳ್ಳುವ ರದ್ದತಿ",
       "verifiedVendor": "ಗುರುತು-ಪರಿಶೀಲಿತ Vendor",
       "exactRefund": "ಖಚಿತಪಡಿಸುವ ಮೊದಲು ನಿಖರ ಮರುಪಾವತಿ ತೋರಿಸಲಾಗುತ್ತದೆ"
     },
@@ -924,7 +924,7 @@
       "cancelLabel": "ನೀವು ರದ್ದುಮಾಡುತ್ತೀರಿ",
       "resultLabel": "ಲೆಕ್ಕಹಾಕಿದ ಮರುಪಾವತಿ",
       "feeLabel": "ರದ್ದತಿ ಶುಲ್ಕ",
-      "slabFree": "ಉಚಿತ-ರದ್ದತಿ ಅವಧಿ — ಪೂರ್ಣ ಮರುಪಾವತಿ",
+      "slabFree": "ಪೂರ್ಣ-ಮರುಪಾವತಿ ಅವಧಿ — ಪೂರ್ಣ ಮರುಪಾವತಿ",
       "slabHalf": "ಅರ್ಧ-ಮರುಪಾವತಿ ಅವಧಿ — 50% ಹಿಂತಿರುಗಿ",
       "slabNone": "ಮರುಪಾವತಿ-ಇಲ್ಲದ ಅವಧಿ",
       "promptEmpty": "ನಿಮ್ಮ ಮರುಪಾವತಿಯನ್ನು ನೋಡಲು ಮೊತ್ತ ಮತ್ತು ಎರಡೂ ದಿನಾಂಕಗಳನ್ನು ನಮೂದಿಸಿ.",
@@ -1269,7 +1269,7 @@
       "breadcrumb": "ತಾಣಗಳು",
       "heroEyebrow": "ಎಲ್ಲಿಗೆ ಹೋಗಬೇಕು",
       "heroTitle": "ಭಾರತದಾದ್ಯಂತ ಸಾಹಸ ತಾಣಗಳು",
-      "heroSubtitle": "ಹಿಮಾಲಯದ ಕಣಿವೆಗಳಿಂದ ಕರಾವಳಿ ಹವಳದ ದಿಬ್ಬಗಳವರೆಗೆ — Outvers ಒಳಗೊಂಡ ಪ್ರತಿ ಪ್ರದೇಶವನ್ನು ನೋಡಿ, ಪ್ರತಿಯೊಂದರಲ್ಲೂ KYC-ಪರಿಶೀಲಿತ ಮಾರಾಟಗಾರರು ಮತ್ತು 24 ಗಂಟೆಗಳವರೆಗೆ ಉಚಿತ ರದ್ದತಿ.",
+      "heroSubtitle": "ಹಿಮಾಲಯದ ಕಣಿವೆಗಳಿಂದ ಕರಾವಳಿ ಹವಳದ ದಿಬ್ಬಗಳವರೆಗೆ — Outvers ಒಳಗೊಂಡ ಪ್ರತಿ ಪ್ರದೇಶವನ್ನು ನೋಡಿ, ಪ್ರತಿಯೊಂದರಲ್ಲೂ KYC-ಪರಿಶೀಲಿತ ಮಾರಾಟಗಾರರು ಮತ್ತು 24 ಗಂಟೆಗಳವರೆಗೆ ಹೊಂದಿಕೊಳ್ಳುವ ರದ್ದತಿ.",
       "regionsHeading": "ಎಲ್ಲಾ ತಾಣಗಳು",
       "regionCount": "{count, plural, =0 {ಇನ್ನೂ ಅನುಭವಗಳಿಲ್ಲ} one {# ಅನುಭವ} other {# ಅನುಭವಗಳು}}",
       "exploreCta": "{region} ಅನ್ವೇಷಿಸಿ"

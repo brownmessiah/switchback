@@ -982,8 +982,8 @@ export default async function ExperienceDetailPage({
             {/* Cancellation policy (anchor target #cancellation) — ADR-0005.
                 For a non_cancellable Experience we show a CONSTRAINT badge
                 (destructive tint + Ban icon, never green — the policy is a
-                restriction, not a perk). Otherwise the "Free cancellation up to
-                {hours}h before activity" line, with the hour figure DERIVED from
+                restriction, not a perk). Otherwise the "Full refund if you
+                cancel up to {hours}h before activity" line, with the hour figure DERIVED from
                 PRESET_WINDOWS via lib/payments/cancellation-copy so it can never
                 drift from the refund math (issue #10). */}
             <section id="cancellation">
@@ -1061,7 +1061,7 @@ export default async function ExperienceDetailPage({
                 reviews={experienceReviews}
                 locale={locale}
                 monthNames={reviewMonthNames}
-                travelledInLabel={t('reviews.travelledIn')}
+                travelledInLabel={t.raw('reviews.travelledIn')}
                 verifiedLabel={t('reviews.verified')}
                 groupTypeLabels={{
                   solo: t('reviews.groupType.solo'),
@@ -1077,7 +1077,7 @@ export default async function ExperienceDetailPage({
                   lowest: t('reviews.sort.lowest'),
                 }}
                 emptyLabel={t('reviews.empty')}
-                summaryLabel={t('reviews.summary')}
+                summaryLabel={t.raw('reviews.summary')}
                 withPhotosLabel={t('reviews.withPhotos')}
               />
             </section>
@@ -1175,7 +1175,16 @@ export async function generateMetadata({ params }: PageProps) {
   const { locale, slug } = await params
   const result = await loadExperienceDetail(db, { lng: 'en', slug })
 
-  if (!result || result.type !== 'found') {
+  // A genuinely missing slug → notFound() here so the 404 HTTP status is set in
+  // generateMetadata (resolved BEFORE the page body / loading.tsx Suspense shell
+  // streams a 200 — a streamed status can't be changed afterwards). See
+  // next/dist/docs .../file-conventions/loading.md "Status Codes".
+  if (!result) notFound()
+
+  // A slug-alias hit (result.type === 'redirect') is NOT a 404 — the page body
+  // issues a redirect() to the canonical slug. Return placeholder metadata and
+  // let that redirect run (do not notFound() it).
+  if (result.type !== 'found') {
     const tCommon = await getTranslations({ locale, namespace: 'Common' })
     return {
       title: tCommon('notFound'),

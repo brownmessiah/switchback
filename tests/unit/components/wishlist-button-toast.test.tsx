@@ -72,16 +72,33 @@ describe('WishlistButton — action toasts (issue 24)', () => {
     expect(toast.success).toHaveBeenCalledWith('toast.removed')
   })
 
-  it('fires a "sign in" toast and routes to /sign-in on the unauthenticated path', async () => {
-    toggleWishlistAction.mockResolvedValue({ ok: false, error: 'unauthenticated' })
-    const user = userEvent.setup()
-    render(<WishlistButton experienceId={EXPERIENCE_ID} initialSaved={false} />)
+  it('fires a "sign in" toast first, then defers the /sign-in redirect so the toast is seen', async () => {
+    // Spy on setTimeout to capture the deferred redirect without waiting in real
+    // time (the deferral exists so the toast paints before navigation tears down
+    // the Toaster — issue 24).
+    const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout')
+    try {
+      toggleWishlistAction.mockResolvedValue({ ok: false, error: 'unauthenticated' })
+      const user = userEvent.setup()
+      render(<WishlistButton experienceId={EXPERIENCE_ID} initialSaved={false} />)
 
-    await user.click(screen.getByTestId('wishlist-button'))
+      await user.click(screen.getByTestId('wishlist-button'))
 
-    // Existing UX preserved: still routes to sign-in.
-    expect(push).toHaveBeenCalledWith('/sign-in')
-    // New: a toast explains why.
-    expect(toast.info).toHaveBeenCalledWith('toast.signInRequired')
+      // The toast explains why the heart didn't stick — fired immediately.
+      expect(toast.info).toHaveBeenCalledWith('toast.signInRequired')
+      // The redirect is DEFERRED: pushing on the same tick would discard the
+      // toast, so it is scheduled via setTimeout, not called synchronously.
+      expect(push).not.toHaveBeenCalled()
+      const deferred = setTimeoutSpy.mock.calls.find(
+        ([, delay]) => typeof delay === 'number' && delay >= 1000,
+      )
+      expect(deferred, 'redirect should be deferred ~1.2s for toast visibility').toBeDefined()
+
+      // Invoking the scheduled callback performs the redirect (existing UX preserved).
+      ;(deferred![0] as () => void)()
+      expect(push).toHaveBeenCalledWith('/sign-in')
+    } finally {
+      setTimeoutSpy.mockRestore()
+    }
   })
 })

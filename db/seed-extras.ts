@@ -679,7 +679,7 @@ async function main(db: SeedDb): Promise<void> {
         responseTimeSlaScore: variety.responseTimeSlaScore,
         createdAt: variety.createdAt,
         about:
-          'A KYC-verified Outvers operator running certified, safety-first adventures with experienced local guides. Small groups, transparent pricing, free cancellation within policy.',
+          'A KYC-verified Outvers operator running certified, safety-first adventures with experienced local guides. Small groups, transparent pricing, flexible cancellation within policy.',
       })
       .onConflictDoNothing()
   }
@@ -1078,7 +1078,7 @@ async function main(db: SeedDb): Promise<void> {
   // ── 10. site_content — all 6 sections (admin CMS; not yet read publicly) ──
   const featuredIds = catalogIds.slice(0, 6)
   const SITE: Array<{ section: string; value: Record<string, unknown> }> = [
-    { section: 'hero', value: { title: 'Find your next adventure', subtitle: 'KYC-verified vendors. Transparent pricing. Free cancellation.', ctaText: 'Explore experiences', ctaLink: '/search', backgroundImageUrl: IMG('photo-1530866495561-507c9faab2ed', 1600) } },
+    { section: 'hero', value: { title: 'Find your next adventure', subtitle: 'KYC-verified vendors. Transparent pricing. Flexible cancellation.', ctaText: 'Explore experiences', ctaLink: '/search', backgroundImageUrl: IMG('photo-1530866495561-507c9faab2ed', 1600) } },
     { section: 'announcement_bar', value: { text: 'Monsoon season is here — waterfall rappelling now live in Lonavala', linkText: 'Browse', linkUrl: '/search?region=lonavala', enabled: true, backgroundColor: '#0f766e' } },
     { section: 'homepage', value: { featuredSectionTitle: 'Featured experiences', featuredExperienceIds: featuredIds, showCategories: true, showTestimonials: true } },
     { section: 'branding', value: { siteName: 'Outvers', primaryColor: '#0f766e', logoUrl: IMG('photo-1557804506-669a67965ba0', 256), faviconUrl: IMG('photo-1557804506-669a67965ba0', 64) } },

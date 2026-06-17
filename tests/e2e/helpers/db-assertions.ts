@@ -236,6 +236,59 @@ export async function getWalletBalanceRupees(
   })
 }
 
+/**
+ * Grant (restore) a deterministic, unexpired `outvers_credit` balance for a
+ * user — used by the wallet E2E suite to own its credit state.
+ *
+ * The customer E2E project shares ONE seeded customer (`u_seed_customer`), and
+ * the revenue-spine checkout spec legitimately debits that customer's promo
+ * credit to ₹0 via `applyWalletToCheckout` (a real ADR-0004 feature: the
+ * checkout auto-applies promo credit first). This helper restores a known,
+ * non-zero, unexpired credit so the wallet assertions (live balance render,
+ * ledger row, expiry chip) run against a deterministic baseline regardless of
+ * what the checkout spec did earlier in the run.
+ *
+ * Units: `wallet_balances.amount` / `wallet_transactions.amount` are
+ * `numeric(14,2)` whole-rupee values (NOT paise) — `getWalletBalanceRupees`
+ * reads them with `Math.floor(Number(amount))`. `rupees` is therefore stored
+ * verbatim with two decimals (e.g. 500 → '500.00').
+ *
+ * Idempotent: the aggregate row is upserted in place (the PK is
+ * (user_id, balance_type)), and the matching ledger grant is keyed on a fixed
+ * `referenceId` with delete-before-insert (wallet_transactions has no natural
+ * unique key) so repeated `beforeAll` runs never accumulate duplicate grants.
+ */
+export async function grantOutversCredit(
+  userId: string,
+  rupees: number,
+  expiresAt: Date,
+): Promise<void> {
+  const amount = rupees.toFixed(2)
+  const referenceId = `e2e-wallet-grant-${userId}`
+  await withSql(async (sql) => {
+    // Upsert the aggregate balance row to the exact granted amount (the seed
+    // row already exists for u_seed_customer; a completed checkout may have
+    // drawn it down to 0 — restore it deterministically).
+    await sql`
+      INSERT INTO wallet_balances (user_id, balance_type, amount)
+      VALUES (${userId}, 'outvers_credit', ${amount})
+      ON CONFLICT (user_id, balance_type)
+      DO UPDATE SET amount = ${amount}, updated_at = now()
+    `
+    // Replace any prior copy of this E2E grant, then insert a fresh positive
+    // credit ledger row carrying the expiry so the ledger + expiry chip render.
+    await sql`
+      DELETE FROM wallet_transactions WHERE reference_id = ${referenceId}
+    `
+    await sql`
+      INSERT INTO wallet_transactions
+        (user_id, balance_type, amount, source, reference_id, expires_at)
+      VALUES
+        (${userId}, 'outvers_credit', ${amount}, 'promo', ${referenceId}, ${expiresAt})
+    `
+  })
+}
+
 /** Fetch a booking's current state, or null if it does not exist. */
 export async function getBookingState(bookingId: string): Promise<string | null> {
   return withSql(async (sql) => {

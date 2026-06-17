@@ -56,8 +56,12 @@ test.describe('List/map toggle + Leaflet map (issue 11)', () => {
 
     const map = page.getByTestId('experience-map')
     await expect(map).toBeVisible()
-    // At least one price pin is rendered (the seeded rishikesh inventory).
-    await expect(map.locator('.experience-price-pin').first()).toBeVisible()
+    // At least one price pin is rendered (the seeded rishikesh inventory). The
+    // Leaflet marker (`.experience-price-pin`) is a 0×0 divIcon, so assert on
+    // its visible label child (components/maps/experience-map.tsx).
+    await expect(
+      map.locator('.experience-price-pin__label').first(),
+    ).toBeVisible()
 
     // Honest, city-level disclaimer is present (coordinate honesty, D0).
     await expect(page.getByTestId('map-city-level-note')).toBeVisible()
@@ -71,8 +75,15 @@ test.describe('List/map toggle + Leaflet map (issue 11)', () => {
     const map = page.getByTestId('experience-map')
     await expect(map).toBeVisible()
 
-    // Click the first price pin to open its popup mini-card.
-    await map.locator('.experience-price-pin').first().click()
+    // Rishikesh's experiences share one region centroid (coordinate honesty, D0),
+    // so their price pins stack at the SAME point and overlap. Clicking the
+    // first (DOM-order) label is intercepted by whichever marker Leaflet paints
+    // on top, so target the TOPMOST pin's label (last in DOM = top of the
+    // z-stack) — the one that actually receives the pointer event. The marker
+    // root is a 0×0 divIcon (not "visible" to Playwright), so click its sized
+    // label child. The test asserts the popup CTA links to /experience/{slug},
+    // not a specific slug, so any pin's popup satisfies it.
+    await map.locator('.experience-price-pin__label').last().click()
 
     const miniCard = page.getByTestId('map-mini-card')
     await expect(miniCard).toBeVisible()

@@ -25,49 +25,16 @@ test.describe('Home page', () => {
     })
   })
 
-  // Credibility copy (issue 01): the cancellation trust chip is "Flexible
-  // cancellation" — CONTEXT.md vocabulary (Inside-policy / Flexible
-  // cancellation), never "Free cancellation".
-  test('cancellation trust chip reads "Flexible cancellation", never "Free"', async ({
-    page,
-  }) => {
-    await page.goto('/')
-
-    await expect(
-      page.getByText('Flexible cancellation', { exact: false }).first(),
-    ).toBeVisible()
-    await expect(
-      page.getByText('Free cancellation', { exact: false }),
-    ).toHaveCount(0)
-  })
-
-  // Variant-B functional contract: the hero search form and the activity
-  // chips are real GET navigations to /search. Behaviour-level — fill +
-  // submit + click, then assert the resulting URL — not coupled to markup.
-  test('hero search submits to /search?q=', async ({ page }) => {
-    await page.goto('/')
-
-    await page.locator('input#home-search').fill('rishikesh rafting')
-    await Promise.all([
-      page.waitForURL(/\/search\?.*\bq=rishikesh(\+|%20)rafting\b/),
-      page.locator('input#home-search').press('Enter'),
-    ])
-
-    expect(new URL(page.url()).searchParams.get('q')).toBe('rishikesh rafting')
-  })
-
-  test('activity chip navigates to /search?activity=rafting', async ({
-    page,
-  }) => {
-    await page.goto('/')
-
-    const raftingChip = page.locator('a[href="/search?activity=rafting"]')
-    await expect(raftingChip).toBeVisible()
-    await raftingChip.click()
-
-    await page.waitForURL('**/search?activity=rafting')
-    expect(new URL(page.url()).searchParams.get('activity')).toBe('rafting')
-  })
+  // NOTE: The home hero was redesigned to the Headout-style single-search
+  // layout (owner screenshots 2026-06-11): the cancellation trust chip, the
+  // duplicate `input#home-search` hero-search form, and the activity chip row
+  // were all dropped from the hero. The corresponding tests are removed here —
+  //   • the cancellation-chip test (chip no longer on the home page),
+  //   • the `input#home-search` hero-search test (a stale duplicate of the
+  //     passing `home-hero-search` test further down, ~"single hero search
+  //     submits to /search?q="),
+  //   • the `a[href="/search?activity=rafting"]` activity-chip test (no such
+  //     chip in the redesigned hero).
 
   // Home JSON-LD (ADR-0013 / issue 21): exactly ONE WebSite node carrying the
   // sitelinks SearchAction, plus one Organization node. There must be NO
@@ -182,7 +149,12 @@ test.describe('Home page', () => {
     ).toBeVisible()
   })
 
-  test('trust section renders the six named cards (Vendor vocabulary, no operators)', async ({
+  // The compact trust strip (owner screenshots 2026-06-11) renders FOUR cards,
+  // not six — the redesign collapsed the original six-card section into a slim
+  // band of four feature-category items (the dropped "Easy booking support" +
+  // "Secure checkout" are covered by the footer + checkout page). Titles read
+  // from components/home/trust.tsx (HomePage.trust.cards.*.title).
+  test('trust section renders the four named cards (Vendor vocabulary, no operators)', async ({
     page,
   }) => {
     await page.goto('/')
@@ -192,13 +164,11 @@ test.describe('Home page', () => {
       'Verified adventure Vendors',
       'Transparent pricing',
       'Safety-first Experiences',
-      'Easy booking support',
       'Instant confirmation',
-      'Secure checkout',
     ]) {
       await expect(trust.getByText(title, { exact: true })).toBeVisible()
     }
-    await expect(trust.getByTestId('trust-card')).toHaveCount(6)
+    await expect(trust.getByTestId('trust-card')).toHaveCount(4)
   })
 
   test('how-it-works section renders the five ordered steps', async ({
@@ -268,8 +238,13 @@ test.describe('Home page', () => {
     await expect(
       page.getByRole('link', { name: 'Explore Experiences' }),
     ).toHaveCount(0)
-    // The supply-side CTA is the header's (single) "List your experience".
-    const headerCta = page.getByRole('link', { name: 'List your experience' })
+    // The supply-side CTA now lives in the header's Primary nav (the footer
+    // carries its own "List your experience" link, so a page-wide locator is
+    // ambiguous — scope to the Primary nav). components/site-header.tsx renders
+    // `<nav aria-label="Primary">` containing the single CTA → /vendor-partner.
+    const headerCta = page
+      .getByRole('navigation', { name: 'Primary' })
+      .getByRole('link', { name: 'List your experience' })
     await expect(headerCta).toBeVisible()
     await expect(headerCta).toHaveAttribute('href', '/vendor-partner')
   })
@@ -445,12 +420,23 @@ test.describe('Experience detail', () => {
     await expect(page.locator('text=₹1,100').first()).toBeVisible()
     await expect(page.locator('text=/ person').first()).toBeVisible()
 
-    // Cancellation policy preset (ADR-0005) — section heading + the
-    // "flexible" preset badge are shown.
+    // Cancellation policy preset (ADR-0005) — section heading + the success
+    // badge. The flexible preset (seeded for this Experience) renders the
+    // derived free-window line "Full refund if you cancel up to 24h before the
+    // activity" (PRESET_WINDOWS.flexible.freeHours = 24, via
+    // ExperiencePage.cancellation.freeUpToHours). The banned "Free
+    // cancellation" copy is NEVER used.
     await expect(
       page.locator('h2:has-text("Cancellation policy")'),
     ).toBeVisible()
-    await expect(page.getByText('flexible', { exact: true })).toBeVisible()
+    await expect(
+      page.getByText('Full refund if you cancel up to 24h before the activity', {
+        exact: false,
+      }),
+    ).toBeVisible()
+    await expect(
+      page.getByText('Free cancellation', { exact: false }),
+    ).toHaveCount(0)
 
     // FAQ section
     await expect(
@@ -545,21 +531,50 @@ test.describe('Experience detail', () => {
   })
 
   // Direction B: the Booking rail keeps the Partial-pay Advance/balance split
-  // permanently in view before commit. The seeded rafting Experience allows
-  // partial pay, so both the 25% Advance line and the T-24h balance line must
-  // render in the rail alongside the working Book-now link.
+  // in view before commit. The rail (booking-rail-interactive.tsx) only shows
+  // the 25% Advance / T-24h balance split when the SELECTED slot is ≥48h out —
+  // ADR-0001's carve-out (resolveDisplaySplit) coerces a <48h slot to
+  // full-upfront (Advance == Total, no balance line). The seed's soonest
+  // bookable future date can be <48h away, so we must drive the date picker to a
+  // date that is comfortably ≥48h out FIRST, then assert the split.
+  //
+  // We pick the LAST available (enabled) day in the rendered month grid — the
+  // furthest-out date — which is guaranteed ≥48h regardless of the seed's
+  // soonest-slot timing. Day buttons carry data-testid="cal-day-<YYYY-MM-DD>"
+  // (unavailable days are `disabled`); time-slot chips carry
+  // data-testid="time-slot-<id>" (sold-out chips are `disabled`). The desktop
+  // rail is `hidden lg:block`; the default Playwright viewport (1280px) is ≥lg,
+  // so it is visible — scope to the `#booking` aside.
   test('booking rail shows the Partial-pay Advance/balance split', async ({
     page,
   }) => {
     await page.goto('/experience/rishikesh-rafting-grade-iii')
 
-    // 1-2 bracket price is ₹1,500 → Advance (25%) = ₹375, balance = ₹1,125.
-    await expect(page.getByText('₹375').first()).toBeVisible()
-    await expect(page.getByText('₹1,125').first()).toBeVisible()
+    const rail = page.locator('#booking')
+    await expect(rail).toBeVisible()
+
+    // The furthest-out available calendar day → its slot is well beyond the
+    // 48h full-upfront carve-out, so the 25% partial split applies.
+    const availableDay = rail
+      .getByTestId('booking-calendar')
+      .locator('button[data-testid^="cal-day-"]:not([disabled])')
+      .last()
+    await availableDay.click()
+
+    const availableSlot = rail
+      .getByTestId('time-slot-list')
+      .locator('button[data-testid^="time-slot-"]:not([disabled])')
+      .first()
+    await availableSlot.click()
+
+    // 1-2 bracket price is ₹1,500 → Advance (25%) = ₹375, balance = ₹1,125
+    // (the chosen slot is ≥48h out, so the partial split applies — no carve-out).
+    await expect(rail.getByText('₹375').first()).toBeVisible()
+    await expect(rail.getByText('₹1,125').first()).toBeVisible()
 
     // Book-now remains a working link into checkout (revenue spine depends on
     // this exact text + href).
-    const bookNow = page.locator('a:has-text("Book now")')
+    const bookNow = page.locator('a:has-text("Book now")').first()
     await expect(bookNow).toBeVisible()
     await expect(bookNow).toHaveAttribute('href', /\/checkout\?experienceId=/)
   })
@@ -644,7 +659,13 @@ test.describe('Experience detail', () => {
     await expect(page.locator('a:has-text("Book now")')).toBeVisible()
 
     // None of the structured section shells are emitted when there is no data.
-    for (const id of ['highlights', 'itinerary', 'details', 'meetingPoint']) {
+    // NOTE: `meetingPoint` is intentionally excluded — by design the PDP renders
+    // a region-centroid approximate-area map (#meetingPoint) for EVERY
+    // Experience whose region has a known centroid (coordinate-honesty, D0),
+    // even bare ones with no Vendor-authored meeting point. So a bare Experience
+    // still legitimately carries a #meetingPoint section. Only the genuinely
+    // data-driven structured shells must be absent.
+    for (const id of ['highlights', 'itinerary', 'details']) {
       await expect(page.locator(`#${id}`)).toHaveCount(0)
     }
     // No quick-facts strip either.
@@ -849,9 +870,13 @@ test.describe('Search bare', () => {
     await rail.getByTestId('facet-more-toggle').click()
     await expect(rail.getByTestId('facet-activity')).toBeVisible()
 
-    // The rail submits via a native GET form whose action is the bare /search
-    // (so the searchParam-name contract and robots/canonical rules hold).
-    await expect(rail.locator('form[method="get"][action="/search"]')).toHaveCount(1)
+    // The rail is a client `router.push` auto-filter island (components/search/
+    // facet-form.tsx) — changing any control navigates immediately with the
+    // updated searchParam (no Apply button, no native <form>). The
+    // searchParam-name contract that ADR-0013's robots/canonical rules depend on
+    // is still preserved by the per-control navigate() calls, so there is NO
+    // <form> element in the rail.
+    await expect(rail.locator('form')).toHaveCount(0)
 
     // Mobile "Filters" trigger exists (opens the Sheet on small screens).
     await expect(page.getByTestId('search-filters-trigger')).toHaveCount(1)
@@ -1155,11 +1180,21 @@ test.describe('Sign-in page', () => {
     // present in the DOM (progressive disclosure is client-side only — there
     // is no server "does this email exist" check). (DevTools fixture also
     // gates console + axe over the split-screen layout.)
-    await expect(page.locator('form')).toBeVisible()
+    // Scope to the sign-in form specifically: the page ALSO renders the footer
+    // newsletter form (data-testid="newsletter-form"), so a bare locator('form')
+    // matches two elements → strict-mode violation. The sign-in form is the one
+    // containing the email input.
+    const signInForm = page
+      .locator('form')
+      .filter({ has: page.locator('input#email[type="email"]') })
+    await expect(signInForm).toBeVisible()
     await expect(page.locator('input#email[type="email"]')).toBeVisible()
     await expect(page.getByTestId('continue-step1')).toBeVisible()
     await expect(page.locator('input#password')).toHaveCount(0)
-    await expect(page.locator('button[type="submit"]')).toHaveCount(0)
+    // Scope the submit-button assertion to the sign-in form — the page ALSO
+    // renders the footer newsletter form, which has its own submit button, so a
+    // page-wide locator('button[type="submit"]') would match it (strict-mode/count).
+    await expect(signInForm.locator('button[type="submit"]')).toHaveCount(0)
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/sign-in.png',
@@ -1173,7 +1208,8 @@ test.describe('Sign-in page', () => {
     await page.getByTestId('continue-step1').click()
 
     await expect(page.locator('input#password[type="password"]')).toBeVisible()
-    await expect(page.locator('button[type="submit"]')).toBeVisible()
+    // Scope to the sign-in form — the footer newsletter form also has a submit.
+    await expect(signInForm.locator('button[type="submit"]')).toBeVisible()
     await expect(page.locator('input#email[type="email"]')).toBeVisible()
 
     await page.screenshot({

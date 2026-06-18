@@ -3337,3 +3337,329 @@ export async function deleteGuestContactTicketsBySubject(
     `
   })
 }
+
+// ---------------------------------------------------------------------------
+// Razorpay X vendor-payout leg assertions (slices 01–07, ADR-0016 amendment)
+//
+// These drive + assert the NEW payout SEND path end-to-end against outvers_e2e:
+//   - the 5pm-IST Payout Batch cron (/api/cron/payout-batch) that groups
+//     matured-eligible Payouts into one Razorpay X transfer per
+//     (vendor, destination, batchDay), keyed unique on that triple;
+//   - the Razorpay X payout webhook (/api/webhooks/razorpayx) that reconciles
+//     `reference_id` → payouts.id and cascades processed/failed/reversed onto
+//     the member Bookings;
+//   - eager Contact + Fund Account provisioning from the vendor settings form.
+//
+// The seed's dedicated payout vendor (`u_seed_v_payout`) has six completed,
+// matured, pending-payout Bookings but NO payout_method/destination snapshot and
+// NO vendor_fund_accounts row (those are created at runtime). So the cron spec
+// stages, per chosen Booking: a payout snapshot, the matching fund-account row
+// (resolved by `destinationFingerprint`), and the eligibility gate
+// (manual_payouts_remaining=0 OR payout_state='approved'). Mirrors the existing
+// `withSql` style; idempotent inserts so a re-run never accumulates rows.
+// ---------------------------------------------------------------------------
+
+/** Fetch a Booking's payout_destination_snapshot jsonb (to compute the fingerprint), or null. */
+export async function getBookingPayoutDestinationSnapshot(
+  bookingId: string,
+): Promise<Record<string, unknown> | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ payout_destination_snapshot: Record<string, unknown> | null }[]>`
+      SELECT payout_destination_snapshot
+      FROM bookings
+      WHERE id = ${bookingId}
+      LIMIT 1
+    `
+    return rows[0]?.payout_destination_snapshot ?? null
+  })
+}
+
+/** Read a Booking's payout_batch_id (the link to its Payout Batch), or null. */
+export async function getBookingPayoutBatchId(
+  bookingId: string,
+): Promise<string | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ payout_batch_id: string | null }[]>`
+      SELECT payout_batch_id FROM bookings WHERE id = ${bookingId} LIMIT 1
+    `
+    return rows[0]?.payout_batch_id ?? null
+  })
+}
+
+/**
+ * Set a Booking's payout snapshot fields (method + destination) so the cron's
+ * candidate filter (`payoutMethod !== null && payoutDestinationSnapshot !== null`)
+ * keeps it AND the planner can fingerprint the destination into the batch key.
+ * The seed leaves these null on the payout vendor's Bookings; the cron spec
+ * stages them to a known destination it also provisions a fund account for.
+ */
+export async function setBookingPayoutSnapshot(input: {
+  bookingId: string
+  payoutMethod: 'upi' | 'bank_account'
+  payoutDestination: Record<string, unknown>
+}): Promise<void> {
+  await withSql(async (sql) => {
+    await sql`
+      UPDATE bookings
+      SET payout_method_snapshot = ${input.payoutMethod},
+          payout_destination_snapshot = ${JSON.stringify(input.payoutDestination)}::jsonb
+      WHERE id = ${input.bookingId}
+    `
+  })
+}
+
+/**
+ * Insert a vendor_fund_accounts row (the resolver's join target), idempotent on
+ * the unique (vendor, destinationFingerprint) index. `coolingOffUntil` in the
+ * PAST makes the resolver return `ok` (not cooling_off); a missing row makes it
+ * route to the admin queue. The cron spec computes `destinationFingerprint`
+ * from the Booking's staged destination so the resolver matches.
+ */
+export async function insertVendorFundAccount(input: {
+  vendorUserId: string
+  destinationFingerprint: string
+  razorpayFundAccountId: string
+  coolingOffUntil: Date
+}): Promise<void> {
+  await withSql(async (sql) => {
+    await sql`
+      INSERT INTO vendor_fund_accounts
+        (vendor_user_id, destination_fingerprint, razorpay_fund_account_id, cooling_off_until)
+      VALUES (
+        ${input.vendorUserId},
+        ${input.destinationFingerprint},
+        ${input.razorpayFundAccountId},
+        ${input.coolingOffUntil.toISOString()}::timestamptz
+      )
+      ON CONFLICT (vendor_user_id, destination_fingerprint) DO NOTHING
+    `
+  })
+}
+
+export interface VendorFundAccountRow {
+  destinationFingerprint: string
+  razorpayFundAccountId: string
+  coolingOffUntil: Date
+}
+
+/** Fetch a Vendor's provisioned Fund Accounts (oldest first). */
+export async function getVendorFundAccounts(
+  vendorUserId: string,
+): Promise<VendorFundAccountRow[]> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        destination_fingerprint: string
+        razorpay_fund_account_id: string
+        cooling_off_until: Date
+      }[]
+    >`
+      SELECT destination_fingerprint, razorpay_fund_account_id, cooling_off_until
+      FROM vendor_fund_accounts
+      WHERE vendor_user_id = ${vendorUserId}
+      ORDER BY created_at ASC
+    `
+    return rows.map((r) => ({
+      destinationFingerprint: r.destination_fingerprint,
+      razorpayFundAccountId: r.razorpay_fund_account_id,
+      coolingOffUntil: new Date(r.cooling_off_until),
+    }))
+  })
+}
+
+/** Read a Vendor's cached Razorpay X contact id (vendor_profiles.razorpay_contact_id), or null. */
+export async function getVendorRazorpayContactId(
+  vendorUserId: string,
+): Promise<string | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ razorpay_contact_id: string | null }[]>`
+      SELECT razorpay_contact_id FROM vendor_profiles WHERE user_id = ${vendorUserId} LIMIT 1
+    `
+    return rows[0]?.razorpay_contact_id ?? null
+  })
+}
+
+export interface PayoutBatchRow {
+  id: string
+  status: string
+  razorpayPayoutId: string | null
+  amountNetRupees: number
+  tdsTotal: number
+  tcsTotal: number
+  batchDay: string
+  attemptCount: number
+  failureReason: string | null
+  destinationFingerprint: string
+}
+
+/** Fetch a Vendor's Payout Batches (payouts rows), newest first. */
+export async function getPayoutBatchesForVendor(
+  vendorUserId: string,
+): Promise<PayoutBatchRow[]> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        id: string
+        status: string
+        razorpay_payout_id: string | null
+        amount_net_rupees: string
+        tds_total: string
+        tcs_total: string
+        batch_day: string
+        attempt_count: number
+        failure_reason: string | null
+        destination_fingerprint: string
+      }[]
+    >`
+      SELECT id, status, razorpay_payout_id, amount_net_rupees, tds_total,
+             tcs_total, batch_day, attempt_count, failure_reason,
+             destination_fingerprint
+      FROM payouts
+      WHERE vendor_user_id = ${vendorUserId}
+      ORDER BY created_at DESC
+    `
+    return rows.map((r) => ({
+      id: r.id,
+      status: r.status,
+      razorpayPayoutId: r.razorpay_payout_id,
+      amountNetRupees: Math.floor(Number(r.amount_net_rupees)),
+      tdsTotal: Math.floor(Number(r.tds_total)),
+      tcsTotal: Math.floor(Number(r.tcs_total)),
+      batchDay: r.batch_day,
+      attemptCount: r.attempt_count,
+      failureReason: r.failure_reason,
+      destinationFingerprint: r.destination_fingerprint,
+    }))
+  })
+}
+
+/** Read a single Payout Batch (payouts row) by id, or null. */
+export async function getPayoutBatchById(
+  payoutId: string,
+): Promise<PayoutBatchRow | null> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      {
+        id: string
+        status: string
+        razorpay_payout_id: string | null
+        amount_net_rupees: string
+        tds_total: string
+        tcs_total: string
+        batch_day: string
+        attempt_count: number
+        failure_reason: string | null
+        destination_fingerprint: string
+      }[]
+    >`
+      SELECT id, status, razorpay_payout_id, amount_net_rupees, tds_total,
+             tcs_total, batch_day, attempt_count, failure_reason,
+             destination_fingerprint
+      FROM payouts
+      WHERE id = ${payoutId}
+      LIMIT 1
+    `
+    const r = rows[0]
+    if (!r) return null
+    return {
+      id: r.id,
+      status: r.status,
+      razorpayPayoutId: r.razorpay_payout_id,
+      amountNetRupees: Math.floor(Number(r.amount_net_rupees)),
+      tdsTotal: Math.floor(Number(r.tds_total)),
+      tcsTotal: Math.floor(Number(r.tcs_total)),
+      batchDay: r.batch_day,
+      attemptCount: r.attempt_count,
+      failureReason: r.failure_reason,
+      destinationFingerprint: r.destination_fingerprint,
+    }
+  })
+}
+
+/** Count payouts rows for a (vendor, destination, batchDay) triple — the at-most-once guard. */
+export async function countPayoutBatchesForKey(input: {
+  vendorUserId: string
+  destinationFingerprint: string
+  batchDay: string
+}): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT count(*)::text AS n
+      FROM payouts
+      WHERE vendor_user_id = ${input.vendorUserId}
+        AND destination_fingerprint = ${input.destinationFingerprint}
+        AND batch_day = ${input.batchDay}
+    `
+    return Number(rows[0]?.n ?? '0')
+  })
+}
+
+/** Member Bookings of a Payout Batch (payout_batch_id = payoutId), with payout_state. */
+export async function getPayoutBatchMemberBookings(
+  payoutId: string,
+): Promise<{ bookingId: string; payoutState: string }[]> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ id: string; payout_state: string }[]>`
+      SELECT id, payout_state FROM bookings WHERE payout_batch_id = ${payoutId}
+    `
+    return rows.map((r) => ({ bookingId: r.id, payoutState: r.payout_state }))
+  })
+}
+
+/** Count payout-batch webhook audit rows for a Payout Batch id (e.g. payout.webhook_processed). */
+export async function countPayoutBatchAuditRows(
+  action: string,
+  payoutId: string,
+): Promise<number> {
+  return withSql(async (sql) => {
+    const rows = await sql<{ n: string }[]>`
+      SELECT count(*)::text AS n
+      FROM audit_logs
+      WHERE action = ${action}
+        AND entity_type = 'payout_batch'
+        AND entity_id = ${payoutId}
+    `
+    return Number(rows[0]?.n ?? '0')
+  })
+}
+
+/** Set a Vendor's manual_payouts_remaining (stage the first-3 gate). */
+export async function setVendorManualPayoutsRemaining(
+  vendorUserId: string,
+  n: number,
+): Promise<void> {
+  await withSql(async (sql) => {
+    await sql`
+      UPDATE vendor_profiles SET manual_payouts_remaining = ${n}, updated_at = NOW()
+      WHERE user_id = ${vendorUserId}
+    `
+  })
+}
+
+/**
+ * Resolve a payout vendor's completed, matured, currently-unbatched Bookings
+ * (payout_batch_id IS NULL), oldest-completed first, so the cron spec picks
+ * deterministic targets to stage.
+ */
+export async function getUnbatchedCompletedBookingsForVendor(
+  vendorUserId: string,
+): Promise<{ bookingId: string; payoutState: string; grossRupees: number }[]> {
+  return withSql(async (sql) => {
+    const rows = await sql<
+      { id: string; payout_state: string; gross_total_snapshot: string }[]
+    >`
+      SELECT b.id, b.payout_state, b.gross_total_snapshot
+      FROM bookings b
+      JOIN experiences e ON e.id = b.experience_id
+      WHERE e.vendor_user_id = ${vendorUserId}
+        AND b.state = 'completed'
+        AND b.payout_batch_id IS NULL
+      ORDER BY b.completed_at ASC
+    `
+    return rows.map((r) => ({
+      bookingId: r.id,
+      payoutState: r.payout_state,
+      grossRupees: Math.floor(Number(r.gross_total_snapshot)),
+    }))
+  })
+}

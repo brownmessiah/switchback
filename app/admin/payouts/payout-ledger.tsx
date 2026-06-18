@@ -212,7 +212,23 @@ const QUEUE_CATEGORY_VARIANT: Record<
   rejected: 'secondary',
 }
 
+// Only the COMPUTED categories carry information the Status column does not
+// already show. The PASSTHROUGH categories (processing/paid/failed/reversed/
+// held/rejected) merely echo the payout-state badge with an identical label —
+// rendering them duplicates the pill and makes `getByText('Held', {exact})`
+// ambiguous. Suppress those; render an em-dash placeholder so the column stays
+// aligned and the absence is explicit.
+const COMPUTED_QUEUE_CATEGORIES: ReadonlySet<PayoutQueueCategory> = new Set([
+  'awaiting_approval',
+  'auto_pending',
+  'blocked_fund_account',
+  'not_matured',
+])
+
 function PayoutQueueBadge({ category }: { category: PayoutQueueCategory }) {
+  if (!COMPUTED_QUEUE_CATEGORIES.has(category)) {
+    return <span className="text-xs text-muted-foreground">—</span>
+  }
   return (
     <Badge variant={QUEUE_CATEGORY_VARIANT[category]} data-queue-category={category}>
       {payoutQueueCategoryLabel(category)}

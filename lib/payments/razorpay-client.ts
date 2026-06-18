@@ -231,6 +231,16 @@ export function getRazorpayClient(opts: GetClientOpts = {}): RazorpaySdkLike {
   const keyId = opts.keyId ?? env.RAZORPAY_KEY_ID
   const keySecret = opts.keySecret ?? env.RAZORPAY_KEY_SECRET
   if (!keyId || !keySecret) {
+    // Production must NEVER silently fall back to the demo stub: it fabricates
+    // fake order/payment/refund ids and would confirm Bookings against money
+    // that never moved. Refuse to construct. Use `process.env.NODE_ENV` (not the
+    // frozen `env` module) for consistency with the RAZORPAY_TEST_MODE guard
+    // above. Never echo secret values.
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'Razorpay credentials missing in production: set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET (the demo stub is non-prod only)',
+      )
+    }
     cachedClient = makeDemoStub()
     return cachedClient
   }

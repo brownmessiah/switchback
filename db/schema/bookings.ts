@@ -24,15 +24,27 @@ import { payoutMethodEnum } from './vendor-profiles'
  * for Vendor payouts. Only applies to completed Bookings.
  *
  *   pending     → default; awaiting payout processing
- *   approved    → admin-approved; ready for Razorpay X disbursement
+ *   approved    → admin-approved; ready for the Razorpay X Payout Batch send
  *   rejected    → admin-rejected with reason
  *   held        → dispute-paused; payout timer frozen
+ *
+ * ADR-0016 (2026-06-18 amendment, D1+D3) — Payout Batch send lifecycle values
+ * added for the Payout Batch path. Once a Booking is gathered into a Payout
+ * Batch the Razorpay X transfer drives these:
+ *   processing  → batched; the Razorpay X transfer has been requested
+ *   paid        → the Vendor received the transfer (webhook-driven — slice 06)
+ *   failed      → the transfer failed (slice 07 retries)
+ *   reversed    → a previously-paid transfer was reversed (slice 07)
  */
 export const payoutStateEnum = pgEnum('payout_state', [
   'pending',
   'approved',
   'rejected',
   'held',
+  'processing',
+  'paid',
+  'failed',
+  'reversed',
 ])
 
 /**
@@ -171,6 +183,15 @@ export const bookings = pgTable(
     payoutState: payoutStateEnum('payout_state').default('pending').notNull(),
     payoutRejectionReason: text('payout_rejection_reason'),
 
+    // ADR-0016 (2026-06-18 amendment, D1+D3) — links a Booking to the Payout
+    // Batch (payouts row) it was sent in. NULL until the 5pm-IST cron gathers
+    // this Booking into a Batch and sends the Razorpay X transfer.
+    // Plain uuid here (no Drizzle `.references()`) to avoid a bookings↔payouts
+    // import edge — the FK is declared in migration 0033 only. NOT a snapshot
+    // column, so the snapshot-lock trigger (migration 0004/0019) permits the
+    // single write the cron makes.
+    payoutBatchId: uuid('payout_batch_id'),
+
     // Optional ref — set when the Customer chose to book from a TripGroup itinerary
     tripGroupId: uuid('trip_group_id'),
 
@@ -218,6 +239,7 @@ export const bookings = pgTable(
     index('bookings_by_slot').on(t.slotId),
     index('bookings_by_state').on(t.state),
     index('bookings_by_payout_state').on(t.payoutState),
+    index('bookings_by_payout_batch').on(t.payoutBatchId),
   ],
 )
 

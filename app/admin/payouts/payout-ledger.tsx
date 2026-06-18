@@ -38,7 +38,19 @@ import {
 export interface PayoutLedgerRow {
   bookingId: string
   state: string
-  payoutState: 'pending' | 'approved' | 'rejected' | 'held'
+  // The full payout_state enum (db/schema/bookings.ts). The admin approval
+  // queue acts on the first four (pending/approved/rejected/held); the latter
+  // four are the Payout Batch send lifecycle the Payout Batch cron drives
+  // (ADR-0016, 2026-06-18 amendment) — surfaced read-only here.
+  payoutState:
+    | 'pending'
+    | 'approved'
+    | 'rejected'
+    | 'held'
+    | 'processing'
+    | 'paid'
+    | 'failed'
+    | 'reversed'
   manualPayoutsRemaining: number
   vendorName: string | null
   expTitle: string | null
@@ -58,6 +70,10 @@ const PAYOUT_STATE_LABEL: Record<string, string> = {
   approved: 'Approved',
   rejected: 'Rejected',
   held: 'Held',
+  processing: 'Processing',
+  paid: 'Paid',
+  failed: 'Failed',
+  reversed: 'Reversed',
 }
 
 export function PayoutLedger({ rows }: { rows: PayoutLedgerRow[] }) {

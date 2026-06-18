@@ -325,7 +325,7 @@ interface NormalisedError {
   error?: { code?: string; description?: string }
 }
 
-function normalizeError(err: unknown): RazorpayClientError {
+export function normalizeError(err: unknown): RazorpayClientError {
   if (err instanceof RazorpayClientError) return err
 
   const normalised = err as NormalisedError

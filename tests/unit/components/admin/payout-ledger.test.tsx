@@ -28,6 +28,7 @@ const ROW: PayoutLedgerRow = {
   bookingId: '11111111-1111-1111-1111-111111111111',
   state: 'completed',
   payoutState: 'pending',
+  category: 'awaiting_approval',
   manualPayoutsRemaining: 3,
   vendorName: 'Himalayan Treks',
   expTitle: 'Sunrise Trek',
@@ -74,5 +75,25 @@ describe('PayoutLedger split-view (breakdown + action co-present)', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Approve Payout' }))
     expect(approveSpy).toHaveBeenCalledTimes(1)
     expect(approveSpy).toHaveBeenCalledWith(ROW.bookingId)
+  })
+})
+
+describe('PayoutLedger queue visibility (stories 11 + 14)', () => {
+  it('surfaces the awaiting-approval queue category as a visible badge', () => {
+    render(<PayoutLedger rows={[ROW]} />)
+    const row = screen.getByTestId(`payout-row-${ROW.bookingId}`)
+    expect(within(row).getByText('Awaiting approval')).toBeInTheDocument()
+  })
+
+  it('surfaces a fund-account-blocked exception so it is never silently dropped', () => {
+    const blocked: PayoutLedgerRow = {
+      ...ROW,
+      bookingId: '22222222-2222-2222-2222-222222222222',
+      payoutState: 'approved',
+      category: 'blocked_fund_account',
+    }
+    render(<PayoutLedger rows={[blocked]} />)
+    const row = screen.getByTestId(`payout-row-${blocked.bookingId}`)
+    expect(within(row).getByText('Fund account blocked')).toBeInTheDocument()
   })
 })

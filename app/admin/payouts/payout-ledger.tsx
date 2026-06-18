@@ -24,6 +24,11 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
+import {
+  payoutQueueCategoryLabel,
+  type PayoutQueueCategory,
+} from '@/lib/payments/payout-queue'
+
 import { AdminStatusBadge } from '../_components/admin-status-badge'
 import { CommissionSnapshot } from '../_components/commission-snapshot'
 import { ConfirmMoneyDialog } from '../_components/confirm-money-dialog'
@@ -51,6 +56,11 @@ export interface PayoutLedgerRow {
     | 'paid'
     | 'failed'
     | 'reversed'
+  // The admin-queue category (lib/payments/payout-queue.ts). Distinguishes the
+  // first-3 awaiting-approval queue (story 11) and the fund-account-blocked
+  // exceptions (story 14) from auto-batching / maturing / sent Payouts, so
+  // nothing silently disappears between approve and the 5pm-IST cron.
+  category: PayoutQueueCategory
   manualPayoutsRemaining: number
   vendorName: string | null
   expTitle: string | null
@@ -102,6 +112,7 @@ export function PayoutLedger({ rows }: { rows: PayoutLedgerRow[] }) {
                     <TableHead className="text-right">Gross</TableHead>
                     <TableHead className="text-right">Net</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Queue</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -169,9 +180,43 @@ function PayoutRow({
         <AdminStatusBadge status={row.payoutState} label={PAYOUT_STATE_LABEL[row.payoutState] ?? row.payoutState} />
       </TableCell>
       <TableCell>
+        <PayoutQueueBadge category={row.category} />
+      </TableCell>
+      <TableCell>
         <PayoutActions row={row} onSelect={onSelect} />
       </TableCell>
     </TableRow>
+  )
+}
+
+// ── Queue category badge ───────────────────────────────────────────────
+//
+// Surfaces the admin-queue category so the first-3 awaiting-approval queue
+// (story 11) and the fund-account-blocked exceptions (story 14) are visible at
+// a glance, distinct from auto-batching / maturing / sent Payouts. The label
+// text carries the meaning (status never by color alone, DESIGN.md §1.3).
+
+const QUEUE_CATEGORY_VARIANT: Record<
+  PayoutQueueCategory,
+  'warning' | 'info' | 'destructive' | 'success' | 'secondary' | 'outline'
+> = {
+  awaiting_approval: 'warning',
+  blocked_fund_account: 'destructive',
+  auto_pending: 'info',
+  not_matured: 'outline',
+  processing: 'info',
+  paid: 'success',
+  failed: 'destructive',
+  reversed: 'secondary',
+  held: 'secondary',
+  rejected: 'secondary',
+}
+
+function PayoutQueueBadge({ category }: { category: PayoutQueueCategory }) {
+  return (
+    <Badge variant={QUEUE_CATEGORY_VARIANT[category]} data-queue-category={category}>
+      {payoutQueueCategoryLabel(category)}
+    </Badge>
   )
 }
 

@@ -7,6 +7,7 @@ export * from './users'
 export * from './auth'
 export * from './customer-profiles'
 export * from './vendor-profiles'
+export * from './vendor-fund-accounts'
 export * from './vendor-team-members'
 export * from './admin-profiles'
 

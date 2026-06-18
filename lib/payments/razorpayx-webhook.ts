@@ -1,4 +1,4 @@
-import { and, eq, ne } from 'drizzle-orm'
+import { and, count, eq, ne, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
 import { bookings } from '@/db/schema/bookings'
@@ -8,6 +8,7 @@ import { notifyPayoutStateChange, safeNotify } from '@/lib/notifications/booking
 import { getRedis } from '@/lib/redis'
 
 import type { DBOrTx } from './commission-resolver'
+import { decidePayoutRetry } from './payout-retry-policy'
 import { verifyWebhookSignature } from './razorpay-signature'
 
 /**
@@ -40,9 +41,21 @@ import { verifyWebhookSignature } from './razorpay-signature'
  *   - Success                  → 200
  *   - Internal DB error        → clear dedup key + 500 (retry)
  *
- * Events handled here: `payout.processed` (→ paid + cascade + notify) and the
- * benign lifecycle acks `payout.initiated` / `payout.queued` (ack/ignore).
- * `payout.failed` / `payout.reversed` are admin-gated and land in slice 07.
+ * Events handled here:
+ *   - `payout.processed` → paid + cascade + notify (slice 06).
+ *   - `payout.failed` → mark failed, decide retry vs admin queue per
+ *     ADR-0016 D5 (decidePayoutRetry): retry (≤3) re-queues member Bookings
+ *     (pending + clear batch link → next cron re-picks); exhausted (≥4) routes
+ *     to the admin queue (failed + keep batch link) + notifies the Vendor.
+ *   - `payout.reversed` → the DANGEROUS path: money returned after `processed`.
+ *     Mark reversed, revert member Bookings from paid, KEEP the batch link
+ *     (admin-gated — NEVER auto-retransfer), always notify the Vendor.
+ *   - benign lifecycle acks `payout.initiated` / `payout.queued` (ack/ignore).
+ *
+ * Idempotency for the slice-07 events is a GUARDED status transition:
+ *   - failed:   `status='processing' → 'failed'` (RETURNING gates side-effects).
+ *   - reversed: `status='paid' → 'reversed'` (RETURNING gates side-effects).
+ * A replay past Redis finds 0 rows transitioned and skips every side-effect.
  */
 
 const DEDUP_TTL_SECONDS = 14 * 24 * 60 * 60
@@ -55,6 +68,8 @@ const PayoutEntitySchema = z.object({
   status: z.string(),
   reference_id: z.string().nullable().optional(),
   notes: z.record(z.string(), z.unknown()).optional(),
+  /** Razorpay X failure/reversal detail (best-effort — shape varies). */
+  status_details: z.record(z.string(), z.unknown()).nullable().optional(),
 })
 
 const WebhookEventSchema = z.object({
@@ -95,6 +110,9 @@ export interface RazorpayXWebhookResult {
 
 /** Lifecycle events we explicitly ack without side-effects. */
 const ACK_ONLY_EVENTS = new Set(['payout.initiated', 'payout.queued'])
+
+/** Events that drive a state transition + cascade + audit + (maybe) notify. */
+const HANDLED_EVENTS = new Set(['payout.processed', 'payout.failed', 'payout.reversed'])
 
 export async function processRazorpayXWebhook(
   args: ProcessRazorpayXWebhookArgs,
@@ -146,7 +164,7 @@ export async function processRazorpayXWebhook(
     return { status: 200, body: { ok: true, ignored: event.event }, ignored: true }
   }
 
-  if (event.event !== 'payout.processed') {
+  if (!HANDLED_EVENTS.has(event.event)) {
     return {
       status: 200,
       body: { ok: true, ignored: event.event },
@@ -156,11 +174,18 @@ export async function processRazorpayXWebhook(
 
   const payout = event.payload.payout?.entity
   if (!payout) {
-    return { status: 400, body: { error: 'payout.processed missing payload.payout' } }
+    return { status: 400, body: { error: `${event.event} missing payload.payout` } }
   }
 
   try {
-    return await handlePayoutProcessed({ db, payout, event, eventId })
+    switch (event.event) {
+      case 'payout.failed':
+        return await handlePayoutFailed({ db, payout, eventId })
+      case 'payout.reversed':
+        return await handlePayoutReversed({ db, payout, eventId })
+      default:
+        return await handlePayoutProcessed({ db, payout, event, eventId })
+    }
   } catch {
     // Clear the dedup key so Razorpay's retry policy can land the transition on
     // a transient DB / network blip. Without this, the next retry would see the
@@ -274,6 +299,280 @@ async function handlePayoutProcessed(
   }
 
   return { status: 200, body: { ok: true } }
+}
+
+interface HandlePayoutFailedArgs {
+  db: DBOrTx
+  payout: PayoutEntity
+  eventId: string
+}
+
+/**
+ * Handle `payout.failed` per ADR-0016 D5.
+ *
+ * GUARDED transition `status='processing' → 'failed'`. Only on a REAL transition
+ * (RETURNING non-empty) do we count failed attempts for the group, decide via
+ * the pure `decidePayoutRetry`, and apply the booking reverts + audit:
+ *   - retry (failureCount ≤ 3): member Bookings → `pending`, clear
+ *     `payout_batch_id` → the next daily cron re-picks them (a NEW payouts row,
+ *     new batch_day). Transient — the Vendor is NOT notified.
+ *   - admin_queue (failureCount ≥ 4): member Bookings → `failed`, KEEP
+ *     `payout_batch_id` → the cron does NOT re-pick; slice-05's classifier shows
+ *     category 'failed' to the Admin. The Vendor IS notified (state 'failed').
+ *
+ * failureCount = COUNT(payouts WHERE vendor + destination AND status='failed'),
+ * read AFTER marking the current row failed so it includes the current failure.
+ */
+async function handlePayoutFailed(
+  args: HandlePayoutFailedArgs,
+): Promise<RazorpayXWebhookResult> {
+  const { db, payout, eventId } = args
+
+  const payoutRowId = await reconcilePayoutRowId({ db, payout })
+  if (!payoutRowId) {
+    await writeUnmatchedAudit({ db, payout, eventId })
+    return { status: 200, body: { ok: true, unmatched: true }, unmatched: true }
+  }
+
+  const failureReason = extractFailureReason(payout)
+
+  const outcome = await db.transaction(async (tx) => {
+    // GUARDED transition: only `processing` → `failed` is a real failure. A
+    // replay (past Redis) finds status already `failed` → 0 rows → skip
+    // everything (no re-revert, no re-notify, no double attemptCount).
+    const updated = await tx
+      .update(payouts)
+      .set({
+        status: 'failed',
+        failureReason,
+        attemptCount: sql`${payouts.attemptCount} + 1`,
+      })
+      .where(and(eq(payouts.id, payoutRowId), eq(payouts.status, 'processing')))
+      .returning({
+        id: payouts.id,
+        vendorUserId: payouts.vendorUserId,
+        destinationFingerprint: payouts.destinationFingerprint,
+      })
+
+    if (updated.length === 0) {
+      return null
+    }
+    const { vendorUserId, destinationFingerprint } = updated[0]!
+
+    // failureCount = total failed attempts for the (vendor, destination) group,
+    // now including the row we just marked failed.
+    const [countRow] = await tx
+      .select({ failedCount: count() })
+      .from(payouts)
+      .where(
+        and(
+          eq(payouts.vendorUserId, vendorUserId),
+          eq(payouts.destinationFingerprint, destinationFingerprint),
+          eq(payouts.status, 'failed'),
+        ),
+      )
+    const failureCount = countRow!.failedCount
+
+    const decision = decidePayoutRetry({ failureCount })
+
+    if (decision.action === 'retry') {
+      // Re-queue: pending + clear the batch link → next cron re-picks them.
+      await tx
+        .update(bookings)
+        .set({ payoutState: 'pending', payoutBatchId: null })
+        .where(eq(bookings.payoutBatchId, payoutRowId))
+    } else {
+      // Retries exhausted → route to admin queue: failed + KEEP the batch link.
+      await tx
+        .update(bookings)
+        .set({ payoutState: 'failed' })
+        .where(eq(bookings.payoutBatchId, payoutRowId))
+    }
+
+    await writeAuditLog(tx, {
+      actorUserId: null,
+      action: 'payout.webhook_failed',
+      entityType: 'payout_batch',
+      entityId: payoutRowId,
+      payload: {
+        razorpayPayoutId: payout.id,
+        referenceId: payout.reference_id ?? null,
+        reason: failureReason,
+        failureCount,
+        decision: decision.action,
+        ...(decision.action === 'retry' ? { backoffMs: decision.backoffMs } : {}),
+        eventId,
+      },
+    })
+
+    return { vendorUserId, decision: decision.action }
+  })
+
+  if (!outcome) {
+    return { status: 200, body: { ok: true, deduped: true }, deduped: true }
+  }
+
+  // Only notify the Vendor when retries are exhausted (admin queue). A retry is
+  // transient + re-queued silently — notifying would cry wolf, and the per-
+  // (booking,state) eventId would suppress the LATER exhaustion notify.
+  if (outcome.decision === 'admin_queue') {
+    await notifyVendorPerMemberBooking({
+      db,
+      payoutRowId,
+      vendorUserId: outcome.vendorUserId,
+      state: 'failed',
+      label: 'payout.failed',
+    })
+  }
+
+  return { status: 200, body: { ok: true } }
+}
+
+interface HandlePayoutReversedArgs {
+  db: DBOrTx
+  payout: PayoutEntity
+  eventId: string
+}
+
+/**
+ * Handle `payout.reversed` per ADR-0016 D5 — THE DANGEROUS PATH.
+ *
+ * Money returned after the transfer was `processed` (bad beneficiary). GUARDED
+ * transition `status='paid' → 'reversed'` (reversal is only valid from paid).
+ * On a real transition: revert member Bookings from `paid` → `reversed` and
+ * KEEP `payout_batch_id` so the cron NEVER re-picks them. We NEVER call
+ * createPayout / re-send — re-pay is ADMIN-GATED. Surface loudly: always notify
+ * the Vendor (state 'reversed').
+ */
+async function handlePayoutReversed(
+  args: HandlePayoutReversedArgs,
+): Promise<RazorpayXWebhookResult> {
+  const { db, payout, eventId } = args
+
+  const payoutRowId = await reconcilePayoutRowId({ db, payout })
+  if (!payoutRowId) {
+    await writeUnmatchedAudit({ db, payout, eventId })
+    return { status: 200, body: { ok: true, unmatched: true }, unmatched: true }
+  }
+
+  const failureReason = extractFailureReason(payout) ?? 'payout reversed'
+
+  const transitioned = await db.transaction(async (tx) => {
+    // GUARDED transition: reversal is only valid from `paid`. A replay (or a
+    // reversal of a non-paid batch) finds 0 rows → skip ALL side-effects.
+    const updated = await tx
+      .update(payouts)
+      .set({ status: 'reversed', failureReason })
+      .where(and(eq(payouts.id, payoutRowId), eq(payouts.status, 'paid')))
+      .returning({ id: payouts.id, vendorUserId: payouts.vendorUserId })
+
+    if (updated.length === 0) {
+      return null
+    }
+
+    // Revert member Bookings from paid → reversed. KEEP the batch link — this is
+    // admin-gated and must NOT re-enter the cron's candidate set.
+    await tx
+      .update(bookings)
+      .set({ payoutState: 'reversed' })
+      .where(eq(bookings.payoutBatchId, payoutRowId))
+
+    await writeAuditLog(tx, {
+      actorUserId: null,
+      action: 'payout.webhook_reversed',
+      entityType: 'payout_batch',
+      entityId: payoutRowId,
+      payload: {
+        razorpayPayoutId: payout.id,
+        referenceId: payout.reference_id ?? null,
+        reason: failureReason,
+        eventId,
+      },
+    })
+
+    return { vendorUserId: updated[0]!.vendorUserId }
+  })
+
+  if (!transitioned) {
+    return { status: 200, body: { ok: true, deduped: true }, deduped: true }
+  }
+
+  // ALWAYS notify the Vendor — reversal is loud + admin-gated. NEVER re-send.
+  await notifyVendorPerMemberBooking({
+    db,
+    payoutRowId,
+    vendorUserId: transitioned.vendorUserId,
+    state: 'reversed',
+    label: 'payout.reversed',
+  })
+
+  return { status: 200, body: { ok: true } }
+}
+
+/**
+ * Notify the Vendor once per member Booking AFTER commit. A notify failure must
+ * never fail the money path (safeNotify), and the per-(booking,state) eventId
+ * keeps it idempotent across replays.
+ */
+async function notifyVendorPerMemberBooking(args: {
+  db: DBOrTx
+  payoutRowId: string
+  vendorUserId: string
+  state: 'failed' | 'reversed'
+  label: string
+}): Promise<void> {
+  const { db, payoutRowId, vendorUserId, state, label } = args
+  const memberBookings = await db
+    .select({ id: bookings.id })
+    .from(bookings)
+    .where(eq(bookings.payoutBatchId, payoutRowId))
+
+  for (const member of memberBookings) {
+    await safeNotify(label, () =>
+      notifyPayoutStateChange(db, {
+        bookingId: member.id,
+        vendorUserId,
+        state,
+      }),
+    )
+  }
+}
+
+/** Append the standard unmatched-reference audit row + ack (200). */
+async function writeUnmatchedAudit(args: {
+  db: DBOrTx
+  payout: PayoutEntity
+  eventId: string
+}): Promise<void> {
+  const { db, payout, eventId } = args
+  await writeAuditLog(db, {
+    actorUserId: null,
+    action: 'payout.webhook_unmatched',
+    entityType: 'payout_batch',
+    entityId: payout.id,
+    payload: {
+      razorpayPayoutId: payout.id,
+      referenceId: payout.reference_id ?? null,
+      notesPayoutId: extractNotesPayoutId(payout.notes),
+      eventId,
+    },
+  })
+}
+
+/**
+ * Best-effort failure/reversal reason from the X payout entity. Shape varies
+ * across X versions, so we read `status_details.reason` / `.description` and
+ * fall back to the entity `status`. Returns null only when nothing is present.
+ */
+function extractFailureReason(payout: PayoutEntity): string | null {
+  const details = payout.status_details
+  if (details) {
+    const reason = details.reason
+    if (typeof reason === 'string' && reason.length > 0) return reason
+    const description = details.description
+    if (typeof description === 'string' && description.length > 0) return description
+  }
+  return payout.status || null
 }
 
 /**

@@ -1,14 +1,33 @@
+import { and, asc, desc, eq, gte, inArray, lte, sql, type SQL } from 'drizzle-orm'
+
+import { db as prodDb } from '@/db/client'
+import { experiences } from '@/db/schema/experiences'
+import { vendorProfiles } from '@/db/schema/vendor-profiles'
+import { listActivities } from '@/lib/activities/registry'
 import { isFixtureExperienceSlug } from '@/lib/experiences/fixture-slugs'
+import { publiclyVisibleExperienceCondition } from '@/lib/experiences/public-filter'
+import type { DBOrTx } from '@/lib/media/experience-images'
+import { listRegions } from '@/lib/regions/registry'
 
-import { ensureExperienceIndexSettings } from './indexer'
-import { getMeiliClient, type MeiliLike } from './meilisearch-client'
+import { DURATION_BAND_RANGES, type DurationBand } from './duration-band'
 
-const EXPERIENCE_INDEX = 'experiences'
-
-// The one-shot settings guard lives in `indexer.ts` so the search READ path
-// and the index WRITE path share a single process-level guard. Re-export the
-// test reset from there.
-export { _resetSettingsGuardForTests } from './indexer'
+/**
+ * Postgres-native experience search (ADR-0019, amends ADR-0013).
+ *
+ * Meilisearch is retired. `searchExperiences` serves the same `{ hits }` result
+ * the customer `/search` page consumes, straight from Postgres:
+ *   - the `q` text query → FTS (`to_tsvector` + GIN, `'english'`) over title +
+ *     short_description with prefix matching, plus `pg_trgm` `word_similarity`
+ *     for typo tolerance;
+ *   - every facet/filter → a SQL `WHERE` clause;
+ *   - every sort → an `ORDER BY`.
+ *
+ * Search is now exactly as available as the database the rest of the site
+ * already needs — no second datastore, no index to keep in sync, no empty-result
+ * fragility on an outage. The FTS expression below MUST stay byte-for-byte
+ * identical to the GIN index in db/migrations/0034_postgres_native_search.sql or
+ * the planner cannot use it.
+ */
 
 export type SortOption =
   | 'relevance'
@@ -68,83 +87,14 @@ export interface SearchExperiencesResult {
   hits: SearchExperienceHit[]
 }
 
-export function buildMeiliFilter(params: Omit<SearchExperiencesParams, 'q' | 'sort'>): string {
-  const parts: string[] = []
+/** Max hits returned to the search page (matches the prior Meili `limit`). */
+const SEARCH_LIMIT = 20
 
-  if (params.activity) {
-    parts.push(`activitySlug = "${params.activity}"`)
-  }
-  if (params.region) {
-    parts.push(`regionSlug = "${params.region}"`)
-  }
-  if (params.minPrice !== undefined) {
-    parts.push(`pricePerPersonRupees >= ${params.minPrice}`)
-  }
-  if (params.maxPrice !== undefined) {
-    parts.push(`pricePerPersonRupees <= ${params.maxPrice}`)
-  }
-  // ADR-0017 structured facets (issue 04). String values quoted, numerics
-  // bare — matching the existing quoting style. `seasonMonths = N` is array
-  // membership; `maxGroupSize >= N` is a "fits a group of N" lower bound.
-  if (params.difficulty) {
-    parts.push(`difficulty = "${params.difficulty}"`)
-  }
-  if (params.durationBand) {
-    parts.push(`durationBand = "${params.durationBand}"`)
-  }
-  if (params.seasonMonth !== undefined) {
-    parts.push(`seasonMonths = ${params.seasonMonth}`)
-  }
-  if (params.maxGroupSize !== undefined) {
-    parts.push(`maxGroupSize >= ${params.maxGroupSize}`)
-  }
-  // Category (activity rollup) + Destination=State facets (issue 04 follow-up).
-  // String values quoted, matching the existing style. Both are DERIVED index
-  // attributes — a doc with an unknown activity/region slug carries null and so
-  // never matches these filters (correct).
-  if (params.category) {
-    parts.push(`category = "${params.category}"`)
-  }
-  if (params.state) {
-    parts.push(`state = "${params.state}"`)
-  }
-  // Issue 10 trust-oriented filters — all map to REAL index data (D0).
-  // `minRating` is a numeric lower-bound; 0 is a legitimate value (unrated docs
-  // index ratingAvg = 0) so we check `!== undefined`, not truthiness, and a
-  // "rating ≥ 0" filter matches every doc. `safetyVerified` only filters when
-  // TRUE (the per-listing Safety Checked signal, ADR-0015); `false` is unset.
-  // `cancellation` is the Flexible preset (ADR-0005) — string, quoted; NEVER
-  // "free".
-  if (params.minRating !== undefined) {
-    parts.push(`ratingAvg >= ${params.minRating}`)
-  }
-  if (params.safetyVerified) {
-    parts.push('requiresSafetyStack = true')
-  }
-  if (params.cancellation) {
-    parts.push(`cancellationPreset = "${params.cancellation}"`)
-  }
-
-  return parts.join(' AND ')
-}
-
-function meiliSort(sort: SortOption | undefined): string[] {
-  switch (sort) {
-    case 'price_asc':
-      return ['pricePerPersonRupees:asc']
-    case 'price_desc':
-      return ['pricePerPersonRupees:desc']
-    case 'newest':
-      return ['publishedAtEpochMs:desc']
-    case 'duration_asc':
-      return ['durationMinutes:asc']
-    case 'duration_desc':
-      return ['durationMinutes:desc']
-    default:
-      return []
-  }
-}
-
+/**
+ * True iff the search carries any facet/sort/filter (NOT a bare `q`). Drives the
+ * ADR-0013 canonical/robots rules (a filtered variant is noindex,follow and
+ * canonicalises to the unfiltered /search). `q`-only is treated as unfiltered.
+ */
 export function isFilteredSearch(params: SearchExperiencesParams): boolean {
   return !!(
     params.activity ||
@@ -152,60 +102,186 @@ export function isFilteredSearch(params: SearchExperiencesParams): boolean {
     params.minPrice !== undefined ||
     params.maxPrice !== undefined ||
     params.sort ||
-    // ADR-0017 structured facets (issue 04) — a filtered variant for the
-    // noindex/canonical rules (ADR-0013) just as much as the legacy facets.
     params.difficulty ||
     params.durationBand ||
     params.seasonMonth !== undefined ||
     params.maxGroupSize !== undefined ||
-    // Category + Destination=State facets (issue 04 follow-up).
     params.category ||
     params.state ||
-    // Issue 10 trust-oriented filters. `minRating` checked with `!== undefined`
-    // (0 is a real value); `safetyVerified` only when TRUE (unchecked is unset).
     params.minRating !== undefined ||
     params.safetyVerified ||
     params.cancellation
   )
 }
 
+/** Activity slugs whose registry `category` rolls up to the given category. */
+function activitySlugsForCategory(category: string): string[] {
+  return listActivities()
+    .filter((a) => a.category === category)
+    .map((a) => a.slug)
+}
+
+/** Region slugs whose registry `state` matches the given Indian state. */
+function regionSlugsForState(state: string): string[] {
+  return listRegions()
+    .filter((r) => r.state === state)
+    .map((r) => r.slug)
+}
+
+/** FTS expression over title + short_description — identical to the 0034 GIN index. */
+const FTS_EXPR = sql`to_tsvector('english', coalesce(${experiences.title}, '') || ' ' || coalesce(${experiences.shortDescription}, ''))`
+
+/** Build a prefix tsquery string (`raft:* & water:*`) from sanitized terms. */
+function prefixTsquery(q: string): string {
+  return q
+    .split(/\s+/)
+    .map((t) => t.replace(/[^\p{L}\p{N}]+/gu, ''))
+    .filter(Boolean)
+    .map((t) => `${t}:*`)
+    .join(' & ')
+}
+
 export async function searchExperiences(
   params: SearchExperiencesParams,
-  opts: { client?: MeiliLike } = {},
+  opts: { db?: DBOrTx } = {},
 ): Promise<SearchExperiencesResult> {
-  const client = opts.client ?? getMeiliClient()
-  const filter = buildMeiliFilter(params)
-  const sort = meiliSort(params.sort)
+  const dbh = opts.db ?? prodDb
+
+  const conditions: SQL[] = [publiclyVisibleExperienceCondition()]
+
+  if (params.activity) conditions.push(eq(experiences.activitySlug, params.activity))
+  if (params.region) conditions.push(eq(experiences.regionSlug, params.region))
+  if (params.minPrice !== undefined) {
+    conditions.push(sql`${experiences.pricePerPerson_1_2} >= ${params.minPrice}`)
+  }
+  if (params.maxPrice !== undefined) {
+    conditions.push(sql`${experiences.pricePerPerson_1_2} <= ${params.maxPrice}`)
+  }
+  // Enum columns compared as text so an unknown URL value matches nothing
+  // (rather than erroring on an invalid enum label).
+  if (params.difficulty) {
+    conditions.push(sql`${experiences.difficulty}::text = ${params.difficulty}`)
+  }
+  if (params.durationBand) {
+    const range = DURATION_BAND_RANGES[params.durationBand as DurationBand]
+    if (range) {
+      conditions.push(gte(experiences.durationMinutes, range.min))
+      if (range.max !== null) conditions.push(lte(experiences.durationMinutes, range.max))
+    } else {
+      conditions.push(sql`false`)
+    }
+  }
+  if (params.seasonMonth !== undefined) {
+    conditions.push(sql`${params.seasonMonth} = ANY(${experiences.seasonMonths})`)
+  }
+  if (params.maxGroupSize !== undefined) {
+    conditions.push(gte(experiences.maxGroupSize, params.maxGroupSize))
+  }
+  if (params.category) {
+    const slugs = activitySlugsForCategory(params.category)
+    conditions.push(slugs.length ? inArray(experiences.activitySlug, slugs) : sql`false`)
+  }
+  if (params.state) {
+    const slugs = regionSlugsForState(params.state)
+    conditions.push(slugs.length ? inArray(experiences.regionSlug, slugs) : sql`false`)
+  }
+  if (params.minRating !== undefined) {
+    // Correlated published-review average (1-decimal, matching loadExperienceRatingMap).
+    // COALESCE(...,0) so unrated experiences pass `minRating = 0` and fail any N>0.
+    conditions.push(
+      sql`coalesce((select round(avg(reviews.rating)::numeric, 1) from reviews where reviews.experience_id = ${experiences.id} and reviews.status = 'published'), 0) >= ${params.minRating}`,
+    )
+  }
+  if (params.safetyVerified) {
+    conditions.push(eq(experiences.requiresSafetyStack, true))
+  }
+  if (params.cancellation) {
+    conditions.push(sql`${experiences.cancellationPreset}::text = ${params.cancellation}`)
+  }
+
+  // Full-text query: FTS (prefix + stemming) OR pg_trgm word-similarity (typos).
+  const q = params.q?.trim()
+  let relevanceRank: SQL | null = null
+  if (q) {
+    const tsquery = prefixTsquery(q)
+    const ors: SQL[] = []
+    if (tsquery) ors.push(sql`${FTS_EXPR} @@ to_tsquery('english', ${tsquery})`)
+    ors.push(sql`word_similarity(${q}, ${experiences.title}) >= 0.4`)
+    ors.push(sql`word_similarity(${q}, coalesce(${experiences.shortDescription}, '')) >= 0.4`)
+    conditions.push(sql`(${sql.join(ors, sql` OR `)})`)
+    relevanceRank = sql`(ts_rank_cd(${FTS_EXPR}, to_tsquery('english', ${tsquery || ''})) + word_similarity(${q}, ${experiences.title}))`
+  }
+
+  const orderBy: SQL[] = []
+  switch (params.sort) {
+    case 'price_asc':
+      orderBy.push(asc(experiences.pricePerPerson_1_2))
+      break
+    case 'price_desc':
+      orderBy.push(desc(experiences.pricePerPerson_1_2))
+      break
+    case 'newest':
+      orderBy.push(desc(experiences.updatedAt))
+      break
+    case 'duration_asc':
+      orderBy.push(asc(experiences.durationMinutes))
+      break
+    case 'duration_desc':
+      orderBy.push(desc(experiences.durationMinutes))
+      break
+    default:
+      // 'relevance' / unset: rank by text relevance when a query is present,
+      // else newest-first. Deterministic id tiebreak below.
+      orderBy.push(relevanceRank ? desc(relevanceRank) : desc(experiences.updatedAt))
+  }
+  orderBy.push(asc(experiences.id))
 
   try {
-    // Self-heal the index's filter/sort settings before the first query so a
-    // Customer applying a filter never hits a 400 (ADR-0013). The guard is
-    // process-level one-shot (shared with the index write path). Inside the try
-    // so even a settings failure degrades gracefully rather than crashing.
-    await ensureExperienceIndexSettings({ client })
+    const rows = await dbh
+      .select({
+        id: experiences.id,
+        slug: experiences.slug,
+        title: experiences.title,
+        shortDescription: experiences.shortDescription,
+        activitySlug: experiences.activitySlug,
+        regionSlug: experiences.regionSlug,
+        vendorSlug: vendorProfiles.slug,
+        pricePerPerson_1_2: experiences.pricePerPerson_1_2,
+        isCombo: experiences.isCombo,
+        difficulty: experiences.difficulty,
+        durationMinutes: experiences.durationMinutes,
+      })
+      .from(experiences)
+      .innerJoin(vendorProfiles, eq(experiences.vendorUserId, vendorProfiles.userId))
+      .where(and(...conditions))
+      .orderBy(...orderBy)
+      .limit(SEARCH_LIMIT)
 
-    const result = await client.index(EXPERIENCE_INDEX).search(params.q ?? '', {
-      filter: filter || undefined,
-      sort: sort.length > 0 ? sort : undefined,
-      facets: ['activitySlug', 'regionSlug', 'category', 'difficulty', 'durationBand'],
-      limit: 20,
-    })
-
-    // Issue 04 leak hardening: defensively drop any admin/E2E fixture hit.
-    // Fixtures are never indexed (the index write path + reindex script both
-    // route through the shared public-filter), but a stale index from before
-    // this gate must never surface one to a Customer.
-    const hits = (result.hits as SearchExperienceHit[]).filter(
-      (hit) => !isFixtureExperienceSlug(hit.slug),
-    )
+    // Belt-and-suspenders: the SQL already excludes fixtures via
+    // publiclyVisibleExperienceCondition(); this guarantees a fixture never
+    // surfaces even if that predicate is ever loosened.
+    const hits: SearchExperienceHit[] = rows
+      .filter((r) => !isFixtureExperienceSlug(r.slug))
+      .map((r) => ({
+        id: r.id,
+        slug: r.slug,
+        title: r.title,
+        shortDescription: r.shortDescription,
+        activitySlug: r.activitySlug,
+        regionSlug: r.regionSlug,
+        vendorSlug: r.vendorSlug,
+        pricePerPersonRupees: Math.round(Number(r.pricePerPerson_1_2)),
+        isCombo: r.isCombo,
+        difficulty: r.difficulty,
+        durationMinutes: r.durationMinutes,
+      }))
 
     return { hits }
   } catch (err) {
-    // Never crash the customer-facing search page on a Meilisearch error —
-    // degrade to an empty result set (the page renders its empty state). Log
-    // server-side first so a full Meilisearch outage is observable rather than
-    // silently rendering "0 results" indefinitely.
-    console.error('[search] Meilisearch query failed; returning empty results', err)
+    // Never crash the customer-facing search page on a DB error — degrade to an
+    // empty result (the page renders its empty state). Log first so an outage is
+    // observable rather than a silent "0 results".
+    console.error('[search] Postgres search failed; returning empty results', err)
     return { hits: [] }
   }
 }

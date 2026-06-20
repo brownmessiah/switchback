@@ -50,7 +50,6 @@ import {
   countBookingsForSlotAndCustomer,
   countBookingTierCapRejectedAuditRows,
 } from '../../helpers/db-assertions'
-import { getIndexedExperience } from '../../helpers/meili-assertions'
 import { storageFileExists } from '../../helpers/storage-assertions'
 
 // ---------------------------------------------------------------------------
@@ -484,7 +483,7 @@ test.describe('Structured attributes authoring', () => {
 
 // ---------------------------------------------------------------------------
 // 4. Edit listing — open a PUBLISHED listing → change price → save →
-//    price survives reload (DB) AND re-indexes into Meilisearch (AC #1).
+//    price survives reload (DB) (AC #1).
 // ---------------------------------------------------------------------------
 test.describe('Edit listing', () => {
   // A within-cap published listing owned by the business-tier vendor. A
@@ -575,14 +574,6 @@ test.describe('Edit listing', () => {
     await page.getByRole('button', { name: 'Continue' }).click()
     const reloadedValue = await page.locator('#price12').inputValue()
     expect(Number(reloadedValue)).toBe(NEW_PRICE)
-
-    // ── Assert: the published listing RE-INDEXED into Meilisearch ────────
-    // ADR-0013: the canonical search row reflects the edited facet price.
-    const doc = await getIndexedExperience(experienceId)
-    expect(doc, 'edited published experience must be (re)indexed in Meilisearch').not.toBeNull()
-    expect(doc!.id).toBe(experienceId)
-    expect(doc!.slug).toBe(PUBLISHED_SLUG)
-    expect(doc!.pricePerPersonRupees).toBe(NEW_PRICE)
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/vendor-edit-listing.png',

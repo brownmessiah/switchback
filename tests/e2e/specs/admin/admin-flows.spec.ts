@@ -94,7 +94,6 @@ import {
   getBookingsByDistinctState,
   getBookingDetailFixture,
 } from '../../helpers/db-assertions'
-import { getIndexedExperience } from '../../helpers/meili-assertions'
 import { storageFileExists } from '../../helpers/storage-assertions'
 import path from 'node:path'
 
@@ -271,37 +270,35 @@ test.describe('Admin vendors list and detail', () => {
 // 3. Functional: admin Experience moderation (#23)
 //
 // Drives the four admin Experience-moderation Server Actions FROM THE UI
-// (approve / reject / pause / archive) and asserts BOTH the persisted
-// experiences.status AND the Meilisearch index/deindex side-effect
-// (ADR-0013), plus the append-only audit_logs trail.
+// (approve / reject / pause / archive) and asserts the persisted
+// experiences.status, plus the append-only audit_logs trail. With
+// Postgres-native search the live catalog is queried directly off
+// experiences.status — there is no separate search index to mirror.
 //
-//   - APPROVE     : pending_review → published AND INDEXED into Meilisearch
-//                   (getIndexedExperience returns the doc → searchable).
+//   - APPROVE     : pending_review → published (enters the live catalog).
 //   - APPROVE cap : an OVER-CAP pending Experience (price > Rs.5000 for an
 //                   identity-tier Vendor) is REJECTED by the ADR-0007 tier-cap
-//                   guard — stays pending_review, NOT indexed, a
-//                   tier_cap_rejected audit row written (ADR-0007).
+//                   guard — stays pending_review, a tier_cap_rejected audit
+//                   row written (ADR-0007).
 //   - REJECT      : pending_review → archived (stays OUT of the live catalog),
-//                   reason recorded in the audit payload, NOT indexed.
-//   - PAUSE       : a freshly-approved (published + indexed) Experience →
-//                   paused AND DE-INDEXED (getIndexedExperience returns null).
-//   - ARCHIVE     : a freshly-approved (published + indexed) Experience →
-//                   archived AND DE-INDEXED.
+//                   reason recorded in the audit payload.
+//   - PAUSE       : a freshly-approved (published) Experience → paused
+//                   (leaves the live catalog).
+//   - ARCHIVE     : a freshly-approved (published) Experience → archived
+//                   (leaves the live catalog).
 //
 // Each action writes exactly one audit_logs row with the admin as actor.
 // Every Experience here is a DEDICATED moderation seed (identity-tier Vendor,
 // no bookings, no reviews, distinct slugs/slots) so these one-way status
-// transitions never disturb any other spec's determinism. The seed does NOT
-// pre-index into Meilisearch, so pause/archive first approve (proving the doc
-// IS indexed) and then prove the de-index — a full index→deindex round-trip.
+// transitions never disturb any other spec's determinism.
 //
 // Serial so the per-Experience approve→pause / approve→archive chains run in
-// a known order against the shared E2E DB + Meili index.
+// a known order against the shared E2E DB.
 // ---------------------------------------------------------------------------
 test.describe('Admin experience moderation (#23)', () => {
   test.describe.configure({ mode: 'serial' })
 
-  test('approve: pending_review → published AND indexed into Meilisearch + audit row', async ({
+  test('approve: pending_review → published (enters live catalog) + audit row', async ({
     page,
   }) => {
     const experienceId = await getExperienceIdBySlug(MOD_APPROVE_SLUG)
@@ -315,7 +312,7 @@ test.describe('Admin experience moderation (#23)', () => {
 
     const row = page.locator('tr').filter({ hasText: 'Approve me — Within-Cap Pending' })
     await expect(row).toBeVisible()
-    // Approve is consequential (publishes + indexes, ADR-0013) so it is gated
+    // Approve is consequential (publishes to the live catalog) so it is gated
     // behind a confirm Dialog (#88) — click through the confirm to fire it.
     await row.locator('button').filter({ hasText: 'Approve' }).click()
     await page
@@ -331,12 +328,6 @@ test.describe('Admin experience moderation (#23)', () => {
     await expect
       .poll(async () => getExperienceStatus(experienceId!), { timeout: 15_000 })
       .toBe('published')
-
-    // ── Assert: INDEXED into Meilisearch → discoverable in search ────────
-    const doc = await getIndexedExperience(experienceId!)
-    expect(doc, 'approved experience must be indexed in Meilisearch').not.toBeNull()
-    expect(doc!.id).toBe(experienceId)
-    expect(doc!.slug).toBe(MOD_APPROVE_SLUG)
 
     // ── Assert: exactly one approve audit row with actor + transition ────
     expect(
@@ -355,7 +346,7 @@ test.describe('Admin experience moderation (#23)', () => {
     })
   })
 
-  test('approve over-cap: tier-cap guard rejects — stays pending_review, NOT indexed, rejection audited (ADR-0007)', async ({
+  test('approve over-cap: tier-cap guard rejects — stays pending_review, rejection audited (ADR-0007)', async ({
     page,
   }) => {
     const experienceId = await getExperienceIdBySlug(MOD_OVERCAP_SLUG)
@@ -383,12 +374,6 @@ test.describe('Admin experience moderation (#23)', () => {
     // ── Assert: REJECTED — status unchanged, never published ─────────────
     expect(await getExperienceStatus(experienceId!)).toBe('pending_review')
 
-    // ── Assert: NOT indexed into Meilisearch ─────────────────────────────
-    expect(
-      await getIndexedExperience(experienceId!, { timeoutMs: 2000 }),
-      'over-cap experience must NOT be indexed',
-    ).toBeNull()
-
     // ── Assert: no approve row, exactly one tier_cap_rejected row (ADR-0007)
     expect(
       await countExperienceAuditRows('admin.experience.approve', experienceId!),
@@ -404,7 +389,7 @@ test.describe('Admin experience moderation (#23)', () => {
     expect(audit!.payload).toMatchObject({ code: 'PRICE_OVER_CAP' })
   })
 
-  test('reject: pending_review → archived (out of catalog), reason recorded, NOT indexed', async ({
+  test('reject: pending_review → archived (out of catalog), reason recorded', async ({
     page,
   }) => {
     const experienceId = await getExperienceIdBySlug(MOD_REJECT_SLUG)
@@ -430,12 +415,6 @@ test.describe('Admin experience moderation (#23)', () => {
       .poll(async () => getExperienceStatus(experienceId!), { timeout: 15_000 })
       .toBe('archived')
 
-    // ── Assert: NOT indexed ──────────────────────────────────────────────
-    expect(
-      await getIndexedExperience(experienceId!, { timeoutMs: 2000 }),
-      'rejected experience must NOT be indexed',
-    ).toBeNull()
-
     // ── Assert: reject audit row with actor + reason ─────────────────────
     expect(
       await countExperienceAuditRows('admin.experience.reject', experienceId!),
@@ -449,7 +428,7 @@ test.describe('Admin experience moderation (#23)', () => {
     })
   })
 
-  test('pause: approve (published + indexed) → pause → paused AND de-indexed + audit row', async ({
+  test('pause: approve (published) → pause → paused (leaves live catalog) + audit row', async ({
     page,
   }) => {
     const experienceId = await getExperienceIdBySlug(MOD_PAUSE_SLUG)
@@ -457,7 +436,7 @@ test.describe('Admin experience moderation (#23)', () => {
     const statusBefore = await getExperienceStatus(experienceId!)
     test.skip(statusBefore !== 'pending_review', 'already moderated on a reused DB')
 
-    // ── Step 1: approve so it is published AND indexed (proves index) ────
+    // ── Step 1: approve so it is published (enters the live catalog) ─────
     await page.goto('/admin/experiences?status=pending_review')
     const pendingRow = page.locator('tr').filter({ hasText: 'Pause me — Pending' })
     await expect(pendingRow).toBeVisible()
@@ -472,16 +451,12 @@ test.describe('Admin experience moderation (#23)', () => {
     await expect
       .poll(async () => getExperienceStatus(experienceId!), { timeout: 15_000 })
       .toBe('published')
-    expect(
-      await getIndexedExperience(experienceId!),
-      'experience must be indexed after approve',
-    ).not.toBeNull()
 
     // ── Step 2: pause the now-published Experience ───────────────────────
     await page.goto('/admin/experiences?status=published')
     const publishedRow = page.locator('tr').filter({ hasText: 'Pause me — Pending' })
     await expect(publishedRow).toBeVisible()
-    // Pause de-indexes from search (ADR-0013) so it is gated behind a confirm
+    // Pause removes it from the live catalog so it is gated behind a confirm
     // Dialog (#88) — click through the confirm to fire it.
     await publishedRow.locator('button').filter({ hasText: 'Pause' }).click()
     await page
@@ -496,12 +471,6 @@ test.describe('Admin experience moderation (#23)', () => {
       .poll(async () => getExperienceStatus(experienceId!), { timeout: 15_000 })
       .toBe('paused')
 
-    // ── Assert: DE-INDEXED — no longer in search ─────────────────────────
-    expect(
-      await getIndexedExperience(experienceId!, { timeoutMs: 4000 }),
-      'paused experience must be de-indexed',
-    ).toBeNull()
-
     // ── Assert: pause audit row with actor + transition ──────────────────
     expect(
       await countExperienceAuditRows('admin.experience.pause', experienceId!),
@@ -514,7 +483,7 @@ test.describe('Admin experience moderation (#23)', () => {
     })
   })
 
-  test('archive: approve (published + indexed) → archive → archived AND de-indexed + audit row', async ({
+  test('archive: approve (published) → archive → archived (leaves live catalog) + audit row', async ({
     page,
   }) => {
     const experienceId = await getExperienceIdBySlug(MOD_ARCHIVE_SLUG)
@@ -522,7 +491,7 @@ test.describe('Admin experience moderation (#23)', () => {
     const statusBefore = await getExperienceStatus(experienceId!)
     test.skip(statusBefore !== 'pending_review', 'already moderated on a reused DB')
 
-    // ── Step 1: approve so it is published AND indexed ───────────────────
+    // ── Step 1: approve so it is published (enters the live catalog) ─────
     await page.goto('/admin/experiences?status=pending_review')
     const pendingRow = page.locator('tr').filter({ hasText: 'Archive me — Pending' })
     await expect(pendingRow).toBeVisible()
@@ -537,17 +506,13 @@ test.describe('Admin experience moderation (#23)', () => {
     await expect
       .poll(async () => getExperienceStatus(experienceId!), { timeout: 15_000 })
       .toBe('published')
-    expect(
-      await getIndexedExperience(experienceId!),
-      'experience must be indexed after approve',
-    ).not.toBeNull()
 
     // ── Step 2: archive the now-published Experience ─────────────────────
     await page.goto('/admin/experiences?status=published')
     const publishedRow = page.locator('tr').filter({ hasText: 'Archive me — Pending' })
     await expect(publishedRow).toBeVisible()
-    // Archive removes from catalog + de-indexes (ADR-0013) so it is gated
-    // behind a confirm Dialog (#88) — click through the confirm to fire it.
+    // Archive removes it from the live catalog so it is gated behind a confirm
+    // Dialog (#88) — click through the confirm to fire it.
     await publishedRow.locator('button').filter({ hasText: 'Archive' }).click()
     await page
       .getByTestId('archive-confirm')
@@ -560,12 +525,6 @@ test.describe('Admin experience moderation (#23)', () => {
     await expect
       .poll(async () => getExperienceStatus(experienceId!), { timeout: 15_000 })
       .toBe('archived')
-
-    // ── Assert: DE-INDEXED — no longer in search ─────────────────────────
-    expect(
-      await getIndexedExperience(experienceId!, { timeoutMs: 4000 }),
-      'archived experience must be de-indexed',
-    ).toBeNull()
 
     // ── Assert: archive audit row with actor + transition ────────────────
     expect(

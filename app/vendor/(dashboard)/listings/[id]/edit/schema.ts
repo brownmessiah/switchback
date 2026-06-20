@@ -15,7 +15,6 @@ import {
   seasonMonthsSchema,
   whatToBringSchema,
 } from '@/lib/experiences/structured-schema'
-import type { MeiliLike } from '@/lib/search/meilisearch-client'
 import {
   hasAtLeastOnePrice,
   NO_PRICE_MESSAGE,
@@ -97,8 +96,3 @@ export const updateExperienceSchema = z
   )
 
 export type UpdateExperienceInput = z.infer<typeof updateExperienceSchema>
-
-export interface UpdateExperienceOpts {
-  /** Injected Meilisearch client for testing; defaults to the singleton. */
-  searchClient?: MeiliLike
-}

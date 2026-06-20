@@ -29,7 +29,6 @@
     "db:seed": "dotenv -e .env.local -- tsx db/seed.ts",
     "db:seed:demo": "dotenv -e .env.local -- tsx db/seed-demo-catalog.ts",
     "db:seed:blog": "dotenv -e .env.local -- tsx db/content/blog/seed-content.ts",
-    "search:reindex": "dotenv -e .env.local -- tsx scripts/reindex-experiences.ts",
     "i18n:check": "tsx scripts/i18n-check.ts",
     "i18n:missing": "tsx scripts/i18n-missing-report.ts",
     "i18n:merge": "tsx scripts/i18n-merge-translations.ts"
@@ -49,7 +48,6 @@
     "drizzle-orm": "^0.45.2",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.16.0",
-    "meilisearch": "^0.58.0",
     "next": "16.2.6",
     "next-intl": "^4.12.0",
     "openai": "^6.39.0",

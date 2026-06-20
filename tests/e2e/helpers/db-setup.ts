@@ -2,8 +2,8 @@
  * Fresh database setup for E2E tests.
  *
  * Drops and recreates the `outvers_e2e` database, runs Drizzle `db:push`
- * to apply the schema, seeds with demo data, and (optionally) waits for
- * Meilisearch health before returning.
+ * to apply the schema, and seeds with demo data. With Postgres-native search
+ * the seeded DB IS the search source — there is no separate index to ready.
  *
  * Requires the `DATABASE_URL` env var to be set (pointing at any database
  * on the same server — typically the dev database). The function connects
@@ -30,7 +30,7 @@ const E2E_DB_NAME = 'outvers_e2e'
 
 /**
  * Drops and recreates the E2E database, applies the Drizzle schema,
- * seeds it, and waits for Meilisearch health.
+ * and seeds it.
  */
 export async function resetDatabase(): Promise<void> {
   // 1. Connect to postgres maintenance database to manage the E2E DB
@@ -72,32 +72,4 @@ export async function resetDatabase(): Promise<void> {
     stdio: 'pipe',
     timeout: 30_000,
   })
-
-  // 4. Wait for Meilisearch health (if configured)
-  await waitForMeilisearch()
-}
-
-/**
- * Polls Meilisearch /health endpoint until it responds or times out.
- * Silently succeeds if MEILISEARCH_HOST is not configured (allows
- * running E2E tests without Meilisearch).
- */
-async function waitForMeilisearch(timeoutMs = 10_000): Promise<void> {
-  const host = process.env.MEILISEARCH_HOST
-  if (!host) return
-
-  const healthUrl = `${host.replace(/\/$/, '')}/health`
-  const deadline = Date.now() + timeoutMs
-
-  while (Date.now() < deadline) {
-    try {
-      const res = await fetch(healthUrl, { signal: AbortSignal.timeout(2000) })
-      if (res.ok) return
-    } catch {
-      // Not ready yet — retry
-    }
-    await new Promise((r) => setTimeout(r, 500))
-  }
-
-  console.warn(`Meilisearch at ${host} did not become healthy within ${timeoutMs}ms — continuing anyway`)
 }

@@ -2,7 +2,6 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 import { resetDatabase } from './helpers/db-setup'
-import { resetSearchIndex } from './helpers/meili-setup'
 import { injectSession } from './helpers/auth-setup'
 
 function loadEnvFile() {
@@ -27,9 +26,7 @@ async function globalSetup() {
   loadEnvFile()
   console.log('[E2E] Resetting database...')
   await resetDatabase()
-  console.log('[E2E] Database ready. Resetting search index...')
-  await resetSearchIndex()
-  console.log('[E2E] Search index ready. Injecting sessions...')
+  console.log('[E2E] Database ready. Injecting sessions...')
   await injectSession('customer')
   await injectSession('vendor')
   await injectSession('admin')

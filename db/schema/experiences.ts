@@ -59,7 +59,7 @@ export const paymentModeEnum = pgEnum('payment_mode', [
 
 /**
  * Operational difficulty rating per ADR-0017. Nullable on the Experience
- * (additive — legacy rows pre-date the field). Intended as a Meilisearch
+ * (additive — legacy rows pre-date the field). Used as a search
  * facet (issue 04). Distinct from the safety stack (ADR-0015).
  */
 export const experienceDifficultyEnum = pgEnum('experience_difficulty', [
@@ -132,7 +132,7 @@ export const experiences = pgTable(
     // ADR-0017 — Structured Experience attributes. All additive-nullable /
     // array-default-empty so the migration never breaks the seed, the PDP, or
     // any E2E selector. The scalar quick-facts (duration, difficulty, age,
-    // group size, season) are intended Meilisearch facets (issue 04).
+    // group size, season) are Postgres search facets (issue 04).
     durationMinutes: integer('duration_minutes'),
     difficulty: experienceDifficultyEnum('difficulty'),
     minAge: integer('min_age'),

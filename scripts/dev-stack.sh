@@ -2,9 +2,9 @@
 #
 # scripts/dev-stack.sh — self-contained local dev stack for outvers-next.
 #
-# Brings up an ISOLATED Postgres cluster + Meilisearch, wires .env.local to
-# them, applies the schema, seeds the catalog, populates the search index,
-# and starts the Next.js dev server — in one command. No Docker required.
+# Brings up an ISOLATED Postgres cluster, wires .env.local to it, applies the
+# schema, seeds the catalog, and starts the Next.js dev server — in one
+# command. Search is Postgres-native (no separate service). No Docker required.
 #
 # All state lives under .dev-stack/ (gitignored) so it never touches your
 # system Postgres, your Neon dev branch, or the E2E cluster.
@@ -14,15 +14,14 @@
 #   pnpm dev:stack:prod         # production build (next build) + next start + tunnel
 #   pnpm dev:stack:tunnel       # start just the ngrok tunnel (stack already up)
 #   pnpm dev:stack:status       # what's running
-#   pnpm dev:stack:down         # stop app + Postgres + Meilisearch + ngrok (keeps data)
+#   pnpm dev:stack:down         # stop app + Postgres + ngrok (keeps data)
 #   pnpm dev:stack:reset        # drop + re-create + re-seed the DB
 #   pnpm dev:stack:nuke         # stop everything and delete .dev-stack/
 #
-# Flags (for `up`): --prod --no-build --tunnel --no-dev --no-seed --no-reindex
+# Flags (for `up`): --prod --no-build --tunnel --no-dev --no-seed
 #                   --no-schema --demo --blog
 #
-# Overridable via env: OUTVERS_PG_PORT OUTVERS_PG_DB OUTVERS_MEILI_PORT
-#                      OUTVERS_MEILI_KEY OUTVERS_MEILI_VERSION OUTVERS_APP_URL
+# Overridable via env: OUTVERS_PG_PORT OUTVERS_PG_DB OUTVERS_APP_URL
 #                      OUTVERS_NGROK_DOMAIN
 set -euo pipefail
 
@@ -35,8 +34,6 @@ cd "$ROOT"
 
 STACK_DIR="$ROOT/.dev-stack"
 PGDATA="$STACK_DIR/pgdata"
-MEILI_DATA="$STACK_DIR/meili-data"
-BIN_DIR="$STACK_DIR/bin"
 LOG_DIR="$STACK_DIR/logs"
 RUN_DIR="$STACK_DIR/run"
 
@@ -45,9 +42,6 @@ RUN_DIR="$STACK_DIR/run"
 PG_PORT="${OUTVERS_PG_PORT:-5544}"
 PG_DB="${OUTVERS_PG_DB:-outvers_dev}"
 PG_USER="$(whoami)"
-MEILI_PORT="${OUTVERS_MEILI_PORT:-7700}"
-MEILI_KEY="${OUTVERS_MEILI_KEY:-dev-master-key}"
-MEILI_VERSION="${OUTVERS_MEILI_VERSION:-v1.14.0}"
 APP_URL="${OUTVERS_APP_URL:-http://localhost:3000}"
 # Reserved ngrok domain — the same public URL each run. Already trusted by
 # next.config.ts (allowedDevOrigins + serverActions) and lib/auth trustedOrigins.
@@ -73,8 +67,8 @@ usage() {
 # Start a long-lived daemon DETACHED into its own session, so it survives the
 # parent's process group being torn down — e.g. Tilt SIGTERMs a one-shot
 # local_resource's process group when the cmd completes, which would otherwise
-# reap a plain `nohup ... &` child (this is exactly why Meilisearch died under
-# Tilt while pg_ctl-daemonized Postgres lived). macOS ships no `setsid`, so use
+# reap a plain `nohup ... &` child (this is exactly why a backgrounded daemon
+# dies under Tilt while pg_ctl-daemonized Postgres lives). macOS ships no `setsid`, so use
 # Perl's POSIX::setsid; `exec` preserves the pid we record in the pidfile.
 start_detached() {
   local logf="$1" pidf="$2"; shift 2
@@ -160,51 +154,6 @@ ensure_pg() {
 }
 
 # ---------------------------------------------------------------------------
-# Meilisearch — pinned binary cached under .dev-stack/bin (no Docker/brew).
-# ---------------------------------------------------------------------------
-MEILI_BIN="$BIN_DIR/meilisearch"
-
-meili_asset() {
-  local os arch; os="$(uname -s)"; arch="$(uname -m)"
-  case "$os/$arch" in
-    Darwin/arm64)  echo "meilisearch-macos-apple-silicon" ;;
-    Darwin/x86_64) echo "meilisearch-macos-amd64" ;;
-    Linux/x86_64)  echo "meilisearch-linux-amd64" ;;
-    Linux/aarch64|Linux/arm64) echo "meilisearch-linux-aarch64" ;;
-    *) echo "" ;;
-  esac
-}
-
-ensure_meili_bin() {
-  [ -x "$MEILI_BIN" ] && return
-  local asset url; asset="$(meili_asset)"
-  [ -n "$asset" ] || die "No Meilisearch binary for $(uname -s)/$(uname -m). Set OUTVERS_MEILI_* or install manually."
-  url="https://github.com/meilisearch/meilisearch/releases/download/$MEILI_VERSION/$asset"
-  log "Downloading Meilisearch $MEILI_VERSION ($asset)"
-  mkdir -p "$BIN_DIR"
-  curl -fL# "$url" -o "$MEILI_BIN" || die "Download failed: $url"
-  chmod +x "$MEILI_BIN"
-  ok "Meilisearch cached (.dev-stack/bin/meilisearch)"
-}
-
-meili_running() { curl -fsS "http://localhost:$MEILI_PORT/health" >/dev/null 2>&1; }
-
-ensure_meili() {
-  ensure_meili_bin
-  if meili_running; then ok "Meilisearch already running (port $MEILI_PORT)"; return; fi
-  port_busy "$MEILI_PORT" && die "Port $MEILI_PORT in use but not a healthy Meilisearch. Set OUTVERS_MEILI_PORT."
-  log "Starting Meilisearch on port $MEILI_PORT"
-  mkdir -p "$MEILI_DATA" "$LOG_DIR" "$RUN_DIR"
-  start_detached "$LOG_DIR/meili.log" "$RUN_DIR/meili.pid" \
-    "$MEILI_BIN" --master-key "$MEILI_KEY" --db-path "$MEILI_DATA" \
-    --http-addr "localhost:$MEILI_PORT" --env development
-  local i
-  for i in $(seq 1 40); do if meili_running; then break; fi; sleep 0.25; done
-  meili_running || die "Meilisearch did not become healthy — see .dev-stack/logs/meili.log"
-  ok "Meilisearch up (port $MEILI_PORT)"
-}
-
-# ---------------------------------------------------------------------------
 # ngrok reverse proxy — exposes the dev server on a fixed public URL so you
 # can view the UI from anywhere. App-side trust is already configured.
 # ---------------------------------------------------------------------------
@@ -265,8 +214,6 @@ wire_env() {
     [ -n "$old_db" ] && warn "DATABASE_URL: $old_db → $DB_URL"
     upsert_env DATABASE_URL "$DB_URL"
   fi
-  upsert_env MEILISEARCH_HOST "http://localhost:$MEILI_PORT"
-  upsert_env MEILISEARCH_KEY "$MEILI_KEY"
   upsert_env NEXT_PUBLIC_APP_URL "$APP_URL"
   ensure_secret
   ok "Wired .env.local to the local stack"
@@ -274,13 +221,11 @@ wire_env() {
 
 export_env_for_children() {
   export DATABASE_URL="$DB_URL"
-  export MEILISEARCH_HOST="http://localhost:$MEILI_PORT"
-  export MEILISEARCH_KEY="$MEILI_KEY"
   export NEXT_PUBLIC_APP_URL="$APP_URL"
 }
 
 # ---------------------------------------------------------------------------
-# Schema / seed / index.
+# Schema / seed.
 # ---------------------------------------------------------------------------
 push_schema() {
   [ "$DO_SCHEMA" = true ] || { warn "Skipping schema push (--no-schema)"; return; }
@@ -298,18 +243,9 @@ seed_db() {
   ok "Seed complete"
 }
 
-reindex() {
-  [ "$DO_REINDEX" = true ] || { warn "Skipping reindex (--no-reindex)"; return; }
-  if ! meili_running; then warn "Meilisearch not running — skipping reindex"; return; fi
-  log "Reindexing experiences into Meilisearch"
-  pnpm search:reindex
-  ok "Search index populated"
-}
-
 print_summary() {
   printf '\n%s━━━━━━━━ outvers dev stack ━━━━━━━━%s\n' "$BOLD" "$RST"
   printf '  Postgres     localhost:%s  (db %s · user %s)\n' "$PG_PORT" "$PG_DB" "$PG_USER"
-  printf '  Meilisearch  http://localhost:%s\n' "$MEILI_PORT"
   printf '  App          %s%s\n' "$APP_URL" "$([ "$WITH_PROD" = true ] && echo '  (production build · next start)')"
   [ "$WITH_TUNNEL" = true ] && printf '  Public URL   https://%s  (ngrok · view from anywhere)\n' "$NGROK_DOMAIN"
   printf '  DB URL       %s\n' "$DB_URL"
@@ -350,29 +286,27 @@ cmd_up() {
   ensure_node_runtime
   backup_env
   ensure_pg
-  ensure_meili
   wire_env
   export_env_for_children
   push_schema
   seed_db
-  reindex
   if [ "$WITH_PROD" = true ]; then
     build_app
     start_prod_server
     [ "$WITH_TUNNEL" = true ] && ensure_ngrok
     print_summary
     ok "Production stack running in the background (next start, detached)."
-    printf '\nManage:\n  pnpm dev:stack:status    # check services\n  pnpm dev:stack:down      # stop app + Postgres + Meilisearch + ngrok\n\n'
+    printf '\nManage:\n  pnpm dev:stack:status    # check services\n  pnpm dev:stack:down      # stop app + Postgres + ngrok\n\n'
     return
   fi
   [ "$WITH_TUNNEL" = true ] && ensure_ngrok
   print_summary
   if [ "$START_DEV" = true ]; then
-    log "Starting Next.js dev server — Ctrl-C stops it; Postgres + Meilisearch keep running"
+    log "Starting Next.js dev server — Ctrl-C stops it; Postgres keeps running"
     exec pnpm dev
   fi
   ok "Stack ready. Backing services running in the background."
-  printf '\nNext:\n  pnpm dev                 # start the app against this stack\n  pnpm dev:stack:status    # check services\n  pnpm dev:stack:down      # stop Postgres + Meilisearch\n\n'
+  printf '\nNext:\n  pnpm dev                 # start the app against this stack\n  pnpm dev:stack:status    # check services\n  pnpm dev:stack:down      # stop Postgres\n\n'
 }
 
 cmd_down() {
@@ -394,15 +328,6 @@ cmd_down() {
   elif ngrok_api >/dev/null 2>&1; then
     warn "ngrok running but no pid file — kill it manually if it was started outside this script"
   fi
-  if [ -f "$RUN_DIR/meili.pid" ]; then
-    local pid; pid="$(cat "$RUN_DIR/meili.pid")"
-    if kill -0 "$pid" 2>/dev/null; then kill "$pid" 2>/dev/null && ok "Stopped Meilisearch (pid $pid)"; fi
-    rm -f "$RUN_DIR/meili.pid"
-  elif meili_running; then
-    warn "Meilisearch healthy but no pid file — kill it manually if it was started outside this script"
-  else
-    warn "Meilisearch already stopped"
-  fi
   if pg_running; then
     "$PG_BIN/pg_ctl" -D "$PGDATA" -m fast stop >/dev/null && ok "Stopped Postgres"
   else
@@ -413,7 +338,6 @@ cmd_down() {
 cmd_status() {
   printf '%soutvers dev stack status%s\n' "$BOLD" "$RST"
   if pg_running; then ok "Postgres running (port $PG_PORT · db $PG_DB)"; else warn "Postgres stopped"; fi
-  if meili_running; then ok "Meilisearch healthy (http://localhost:$MEILI_PORT)"; else warn "Meilisearch stopped"; fi
   if port_busy 3000; then ok "Dev server listening on :3000"; else warn "Dev server not running"; fi
   if ngrok_api >/dev/null 2>&1; then
     if ngrok_tunneling_ours; then ok "ngrok tunneling https://$NGROK_DOMAIN"; else warn "ngrok running (different tunnel)"; fi
@@ -452,11 +376,9 @@ cmd_reset() {
     "DROP DATABASE IF EXISTS $PG_DB WITH (FORCE)" >/dev/null
   "$PG_BIN/createdb" -h localhost -p "$PG_PORT" -U "$PG_USER" "$PG_DB"
   ok "Database recreated"
-  ensure_meili
   export_env_for_children
   push_schema
   seed_db
-  reindex
   ok "Reset complete"
 }
 
@@ -476,7 +398,7 @@ cmd_logs() {
 # Arg parsing + dispatch.
 # ---------------------------------------------------------------------------
 CMD="up"
-START_DEV=true; DO_SEED=true; DO_DEMO=false; DO_BLOG=false; DO_REINDEX=true; DO_SCHEMA=true
+START_DEV=true; DO_SEED=true; DO_DEMO=false; DO_BLOG=false; DO_SCHEMA=true
 WITH_TUNNEL=false; WITH_PROD=false; DO_BUILD=true
 
 if [ $# -gt 0 ]; then
@@ -493,7 +415,6 @@ while [ $# -gt 0 ]; do
     --no-build)   DO_BUILD=false ;;
     --no-dev)     START_DEV=false ;;
     --no-seed)    DO_SEED=false ;;
-    --no-reindex) DO_REINDEX=false ;;
     --no-schema)  DO_SCHEMA=false ;;
     --demo)       DO_DEMO=true ;;
     --blog)       DO_BLOG=true ;;

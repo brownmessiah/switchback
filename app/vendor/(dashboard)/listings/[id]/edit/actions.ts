@@ -37,7 +37,7 @@ export async function updateExperienceAction(
     return { ok: false, error: gate.error }
   }
 
-  return executeUpdateExperience(prodDb, gate.shop, input, {}, gate.acting)
+  return executeUpdateExperience(prodDb, gate.shop, input, gate.acting)
 }
 
 export async function uploadExperienceImageAction(

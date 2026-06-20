@@ -938,8 +938,8 @@ test.describe('Search filtered', () => {
   })
 
   // The NEW Region facet must ACTUALLY filter (not a cosmetic control). The
-  // Meili index supports `regionSlug` filtering and the page already parses
-  // `region`; this exercises the end-to-end constraint. Stable signal: every
+  // Postgres-native search supports `regionSlug` filtering and the page already
+  // parses `region`; this exercises the end-to-end constraint. Stable signal: every
   // result card on /search?region=goa links to a Goa Experience
   // (/experience/goa-*), whereas the bare /search mixes regions.
   test('region facet constrains results: ?region=goa yields only Goa experiences', async ({

@@ -4,24 +4,21 @@ import { experiences, mediaAssets } from '@/db/schema'
 import { availabilitySlots } from '@/db/schema/availability-slots'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { writeAuditLog } from '@/lib/audit/write'
-import { loadExperienceRatingMap } from '@/lib/experiences/card-badges'
 import { replaceItinerary } from '@/lib/experiences/itinerary'
 import { replacePricingVariations } from '@/lib/experiences/pricing-variations-write'
 import { fromPriceRupees } from '@/lib/payments/pricing-variations'
 import { assertWithinTier, type KycTier } from '@/lib/kyc/tier-caps'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
-import { indexExperience, type ExperienceSearchDoc } from '@/lib/search/indexer'
 import { LocalFileAdapter } from '@/lib/storage/local'
 
 import {
   updateExperienceSchema,
   type UpdateExperienceInput,
-  type UpdateExperienceOpts,
 } from './schema'
 
 // Re-export the types so existing importers + the form keep a single import
 // surface. The schema VALUE stays in ./schema.
-export type { UpdateExperienceInput, UpdateExperienceOpts } from './schema'
+export type { UpdateExperienceInput } from './schema'
 
 /**
  * Edit-Experience + image CORES (issue #03 security split).
@@ -49,7 +46,6 @@ export async function executeUpdateExperience(
   db: DBOrTx,
   userId: string,
   input: UpdateExperienceInput,
-  opts: UpdateExperienceOpts = {},
   // issue #11 §5 — the acting human (audit actor on the tier-cap-rejected path).
   // Ownership keys on `userId` (the SHOP); the audit records the human. Defaults
   // to the shop (single-seat back-compat).
@@ -209,43 +205,10 @@ export async function executeUpdateExperience(
       }
     })
 
-    // ADR-0013 — a PUBLISHED Experience is the canonical search row. Keep the
-    // Meilisearch document in sync with the edited facet fields (title, price,
-    // activity/region, combo, and the ADR-0017 structured facets). Drafts,
-    // paused, archived, and pending_review listings are not searchable (admin
-    // pause/archive deindex them), so we only re-index when the listing is
-    // currently published. The headline 1-2 Group-size bracket is the "From"
-    // facet price, matching the admin approve path
-    // (app/admin/experiences/actions.ts). The facet fields are built from the
-    // freshly-saved `data.*`, NOT the pre-edit row — the form owns them now.
-    if (existing.status === 'published') {
-      // Issue 10 — an edit does not touch reviews, so PRESERVE the live
-      // published-review aggregate rather than zeroing ratingAvg on every save.
-      // safety / KYC tier / cancellation are REAL data: the form owns
-      // requiresSafetyStack + cancellationPreset, the Vendor row owns kycTier.
-      const ratingMap = await loadExperienceRatingMap(db, [data.id])
-      const searchDoc: ExperienceSearchDoc = {
-        id: data.id,
-        slug: existing.slug,
-        title: data.title,
-        shortDescription: data.shortDescription ?? null,
-        activitySlug: data.activitySlug,
-        regionSlug: data.regionSlug,
-        vendorSlug: existing.vendorSlug,
-        pricePerPersonRupees: Math.round(price12),
-        isCombo: data.isCombo,
-        publishedAt: now,
-        difficulty: data.difficulty ?? null,
-        durationMinutes: data.durationMinutes ?? null,
-        maxGroupSize: data.maxGroupSize ?? null,
-        seasonMonths: data.seasonMonths ?? [],
-        ratingAvg: ratingMap.get(data.id)?.avg ?? 0,
-        requiresSafetyStack: data.requiresSafetyStack,
-        vendorKycTier: existing.kycTier,
-        cancellationPreset: data.cancellationPreset,
-      }
-      await indexExperience(searchDoc, { client: opts.searchClient })
-    }
+    // ADR-0019 — a PUBLISHED Experience is the canonical search row served
+    // directly by Postgres-native search (lib/search/search-experiences.ts), so
+    // there is no separate index to keep in sync on edit. The status='published'
+    // gate in the search query is the single source of truth.
 
     return { ok: true }
   } catch (err: unknown) {

@@ -7,14 +7,11 @@ import { z } from 'zod'
 
 import { db as prodDb } from '@/db/client'
 import { experiences } from '@/db/schema/experiences'
-import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { auth } from '@/lib/auth'
 import { hasAdminPermission } from '@/lib/auth/permissions'
 import { writeAuditLog } from '@/lib/audit/write'
 import { assertExperienceWithinTier } from '@/lib/kyc/enforce-tier-caps'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
-import { indexExperience, deindexExperience, type ExperienceSearchDoc } from '@/lib/search/indexer'
-import type { MeiliLike } from '@/lib/search/meilisearch-client'
 
 // ── Result types ────────────────────────────────────────────────────
 
@@ -51,20 +48,12 @@ const rejectSchema = z.object({
     .max(2000),
 })
 
-// ── Search indexing options ─────────────────────────────────────────
-
-export interface ModerationOpts {
-  /** Injected Meilisearch client for testing; defaults to singleton. */
-  searchClient?: MeiliLike
-}
-
 // ── Core testable functions ─────────────────────────────────────────
 
 export async function executeApproveExperience(
   db: DBOrTx,
   adminUserId: string,
   input: { experienceId: string },
-  opts: ModerationOpts = {},
 ): Promise<ExperienceModerationResult> {
   const parsed = experienceIdSchema.safeParse(input)
   if (!parsed.success) {
@@ -74,30 +63,8 @@ export async function executeApproveExperience(
   const { experienceId } = parsed.data
 
   const [exp] = await db
-    .select({
-      status: experiences.status,
-      slug: experiences.slug,
-      title: experiences.title,
-      shortDescription: experiences.shortDescription,
-      activitySlug: experiences.activitySlug,
-      regionSlug: experiences.regionSlug,
-      vendorSlug: vendorProfiles.slug,
-      pricePerPerson_1_2: experiences.pricePerPerson_1_2,
-      isCombo: experiences.isCombo,
-      // ADR-0017 structured facets (issue 04) — indexed so the /search rail
-      // can filter by difficulty / duration / season / group size.
-      difficulty: experiences.difficulty,
-      durationMinutes: experiences.durationMinutes,
-      maxGroupSize: experiences.maxGroupSize,
-      seasonMonths: experiences.seasonMonths,
-      // Issue 10 trust-oriented filters — indexed so the /search rail can filter
-      // by safety / KYC tier / cancellation. All REAL data (D0).
-      requiresSafetyStack: experiences.requiresSafetyStack,
-      cancellationPreset: experiences.cancellationPreset,
-      vendorKycTier: vendorProfiles.kycTier,
-    })
+    .select({ status: experiences.status })
     .from(experiences)
-    .innerJoin(vendorProfiles, eq(experiences.vendorUserId, vendorProfiles.userId))
     .where(eq(experiences.id, experienceId))
     .limit(1)
 
@@ -131,11 +98,9 @@ export async function executeApproveExperience(
     return { ok: false, error: tierCheck.reason }
   }
 
-  const now = new Date()
-
   await db
     .update(experiences)
-    .set({ status: 'published', updatedAt: now })
+    .set({ status: 'published', updatedAt: new Date() })
     .where(eq(experiences.id, experienceId))
 
   await writeAuditLog(db, {
@@ -149,32 +114,9 @@ export async function executeApproveExperience(
     },
   })
 
-  // Index in Meilisearch so the experience appears in search results.
-  const searchDoc: ExperienceSearchDoc = {
-    id: experienceId,
-    slug: exp.slug,
-    title: exp.title,
-    shortDescription: exp.shortDescription,
-    activitySlug: exp.activitySlug,
-    regionSlug: exp.regionSlug,
-    vendorSlug: exp.vendorSlug,
-    pricePerPersonRupees: Math.round(Number(exp.pricePerPerson_1_2)),
-    isCombo: exp.isCombo,
-    publishedAt: now,
-    difficulty: exp.difficulty,
-    durationMinutes: exp.durationMinutes,
-    maxGroupSize: exp.maxGroupSize,
-    seasonMonths: exp.seasonMonths ?? [],
-    // Issue 10 trust-oriented filters. A freshly-approved Experience has no
-    // published reviews yet, so ratingAvg starts at 0 (the search:reindex job
-    // backfills the live aggregate); safety / KYC / cancellation are REAL data.
-    ratingAvg: 0,
-    requiresSafetyStack: exp.requiresSafetyStack,
-    vendorKycTier: exp.vendorKycTier,
-    cancellationPreset: exp.cancellationPreset,
-  }
-  await indexExperience(searchDoc, { client: opts.searchClient })
-
+  // ADR-0019 — published is the canonical, searchable state. Postgres-native
+  // search reads live from the experiences table (status='published' gate), so
+  // there is no separate index to write here.
   return { ok: true }
 }
 
@@ -182,7 +124,6 @@ export async function executeRejectExperience(
   db: DBOrTx,
   adminUserId: string,
   input: { experienceId: string; reason: string },
-  opts: ModerationOpts = {},
 ): Promise<ExperienceModerationResult> {
   const parsed = rejectSchema.safeParse(input)
   if (!parsed.success) {
@@ -225,9 +166,6 @@ export async function executeRejectExperience(
     },
   })
 
-  // Deindex: rejected experiences must not appear in search.
-  await deindexExperience(experienceId, { client: opts.searchClient })
-
   return { ok: true }
 }
 
@@ -235,7 +173,6 @@ export async function executePauseExperience(
   db: DBOrTx,
   adminUserId: string,
   input: { experienceId: string },
-  opts: ModerationOpts = {},
 ): Promise<ExperienceModerationResult> {
   const parsed = experienceIdSchema.safeParse(input)
   if (!parsed.success) {
@@ -277,9 +214,6 @@ export async function executePauseExperience(
     },
   })
 
-  // Deindex: paused experiences must not appear in search.
-  await deindexExperience(experienceId, { client: opts.searchClient })
-
   return { ok: true }
 }
 
@@ -287,7 +221,6 @@ export async function executeArchiveExperience(
   db: DBOrTx,
   adminUserId: string,
   input: { experienceId: string },
-  opts: ModerationOpts = {},
 ): Promise<ExperienceModerationResult> {
   const parsed = experienceIdSchema.safeParse(input)
   if (!parsed.success) {
@@ -328,9 +261,6 @@ export async function executeArchiveExperience(
       newStatus: 'archived',
     },
   })
-
-  // Deindex: archived experiences must not appear in search.
-  await deindexExperience(experienceId, { client: opts.searchClient })
 
   return { ok: true }
 }

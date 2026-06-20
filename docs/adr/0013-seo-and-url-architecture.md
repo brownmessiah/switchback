@@ -79,3 +79,9 @@ MDX files in `content/listicles/{locale}/{activity}-in-{city}.mdx` provide edito
 - Listicle authoring requires both editorial discipline (hand-written intros) and product-data freshness — separate them in the file structure: `intro.mdx` + `cards-config.json` per listicle.
 - JSON-LD validation in CI prevents schema regressions; broken schemas silently hurt rankings.
 - `slug_redirects` lookups are on the hot path of every public URL; cache aggressively (Redis TTL 24h, invalidated on slug change).
+
+## Amendments
+
+### 2026-06-20 — Search backend: Meilisearch → Postgres-native (ADR-0019)
+
+This ADR originally specified Meilisearch as the search/faceting backend for the activity-city collection and `/search` surfaces. As part of the GCP deployment (**ADR-0019**), Meilisearch is **removed**: the `q` text query is served by Postgres FTS (`tsvector` + GIN) + `pg_trgm` over `title` + `shortDescription`, and all facets/filters/sorts/facet-counts are plain SQL in the same Cloud SQL instance. The URL hierarchy, slug rules, canonical handling, JSON-LD, and indexing policies in this ADR are **unchanged** — only the engine producing the result/facet sets changes. Rationale: a small single-language catalog already on Postgres; removing Meili deletes the most ops-heavy component and the prior fragility where a Meili outage returned an empty `/search` with no Postgres fallback. Semantic search, if needed, is `pgvector` in the same Cloud SQL.

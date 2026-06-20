@@ -32,12 +32,12 @@ test.describe('Empty search renders the polished EmptyState', () => {
     page,
   }) => {
     // A genuinely FILTERED zero-result search. `isFilteredSearch` deliberately
-    // excludes `q` (lib/search/search-experiences.ts:148-170 — the ADR-0013
-    // narrowing set is region/activity/price/facets, NOT the free-text query),
+    // excludes `q` (lib/search/search-experiences.ts — the narrowing set is
+    // region/activity/price/facets, NOT the free-text query),
     // so the "Clear filters" CTA only renders for a real filter. region=goa +
     // activity=scuba-diving are seeded slugs, and minPrice=99999999 (₹) is an
-    // impossible price floor → `buildMeiliFilter` emits a valid 3-clause filter
-    // that matches zero docs. So `isFiltered=true` AND `hits.length === 0`.
+    // impossible price floor → Postgres-native search builds a valid 3-clause
+    // SQL WHERE filter that matches zero rows. So `isFiltered=true` AND `hits.length === 0`.
     const status = await gotoWarm(
       page,
       '/search?region=goa&activity=scuba-diving&minPrice=99999999',

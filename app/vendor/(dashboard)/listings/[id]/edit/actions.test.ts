@@ -1,5 +1,5 @@
 import { eq, sql } from 'drizzle-orm'
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import { auditLogs } from '@/db/schema/audit-logs'
 import { experiences } from '@/db/schema/experiences'
@@ -10,42 +10,12 @@ import {
   loadPricingVariations,
   replacePricingVariations,
 } from '@/lib/experiences/pricing-variations-write'
-import type { MeiliLike } from '@/lib/search/meilisearch-client'
 import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 
 import {
   executeUpdateExperience,
   type UpdateExperienceInput,
 } from './update-core'
-
-/**
- * A capturing Meilisearch stub honouring the indexer surface, so the edit
- * action's re-index behaviour (ADR-0013) can be asserted without a live
- * Meilisearch instance.
- */
-function makeSearchStub(): {
-  client: MeiliLike
-  addCalls: unknown[][]
-  deleteCalls: string[]
-} {
-  const addCalls: unknown[][] = []
-  const deleteCalls: string[] = []
-  const client: MeiliLike = {
-    index: () => ({
-      addDocuments: async (docs) => {
-        addCalls.push(docs as unknown[])
-        return { taskUid: 1 }
-      },
-      deleteDocument: async (id) => {
-        deleteCalls.push(String(id))
-        return { taskUid: 2 }
-      },
-      search: vi.fn(async () => ({ hits: [] })),
-      updateSettings: vi.fn(async () => ({ taskUid: 3 })),
-    }),
-  }
-  return { client, addCalls, deleteCalls }
-}
 
 describe('executeUpdateExperience', () => {
   let db: TestDB
@@ -484,101 +454,6 @@ describe('executeUpdateExperience', () => {
     })
   })
 
-  // ── ADR-0013 search re-index on edit ──────────────────────────────
-  //
-  // A published Experience is the canonical search row (ADR-0013). When a
-  // Vendor edits a PUBLISHED listing, the Meilisearch document must be
-  // re-indexed so the facet fields (title, price, activity/region, combo)
-  // stay in sync with the DB. Editing a non-searchable status (draft,
-  // paused, archived) must NOT add a document to the index.
-  describe('search re-index (ADR-0013)', () => {
-    async function setVendorTier(tier: 'phone' | 'identity' | 'business'): Promise<void> {
-      await db
-        .update(vendorProfiles)
-        .set({ kycTier: tier })
-        .where(eq(vendorProfiles.userId, 'u_vendor_edit'))
-    }
-
-    async function setStatus(
-      status: 'draft' | 'pending_review' | 'published' | 'paused',
-    ): Promise<void> {
-      await db
-        .update(experiences)
-        .set({ status })
-        .where(eq(experiences.id, experienceId))
-    }
-
-    it('re-indexes a published listing into Meilisearch with the updated facet fields', async () => {
-      await setVendorTier('business')
-      await setStatus('published')
-      const { client, addCalls } = makeSearchStub()
-
-      const result = await executeUpdateExperience(
-        db,
-        'u_vendor_edit',
-        validInput({
-          title: 'Reindexed Title',
-          activitySlug: 'paragliding',
-          regionSlug: 'manali',
-          pricePerPerson_1_2: 4200,
-          pricePerPerson_3_5: 4000,
-          pricePerPerson_6_plus: 3800,
-          isCombo: false,
-        }),
-        { searchClient: client },
-      )
-
-      expect(result).toEqual({ ok: true })
-      expect(addCalls).toHaveLength(1)
-      const doc = (addCalls[0] as Array<Record<string, unknown>>)[0]!
-      expect(doc.id).toBe(experienceId)
-      expect(doc.title).toBe('Reindexed Title')
-      expect(doc.slug).toBe('edit-test-exp')
-      expect(doc.activitySlug).toBe('paragliding')
-      expect(doc.regionSlug).toBe('manali')
-      expect(doc.vendorSlug).toBe('edit-test-vendor')
-      // Highest bracket governs the search facet price (integer rupees).
-      expect(doc.pricePerPersonRupees).toBe(4200)
-      expect(doc.isCombo).toBe(false)
-    })
-
-    it('does NOT add a document to the index when editing a draft listing', async () => {
-      await setVendorTier('business')
-      await setStatus('draft')
-      const { client, addCalls } = makeSearchStub()
-
-      const result = await executeUpdateExperience(
-        db,
-        'u_vendor_edit',
-        validInput(),
-        { searchClient: client },
-      )
-
-      expect(result).toEqual({ ok: true })
-      expect(addCalls).toHaveLength(0)
-    })
-
-    it('does NOT re-index when a published edit is rejected by the tier cap', async () => {
-      await setVendorTier('identity')
-      await setStatus('published')
-      const { client, addCalls } = makeSearchStub()
-
-      const result = await executeUpdateExperience(
-        db,
-        'u_vendor_edit',
-        validInput({
-          pricePerPerson_1_2: 9000,
-          pricePerPerson_3_5: 9000,
-          pricePerPerson_6_plus: 9000,
-        }),
-        { searchClient: client },
-      )
-
-      expect(result.ok).toBe(false)
-      expect(addCalls).toHaveLength(0)
-    })
-  })
-
   // ── ADR-0017 structured attributes + itinerary persistence (issue 05) ─
   //
   // The edit form now OWNS the structured scalar/array facets and the
@@ -735,48 +610,6 @@ describe('executeUpdateExperience', () => {
       expect(result.ok).toBe(false)
     })
 
-    it('builds the search doc from the NEW structured values, not the existing row', async () => {
-      // Seed the existing row with stale facets so we can prove the doc is
-      // built from the edit input, not the pre-edit DB row.
-      await db
-        .update(experiences)
-        .set({
-          status: 'published',
-          difficulty: 'easy',
-          durationMinutes: 60,
-          maxGroupSize: 2,
-          seasonMonths: [1],
-        })
-        .where(eq(experiences.id, experienceId))
-      await db
-        .update(vendorProfiles)
-        .set({ kycTier: 'business' })
-        .where(eq(vendorProfiles.userId, 'u_vendor_edit'))
-
-      const { client, addCalls } = makeSearchStub()
-      const result = await executeUpdateExperience(
-        db,
-        'u_vendor_edit',
-        structuredInput({
-          difficulty: 'extreme',
-          durationMinutes: 480,
-          maxGroupSize: 6,
-          seasonMonths: [6, 7, 8],
-        }),
-        { searchClient: client },
-      )
-
-      expect(result).toEqual({ ok: true })
-      expect(addCalls).toHaveLength(1)
-      const doc = (addCalls[0] as Array<Record<string, unknown>>)[0]!
-      expect(doc.difficulty).toBe('extreme')
-      expect(doc.durationMinutes).toBe(480)
-      expect(doc.maxGroupSize).toBe(6)
-      expect(doc.seasonMonths).toEqual([6, 7, 8])
-    })
-  })
-
-  describe('pricing variations (issue #08)', () => {
     it('inserts new pricing variations on edit', async () => {
       const result = await executeUpdateExperience(
         db,

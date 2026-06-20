@@ -30,3 +30,17 @@ export function durationBand(minutes: number | null): DurationBand | null {
   if (minutes < 1440) return 'full_day'
   return 'multi_day'
 }
+
+/**
+ * Inclusive `[min, max]` minute bounds per band — the SQL-range form of
+ * `durationBand()`, used by the Postgres search (ADR-0019) to translate a
+ * `durationBand` facet into a `duration_minutes BETWEEN min AND max` filter.
+ * `max: null` means open-ended (multi_day). Kept here as the single source of
+ * truth so the buckets never drift from `durationBand()`.
+ */
+export const DURATION_BAND_RANGES: Record<DurationBand, { min: number; max: number | null }> = {
+  upto_3h: { min: 1, max: 180 },
+  half_day: { min: 181, max: 360 },
+  full_day: { min: 361, max: 1439 },
+  multi_day: { min: 1440, max: null },
+}

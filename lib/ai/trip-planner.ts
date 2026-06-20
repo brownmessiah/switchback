@@ -114,9 +114,9 @@ function fingerprintInput(input: TripPlannerInput): string {
 
 /**
  * RETRIEVAL: publicly-visible experiences matching the region (and activity
- * when given), grounded directly in the canonical Postgres table. Direct DB
- * query (not Meili) keeps retrieval reliable in every environment; either is
- * allowed per the issue, and grounding in real published experience IDs is the
+ * when given), grounded directly in the canonical Postgres table. Search is
+ * Postgres-native, so a direct DB query keeps retrieval reliable in every
+ * environment, and grounding in real published experience IDs is the
  * point. The status gate is the shared `publiclyVisibleExperienceCondition()`
  * (status = 'published' AND not an admin/E2E fixture slug) so the AI surface
  * can never offer a fixture/test Experience as a candidate (ADR-0010 data

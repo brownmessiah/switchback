@@ -36,8 +36,8 @@ import {
  * routes to 404 on null.
  *
  * Order: createdAt DESC for M2. M3 brings in response-time SLA score
- * + Meilisearch ranking; the SQL here is a placeholder ordered by
- * recency until that lands.
+ * + a Postgres-native relevance ranking; the SQL here is a placeholder
+ * ordered by recency until that lands.
  */
 
 export interface ActivityCityCollectionExperience extends CardTrustFields {

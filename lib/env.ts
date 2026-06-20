@@ -42,10 +42,6 @@ const schema = z.object({
   // ===== Maps =====
   MAPBOX_TOKEN: z.string().optional(),
 
-  // ===== Search (M2) =====
-  MEILISEARCH_HOST: z.url().optional(),
-  MEILISEARCH_KEY: z.string().optional(),
-
   // ===== Cron auth (M2) =====
   CRON_SECRET: z.string().optional(),
 

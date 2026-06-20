@@ -1442,8 +1442,8 @@ export async function getLatestAdminVendorAudit(
 //
 // These drive the four admin Experience-moderation Server Actions FROM THE UI
 // (approve / reject / pause / archive) and assert the persisted experiences
-// status, the Meilisearch index/deindex side-effect (via meili-assertions),
-// and the append-only audit_logs trail. The mutating tests operate on
+// status (Postgres-native search reads experiences.status directly — there is
+// no separate index) and the append-only audit_logs trail. The mutating tests operate on
 // dedicated pending_review / published seed Experiences that no other spec
 // books or reviews, so seed determinism for parallel specs is preserved.
 // ---------------------------------------------------------------------------

@@ -1767,7 +1767,7 @@ async function seed(): Promise<void> {
         title: m.title,
         shortDescription: 'Seeded pending_review Experience for the admin moderation E2E (#23).',
         longDescription:
-          'A dedicated pending_review fixture for validating admin approve/reject/pause/archive + Meilisearch index/deindex. Not bookable; not reviewed.',
+          'A dedicated pending_review fixture for validating admin approve/reject/pause/archive — approval makes it searchable on /search, pausing removes it. Not bookable; not reviewed.',
         cancellationPreset: 'flexible' as const,
         paymentModesAllowed: ['full_upfront'] as (
           | 'full_upfront'
@@ -1812,7 +1812,7 @@ async function seed(): Promise<void> {
   // ===================================================================
   // The cross-surface E2E (#30) proves the full publish → index → search
   // journey from the CUSTOMER search surface: a pending_review Experience is
-  // absent from /search, the admin approves it (indexing it into Meilisearch),
+  // absent from /search, the admin approves it (making it searchable),
   // it then APPEARS on the rendered search page, and pausing it removes it.
   //
   // This needs its OWN fixture, isolated from the #23 `mod-*` set: the
@@ -1833,7 +1833,7 @@ async function seed(): Promise<void> {
       shortDescription:
         'Dedicated pending_review fixture for the #30 cross-surface approve → index → search E2E.',
       longDescription:
-        'A dedicated pending_review Experience the #30 cross-surface E2E approves so it indexes into Meilisearch and appears on the rendered customer search page, then pauses so it disappears. Isolated from every other spec.',
+        'A dedicated pending_review Experience the #30 cross-surface E2E approves so it becomes searchable and appears on the rendered customer search page, then pauses so it disappears. Isolated from every other spec.',
       cancellationPreset: 'flexible' as const,
       paymentModesAllowed: ['full_upfront'] as (
         | 'full_upfront'

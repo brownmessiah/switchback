@@ -27,7 +27,7 @@ import {
  * renders (the SEO value is in the editorial + JSON-LD scaffolding).
  *
  * Order: createdAt DESC for now — mirrors the activity-city loader's
- * recency placeholder until Meilisearch ranking lands.
+ * recency placeholder until a Postgres-native relevance ranking lands.
  */
 
 export interface RegionLandingExperience extends CardTrustFields {

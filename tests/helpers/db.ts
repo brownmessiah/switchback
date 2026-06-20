@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 import { PGlite } from '@electric-sql/pglite'
+import { pg_trgm } from '@electric-sql/pglite/contrib/pg_trgm'
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite'
 
 import * as schema from '@/db/schema'
@@ -21,7 +22,11 @@ export async function setupTestDb(): Promise<{
   pglite: PGlite
   teardown: () => Promise<void>
 }> {
-  const pglite = new PGlite()
+  // Register the pg_trgm contrib extension so migration 0034's
+  // `CREATE EXTENSION pg_trgm` + the trigram/FTS indexes apply under PGlite
+  // (Postgres-native search, ADR-0019). Without this the migration replay fails
+  // for the whole suite, not just the search tests.
+  const pglite = new PGlite({ extensions: { pg_trgm } })
   const db = drizzle(pglite, { schema })
 
   const migrationsDir = resolve(process.cwd(), 'db/migrations')

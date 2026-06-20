@@ -27,10 +27,6 @@ import {
   getSlotCapacity,
   setExperienceStatus,
 } from '../../helpers/db-assertions'
-import {
-  getIndexedExperience,
-  removeIndexedExperience,
-} from '../../helpers/meili-assertions'
 import { mockRazorpayCheckout } from '../../helpers/razorpay-mock'
 
 // The vendor-storage session maps to the seed business-tier Vendor
@@ -45,21 +41,21 @@ const AUTH_DIR = path.join(__dirname, '../../.auth')
 // carries a unique beacon token so a `?q=` text search matches ONLY this row.
 const XSURFACE_SEARCH_SLUG = 'xsurface-approve-search-rishikesh'
 const XSURFACE_SEARCH_TITLE = 'Outvers Xsurface Approve-Search Beacon (Rishikesh)'
-// Unique multi-word query the Meilisearch text index ranks this title top for.
+// Unique multi-word query the Postgres-native text search ranks this title top for.
 const XSURFACE_SEARCH_QUERY = 'Outvers Xsurface Beacon'
 
 // ---------------------------------------------------------------------------
-// 1. Admin approves -> indexed -> CUSTOMER SEARCH PAGE finds it -> remove ->
-//    gone  (#30 full publish → index → search journey across surfaces)
+// 1. Admin approves -> CUSTOMER SEARCH PAGE finds it -> remove -> gone
+//    (#30 full publish → search journey across surfaces)
 //
-// This is the cross-surface proof of ADR-0013: a published Experience is
-// indexed in Meilisearch, the customer /search page reads Meilisearch, and a
-// pause de-indexes it. We assert against the RENDERED customer search page
-// (what the user sees), not the Meili index directly — that is the
-// cross-surface end-to-end claim.
+// This is the cross-surface proof: a published Experience appears in the live
+// catalog, the customer /search page queries that catalog (Postgres-native
+// search reads experiences.status directly — no separate index), and a pause
+// removes it. We assert against the RENDERED customer search page (what the
+// user sees) — that is the cross-surface end-to-end claim.
 //
-//   Admin (UI) approve  ──►  Meili index  ──►  /search?q=<beacon> shows card
-//   Admin (UI) pause    ──►  Meili de-index ──► /search?q=<beacon> shows none
+//   Admin (UI) approve  ──►  live catalog ──►  /search?q=<beacon> shows card
+//   Admin (UI) pause    ──►  out of catalog ──► /search?q=<beacon> shows none
 //
 // Uses a DEDICATED pending_review seed fixture (the "Beacon"), isolated from
 // the #23 mod-* set the admin project consumes. Runs on the gated `page`
@@ -71,7 +67,7 @@ test.describe('Cross-surface: admin approve -> customer search finds -> remove -
 
   // The default cross-surface `page` carries the admin session, so it both
   // drives the admin moderation UI AND views the public /search page.
-  test('publish → index → customer search finds it, then pause → de-index → gone', async ({
+  test('publish → customer search finds it, then pause → gone', async ({
     page,
   }) => {
     const experienceId = await getExperienceIdBySlug(XSURFACE_SEARCH_SLUG)
@@ -82,16 +78,10 @@ test.describe('Cross-surface: admin approve -> customer search finds -> remove -
 
     // The search page sets `revalidate = 60`, so the full route cache is keyed
     // by URL. A fresh, unique throwaway param per request guarantees a cache
-    // miss → a live Meilisearch query — so the poll reflects the index, not a
-    // stale cached render. `parseSearchParams` ignores unknown params.
+    // miss → a live Postgres search query — so the poll reflects the catalog,
+    // not a stale cached render. `parseSearchParams` ignores unknown params.
     const searchUrl = (): string =>
       `/search?q=${encodeURIComponent(XSURFACE_SEARCH_QUERY)}&_cb=${Date.now()}-${Math.random().toString(36).slice(2)}`
-
-    // The shared Meilisearch index is never reset between runs. Guarantee a
-    // clean "absent from search" precondition by removing any residue this
-    // fixture's id may have left in the index on a prior run. (This does not
-    // touch the DB row, which the admin UI flow drives.)
-    await removeIndexedExperience(experienceId!)
 
     // On a reused DB a prior run of THIS test may have left the row published
     // or paused. Re-run is still meaningful: we re-establish pending_review so
@@ -120,7 +110,7 @@ test.describe('Cross-surface: admin approve -> customer search finds -> remove -
       .locator('tr')
       .filter({ hasText: XSURFACE_SEARCH_TITLE })
     await expect(pendingRow).toBeVisible()
-    // Approve is consequential (publishes + indexes, ADR-0013) so it is gated
+    // Approve is consequential (publishes to the live catalog) so it is gated
     // behind a confirm Dialog (#88) — click through the confirm to fire it.
     await pendingRow.locator('button').filter({ hasText: 'Approve' }).click()
     await page
@@ -130,18 +120,14 @@ test.describe('Cross-surface: admin approve -> customer search finds -> remove -
     // The now-published row drops OUT of the pending_review-filtered list.
     await expect(pendingRow).toHaveCount(0, { timeout: 15_000 })
 
-    // ── Cross-surface side effects: published in DB AND indexed in Meili ──
+    // ── Cross-surface side effect: published in DB (enters live catalog) ──
     await expect
       .poll(async () => getExperienceStatus(experienceId!), { timeout: 15_000 })
       .toBe('published')
-    expect(
-      await getIndexedExperience(experienceId!),
-      'approved experience must be indexed in Meilisearch',
-    ).not.toBeNull()
 
     // ── THE cross-surface claim: it now APPEARS on the customer search page.
-    //    Meili indexing is async; re-navigate (search page revalidates) and
-    //    poll until the rendered results include the beacon card.
+    //    The search page revalidates; re-navigate and poll until the rendered
+    //    results include the beacon card.
     await expect
       .poll(
         async () => {
@@ -175,7 +161,7 @@ test.describe('Cross-surface: admin approve -> customer search finds -> remove -
       .locator('tr')
       .filter({ hasText: XSURFACE_SEARCH_TITLE })
     await expect(publishedRow).toBeVisible()
-    // Pause de-indexes from search (ADR-0013) so it is gated behind a confirm
+    // Pause removes it from the live catalog so it is gated behind a confirm
     // Dialog (#88) — click through the confirm to fire it.
     await publishedRow.locator('button').filter({ hasText: 'Pause' }).click()
     await page
@@ -184,14 +170,10 @@ test.describe('Cross-surface: admin approve -> customer search finds -> remove -
       .click()
     await expect(publishedRow).toHaveCount(0, { timeout: 15_000 })
 
-    // Cross-surface side effects: paused in DB AND de-indexed from Meili.
+    // Cross-surface side effect: paused in DB (leaves the live catalog).
     await expect
       .poll(async () => getExperienceStatus(experienceId!), { timeout: 15_000 })
       .toBe('paused')
-    expect(
-      await getIndexedExperience(experienceId!, { timeoutMs: 5000 }),
-      'paused experience must be de-indexed from Meilisearch',
-    ).toBeNull()
 
     // ── THE remove claim: it DISAPPEARS from the customer search page ─────
     await expect
@@ -229,7 +211,7 @@ test.describe('Cross-surface: admin approve -> customer search finds -> remove -
 //
 //   Vendor (UI) create   ──►  draft, owned by the Vendor, absent from collection
 //   [bridge]  draft → pending_review  (no draft→submit UI transition exists yet)
-//   Admin (UI) approve   ──►  published in DB + indexed in Meilisearch
+//   Admin (UI) approve   ──►  published in DB (enters live catalog)
 //   Marketing render     ──►  /adventure/kayaking-in-goa shows the new card
 //
 // The created Experience uses registry-valid Kayaking + Goa, so its collection
@@ -252,7 +234,7 @@ test.describe('Cross-surface: vendor creates -> admin approves -> collection sho
   const beacon = `Beacon${Date.now()}${Math.floor(Math.random() * 1e4)}`
   const uniqueTitle = `Outvers Xsurface Collection ${beacon} (Goa Kayaking)`
 
-  test('vendor-created experience is absent from its collection, then appears after admin approve + is indexed', async ({
+  test('vendor-created experience is absent from its collection, then appears after admin approve', async ({
     browser,
     page,
   }) => {
@@ -333,11 +315,6 @@ test.describe('Cross-surface: vendor creates -> admin approves -> collection sho
     const experienceId = created!.id
     const experienceSlug = created!.slug
 
-    // Defensive: never let prior-run index residue mask the "absent" precondition
-    // (the slug is unique-per-run via createExperienceAction's Date.now() suffix,
-    // so this is belt-and-suspenders only).
-    await removeIndexedExperience(experienceId)
-
     // ── MARKETING precondition: draft is ABSENT from the collection ──
     //    The collection page reads only PUBLISHED rows from the DB.
     const collectionUrl = (): string =>
@@ -368,7 +345,7 @@ test.describe('Cross-surface: vendor creates -> admin approves -> collection sho
     const pendingRow = page.locator('tr').filter({ hasText: uniqueTitle })
     await expect(pendingRow).toBeVisible()
     await expect(pendingRow.getByText('pending review')).toBeVisible()
-    // Approve is consequential (publishes + indexes, ADR-0013) so it is gated
+    // Approve is consequential (publishes to the live catalog) so it is gated
     // behind a confirm Dialog (#88) — click through the confirm to fire it.
     await pendingRow.locator('button').filter({ hasText: 'Approve' }).click()
     await page
@@ -383,14 +360,10 @@ test.describe('Cross-surface: vendor creates -> admin approves -> collection sho
       fullPage: true,
     })
 
-    // ── Cross-surface side effects: published in DB AND indexed (search) ──
+    // ── Cross-surface side effect: published in DB (enters live catalog) ──
     await expect
       .poll(async () => getExperienceStatus(experienceId), { timeout: 15_000 })
       .toBe('published')
-    expect(
-      await getIndexedExperience(experienceId),
-      'approved experience must be indexed in Meilisearch (searchable)',
-    ).not.toBeNull()
 
     // ── MARKETING (the cross-surface claim): the newly-published Experience
     //    now APPEARS on ITS OWN activity-city collection page. The page sets

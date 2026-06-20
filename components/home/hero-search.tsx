@@ -7,9 +7,9 @@ import type { ReactElement } from 'react'
  *
  * ONE field — "Destination or activity" — replacing the 4-field structured
  * module (issue 09): a plain GET form to /search carrying the existing `q`
- * full-text param, so it is crawlable and works with zero JS. Meilisearch
- * matches destination, activity, Experience and Vendor names through the same
- * `q` pipeline the /search page already uses; date + group size stay on the
+ * full-text param, so it is crawlable and works with zero JS. Postgres-native
+ * search matches destination, activity, Experience and Vendor names through the
+ * same `q` pipeline the /search page already uses; date + group size stay on the
  * /search facet rail rather than crowding the hero.
  */
 export function HomeHeroSearch(): ReactElement {

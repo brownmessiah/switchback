@@ -1,20 +1,10 @@
-import { timingSafeEqual } from 'node:crypto'
-
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 import { db } from '@/db/client'
+import { isCronAuthorized } from '@/lib/cron/auth'
 import { env } from '@/lib/env'
 import { processPayoutBatch } from '@/lib/payments/payout-batch'
-
-function safeCompare(a: string, b: string): boolean {
-  // Length must be checked first — timingSafeEqual throws on length
-  // mismatch, which is itself a side channel.
-  const aBuf = Buffer.from(a)
-  const bBuf = Buffer.from(b)
-  if (aBuf.length !== bBuf.length) return false
-  return timingSafeEqual(aBuf, bBuf)
-}
 
 /**
  * Vercel Cron entry — Payout Batch send per ADR-0016 (2026-06-18 amendment,
@@ -49,8 +39,7 @@ export async function POST(): Promise<NextResponse> {
   }
 
   const hdrs = await headers()
-  const authHeader = hdrs.get('authorization') ?? ''
-  if (!safeCompare(authHeader, `Bearer ${secret}`)) {
+  if (!isCronAuthorized((name) => hdrs.get(name), secret)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 

@@ -46,12 +46,27 @@ export interface VendorAnalyticsData {
   readonly revenueByMonth: readonly DayDataPoint[]
   readonly bookingStatusBreakdown: readonly BookingStatusCount[]
   readonly revenueByExperience: readonly ExperienceRevenue[]
+  /**
+   * Daily breakdown table (Date | Bookings | Revenue) over the last 30 days.
+   * Built from the SAME `confirmedAt`-windowed daily aggregate that feeds the
+   * daily-revenue chart, so the table's revenue total equals the chart's
+   * non-zero points by construction. Only days with ≥1 Booking are emitted
+   * (no filled 0/₹0 rows), ordered newest-day-first.
+   */
+  readonly dailyBreakdown: readonly DailyBreakdownRow[]
 }
 
 /** One Booking-state bucket for the status breakdown (only occurring states). */
 export interface BookingStatusCount {
   readonly state: string
   readonly count: number
+}
+
+/** One day's Booking count + gross revenue for the daily-breakdown table. */
+export interface DailyBreakdownRow {
+  readonly date: string // YYYY-MM-DD
+  readonly bookings: number
+  readonly revenue: number
 }
 
 /** One Experience's Booking count + gross revenue for the by-Experience list. */
@@ -425,10 +440,15 @@ export async function loadVendorAnalytics(
   // Revenue by day (last 30 days), grouped by date(confirmedAt). Filled below so
   // every day in the window materialises (0 for gaps) — same window + field as
   // #02's last30Revenue, so the series sums to that metric (internal consistency).
+  // `bookings: count()` rides along on the same grouped query so the daily
+  // breakdown TABLE (Date | Bookings | Revenue) and the daily-revenue CHART are
+  // sourced from one aggregate — they can never disagree. The chart's fill
+  // reads only `total`; the table's shaper reads both columns.
   const revenueByDayRaw = await db
     .select({
       date: sql<string>`date(${bookings.confirmedAt})`.as('date'),
       total: sum(bookings.grossTotalSnapshot),
+      bookings: count(),
     })
     .from(bookings)
     .innerJoin(experiences, eq(bookings.experienceId, experiences.id))
@@ -505,7 +525,35 @@ export async function loadVendorAnalytics(
     revenueByMonth: fillMonths(monthsStart, now, revenueByMonthRaw, 'total'),
     bookingStatusBreakdown: shapeStatusBreakdown(statusRows),
     revenueByExperience: shapeExperienceRevenue(experienceRows),
+    dailyBreakdown: shapeDailyBreakdown(revenueByDayRaw),
   }
+}
+
+/** Raw per-day rows from the grouped daily query (numeric aggregates as string). */
+interface RawDailyRow {
+  date: string
+  bookings: number | string | null
+  total: number | string | null
+}
+
+/**
+ * Shape the daily-breakdown rows: coerce the grouped count, floor gross revenue
+ * to integer rupees, drop any defensive empty day, and order newest-day-first.
+ * Pure + exported so the coercion / drop-empty / sort behaviour is unit-testable
+ * without a DB. The DB GROUP BY already emits only days with ≥1 Booking; the
+ * `bookings > 0` filter is a belt-and-braces guard against a null/0 aggregate.
+ */
+export function shapeDailyBreakdown(
+  rows: readonly RawDailyRow[],
+): DailyBreakdownRow[] {
+  return rows
+    .map((r) => ({
+      date: String(r.date),
+      bookings: Number(r.bookings ?? 0),
+      revenue: Math.floor(Number(r.total ?? 0)),
+    }))
+    .filter((r) => r.bookings > 0)
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
 }
 
 /** Raw status-count rows from the grouped query (count may surface as string). */

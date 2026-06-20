@@ -12,6 +12,7 @@ import { getActingVendorContext } from '@/lib/vendor/acting-context'
 import { bookingStatusBadge } from '@/lib/bookings/booking-status-badge'
 import {
   type BookingStatusCount,
+  type DailyBreakdownRow,
   type ExperienceRevenue,
   loadVendorAnalytics,
 } from '@/lib/vendor/analytics-loader'
@@ -36,6 +37,19 @@ import { TrendChart } from '../dashboard/dashboard-charts'
  * When the Vendor has no Bookings, an honest empty state is shown instead of a
  * fabricated value (ADR-0012: all visible strings via next-intl).
  */
+/**
+ * Format a `YYYY-MM-DD` day key as a compact `15 Jun` label for the daily
+ * breakdown table. Built at local midnight (`T00:00:00`) so the date never
+ * rolls a day under a timezone offset — mirrors the shared chart's
+ * `formatDateLabel`, keeping the table's date labels identical to the chart's.
+ */
+function formatBreakdownDate(dateStr: string): string {
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+  })
+}
+
 export default async function VendorAnalyticsPage() {
   const session = await auth.api.getSession({ headers: await headers() })
   const acting = session!.user.id
@@ -320,6 +334,45 @@ export default async function VendorAnalyticsPage() {
                 </Card>
               )}
             </div>
+          </section>
+
+          {/* Daily breakdown — per-day Booking count + GROSS revenue over the
+              last 30 days, newest day first, via the SHARED ResponsiveTable.
+              Sourced from the SAME confirmedAt-windowed daily aggregate as the
+              daily-revenue chart above, so the two never disagree. Days with no
+              Bookings are omitted (honest, no 0/₹0 rows); its own empty state
+              covers a Vendor with all-time Bookings but none in the last 30. */}
+          <section className="space-y-4" data-testid="analytics-daily-breakdown">
+            <h2 className="text-lg font-semibold tracking-tight">
+              {t('dailyBreakdownHeading')}
+            </h2>
+            <ResponsiveTable<DailyBreakdownRow>
+              caption={t('dailyBreakdownHeading')}
+              rows={data.dailyBreakdown}
+              getRowKey={(r) => r.date}
+              rowProps={(r) => ({ 'data-day': r.date })}
+              empty={t('dailyBreakdownEmpty')}
+              columns={[
+                {
+                  key: 'date',
+                  header: t('dateColumn'),
+                  primary: true,
+                  cell: (r) => formatBreakdownDate(r.date),
+                },
+                {
+                  key: 'bookings',
+                  header: t('bookingsColumn'),
+                  align: 'right',
+                  cell: (r) => r.bookings.toLocaleString('en-IN'),
+                },
+                {
+                  key: 'revenue',
+                  header: t('revenueColumn'),
+                  align: 'right',
+                  cell: (r) => `₹${r.revenue.toLocaleString('en-IN')}`,
+                },
+              ]}
+            />
           </section>
 
           {/* Booking status breakdown — counts grouped by Booking state, using

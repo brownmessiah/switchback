@@ -16,6 +16,7 @@ import {
   MONTHS_WINDOW,
   loadVendorAnalytics,
   shapeAnalytics,
+  shapeDailyBreakdown,
   shapeExperienceRevenue,
   shapeKeyMetrics,
   shapeStatusBreakdown,
@@ -187,6 +188,59 @@ describe('shapeExperienceRevenue', () => {
 
   it('returns an empty array for no rows', () => {
     expect(shapeExperienceRevenue([])).toEqual([])
+  })
+})
+
+describe('shapeDailyBreakdown', () => {
+  // Pure shaping for the daily-breakdown table (Date | Bookings | Revenue):
+  // coerce string/null aggregates, floor gross revenue to integer rupees,
+  // drop empty days, and order newest-first (date desc).
+
+  it('floors gross revenue and coerces string aggregates', () => {
+    const result = shapeDailyBreakdown([
+      { date: '2026-06-15', bookings: '16', total: '120000.99' },
+    ])
+
+    expect(result).toEqual([
+      { date: '2026-06-15', bookings: 16, revenue: 120000 },
+    ])
+  })
+
+  it('orders rows newest day first', () => {
+    const result = shapeDailyBreakdown([
+      { date: '2026-06-11', bookings: 3, total: '22500.00' },
+      { date: '2026-06-15', bookings: 16, total: '120000.00' },
+      { date: '2026-06-14', bookings: 9, total: '67500.00' },
+    ])
+
+    expect(result.map((r) => r.date)).toEqual([
+      '2026-06-15',
+      '2026-06-14',
+      '2026-06-11',
+    ])
+  })
+
+  it('drops days with zero Bookings (defensive — no 0/₹0 rows)', () => {
+    const result = shapeDailyBreakdown([
+      { date: '2026-06-15', bookings: 2, total: '10000.00' },
+      { date: '2026-06-14', bookings: 0, total: null },
+    ])
+
+    expect(result).toEqual([
+      { date: '2026-06-15', bookings: 2, revenue: 10000 },
+    ])
+  })
+
+  it('coerces null aggregates to 0 (defensive)', () => {
+    const result = shapeDailyBreakdown([
+      { date: '2026-06-15', bookings: 1, total: null },
+    ])
+
+    expect(result).toEqual([{ date: '2026-06-15', bookings: 1, revenue: 0 }])
+  })
+
+  it('returns an empty array for no rows', () => {
+    expect(shapeDailyBreakdown([])).toEqual([])
   })
 })
 
@@ -941,6 +995,42 @@ describe('loadVendorAnalytics', () => {
     // The breakdown + by-Experience lists are empty (no fabricated rows).
     expect(result.bookingStatusBreakdown).toEqual([])
     expect(result.revenueByExperience).toEqual([])
+    // The daily-breakdown table omits empty days entirely (no 0/₹0 rows).
+    expect(result.dailyBreakdown).toEqual([])
+  })
+
+  it('builds the daily breakdown (non-empty days, newest first, gross) consistent with the chart', async () => {
+    // Two Bookings on the SAME day (5 days ago → one aggregated row) + one 20
+    // days ago. The empty days between them must NOT appear as rows. Interior
+    // days are used (not today) so the chart's fill is stable for the
+    // consistency assertion — the today edge has a separate fill quirk.
+    await seedConfirmedBooking({ daysAgo: 5, gross: '10000.00' })
+    await seedConfirmedBooking({ daysAgo: 5, gross: '5000.00' })
+    await seedConfirmedBooking({ daysAgo: 20, gross: '7000.00' })
+
+    const { dailyBreakdown, revenueByDay } = await loadVendorAnalytics(db, 'u_v')
+
+    // Exactly two distinct days had Bookings — no filled 0-day rows.
+    expect(dailyBreakdown).toHaveLength(2)
+    expect(dailyBreakdown.every((r) => r.bookings > 0)).toBe(true)
+
+    // Newest day first (5-days-ago before 20-days-ago).
+    const dates = dailyBreakdown.map((r) => r.date)
+    expect([...dates].sort().reverse()).toEqual(dates)
+
+    // The newest row aggregates BOTH same-day Bookings: 2 bookings, gross 15000.
+    const newest = dailyBreakdown[0]!
+    expect(newest.bookings).toBe(2)
+    expect(newest.revenue).toBe(15000)
+
+    // Consistency: the table's rows match the chart's non-zero points 1:1 and
+    // sum to the same gross (both derive from the same confirmedAt-windowed
+    // daily aggregate).
+    const chartNonZero = revenueByDay.filter((d) => d.value > 0)
+    expect(dailyBreakdown).toHaveLength(chartNonZero.length)
+    const tableRevenueTotal = dailyBreakdown.reduce((s, r) => s + r.revenue, 0)
+    const chartRevenueTotal = chartNonZero.reduce((s, d) => s + d.value, 0)
+    expect(tableRevenueTotal).toBe(chartRevenueTotal)
   })
 
   // ── Regression guard (issue 03 AC): the existing dashboard-home charts must

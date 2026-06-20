@@ -213,7 +213,10 @@
     "revenueByExperienceEmpty": "अभी कोई Booking नहीं है, इसलिए आपके Experiences को कोई राजस्व नहीं सौंपा जा सकता।",
     "experienceColumn": "Experience",
     "bookingsColumn": "Bookings",
-    "revenueColumn": "राजस्व"
+    "revenueColumn": "राजस्व",
+    "dailyBreakdownHeading": "दैनिक विवरण",
+    "dateColumn": "तारीख़",
+    "dailyBreakdownEmpty": "पिछले 30 दिनों में कोई Booking नहीं।"
   },
   "VendorTeam": {
     "title": "टीम और भूमिकाएँ",

@@ -213,7 +213,10 @@
     "revenueByExperienceEmpty": "No Bookings yet, so there is no revenue to attribute to your Experiences.",
     "experienceColumn": "Experience",
     "bookingsColumn": "Bookings",
-    "revenueColumn": "Revenue"
+    "revenueColumn": "Revenue",
+    "dailyBreakdownHeading": "Daily breakdown",
+    "dateColumn": "Date",
+    "dailyBreakdownEmpty": "No Bookings in the last 30 days."
   },
   "VendorTeam": {
     "title": "ടീമും റോളുകളും",

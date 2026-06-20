@@ -27,7 +27,12 @@ export default defineConfig({
     ? undefined
     : {
         command: 'pnpm dev',
-        url: 'http://localhost:3000',
+        // Readiness check on the DB-INDEPENDENT shallow healthz (process-up, no
+        // SELECT) — NOT the home page. The home page 500s until global-setup
+        // creates+seeds outvers_e2e, but Playwright awaits the webServer BEFORE
+        // running global-setup; checking the home page deadlocks (home needs the
+        // DB ↔ DB created after the webServer is ready). Shallow healthz breaks it.
+        url: 'http://localhost:3000/api/healthz?shallow',
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
       },

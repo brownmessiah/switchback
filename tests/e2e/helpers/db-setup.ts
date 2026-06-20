@@ -65,6 +65,16 @@ export async function resetDatabase(): Promise<void> {
     timeout: 30_000,
   })
 
+  // 2b. Postgres-native search needs pg_trgm (`word_similarity` for the `q`
+  //     query). The prod 0034 migration installs it; drizzle-kit push does NOT
+  //     (it's a hand-authored .sql), so add it to the E2E DB explicitly.
+  const ext = postgres(dbUrl, { max: 1 })
+  try {
+    await ext.unsafe('CREATE EXTENSION IF NOT EXISTS pg_trgm')
+  } finally {
+    await ext.end()
+  }
+
   // 3. Run the seed script directly (bypass `pnpm db:seed` which wraps
   //    with `dotenv -e .env.local`, overriding our DATABASE_URL).
   execSync('npx tsx db/seed.ts', {

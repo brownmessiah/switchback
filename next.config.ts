@@ -1,24 +1,27 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
+import { serverActionAllowedOrigins } from "./lib/config/origins";
+
 const withNextIntl = createNextIntlPlugin({
   requestConfig: "./lib/i18n/request.ts",
 });
 
+// ADR-0019: behind the External LB, Server Actions must trust the prod host or
+// the Origin/Host CSRF check rejects them. Derived at build time from
+// NEXT_PUBLIC_APP_URL (+ optional comma-separated AUTH_TRUSTED_ORIGINS). The old
+// ngrok dev hacks are removed — the demo runs on Cloud Run behind the LB.
+const allowedOrigins = serverActionAllowedOrigins(
+  process.env.NEXT_PUBLIC_APP_URL,
+  process.env.AUTH_TRUSTED_ORIGINS,
+);
+
 const nextConfig: NextConfig = {
-  // Local-demo only: allow the ngrok tunnel host to reach the dev server
-  // (Next 16 blocks cross-origin dev requests otherwise). Safe to remove.
-  allowedDevOrigins: ['2e99352b354d.ngrok.app', '.ngrok.app'],
+  // Self-contained server output for the Cloud Run container (ADR-0019).
+  output: "standalone",
   experimental: {
-    // Local-demo only: `next start` sits behind the ngrok tunnel, so every
-    // Server Action POST arrives with Origin=<tunnel host> but Host=localhost.
-    // Next 16's Server Action CSRF check rejects that mismatch ("failed to
-    // forward action response" → the post-sign-in redirect action throws and
-    // the UI appears to do nothing). Trusting the tunnel origin fixes ALL
-    // server actions behind the proxy (sign-in redirect, cancel, checkout…).
-    // Safe to remove alongside allowedDevOrigins. (Wildcards are supported.)
     serverActions: {
-      allowedOrigins: ['2e99352b354d.ngrok.app', '*.ngrok.app', '*.ngrok-free.app'],
+      allowedOrigins,
     },
   },
   images: {

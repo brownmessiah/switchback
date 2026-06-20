@@ -32,16 +32,13 @@ const msg91Config: Msg91Config = {
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.NEXT_PUBLIC_APP_URL,
-  // Accept the app's own origin PLUS optional extra origins (comma-separated
-  // `AUTH_TRUSTED_ORIGINS` env) and ngrok tunnel hosts — so signing in through
-  // a demo tunnel (where the browser Origin is the *.ngrok.app host, not the
-  // localhost baseURL) is not rejected as an "invalid origin". Prod traffic
-  // arrives on the baseURL, which is always trusted.
+  // ADR-0019: trust the app's own origin (the prod domain / Cloud Run URL behind
+  // the LB) PLUS optional extra origins (comma-separated `AUTH_TRUSTED_ORIGINS`),
+  // so sign-in is not rejected as an "invalid origin". The ngrok dev-tunnel hosts
+  // are removed — the demo runs on Cloud Run behind the LB.
   trustedOrigins: [
     env.NEXT_PUBLIC_APP_URL,
     ...(process.env.AUTH_TRUSTED_ORIGINS?.split(',').map((o) => o.trim()).filter(Boolean) ?? []),
-    'https://*.ngrok.app',
-    'https://*.ngrok-free.app',
   ],
   emailAndPassword: { enabled: true },
   database: drizzleAdapter(db, {

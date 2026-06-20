@@ -174,6 +174,65 @@ describe('lifecycle notification helpers', () => {
       const rows = await db.select().from(notifications)
       expect(rows).toHaveLength(1)
     })
+
+    it("notifies the vendor with a 'payout sent' message for state='paid' (slice 06)", async () => {
+      const result = await notifyPayoutStateChange(db, {
+        bookingId: 'b_payout_paid',
+        vendorUserId: vendorId,
+        state: 'paid',
+      })
+
+      expect(result.created).toBe(true)
+
+      const rows = await db.select().from(notifications)
+      expect(rows).toHaveLength(1)
+      expect(rows[0]!.userId).toBe(vendorId)
+      expect(rows[0]!.type).toBe('payout_processed')
+      expect(rows[0]!.link).toBe('/vendor/payouts')
+      expect(rows[0]!.title.toLowerCase()).toContain('sent')
+      // Vendor-facing copy uses the domain term "payout" (CONTEXT.md).
+      expect(rows[0]!.body.toLowerCase()).toContain('payout')
+      // Distinct eventId namespace from approved/held/rejected.
+      expect(rows[0]!.eventId).toBe('payout_paid:b_payout_paid')
+    })
+
+    it("notifies the vendor with a 'payout failed' message for state='failed' (slice 07)", async () => {
+      const result = await notifyPayoutStateChange(db, {
+        bookingId: 'b_payout_failed',
+        vendorUserId: vendorId,
+        state: 'failed',
+      })
+
+      expect(result.created).toBe(true)
+
+      const rows = await db.select().from(notifications)
+      expect(rows).toHaveLength(1)
+      expect(rows[0]!.userId).toBe(vendorId)
+      expect(rows[0]!.type).toBe('payout_processed')
+      expect(rows[0]!.link).toBe('/vendor/payouts')
+      expect(rows[0]!.title.toLowerCase()).toContain('failed')
+      expect(rows[0]!.body.toLowerCase()).toContain('payout')
+      expect(rows[0]!.eventId).toBe('payout_failed:b_payout_failed')
+    })
+
+    it("notifies the vendor with a 'payout reversed' message for state='reversed' (slice 07)", async () => {
+      const result = await notifyPayoutStateChange(db, {
+        bookingId: 'b_payout_reversed',
+        vendorUserId: vendorId,
+        state: 'reversed',
+      })
+
+      expect(result.created).toBe(true)
+
+      const rows = await db.select().from(notifications)
+      expect(rows).toHaveLength(1)
+      expect(rows[0]!.userId).toBe(vendorId)
+      expect(rows[0]!.type).toBe('payout_processed')
+      expect(rows[0]!.link).toBe('/vendor/payouts')
+      expect(rows[0]!.title.toLowerCase()).toContain('reversed')
+      expect(rows[0]!.body.toLowerCase()).toContain('payout')
+      expect(rows[0]!.eventId).toBe('payout_reversed:b_payout_reversed')
+    })
   })
 
   // ── preference opt-out is inherited from notify() ──────────────────

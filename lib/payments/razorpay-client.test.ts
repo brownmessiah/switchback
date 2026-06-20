@@ -741,3 +741,130 @@ describe('normalizeError fallbacks (sparse upstream payloads)', () => {
     expect(err.message).toBe('socket hang up')
   })
 })
+
+/**
+ * Production hardening: the factory must REFUSE to silently fall back to the
+ * in-process demo stub when real credentials are absent in production. A stub
+ * in prod fabricates fake order/payment/refund ids and would confirm Bookings
+ * against money that never moved. We cover all four quadrants
+ * (prod/non-prod × creds/no-creds) plus the RAZORPAY_TEST_MODE override.
+ *
+ * NODE_ENV is flipped on `process.env` (not the frozen `env` module) so the
+ * runtime guard — like the existing RAZORPAY_TEST_MODE guard — can observe it;
+ * it is always restored in a `finally`. `_resetRazorpayClientForTests()` keys
+ * off the build-time `env.NODE_ENV` ('test'), so it stays callable even while
+ * `process.env.NODE_ENV` is flipped to 'production', letting us clear the cache
+ * between assertions.
+ */
+describe('getRazorpayClient prod-throw on missing creds (no silent demo stub)', () => {
+  const originalTestMode = process.env['RAZORPAY_TEST_MODE']
+
+  beforeEach(() => {
+    delete process.env['RAZORPAY_TEST_MODE']
+    _resetRazorpayClientForTests()
+  })
+
+  afterEach(() => {
+    if (originalTestMode === undefined) {
+      delete process.env['RAZORPAY_TEST_MODE']
+    } else {
+      process.env['RAZORPAY_TEST_MODE'] = originalTestMode
+    }
+    _resetRazorpayClientForTests()
+  })
+
+  it('throws in production when both creds are missing (no stub, no fake ids)', () => {
+    const envRecord = process.env as Record<string, string | undefined>
+    const origNodeEnv = envRecord['NODE_ENV']
+    envRecord['NODE_ENV'] = 'production'
+    try {
+      expect(() =>
+        getRazorpayClient({ keyId: undefined, keySecret: undefined }),
+      ).toThrow(/RAZORPAY_KEY_ID/)
+    } finally {
+      envRecord['NODE_ENV'] = origNodeEnv
+      _resetRazorpayClientForTests()
+    }
+  })
+
+  it('throws in production when only one cred is present (still incomplete)', () => {
+    const envRecord = process.env as Record<string, string | undefined>
+    const origNodeEnv = envRecord['NODE_ENV']
+    envRecord['NODE_ENV'] = 'production'
+    try {
+      expect(() =>
+        getRazorpayClient({ keyId: 'rzp_live_partial', keySecret: undefined }),
+      ).toThrow(/RAZORPAY_KEY_SECRET/)
+      _resetRazorpayClientForTests()
+      expect(() =>
+        getRazorpayClient({ keyId: undefined, keySecret: 'only_secret' }),
+      ).toThrow(/RAZORPAY_KEY_ID/)
+    } finally {
+      envRecord['NODE_ENV'] = origNodeEnv
+      _resetRazorpayClientForTests()
+    }
+  })
+
+  it('error message never echoes the supplied secret value', () => {
+    const envRecord = process.env as Record<string, string | undefined>
+    const origNodeEnv = envRecord['NODE_ENV']
+    envRecord['NODE_ENV'] = 'production'
+    try {
+      let captured: unknown
+      try {
+        getRazorpayClient({ keyId: undefined, keySecret: 'super_secret_value' })
+      } catch (err) {
+        captured = err
+      }
+      expect(captured).toBeInstanceOf(Error)
+      expect((captured as Error).message).not.toMatch(/super_secret_value/)
+    } finally {
+      envRecord['NODE_ENV'] = origNodeEnv
+      _resetRazorpayClientForTests()
+    }
+  })
+
+  it('production WITH both real creds still constructs the real SDK (guard fires only on missing creds)', () => {
+    const envRecord = process.env as Record<string, string | undefined>
+    const origNodeEnv = envRecord['NODE_ENV']
+    envRecord['NODE_ENV'] = 'production'
+    try {
+      const client = getRazorpayClient({ keyId: 'rzp_live_real', keySecret: 'real_secret' })
+      expect(client).toBeDefined()
+      expect(client.orders).toBeDefined()
+      expect(client.payments).toBeDefined()
+    } finally {
+      envRecord['NODE_ENV'] = origNodeEnv
+      _resetRazorpayClientForTests()
+    }
+  })
+
+  it('non-prod with NO creds still falls back to the demo stub (dev ergonomics unchanged)', async () => {
+    // NODE_ENV stays 'test' (non-prod) here — no flip.
+    const client = getRazorpayClient({ keyId: undefined, keySecret: undefined })
+    const order = await client.orders.create({ amount: 10_000, currency: 'INR' })
+    expect(order.id).toMatch(/^order_demo_/)
+  })
+
+  it('RAZORPAY_TEST_MODE=true yields the demo stub in non-prod even with real creds', async () => {
+    process.env['RAZORPAY_TEST_MODE'] = 'true'
+    const client = getRazorpayClient({ keyId: 'rzp_live_real', keySecret: 'real_secret' })
+    const order = await client.orders.create({ amount: 10_000, currency: 'INR' })
+    expect(order.id).toMatch(/^order_demo_/)
+  })
+
+  it('RAZORPAY_TEST_MODE=true still throws in production (test-mode guard preserved, takes precedence over missing-cred path)', () => {
+    process.env['RAZORPAY_TEST_MODE'] = 'true'
+    const envRecord = process.env as Record<string, string | undefined>
+    const origNodeEnv = envRecord['NODE_ENV']
+    envRecord['NODE_ENV'] = 'production'
+    try {
+      expect(() => getRazorpayClient()).toThrow(
+        /RAZORPAY_TEST_MODE must not be enabled in production/,
+      )
+    } finally {
+      envRecord['NODE_ENV'] = origNodeEnv
+      _resetRazorpayClientForTests()
+    }
+  })
+})

@@ -80,6 +80,10 @@ export const vendorProfiles = pgTable('vendor_profiles', {
   payoutDestinationChangedAt: timestamp('payout_destination_changed_at', {
     withTimezone: true,
   }),
+  // ADR-0016 (2026-06-18) — Razorpay X Contact id, provisioned once per Vendor
+  // and cached so a destination change reuses it (no duplicate Contact). See
+  // db/schema/vendor-fund-accounts.ts for the per-destination Fund Accounts.
+  razorpayContactId: text('razorpay_contact_id'),
   // ADR-0007 — First 3 Payouts after reaching Tier 2 require manual admin approval.
   manualPayoutsRemaining: integer('manual_payouts_remaining').default(3).notNull(),
 

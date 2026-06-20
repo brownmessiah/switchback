@@ -73,8 +73,12 @@ A payment mode where 0% is captured at booking and 100% is auto-captured at a co
 _Avoid_: Pay-on-arrival, hold-and-charge.
 
 **Payout**:
-Money Outvers transfers to a Vendor for completed Experiences, net of commission, GST on commission, and TDS. Issued T+7 from Booking Completion in daily batches; subject to Dispute pause-and-resume. See ADR-0016.
+The per-Booking record of money owed to a Vendor for a completed Experience, net of commission, GST on commission, TDS, and GST TCS. One completed Booking produces exactly one Payout. Matures T+7 from Booking Completion (T+30 under the extended window); subject to Dispute pause-and-resume. Carries its own net/TDS/TCS attribution so it feeds the monthly statement and Form 26Q even though many Payouts are paid in a single Payout Batch. See ADR-0016.
 _Avoid_: Settlement, disbursement, transfer.
+
+**Payout Batch**:
+The unit of money actually sent to Razorpay X: one transfer per `(Vendor, payout destination)` per daily 5pm IST batch, summing every matured Payout that shares that destination. Two Payouts for the same Vendor land in *different* Batches if the Vendor changed their payout destination between the two Bookings (each Booking snapshots its destination at create). A Batch's lifecycle (`processing → paid | failed | reversed`) is driven by Razorpay X payout webhooks and cascades to each member Payout. See ADR-0016.
+_Avoid_: Run, settlement file, sweep.
 
 **TDS (Tax Deducted at Source)**:
 The 0.1% deduction Outvers must withhold on the gross Booking value paid to resident-Indian Vendors under Section 194-O of the Income Tax Act (rate reduced from 1% to 0.1% by Finance Act 2024, effective 1 Oct 2024). Filed quarterly via Form 26Q; Vendor receives Form 16A. Not optional. See ADR-0016.

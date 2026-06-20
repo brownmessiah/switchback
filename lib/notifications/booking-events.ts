@@ -139,8 +139,23 @@ export async function notifyRefundCredited(
   })
 }
 
-/** Payout state transitions that produce a vendor notification. */
-export type PayoutNotifyState = 'approved' | 'held' | 'rejected'
+/**
+ * Payout state transitions that produce a vendor notification.
+ *
+ * `approved` / `held` / `rejected` are the admin approval-flow transitions;
+ * `paid` is the Razorpay X send confirmation (slice 06, ADR-0016 D4 — the
+ * payout reached the Vendor's account). `failed` / `reversed` are the unhappy
+ * paths (slice 07, ADR-0016 D5): `failed` fires only once retries are exhausted
+ * and the Payout has been routed to the admin queue; `reversed` is the dangerous
+ * path (money returned after `processed`) and always notifies.
+ */
+export type PayoutNotifyState =
+  | 'approved'
+  | 'held'
+  | 'rejected'
+  | 'paid'
+  | 'failed'
+  | 'reversed'
 
 const PAYOUT_STATE_COPY: Record<
   PayoutNotifyState,
@@ -157,6 +172,18 @@ const PAYOUT_STATE_COPY: Record<
   rejected: {
     title: 'Payout rejected',
     body: 'A payout for one of your bookings was rejected.',
+  },
+  paid: {
+    title: 'Payout sent',
+    body: 'A payout for your completed bookings has been sent to your account.',
+  },
+  failed: {
+    title: 'Payout failed',
+    body: 'A payout for your completed bookings could not be sent — our team is looking into it.',
+  },
+  reversed: {
+    title: 'Payout reversed',
+    body: 'A payout to your account was reversed — our team will contact you.',
   },
 }
 

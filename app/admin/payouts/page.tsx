@@ -1,12 +1,25 @@
 import { eq, inArray } from 'drizzle-orm'
 
 import { db } from '@/db/client'
-import { bookings, experiences, vendorProfiles } from '@/db/schema'
+import { availabilitySlots, bookings, experiences, vendorProfiles } from '@/db/schema'
 import { computeVendorNetPayout } from '@/lib/payments/payout-calculator'
+import { destinationFingerprint } from '@/lib/payments/payout-destination'
+import { resolveFundAccount } from '@/lib/payments/fund-account-resolver'
+import {
+  classifyPayoutQueueItem,
+  type PayoutQueueCategory,
+} from '@/lib/payments/payout-queue'
 
 import { PayoutLedger, type PayoutLedgerRow } from './payout-ledger'
 
+/** Two timestamps span more than one UTC calendar day (mirrors the cron worker). */
+function isMultiDay(startAt: Date, endAt: Date): boolean {
+  return startAt.toISOString().slice(0, 10) !== endAt.toISOString().slice(0, 10)
+}
+
 export default async function AdminPayoutsPage() {
+  const now = new Date()
+
   const rows = await db
     .select({
       bookingId: bookings.id,
@@ -21,16 +34,71 @@ export default async function AdminPayoutsPage() {
       vendorUserId: vendorProfiles.userId,
       manualPayoutsRemaining: vendorProfiles.manualPayoutsRemaining,
       expTitle: experiences.title,
+      requiredPermits: experiences.requiredPermits,
       completedAt: bookings.completedAt,
       payoutRejectionReason: bookings.payoutRejectionReason,
+      payoutDestinationSnapshot: bookings.payoutDestinationSnapshot,
+      payoutBatchId: bookings.payoutBatchId,
+      slotStartAt: availabilitySlots.startAt,
+      slotEndAt: availabilitySlots.endAt,
     })
     .from(bookings)
     .innerJoin(experiences, eq(bookings.experienceId, experiences.id))
     .innerJoin(vendorProfiles, eq(experiences.vendorUserId, vendorProfiles.userId))
+    .innerJoin(availabilitySlots, eq(availabilitySlots.id, bookings.slotId))
     .where(inArray(bookings.state, ['completed', 'awaiting_completion']))
     .orderBy(bookings.completedAt)
 
-  const pendingCount = rows.filter((r) => r.payoutState === 'pending').length
+  // Classify each Payout into the queue category the admin sees, so the first-3
+  // queue (story 11) and the fund-account-blocked exceptions (story 14) are
+  // VISIBLE rather than silently dropped. Reuses the SAME maturity window +
+  // fingerprint + Fund Account resolver the 5pm-IST cron uses, so the queue and
+  // the cron agree exactly. Only matured-eligible-unbatched rows need a Fund
+  // Account lookup — we resolve those, classify the rest from row facts alone.
+  const categories = new Map<string, PayoutQueueCategory>()
+  for (const row of rows) {
+    const permitRequired = (row.requiredPermits ?? []).length > 0
+    const multiDay = isMultiDay(row.slotStartAt, row.slotEndAt)
+    const alreadyBatched = row.payoutBatchId !== null
+
+    // Resolve a Fund Account only for a matured, unbatched Payout that is
+    // eligible to batch (approved, or pending with the first-3 gate open) — the
+    // only case where a missing/cooling-off account becomes a visible exception.
+    // The classifier ignores fundAccount for every other category, so a benign
+    // 'missing' default keeps the shape without an unnecessary DB read.
+    const eligibleToBatch =
+      row.payoutState === 'approved' ||
+      (row.payoutState === 'pending' && row.manualPayoutsRemaining === 0)
+    const fundAccount: Awaited<ReturnType<typeof resolveFundAccount>> =
+      !alreadyBatched && eligibleToBatch && row.payoutDestinationSnapshot !== null
+        ? await resolveFundAccount(db, {
+            vendorUserId: row.vendorUserId,
+            destinationFingerprint: destinationFingerprint(row.payoutDestinationSnapshot),
+            now,
+          })
+        : { status: 'admin_queue', reason: 'missing' }
+
+    categories.set(
+      row.bookingId,
+      classifyPayoutQueueItem({
+        payoutState: row.payoutState,
+        completedAt: row.completedAt,
+        permitRequired,
+        multiDay,
+        manualPayoutsRemaining: row.manualPayoutsRemaining,
+        alreadyBatched,
+        fundAccount,
+        now,
+      }),
+    )
+  }
+
+  const awaitingApprovalCount = [...categories.values()].filter(
+    (c) => c === 'awaiting_approval',
+  ).length
+  const blockedCount = [...categories.values()].filter(
+    (c) => c === 'blocked_fund_account',
+  ).length
 
   // Build the full Commission Snapshot per row from the LOCKED snapshot columns
   // (ADR-0016) via the canonical pure calculator. Read-only — no money write.
@@ -75,6 +143,7 @@ export default async function AdminPayoutsPage() {
       bookingId: row.bookingId,
       state: row.state,
       payoutState: row.payoutState,
+      category: categories.get(row.bookingId) ?? 'not_matured',
       manualPayoutsRemaining: row.manualPayoutsRemaining,
       vendorName: row.vendorName,
       expTitle: row.expTitle,
@@ -94,7 +163,8 @@ export default async function AdminPayoutsPage() {
         <h1 className="font-heading text-h1 font-semibold tracking-tight">Payout queue</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {rows.length} booking{rows.length === 1 ? '' : 's'} in queue
-          {pendingCount > 0 && <> ({pendingCount} pending approval)</>}
+          {awaitingApprovalCount > 0 && <> ({awaitingApprovalCount} awaiting approval)</>}
+          {blockedCount > 0 && <> ({blockedCount} fund account blocked)</>}
         </p>
       </div>
 

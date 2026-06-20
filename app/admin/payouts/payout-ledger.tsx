@@ -24,6 +24,11 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
+import {
+  payoutQueueCategoryLabel,
+  type PayoutQueueCategory,
+} from '@/lib/payments/payout-queue'
+
 import { AdminStatusBadge } from '../_components/admin-status-badge'
 import { CommissionSnapshot } from '../_components/commission-snapshot'
 import { ConfirmMoneyDialog } from '../_components/confirm-money-dialog'
@@ -38,7 +43,24 @@ import {
 export interface PayoutLedgerRow {
   bookingId: string
   state: string
-  payoutState: 'pending' | 'approved' | 'rejected' | 'held'
+  // The full payout_state enum (db/schema/bookings.ts). The admin approval
+  // queue acts on the first four (pending/approved/rejected/held); the latter
+  // four are the Payout Batch send lifecycle the Payout Batch cron drives
+  // (ADR-0016, 2026-06-18 amendment) — surfaced read-only here.
+  payoutState:
+    | 'pending'
+    | 'approved'
+    | 'rejected'
+    | 'held'
+    | 'processing'
+    | 'paid'
+    | 'failed'
+    | 'reversed'
+  // The admin-queue category (lib/payments/payout-queue.ts). Distinguishes the
+  // first-3 awaiting-approval queue (story 11) and the fund-account-blocked
+  // exceptions (story 14) from auto-batching / maturing / sent Payouts, so
+  // nothing silently disappears between approve and the 5pm-IST cron.
+  category: PayoutQueueCategory
   manualPayoutsRemaining: number
   vendorName: string | null
   expTitle: string | null
@@ -58,6 +80,10 @@ const PAYOUT_STATE_LABEL: Record<string, string> = {
   approved: 'Approved',
   rejected: 'Rejected',
   held: 'Held',
+  processing: 'Processing',
+  paid: 'Paid',
+  failed: 'Failed',
+  reversed: 'Reversed',
 }
 
 export function PayoutLedger({ rows }: { rows: PayoutLedgerRow[] }) {
@@ -86,6 +112,7 @@ export function PayoutLedger({ rows }: { rows: PayoutLedgerRow[] }) {
                     <TableHead className="text-right">Gross</TableHead>
                     <TableHead className="text-right">Net</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Queue</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -153,9 +180,59 @@ function PayoutRow({
         <AdminStatusBadge status={row.payoutState} label={PAYOUT_STATE_LABEL[row.payoutState] ?? row.payoutState} />
       </TableCell>
       <TableCell>
+        <PayoutQueueBadge category={row.category} />
+      </TableCell>
+      <TableCell>
         <PayoutActions row={row} onSelect={onSelect} />
       </TableCell>
     </TableRow>
+  )
+}
+
+// ── Queue category badge ───────────────────────────────────────────────
+//
+// Surfaces the admin-queue category so the first-3 awaiting-approval queue
+// (story 11) and the fund-account-blocked exceptions (story 14) are visible at
+// a glance, distinct from auto-batching / maturing / sent Payouts. The label
+// text carries the meaning (status never by color alone, DESIGN.md §1.3).
+
+const QUEUE_CATEGORY_VARIANT: Record<
+  PayoutQueueCategory,
+  'warning' | 'info' | 'destructive' | 'success' | 'secondary' | 'outline'
+> = {
+  awaiting_approval: 'warning',
+  blocked_fund_account: 'destructive',
+  auto_pending: 'info',
+  not_matured: 'outline',
+  processing: 'info',
+  paid: 'success',
+  failed: 'destructive',
+  reversed: 'secondary',
+  held: 'secondary',
+  rejected: 'secondary',
+}
+
+// Only the COMPUTED categories carry information the Status column does not
+// already show. The PASSTHROUGH categories (processing/paid/failed/reversed/
+// held/rejected) merely echo the payout-state badge with an identical label —
+// rendering them duplicates the pill and makes `getByText('Held', {exact})`
+// ambiguous. Suppress those; render an em-dash placeholder so the column stays
+// aligned and the absence is explicit.
+const COMPUTED_QUEUE_CATEGORIES: ReadonlySet<PayoutQueueCategory> = new Set([
+  'awaiting_approval',
+  'auto_pending',
+  'blocked_fund_account',
+  'not_matured',
+])
+
+function PayoutQueueBadge({ category }: { category: PayoutQueueCategory }) {
+  if (!COMPUTED_QUEUE_CATEGORIES.has(category)) {
+    return <span className="text-xs text-muted-foreground">—</span>
+  }
+  return (
+    <Badge variant={QUEUE_CATEGORY_VARIANT[category]} data-queue-category={category}>
+      {payoutQueueCategoryLabel(category)}
+    </Badge>
   )
 }
 

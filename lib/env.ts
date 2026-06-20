@@ -20,6 +20,10 @@ const schema = z.object({
   RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
   /** E2E test-mode: forces demo stub + signature bypass even with real creds */
   RAZORPAY_TEST_MODE: z.enum(['true', 'false']).optional(),
+  /** Razorpay X source virtual account for Payout Batches (ADR-0016). Launch-blocking ops dep, not a build blocker. */
+  RAZORPAYX_ACCOUNT_NUMBER: z.string().optional(),
+  /** Razorpay X webhook signing secret for payout-status events (ADR-0016). */
+  RAZORPAYX_WEBHOOK_SECRET: z.string().optional(),
 
   // ===== AI (M4) =====
   OPENAI_API_KEY: z.string().optional(),

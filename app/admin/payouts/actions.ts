@@ -176,8 +176,12 @@ export async function executeApprovePayout(
       .where(eq(vendorProfiles.userId, vendor.vendorUserId))
   }
 
-  // TODO: Razorpay X disbursement — queue payout for batch processing
-  // per ADR-0016 (daily batches at 5pm IST). Stubbed for M3.
+  // Approval only transitions payout_state → 'approved' (and consumes one of
+  // the first-3 manual approvals above). There is NO inline send here: the
+  // Payout Batch cron (lib/payments/payout-batch.ts) picks up approved — and,
+  // once manualPayoutsRemaining hits 0, pending — Payouts at the daily 5pm-IST
+  // run and sends ONE Razorpay X transfer per (Vendor, destination). The cron
+  // owns sending; this action owns the approval gate (ADR-0016).
 
   await writeAuditLog(db, {
     actorUserId: adminUserId,

@@ -60,6 +60,28 @@ describe('parseEnv', () => {
     expect(parsed.OPENAI_API_KEY).toBe('sk-test-abc')
   })
 
+  it('accepts and preserves the optional Razorpay X payout creds when present', () => {
+    const parsed = parseEnv({
+      DATABASE_URL: 'postgres://x',
+      BETTER_AUTH_SECRET: 'a'.repeat(32),
+      NEXT_PUBLIC_APP_URL: 'http://localhost:3000',
+      RAZORPAYX_ACCOUNT_NUMBER: '2323230000000000',
+      RAZORPAYX_WEBHOOK_SECRET: 'whsec_x_test',
+    })
+    expect(parsed.RAZORPAYX_ACCOUNT_NUMBER).toBe('2323230000000000')
+    expect(parsed.RAZORPAYX_WEBHOOK_SECRET).toBe('whsec_x_test')
+  })
+
+  it('treats the Razorpay X payout creds as optional (absent → undefined)', () => {
+    const parsed = parseEnv({
+      DATABASE_URL: 'postgres://x',
+      BETTER_AUTH_SECRET: 'a'.repeat(32),
+      NEXT_PUBLIC_APP_URL: 'http://localhost:3000',
+    })
+    expect(parsed.RAZORPAYX_ACCOUNT_NUMBER).toBeUndefined()
+    expect(parsed.RAZORPAYX_WEBHOOK_SECRET).toBeUndefined()
+  })
+
   it('rejects unknown NODE_ENV values', () => {
     expect(() =>
       parseEnv({

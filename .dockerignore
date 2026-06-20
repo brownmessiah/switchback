@@ -1,0 +1,30 @@
+# Rebuilt inside the image
+node_modules
+.next
+
+# VCS + local state
+.git
+.gitignore
+.dev-stack
+*.log
+.DS_Store
+
+# Tests / reports / coverage (not needed to build or run the app)
+coverage
+playwright-report
+playwright/.cache
+test-results
+
+# Secrets + local env (the build injects env via ARG/ENV; runtime via Secret Manager)
+.env*
+!.env.example
+
+# Infra / docs / scratch — not part of the app image
+terraform
+.scratch
+docs
+.github
+
+# Container files themselves
+Dockerfile
+.dockerignore

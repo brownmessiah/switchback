@@ -9,7 +9,7 @@ import { replacePricingVariations } from '@/lib/experiences/pricing-variations-w
 import { fromPriceRupees } from '@/lib/payments/pricing-variations'
 import { assertWithinTier, type KycTier } from '@/lib/kyc/tier-caps'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
-import { LocalFileAdapter } from '@/lib/storage/local'
+import { getStorageAdapter } from '@/lib/storage/factory'
 
 import {
   updateExperienceSchema,
@@ -248,7 +248,7 @@ export async function executeUploadExperienceImage(
     return { ok: false, error: 'Experience not found or not owned by you.' }
   }
 
-  const adapter = new LocalFileAdapter()
+  const adapter = getStorageAdapter()
   const ext = file.name.split('.').pop() ?? 'jpg'
   const key = `experiences/${experienceId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
 
@@ -316,7 +316,7 @@ export async function executeDeleteExperienceImage(
     return { ok: false, error: 'Not authorized to delete this image.' }
   }
 
-  const adapter = new LocalFileAdapter()
+  const adapter = getStorageAdapter()
 
   try {
     await adapter.delete(asset.storageKey)

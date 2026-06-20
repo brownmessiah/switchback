@@ -59,11 +59,11 @@ const schema = z.object({
   SENTRY_DSN: z.url().optional(),
   POSTHOG_API_KEY: z.string().optional(),
 
-  // ===== Storage (R2) =====
-  R2_ACCESS_KEY_ID: z.string().optional(),
-  R2_SECRET_ACCESS_KEY: z.string().optional(),
-  R2_BUCKET: z.string().optional(),
-  R2_ACCOUNT_ID: z.string().optional(),
+  // ===== Storage (GCS — ADR-0019) =====
+  /** Public uploads bucket. When set (and STORAGE_BACKEND != 'local') the GCS adapter is used. */
+  GCS_BUCKET: z.string().optional(),
+  /** Force a backend: 'gcs' (prod) or 'local' (dev/test). Defaults to GCS when GCS_BUCKET is set. */
+  STORAGE_BACKEND: z.enum(['gcs', 'local']).optional(),
 })
 
 export type Env = z.infer<typeof schema>

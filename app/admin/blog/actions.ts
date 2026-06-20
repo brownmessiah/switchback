@@ -11,7 +11,7 @@ import { mediaAssets } from '@/db/schema/media-assets'
 import { auth } from '@/lib/auth'
 import { hasAdminPermission } from '@/lib/auth/permissions'
 import { writeAuditLog } from '@/lib/audit/write'
-import { LocalFileAdapter } from '@/lib/storage/local'
+import { getStorageAdapter } from '@/lib/storage/factory'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
 // ── Result types ────────────────────────────────────────────────────
@@ -322,7 +322,7 @@ export async function uploadBlogCoverImage(
     return { ok: false, error: 'File size must be under 10 MB.' }
   }
 
-  const adapter = new LocalFileAdapter()
+  const adapter = getStorageAdapter()
   const ext = file.name.split('.').pop() ?? 'jpg'
   const key = `blog/${postId ?? 'new'}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
 

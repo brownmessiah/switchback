@@ -1,36 +1,66 @@
+import { Storage } from '@google-cloud/storage'
+
 import type { StorageAdapter } from './adapter'
 
 /**
- * Google Cloud Storage adapter stub. Implements StorageAdapter so the
- * application can reference it, but throws at runtime until GCS
- * credentials are wired (expected: M3 or later).
+ * Google Cloud Storage adapter (ADR-0019). Targets a PUBLIC bucket with uniform
+ * bucket-level access (the bucket IAM grants `allUsers:objectViewer`, so objects
+ * are world-readable without per-object ACLs), keeping `getUrl()` a plain
+ * `https://storage.googleapis.com/<bucket>/<key>` — the host already allow-listed
+ * in `next.config`.
  *
- * Production deployments should swap to R2Adapter (see r2.ts) or
- * implement this stub against the @google-cloud/storage SDK.
+ * Auth is ADC: on Cloud Run the attached service account is used automatically —
+ * no key files. The `Storage` client is created lazily on first use so
+ * constructing the adapter (and `getUrl`) never touches GCP credentials (keeps
+ * the factory + tests credential-free).
+ *
+ * Forward guardrail (ADR-0019): sensitive uploads (KYC docs, invoices, payout
+ * statements) must NOT use this public adapter — they go in a separate PRIVATE
+ * bucket served via signed URLs (future M3).
  */
 export class GcsAdapter implements StorageAdapter {
   private readonly bucket: string
+  private client: Storage | undefined
 
-  constructor(bucket: string) {
+  constructor(bucket: string, client?: Storage) {
     this.bucket = bucket
+    this.client = client
+  }
+
+  private getClient(): Storage {
+    if (!this.client) {
+      this.client = new Storage()
+    }
+    return this.client
   }
 
   async upload(
-    _file: File,
-    _key: string,
+    file: File,
+    key: string,
   ): Promise<{ url: string; storageKey: string }> {
-    throw new Error(
-      `GcsAdapter.upload not implemented — bucket "${this.bucket}". Wire @google-cloud/storage or use LocalFileAdapter for dev.`,
-    )
+    const buffer = Buffer.from(await file.arrayBuffer())
+    await this.getClient()
+      .bucket(this.bucket)
+      .file(key)
+      .save(buffer, {
+        contentType: file.type || 'application/octet-stream',
+        // Small image uploads — a single-shot (non-resumable) write is simpler
+        // and avoids a resumable-session round-trip.
+        resumable: false,
+      })
+    return { url: this.getUrl(key), storageKey: key }
   }
 
   getUrl(storageKey: string): string {
     return `https://storage.googleapis.com/${this.bucket}/${storageKey}`
   }
 
-  async delete(_storageKey: string): Promise<void> {
-    throw new Error(
-      `GcsAdapter.delete not implemented — bucket "${this.bucket}". Wire @google-cloud/storage or use LocalFileAdapter for dev.`,
-    )
+  async delete(storageKey: string): Promise<void> {
+    // `ignoreNotFound` mirrors LocalFileAdapter.delete (a missing object is not
+    // an error — callers delete best-effort during edits).
+    await this.getClient()
+      .bucket(this.bucket)
+      .file(storageKey)
+      .delete({ ignoreNotFound: true })
   }
 }

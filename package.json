@@ -24,6 +24,7 @@
     "e2e:ui": "playwright test --ui",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate:run": "dotenv -e .env.local -- tsx db/migrate/run.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "dotenv -e .env.local -- tsx db/seed.ts",

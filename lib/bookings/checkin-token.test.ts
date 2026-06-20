@@ -1,6 +1,9 @@
+import { createHmac } from 'node:crypto'
+
 import { describe, expect, it } from 'vitest'
 
 import {
+  DEFAULT_CHECKIN_TTL_MS,
   signCheckInToken,
   verifyCheckInToken,
   type VerifyCheckInResult,
@@ -33,6 +36,19 @@ const NOW = 1_700_000_000_000
 function ok(result: VerifyCheckInResult): { bookingId: string } {
   if (!result.ok) throw new Error(`expected ok, got ${result.reason}`)
   return result
+}
+
+/**
+ * Build a CORRECTLY-signed token from an arbitrary JSON payload value, mirroring
+ * the production `sign()` (HMAC-SHA256 over the base64url-encoded payload, hex
+ * digest). Because the signature is valid, verification passes the constant-time
+ * compare and reaches the payload shape-check — letting us exercise the
+ * `isValidPayload` rejection arm with a non-`bad_signature` cause.
+ */
+function signArbitraryPayload(payloadValue: unknown, secret: string): string {
+  const payloadB64Url = Buffer.from(JSON.stringify(payloadValue)).toString('base64url')
+  const signature = createHmac('sha256', secret).update(payloadB64Url).digest('hex')
+  return `${payloadB64Url}.${signature}`
 }
 
 describe('signCheckInToken / verifyCheckInToken (issue #06)', () => {
@@ -105,5 +121,95 @@ describe('signCheckInToken / verifyCheckInToken (issue #06)', () => {
     // Signature won't match the substituted payload → bad_signature is the
     // first gate; either way it is NOT ok.
     expect(result.ok).toBe(false)
+  })
+
+  it('rejects a signature that is not 64 hex chars → bad_signature (structural sig guard)', () => {
+    // A two-part token whose signature passes the part-count + non-empty gates
+    // but is NOT a 64-char SHA-256 hex digest. This hits the HEX_64_RE guard
+    // (which exists to avoid crashing timingSafeEqual on a length mismatch).
+    const token = signCheckInToken({ bookingId: BOOKING_ID, expiresAt: NOW + 60_000 }, SECRET)
+    const payload = token.split('.')[0]!
+
+    for (const badSig of [
+      'deadbeef', // too short
+      'g'.repeat(64), // 64 chars but 'g' is not a hex digit
+      'a'.repeat(63), // one char short
+      'a'.repeat(65), // one char long
+    ]) {
+      expect(verifyCheckInToken(`${payload}.${badSig}`, SECRET, NOW)).toEqual({
+        ok: false,
+        reason: 'bad_signature',
+      })
+    }
+  })
+
+  it('rejects a correctly-signed payload that decodes to a non-object → malformed', () => {
+    // The signature is VALID (signed with the real secret), so verification
+    // passes the constant-time compare and reaches the payload shape-check.
+    // A JSON number is valid JSON but `isValidPayload` rejects it (not an
+    // object) → malformed, NOT bad_signature.
+    const token = signArbitraryPayload(42, SECRET)
+    expect(verifyCheckInToken(token, SECRET, NOW)).toEqual({
+      ok: false,
+      reason: 'malformed',
+    })
+  })
+
+  it('rejects a correctly-signed payload that decodes to null → malformed', () => {
+    // `typeof null === 'object'` — the explicit `value === null` guard in
+    // isValidPayload must reject it. Signature is valid, so we land on the
+    // shape-check, not the signature gate.
+    const token = signArbitraryPayload(null, SECRET)
+    expect(verifyCheckInToken(token, SECRET, NOW)).toEqual({
+      ok: false,
+      reason: 'malformed',
+    })
+  })
+
+  it('rejects a correctly-signed object missing bookingId → malformed', () => {
+    // Valid signature, valid JSON object, but `bookingId` absent.
+    const token = signArbitraryPayload({ expiresAt: NOW + 60_000 }, SECRET)
+    expect(verifyCheckInToken(token, SECRET, NOW)).toEqual({
+      ok: false,
+      reason: 'malformed',
+    })
+  })
+
+  it('rejects a correctly-signed object with an empty bookingId → malformed', () => {
+    // `bookingId` is a string but zero-length — the `length > 0` guard rejects it.
+    const token = signArbitraryPayload({ bookingId: '', expiresAt: NOW + 60_000 }, SECRET)
+    expect(verifyCheckInToken(token, SECRET, NOW)).toEqual({
+      ok: false,
+      reason: 'malformed',
+    })
+  })
+
+  it('rejects a correctly-signed object whose expiresAt is not finite → malformed', () => {
+    // `expiresAt` is a number but NaN serialises to JSON `null`, so this also
+    // exercises the non-number arm; use a string to force the typeof guard.
+    const token = signArbitraryPayload(
+      { bookingId: BOOKING_ID, expiresAt: 'soon' },
+      SECRET,
+    )
+    expect(verifyCheckInToken(token, SECRET, NOW)).toEqual({
+      ok: false,
+      reason: 'malformed',
+    })
+  })
+
+  it('exposes a 24h default TTL used by the QR-minting call site', () => {
+    expect(DEFAULT_CHECKIN_TTL_MS).toBe(24 * 60 * 60 * 1000)
+  })
+
+  it('a token signed with DEFAULT_CHECKIN_TTL_MS past now verifies (mint-then-scan)', () => {
+    // Mirrors the confirmation page: sign with slotEnd + DEFAULT_CHECKIN_TTL_MS,
+    // then a staff scan inside that window verifies.
+    const token = signCheckInToken(
+      { bookingId: BOOKING_ID, expiresAt: NOW + DEFAULT_CHECKIN_TTL_MS },
+      SECRET,
+    )
+    const result = verifyCheckInToken(token, SECRET, NOW + 1_000)
+    expect(result.ok).toBe(true)
+    expect(ok(result).bookingId).toBe(BOOKING_ID)
   })
 })

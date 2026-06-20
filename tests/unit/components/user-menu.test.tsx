@@ -53,7 +53,9 @@ async function openMenu(): Promise<void> {
   // known item so the popup is fully mounted BEFORE the tests' synchronous
   // getByRole queries run — otherwise, under parallel-suite CPU pressure, a
   // sync query can race the mount and intermittently fail (cross-file flake).
-  await screen.findByRole('link', { name: 'Trip Groups' })
+  // Generous timeout: on a loaded 2-core CI runner the popup mount can exceed
+  // the 1s testing-library default, which was the source of the flake.
+  await screen.findByRole('link', { name: 'Trip Groups' }, { timeout: 8000 })
 }
 
 describe('UserMenu — Trip Groups entry (issue 03)', () => {

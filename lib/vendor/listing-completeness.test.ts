@@ -111,4 +111,31 @@ describe('computeListingCompleteness', () => {
       expect.arrayContaining(['shortDescription', 'longDescription']),
     )
   })
+
+  it('counts a positive NUMBER price (not just string) as filled', () => {
+    // Drizzle numeric columns usually arrive as strings, but the input type
+    // also permits raw numbers — exercise the number branch of hasPositivePrice.
+    const result = computeListingCompleteness({
+      ...FULL,
+      pricePerPerson_1_2: 2500,
+      pricePerPerson_3_5: 2200,
+      pricePerPerson_6_plus: 2000,
+    })
+    expect(result.percent).toBe(100)
+    expect(result.missing).not.toContain('pricePerPerson_1_2')
+  })
+
+  it('does not count a zero or negative NUMBER price as filled', () => {
+    const result = computeListingCompleteness({
+      ...FULL,
+      pricePerPerson_1_2: 0,
+      pricePerPerson_3_5: -1,
+      pricePerPerson_6_plus: 2000,
+    })
+    // The 0 and -1 numeric brackets drop out; only the 6+ bracket remains.
+    expect(result.missing).toEqual(
+      expect.arrayContaining(['pricePerPerson_1_2', 'pricePerPerson_3_5']),
+    )
+    expect(result.missing).not.toContain('pricePerPerson_6_plus')
+  })
 })

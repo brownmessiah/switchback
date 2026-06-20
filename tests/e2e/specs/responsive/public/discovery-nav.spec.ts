@@ -30,7 +30,10 @@ test.describe('mobile menu · minimal header (< sm)', () => {
     test.skip(width >= 640, 'menu is < sm only; desktop bar covers >= sm')
 
     await page.goto('/')
-    await page.getByRole('button', { name: 'Open menu' }).click()
+    // The mobile menu trigger is a <summary> with aria-label="Open menu"; a
+    // <summary> exposes role "generic" (not "button"), so target it by its
+    // accessible name rather than a role.
+    await page.getByLabel('Open menu').click()
 
     const nav = page.getByRole('navigation', { name: 'Mobile primary' })
     await expect(
@@ -54,7 +57,10 @@ test.describe('mobile menu · minimal header (< sm)', () => {
     test.skip(width >= 640, 'menu is < sm only; desktop bar covers >= sm')
 
     await page.goto('/')
-    await page.getByRole('button', { name: 'Open menu' }).click()
+    // The mobile menu trigger is a <summary> with aria-label="Open menu"; a
+    // <summary> exposes role "generic" (not "button"), so target it by its
+    // accessible name rather than a role.
+    await page.getByLabel('Open menu').click()
     const nav = page.getByRole('navigation', { name: 'Mobile primary' })
     const links = nav.getByRole('link')
     const count = await links.count()

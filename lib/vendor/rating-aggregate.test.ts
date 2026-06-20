@@ -156,3 +156,46 @@ describe('loadVendorRatingAggregate (issue 21, D0)', () => {
     expect(result!.ratingValue).toBe(5)
   })
 })
+
+/**
+ * Defensive-guard unit tests with a stub query builder. Postgres' `count(*)`
+ * always returns a row, so the "no row at all" path (`row` is undefined) is
+ * unreachable with a real DB — but the loader still guards it (`row?.count ??
+ * 0`, `row?.avg == null`). A tiny stub driver lets us prove that guard holds:
+ * a missing row must yield `null`, never a thrown error or a fabricated rating.
+ */
+describe('loadVendorRatingAggregate — defensive guards (stub driver)', () => {
+  /** Build a stub matching the `db.select(...).from(...).where(...)` chain,
+   *  resolving the awaited `where(...)` to the supplied rows. */
+  function stubDb(rows: unknown[]) {
+    const chain = {
+      from: () => chain,
+      where: () => Promise.resolve(rows),
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return { select: () => chain } as any
+  }
+
+  it('returns null when the aggregate query yields NO row (row is undefined)', async () => {
+    const result = await loadVendorRatingAggregate(stubDb([]), 'u_v')
+    expect(result).toBeNull()
+  })
+
+  it('returns null when the row exists but avg is null (count>0, avg null)', async () => {
+    // Exercises the second arm of `count === 0 || row?.avg == null` — a present
+    // row whose avg is null must still omit the aggregate (no fabricated rating).
+    const result = await loadVendorRatingAggregate(
+      stubDb([{ count: 3, avg: null }]),
+      'u_v',
+    )
+    expect(result).toBeNull()
+  })
+
+  it('returns the aggregate when the stub row carries a real avg + count', async () => {
+    const result = await loadVendorRatingAggregate(
+      stubDb([{ count: 2, avg: '4.25' }]),
+      'u_v',
+    )
+    expect(result).toEqual({ ratingValue: 4.3, ratingCount: 2 }) // round(4.25*10)/10
+  })
+})

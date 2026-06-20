@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { copyFileSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 import { resetDatabase } from './helpers/db-setup'
@@ -29,10 +29,20 @@ async function globalSetup() {
   console.log('[E2E] Database ready. Injecting sessions...')
   await injectSession('customer')
   await injectSession('vendor')
-  await injectSession('admin')
+  const adminStoragePath = await injectSession('admin')
   await injectSession('subadmin')
   await injectSession('vendor-onboarding')
   await injectSession('identity-vendor')
+
+  // The `responsive-phone-admin` / `responsive-tablet-admin` projects reference
+  // `admin-demo-storage.json` (playwright.config.ts), which is gitignored and so
+  // never exists in a fresh CI checkout. Without it those projects fail before a
+  // single request with an unreadable storageState. The session row injected for
+  // `admin` is a fully valid Admin session, so seed the demo storage state from
+  // it — the responsive-admin specs only need an authenticated Admin context.
+  const adminDemoStoragePath = resolve(__dirname, '.auth/admin-demo-storage.json')
+  copyFileSync(adminStoragePath, adminDemoStoragePath)
+
   console.log('[E2E] Sessions injected. Starting webServer...')
 }
 

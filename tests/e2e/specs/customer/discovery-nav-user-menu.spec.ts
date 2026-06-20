@@ -32,7 +32,14 @@ test.describe('User menu — Trip Groups (authenticated customer)', () => {
       .locator('button[aria-haspopup="menu"]')
       .last()
     await expect(trigger).toBeVisible()
-    await trigger.click()
+    // The first click can land before the Base UI menu's handler is hydrated,
+    // dropping the open; re-click until a menuitem actually appears.
+    await expect(async () => {
+      await trigger.click()
+      await expect(page.getByRole('menuitem', { name: 'Trip Groups' })).toBeVisible({
+        timeout: 3_000,
+      })
+    }).toPass({ timeout: 20_000 })
   }
 
   test('account menu surfaces "Trip Groups" → /community', async ({ page }) => {

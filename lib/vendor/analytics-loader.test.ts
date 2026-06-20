@@ -239,6 +239,36 @@ describe('shapeDailyBreakdown', () => {
     expect(result).toEqual([{ date: '2026-06-15', bookings: 1, revenue: 0 }])
   })
 
+  it('drops a row whose bookings count is null (coerced to 0 → filtered out)', () => {
+    // The DB GROUP BY never emits a null count, but the shaper defends against
+    // it: `Number(null ?? 0)` → 0 → dropped by the `bookings > 0` filter.
+    const result = shapeDailyBreakdown([
+      { date: '2026-06-15', bookings: 2, total: '10000.00' },
+      { date: '2026-06-14', bookings: null, total: '5000.00' },
+    ])
+
+    expect(result).toEqual([
+      { date: '2026-06-15', bookings: 2, revenue: 10000 },
+    ])
+  })
+
+  it('keeps a stable order for two rows on the same date (sort returns 0)', () => {
+    // Equal dates exercise the comparator's terminal `=== 0` arm. The two
+    // same-date rows must both survive (neither is dropped) and stay together.
+    const result = shapeDailyBreakdown([
+      { date: '2026-06-15', bookings: 2, total: '10000.00' },
+      { date: '2026-06-15', bookings: 3, total: '15000.00' },
+      { date: '2026-06-14', bookings: 1, total: '5000.00' },
+    ])
+
+    expect(result.map((r) => r.date)).toEqual([
+      '2026-06-15',
+      '2026-06-15',
+      '2026-06-14',
+    ])
+    expect(result).toHaveLength(3)
+  })
+
   it('returns an empty array for no rows', () => {
     expect(shapeDailyBreakdown([])).toEqual([])
   })

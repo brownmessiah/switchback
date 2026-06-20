@@ -660,6 +660,102 @@ describe('vendor booking actions (ADR-0003)', () => {
   // ownership the shop.
   // ═══════════════════════════════════════════════════════════════════
 
+  // ═══════════════════════════════════════════════════════════════════
+  // Defensive guards — data-integrity gaps that should never occur but are
+  // guarded anyway (a booking referencing a missing slot; a cancel whose
+  // vendor profile row has vanished). We force the gap with the FK triggers
+  // disabled (session_replication_role=replica) so the guard arm is exercised
+  // by REAL behaviour, not a mock.
+  // ═══════════════════════════════════════════════════════════════════
+
+  describe('defensive guards (data-integrity gaps)', () => {
+    it('mark-no-show throws BOOKING_NOT_FOUND when the slot row is missing', async () => {
+      const { bookingId } = await seedBooking({ state: 'confirmed', past: true })
+
+      // Re-point the booking at a slot that does not exist, bypassing the
+      // ON DELETE RESTRICT FK so the missing-slot guard (not the FK) is what
+      // rejects the action.
+      const ghostSlotId = '00000000-0000-0000-0000-0000000000ff'
+      await db.execute(sql`SET session_replication_role = replica`)
+      try {
+        await db
+          .update(bookings)
+          .set({ slotId: ghostSlotId })
+          .where(eq(bookings.id, bookingId))
+      } finally {
+        await db.execute(sql`SET session_replication_role = origin`)
+      }
+
+      await expect(executeMarkNoShow(db, bookingId, 'u_v')).rejects.toMatchObject({
+        code: 'BOOKING_NOT_FOUND',
+      })
+
+      // State unchanged — no transition past the missing-slot guard.
+      const [row] = await db
+        .select({ state: bookings.state })
+        .from(bookings)
+        .where(eq(bookings.id, bookingId))
+      expect(row?.state).toBe('confirmed')
+    })
+
+    it('vendor-cancel falls back to "0.00" SLA score when the vendor profile row is gone', async () => {
+      // A confirmed booking owned by u_v. Delete the vendor profile AFTER the
+      // ownership read would pass but the SLA read-back finds no row → the
+      // `vendorRow?.slaScore ?? '0.00'` nullish fallback fires.
+      const { bookingId } = await seedBooking({ state: 'confirmed', grossRupees: 2000 })
+
+      await db.execute(sql`SET session_replication_role = replica`)
+      try {
+        await db.delete(vendorProfiles).where(eq(vendorProfiles.userId, 'u_v'))
+      } finally {
+        await db.execute(sql`SET session_replication_role = origin`)
+      }
+
+      const result = await executeVendorCancel(db, bookingId, 'u_v', 'profile vanished')
+
+      // The action still completes; the missing profile yields the floor value.
+      expect(result.slaScoreAfter).toBe('0.00')
+      // And the refund still credits the customer (money path unaffected).
+      expect(result.refundAmountRupees).toBe(2000)
+      expect(await readRefundBalance('u_c')).toBe(2000)
+
+      // Re-seed the profile so later tests (which reset it) find a row.
+      await db.execute(sql`SET session_replication_role = replica`)
+      try {
+        await db.insert(vendorProfiles).values({
+          userId: 'u_v',
+          businessName: 'Test Adventures',
+          slug: 'test-adventures',
+          pan: 'ABCDE1234F',
+          commissionRate: '20.00',
+          responseTimeSlaScore: '100.00',
+          payoutMethod: 'upi',
+          payoutDestination: { vpa: 'vendor@upi' },
+        })
+      } finally {
+        await db.execute(sql`SET session_replication_role = origin`)
+      }
+    })
+
+    it('vendor-cancel on a zero-gross booking skips the wallet credit but still records the refund request', async () => {
+      // grossRupees=0 ⇒ the `grossRupees > 0` guard around creditRefundBalance
+      // is false; the refund_requests row is still written (audit completeness)
+      // but no wallet credit occurs.
+      const { bookingId } = await seedBooking({ state: 'confirmed', grossRupees: 0 })
+
+      const result = await executeVendorCancel(db, bookingId, 'u_v', 'free booking')
+      expect(result.refundAmountRupees).toBe(0)
+      // No wallet credit for the customer.
+      expect(await readRefundBalance('u_c')).toBe(0)
+      // But the refund_requests row exists for the audit trail.
+      const [reqRow] = await db
+        .select({ amount: refundRequests.amount })
+        .from(refundRequests)
+        .where(eq(refundRequests.id, result.refundRequestId))
+      expect(reqRow?.amount).toBe('0.00')
+    })
+  })
+
   describe('two-id audit split (issue #11 §5)', () => {
     it('mark-complete: actorUserId records the acting member, ownership keys on the shop', async () => {
       const { bookingId } = await seedBooking({ state: 'awaiting_completion' })

@@ -158,18 +158,19 @@ test.describe('Cross-surface: review photo → admin moderation → PDP render @
     ).toHaveCount(0)
 
     // ── Admin (UI): approve the pending photo in the moderation queue ─────
-    await page.goto('/admin/reviews')
+    await page.goto('/admin/reviews', { waitUntil: 'networkidle' })
     const queueItem = page
       .getByTestId('review-photo-queue-item')
       .filter({ has: page.locator(`[data-photo-id="${photoId}"]`) })
       .or(page.locator(`[data-photo-id="${photoId}"]`))
     await expect(queueItem.first()).toBeVisible()
-    await queueItem.first().getByTestId('review-photo-approve').click()
 
-    // ── Side effect: status → approved ───────────────────────────────────
-    await expect
-      .poll(async () => photoStatus(photoId), { timeout: 15_000 })
-      .toBe('approved')
+    // Re-click Approve until the status flips — the first click can land before
+    // the button's onClick is hydrated, dropping the action.
+    await expect(async () => {
+      await queueItem.first().getByTestId('review-photo-approve').click()
+      expect(await photoStatus(photoId)).toBe('approved')
+    }).toPass({ timeout: 30_000 })
 
     // ── Render: the approved photo now appears on the public PDP ─────────
     await page.goto(`/experience/${RAFTING_SLUG}`)
@@ -190,14 +191,17 @@ test.describe('Cross-surface: review photo → admin moderation → PDP render @
   }) => {
     const { photoId } = await seedPendingReviewPhoto()
 
-    await page.goto('/admin/reviews')
+    await page.goto('/admin/reviews', { waitUntil: 'networkidle' })
     const queueItem = page.locator(`[data-photo-id="${photoId}"]`)
     await expect(queueItem.first()).toBeVisible()
-    await queueItem.first().getByTestId('review-photo-reject').click()
 
-    await expect
-      .poll(async () => photoStatus(photoId), { timeout: 15_000 })
-      .toBe('rejected')
+    // Re-click Reject until the status actually flips — the first click can land
+    // before the button's onClick is hydrated, dropping the action and leaving
+    // the photo 'pending'.
+    await expect(async () => {
+      await queueItem.first().getByTestId('review-photo-reject').click()
+      expect(await photoStatus(photoId)).toBe('rejected')
+    }).toPass({ timeout: 30_000 })
 
     await page.goto(`/experience/${RAFTING_SLUG}`)
     await expect(

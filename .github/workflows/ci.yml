@@ -74,7 +74,31 @@ jobs:
   e2e:
     name: Playwright E2E
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # The full 374-test suite runs serially (workers: 1 under CI) against an
+    # on-demand-compiling Next dev server, with up to 2 retries per test — well
+    # over the previous 15-minute budget once the dev server is actually live.
+    timeout-minutes: 40
+    # The E2E harness manages its own database: global-setup connects to the
+    # `postgres` maintenance DB (derived from DATABASE_URL), drops/recreates
+    # `outvers_e2e`, runs `drizzle-kit push`, and seeds it. The Next dev server
+    # (`pnpm dev`, started by Playwright's webServer) inherits this job's
+    # DATABASE_URL and serves the same `outvers_e2e` DB. So DATABASE_URL must
+    # point at `outvers_e2e`: maintenance ops resolve to `/postgres`, push/seed
+    # and the dev server resolve to `/outvers_e2e`. All three stay aligned.
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v5
@@ -90,9 +114,26 @@ jobs:
       - run: pnpm e2e
         env:
           CI: 'true'
-          DATABASE_URL: postgres://ci:ci@localhost:5432/ci
+          # Headroom for the on-demand-compiling Next dev server on a 7GB runner;
+          # a cold dev server compiling 45 routes while serving the suite can
+          # otherwise OOM/stall and start refusing connections mid-run.
+          NODE_OPTIONS: --max-old-space-size=4096
+          # Point at outvers_e2e: the harness swaps the db name to `postgres`
+          # for DROP/CREATE, and push/seed + the dev server use outvers_e2e.
+          DATABASE_URL: postgres://ci:ci@localhost:5432/outvers_e2e
           BETTER_AUTH_SECRET: ci-only-ci-only-ci-only-ci-only-ci
           NEXT_PUBLIC_APP_URL: http://localhost:3000
+          # Deterministic Razorpay / Razorpay X demo stub (lib/payments) — the
+          # payout-batch + provisioning + webhook specs run against fake responses
+          # (pout_demo_/fa_demo_ ids, signature bypass). Test-only constants; no
+          # real money path. Without these the dev server can't run the money loop.
+          RAZORPAY_TEST_MODE: 'true'
+          # The payout-batch cron route is env-gated OFF (404) unless RUN_CRON_ROUTES
+          # is 'true'; the spec drives it via Bearer CRON_SECRET. Test-only values
+          # that MUST match tests/e2e/specs/admin/payout-batch-loop.spec.ts.
+          RUN_CRON_ROUTES: 'true'
+          CRON_SECRET: e2e-cron-secret
+          RAZORPAYX_WEBHOOK_SECRET: e2e-razorpayx-webhook-secret
       - uses: actions/upload-artifact@v5
         if: always()
         with:
@@ -100,22 +141,15 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-  # Auto-deploy to Cloud Run on merge to main (ADR-0019). Gated behind the
-  # deterministic, infra-free jobs (lint/typecheck/unit). The Playwright e2e job
-  # needs a live DB it doesn't provision in CI, so the REAL end-to-end gate is the
-  # live-URL validation against the deployed app (#15) — per the ADR, "infra/CI are
-  # proven by the live E2E loop". Safety net: tagged --no-traffic → smoke → shift,
-  # so a bad revision never serves. Rollback (no rebuild):
+  # Auto-deploy to Cloud Run on merge to main (ADR-0019), gated behind the FULL CI
+  # suite: lint + typecheck + unit (with the 90% money-path coverage gate) + e2e.
+  # Safety net: tagged --no-traffic → smoke → shift, so a bad revision never
+  # serves. Rollback (no rebuild):
   #   gcloud run services update-traffic outvers-web --region asia-south1 \
   #     --to-revisions PREVIOUS_REVISION=100
   deploy:
     name: Deploy (Cloud Run)
-    # Gate on lint + typecheck (both green) + a tests-pass step below. NOT on the
-    # coverage-enforcing `unit` job: it carries PRE-EXISTING money-path branch
-    # debt (lib/bookings 81.9%, lib/vendor 88.7% vs the 90% bar) unrelated to this
-    # change — kept as a quality signal, but a quality threshold shouldn't block a
-    # green-tests deploy. The live-URL E2E (#15) is the real end-to-end gate.
-    needs: [lint, typecheck]
+    needs: [lint, typecheck, unit, e2e]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -132,21 +166,6 @@ jobs:
       SQL_INSTANCE: outvers-pg
     steps:
       - uses: actions/checkout@v5
-
-      # Tests-pass gate (no coverage thresholds) — a red suite never deploys.
-      - uses: pnpm/action-setup@v5
-        with:
-          version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v5
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm test
-        env:
-          DATABASE_URL: postgres://ci:ci@localhost:5432/ci
-          BETTER_AUTH_SECRET: ci-only-ci-only-ci-only-ci-only-ci
-          NEXT_PUBLIC_APP_URL: http://localhost:3000
 
       - id: auth
         uses: google-github-actions/auth@v2

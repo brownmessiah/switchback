@@ -1,0 +1,11 @@
+# Local provider plugins + cache
+.terraform/
+# Any local state (we use the GCS backend, but never commit state)
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+# Local var overrides (none should hold secrets, but be safe)
+*.auto.tfvars
+override.tf
+override.tf.json

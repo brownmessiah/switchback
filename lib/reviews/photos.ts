@@ -29,7 +29,7 @@ import { reviews } from '@/db/schema/reviews'
 import { auth } from '@/lib/auth'
 import type { DBOrTx } from '@/lib/media/experience-images'
 import type { StorageAdapter } from '@/lib/storage/adapter'
-import { LocalFileAdapter } from '@/lib/storage/local'
+import { getStorageAdapter } from '@/lib/storage/factory'
 
 const attachReviewPhotoSchema = z.object({
   reviewId: z.string().uuid('Invalid review ID.'),
@@ -220,7 +220,7 @@ export async function uploadReviewPhotoAction(
   }
 
   return executeUploadReviewPhoto(
-    { db: prodDb, userId: session.user.id, adapter: new LocalFileAdapter() },
+    { db: prodDb, userId: session.user.id, adapter: getStorageAdapter() },
     formData,
   )
 }
@@ -279,7 +279,7 @@ export async function deleteReviewPhotoAction(
   }
 
   return executeDeleteReviewPhoto(
-    { db: prodDb, userId: session.user.id, adapter: new LocalFileAdapter() },
+    { db: prodDb, userId: session.user.id, adapter: getStorageAdapter() },
     photoId,
   )
 }

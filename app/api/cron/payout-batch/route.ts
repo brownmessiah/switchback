@@ -34,6 +34,12 @@ function safeCompare(a: string, b: string): boolean {
  * so the Vercel cron logs are informative for ops triage.
  */
 export async function POST(): Promise<NextResponse> {
+  // ADR-0019 — env-gated OFF on the public web service (404). Only the private
+  // cron service sets RUN_CRON_ROUTES=true; CRON_SECRET below is defense-in-depth.
+  if (env.RUN_CRON_ROUTES !== 'true') {
+    return NextResponse.json({ error: 'not found' }, { status: 404 })
+  }
+
   const secret = env.CRON_SECRET
   if (!secret) {
     return NextResponse.json(

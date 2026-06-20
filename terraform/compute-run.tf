@@ -195,8 +195,11 @@ resource "google_cloud_run_v2_job" "migrate" {
         egress = "PRIVATE_RANGES_ONLY"
       }
       containers {
-        image   = var.placeholder_image
-        command = ["migrate.cjs"]
+        image = var.placeholder_image
+        # args (NOT command): keep the distroless `node` ENTRYPOINT and pass the
+        # bundled runner as its arg → `node migrate.cjs`. Cloud Run v2 `command`
+        # REPLACES the entrypoint, which would try to exec the non-executable .cjs.
+        args = ["migrate.cjs"]
         resources {
           limits = {
             cpu    = "1"

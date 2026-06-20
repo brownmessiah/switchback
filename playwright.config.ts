@@ -26,6 +26,10 @@ export default defineConfig({
   webServer: process.env.E2E_SKIP_SETUP
     ? undefined
     : {
+        // `pnpm dev` (NOT a prebuilt server): the suite relies on dev/test-only
+        // simulation hooks (?simulateAvailabilityError, the Razorpay checkout
+        // mock, payout-provisioning hooks) that are intentionally absent from a
+        // production build, so it must run against the dev server.
         command: 'pnpm dev',
         // Readiness check on the DB-INDEPENDENT shallow healthz (process-up, no
         // SELECT) — NOT the home page. The home page 500s until global-setup

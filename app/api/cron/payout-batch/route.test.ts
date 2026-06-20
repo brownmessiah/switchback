@@ -17,6 +17,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const headersMock = vi.fn()
 const processPayoutBatchMock = vi.fn()
 let cronSecret: string | undefined
+let runCronRoutes: string | undefined
 
 vi.mock('next/headers', () => ({
   headers: () => headersMock(),
@@ -26,7 +27,7 @@ vi.mock('@/db/client', () => ({ db: {} }))
 
 vi.mock('@/lib/env', () => ({
   get env() {
-    return { CRON_SECRET: cronSecret }
+    return { CRON_SECRET: cronSecret, RUN_CRON_ROUTES: runCronRoutes }
   },
 }))
 
@@ -41,12 +42,22 @@ function headersWith(authorization: string | null): { get: (k: string) => string
 describe('POST /api/cron/payout-batch (auth contract)', () => {
   beforeEach(() => {
     cronSecret = 'top-secret'
+    runCronRoutes = 'true'
     headersMock.mockReset()
     processPayoutBatchMock.mockReset()
   })
 
   afterEach(() => {
     vi.resetModules()
+  })
+
+  it('returns 404 when RUN_CRON_ROUTES is not enabled (public surface)', async () => {
+    runCronRoutes = undefined
+    headersMock.mockResolvedValue(headersWith('Bearer top-secret'))
+    const { POST } = await import('./route')
+    const res = await POST()
+    expect(res.status).toBe(404)
+    expect(processPayoutBatchMock).not.toHaveBeenCalled()
   })
 
   it('returns 500 when CRON_SECRET is not configured', async () => {

@@ -44,6 +44,12 @@ const schema = z.object({
 
   // ===== Cron auth (M2) =====
   CRON_SECRET: z.string().optional(),
+  /**
+   * ADR-0019: gates the /api/cron/* handlers. Set to 'true' ONLY on the private
+   * cron Cloud Run service; unset on the public web service so cron endpoints
+   * 404 there (absent from the public surface).
+   */
+  RUN_CRON_ROUTES: z.enum(['true', 'false']).optional(),
 
   // ===== Real-time (M3) =====
   PUSHER_APP_ID: z.string().optional(),

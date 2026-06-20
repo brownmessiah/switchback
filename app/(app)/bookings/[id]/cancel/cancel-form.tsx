@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -75,12 +76,12 @@ export function CancelForm({ bookingId, cancellationPreset }: CancelFormProps) {
             </p>
           </>
         )}
-        <a
+        <Link
           href="/dashboard"
           className="mt-4 inline-block text-sm font-medium text-primary underline-offset-4 hover:underline"
         >
           Back to my bookings
-        </a>
+        </Link>
       </div>
     )
   }

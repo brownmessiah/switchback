@@ -78,6 +78,11 @@ export default defineConfig({
         // by the unit suite. Including it would gate the money path on
         // covering fixture-construction branches.
         'db/seed.ts',
+        // Migration runner ENTRYPOINT (composition root): opens a postgres.js
+        // connection + calls runMigrations (which IS unit-tested in
+        // db/migrate/runner.test.ts). Like db/seed.ts, it's dev/ops tooling
+        // exercised live (the Cloud Run migrate Job), not by the unit suite.
+        'db/migrate/run.ts',
         // Pusher + Sentry are thin SDK init wrappers. M3 (real-time
         // chat) and Sentry-backed error paths get covered when the
         // calling feature lands.

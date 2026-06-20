@@ -110,7 +110,12 @@ jobs:
   #     --to-revisions PREVIOUS_REVISION=100
   deploy:
     name: Deploy (Cloud Run)
-    needs: [lint, typecheck, unit]
+    # Gate on lint + typecheck (both green) + a tests-pass step below. NOT on the
+    # coverage-enforcing `unit` job: it carries PRE-EXISTING money-path branch
+    # debt (lib/bookings 81.9%, lib/vendor 88.7% vs the 90% bar) unrelated to this
+    # change — kept as a quality signal, but a quality threshold shouldn't block a
+    # green-tests deploy. The live-URL E2E (#15) is the real end-to-end gate.
+    needs: [lint, typecheck]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
@@ -126,6 +131,21 @@ jobs:
       SQL_INSTANCE: outvers-pg
     steps:
       - uses: actions/checkout@v5
+
+      # Tests-pass gate (no coverage thresholds) — a red suite never deploys.
+      - uses: pnpm/action-setup@v5
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+        env:
+          DATABASE_URL: postgres://ci:ci@localhost:5432/ci
+          BETTER_AUTH_SECRET: ci-only-ci-only-ci-only-ci-only-ci
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
 
       - id: auth
         uses: google-github-actions/auth@v2

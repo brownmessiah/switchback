@@ -133,20 +133,20 @@ TODO_FOR_SHIVAM.md    Operational items (Aadhaar API, MSG91 templates, etc.)
 | Framework | Next.js 16.2 (App Router, Turbopack) |
 | Language | TypeScript 5.9, strict mode |
 | Styling | Tailwind v4 + shadcn/ui |
-| DB | Postgres (Neon, ap-south-1 Mumbai) |
+| DB | Postgres (Cloud SQL PG16, asia-south1 Mumbai) |
 | ORM | Drizzle ORM 0.45 + drizzle-kit |
 | Auth | better-auth 1.6 (Drizzle adapter) + Google OAuth + MSG91 phone OTP |
 | Payments | Razorpay (UPI, cards, EMI) — wired in M2 |
 | Real-time | Pusher Channels |
-| Search | Meilisearch (managed) |
-| AI | OpenAI via Vercel AI SDK |
+| Search | Postgres-native (FTS + pg_trgm) — see ADR-0013 amendment |
+| AI | OpenAI / Anthropic via the AI SDK |
 | Maps | Mapbox |
 | Email | Resend + React Email |
-| Object storage | Cloudflare R2 (S3-compatible) |
-| Observability | Sentry + PostHog + Vercel Analytics |
+| Object storage | Google Cloud Storage |
+| Observability | Sentry + PostHog |
 | Testing | Vitest + @electric-sql/pglite + Playwright |
-| CI | GitHub Actions |
-| Deploy | Vercel |
+| CI/CD | GitHub Actions + Workload Identity Federation |
+| Deploy | GCP — Cloud Run + Cloud SQL + GCS (see ADR-0019) |
 
 ---
 

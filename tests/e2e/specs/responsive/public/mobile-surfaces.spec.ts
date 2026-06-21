@@ -40,6 +40,17 @@ test.describe('responsive · public surfaces (< lg)', () => {
       page.getByRole('region', { name: 'Adventure you can trust' }),
     ).toBeVisible()
     await expect(page.getByTestId('trust-card')).toHaveCount(4)
+
+    // Cut info density on phones: the verbose per-item descriptions are hidden
+    // below sm (icon + title only) and reveal at sm+ (tablet/desktop). The phone
+    // project (375) asserts hidden; the tablet project (768) asserts visible.
+    const firstBody = page.getByTestId('trust-card-body').first()
+    if ((page.viewportSize()?.width ?? 0) < 640) {
+      await expect(firstBody).toBeHidden()
+    } else {
+      await expect(firstBody).toBeVisible()
+    }
+
     await expect(
       page.getByRole('region', { name: 'How Outvers works' }),
     ).toBeVisible()

@@ -87,7 +87,12 @@ export function HomeTrust(): ReactElement {
             </span>
             <div className="min-w-0">
               <h3 className="text-sm font-semibold leading-tight">{title}</h3>
-              <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+              {/* Mobile shows a compact strip (icon + title only); the verbose
+                  description is hidden < sm to cut info density, revealed sm+. */}
+              <p
+                data-testid="trust-card-body"
+                className="hidden text-xs text-muted-foreground sm:mt-0.5 sm:line-clamp-2 sm:block"
+              >
                 {body}
               </p>
             </div>

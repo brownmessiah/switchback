@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "baseUrl": "..",
+    "paths": {
+      "@/db/client": [".design-sync/shims/db-client.ts"],
+      "@/app/(app)/wishlist/actions": [".design-sync/shims/wishlist-actions.ts"],
+      "@/lib/i18n/provider": [".design-sync/shims/i18n-provider.tsx"],
+      "next/image": [".design-sync/shims/next-image.tsx"],
+      "next/link": [".design-sync/shims/next-link.tsx"],
+      "next/navigation": [".design-sync/shims/next-navigation.ts"],
+      "next-intl": [".design-sync/shims/next-intl.tsx"],
+      "server-only": [".design-sync/shims/empty.ts"],
+      "postgres": [".design-sync/shims/empty.ts"],
+      "@/*": ["./*"]
+    }
+  }
+}

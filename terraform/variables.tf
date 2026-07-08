@@ -52,7 +52,8 @@ variable "placeholder_image" {
 # to https://outvers.com at the domain step (#16).
 variable "app_url" {
   type = string
-  # First deploy: the assigned Cloud Run web URL (pre-DNS validation runs here).
-  # Flips to https://outvers.com at the domain step (#16).
-  default = "https://outvers-web-vcmczhad2a-el.a.run.app"
+  # Domain step (#16) complete: DNS (GoDaddy apex + www) points at the LB and the
+  # managed cert serves TLS for outvers.com, so the app is addressed by its real
+  # domain. Baked into the client bundle (build-arg) + set as runtime NEXT_PUBLIC_APP_URL.
+  default = "https://outvers.com"
 }

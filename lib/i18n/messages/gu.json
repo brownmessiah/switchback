@@ -6,9 +6,18 @@
       "searchLabel": "અનુભવો શોધો",
       "searchPlaceholder": "\"રાફ્ટિંગ ઋષિકેશ\" અથવા \"સ્કૂબા ગોવા\" અજમાવો",
       "searchButton": "શોધો",
-      "brandLine": "તમે જીવવા માગો છો તે દ્રશ્ય બુક કરો.",
       "exploreCta": "અનુભવો જુઓ",
       "listCta": "તમારો અનુભવ સૂચિબદ્ધ કરો"
+    },
+    "featureCarousel": {
+      "label": "Outvers પર શા માટે બુક કરવું",
+      "dotLabel": "હાઇલાઇટ {number} પર જાઓ",
+      "items": {
+        "verified": "ચકાસાયેલ અનુભવો બુક કરો",
+        "flexible": "લવચીક રહો",
+        "cancellation": "નીતિની અંદર લવચીક રદ્દીકરણ",
+        "explore": "તમારી આસપાસના શ્રેષ્ઠ અનુભવો જુઓ"
+      }
     },
     "trustBadges": {
       "freeCancellation": "લવચીક રદ કરણ",

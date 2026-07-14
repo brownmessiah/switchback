@@ -8,6 +8,7 @@ import { ChevronDown, MapPin } from 'lucide-react'
 import { ExperienceCard } from '@/components/experience-card'
 import { loadRecentlyViewedCardsAction } from '@/components/recently-viewed/actions'
 import { RecentlyViewedRail } from '@/components/recently-viewed/rail'
+import { HomeFeatureCarousel } from '@/components/home/feature-carousel'
 import { HeroRotator } from '@/components/home/hero-rotator'
 import { HomeHeroSearch } from '@/components/home/hero-search'
 import { HomeHowItWorks } from '@/components/home/how-it-works'
@@ -121,13 +122,6 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
               category chip rows are gone (judged clutter in the owner's
               screenshot pass, 2026-06-11). */}
           <HomeHeroSearch />
-
-          {/* Secondary emotional brand line — kept from the original hero, now
-              a smaller line below the search (a paragraph, not the page
-              heading). */}
-          <p className="mt-5 text-sm font-medium text-white/80 [text-shadow:0_1px_2px_rgb(0_0_0/0.6)] sm:text-base">
-            {t('hero.brandLine')}
-          </p>
         </div>
 
         {/* Scroll indicator */}
@@ -135,6 +129,11 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
           <ChevronDown className="size-6 text-white/70" aria-hidden="true" />
         </div>
       </section>
+
+      {/* FEATURE CAROUSEL (issue 05 / CR8) — swipeable marketplace-promise
+          pills; replaced the hero brand line. Documented ADR-0018
+          horizontal-scroll exception (snap track inside the section only). */}
+      <HomeFeatureCarousel />
 
       {/* DESTINATIONS — decision-complete tiles with activity counts */}
       <section

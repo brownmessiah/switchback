@@ -119,15 +119,41 @@ test.describe('Home page', () => {
     await expect(seoH2).toContainText('rafting')
   })
 
-  test('secondary brand line is present but not the H1', async ({ page }) => {
+  // Issue 05 (CR8): the feature carousel replaced the brand line.
+  test('feature carousel renders below the hero; the brand line is gone', async ({
+    page,
+  }) => {
+    // Freeze autoplay so aria-current assertions can't race the 5s timer
+    // (this also exercises the reduced-motion branch end-to-end).
+    await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto('/')
 
-    const brandLine = page.getByText('Book the scene you want to live.', {
-      exact: false,
-    })
-    await expect(brandLine.first()).toBeVisible()
-    // The brand line must not be wrapped in (or equal to) the page H1.
-    await expect(page.locator('h1', { hasText: 'Book the scene' })).toHaveCount(0)
+    await expect(page.getByText('Book the scene you want to live.')).toHaveCount(0)
+
+    const carousel = page.getByRole('region', { name: 'Why book on Outvers' })
+    await expect(carousel).toBeVisible()
+    await expect(carousel.getByTestId('feature-card')).toHaveCount(4)
+    const dots = carousel.getByTestId('feature-carousel-dot')
+    await expect(dots).toHaveCount(4)
+    await expect(dots.first()).toHaveAttribute('aria-current', 'true')
+
+    // Copy honesty (D7): the softened cancellation pill, never "anytime".
+    await expect(
+      carousel.getByText('Flexible cancellation, within policy'),
+    ).toBeAttached()
+    await expect(page.getByText(/cancel or modify anytime/i)).toHaveCount(0)
+
+    // Dot navigation works in a real browser (jsdom cannot lay out the snap
+    // track): click the last dot, the selection settles there and exactly
+    // one dot stays current.
+    await dots.nth(3).click()
+    await expect(dots.nth(3)).toHaveAttribute('aria-current', 'true')
+    await expect(
+      carousel.locator('[data-testid="feature-carousel-dot"][aria-current="true"]'),
+    ).toHaveCount(1)
+    await expect(
+      carousel.getByText('Explore best experiences around you'),
+    ).toBeInViewport()
   })
 
   // Issue 08: two new trust sections render as crawlable, labelled <section>

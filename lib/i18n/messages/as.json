@@ -6,9 +6,18 @@
       "searchLabel": "অভিজ্ঞতা সন্ধান কৰক",
       "searchPlaceholder": "\"ৰাফ্টিং ঋষিকেশ\" বা \"স্কুবা গোৱা\" চেষ্টা কৰক",
       "searchButton": "সন্ধান কৰক",
-      "brandLine": "আপুনি জীয়াই থাকিব বিচৰা দৃশ্য বুক কৰক।",
       "exploreCta": "অভিজ্ঞতা চাওক",
       "listCta": "আপোনাৰ অভিজ্ঞতা তালিকাভুক্ত কৰক"
+    },
+    "featureCarousel": {
+      "label": "Outvers-ত কিয় বুক কৰিব",
+      "dotLabel": "হাইলাইট {number}লৈ যাওক",
+      "items": {
+        "verified": "সত্যাপিত অভিজ্ঞতা বুক কৰক",
+        "flexible": "নমনীয় হৈ থাকক",
+        "cancellation": "নীতিৰ ভিতৰত নমনীয় বাতিলকৰণ",
+        "explore": "আপোনাৰ আশে-পাশে থকা শ্ৰেষ্ঠ অভিজ্ঞতা চাওক"
+      }
     },
     "trustBadges": {
       "freeCancellation": "নমনীয় বাতিলকৰণ",

@@ -6,9 +6,18 @@
       "searchLabel": "অভিজ্ঞতা খুঁজুন",
       "searchPlaceholder": "\"র‍্যাফটিং ঋষিকেশ\" বা \"স্কুবা গোয়া\" চেষ্টা করুন",
       "searchButton": "খুঁজুন",
-      "brandLine": "যে দৃশ্য বাঁচতে চাও সেটা বুক করো।",
       "exploreCta": "অভিজ্ঞতা দেখুন",
       "listCta": "আপনার অভিজ্ঞতা তালিকাভুক্ত করুন"
+    },
+    "featureCarousel": {
+      "label": "Outvers-এ কেন বুক করবেন",
+      "dotLabel": "হাইলাইট {number}-এ যান",
+      "items": {
+        "verified": "যাচাইকৃত অভিজ্ঞতা বুক করুন",
+        "flexible": "নমনীয় থাকুন",
+        "cancellation": "নীতির মধ্যে নমনীয় বাতিলকরণ",
+        "explore": "আপনার আশেপাশের সেরা অভিজ্ঞতা দেখুন"
+      }
     },
     "trustBadges": {
       "freeCancellation": "নমনীয় বাতিলকরণ",

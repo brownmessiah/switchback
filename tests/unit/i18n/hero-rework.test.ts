@@ -35,7 +35,6 @@ const PAGE_PATH = resolve(ROOT, 'app/[locale]/(marketing)/page.tsx')
 const MESSAGES_GLOB = 'lib/i18n/messages/*.json'
 
 const NEW_H1 = 'Book best experiences around you'
-const BRAND_LINE = 'Book the scene you'
 const FLAGSHIP_ACTIVITIES = ['rafting', 'paragliding', 'scuba', 'trekking']
 
 function get(obj: Record<string, unknown>, dotted: string): unknown {
@@ -71,10 +70,8 @@ describe('hero copy contract (en.json)', () => {
     expect(get(en, 'HomePage.hero.subtitle')).toBeUndefined()
   })
 
-  it('hero.brandLine survives as the secondary emotional line (until issue 05)', () => {
-    const brand = get(en, 'HomePage.hero.brandLine')
-    expect(typeof brand).toBe('string')
-    expect(brand as string).toContain(BRAND_LINE)
+  it('hero.brandLine is removed (issue 05: the feature carousel replaced it)', () => {
+    expect(get(en, 'HomePage.hero.brandLine')).toBeUndefined()
   })
 
   it('hero.seoSubheading carries the keywords the H1/subtitle dropped (D4)', () => {
@@ -129,10 +126,8 @@ describe('hero route wiring (page.tsx)', () => {
     expect(h2Block?.[0]).toContain("t('hero.seoSubheading')")
   })
 
-  it('renders the brand line via hero.brandLine outside any <h1>', () => {
-    expect(source).toContain("t('hero.brandLine')")
-    const h1Block = source.match(/<h1[\s\S]*?<\/h1>/)
-    expect(h1Block?.[0]).not.toContain("t('hero.brandLine')")
+  it('no longer renders the brand line (issue 05: carousel replaced it)', () => {
+    expect(source).not.toContain("t('hero.brandLine')")
   })
 
   it('the Organization JSON-LD description stays keyword-bearing (D4)', () => {
@@ -166,10 +161,9 @@ describe('hero route wiring (page.tsx)', () => {
 
 describe('hero locale parity', () => {
   for (const { locale, json } of localeFiles()) {
-    it(`${locale}.json carries hero.title, brandLine, seoSubheading, exploreCta, listCta`, () => {
+    it(`${locale}.json carries hero.title, seoSubheading, exploreCta, listCta`, () => {
       for (const key of [
         'HomePage.hero.title',
-        'HomePage.hero.brandLine',
         'HomePage.hero.seoSubheading',
         'HomePage.hero.exploreCta',
         'HomePage.hero.listCta',
@@ -180,8 +174,9 @@ describe('hero locale parity', () => {
       }
     })
 
-    it(`${locale}.json no longer carries the removed hero.subtitle`, () => {
+    it(`${locale}.json no longer carries the removed hero.subtitle or hero.brandLine`, () => {
       expect(get(json, 'HomePage.hero.subtitle'), `${locale} still has hero.subtitle`).toBeUndefined()
+      expect(get(json, 'HomePage.hero.brandLine'), `${locale} still has hero.brandLine`).toBeUndefined()
     })
 
     it(`${locale}.json hero copy never says "operator"`, () => {

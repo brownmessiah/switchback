@@ -46,3 +46,14 @@ This clears the three-part ADR test: **hard to reverse** (encoded across 45 rout
 ## Cross-references
 
 - **ADR-0012 (Multi-locale strategy)** — the tier-2/3 mobile-first audience that makes the 44px touch-target floor an accessibility requirement, not a polish item.
+
+## Amendment — homepage feature carousel (home-redesign issue 05, 2026-07-14)
+
+A3's "no horizontal scroll" rule gains one **intentional, documented
+exception**: the homepage feature carousel (`components/home/
+feature-carousel.tsx`, CR8). It is a snap-locked, one-card-per-view
+scroll-snap track — swipe is the *primary* gesture, not an overflow
+accident; dots + autoplay make every card reachable without scrolling at
+all; and the track is confined to its own `<section>` (the page body still
+never scrolls horizontally, which is what A3 actually protects). Reviewers
+must not "fix" this track into a stacked list.

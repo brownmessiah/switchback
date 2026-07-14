@@ -3,12 +3,21 @@
     "hero": {
       "title": "Book best experiences around you",
       "seoSubheading": "Verified adventure experiences across India — rafting, paragliding, scuba, and trekking.",
-      "brandLine": "Book the scene you want to live.",
       "exploreCta": "Explore Experiences",
       "listCta": "List Your Experience",
       "searchLabel": "Search experiences",
       "searchPlaceholder": "Try \"rafting Rishikesh\" or \"scuba Goa\"",
       "searchButton": "Search"
+    },
+    "featureCarousel": {
+      "label": "Why book on Outvers",
+      "dotLabel": "Go to highlight {number}",
+      "items": {
+        "verified": "Book verified experiences",
+        "flexible": "Stay flexible",
+        "cancellation": "Flexible cancellation, within policy",
+        "explore": "Explore best experiences around you"
+      }
     },
     "trustBadges": {
       "freeCancellation": "Flexible cancellation",

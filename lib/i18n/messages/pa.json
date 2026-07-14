@@ -6,9 +6,18 @@
       "searchLabel": "ਅਨੁਭਵ ਖੋਜੋ",
       "searchPlaceholder": "\"ਰਾਫਟਿੰਗ ਰਿਸ਼ੀਕੇਸ਼\" ਜਾਂ \"ਸਕੂਬਾ ਗੋਆ\" ਅਜ਼ਮਾਓ",
       "searchButton": "ਖੋਜੋ",
-      "brandLine": "ਉਹ ਦ੍ਰਿਸ਼ ਬੁੱਕ ਕਰੋ ਜੋ ਤੁਸੀਂ ਜਿਊਣਾ ਚਾਹੁੰਦੇ ਹੋ.",
       "exploreCta": "ਅਨੁਭਵ ਵੇਖੋ",
       "listCta": "ਆਪਣਾ ਅਨੁਭਵ ਸੂਚੀਬੱਧ ਕਰੋ"
+    },
+    "featureCarousel": {
+      "label": "Outvers 'ਤੇ ਬੁੱਕ ਕਰਨ ਦੇ ਕਾਰਨ",
+      "dotLabel": "ਹਾਈਲਾਈਟ {number} 'ਤੇ ਜਾਓ",
+      "items": {
+        "verified": "ਪ੍ਰਮਾਣਿਤ ਅਨੁਭਵ ਬੁੱਕ ਕਰੋ",
+        "flexible": "ਲਚਕਦਾਰ ਰਹੋ",
+        "cancellation": "ਨੀਤੀ ਦੇ ਅੰਦਰ ਲਚਕਦਾਰ ਰੱਦਕਰਨ",
+        "explore": "ਆਪਣੇ ਆਲੇ-ਦੁਆਲੇ ਦੇ ਵਧੀਆ ਅਨੁਭਵ ਦੇਖੋ"
+      }
     },
     "trustBadges": {
       "freeCancellation": "ਲਚਕਦਾਰ ਰੱਦ ਕਰਨਾ",

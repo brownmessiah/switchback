@@ -6,9 +6,18 @@
       "searchLabel": "अनुभव खोजें",
       "searchPlaceholder": "\"राफ्टिंग ऋषिकेश\" या \"स्कूबा गोवा\" आज़माएँ",
       "searchButton": "खोजें",
-      "brandLine": "वो नज़ारा बुक करो जो जीना चाहते हो।",
       "exploreCta": "अनुभव देखें",
       "listCta": "अपना अनुभव सूचीबद्ध करें"
+    },
+    "featureCarousel": {
+      "label": "Outvers पर बुक करने की वजहें",
+      "dotLabel": "हाइलाइट {number} पर जाएँ",
+      "items": {
+        "verified": "सत्यापित अनुभव बुक करें",
+        "flexible": "लचीले रहें",
+        "cancellation": "पॉलिसी के भीतर लचीला कैंसिलेशन",
+        "explore": "अपने आस-पास के बेहतरीन अनुभव देखें"
+      }
     },
     "trustBadges": {
       "freeCancellation": "लचीला रद्दीकरण",

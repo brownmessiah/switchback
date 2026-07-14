@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+
 import { cleanup, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -104,6 +107,35 @@ describe('HomeTrust — compact trust strip (owner screenshots 2026-06-11)', () 
     for (const forbidden of FORBIDDEN_SUBSTRINGS) {
       expect(text).not.toContain(forbidden.toLowerCase())
     }
+  })
+})
+
+describe('HomeTrust placement — closes the homepage (home-redesign issue 02 / CR9)', () => {
+  // The strip moved from directly-under-the-hero to the BOTTOM of <main>
+  // (after HomeHowItWorks) per the owner brief. Assert against the route
+  // source: the home page is a Server Component that hits the DB, so JSX
+  // order in page.tsx is the testable contract (same technique the
+  // hero-rework contract test uses).
+  const pagePath = resolve(__dirname, '../../../app/[locale]/(marketing)/page.tsx')
+  const source = readFileSync(pagePath, 'utf-8')
+
+  it('renders after HomeHowItWorks, no longer directly under the hero', () => {
+    const trustIdx = source.indexOf('<HomeTrust />')
+    const howItWorksIdx = source.indexOf('<HomeHowItWorks />')
+    const destinationsIdx = source.indexOf("t('destinations.heading')")
+    const featuredIdx = source.indexOf("t('featured.heading')")
+    expect(trustIdx).toBeGreaterThan(-1)
+    expect(howItWorksIdx).toBeGreaterThan(-1)
+    expect(destinationsIdx).toBeGreaterThan(-1)
+    expect(trustIdx).toBeGreaterThan(howItWorksIdx)
+    expect(trustIdx).toBeGreaterThan(destinationsIdx)
+    // Carried over from the retired hero-rework ordering guardrail:
+    // destinations stay above Featured experiences.
+    expect(destinationsIdx).toBeLessThan(featuredIdx)
+  })
+
+  it('is the last section of <main>', () => {
+    expect(source).toMatch(/<HomeTrust \/>\s*<\/main>/)
   })
 })
 

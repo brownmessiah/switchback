@@ -255,13 +255,26 @@ test.describe('Home page', () => {
     await expect(headerCta).toHaveAttribute('href', '/vendor-partner')
   })
 
-  test('the compact trust strip renders directly under the hero', async ({
+  test('the compact trust strip closes the page, after How-Outvers-works (issue 02)', async ({
     page,
   }) => {
     await page.goto('/')
 
     const items = page.getByTestId('trust-card')
     await expect(items).toHaveCount(4)
+
+    // Position: the strip moved from under-the-hero to the bottom of <main>
+    // (home-redesign issue 02 / CR9) — it must render BELOW the
+    // "How Outvers works" section.
+    const trust = page.getByRole('region', { name: 'Adventure you can trust' })
+    const howItWorks = page.getByRole('region', { name: 'How Outvers works' })
+    await expect(trust).toBeVisible()
+    await expect(howItWorks).toBeVisible()
+    const trustBox = await trust.boundingBox()
+    const howBox = await howItWorks.boundingBox()
+    expect(trustBox).not.toBeNull()
+    expect(howBox).not.toBeNull()
+    expect(trustBox!.y).toBeGreaterThan(howBox!.y)
   })
 })
 

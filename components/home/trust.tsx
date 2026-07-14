@@ -12,9 +12,10 @@ import {
 
 /**
  * "Adventure You Can Trust" — compact trust STRIP (owner screenshots,
- * 2026-06-11; was six full cards in issue 08). Headout-style: one slim band
- * directly under the hero so it lands in the first screen, four items with an
- * icon + bold title + one-liner.
+ * 2026-06-11; was six full cards in issue 08). Headout-style: one slim band,
+ * four items with an icon + bold title + one-liner. Since home-redesign
+ * issue 02 (CR9) it renders at the BOTTOM of the homepage <main> (after
+ * HomeHowItWorks) as a closing reassurance band — no longer under the hero.
  *
  * DECISION D0 (data honesty) still applies: every item is a FEATURE CATEGORY
  * backed by real product behaviour, never a fabricated metric:
@@ -70,7 +71,11 @@ export function HomeTrust(): ReactElement {
   return (
     <section
       aria-labelledby="home-trust-heading"
-      className="border-b border-border bg-card"
+      // border-t (not -b): at the bottom of <main> the strip needs a divider
+      // against HomeHowItWorks above (same surface-1 background), and the
+      // footer's own border-t owns the rule below — a border-b here would
+      // strand a floating hairline above the footer gap.
+      className="border-t border-border bg-card"
     >
       <h2 id="home-trust-heading" className="sr-only">
         {t('trust.heading')}

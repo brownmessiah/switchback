@@ -76,8 +76,10 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
 
       {/* CINEMATIC HERO — Headout-style minimal (owner screenshots
           2026-06-11): full-bleed photo + scrim, headline, ONE search bar.
-          The chip rows / CTA buttons / 4-field module are gone (clutter);
-          height trimmed so the trust strip below lands in the first screen. */}
+          The chip rows / CTA buttons / 4-field module are gone (clutter).
+          The trust strip that used to sit directly below moved to the END of
+          the page (issue 02 / CR9), so destinations now land right after the
+          hero. */}
       <section className="relative flex min-h-[72vh] flex-col items-center justify-center overflow-hidden pt-20 pb-12">
         <div className="absolute inset-0">
           <Image
@@ -137,11 +139,6 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
           <ChevronDown className="size-6 text-white/70" aria-hidden="true" />
         </div>
       </section>
-
-      {/* COMPACT TRUST STRIP — directly under the hero so it lands in the
-          first screen (owner screenshots 2026-06-11; was a six-card section
-          lower on the page). */}
-      <HomeTrust />
 
       {/* DESTINATIONS — decision-complete tiles with activity counts */}
       <section
@@ -253,6 +250,11 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
       {/* HOW OUTVERS WORKS — five sequential steps (issue 08). Crawlable HTML,
           stacks on mobile, no horizontal scroll. */}
       <HomeHowItWorks />
+
+      {/* COMPACT TRUST STRIP — closes the page as a final reassurance band
+          (home-redesign issue 02 / CR9; previously directly under the hero,
+          owner screenshots 2026-06-11). */}
+      <HomeTrust />
     </main>
   )
 }

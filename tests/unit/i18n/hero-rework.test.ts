@@ -145,18 +145,10 @@ describe('hero route wiring (page.tsx)', () => {
     )
   })
 
-  it('renders the compact trust strip directly after the hero, before Popular destinations', () => {
-    // Ordering guardrail carried over from the pre-rework contract: issue 01
-    // only changes hero COPY. Issue 02 (trust strip to bottom) deliberately
-    // relocates the strip and updates this assertion in its own slice.
-    const trustIdx = source.indexOf('<HomeTrust />')
-    const destinationsIdx = source.indexOf("t('destinations.heading')")
-    const featuredIdx = source.indexOf("t('featured.heading')")
-    expect(trustIdx).toBeGreaterThan(-1)
-    expect(destinationsIdx).toBeGreaterThan(-1)
-    expect(trustIdx).toBeLessThan(destinationsIdx)
-    expect(destinationsIdx).toBeLessThan(featuredIdx)
-  })
+  // The trust-strip ordering guardrail moved to
+  // tests/unit/components/home-trust-sections.test.tsx ("placement"): since
+  // issue 02 the strip closes the page (after HomeHowItWorks), so it is no
+  // longer part of the hero's first-screen contract.
 
   it('mounts the single hero search and drops the CTA buttons (screenshots 2026-06-11)', () => {
     expect(source).toContain('HomeHeroSearch')

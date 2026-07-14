@@ -531,7 +531,11 @@
       "refundablePointer": "રિફંડપાત્ર રકમ {preset} રદ કરવાની નીતિ અનુસરે છે — ઉપરની રદ કરવાની નીતિ જુઓ.",
       "chooseOption": "એક વિકલ્પ પસંદ કરો",
       "standardOption": "સ્ટાન્ડર્ડ (જૂથ ભાવ)",
-      "variationDuration": "· {minutes} મિનિટ"
+      "variationDuration": "· {minutes} મિનિટ",
+      "addToCart": "કાર્ટમાં ઉમેરો",
+      "addedToCart": "તમારા કાર્ટમાં ઉમેરાયું",
+      "addToCartSignIn": "કાર્ટમાં ઉમેરવા સાઇન ઇન કરો",
+      "addToCartError": "કાર્ટમાં ઉમેરી શકાયું નહીં — ફરી પ્રયાસ કરો"
     },
     "closure": {
       "heading": "હાલમાં બંધ છે",
@@ -1053,6 +1057,7 @@
     "blog": "બ્લોગ",
     "tripGroups": "ટ્રિપ ગ્રુપ્સ",
     "wishlist": "વિશલિસ્ટ",
+    "cart": "કાર્ટ",
     "currencyBadge": "₹ INR",
     "currencyBadgeLabel": "કિંમતો ભારતીય રૂપિયામાં"
   },

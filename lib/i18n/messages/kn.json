@@ -531,7 +531,11 @@
       "refundablePointer": "ಮರುಪಾವತಿ ಮೊತ್ತವು {preset} ರದ್ದತಿ ನೀತಿಯನ್ನು ಅನುಸರಿಸುತ್ತದೆ — ಮೇಲಿನ ರದ್ದತಿ ನೀತಿಯನ್ನು ನೋಡಿ.",
       "chooseOption": "ಒಂದು ಆಯ್ಕೆಯನ್ನು ಆರಿಸಿ",
       "standardOption": "ಪ್ರಮಾಣಿತ (ಗುಂಪು ಬೆಲೆ)",
-      "variationDuration": "· {minutes} ನಿಮಿಷ"
+      "variationDuration": "· {minutes} ನಿಮಿಷ",
+      "addToCart": "ಕಾರ್ಟ್‌ಗೆ ಸೇರಿಸಿ",
+      "addedToCart": "ನಿಮ್ಮ ಕಾರ್ಟ್‌ಗೆ ಸೇರಿಸಲಾಗಿದೆ",
+      "addToCartSignIn": "ಕಾರ್ಟ್‌ಗೆ ಸೇರಿಸಲು ಸೈನ್ ಇನ್ ಮಾಡಿ",
+      "addToCartError": "ಕಾರ್ಟ್‌ಗೆ ಸೇರಿಸಲಾಗಲಿಲ್ಲ — ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ"
     },
     "closure": {
       "heading": "ಪ್ರಸ್ತುತ ಮುಚ್ಚಲಾಗಿದೆ",
@@ -1053,6 +1057,7 @@
     "blog": "ಬ್ಲಾಗ್",
     "tripGroups": "ಟ್ರಿಪ್ ಗುಂಪುಗಳು",
     "wishlist": "ವಿಶ್‌ಲಿಸ್ಟ್",
+    "cart": "ಕಾರ್ಟ್",
     "currencyBadge": "₹ INR",
     "currencyBadgeLabel": "ಬೆಲೆಗಳು ಭಾರತೀಯ ರೂಪಾಯಿಗಳಲ್ಲಿ"
   },

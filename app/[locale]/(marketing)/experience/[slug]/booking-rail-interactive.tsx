@@ -4,10 +4,12 @@ import { useEffect, useState, type ReactElement } from 'react'
 
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { CalendarX, CircleCheck, Clock, Info, Users, Wallet } from 'lucide-react'
+import { CalendarX, CircleCheck, Clock, Info, ShoppingCart, Users, Wallet } from 'lucide-react'
 
 import { buttonVariants } from '@/components/ui/button'
 import { ParticipantsStepper } from '@/components/search/participants-stepper'
+import { addToCartAction } from '@/app/(app)/cart/actions'
+import { broadcastCartCount } from '@/components/cart-indicator'
 import { Separator } from '@/components/ui/separator'
 import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
@@ -35,6 +37,8 @@ import type {
 } from './booking-rail'
 
 export interface BookingRailInteractiveProps {
+  /** The Experience id — needed by the add-to-cart action (issue 11). */
+  experienceId: string
   priceTableLabel: string
   /** Ordered 1-2 / 3-5 / 6+ brackets (already-translated labels + prices). */
   brackets: ReadonlyArray<BookingRailBracket>
@@ -71,6 +75,13 @@ export interface BookingRailInteractiveProps {
   bookNowLabel: string
   /** Base checkout deep link; the selected slot + participant count are appended. */
   checkoutHref: string
+  /** Already-translated add-to-cart labels (issue 11, ADR-0021). */
+  addToCartLabels: {
+    label: string
+    added: string
+    signIn: string
+    error: string
+  }
   /** Future bookable slots powering the date picker (#70). */
   slots: CalendarSlot[]
   /** Active locale (Intl month/weekday names). */
@@ -117,6 +128,7 @@ function formatRupees(amount: number): string {
  * stepper + CTA are disabled (booking paused).
  */
 export function BookingRailInteractive({
+  experienceId,
   priceTableLabel,
   brackets,
   variations,
@@ -129,6 +141,7 @@ export function BookingRailInteractive({
   freeCancellation,
   bookNowLabel,
   checkoutHref,
+  addToCartLabels,
   slots,
   locale,
   calendarLabels,
@@ -254,6 +267,36 @@ export function BookingRailInteractive({
     ? `&variationId=${encodeURIComponent(selectedVariation.id)}`
     : ''
   const href = `${checkoutHref}${slotParam}&participants=${count}${variationParam}`
+
+  // Add-to-cart (issue 11, ADR-0021): the cart is a saved list — the same
+  // selection (slot, count, variation) the Book-now link carries goes to the
+  // customer's cart instead. Auth is resolved server-side; an anonymous
+  // click gets a sign-in prompt toast (the /cart page is auth-gated anyway).
+  const [addingToCart, setAddingToCart] = useState(false)
+  async function handleAddToCart(): Promise<void> {
+    if (!selectedSlotId) return
+    setAddingToCart(true)
+    try {
+      const result = await addToCartAction({
+        experienceId,
+        slotId: selectedSlotId,
+        variationId: selectedVariation?.id,
+        participantCount: count,
+      })
+      if (result.ok) {
+        toast.success(addToCartLabels.added)
+        broadcastCartCount(result.cartCount)
+      } else if (result.error === 'unauthenticated') {
+        toast.info(addToCartLabels.signIn)
+      } else {
+        toast.error(addToCartLabels.error)
+      }
+    } catch {
+      toast.error(addToCartLabels.error)
+    } finally {
+      setAddingToCart(false)
+    }
+  }
 
 
   return (
@@ -541,6 +584,20 @@ export function BookingRailInteractive({
           >
             {bookNowLabel}
           </Link>
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            disabled={addingToCart || !selectedSlotId}
+            data-testid="add-to-cart"
+            className={buttonVariants({
+              size: 'lg',
+              variant: 'outline',
+              className: 'w-full disabled:opacity-50',
+            })}
+          >
+            <ShoppingCart aria-hidden="true" className="size-4" />
+            {addToCartLabels.label}
+          </button>
           <p className="flex items-center justify-center gap-1.5 text-center text-xs text-success">
             <CircleCheck aria-hidden="true" className="size-4 shrink-0" />
             {freeCancellation}

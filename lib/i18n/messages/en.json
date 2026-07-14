@@ -604,7 +604,11 @@
       "fullUpfront": "Charged in full now (within 48 hours of the start, or above ₹25,000).",
       "chooseOption": "Choose an option",
       "standardOption": "Standard (group pricing)",
-      "variationDuration": "· {minutes} min"
+      "variationDuration": "· {minutes} min",
+      "addToCart": "Add to cart",
+      "addedToCart": "Added to your cart",
+      "addToCartSignIn": "Sign in to add to your cart",
+      "addToCartError": "Could not add to cart — try again"
     },
     "closure": {
       "heading": "Currently closed",
@@ -1212,6 +1216,7 @@
     "blog": "Blog",
     "tripGroups": "Trip Groups",
     "wishlist": "Wishlist",
+    "cart": "Cart",
     "currencyBadge": "₹ INR",
     "currencyBadgeLabel": "Prices in Indian Rupees"
   },

@@ -531,7 +531,11 @@
       "refundablePointer": "తిరిగి చెల్లించదగిన మొత్తం {preset} రద్దు విధానాన్ని అనుసరిస్తుంది — పైన ఉన్న రద్దు విధానాన్ని చూడండి.",
       "chooseOption": "ఒక ఎంపికను ఎంచుకోండి",
       "standardOption": "ప్రామాణికం (సమూహ ధర)",
-      "variationDuration": "· {minutes} నిమి"
+      "variationDuration": "· {minutes} నిమి",
+      "addToCart": "కార్ట్‌కు జోడించండి",
+      "addedToCart": "మీ కార్ట్‌కు జోడించబడింది",
+      "addToCartSignIn": "కార్ట్‌కు జోడించడానికి సైన్ ఇన్ చేయండి",
+      "addToCartError": "కార్ట్‌కు జోడించలేకపోయాము — మళ్లీ ప్రయత్నించండి"
     },
     "closure": {
       "heading": "ప్రస్తుతం మూసివేయబడింది",
@@ -1053,6 +1057,7 @@
     "blog": "బ్లాగ్",
     "tripGroups": "ట్రిప్ గ్రూప్‌లు",
     "wishlist": "విష్‌లిస్ట్",
+    "cart": "కార్ట్",
     "currencyBadge": "₹ INR",
     "currencyBadgeLabel": "ధరలు భారతీయ రూపాయల్లో"
   },

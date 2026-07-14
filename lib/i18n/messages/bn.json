@@ -531,7 +531,11 @@
       "refundablePointer": "ফেরতযোগ্য পরিমাণ {preset} বাতিলকরণ নীতি অনুসরণ করে — উপরের বাতিলকরণ নীতি দেখুন।",
       "chooseOption": "একটি বিকল্প বেছে নিন",
       "standardOption": "স্ট্যান্ডার্ড (গ্রুপ মূল্য)",
-      "variationDuration": "· {minutes} মিনিট"
+      "variationDuration": "· {minutes} মিনিট",
+      "addToCart": "কার্টে যোগ করুন",
+      "addedToCart": "আপনার কার্টে যোগ হয়েছে",
+      "addToCartSignIn": "কার্টে যোগ করতে সাইন ইন করুন",
+      "addToCartError": "কার্টে যোগ করা যায়নি — আবার চেষ্টা করুন"
     },
     "closure": {
       "heading": "বর্তমানে বন্ধ",
@@ -1053,6 +1057,7 @@
     "blog": "ব্লগ",
     "tripGroups": "ট্রিপ গ্রুপ",
     "wishlist": "উইশলিস্ট",
+    "cart": "কার্ট",
     "currencyBadge": "₹ INR",
     "currencyBadgeLabel": "মূল্য ভারতীয় রুপিতে"
   },

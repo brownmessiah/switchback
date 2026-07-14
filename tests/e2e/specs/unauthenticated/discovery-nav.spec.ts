@@ -53,6 +53,12 @@ test.describe('Primary nav — minimal header (desktop)', () => {
     await expect(nav.getByText('₹ INR')).toBeVisible()
   })
 
+  test('logged-out /cart is auth-gated → /sign-in (issue 11)', async ({ page }) => {
+    await page.goto('/cart')
+    await page.waitForURL(/\/sign-in/)
+    expect(new URL(page.url()).pathname).toBe('/sign-in')
+  })
+
   test('logged-out Wishlist click lands on /sign-in (auth-gated route)', async ({
     page,
   }) => {

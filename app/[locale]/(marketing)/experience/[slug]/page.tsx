@@ -511,6 +511,14 @@ export default async function ExperienceDetailPage({
       : undefined,
     freeCancellation: t('pricing.freeCancellation'),
     bookNowLabel: t('pricing.bookNow'),
+    // Add-to-cart (issue 11, ADR-0021).
+    experienceId: detail.id,
+    addToCartLabels: {
+      label: t('pricing.addToCart'),
+      added: t('pricing.addedToCart'),
+      signIn: t('pricing.addToCartSignIn'),
+      error: t('pricing.addToCartError'),
+    },
     checkoutHref,
     slots: calendarSlots,
     locale,

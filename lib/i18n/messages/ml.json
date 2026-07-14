@@ -531,7 +531,11 @@
       "refundablePointer": "റീഫണ്ട് ചെയ്യാവുന്ന തുക {preset} റദ്ദാക്കൽ നയം പിന്തുടരുന്നു — മുകളിലെ റദ്ദാക്കൽ നയം കാണുക.",
       "chooseOption": "ഒരു ഓപ്ഷൻ തിരഞ്ഞെടുക്കുക",
       "standardOption": "സ്റ്റാൻഡേർഡ് (ഗ്രൂപ്പ് വില)",
-      "variationDuration": "· {minutes} മിനിറ്റ്"
+      "variationDuration": "· {minutes} മിനിറ്റ്",
+      "addToCart": "കാർട്ടിലേക്ക് ചേർക്കുക",
+      "addedToCart": "നിങ്ങളുടെ കാർട്ടിൽ ചേർത്തു",
+      "addToCartSignIn": "കാർട്ടിൽ ചേർക്കാൻ സൈൻ ഇൻ ചെയ്യുക",
+      "addToCartError": "കാർട്ടിൽ ചേർക്കാനായില്ല — വീണ്ടും ശ്രമിക്കുക"
     },
     "closure": {
       "heading": "ഇപ്പോൾ അടച്ചിരിക്കുന്നു",
@@ -1053,6 +1057,7 @@
     "blog": "ബ്ലോഗ്",
     "tripGroups": "ട്രിപ്പ് ഗ്രൂപ്പുകൾ",
     "wishlist": "വിഷ്‌ലിസ്റ്റ്",
+    "cart": "കാർട്ട്",
     "currencyBadge": "₹ INR",
     "currencyBadgeLabel": "വിലകൾ ഇന്ത്യൻ രൂപയിൽ"
   },

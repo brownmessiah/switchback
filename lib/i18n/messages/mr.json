@@ -531,7 +531,11 @@
       "refundablePointer": "परतावा-योग्य रक्कम {preset} रद्द करण्याच्या धोरणाचे पालन करते — वरील रद्द करण्याचे धोरण पहा.",
       "chooseOption": "एक पर्याय निवडा",
       "standardOption": "मानक (गट किंमत)",
-      "variationDuration": "· {minutes} मिनिटे"
+      "variationDuration": "· {minutes} मिनिटे",
+      "addToCart": "कार्टमध्ये जोडा",
+      "addedToCart": "तुमच्या कार्टमध्ये जोडले",
+      "addToCartSignIn": "कार्टमध्ये जोडण्यासाठी साइन इन करा",
+      "addToCartError": "कार्टमध्ये जोडता आले नाही — पुन्हा प्रयत्न करा"
     },
     "closure": {
       "heading": "सध्या बंद आहे",
@@ -1053,6 +1057,7 @@
     "blog": "ब्लॉग",
     "tripGroups": "ट्रिप ग्रुप्स",
     "wishlist": "विशलिस्ट",
+    "cart": "कार्ट",
     "currencyBadge": "₹ INR",
     "currencyBadgeLabel": "किंमती भारतीय रुपयांत"
   },

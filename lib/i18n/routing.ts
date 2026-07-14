@@ -45,6 +45,7 @@ export const EXCLUDED_PREFIXES = [
   '/community',
   '/checkout',
   '/bookings',
+  '/cart',
   '/wishlist',
   '/api',
 ] as const

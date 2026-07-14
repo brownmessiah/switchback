@@ -531,7 +531,11 @@
       "refundablePointer": "रिफंड-योग्य राशि {preset} रद्दीकरण नीति का पालन करती है — ऊपर दी गई रद्दीकरण नीति देखें।",
       "chooseOption": "एक विकल्प चुनें",
       "standardOption": "मानक (समूह मूल्य)",
-      "variationDuration": "· {minutes} मिनट"
+      "variationDuration": "· {minutes} मिनट",
+      "addToCart": "कार्ट में जोड़ें",
+      "addedToCart": "आपके कार्ट में जुड़ गया",
+      "addToCartSignIn": "कार्ट में जोड़ने के लिए साइन इन करें",
+      "addToCartError": "कार्ट में नहीं जुड़ सका — फिर से कोशिश करें"
     },
     "closure": {
       "heading": "अभी बंद है",
@@ -1053,6 +1057,7 @@
     "blog": "ब्लॉग",
     "tripGroups": "ट्रिप ग्रुप्स",
     "wishlist": "विशलिस्ट",
+    "cart": "कार्ट",
     "currencyBadge": "₹ INR",
     "currencyBadgeLabel": "कीमतें भारतीय रुपये में"
   },

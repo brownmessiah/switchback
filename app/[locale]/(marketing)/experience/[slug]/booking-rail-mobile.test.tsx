@@ -34,6 +34,13 @@ afterEach(() => {
 function baseProps(overrides: Partial<BookingRailMobileProps> = {}): BookingRailMobileProps {
   return {
     heading: 'Booking',
+    experienceId: 'exp-cart-test',
+    addToCartLabels: {
+      label: 'Add to cart',
+      added: 'Added to your cart',
+      signIn: 'Sign in to add to your cart',
+      error: 'Could not add to cart',
+    },
     priceTableLabel: 'Per-participant price',
     brackets: [
       { label: '1-2 participants', priceRupees: 1500 },

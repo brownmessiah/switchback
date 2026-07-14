@@ -445,7 +445,11 @@
       "refundablePointer": "ଫେରସ୍ତଯୋଗ୍ୟ ରାଶି {preset} ବାତିଲ ନୀତି ଅନୁସରଣ କରେ — ଉପରେ ଥିବା ବାତିଲ ନୀତି ଦେଖନ୍ତୁ।",
       "chooseOption": "ଏକ ବିକଳ୍ପ ବାଛନ୍ତୁ",
       "standardOption": "ମାନକ (ଗୋଷ୍ଠୀ ମୂଲ୍ୟ)",
-      "variationDuration": "· {minutes} ମିନିଟ୍"
+      "variationDuration": "· {minutes} ମିନିଟ୍",
+      "addToCart": "କାର୍ଟରେ ଯୋଡ଼ନ୍ତୁ",
+      "addedToCart": "ଆପଣଙ୍କ କାର୍ଟରେ ଯୋଡ଼ାଗଲା",
+      "addToCartSignIn": "କାର୍ଟରେ ଯୋଡ଼ିବାକୁ ସାଇନ୍ ଇନ୍ କରନ୍ତୁ",
+      "addToCartError": "କାର୍ଟରେ ଯୋଡ଼ିହେଲା ନାହିଁ — ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ"
     },
     "closure": {
       "heading": "ବର୍ତ୍ତମାନ ବନ୍ଦ ଅଛି",
@@ -981,6 +985,7 @@
     "blog": "ବ୍ଲଗ୍",
     "tripGroups": "ଟ୍ରିପ୍ ଗ୍ରୁପ୍",
     "wishlist": "ୱିଶଲିଷ୍ଟ",
+    "cart": "କାର୍ଟ",
     "currencyBadge": "₹ INR",
     "currencyBadgeLabel": "ମୂଲ୍ୟ ଭାରତୀୟ ଟଙ୍କାରେ"
   },

@@ -531,7 +531,11 @@
       "refundablePointer": "قابل واپسی رقم {preset} منسوخی پالیسی کی پیروی کرتی ہے — اوپر دی گئی منسوخی پالیسی دیکھیں۔",
       "chooseOption": "ایک آپشن منتخب کریں",
       "standardOption": "معیاری (گروپ قیمت)",
-      "variationDuration": "· {minutes} منٹ"
+      "variationDuration": "· {minutes} منٹ",
+      "addToCart": "کارٹ میں شامل کریں",
+      "addedToCart": "آپ کے کارٹ میں شامل ہو گیا",
+      "addToCartSignIn": "کارٹ میں شامل کرنے کے لیے سائن ان کریں",
+      "addToCartError": "کارٹ میں شامل نہیں ہو سکا — دوبارہ کوشش کریں"
     },
     "closure": {
       "heading": "فی الحال بند ہے",
@@ -1053,6 +1057,7 @@
     "blog": "بلاگ",
     "tripGroups": "ٹرپ گروپس",
     "wishlist": "وش لسٹ",
+    "cart": "کارٹ",
     "currencyBadge": "₹ INR",
     "currencyBadgeLabel": "قیمتیں بھارتی روپے میں"
   },

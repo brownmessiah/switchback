@@ -445,7 +445,11 @@
       "refundablePointer": "ঘূৰাই দিব পৰা পৰিমাণ {preset} বাতিলকৰণ নীতি অনুসৰি — ওপৰৰ বাতিলকৰণ নীতি চাওক।",
       "chooseOption": "এটা বিকল্প বাছনি কৰক",
       "standardOption": "মানক (গোট মূল্য)",
-      "variationDuration": "· {minutes} মিনিট"
+      "variationDuration": "· {minutes} মিনিট",
+      "addToCart": "কাৰ্টত যোগ কৰক",
+      "addedToCart": "আপোনাৰ কাৰ্টত যোগ হ'ল",
+      "addToCartSignIn": "কাৰ্টত যোগ কৰিবলৈ ছাইন ইন কৰক",
+      "addToCartError": "কাৰ্টত যোগ কৰিব পৰা নগ'ল — আকৌ চেষ্টা কৰক"
     },
     "closure": {
       "heading": "বৰ্তমানে বন্ধ",
@@ -981,6 +985,7 @@
     "blog": "ব্লগ",
     "tripGroups": "ট্ৰিপ গ্ৰুপ",
     "wishlist": "ৱিছলিষ্ট",
+    "cart": "কাৰ্ট",
     "currencyBadge": "₹ INR",
     "currencyBadgeLabel": "মূল্য ভাৰতীয় টকাত"
   },

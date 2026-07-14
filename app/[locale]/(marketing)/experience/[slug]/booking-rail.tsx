@@ -63,6 +63,15 @@ export interface BookingRailClosure {
 interface BookingRailProps {
   /** Already-translated module heading (`pricing.heading`). */
   heading: string
+  /** The Experience id — threaded to the add-to-cart action (issue 11). */
+  experienceId: string
+  /** Already-translated add-to-cart labels (issue 11). */
+  addToCartLabels: {
+    label: string
+    added: string
+    signIn: string
+    error: string
+  }
   /** Already-translated "per-participant price table" caption. */
   priceTableLabel: string
   /** Ordered 1-2 / 3-5 / 6+ Group-size brackets. */
@@ -130,6 +139,8 @@ interface BookingRailProps {
  */
 export function BookingRail({
   heading,
+  experienceId,
+  addToCartLabels,
   priceTableLabel,
   brackets,
   variations,
@@ -158,6 +169,8 @@ export function BookingRail({
       </CardHeader>
       <CardContent>
         <BookingRailInteractive
+          experienceId={experienceId}
+          addToCartLabels={addToCartLabels}
           priceTableLabel={priceTableLabel}
           brackets={brackets}
           variations={variations}

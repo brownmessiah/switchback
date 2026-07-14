@@ -531,7 +531,11 @@
       "refundablePointer": "ਵਾਪਸੀਯੋਗ ਰਕਮ {preset} ਰੱਦ ਕਰਨ ਦੀ ਨੀਤੀ ਦੀ ਪਾਲਣਾ ਕਰਦੀ ਹੈ — ਉੱਪਰ ਦਿੱਤੀ ਰੱਦ ਕਰਨ ਦੀ ਨੀਤੀ ਵੇਖੋ।",
       "chooseOption": "ਇੱਕ ਵਿਕਲਪ ਚੁਣੋ",
       "standardOption": "ਸਟੈਂਡਰਡ (ਗਰੁੱਪ ਕੀਮਤ)",
-      "variationDuration": "· {minutes} ਮਿੰਟ"
+      "variationDuration": "· {minutes} ਮਿੰਟ",
+      "addToCart": "ਕਾਰਟ ਵਿੱਚ ਸ਼ਾਮਲ ਕਰੋ",
+      "addedToCart": "ਤੁਹਾਡੇ ਕਾਰਟ ਵਿੱਚ ਸ਼ਾਮਲ ਹੋ ਗਿਆ",
+      "addToCartSignIn": "ਕਾਰਟ ਵਿੱਚ ਸ਼ਾਮਲ ਕਰਨ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ",
+      "addToCartError": "ਕਾਰਟ ਵਿੱਚ ਸ਼ਾਮਲ ਨਹੀਂ ਹੋ ਸਕਿਆ — ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ"
     },
     "closure": {
       "heading": "ਇਸ ਵੇਲੇ ਬੰਦ ਹੈ",
@@ -1053,6 +1057,7 @@
     "blog": "ਬਲੌਗ",
     "tripGroups": "ਟ੍ਰਿਪ ਗਰੁੱਪ",
     "wishlist": "ਵਿਸ਼ਲਿਸਟ",
+    "cart": "ਕਾਰਟ",
     "currencyBadge": "₹ INR",
     "currencyBadgeLabel": "ਕੀਮਤਾਂ ਭਾਰਤੀ ਰੁਪਏ ਵਿੱਚ"
   },

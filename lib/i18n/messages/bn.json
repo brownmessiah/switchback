@@ -1795,9 +1795,12 @@
   },
   "HomeSearch": {
     "single": {
-      "label": "গন্তব্য বা কার্যকলাপ খুঁজুন",
-      "placeholder": "গন্তব্য বা কার্যকলাপ",
+      "label": "স্থান বা কার্যকলাপ খুঁজুন",
+      "placeholder": "স্থান বা কার্যকলাপ খুঁজুন",
       "submit": "খুঁজুন"
+    },
+    "participants": {
+      "count": "{count, plural, one {# জন} other {# জন}}"
     },
     "fields": {
       "destination": "গন্তব্য",

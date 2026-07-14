@@ -1795,9 +1795,12 @@
   },
   "HomeSearch": {
     "single": {
-      "label": "இலக்கு அல்லது செயல்பாட்டைத் தேடுங்கள்",
-      "placeholder": "இலக்கு அல்லது செயல்பாடு",
+      "label": "இடங்கள் அல்லது செயல்பாடுகளைத் தேடுங்கள்",
+      "placeholder": "இடங்கள் அல்லது செயல்பாடுகளைத் தேடுங்கள்",
       "submit": "தேடு"
+    },
+    "participants": {
+      "count": "{count, plural, one {# நபர்} other {# நபர்கள்}}"
     },
     "fields": {
       "destination": "இலக்கு",

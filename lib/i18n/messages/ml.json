@@ -1795,9 +1795,12 @@
   },
   "HomeSearch": {
     "single": {
-      "label": "ലക്ഷ്യസ്ഥാനം അല്ലെങ്കിൽ പ്രവർത്തനം തിരയുക",
-      "placeholder": "ലക്ഷ്യസ്ഥാനം അല്ലെങ്കിൽ പ്രവർത്തനം",
+      "label": "സ്ഥലങ്ങളോ പ്രവർത്തനങ്ങളോ തിരയൂ",
+      "placeholder": "സ്ഥലങ്ങളോ പ്രവർത്തനങ്ങളോ തിരയൂ",
       "submit": "തിരയുക"
+    },
+    "participants": {
+      "count": "{count, plural, one {# ആൾ} other {# പേർ}}"
     },
     "fields": {
       "destination": "ലക്ഷ്യസ്ഥാനം",

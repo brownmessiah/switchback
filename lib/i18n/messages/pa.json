@@ -1795,9 +1795,12 @@
   },
   "HomeSearch": {
     "single": {
-      "label": "ਮੰਜ਼ਿਲ ਜਾਂ ਗਤੀਵਿਧੀ ਖੋਜੋ",
-      "placeholder": "ਮੰਜ਼ਿਲ ਜਾਂ ਗਤੀਵਿਧੀ",
+      "label": "ਥਾਵਾਂ ਜਾਂ ਗਤੀਵਿਧੀਆਂ ਖੋਜੋ",
+      "placeholder": "ਥਾਵਾਂ ਜਾਂ ਗਤੀਵਿਧੀਆਂ ਖੋਜੋ",
       "submit": "ਖੋਜੋ"
+    },
+    "participants": {
+      "count": "{count, plural, one {# ਵਿਅਕਤੀ} other {# ਲੋਕ}}"
     },
     "fields": {
       "destination": "ਮੰਜ਼ਿਲ",

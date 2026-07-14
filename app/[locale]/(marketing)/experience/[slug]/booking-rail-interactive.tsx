@@ -4,9 +4,10 @@ import { useEffect, useState, type ReactElement } from 'react'
 
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { CalendarX, CircleCheck, Clock, Info, Minus, Plus, Users, Wallet } from 'lucide-react'
+import { CalendarX, CircleCheck, Clock, Info, Users, Wallet } from 'lucide-react'
 
 import { buttonVariants } from '@/components/ui/button'
+import { ParticipantsStepper } from '@/components/search/participants-stepper'
 import { Separator } from '@/components/ui/separator'
 import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
@@ -246,8 +247,6 @@ export function BookingRailInteractive({
     toast.info(toastLabels.slotSelected)
   }
 
-  const dec = () => setCount((c) => Math.max(1, c - 1))
-  const inc = () => setCount((c) => Math.min(maxForSlot, c + 1))
   const slotParam = selectedSlotId ? `&slotId=${selectedSlotId}` : ''
   // Carry the selected variation (issue #08). The client passes ONLY the id —
   // never a price — and the server resolves + snapshots the authoritative price.
@@ -256,13 +255,6 @@ export function BookingRailInteractive({
     : ''
   const href = `${checkoutHref}${slotParam}&participants=${count}${variationParam}`
 
-  // `.min-tap` (Foundation A) raises the hit area to the 44px coarse-pointer
-  // floor (DESIGN.md §8.2) on touch, leaving the fine-pointer 36px paint intact.
-  const stepBtn = buttonVariants({
-    variant: 'outline',
-    size: 'icon',
-    className: 'min-tap size-9 rounded-full',
-  })
 
   return (
     <div className="space-y-4">
@@ -395,38 +387,23 @@ export function BookingRailInteractive({
         </fieldset>
       )}
 
-      {/* Participant stepper — drives the bracket + the live breakdown. */}
+      {/* Participant stepper — drives the bracket + the live breakdown.
+          Shared control (components/search/participants-stepper.tsx) since
+          home-redesign issue 07; behavior/aria identical to the old inline
+          stepper. */}
       <div className="flex items-center justify-between gap-3">
         <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
           <Users aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
           {participantsLabel}
         </span>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={dec}
-            disabled={disabled || count <= 1}
-            aria-label={`${participantsLabel} −`}
-            className={cn(stepBtn, 'disabled:opacity-40')}
-          >
-            <Minus aria-hidden="true" className="size-4" />
-          </button>
-          <span
-            aria-live="polite"
-            className="min-w-7 text-center text-base font-semibold tabular-nums"
-          >
-            {count}
-          </span>
-          <button
-            type="button"
-            onClick={inc}
-            disabled={disabled || count >= maxForSlot}
-            aria-label={`${participantsLabel} +`}
-            className={cn(stepBtn, 'disabled:opacity-40')}
-          >
-            <Plus aria-hidden="true" className="size-4" />
-          </button>
-        </div>
+        <ParticipantsStepper
+          label={participantsLabel}
+          value={count}
+          min={1}
+          max={maxForSlot}
+          disabled={disabled}
+          onChange={setCount}
+        />
       </div>
 
       {/* Capacity note — shown when the chosen time slot's seats are the binding

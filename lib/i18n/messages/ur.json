@@ -1795,9 +1795,12 @@
   },
   "HomeSearch": {
     "single": {
-      "label": "منزل یا سرگرمی تلاش کریں",
-      "placeholder": "منزل یا سرگرمی",
+      "label": "مقامات یا سرگرمیاں تلاش کریں",
+      "placeholder": "مقامات یا سرگرمیاں تلاش کریں",
       "submit": "تلاش کریں"
+    },
+    "participants": {
+      "count": "{count, plural, one {# فرد} other {# افراد}}"
     },
     "fields": {
       "destination": "منزل",

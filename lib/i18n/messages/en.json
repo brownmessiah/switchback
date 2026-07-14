@@ -108,9 +108,12 @@
   },
   "HomeSearch": {
     "single": {
-      "label": "Search destinations or activities",
-      "placeholder": "Destination or activity",
+      "label": "Search places or activities",
+      "placeholder": "Search places or activities",
       "submit": "Search"
+    },
+    "participants": {
+      "count": "{count, plural, one {# person} other {# people}}"
     },
     "fields": {
       "destination": "Destination",

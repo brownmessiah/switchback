@@ -1795,9 +1795,12 @@
   },
   "HomeSearch": {
     "single": {
-      "label": "गंतव्य या गतिविधि खोजें",
-      "placeholder": "गंतव्य या गतिविधि",
+      "label": "स्थान या गतिविधियाँ खोजें",
+      "placeholder": "स्थान या गतिविधियाँ खोजें",
       "submit": "खोजें"
+    },
+    "participants": {
+      "count": "{count, plural, one {# व्यक्ति} other {# लोग}}"
     },
     "fields": {
       "destination": "गंतव्य",

@@ -1795,9 +1795,12 @@
   },
   "HomeSearch": {
     "single": {
-      "label": "గమ్యం లేదా కార్యకలాపం వెతకండి",
-      "placeholder": "గమ్యం లేదా కార్యకలాపం",
+      "label": "ప్రదేశాలు లేదా కార్యకలాపాలను వెతకండి",
+      "placeholder": "ప్రదేశాలు లేదా కార్యకలాపాలను వెతకండి",
       "submit": "వెతకండి"
+    },
+    "participants": {
+      "count": "{count, plural, one {# వ్యక్తి} other {# మంది}}"
     },
     "fields": {
       "destination": "గమ్యం",

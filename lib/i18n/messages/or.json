@@ -1795,9 +1795,12 @@
   },
   "HomeSearch": {
     "single": {
-      "label": "ଗନ୍ତବ୍ୟ କିମ୍ବା କାର୍ଯ୍ୟକଳାପ ଖୋଜନ୍ତୁ",
-      "placeholder": "ଗନ୍ତବ୍ୟ କିମ୍ବା କାର୍ଯ୍ୟକଳାପ",
+      "label": "ସ୍ଥାନ କିମ୍ବା କାର୍ଯ୍ୟକଳାପ ଖୋଜନ୍ତୁ",
+      "placeholder": "ସ୍ଥାନ କିମ୍ବା କାର୍ଯ୍ୟକଳାପ ଖୋଜନ୍ତୁ",
       "submit": "ଖୋଜନ୍ତୁ"
+    },
+    "participants": {
+      "count": "{count, plural, one {# ଜଣ} other {# ଜଣ}}"
     },
     "fields": {
       "destination": "ଗନ୍ତବ୍ୟ",

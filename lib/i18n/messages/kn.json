@@ -1795,9 +1795,12 @@
   },
   "HomeSearch": {
     "single": {
-      "label": "ಗಮ್ಯಸ್ಥಾನ ಅಥವಾ ಚಟುವಟಿಕೆ ಹುಡುಕಿ",
-      "placeholder": "ಗಮ್ಯಸ್ಥಾನ ಅಥವಾ ಚಟುವಟಿಕೆ",
+      "label": "ಸ್ಥಳಗಳು ಅಥವಾ ಚಟುವಟಿಕೆಗಳನ್ನು ಹುಡುಕಿ",
+      "placeholder": "ಸ್ಥಳಗಳು ಅಥವಾ ಚಟುವಟಿಕೆಗಳನ್ನು ಹುಡುಕಿ",
       "submit": "ಹುಡುಕಿ"
+    },
+    "participants": {
+      "count": "{count, plural, one {# ವ್ಯಕ್ತಿ} other {# ಜನರು}}"
     },
     "fields": {
       "destination": "ಗಮ್ಯ",

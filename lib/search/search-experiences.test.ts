@@ -7,6 +7,7 @@ import { experiences } from '@/db/schema/experiences'
 import { reviews } from '@/db/schema/reviews'
 import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
+import { dateKey } from '@/lib/experiences/booking-calendar'
 import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 
 import { isFilteredSearch, searchExperiences } from './search-experiences'
@@ -48,6 +49,10 @@ describe('isFilteredSearch', () => {
 
   it('returns false when safetyVerified is explicitly false', () => {
     expect(isFilteredSearch({ safetyVerified: false })).toBe(false)
+  })
+
+  it('returns true when only date is set (ADR-0020 — mandatory for robots/canonical)', () => {
+    expect(isFilteredSearch({ date: '2026-08-01' })).toBe(true)
   })
 
   it('returns false when only q is set', () => {
@@ -411,5 +416,171 @@ describe('searchExperiences (Postgres-native, PGlite)', () => {
     } finally {
       errSpy.mockRestore()
     }
+  })
+
+  // ── Date-availability filter (home-redesign issue 10, ADR-0020) ──────────
+  // Inline `EXISTS`-before-`LIMIT` correlated subquery against
+  // availability_slots: `status='open' AND start_at in [day) AND
+  // capacity_taken < capacity`. NOT a post-hoc filter of the returned hits.
+  describe('date-availability filter (ADR-0020)', () => {
+    /** A UTC day comfortably in the future (10 days out). */
+    const targetDate = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000)
+    const targetDay = dateKey(targetDate)
+    const dayAfter = dateKey(new Date(targetDate.getTime() + 24 * 60 * 60 * 1000))
+
+    /** Insert a slot at 06:00–10:00 UTC on the given YYYY-MM-DD day. */
+    async function addSlot(
+      experienceId: string,
+      day: string,
+      opts: {
+        capacity?: number
+        capacityTaken?: number
+        status?: 'open' | 'sold_out' | 'closed'
+      } = {},
+    ): Promise<void> {
+      const startAt = new Date(`${day}T06:00:00.000Z`)
+      const endAt = new Date(`${day}T10:00:00.000Z`)
+      await db.insert(availabilitySlots).values({
+        experienceId,
+        startAt,
+        endAt,
+        capacity: opts.capacity ?? 8,
+        capacityTaken: opts.capacityTaken ?? 0,
+        status: opts.status ?? 'open',
+      })
+    }
+
+    it('includes experiences with an open, non-full slot on the chosen day', async () => {
+      const withSlot = await seed({ slug: 'has-slot' })
+      await seed({ slug: 'no-slot' })
+      await addSlot(withSlot, targetDay)
+
+      const { hits } = await searchExperiences({ date: targetDay }, { db })
+      expect(hits.map((h) => h.slug)).toEqual(['has-slot'])
+    })
+
+    it('excludes an experience whose only slot is on a DIFFERENT day', async () => {
+      const other = await seed({ slug: 'wrong-day' })
+      await addSlot(other, dayAfter)
+
+      const { hits } = await searchExperiences({ date: targetDay }, { db })
+      expect(hits).toHaveLength(0)
+    })
+
+    it('excludes sold_out and closed slots on the day', async () => {
+      const soldOut = await seed({ slug: 'sold-out' })
+      await addSlot(soldOut, targetDay, { status: 'sold_out' })
+      const closed = await seed({ slug: 'closed' })
+      await addSlot(closed, targetDay, { status: 'closed' })
+
+      const { hits } = await searchExperiences({ date: targetDay }, { db })
+      expect(hits).toHaveLength(0)
+    })
+
+    it('excludes an open slot whose capacity is fully taken', async () => {
+      const full = await seed({ slug: 'full' })
+      await addSlot(full, targetDay, { capacity: 4, capacityTaken: 4 })
+
+      const { hits } = await searchExperiences({ date: targetDay }, { db })
+      expect(hits).toHaveLength(0)
+    })
+
+    it('includes an experience when ANY slot on the day is bookable (one full, one free)', async () => {
+      const mixed = await seed({ slug: 'mixed' })
+      await addSlot(mixed, targetDay, { capacity: 4, capacityTaken: 4 })
+      // Second slot 4h later on the same UTC day, seats free.
+      await db.insert(availabilitySlots).values({
+        experienceId: mixed,
+        startAt: new Date(`${targetDay}T12:00:00.000Z`),
+        endAt: new Date(`${targetDay}T16:00:00.000Z`),
+        capacity: 8,
+        capacityTaken: 2,
+        status: 'open',
+      })
+
+      const { hits } = await searchExperiences({ date: targetDay }, { db })
+      expect(hits.map((h) => h.slug)).toEqual(['mixed'])
+    })
+
+    it('a date beyond the materialization horizon returns empty (ADR-0020 caveat)', async () => {
+      const exp = await seed({ slug: 'horizon' })
+      await addSlot(exp, targetDay)
+      const farFuture = dateKey(new Date(Date.now() + 300 * 24 * 60 * 60 * 1000))
+
+      const { hits } = await searchExperiences({ date: farFuture }, { db })
+      expect(hits).toHaveLength(0)
+    })
+
+    it('date=TODAY excludes slots that already departed (>= now clamp)', async () => {
+      // Freeze "now" at 12:00 UTC so the same-UTC-day past/future slots are
+      // unambiguous. The clamp is a JS-computed ISO param (not SQL now()),
+      // so fake timers govern it.
+      vi.useFakeTimers()
+      try {
+        const todayNoon = new Date(`${dateKey(new Date())}T12:00:00.000Z`)
+        vi.setSystemTime(todayNoon)
+        const todayKeyStr = dateKey(todayNoon)
+
+        const departed = await seed({ slug: 'departed' })
+        await db.insert(availabilitySlots).values({
+          experienceId: departed,
+          startAt: new Date(`${todayKeyStr}T06:00:00.000Z`), // 6h ago
+          endAt: new Date(`${todayKeyStr}T10:00:00.000Z`),
+          capacity: 8,
+        })
+        const upcoming = await seed({ slug: 'upcoming' })
+        await db.insert(availabilitySlots).values({
+          experienceId: upcoming,
+          startAt: new Date(`${todayKeyStr}T18:00:00.000Z`), // 6h ahead
+          endAt: new Date(`${todayKeyStr}T22:00:00.000Z`),
+          capacity: 8,
+        })
+
+        const { hits } = await searchExperiences({ date: todayKeyStr }, { db })
+        expect(hits.map((h) => h.slug)).toEqual(['upcoming'])
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it('a malformed date that bypassed parsing matches NOTHING (defensive sql false)', async () => {
+      const exp = await seed({ slug: 'guarded' })
+      await addSlot(exp, targetDay)
+
+      const { hits } = await searchExperiences({ date: 'not-a-date' }, { db })
+      expect(hits).toHaveLength(0)
+    })
+
+    it('composes with q (text match AND bookable that day)', async () => {
+      const raftWith = await seed({ slug: 'raft-with', title: 'Ganga Rafting Rush' })
+      await addSlot(raftWith, targetDay)
+      await seed({ slug: 'raft-without', title: 'Ganga Rafting Calm' })
+
+      const { hits } = await searchExperiences({ q: 'rafting', date: targetDay }, { db })
+      expect(hits.map((h) => h.slug)).toEqual(['raft-with'])
+    })
+
+    it('filters BEFORE the 20-hit limit — the page still fills when >20 match (never post-hoc)', async () => {
+      // 22 matching experiences (older updatedAt), then 5 NON-matching seeded
+      // with the NEWEST updatedAt: under the default newest-first sort a
+      // naive "filter the returned 20" would waste 5 of the page's rows on
+      // slotless experiences and return only 15. The inline EXISTS must
+      // return a full page of 20 bookable hits.
+      const old = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      for (let i = 0; i < 22; i++) {
+        const id = await seed({
+          slug: `bookable-${String(i).padStart(2, '0')}`,
+          updatedAt: old,
+        })
+        await addSlot(id, targetDay)
+      }
+      for (let i = 0; i < 5; i++) {
+        await seed({ slug: `slotless-${i}` }) // newest updatedAt (now)
+      }
+
+      const { hits } = await searchExperiences({ date: targetDay }, { db })
+      expect(hits).toHaveLength(20)
+      expect(hits.every((h) => h.slug.startsWith('bookable-'))).toBe(true)
+    })
   })
 })

@@ -115,6 +115,12 @@
     "participants": {
       "count": "{count, plural, one {# person} other {# people}}"
     },
+    "date": {
+      "anytime": "Anytime",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "nextWeekend": "Next weekend"
+    },
     "fields": {
       "destination": "Destination",
       "activity": "Activity",

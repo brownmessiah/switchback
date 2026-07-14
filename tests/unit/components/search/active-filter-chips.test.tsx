@@ -27,6 +27,7 @@ vi.mock('next-intl', () => ({
     t.has = (key: string) => KNOWN_KEYS.has(key)
     return t
   },
+  useLocale: () => 'en',
 }))
 
 const push = vi.fn()

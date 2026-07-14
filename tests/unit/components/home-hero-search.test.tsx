@@ -17,8 +17,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
  *     (parseSearchParams → maxGroupSize "fits a group of N" filter). At the
  *     default (1) NO groupSize input is emitted, so the no-JS submit and the
  *     canonical /search?q= URL shape are unchanged.
- *   - The date segment is deliberately ABSENT here (issue 10 adds it with
- *     the ADR-0020 backend; no dead controls).
+ *   - The date segment (issue 10, ADR-0020): popover trigger + hidden
+ *     `date` input only when a day is picked — the default submit stays
+ *     /search?q=.
  */
 
 vi.mock('next-intl', () => ({
@@ -26,6 +27,7 @@ vi.mock('next-intl', () => ({
     (ns: string) =>
     (key: string, values?: Record<string, unknown>) =>
       values ? `${ns}.${key}:${JSON.stringify(values)}` : `${ns}.${key}`,
+  useLocale: () => 'en',
 }))
 
 import { HomeHeroSearch } from '@/components/home/hero-search'
@@ -101,10 +103,20 @@ describe('HomeHeroSearch — unified bar (issue 07)', () => {
     ).toBeInTheDocument()
   })
 
-  it('renders NO date control (issue 10 adds it with the backend)', () => {
+  it('renders the date segment (issue 10): Anytime trigger, no date input until picked', () => {
     const { container } = render(<HomeHeroSearch />)
+    // The popover trigger (accessible name = the "Date" field label) shows
+    // the "Anytime" default as its visible text; the hidden `date` input
+    // exists only once a day is picked (selection interaction is covered by
+    // the DatePanel unit tests + the e2e — jsdom does not exercise the
+    // base-ui portal popup).
+    // Accessible name composes the field label WITH the current value
+    // (WCAG 2.5.3 label-in-name).
+    const trigger = screen.getByRole('button', {
+      name: 'HomeSearch.fields.date: HomeSearch.date.anytime',
+    })
+    expect(trigger.textContent).toContain('HomeSearch.date.anytime')
     expect(container.querySelector('input[name="date"]')).toBeNull()
-    expect(container.querySelector('[data-testid="date-popover"]')).toBeNull()
   })
 })
 

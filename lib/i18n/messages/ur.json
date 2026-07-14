@@ -1802,6 +1802,12 @@
     "participants": {
       "count": "{count, plural, one {# فرد} other {# افراد}}"
     },
+    "date": {
+      "anytime": "کسی بھی وقت",
+      "today": "آج",
+      "tomorrow": "کل",
+      "nextWeekend": "اگلا ویک اینڈ"
+    },
     "fields": {
       "destination": "منزل",
       "activity": "سرگرمی",

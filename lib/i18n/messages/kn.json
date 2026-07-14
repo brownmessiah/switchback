@@ -1802,6 +1802,12 @@
     "participants": {
       "count": "{count, plural, one {# ವ್ಯಕ್ತಿ} other {# ಜನರು}}"
     },
+    "date": {
+      "anytime": "ಯಾವಾಗ ಬೇಕಾದರೂ",
+      "today": "ಇಂದು",
+      "tomorrow": "ನಾಳೆ",
+      "nextWeekend": "ಮುಂದಿನ ವಾರಾಂತ್ಯ"
+    },
     "fields": {
       "destination": "ಗಮ್ಯ",
       "activity": "ಚಟುವಟಿಕೆ",

@@ -54,3 +54,18 @@ The existing unique index `(experience_id, start_at)` on `availability_slots` (f
 - `searchExperiences` stays a single query; the `EXISTS` adds one correlated, indexed lookup per candidate row.
 - Filter tests must cover: date with an open slot (included); date fully `sold_out`/`closed` (excluded); date where `capacity_taken = capacity` (excluded); past date (rejected in parse); date beyond the materialization horizon (empty); and pagination correctness (≥20 matches still fill the page — i.e. the `EXISTS` is inside the query, not applied after `LIMIT`).
 - The date variant of a `/search` URL is `noindex, follow` and canonicalizes to bare `/search` (via `isFilteredSearch`), consistent with every other facet.
+
+## Amendment — lower bound clamps to `now()` (issue-10 review, 2026-07-14)
+
+The original SQL ranged `[:dayStart, :dayEnd)` and asserted "a today/future
+day is always `>= now`" — true only at midnight. For the flagship **Today**
+selection, slots earlier in the UTC day would still match, surfacing
+Experiences whose only same-day slot has already departed (India inventory
+is morning-heavy). The implemented predicate therefore clamps the lower
+bound: `start_at >= GREATEST(:dayStart, now-as-bound)` (computed as the max
+of the day-start and the current instant, passed as an ISO string). This
+restores parity with the canonical bookable predicate
+(`lib/experiences/detail-loader.ts`: `startAt >= now`). Additionally,
+`parseDateParam` clamps the far horizon to ~366 days: the UI offers two
+months, materialization covers ~90 days, and extreme years ('9999-12-31')
+serialize to expanded-year ISO strings Postgres rejects.

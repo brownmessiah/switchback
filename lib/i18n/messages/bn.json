@@ -1802,6 +1802,12 @@
     "participants": {
       "count": "{count, plural, one {# জন} other {# জন}}"
     },
+    "date": {
+      "anytime": "যেকোনো সময়",
+      "today": "আজ",
+      "tomorrow": "আগামীকাল",
+      "nextWeekend": "পরবর্তী সপ্তাহান্ত"
+    },
     "fields": {
       "destination": "গন্তব্য",
       "activity": "কার্যকলাপ",

@@ -62,6 +62,84 @@ test.describe('home hero search · unified bar (issue 07)', () => {
     expect(narrowed).toBeLessThan(allCount)
   })
 
+  test('date selection carries to /search and narrows to bookable-day results (ADR-0020)', async ({
+    page,
+  }) => {
+    // UTC day key, matching dateKey()/the grid buttons' aria-labels.
+    const dayKeyOffset = (days: number): string =>
+      new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10)
+
+    // A day the seeds materialize slots for (fixed offsets 5/7/12 PLUS the
+    // 90-day weekly-pattern materialization) — deterministically bookable.
+    const bookableDay = dayKeyOffset(5)
+    await page.goto('/')
+    await page.getByTestId('date-popover-trigger').click()
+    await page.locator(`[data-day="${bookableDay}"]`).click()
+    const form = page.getByTestId('home-hero-search')
+    await form.getByRole('button', { name: 'Search' }).click()
+    await page.waitForURL(`**/search?**date=${bookableDay}**`)
+
+    const results = page.getByRole('region', { name: 'Search results' })
+    const cards = results.locator('a[href^="/experience/"]')
+    await expect(cards.first()).toBeVisible()
+
+    // The applied date is VISIBLE and removable as a filter chip (review
+    // fix — it would otherwise silently stick across later refinements).
+    const chip = page.getByTestId('active-filter-chip-date')
+    await expect(chip).toBeVisible()
+
+    // ADR-0020 robots rule: a date-filtered URL is noindex,follow and
+    // canonicalises to the bare /search.
+    const robots = page.locator('meta[name="robots"]')
+    await expect(robots.first()).toHaveAttribute('content', /noindex/i)
+    const canonical = page.locator('link[rel="canonical"]')
+    await expect(canonical.first()).toHaveAttribute('href', /\/search$/)
+
+    // Dismissing the chip drops ONLY the date param.
+    await Promise.all([page.waitForURL((u) => !u.searchParams.has('date')), chip.click()])
+    await expect(page.getByTestId('active-filter-chip-date')).toHaveCount(0)
+  })
+
+  test('the date popover is keyboard-operable (AC1): open, pick, submit', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    await page.getByTestId('date-popover-trigger').focus()
+    await page.keyboard.press('Enter') // opens the popover
+    const popup = page.getByTestId('date-popover')
+    await expect(popup).toBeVisible()
+    // Keyboard-activate the "Today" pill (Enter).
+    const today = popup.getByRole('button', { name: 'Today' })
+    await today.focus()
+    await page.keyboard.press('Enter')
+    await expect(popup).toBeHidden()
+
+    const form = page.getByTestId('home-hero-search')
+    await form.getByRole('button', { name: 'Search' }).focus()
+    await page.keyboard.press('Enter')
+    await page.waitForURL(/\/search\?.*date=\d{4}-\d{2}-\d{2}/)
+  })
+
+  test('a date beyond the slot-materialization horizon returns the empty state (ADR-0020 caveat)', async ({
+    page,
+  }) => {
+    const dayKeyOffset = (days: number): string =>
+      new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10)
+    // +100 days: beyond the ~90-day weekly-pattern materialization window
+    // (the popover's 2-month grid can't reach it — the BACKEND contract is
+    // under test), inside parseDateParam's 366-day clamp. The filter must
+    // return the empty state, never fall back to unfiltered.
+    const horizonDay = dayKeyOffset(100)
+
+    await page.goto(`/search?date=${horizonDay}`)
+
+    // The results region must have RENDERED (a broken page would also have
+    // zero cards) — assert the empty state, then the zero count.
+    await expect(page.getByTestId('search-empty')).toBeVisible()
+    const results = page.getByRole('region', { name: 'Search results' })
+    await expect(results.locator('a[href^="/experience/"]')).toHaveCount(0)
+  })
+
   test('default participants (1) emits NO groupSize param (canonical URL shape)', async ({
     page,
   }) => {

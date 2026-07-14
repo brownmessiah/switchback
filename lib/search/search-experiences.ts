@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, gte, inArray, lte, sql, type SQL } from 'drizzle-orm'
 
 import { db as prodDb } from '@/db/client'
+import { availabilitySlots } from '@/db/schema/availability-slots'
 import { experiences } from '@/db/schema/experiences'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { listActivities } from '@/lib/activities/registry'
@@ -66,6 +67,14 @@ export interface SearchExperiencesParams {
   safetyVerified?: boolean
   /** Flexible cancellation preset (ADR-0005) — `cancellationPreset = "flexible"`. NEVER "free". */
   cancellation?: string
+  /**
+   * Bookable-on-date filter (home-redesign issue 10, ADR-0020): a UTC
+   * `YYYY-MM-DD` day. Matches Experiences with at least one `open` slot
+   * starting inside that UTC day with capacity remaining — an inline
+   * `EXISTS` evaluated BEFORE the LIMIT, never a post-hoc filter of the
+   * returned page. Callers validate via `parseDateParam` (past rejected).
+   */
+  date?: string
 }
 
 export interface SearchExperienceHit {
@@ -110,7 +119,11 @@ export function isFilteredSearch(params: SearchExperiencesParams): boolean {
     params.state ||
     params.minRating !== undefined ||
     params.safetyVerified ||
-    params.cancellation
+    params.cancellation ||
+    // ADR-0020: a date-filtered URL MUST inherit noindex,follow + the
+    // canonical-to-bare-/search treatment, or infinite date permutations
+    // leak into the index.
+    params.date
   )
 }
 
@@ -197,6 +210,43 @@ export async function searchExperiences(
   }
   if (params.cancellation) {
     conditions.push(sql`${experiences.cancellationPreset}::text = ${params.cancellation}`)
+  }
+  if (params.date !== undefined) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(params.date)) {
+      // ADR-0020: correlated EXISTS on the canonical "bookable" predicate
+      // (status open + capacity remaining), ranged over the UTC calendar day
+      // — `start_at` is timestamptz, equality would never match. Served by
+      // the (experience_id, start_at) unique index; evaluated BEFORE the
+      // LIMIT so the page fills whenever >=20 matches exist.
+      // Bounds are ISO STRINGS + ::timestamptz casts, NOT js Date params:
+      // the postgres-js driver throws ERR_INVALID_ARG_TYPE on raw Date
+      // values in sql`` templates (PGlite tolerates them — unit tests alone
+      // would not catch this).
+      const dayStartMs = Date.parse(`${params.date}T00:00:00.000Z`)
+      const dayStart = new Date(dayStartMs).toISOString()
+      const dayEnd = new Date(dayStartMs + 24 * 60 * 60 * 1000).toISOString()
+      // Lower bound clamps to NOW for the today case: the canonical
+      // bookable predicate (detail-loader) is `startAt >= now`, and without
+      // the clamp "Today" would match slots that already departed —
+      // click-through lands on a PDP with nothing bookable. (Review fix;
+      // amended into ADR-0020.)
+      const nowIso = new Date().toISOString()
+      const lowerBound = dayStart > nowIso ? dayStart : nowIso
+      conditions.push(
+        sql`exists (
+          select 1 from ${availabilitySlots}
+          where ${availabilitySlots.experienceId} = ${experiences.id}
+            and ${availabilitySlots.status} = 'open'
+            and ${availabilitySlots.startAt} >= ${lowerBound}::timestamptz
+            and ${availabilitySlots.startAt} < ${dayEnd}::timestamptz
+            and ${availabilitySlots.capacityTaken} < ${availabilitySlots.capacity}
+        )`,
+      )
+    } else {
+      // A malformed day that slipped past parseDateParam matches nothing
+      // (same convention as an unknown durationBand) — never unfiltered.
+      conditions.push(sql`false`)
+    }
   }
 
   // Full-text query: FTS (prefix + stemming) OR pg_trgm word-similarity (typos).

@@ -3,6 +3,17 @@ import { describe, expect, it } from 'vitest'
 import { deriveActiveFilterChips } from './active-filter-chips'
 
 describe('deriveActiveFilterChips (issue 10)', () => {
+  it('derives a removable date chip (home-redesign issue 10 / ADR-0020)', () => {
+    const chips = deriveActiveFilterChips({ date: '2026-08-01' })
+    expect(chips).toHaveLength(1)
+    expect(chips[0]).toMatchObject({
+      key: 'date',
+      kind: 'date',
+      value: '2026-08-01',
+      removeParams: ['date'],
+    })
+  })
+
   it('returns no chips when no filter params are set', () => {
     expect(deriveActiveFilterChips({})).toEqual([])
     // `q` and `sort` are not removable filter chips (q is the search query, sort

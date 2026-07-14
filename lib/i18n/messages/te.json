@@ -1802,6 +1802,12 @@
     "participants": {
       "count": "{count, plural, one {# వ్యక్తి} other {# మంది}}"
     },
+    "date": {
+      "anytime": "ఎప్పుడైనా",
+      "today": "ఈరోజు",
+      "tomorrow": "రేపు",
+      "nextWeekend": "వచ్చే వారాంతం"
+    },
     "fields": {
       "destination": "గమ్యం",
       "activity": "కార్యకలాపం",

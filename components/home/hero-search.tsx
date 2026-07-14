@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import type { ReactElement } from 'react'
 import { useState } from 'react'
 
+import { DatePopover } from '@/components/search/date-popover'
 import { ParticipantsStepper } from '@/components/search/participants-stepper'
 
 /**
@@ -30,6 +31,7 @@ const MAX_PARTICIPANTS = 20
 export function HomeHeroSearch(): ReactElement {
   const t = useTranslations('HomeSearch')
   const [participants, setParticipants] = useState(1)
+  const [date, setDate] = useState<string | null>(null)
 
   return (
     <form
@@ -53,6 +55,14 @@ export function HomeHeroSearch(): ReactElement {
             autoComplete="off"
             className="min-tap h-11 w-full bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
+        </div>
+
+        {/* Date segment (issue 10 / CR6): popover with quick pills + a
+            2-month grid (ADR-0020). The hidden input exists only when a day
+            is picked, so the default submit stays /search?q=. */}
+        <div className="flex items-center border-t border-border/60 px-2 pt-2 sm:border-l sm:border-t-0 sm:pt-0">
+          <DatePopover value={date} onChange={setDate} />
+          {date !== null && <input type="hidden" name="date" value={date} />}
         </div>
 
         {/* Participants segment (CR7): the shared stepper displays the

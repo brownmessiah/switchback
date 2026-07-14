@@ -1802,6 +1802,12 @@
     "participants": {
       "count": "{count, plural, one {# व्यक्ति} other {# लोग}}"
     },
+    "date": {
+      "anytime": "कभी भी",
+      "today": "आज",
+      "tomorrow": "कल",
+      "nextWeekend": "अगला वीकेंड"
+    },
     "fields": {
       "destination": "गंतव्य",
       "activity": "गतिविधि",

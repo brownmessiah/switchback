@@ -1,10 +1,11 @@
 /**
- * E2E — minimal Headout-style header (owner screenshots, 2026-06-11).
+ * E2E — customer-centric header (home-redesign issue 06 / D3).
  *
- * Supersedes the issue-03 discovery-forward bar: the header carries ONLY the
- * wordmark, the supply-side "List your experience" CTA, the theme/locale
- * utilities and the auth control. The five discovery surfaces stay reachable
- * through the footer's link columns; the hero search is the discovery entry.
+ * Customer-centric since home-redesign issue 06 (D3): the header carries the
+ * wordmark, Wishlist, the theme/locale utilities + static "₹ INR" badge (D5)
+ * and the auth control — the vendor CTA moved to the footer's "For Vendors"
+ * column. The five discovery surfaces stay reachable through the footer's
+ * link columns; the hero search is the discovery entry.
  *
  * DevTools fixture → axe (wcag2a+wcag2aa) + console-error gating per test.
  */
@@ -33,14 +34,35 @@ test.describe('Primary nav — minimal header (desktop)', () => {
     }
   })
 
-  test('shows the "List your experience" CTA → /vendor-partner (issue 06)', async ({
+  // Home-redesign issue 06 (D3): the header is customer-centric — the vendor
+  // CTA moved out (footer "For Vendors" column keeps the supply-side entry),
+  // Wishlist joins, and a static "₹ INR" badge sits beside the FUNCTIONAL
+  // language selector (D5).
+  test('customer-centric header: Wishlist + ₹ INR badge, no vendor CTA (issue 06)', async ({
     page,
   }) => {
     await page.goto('/')
     const nav = page.getByRole('navigation', { name: 'Primary' })
     await expect(
       nav.getByRole('link', { name: 'List your experience' }),
-    ).toHaveAttribute('href', '/vendor-partner')
+    ).toHaveCount(0)
+    await expect(nav.getByRole('link', { name: 'Wishlist' })).toHaveAttribute(
+      'href',
+      '/wishlist',
+    )
+    await expect(nav.getByText('₹ INR')).toBeVisible()
+  })
+
+  test('logged-out Wishlist click lands on /sign-in (auth-gated route)', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    await page
+      .getByRole('navigation', { name: 'Primary' })
+      .getByRole('link', { name: 'Wishlist' })
+      .click()
+    await page.waitForURL(/\/sign-in/)
+    expect(new URL(page.url()).pathname).toBe('/sign-in')
   })
 
   test('discovery stays reachable via the footer link columns', async ({

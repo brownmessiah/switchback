@@ -1052,7 +1052,9 @@
     "safety": "ಸುರಕ್ಷತೆ",
     "blog": "ಬ್ಲಾಗ್",
     "tripGroups": "ಟ್ರಿಪ್ ಗುಂಪುಗಳು",
-    "listYourExperience": "ನಿಮ್ಮ ಅನುಭವವನ್ನು ಪಟ್ಟಿಮಾಡಿ"
+    "wishlist": "ವಿಶ್‌ಲಿಸ್ಟ್",
+    "currencyBadge": "₹ INR",
+    "currencyBadgeLabel": "ಬೆಲೆಗಳು ಭಾರತೀಯ ರೂಪಾಯಿಗಳಲ್ಲಿ"
   },
   "NotFound": {
     "heading": "404",

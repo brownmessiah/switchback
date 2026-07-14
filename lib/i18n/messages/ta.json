@@ -1052,7 +1052,9 @@
     "safety": "பாதுகாப்பு",
     "blog": "வலைப்பதிவு",
     "tripGroups": "பயணக் குழுக்கள்",
-    "listYourExperience": "உங்கள் அனுபவத்தை பட்டியலிடுங்கள்"
+    "wishlist": "விருப்பப்பட்டியல்",
+    "currencyBadge": "₹ INR",
+    "currencyBadgeLabel": "விலைகள் இந்திய ரூபாயில்"
   },
   "NotFound": {
     "heading": "404",

@@ -980,7 +980,9 @@
     "safety": "সুৰক্ষা",
     "blog": "ব্লগ",
     "tripGroups": "ট্ৰিপ গ্ৰুপ",
-    "listYourExperience": "আপোনাৰ অভিজ্ঞতা তালিকাভুক্ত কৰক"
+    "wishlist": "ৱিছলিষ্ট",
+    "currencyBadge": "₹ INR",
+    "currencyBadgeLabel": "মূল্য ভাৰতীয় টকাত"
   },
   "NotFound": {
     "heading": "404",

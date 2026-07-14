@@ -262,7 +262,7 @@ test.describe('Home page', () => {
     expect(new URL(page.url()).pathname).toBe('/search')
   })
 
-  test('the old hero CTA buttons are gone; supply CTA lives in the header', async ({
+  test('the old hero CTA buttons are gone; supply CTA lives in the footer only', async ({
     page,
   }) => {
     await page.goto('/')
@@ -270,15 +270,17 @@ test.describe('Home page', () => {
     await expect(
       page.getByRole('link', { name: 'Explore Experiences' }),
     ).toHaveCount(0)
-    // The supply-side CTA now lives in the header's Primary nav (the footer
-    // carries its own "List your experience" link, so a page-wide locator is
-    // ambiguous — scope to the Primary nav). components/site-header.tsx renders
-    // `<nav aria-label="Primary">` containing the single CTA → /vendor-partner.
-    const headerCta = page
-      .getByRole('navigation', { name: 'Primary' })
+    // Issue 06 (D3): the header is customer-centric — no vendor CTA. The
+    // supply side enters via the footer's "For Vendors" column.
+    await expect(
+      page
+        .getByRole('navigation', { name: 'Primary' })
+        .getByRole('link', { name: 'List your experience' }),
+    ).toHaveCount(0)
+    const footerCta = page
+      .getByRole('navigation', { name: 'Footer navigation' })
       .getByRole('link', { name: 'List your experience' })
-    await expect(headerCta).toBeVisible()
-    await expect(headerCta).toHaveAttribute('href', '/vendor-partner')
+    await expect(footerCta).toHaveAttribute('href', '/vendor-partner')
   })
 
   test('the compact trust strip closes the page, after How-Outvers-works (issue 02)', async ({

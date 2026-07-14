@@ -980,7 +980,9 @@
     "safety": "ସୁରକ୍ଷା",
     "blog": "ବ୍ଲଗ୍",
     "tripGroups": "ଟ୍ରିପ୍ ଗ୍ରୁପ୍",
-    "listYourExperience": "ଆପଣଙ୍କ ଅନୁଭୂତି ତାଲିକାଭୁକ୍ତ କରନ୍ତୁ"
+    "wishlist": "ୱିଶଲିଷ୍ଟ",
+    "currencyBadge": "₹ INR",
+    "currencyBadgeLabel": "ମୂଲ୍ୟ ଭାରତୀୟ ଟଙ୍କାରେ"
   },
   "NotFound": {
     "heading": "404",

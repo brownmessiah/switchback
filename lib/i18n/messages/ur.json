@@ -1052,7 +1052,9 @@
     "safety": "حفاظت",
     "blog": "بلاگ",
     "tripGroups": "ٹرپ گروپس",
-    "listYourExperience": "اپنا تجربہ درج کریں"
+    "wishlist": "وش لسٹ",
+    "currencyBadge": "₹ INR",
+    "currencyBadgeLabel": "قیمتیں بھارتی روپے میں"
   },
   "NotFound": {
     "heading": "404",

@@ -1202,7 +1202,9 @@
     "safety": "Safety",
     "blog": "Blog",
     "tripGroups": "Trip Groups",
-    "listYourExperience": "List your experience"
+    "wishlist": "Wishlist",
+    "currencyBadge": "₹ INR",
+    "currencyBadgeLabel": "Prices in Indian Rupees"
   },
   "NotFound": {
     "heading": "This trail leads nowhere",

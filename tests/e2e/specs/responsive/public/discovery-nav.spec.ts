@@ -3,8 +3,9 @@
  * 2026-06-11; supersedes the issue-03 discovery drawer). Runs under
  * responsive-phone-public (375) + responsive-tablet-public (768), both
  * coarse-pointer so the §8.2 44px floor is live. The `< sm` `<details>` menu
- * mirrors the minimal desktop bar: "List your experience" + Sign in + the
- * theme/locale utilities — NO discovery links.
+ * mirrors the customer-centric desktop bar (issue 06 / D3): Wishlist +
+ * Sign in + the theme/locale utilities + "₹ INR" badge — NO vendor CTA, NO
+ * discovery links.
  *
  * DevTools fixture → axe (wcag2a+wcag2aa) gating per test.
  */
@@ -21,7 +22,7 @@ const REMOVED_DISCOVERY_LABELS = [
 ]
 
 test.describe('mobile menu · minimal header (< sm)', () => {
-  test('opens the menu and carries only the supply CTA + Sign in', async ({
+  test('opens the menu and carries Wishlist + Sign in (no supply CTA)', async ({
     page,
   }) => {
     const width = page.viewportSize()?.width ?? 0
@@ -36,9 +37,15 @@ test.describe('mobile menu · minimal header (< sm)', () => {
     await page.getByLabel('Open menu').click()
 
     const nav = page.getByRole('navigation', { name: 'Mobile primary' })
+    // Issue 06 (D3): customer-centric menu — Wishlist replaced the vendor CTA.
     await expect(
       nav.getByRole('link', { name: 'List your experience' }),
-    ).toHaveAttribute('href', '/vendor-partner')
+    ).toHaveCount(0)
+    await expect(nav.getByRole('link', { name: 'Wishlist' })).toHaveAttribute(
+      'href',
+      '/wishlist',
+    )
+    await expect(nav.getByText('₹ INR')).toBeVisible()
     await expect(nav.getByRole('link', { name: 'Sign in' })).toHaveAttribute(
       'href',
       '/sign-in',

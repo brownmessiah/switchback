@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { usePathname } from 'next/navigation'
 import type { ReactElement } from 'react'
+import { Heart } from 'lucide-react'
 
 import { isBackOfficePath } from '@/lib/chrome/back-office-path'
 
@@ -12,21 +13,21 @@ import { LanguageSelector } from './language-selector'
 import { ThemeToggle } from './theme-toggle'
 
 /**
- * Minimal Headout-style header (owner screenshots, 2026-06-11): ONLY the
- * wordmark, the supply-side "List your experience" CTA, the theme/locale
- * utilities, and the auth control. This supersedes the issue-03
- * discovery-forward bar — the five discovery surfaces (Explore /
- * Destinations / Activities / Safety / Blog) stay reachable sitewide via the
- * footer's "Explore" + "Support" columns, and the homepage hero search is
- * the primary discovery entry.
+ * Customer-centric header (home-redesign issue 06 / CR4, decision D3 —
+ * supersedes the 2026-06-11 minimal bar that carried the supply-side CTA):
+ * wordmark, Wishlist, theme toggle, the FUNCTIONAL language selector with a
+ * static "₹ INR" badge beside it (decision D5 — currency is decorative;
+ * INR is the only charge currency, and locale routing/hreflang stay
+ * untouched per ADR-0012/0013), and the auth control.
+ *
+ * The "List your experience" vendor CTA moved OUT of the header — the
+ * supply side enters via the footer's "For Vendors" column (site-footer),
+ * so it is not orphaned. Discovery links stay out too (footer's Explore/
+ * Support columns; the hero search is the primary discovery entry).
+ *
+ * Wishlist points at the auth-gated /wishlist — a logged-out click lands on
+ * /sign-in (accepted, per the issue).
  */
-
-/**
- * Supply-side CTA → the public /vendor-partner landing page (issue 06), which
- * funnels into the auth-gated /vendor/onboarding. The header points at the
- * crawlable partner page, not the onboarding route itself.
- */
-const VENDOR_CTA_HREF = '/vendor-partner'
 
 export function SiteHeader(): ReactElement | null {
   const pathname = usePathname()
@@ -56,20 +57,36 @@ export function SiteHeader(): ReactElement | null {
 
         <nav aria-label="Primary" className="hidden items-center gap-4 sm:flex">
           <Link
-            href={VENDOR_CTA_HREF}
-            className={
+            href="/wishlist"
+            className={`flex items-center gap-1.5 text-sm font-medium ${
               isHome
-                ? 'text-sm font-medium text-white hover:text-white/80'
-                : 'text-sm font-medium text-foreground hover:text-foreground/80'
-            }
+                ? 'text-white hover:text-white/80'
+                : 'text-foreground hover:text-foreground/80'
+            }`}
           >
-            {t('listYourExperience')}
+            <Heart className="size-4" aria-hidden="true" />
+            {t('wishlist')}
           </Link>
           <ThemeToggle
             label={t('themeToggle')}
             className={isHome ? 'text-white hover:bg-white/10 hover:text-white' : ''}
           />
-          <LanguageSelector variant="compact" onDark={isHome} />
+          <div className="flex items-center gap-1.5">
+            <LanguageSelector variant="compact" onDark={isHome} />
+            {/* Static currency indicator (D5): INR is the only charge
+                currency (razorpay-client hardcodes it) — this is a label,
+                not a switcher. */}
+            <span
+              aria-label={t('currencyBadgeLabel')}
+              className={`rounded-[var(--radius-pill)] border px-1.5 py-0.5 text-xs font-medium tabular-nums ${
+                isHome
+                  ? 'border-white/30 text-white/90'
+                  : 'border-border text-muted-foreground'
+              }`}
+            >
+              {t('currencyBadge')}
+            </span>
+          </div>
           <AuthStatus />
         </nav>
 
@@ -98,14 +115,21 @@ export function SiteHeader(): ReactElement | null {
             className="absolute right-4 mt-2 flex w-56 flex-col gap-1 rounded-lg border bg-popover p-2 shadow-lg"
           >
             <Link
-              href={VENDOR_CTA_HREF}
-              className="min-tap flex items-center rounded px-3 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground"
+              href="/wishlist"
+              className="min-tap flex items-center gap-2 rounded px-3 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground"
             >
-              {t('listYourExperience')}
+              <Heart className="size-4" aria-hidden="true" />
+              {t('wishlist')}
             </Link>
             <div className="flex items-center gap-1 px-1 py-1">
               <ThemeToggle label={t('themeToggle')} />
               <LanguageSelector variant="compact" />
+              <span
+                aria-label={t('currencyBadgeLabel')}
+                className="rounded-[var(--radius-pill)] border border-border px-1.5 py-0.5 text-xs font-medium tabular-nums text-muted-foreground"
+              >
+                {t('currencyBadge')}
+              </span>
             </div>
             <Link
               href="/sign-in"

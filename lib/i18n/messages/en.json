@@ -1,8 +1,8 @@
 {
   "HomePage": {
     "hero": {
-      "title": "Book Verified Adventure Experiences Across India",
-      "subtitle": "Rafting, paragliding, scuba, and trekking from verified Vendors — with transparent pricing and real-time availability.",
+      "title": "Book best experiences around you",
+      "seoSubheading": "Verified adventure experiences across India — rafting, paragliding, scuba, and trekking.",
       "brandLine": "Book the scene you want to live.",
       "exploreCta": "Explore Experiences",
       "listCta": "List Your Experience",
@@ -198,7 +198,7 @@
     "beginnerFriendly": "Beginner Friendly"
   },
   "Metadata": {
-    "title": "Outvers — adventure activities in India",
+    "title": "Outvers — book verified adventure experiences across India",
     "description": "Book rafting, paragliding, scuba, trekking and more across India. Vendor-verified Experiences with transparent refund policy and a 24-hour refund SLA."
   },
   "Common": {

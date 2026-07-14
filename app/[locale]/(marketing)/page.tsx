@@ -90,23 +90,31 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
             sizes="100vw"
           />
           {/* Scrim: darker at top (keeps the overlay header's white text AA)
-              and bottom, so the display headline + chips read over imagery. The
-              mid-stop is deepened (was /45) because the headline + subtitle sit
-              vertically centred over the busiest, lightest part of the hero
-              photo — the prior mid value left the subtitle low-contrast. */}
+              and bottom, so the display headline reads over imagery. The
+              mid-stop is deepened (was /45) because the headline + brand line
+              sit vertically centred over the busiest, lightest part of the
+              hero photo — the prior mid value left mid-hero text
+              low-contrast. */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/60 to-black/80" />
         </div>
 
         <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center px-4 text-center">
-          {/* Keyword-forward H1 (issue 02 / DECISION D1) — the single page
-              heading, optimised for marketplace credibility + SEO. */}
+          {/* Brand-forward H1 (home-redesign issue 01 / CR2) — the single
+              page heading, softened per the owner brief. The SEO keywords the
+              old keyword-H1 + subtitle carried are preserved (D4) in the
+              sr-only <h2> below + Metadata title/description + the
+              Organization JSON-LD. NOTE: a hidden heading carries less
+              ranking weight than the old visible H1 — an accepted tradeoff
+              of the owner's declutter directive; watch Search Console. */}
           <h1 className="max-w-3xl text-balance text-h1 font-heading font-bold text-white sm:text-display">
             {t('hero.title')}
           </h1>
 
-          <p className="mt-5 max-w-lg text-base text-white [text-shadow:0_1px_3px_rgb(0_0_0/0.6)] sm:text-lg">
-            {t('hero.subtitle')}
-          </p>
+          {/* Visually-hidden keyword subheading (D4): keeps a crawlable,
+              screen-reader-visible keyword heading without re-cluttering the
+              hero the owner asked to simplify (the visible subtitle was
+              removed by CR3). */}
+          <h2 className="sr-only">{t('hero.seoSubheading')}</h2>
 
           {/* The search bar IS the call to action (Headout pattern): one
               "Destination or activity" field GET-posting to /search?q=. The

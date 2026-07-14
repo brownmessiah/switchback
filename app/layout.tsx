@@ -45,7 +45,7 @@ const notoDevanagari = Noto_Sans_Devanagari({
 });
 
 export const metadata: Metadata = {
-  title: "Outvers — adventure activities in India",
+  title: "Outvers — book verified adventure experiences across India",
   description:
     "Book rafting, paragliding, scuba, trekking and more across India. Vendor-verified Experiences with transparent refund policy.",
 };

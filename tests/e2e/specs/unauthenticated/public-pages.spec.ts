@@ -100,17 +100,23 @@ test.describe('Home page', () => {
     expect(new URL(page.url()).searchParams.get('region')).toBeTruthy()
   })
 
-  // Hero rework (issue 02 / DECISION D1): the H1 is the keyword line, the
-  // brand line is secondary (NOT an h1), and the two explicit CTAs route to
-  // /search and (since #06) the public /vendor-partner partner page.
-  test('H1 is the keyword line and is the only h1 on the page', async ({
+  // Hero copy rework (home-redesign issue 01 / CR2+CR3+D4): the H1 is the
+  // brand-forward line, the visible subtitle is gone, and the SEO keywords
+  // both lines used to carry live on in a visually-hidden <h2>.
+  test('H1 is the brand-forward line and is the only h1 on the page', async ({
     page,
   }) => {
     await page.goto('/')
 
     const h1 = page.locator('h1')
     await expect(h1).toHaveCount(1)
-    await expect(h1).toHaveText('Book Verified Adventure Experiences Across India')
+    await expect(h1).toHaveText('Book best experiences around you')
+
+    // D4 keyword preservation: the sr-only keyword <h2> is in the DOM (not
+    // visible) and carries the flagship-activity keywords.
+    const seoH2 = page.locator('section h2', { hasText: 'Verified adventure experiences' })
+    await expect(seoH2).toHaveCount(1)
+    await expect(seoH2).toContainText('rafting')
   })
 
   test('secondary brand line is present but not the H1', async ({ page }) => {

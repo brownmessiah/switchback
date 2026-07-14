@@ -18,6 +18,7 @@
 import type { Page } from '@playwright/test'
 
 import { test, expect } from '../../fixtures/devtools'
+import { mockRazorpayCheckout } from '../../helpers/razorpay-mock'
 
 // Seeded flagship rafting Experience with future open slots — see db/seed.ts.
 const RAFTING_SLUG = 'rishikesh-rafting-grade-iii'
@@ -76,8 +77,8 @@ test.describe('customer cart (issue 11)', () => {
       .poll(async () => page.getByTestId('cart-subtotal').textContent())
       .not.toBe(subtotalBefore)
 
-    // The checkout CTA is present but INERT (issue 12).
-    await expect(page.getByTestId('cart-checkout-inert')).toBeDisabled()
+    // The checkout CTA is gated behind the permits acknowledgement.
+    await expect(page.getByTestId('cart-checkout')).toBeDisabled()
 
     // Reload: the edit persisted server-side.
     await page.reload()
@@ -90,5 +91,35 @@ test.describe('customer cart (issue 11)', () => {
     // Badge follows on next navigation.
     await page.goto('/')
     await expect(page.getByTestId('cart-indicator-count')).toHaveCount(0)
+  })
+
+  test('multi-item checkout: pay once, land on bookings, cart emptied (issue 12)', async ({
+    page,
+  }) => {
+    await mockRazorpayCheckout(page)
+
+    // A BUSINESS-tier vendor's experience: the flagship rafting vendor is
+    // identity-tier and its ADR-0007 FY tier cap is already consumed by the
+    // seeded demo bookings — checkout there correctly rejects with
+    // TIER_CAP_EXCEEDED (verified: the all-or-nothing rejection audit
+    // fires). Business tier has headroom; Goa is not region-closed in seeds
+    // (lonavala/spiti/leh-ladakh/andaman are).
+    await page.goto('/experience/goa-kayaking-mandovi-mangrove')
+    await page.getByTestId('add-to-cart').first().click()
+    await expect(page.getByText('Added to your cart').first()).toBeVisible()
+
+    await page.goto('/cart')
+    await expect(page.getByTestId('cart-item')).toHaveCount(1)
+    await page.getByTestId('cart-permits-ack').check()
+    const cta = page.getByTestId('cart-checkout')
+    await expect(cta).toBeEnabled()
+    await cta.click()
+
+    // The mocked Razorpay sheet auto-succeeds -> UI advances to bookings.
+    await page.waitForURL(/\/bookings/)
+
+    // The cart is empty afterwards (cleared inside the checkout tx).
+    await page.goto('/cart')
+    await expect(page.getByTestId('cart-empty')).toBeVisible()
   })
 })

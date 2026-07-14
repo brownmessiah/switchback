@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import type { ReactElement } from 'react'
 import { useState, useTransition } from 'react'
+import Script from 'next/script'
+import { useRouter } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
 
 import { ParticipantsStepper } from '@/components/search/participants-stepper'
@@ -11,7 +13,7 @@ import type { CartView as CartViewData } from '@/lib/cart/core'
 import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
 
-import { removeFromCartAction, updateCartItemAction } from './actions'
+import { checkoutCartAction, removeFromCartAction, updateCartItemAction } from './actions'
 import { broadcastCartCount } from '@/components/cart-indicator'
 
 /**
@@ -33,11 +35,24 @@ function formatRupees(amount: number): string {
 
 interface CartViewProps {
   readonly initialCart: CartViewData
+  /** Session identity for the Razorpay prefill (never money-bearing). */
+  readonly customerName?: string
+  readonly customerEmail?: string
 }
 
-export function CartView({ initialCart }: CartViewProps): ReactElement {
+export function CartView({ initialCart, customerName, customerEmail }: CartViewProps): ReactElement {
+  const router = useRouter()
   const [cart, setCart] = useState(initialCart)
   const [isPending, startTransition] = useTransition()
+  const [acknowledged, setAcknowledged] = useState(false)
+  const [checkingOut, setCheckingOut] = useState(false)
+  // A dismissed pay-sheet must NOT strand the (already-created) bookings:
+  // the order id is kept so "Resume payment" re-opens the same order.
+  const [pendingPayment, setPendingPayment] = useState<{
+    razorpayOrderId: string
+    amountRupees: number
+    keyId: string
+  } | null>(null)
 
   function patchLine(id: string, participantCount: number): void {
     setCart((c) => {
@@ -87,6 +102,97 @@ export function CartView({ initialCart }: CartViewProps): ReactElement {
         }
       })
     })
+  }
+
+  async function onCheckout(): Promise<void> {
+    setCheckingOut(true)
+    try {
+      const result = await checkoutCartAction({
+        idempotencyKey: crypto.randomUUID(),
+        acknowledgedPermits: acknowledged,
+      })
+      if (!result.ok) {
+        toast.error(result.message)
+        setCheckingOut(false)
+        return
+      }
+      broadcastCartCount(0)
+      if (result.paymentSetupFailed) {
+        toast.error(
+          'Your bookings were created but payment setup could not start. Our team will follow up — you have not been charged yet.',
+        )
+        router.push('/bookings')
+        return
+      }
+      if (!result.razorpayOrderId || result.razorpayRemainderRupees <= 0) {
+        // Wallet fully funded the order (ADR-0004 wallet-before-Razorpay).
+        toast.success('Booked! Your wallet covered the full amount.')
+        router.push('/bookings')
+        return
+      }
+      if (typeof window === 'undefined' || !window.Razorpay) {
+        toast.error('Payment could not be started. Please reload and try again.')
+        setCheckingOut(false)
+        return
+      }
+      openPaySheet({
+        razorpayOrderId: result.razorpayOrderId,
+        amountRupees: result.razorpayRemainderRupees,
+        keyId: result.keyId,
+      })
+    } catch {
+      toast.error('Checkout failed. Please try again.')
+      setCheckingOut(false)
+    }
+  }
+
+  function openPaySheet(payment: {
+    razorpayOrderId: string
+    amountRupees: number
+    keyId: string
+  }): void {
+    new window.Razorpay({
+      key: payment.keyId,
+      amount: payment.amountRupees * 100,
+      currency: 'INR',
+      name: 'Outvers',
+      description:
+        cart.items.length === 1 ? '1 experience' : `${cart.items.length} experiences`,
+      order_id: payment.razorpayOrderId,
+      prefill: { name: customerName ?? '', email: customerEmail ?? '', contact: '' },
+      // The webhook is the authoritative capture; this only advances the UI.
+      handler: () => {
+        setPendingPayment(null)
+        router.push('/bookings')
+      },
+      modal: {
+        ondismiss: () => {
+          // The bookings/order are already committed — keep the order id so
+          // payment can be RESUMED (never stranded behind a cleared cart).
+          setPendingPayment(payment)
+          toast.error('Payment was not completed. You have not been charged — resume when ready.')
+          setCheckingOut(false)
+        },
+      },
+    }).open()
+  }
+
+  if (pendingPayment) {
+    return (
+      <div className="mt-10 flex flex-col items-start gap-4" data-testid="cart-pending-payment">
+        <p className="text-muted-foreground">
+          Your bookings are reserved but not yet paid. Resume payment to
+          confirm them.
+        </p>
+        <button
+          type="button"
+          onClick={() => openPaySheet(pendingPayment)}
+          className={cn(buttonVariants({ size: 'lg' }))}
+        >
+          Resume payment
+        </button>
+      </div>
+    )
   }
 
   if (cart.items.length === 0) {
@@ -167,21 +273,39 @@ export function CartView({ initialCart }: CartViewProps): ReactElement {
         </p>
       </div>
 
-      {/* Inert until issue 12 (multi-item checkout per ADR-0021) — present so
-          the layout is final, disabled so nothing dead-ends. */}
+      {/* Permits acknowledgement (ADR consent gate): createBooking refuses
+          permit-requiring Experiences without it — one consent covers the
+          cart, mirroring the single-item checkout page's notice. */}
+      <label className="flex items-start gap-2 text-sm text-muted-foreground">
+        <input
+          type="checkbox"
+          data-testid="cart-permits-ack"
+          checked={acknowledged}
+          onChange={(e) => setAcknowledged(e.target.checked)}
+          className="mt-0.5 size-4 accent-primary"
+        />
+        I acknowledge any permits these experiences require and confirm the
+        participant details are correct.
+      </label>
+
+      {/* Multi-item checkout (issue 12, ADR-0021): all-or-nothing — N
+          bookings in one transaction, ONE Razorpay payment for the total. */}
       <button
         type="button"
-        disabled
-        data-testid="cart-checkout-inert"
-        title="Multi-item checkout is coming next"
-        className={cn(buttonVariants({ size: 'lg' }), 'w-full opacity-60')}
+        disabled={!acknowledged || checkingOut || isPending}
+        data-testid="cart-checkout"
+        onClick={onCheckout}
+        className={cn(buttonVariants({ size: 'lg' }), 'w-full disabled:opacity-60')}
       >
-        Proceed to checkout
+        {checkingOut ? 'Processing…' : 'Proceed to checkout'}
       </button>
       <p className="text-center text-xs text-muted-foreground">
-        Multi-item checkout arrives with the next update — items stay saved
-        here meanwhile.
+        You pay once for everything; each experience becomes its own booking
+        with its own cancellation policy.
       </p>
+
+      {/* Razorpay checkout.js — eager so window.Razorpay exists by pay time. */}
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
     </div>
   )
 }

@@ -31,7 +31,11 @@ export default async function CartPage(): Promise<ReactElement> {
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
       <h1 className="font-heading text-h2 font-bold tracking-tight">Your cart</h1>
-      <CartView initialCart={cart} />
+      <CartView
+        initialCart={cart}
+        customerName={session.user.name ?? undefined}
+        customerEmail={session.user.email ?? undefined}
+      />
     </main>
   )
 }

@@ -4,6 +4,7 @@ import { headers } from 'next/headers'
 
 import { db } from '@/db/client'
 import { auth } from '@/lib/auth'
+import { executeCartCheckout } from '@/lib/cart/checkout'
 import {
   addToCart,
   CartError,
@@ -11,6 +12,7 @@ import {
   removeFromCart,
   updateCartItem,
 } from '@/lib/cart/core'
+import { env } from '@/lib/env'
 
 /**
  * Thin `'use server'` wrappers over the db-injected cart core (issue 11,
@@ -109,4 +111,54 @@ export async function getCartCountAction(): Promise<number> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return 0
   return getCartCount(db, session.user.id)
+}
+
+/**
+ * Multi-item checkout (issue 12, ADR-0021): N bookings in one transaction,
+ * one order-scoped Razorpay payment. The client supplies only a fresh
+ * idempotency key + the permits acknowledgement — never a price.
+ */
+export async function checkoutCartAction(input: {
+  idempotencyKey: string
+  acknowledgedPermits?: boolean
+}): Promise<
+  | {
+      ok: true
+      orderId: string
+      razorpayOrderId: string | null
+      amountTotalRupees: number
+      razorpayRemainderRupees: number
+      keyId: string
+      paymentSetupFailed?: boolean
+      replayed?: boolean
+    }
+  | (CartActionFailure & { failedSlotId?: string })
+> {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user) {
+    return { ok: false, error: 'unauthenticated', message: 'Sign in to check out.' }
+  }
+  const result = await executeCartCheckout(db, {
+    customerUserId: session.user.id,
+    idempotencyKey: input.idempotencyKey,
+    acknowledgedPermits: input.acknowledgedPermits ?? false,
+  })
+  if (!result.ok) {
+    return {
+      ok: false,
+      error: result.error,
+      message: result.message,
+      ...(result.failedSlotId ? { failedSlotId: result.failedSlotId } : {}),
+    }
+  }
+  return {
+    ok: true,
+    orderId: result.orderId,
+    razorpayOrderId: result.razorpayOrderId,
+    amountTotalRupees: result.amountTotalRupees,
+    razorpayRemainderRupees: result.razorpayRemainderRupees,
+    keyId: env.RAZORPAY_KEY_ID ?? '',
+    ...(result.paymentSetupFailed ? { paymentSetupFailed: true } : {}),
+    ...(result.replayed ? { replayed: true } : {}),
+  }
 }

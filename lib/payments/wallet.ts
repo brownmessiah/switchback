@@ -60,6 +60,131 @@ function assertNonNegativeInteger(amountRupees: number, field = 'grossRupees'): 
 }
 
 // ============================================================================
+// Order-level wallet application (issue 12, ADR-0021)
+// ============================================================================
+
+export interface ApplyWalletToOrderArgs {
+  userId: string
+  orderId: string
+  /** Cart lines in DETERMINISTIC checkout order (created_at, then id). */
+  lines: ReadonlyArray<{ bookingId: string; grossRupees: number }>
+}
+
+export interface ApplyWalletToOrderResult {
+  outversCreditAppliedRupees: number
+  refundBalanceAppliedRupees: number
+  razorpayRemainderRupees: number
+}
+
+/**
+ * Apply the wallet ONCE against a cart-checkout order total (ADR-0021):
+ * the ADR-0004 spend order (outvers_credit → refund_balance → Razorpay
+ * remainder) runs a single time over the summed gross — looping the
+ * per-booking `applyWalletToCheckout` would re-run the spend order N times.
+ * The spend is then ALLOCATED back to the individual bookings greedily in
+ * line order, and one `wallet.apply_to_checkout` audit row is written PER
+ * BOOKING (the Refund-balance liability must stay per-booking attributable).
+ * Must run inside the checkout's outer transaction so a later item failure
+ * rolls the debit back.
+ */
+export async function applyWalletToOrder(
+  db: DBOrTx,
+  args: ApplyWalletToOrderArgs,
+): Promise<ApplyWalletToOrderResult> {
+  const totalRupees = args.lines.reduce((sum, line) => {
+    assertNonNegativeInteger(line.grossRupees, 'grossRupees')
+    return sum + line.grossRupees
+  }, 0)
+
+  if (totalRupees === 0 || args.lines.length === 0) {
+    return {
+      outversCreditAppliedRupees: 0,
+      refundBalanceAppliedRupees: 0,
+      razorpayRemainderRupees: 0,
+    }
+  }
+
+  const rows = await db
+    .select()
+    .from(walletBalances)
+    .where(eq(walletBalances.userId, args.userId))
+    .for('update')
+
+  const creditAvail = Math.floor(
+    Number(rows.find((r) => r.balanceType === 'outvers_credit')?.amount ?? 0),
+  )
+  const refundAvail = Math.floor(
+    Number(rows.find((r) => r.balanceType === 'refund_balance')?.amount ?? 0),
+  )
+
+  const creditApplied = Math.min(creditAvail, totalRupees)
+  const afterCredit = totalRupees - creditApplied
+  const refundApplied = Math.min(refundAvail, afterCredit)
+  const razorpayRemainder = afterCredit - refundApplied
+
+  if (creditApplied > 0) {
+    await db
+      .update(walletBalances)
+      .set({
+        amount: sql`${walletBalances.amount} - ${creditApplied}`,
+        updatedAt: sql`now()`,
+      })
+      .where(
+        and(
+          eq(walletBalances.userId, args.userId),
+          eq(walletBalances.balanceType, 'outvers_credit'),
+        ),
+      )
+  }
+  if (refundApplied > 0) {
+    await db
+      .update(walletBalances)
+      .set({
+        amount: sql`${walletBalances.amount} - ${refundApplied}`,
+        updatedAt: sql`now()`,
+      })
+      .where(
+        and(
+          eq(walletBalances.userId, args.userId),
+          eq(walletBalances.balanceType, 'refund_balance'),
+        ),
+      )
+  }
+
+  // Greedy per-line allocation in the deterministic checkout order; one
+  // audit row per booking so every rupee of wallet spend stays attributable.
+  let creditLeft = creditApplied
+  let refundLeft = refundApplied
+  for (const line of args.lines) {
+    const lineCredit = Math.min(creditLeft, line.grossRupees)
+    const lineRefund = Math.min(refundLeft, line.grossRupees - lineCredit)
+    creditLeft -= lineCredit
+    refundLeft -= lineRefund
+    await writeAuditLog(db, {
+      actorUserId: args.userId,
+      action: 'wallet.apply_to_checkout',
+      entityType: 'wallet_balance',
+      entityId: args.userId,
+      payload: {
+        userId: args.userId,
+        orderId: args.orderId,
+        bookingId: line.bookingId,
+        grossRupees: line.grossRupees,
+        outversCreditAppliedRupees: lineCredit,
+        refundBalanceAppliedRupees: lineRefund,
+        razorpayRemainderRupees: line.grossRupees - lineCredit - lineRefund,
+      },
+    })
+  }
+
+  return {
+    outversCreditAppliedRupees: creditApplied,
+    refundBalanceAppliedRupees: refundApplied,
+    razorpayRemainderRupees: razorpayRemainder,
+  }
+}
+
+// ============================================================================
 // applyWalletToCheckout
 // ============================================================================
 
@@ -345,7 +470,10 @@ export async function requestCashout(
     )
     .for('update')
     .limit(1)
-  if (!paymentRow) {
+  if (!paymentRow || !paymentRow.bookingId) {
+    // The inner join on bookings means an order-scoped payment (issue 12,
+    // booking_id NULL) can never match — this guard narrows the type and
+    // keeps cashout a strictly booking-scoped flow.
     throw new Error(`payment ${args.originalPaymentId} not found`)
   }
 
@@ -426,7 +554,10 @@ export async function requestCashout(
       paymentId: args.originalPaymentId,
       amountRupees: args.amountRupees,
       notes: {
-        booking_id: paymentRow.bookingId,
+        // payments.booking_id is nullable since issue 12 (order-scoped cart
+        // payments); cashout refunds only ever target booking-scoped
+        // payments today, but the notes stay well-typed either way.
+        ...(paymentRow.bookingId ? { booking_id: paymentRow.bookingId } : {}),
         refund_request_id: refundReq.id,
         type: 'wallet_cashout',
       },

@@ -12,10 +12,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const updateCartItemAction = vi.fn(async () => ({ ok: true as const }))
 const removeFromCartAction = vi.fn(async () => ({ ok: true as const, cartCount: 0 }))
+const checkoutCartAction = vi.fn()
 vi.mock('@/app/(app)/cart/actions', () => ({
   updateCartItemAction: (...args: unknown[]) => updateCartItemAction(...(args as [])),
   removeFromCartAction: (...args: unknown[]) => removeFromCartAction(...(args as [])),
+  checkoutCartAction: (...args: unknown[]) => checkoutCartAction(...(args as [])),
 }))
+vi.mock('next/script', () => ({ default: () => null }))
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }))
 vi.mock('@/lib/toast', () => ({
   toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() },
 }))
@@ -96,12 +100,31 @@ describe('CartView', () => {
     expect(screen.getByTestId('cart-subtotal').textContent).toBe('₹3,200')
   })
 
-  it('"Proceed to checkout" is present but INERT (issue 12 wires it)', () => {
+  it('"Proceed to checkout" stays disabled until the permits acknowledgement is checked (issue 12)', () => {
     render(<CartView initialCart={CART} />)
-    const cta = screen.getByTestId('cart-checkout-inert')
+    const cta = screen.getByTestId('cart-checkout')
     expect(cta).toBeDisabled()
-    expect(cta.tagName).toBe('BUTTON')
-    expect(cta.getAttribute('href')).toBeNull()
+    fireEvent.click(screen.getByTestId('cart-permits-ack'))
+    expect(cta).toBeEnabled()
+  })
+
+  it('checkout sends ONLY the idempotency key + acknowledgement (never a price)', async () => {
+    checkoutCartAction.mockResolvedValueOnce({
+      ok: true,
+      orderId: 'o-1',
+      razorpayOrderId: null,
+      amountTotalRupees: 6200,
+      razorpayRemainderRupees: 0,
+      keyId: 'rzp_test',
+    })
+    render(<CartView initialCart={CART} />)
+    fireEvent.click(screen.getByTestId('cart-permits-ack'))
+    fireEvent.click(screen.getByTestId('cart-checkout'))
+    await waitFor(() => expect(checkoutCartAction).toHaveBeenCalledTimes(1))
+    const arg = checkoutCartAction.mock.calls[0]![0] as Record<string, unknown>
+    expect(Object.keys(arg).sort()).toEqual(['acknowledgedPermits', 'idempotencyKey'])
+    expect(arg.acknowledgedPermits).toBe(true)
+    expect(typeof arg.idempotencyKey).toBe('string')
   })
 
   it('renders the empty state with a browse link when the cart is empty', () => {

@@ -14,6 +14,7 @@ import {
 
 import { timestamps } from './_common'
 import { bookings } from './bookings'
+import { orders } from './orders'
 import { refundRequests } from './refund-requests'
 
 /**
@@ -48,9 +49,15 @@ export const payments = pgTable(
   'payments',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    bookingId: uuid('booking_id')
-      .references(() => bookings.id, { onDelete: 'restrict' })
-      .notNull(),
+    // Nullable since issue 12 (ADR-0021): a payment is booking-scoped
+    // (legacy single-item) XOR order-scoped (cart) — see
+    // payment_scope_exactly_one below.
+    bookingId: uuid('booking_id').references(() => bookings.id, {
+      onDelete: 'restrict',
+    }),
+    orderId: uuid('order_id').references(() => orders.id, {
+      onDelete: 'restrict',
+    }),
     razorpayPaymentId: text('razorpay_payment_id').notNull().unique(),
     razorpayOrderId: text('razorpay_order_id'),
     amount: numeric('amount', { precision: 14, scale: 2 }).notNull(),
@@ -88,6 +95,13 @@ export const payments = pgTable(
       .on(t.razorpayOrderId)
       .where(sql`${t.razorpayOrderId} IS NOT NULL`),
     index('payments_by_booking').on(t.bookingId),
+    index('payments_by_order').on(t.orderId),
+    // Exactly one scope: booking-scoped (single-item) XOR order-scoped (cart).
+    check(
+      'payment_scope_exactly_one',
+      sql`(${t.bookingId} IS NOT NULL AND ${t.orderId} IS NULL) OR
+          (${t.bookingId} IS NULL AND ${t.orderId} IS NOT NULL)`,
+    ),
   ],
 )
 

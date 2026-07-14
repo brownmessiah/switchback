@@ -1,5 +1,7 @@
+import { eq, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
+import { orders } from '@/db/schema/orders'
 import { payments } from '@/db/schema/payments'
 import { writeAuditLog } from '@/lib/audit/write'
 import { getRedis } from '@/lib/redis'
@@ -157,20 +159,28 @@ export async function processRazorpayWebhook(
         return { status: 400, body: { error: 'payment.captured missing payload.payment' } }
       }
       const bookingId = extractBookingId(payment.notes)
-      if (!bookingId) {
-        return { status: 400, body: { error: 'payment.captured notes missing booking_id' } }
+      const orderId = extractOrderId(payment.notes)
+      if (!bookingId && !orderId) {
+        return {
+          status: 400,
+          body: { error: 'payment.captured notes missing booking_id or order_id' },
+        }
       }
-      await persistPaymentCaptured({ db, payment, bookingId, event })
+      await persistPaymentCaptured({ db, payment, bookingId, orderId, event })
     } else if (event.event === 'payment.failed') {
       const payment = event.payload.payment?.entity
       if (!payment) {
         return { status: 400, body: { error: 'payment.failed missing payload.payment' } }
       }
       const bookingId = extractBookingId(payment.notes)
-      if (!bookingId) {
-        return { status: 400, body: { error: 'payment.failed notes missing booking_id' } }
+      const orderId = extractOrderId(payment.notes)
+      if (!bookingId && !orderId) {
+        return {
+          status: 400,
+          body: { error: 'payment.failed notes missing booking_id or order_id' },
+        }
       }
-      await recordPaymentFailed({ db, payment, bookingId, event })
+      await recordPaymentFailed({ db, payment, bookingId, orderId, event })
     } else if (event.event === 'refund.processed') {
       const refund = event.payload.refund?.entity
       if (!refund) {
@@ -209,22 +219,35 @@ function extractBookingId(notes: Record<string, unknown> | undefined): string | 
   return null
 }
 
+/** Order-scoped cart payments (issue 12, ADR-0021) carry notes.order_id. */
+function extractOrderId(notes: Record<string, unknown> | undefined): string | null {
+  if (!notes) return null
+  const raw = notes.order_id
+  if (typeof raw === 'string' && raw.length > 0) return raw
+  return null
+}
+
 interface PersistPaymentCapturedArgs {
   db: DBOrTx
   payment: PaymentEntity
-  bookingId: string
+  /** Booking-scoped (single-item) XOR order-scoped (cart, issue 12). */
+  bookingId: string | null
+  orderId: string | null
   event: WebhookEvent
 }
 
 async function persistPaymentCaptured(args: PersistPaymentCapturedArgs): Promise<void> {
-  const { db, payment, bookingId, event } = args
+  const { db, payment, bookingId, orderId, event } = args
   const amountRupees = (payment.amount / 100).toFixed(2)
 
   await db.transaction(async (tx) => {
     const inserted = await tx
       .insert(payments)
       .values({
+        // XOR enforced by payment_scope_exactly_one: prefer the booking
+        // scope when notes somehow carry both (legacy single-item shape).
         bookingId,
+        orderId: bookingId ? null : orderId,
         razorpayPaymentId: payment.id,
         razorpayOrderId: payment.order_id ?? null,
         amount: amountRupees,
@@ -238,6 +261,15 @@ async function persistPaymentCaptured(args: PersistPaymentCapturedArgs): Promise
     // audit row — the original capture event already logged.
     if (inserted.length === 0) return
 
+    // Order envelope lifecycle: an order-scoped capture marks the order
+    // paid (idempotent — gated on the fresh payment insert above).
+    if (!bookingId && orderId) {
+      await tx
+        .update(orders)
+        .set({ state: 'paid', updatedAt: sql`now()` })
+        .where(eq(orders.id, orderId))
+    }
+
     await writeAuditLog(tx, {
       actorUserId: null,
       action: 'webhook.payment.captured',
@@ -245,6 +277,7 @@ async function persistPaymentCaptured(args: PersistPaymentCapturedArgs): Promise
       entityId: payment.id,
       payload: {
         bookingId,
+        orderId: bookingId ? null : orderId,
         razorpayPaymentId: payment.id,
         razorpayOrderId: payment.order_id ?? null,
         amountRupees,
@@ -258,12 +291,13 @@ async function persistPaymentCaptured(args: PersistPaymentCapturedArgs): Promise
 interface RecordPaymentFailedArgs {
   db: DBOrTx
   payment: PaymentEntity
-  bookingId: string
+  bookingId: string | null
+  orderId: string | null
   event: WebhookEvent
 }
 
 async function recordPaymentFailed(args: RecordPaymentFailedArgs): Promise<void> {
-  const { db, payment, bookingId, event } = args
+  const { db, payment, bookingId, orderId, event } = args
 
   // M2 contract: only record the failure to audit_logs. M3's capture
   // worker decides whether to retry, mark the Booking as failed, or
@@ -275,6 +309,7 @@ async function recordPaymentFailed(args: RecordPaymentFailedArgs): Promise<void>
     entityId: payment.id,
     payload: {
       bookingId,
+      orderId,
       razorpayPaymentId: payment.id,
       errorCode: payment.error_code ?? null,
       errorDescription: payment.error_description ?? null,

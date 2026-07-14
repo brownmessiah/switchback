@@ -8,13 +8,14 @@ import { ChevronDown, MapPin } from 'lucide-react'
 import { ExperienceCard } from '@/components/experience-card'
 import { loadRecentlyViewedCardsAction } from '@/components/recently-viewed/actions'
 import { RecentlyViewedRail } from '@/components/recently-viewed/rail'
+import { HeroRotator } from '@/components/home/hero-rotator'
 import { HomeHeroSearch } from '@/components/home/hero-search'
 import { HomeHowItWorks } from '@/components/home/how-it-works'
 import { HomeTrust } from '@/components/home/trust'
 import { db } from '@/db/client'
 import { env } from '@/lib/env'
 import { loadHomePageData } from '@/lib/home/queries'
-import { getHeroImage, getRegionImage } from '@/lib/images'
+import { getHeroImages, getRegionImage } from '@/lib/images'
 import { generateAlternates } from '@/lib/seo/hreflang'
 import { organization } from '@/lib/seo/schemas/organization'
 import { website } from '@/lib/seo/schemas/website'
@@ -82,15 +83,10 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
           hero. */}
       <section className="relative flex min-h-[72vh] flex-col items-center justify-center overflow-hidden pt-20 pb-12">
         <div className="absolute inset-0">
-          <Image
-            src={getHeroImage()}
-            alt=""
-            role="presentation"
-            fill
-            className="object-cover"
-            priority
-            sizes="100vw"
-          />
+          {/* Auto-rotating adventure pool (issue 04 / CR1): slide 0 keeps
+              priority/preload (LCP), rotation starts client-side after mount,
+              reduced-motion stays static. */}
+          <HeroRotator images={getHeroImages()} />
           {/* Scrim: darker at top (keeps the overlay header's white text AA)
               and bottom, so the display headline reads over imagery. The
               mid-stop is deepened (was /45) because the headline + brand line

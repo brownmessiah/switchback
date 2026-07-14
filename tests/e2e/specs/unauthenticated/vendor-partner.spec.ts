@@ -64,12 +64,14 @@ test.describe('/vendor-partner — public partner page', () => {
     await expect(ctas.first()).toHaveAttribute('href', '/vendor/onboarding')
   })
 
-  test('nav + footer "List your experience" route to /vendor-partner', async ({ page }) => {
+  // Issue 06 (D3): the header no longer carries the vendor CTA — the footer
+  // "For Vendors" column is the supply-side entry point.
+  test('footer "List your experience" routes to /vendor-partner (header carries none)', async ({ page }) => {
     await page.goto('/')
     const nav = page.getByRole('navigation', { name: 'Primary' })
     await expect(
       nav.getByRole('link', { name: 'List your experience' }),
-    ).toHaveAttribute('href', '/vendor-partner')
+    ).toHaveCount(0)
 
     const footerNav = page.getByRole('navigation', { name: 'Footer navigation' })
     await expect(

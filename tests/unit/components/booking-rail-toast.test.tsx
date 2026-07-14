@@ -57,6 +57,13 @@ const FUTURE_2 = '2099-12-25T14:00:00.000Z'
 const FUTURE_2_END = '2099-12-25T16:00:00.000Z'
 
 const baseProps = {
+  experienceId: 'exp-cart-test',
+  addToCartLabels: {
+    label: 'Add to cart',
+    added: 'Added to your cart',
+    signIn: 'Sign in to add to your cart',
+    error: 'Could not add to cart',
+  },
   priceTableLabel: 'Price',
   brackets: [
     { label: '1-2', priceRupees: 2000 },

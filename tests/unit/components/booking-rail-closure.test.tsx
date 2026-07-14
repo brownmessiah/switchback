@@ -27,6 +27,13 @@ vi.mock(
 import { BookingRailInteractive } from '@/app/[locale]/(marketing)/experience/[slug]/booking-rail-interactive'
 
 const BASE_PROPS = {
+  experienceId: 'exp-cart-test',
+  addToCartLabels: {
+    label: 'Add to cart',
+    added: 'Added to your cart',
+    signIn: 'Sign in to add to your cart',
+    error: 'Could not add to cart',
+  },
   priceTableLabel: 'pricing.priceTable',
   brackets: [
     { label: 'pricing.tier1_2', priceRupees: 5000 },

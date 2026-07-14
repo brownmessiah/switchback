@@ -33,9 +33,9 @@ test.describe('responsive · public surfaces (< lg)', () => {
   }) => {
     await page.goto('/', { waitUntil: 'networkidle' })
 
-    // The compact trust strip (owner screenshots 2026-06-11) sits directly
-    // under the hero; how-it-works stays at the bottom. Both wrap/stack
-    // rather than scroll horizontally.
+    // The compact trust strip closes the page after how-it-works
+    // (home-redesign issue 02 / CR9; previously directly under the hero).
+    // Both wrap/stack rather than scroll horizontally.
     await expect(
       page.getByRole('region', { name: 'Adventure you can trust' }),
     ).toBeVisible()

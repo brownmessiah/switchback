@@ -37,6 +37,7 @@ export type ActiveFilterKind =
   | 'rating'
   | 'safety'
   | 'cancellation'
+  | 'date'
 
 export interface ActiveFilterChip {
   /** Stable identity for React keys (the param name, or `price` for the range). */
@@ -69,6 +70,19 @@ export function deriveActiveFilterChips(
   params: SearchExperiencesParams,
 ): ActiveFilterChip[] {
   const chips: ActiveFilterChip[] = []
+
+  // Bookable-on-date (home-redesign issue 10 / ADR-0020). Leads the row —
+  // without a chip the date silently sticks across every later refinement
+  // (FacetForm/SearchBox merge-preserve the live query) with no way to see
+  // or clear it.
+  if (params.date) {
+    chips.push({
+      key: 'date',
+      kind: 'date',
+      value: params.date,
+      removeParams: ['date'],
+    })
+  }
 
   if (params.category) {
     chips.push({

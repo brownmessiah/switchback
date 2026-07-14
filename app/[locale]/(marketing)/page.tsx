@@ -8,13 +8,15 @@ import { ChevronDown, MapPin } from 'lucide-react'
 import { ExperienceCard } from '@/components/experience-card'
 import { loadRecentlyViewedCardsAction } from '@/components/recently-viewed/actions'
 import { RecentlyViewedRail } from '@/components/recently-viewed/rail'
+import { HomeFeatureCarousel } from '@/components/home/feature-carousel'
+import { HeroRotator } from '@/components/home/hero-rotator'
 import { HomeHeroSearch } from '@/components/home/hero-search'
 import { HomeHowItWorks } from '@/components/home/how-it-works'
 import { HomeTrust } from '@/components/home/trust'
 import { db } from '@/db/client'
 import { env } from '@/lib/env'
 import { loadHomePageData } from '@/lib/home/queries'
-import { getHeroImage, getRegionImage } from '@/lib/images'
+import { getHeroImages, getRegionImage } from '@/lib/images'
 import { generateAlternates } from '@/lib/seo/hreflang'
 import { organization } from '@/lib/seo/schemas/organization'
 import { website } from '@/lib/seo/schemas/website'
@@ -76,37 +78,42 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
 
       {/* CINEMATIC HERO — Headout-style minimal (owner screenshots
           2026-06-11): full-bleed photo + scrim, headline, ONE search bar.
-          The chip rows / CTA buttons / 4-field module are gone (clutter);
-          height trimmed so the trust strip below lands in the first screen. */}
+          The chip rows / CTA buttons / 4-field module are gone (clutter).
+          The trust strip that used to sit directly below moved to the END of
+          the page (issue 02 / CR9), so destinations now land right after the
+          hero. */}
       <section className="relative flex min-h-[72vh] flex-col items-center justify-center overflow-hidden pt-20 pb-12">
         <div className="absolute inset-0">
-          <Image
-            src={getHeroImage()}
-            alt=""
-            role="presentation"
-            fill
-            className="object-cover"
-            priority
-            sizes="100vw"
-          />
+          {/* Auto-rotating adventure pool (issue 04 / CR1): slide 0 keeps
+              priority/preload (LCP), rotation starts client-side after mount,
+              reduced-motion stays static. */}
+          <HeroRotator images={getHeroImages()} />
           {/* Scrim: darker at top (keeps the overlay header's white text AA)
-              and bottom, so the display headline + chips read over imagery. The
-              mid-stop is deepened (was /45) because the headline + subtitle sit
-              vertically centred over the busiest, lightest part of the hero
-              photo — the prior mid value left the subtitle low-contrast. */}
+              and bottom, so the display headline reads over imagery. The
+              mid-stop is deepened (was /45) because the headline + brand line
+              sit vertically centred over the busiest, lightest part of the
+              hero photo — the prior mid value left mid-hero text
+              low-contrast. */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/60 to-black/80" />
         </div>
 
         <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center px-4 text-center">
-          {/* Keyword-forward H1 (issue 02 / DECISION D1) — the single page
-              heading, optimised for marketplace credibility + SEO. */}
+          {/* Brand-forward H1 (home-redesign issue 01 / CR2) — the single
+              page heading, softened per the owner brief. The SEO keywords the
+              old keyword-H1 + subtitle carried are preserved (D4) in the
+              sr-only <h2> below + Metadata title/description + the
+              Organization JSON-LD. NOTE: a hidden heading carries less
+              ranking weight than the old visible H1 — an accepted tradeoff
+              of the owner's declutter directive; watch Search Console. */}
           <h1 className="max-w-3xl text-balance text-h1 font-heading font-bold text-white sm:text-display">
             {t('hero.title')}
           </h1>
 
-          <p className="mt-5 max-w-lg text-base text-white [text-shadow:0_1px_3px_rgb(0_0_0/0.6)] sm:text-lg">
-            {t('hero.subtitle')}
-          </p>
+          {/* Visually-hidden keyword subheading (D4): keeps a crawlable,
+              screen-reader-visible keyword heading without re-cluttering the
+              hero the owner asked to simplify (the visible subtitle was
+              removed by CR3). */}
+          <h2 className="sr-only">{t('hero.seoSubheading')}</h2>
 
           {/* The search bar IS the call to action (Headout pattern): one
               "Destination or activity" field GET-posting to /search?q=. The
@@ -115,13 +122,6 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
               category chip rows are gone (judged clutter in the owner's
               screenshot pass, 2026-06-11). */}
           <HomeHeroSearch />
-
-          {/* Secondary emotional brand line — kept from the original hero, now
-              a smaller line below the search (a paragraph, not the page
-              heading). */}
-          <p className="mt-5 text-sm font-medium text-white/80 [text-shadow:0_1px_2px_rgb(0_0_0/0.6)] sm:text-base">
-            {t('hero.brandLine')}
-          </p>
         </div>
 
         {/* Scroll indicator */}
@@ -130,10 +130,10 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
         </div>
       </section>
 
-      {/* COMPACT TRUST STRIP — directly under the hero so it lands in the
-          first screen (owner screenshots 2026-06-11; was a six-card section
-          lower on the page). */}
-      <HomeTrust />
+      {/* FEATURE CAROUSEL (issue 05 / CR8) — swipeable marketplace-promise
+          pills; replaced the hero brand line. Documented ADR-0018
+          horizontal-scroll exception (snap track inside the section only). */}
+      <HomeFeatureCarousel />
 
       {/* DESTINATIONS — decision-complete tiles with activity counts */}
       <section
@@ -245,6 +245,11 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
       {/* HOW OUTVERS WORKS — five sequential steps (issue 08). Crawlable HTML,
           stacks on mobile, no horizontal scroll. */}
       <HomeHowItWorks />
+
+      {/* COMPACT TRUST STRIP — closes the page as a final reassurance band
+          (home-redesign issue 02 / CR9; previously directly under the hero,
+          owner screenshots 2026-06-11). */}
+      <HomeTrust />
     </main>
   )
 }

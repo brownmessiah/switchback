@@ -67,3 +67,8 @@ tests/e2e/screenshots/
 screenshots/
 showcase/
 outvers-showcase.zip
+
+# design-sync workstream leftovers (never commit)
+.design-sync/
+.ds-sync/
+ds-bundle/

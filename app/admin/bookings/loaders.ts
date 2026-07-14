@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, lte, notInArray, type SQL } from 'drizzle-orm'
+import { and, desc, eq, gte, lte, notInArray, type SQL, or } from 'drizzle-orm'
 import type { ExtractTablesWithRelations } from 'drizzle-orm'
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core'
 
@@ -120,6 +120,7 @@ export async function loadBookingDetail(db: DBOrTx, bookingId: string) {
       vendorUserId: experiences.vendorUserId,
       slotStart: availabilitySlots.startAt,
       slotEnd: availabilitySlots.endAt,
+      orderId: bookings.orderId,
     })
     .from(bookings)
     .innerJoin(experiences, eq(bookings.experienceId, experiences.id))
@@ -141,7 +142,14 @@ export async function loadBookingDetail(db: DBOrTx, bookingId: string) {
         razorpayPaymentId: payments.razorpayPaymentId,
       })
       .from(payments)
-      .where(eq(payments.bookingId, bookingId))
+      // Cart bookings (ADR-0021) are paid by ONE order-scoped payment
+      // (booking_id NULL) — surface it on the booking detail too, or paid
+      // cart bookings read as "no payment" (support hazard).
+      .where(
+        booking.orderId
+          ? or(eq(payments.bookingId, bookingId), eq(payments.orderId, booking.orderId))
+          : eq(payments.bookingId, bookingId),
+      )
       .orderBy(payments.capturedAt),
     db
       .select({

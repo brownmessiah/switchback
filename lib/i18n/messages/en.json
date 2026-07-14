@@ -1,14 +1,23 @@
 {
   "HomePage": {
     "hero": {
-      "title": "Book Verified Adventure Experiences Across India",
-      "subtitle": "Rafting, paragliding, scuba, and trekking from verified Vendors — with transparent pricing and real-time availability.",
-      "brandLine": "Book the scene you want to live.",
+      "title": "Book best experiences around you",
+      "seoSubheading": "Verified adventure experiences across India — rafting, paragliding, scuba, and trekking.",
       "exploreCta": "Explore Experiences",
       "listCta": "List Your Experience",
       "searchLabel": "Search experiences",
       "searchPlaceholder": "Try \"rafting Rishikesh\" or \"scuba Goa\"",
       "searchButton": "Search"
+    },
+    "featureCarousel": {
+      "label": "Why book on Outvers",
+      "dotLabel": "Go to highlight {number}",
+      "items": {
+        "verified": "Book verified experiences",
+        "flexible": "Stay flexible",
+        "cancellation": "Flexible cancellation, within policy",
+        "explore": "Explore best experiences around you"
+      }
     },
     "trustBadges": {
       "freeCancellation": "Flexible cancellation",
@@ -99,9 +108,18 @@
   },
   "HomeSearch": {
     "single": {
-      "label": "Search destinations or activities",
-      "placeholder": "Destination or activity",
+      "label": "Search places or activities",
+      "placeholder": "Search places or activities",
       "submit": "Search"
+    },
+    "participants": {
+      "count": "{count, plural, one {# person} other {# people}}"
+    },
+    "date": {
+      "anytime": "Anytime",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "nextWeekend": "Next weekend"
     },
     "fields": {
       "destination": "Destination",
@@ -198,7 +216,7 @@
     "beginnerFriendly": "Beginner Friendly"
   },
   "Metadata": {
-    "title": "Outvers — adventure activities in India",
+    "title": "Outvers — book verified adventure experiences across India",
     "description": "Book rafting, paragliding, scuba, trekking and more across India. Vendor-verified Experiences with transparent refund policy and a 24-hour refund SLA."
   },
   "Common": {
@@ -586,7 +604,11 @@
       "fullUpfront": "Charged in full now (within 48 hours of the start, or above ₹25,000).",
       "chooseOption": "Choose an option",
       "standardOption": "Standard (group pricing)",
-      "variationDuration": "· {minutes} min"
+      "variationDuration": "· {minutes} min",
+      "addToCart": "Add to cart",
+      "addedToCart": "Added to your cart",
+      "addToCartSignIn": "Sign in to add to your cart",
+      "addToCartError": "Could not add to cart — try again"
     },
     "closure": {
       "heading": "Currently closed",
@@ -1144,6 +1166,7 @@
     "signIn": "Sign in",
     "openMenu": "Open menu",
     "footer": {
+      "brandTagline": "Outvers - Your Adventure Partner",
       "tagline": "Adventure activities across India from KYC-verified vendors. Transparent refund policy, real-time slot availability.",
       "explore": "Explore",
       "paragliding": "Paragliding",
@@ -1192,7 +1215,10 @@
     "safety": "Safety",
     "blog": "Blog",
     "tripGroups": "Trip Groups",
-    "listYourExperience": "List your experience"
+    "wishlist": "Wishlist",
+    "cart": "Cart",
+    "currencyBadge": "₹ INR",
+    "currencyBadgeLabel": "Prices in Indian Rupees"
   },
   "NotFound": {
     "heading": "This trail leads nowhere",

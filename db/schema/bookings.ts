@@ -16,6 +16,7 @@ import {
 import { timestamps } from './_common'
 import { availabilitySlots } from './availability-slots'
 import { experiences } from './experiences'
+import { orders } from './orders'
 import { users } from './users'
 import { payoutMethodEnum } from './vendor-profiles'
 
@@ -122,6 +123,15 @@ export const bookings = pgTable(
     participantCount: integer('participant_count').notNull(),
     state: bookingStateEnum('state').default('confirmed').notNull(),
     paymentMode: paymentModeBookingEnum('payment_mode').notNull(),
+    /**
+     * Cart-checkout order envelope (issue 12, ADR-0021). NULL for
+     * single-item "Book now" bookings (mirrors trip_group_id's nullable
+     * grouping). Deliberately NOT snapshot-locked — backfilled inside the
+     * checkout transaction after createBooking returns.
+     */
+    orderId: uuid('order_id').references(() => orders.id, {
+      onDelete: 'restrict',
+    }),
 
     // ===== Snapshots (LOCKED at create; never recomputed) =====
     grossTotalSnapshot: numeric('gross_total_snapshot', { precision: 14, scale: 2 }).notNull(),
@@ -235,6 +245,7 @@ export const bookings = pgTable(
        OR (${t.payoutMethodSnapshot} IS NOT NULL AND ${t.payoutDestinationSnapshot} IS NOT NULL)`,
     ),
     index('bookings_by_customer').on(t.customerUserId),
+    index('bookings_by_order').on(t.orderId),
     index('bookings_by_experience').on(t.experienceId),
     index('bookings_by_slot').on(t.slotId),
     index('bookings_by_state').on(t.state),

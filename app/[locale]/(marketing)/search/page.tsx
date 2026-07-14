@@ -20,7 +20,9 @@ import { enrichCardBadges } from '@/lib/experiences/card-badges'
 import { loadPopularSearchChips } from '@/lib/home/popular-chips'
 import { toMapPins } from '@/lib/maps/pins'
 import { loadExperienceCoverMap } from '@/lib/media/experience-images'
+import { dateKey } from '@/lib/experiences/booking-calendar'
 import { generateAlternates } from '@/lib/seo/hreflang'
+import { parseDateParam, parseFiniteNumber } from '@/lib/search/param-parsing'
 import {
   isFilteredSearch,
   searchExperiences,
@@ -65,21 +67,27 @@ function parseSearchParams(
     q: first(raw.q),
     activity: first(raw.activity),
     region: first(raw.region),
-    minPrice: minPrice ? Number(minPrice) : undefined,
-    maxPrice: maxPrice ? Number(maxPrice) : undefined,
+    // Numeric params run through parseFiniteNumber (issue-10 hardening):
+    // hand-edited junk (`?groupSize=abc`) used to reach SQL as NaN → 500.
+    minPrice: parseFiniteNumber(minPrice),
+    maxPrice: parseFiniteNumber(maxPrice),
     sort: (first(raw.sort) as SearchExperiencesParams['sort']) ?? undefined,
     difficulty: difficulty || undefined,
     durationBand: durationBand || undefined,
-    seasonMonth: season ? Number(season) : undefined,
-    maxGroupSize: groupSize ? Number(groupSize) : undefined,
+    seasonMonth: parseFiniteNumber(season),
+    maxGroupSize: parseFiniteNumber(groupSize),
     category: category || undefined,
     state: state || undefined,
     // `minRating` parses to a number; an empty/absent value omits it (and a
     // missing param is not filtered). `safetyVerified` is omitted when not
     // exactly "true" so `false` is never carried (an unset trust filter).
-    minRating: minRating ? Number(minRating) : undefined,
+    minRating: parseFiniteNumber(minRating),
     safetyVerified: safetyVerified ? true : undefined,
     cancellation: cancellation || undefined,
+    // ADR-0020 (issue 10): UTC YYYY-MM-DD, strictly validated, past dates
+    // collapse to undefined. Adding it here also flows into generateMetadata
+    // → isFilteredSearch → noindex,follow + canonical-to-bare-/search.
+    date: parseDateParam(first(raw.date), dateKey(new Date())),
   }
 }
 

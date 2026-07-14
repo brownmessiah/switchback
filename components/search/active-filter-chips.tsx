@@ -4,7 +4,7 @@ import type { ReactElement } from 'react'
 import { X } from 'lucide-react'
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { Badge } from '@/components/ui/badge'
 import {
@@ -35,6 +35,7 @@ interface ActiveFilterChipsProps {
  */
 export function ActiveFilterChips({ parsed }: ActiveFilterChipsProps): ReactElement | null {
   const t = useTranslations('SearchPage')
+  const locale = useLocale()
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -88,6 +89,16 @@ export function ActiveFilterChips({ parsed }: ActiveFilterChipsProps): ReactElem
         return t('activeFilters.safety')
       case 'cancellation':
         return t('activeFilters.cancellation')
+      // Bookable-on-date (issue 10): the localized calendar date IS the
+      // label — self-explanatory, no i18n key needed (Intl handles every
+      // supported locale).
+      case 'date':
+        return new Intl.DateTimeFormat(locale, {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+          timeZone: 'UTC',
+        }).format(new Date(`${chip.value}T00:00:00.000Z`))
     }
   }
 

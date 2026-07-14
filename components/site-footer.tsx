@@ -44,6 +44,12 @@ export function SiteFooter(): ReactElement | null {
             >
               {t('home')}
             </Link>
+            {/* Brand tagline (home-redesign issue 03 / CR10) sits tight under
+                the wordmark; the keyword-bearing descriptive tagline below is
+                unchanged (it carries the SEO copy). */}
+            <p className="mt-1.5 text-sm font-medium text-foreground/80">
+              {tf('brandTagline')}
+            </p>
             <p className="mt-3 max-w-md text-sm text-muted-foreground">{tf('tagline')}</p>
             <div className="mt-5">
               <LanguageSelector variant="full" />

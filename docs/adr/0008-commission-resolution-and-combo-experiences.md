@@ -56,3 +56,9 @@ Every money-relevant value on a Booking (rate, basis, cancellation preset, captu
 - `experiences.combo_constituents` is an `int[]` with a CHECK constraint that all referenced IDs exist and belong to the same Vendor (no cross-Vendor combos in v1).
 - Combo cancellation: the Combo Experience has its own preset; if a Customer cancels a Combo, the Combo's preset governs — *not* a min/max across constituents.
 - **GST on commission is an open question** (Outvers' commission is a service to the Vendor; GST applies; Vendor's payout = `booking_gross × (1 - commission_rate) − TDS_if_applicable`; Outvers issues a separate GST invoice). Tracked as the next money-path ADR.
+
+## Amendment — customer checkout cart (see ADR-0021)
+
+The rejection of **"Combo as a runtime cart of multiple Experiences"** above (under *Why not the alternatives*) is about representing a **Combo product** as a runtime basket — that remains rejected, for the reasons stated (it would defeat the discoverable combo URL, force N-way inventory intersection, N commission rows, and per-constituent cancellation ambiguity).
+
+It does **not** rule out a customer **checkout cart**. ADR-0021 introduces a cart as a checkout convenience: each line item becomes its **own independent Booking** (its own commission/cancellation/tax snapshots, state machine, and payout) — never a Combo SKU. There is no combo URL to defeat, no N-way intersection (each item books its own slot), no shared commission row, and no cancellation ambiguity (each Booking carries its own preset). The two concepts are orthogonal; see ADR-0021 for the cart money model.

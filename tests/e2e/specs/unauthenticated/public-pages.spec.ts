@@ -100,28 +100,60 @@ test.describe('Home page', () => {
     expect(new URL(page.url()).searchParams.get('region')).toBeTruthy()
   })
 
-  // Hero rework (issue 02 / DECISION D1): the H1 is the keyword line, the
-  // brand line is secondary (NOT an h1), and the two explicit CTAs route to
-  // /search and (since #06) the public /vendor-partner partner page.
-  test('H1 is the keyword line and is the only h1 on the page', async ({
+  // Hero copy rework (home-redesign issue 01 / CR2+CR3+D4): the H1 is the
+  // brand-forward line, the visible subtitle is gone, and the SEO keywords
+  // both lines used to carry live on in a visually-hidden <h2>.
+  test('H1 is the brand-forward line and is the only h1 on the page', async ({
     page,
   }) => {
     await page.goto('/')
 
     const h1 = page.locator('h1')
     await expect(h1).toHaveCount(1)
-    await expect(h1).toHaveText('Book Verified Adventure Experiences Across India')
+    await expect(h1).toHaveText('Book best experiences around you')
+
+    // D4 keyword preservation: the sr-only keyword <h2> is in the DOM (not
+    // visible) and carries the flagship-activity keywords.
+    const seoH2 = page.locator('section h2', { hasText: 'Verified adventure experiences' })
+    await expect(seoH2).toHaveCount(1)
+    await expect(seoH2).toContainText('rafting')
   })
 
-  test('secondary brand line is present but not the H1', async ({ page }) => {
+  // Issue 05 (CR8): the feature carousel replaced the brand line.
+  test('feature carousel renders below the hero; the brand line is gone', async ({
+    page,
+  }) => {
+    // Freeze autoplay so aria-current assertions can't race the 5s timer
+    // (this also exercises the reduced-motion branch end-to-end).
+    await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto('/')
 
-    const brandLine = page.getByText('Book the scene you want to live.', {
-      exact: false,
-    })
-    await expect(brandLine.first()).toBeVisible()
-    // The brand line must not be wrapped in (or equal to) the page H1.
-    await expect(page.locator('h1', { hasText: 'Book the scene' })).toHaveCount(0)
+    await expect(page.getByText('Book the scene you want to live.')).toHaveCount(0)
+
+    const carousel = page.getByRole('region', { name: 'Why book on Outvers' })
+    await expect(carousel).toBeVisible()
+    await expect(carousel.getByTestId('feature-card')).toHaveCount(4)
+    const dots = carousel.getByTestId('feature-carousel-dot')
+    await expect(dots).toHaveCount(4)
+    await expect(dots.first()).toHaveAttribute('aria-current', 'true')
+
+    // Copy honesty (D7): the softened cancellation pill, never "anytime".
+    await expect(
+      carousel.getByText('Flexible cancellation, within policy'),
+    ).toBeAttached()
+    await expect(page.getByText(/cancel or modify anytime/i)).toHaveCount(0)
+
+    // Dot navigation works in a real browser (jsdom cannot lay out the snap
+    // track): click the last dot, the selection settles there and exactly
+    // one dot stays current.
+    await dots.nth(3).click()
+    await expect(dots.nth(3)).toHaveAttribute('aria-current', 'true')
+    await expect(
+      carousel.locator('[data-testid="feature-carousel-dot"][aria-current="true"]'),
+    ).toHaveCount(1)
+    await expect(
+      carousel.getByText('Explore best experiences around you'),
+    ).toBeInViewport()
   })
 
   // Issue 08: two new trust sections render as crawlable, labelled <section>
@@ -230,7 +262,7 @@ test.describe('Home page', () => {
     expect(new URL(page.url()).pathname).toBe('/search')
   })
 
-  test('the old hero CTA buttons are gone; supply CTA lives in the header', async ({
+  test('the old hero CTA buttons are gone; supply CTA lives in the footer only', async ({
     page,
   }) => {
     await page.goto('/')
@@ -238,24 +270,39 @@ test.describe('Home page', () => {
     await expect(
       page.getByRole('link', { name: 'Explore Experiences' }),
     ).toHaveCount(0)
-    // The supply-side CTA now lives in the header's Primary nav (the footer
-    // carries its own "List your experience" link, so a page-wide locator is
-    // ambiguous — scope to the Primary nav). components/site-header.tsx renders
-    // `<nav aria-label="Primary">` containing the single CTA → /vendor-partner.
-    const headerCta = page
-      .getByRole('navigation', { name: 'Primary' })
+    // Issue 06 (D3): the header is customer-centric — no vendor CTA. The
+    // supply side enters via the footer's "For Vendors" column.
+    await expect(
+      page
+        .getByRole('navigation', { name: 'Primary' })
+        .getByRole('link', { name: 'List your experience' }),
+    ).toHaveCount(0)
+    const footerCta = page
+      .getByRole('navigation', { name: 'Footer navigation' })
       .getByRole('link', { name: 'List your experience' })
-    await expect(headerCta).toBeVisible()
-    await expect(headerCta).toHaveAttribute('href', '/vendor-partner')
+    await expect(footerCta).toHaveAttribute('href', '/vendor-partner')
   })
 
-  test('the compact trust strip renders directly under the hero', async ({
+  test('the compact trust strip closes the page, after How-Outvers-works (issue 02)', async ({
     page,
   }) => {
     await page.goto('/')
 
     const items = page.getByTestId('trust-card')
     await expect(items).toHaveCount(4)
+
+    // Position: the strip moved from under-the-hero to the bottom of <main>
+    // (home-redesign issue 02 / CR9) — it must render BELOW the
+    // "How Outvers works" section.
+    const trust = page.getByRole('region', { name: 'Adventure you can trust' })
+    const howItWorks = page.getByRole('region', { name: 'How Outvers works' })
+    await expect(trust).toBeVisible()
+    await expect(howItWorks).toBeVisible()
+    const trustBox = await trust.boundingBox()
+    const howBox = await howItWorks.boundingBox()
+    expect(trustBox).not.toBeNull()
+    expect(howBox).not.toBeNull()
+    expect(trustBox!.y).toBeGreaterThan(howBox!.y)
   })
 })
 

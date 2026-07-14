@@ -3,6 +3,7 @@ import { and, count, eq, gte, sql, sum } from 'drizzle-orm'
 import { availabilitySlots } from '@/db/schema/availability-slots'
 import { bookings } from '@/db/schema/bookings'
 import { experiences } from '@/db/schema/experiences'
+import { orders } from '@/db/schema/orders'
 import { payments } from '@/db/schema/payments'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 
@@ -113,6 +114,29 @@ export async function loadVendorDashboard(
       ),
     )
 
+  // KNOWN ASYMMETRY (documented): the payments leg counts Razorpay-captured
+  // rupees only (a single-item booking's wallet-funded portion is invisible
+  // — pre-existing), while this order leg counts full booking gross on paid
+  // orders. Migrating the single-item leg to gross-on-paid attribution is a
+  // tracked follow-up.
+  // Month revenue — ORDER-scoped leg (ADR-0021 cart checkouts): the single
+  // cart payment row has booking_id NULL and may span vendors, so THIS
+  // vendor's share is the gross snapshot of their bookings on PAID orders.
+  // orders.updated_at is the paid-flip instant (webhook or in-tx
+  // wallet-funded flip — the last writer in both paths).
+  const [orderMonthRevenueResult] = await db
+    .select({ revenue: sum(bookings.grossTotalSnapshot) })
+    .from(bookings)
+    .innerJoin(experiences, eq(bookings.experienceId, experiences.id))
+    .innerJoin(orders, eq(bookings.orderId, orders.id))
+    .where(
+      and(
+        eq(experiences.vendorUserId, vendorUserId),
+        eq(orders.state, 'paid'),
+        gte(orders.updatedAt, monthStart),
+      ),
+    )
+
   // 30-day bookings trend (grouped by day)
   const bookingsTrendRaw = await db
     .select({
@@ -149,6 +173,40 @@ export async function loadVendorDashboard(
     .groupBy(sql`date(${payments.capturedAt})`)
     .orderBy(sql`date(${payments.capturedAt})`)
 
+  // 30-day revenue trend — ORDER-scoped leg (same attribution as above).
+  const orderRevenueTrendRaw = await db
+    .select({
+      date: sql<string>`date(${orders.updatedAt})`.as('date'),
+      total: sum(bookings.grossTotalSnapshot),
+    })
+    .from(bookings)
+    .innerJoin(experiences, eq(bookings.experienceId, experiences.id))
+    .innerJoin(orders, eq(bookings.orderId, orders.id))
+    .where(
+      and(
+        eq(experiences.vendorUserId, vendorUserId),
+        eq(orders.state, 'paid'),
+        gte(orders.updatedAt, thirtyDaysAgo),
+      ),
+    )
+    .groupBy(sql`date(${orders.updatedAt})`)
+    .orderBy(sql`date(${orders.updatedAt})`)
+
+  // Merge the two revenue legs per day before the day-fill.
+  const revenueByDay = new Map<string, number>()
+  for (const row of revenueTrendRaw) {
+    revenueByDay.set(row.date, Math.floor(Number(row.total ?? 0)))
+  }
+  for (const row of orderRevenueTrendRaw) {
+    revenueByDay.set(
+      row.date,
+      (revenueByDay.get(row.date) ?? 0) + Math.floor(Number(row.total ?? 0)),
+    )
+  }
+  const mergedRevenueTrendRaw = Array.from(revenueByDay.entries())
+    .map(([date, total]) => ({ date, total }))
+    .sort((a, z) => a.date.localeCompare(z.date))
+
   // Upcoming bookings (existing feature — keep it)
   const upcomingBookings = await db
     .select({
@@ -173,7 +231,7 @@ export async function loadVendorDashboard(
 
   // Fill the 30-day date range (include days with zero bookings/revenue)
   const bookingsTrend = fillDays(thirtyDaysAgo, todayStart, bookingsTrendRaw, 'count')
-  const revenueTrend = fillDays(thirtyDaysAgo, todayStart, revenueTrendRaw, 'total')
+  const revenueTrend = fillDays(thirtyDaysAgo, todayStart, mergedRevenueTrendRaw, 'total')
 
   return {
     ...shapeDashboardStats({
@@ -182,6 +240,7 @@ export async function loadVendorDashboard(
       allTimeStats,
       todayStats,
       monthRevenueResult,
+      orderMonthRevenueResult,
     }),
     bookingsTrend,
     revenueTrend,
@@ -204,6 +263,7 @@ interface RawDashboardStats {
   allTimeStats?: { total?: number | null; revenue?: string | number | null }
   todayStats?: { count?: number | null }
   monthRevenueResult?: { revenue?: string | number | null }
+  orderMonthRevenueResult?: { revenue?: string | number | null }
 }
 
 type DashboardStatCards = Pick<
@@ -225,7 +285,14 @@ type DashboardStatCards = Pick<
  * the DB to violate its own NOT NULL constraints.
  */
 export function shapeDashboardStats(raw: RawDashboardStats): DashboardStatCards {
-  const { vendor, expCount, allTimeStats, todayStats, monthRevenueResult } = raw
+  const {
+    vendor,
+    expCount,
+    allTimeStats,
+    todayStats,
+    monthRevenueResult,
+    orderMonthRevenueResult,
+  } = raw
   return {
     businessName: vendor?.businessName ?? null,
     kycTier: vendor?.kycTier ?? 'phone',
@@ -233,7 +300,9 @@ export function shapeDashboardStats(raw: RawDashboardStats): DashboardStatCards 
     totalBookings: allTimeStats?.total ?? 0,
     totalRevenue: Math.floor(Number(allTimeStats?.revenue ?? 0)),
     todayBookings: todayStats?.count ?? 0,
-    monthRevenue: Math.floor(Number(monthRevenueResult?.revenue ?? 0)),
+    monthRevenue:
+      Math.floor(Number(monthRevenueResult?.revenue ?? 0)) +
+      Math.floor(Number(orderMonthRevenueResult?.revenue ?? 0)),
     slaScore: Number(vendor?.responseTimeSlaScore ?? 100),
   }
 }

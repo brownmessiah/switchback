@@ -164,13 +164,33 @@ const REGION_IMAGES: Record<string, string> = {
     'https://images.unsplash.com/photo-1605640840605-14ac1855827b?w=800&h=600&fit=crop&q=80',
 }
 
-const HERO_IMAGE =
-  'https://images.unsplash.com/photo-1530866495561-507c9faab2ed?w=1600&h=900&fit=crop&q=80'
+/**
+ * Auto-rotating homepage hero pool (home-redesign issue 04). The FIRST id is
+ * the long-standing hero photo — it stays the preloaded LCP frame; rotation
+ * through the rest starts client-side after mount (components/home/
+ * hero-rotator.tsx). Every other id is drawn from the VISUALLY VERIFIED
+ * activity pools above (rafting / paragliding / trekking / scuba), so the
+ * hero can never regress to off-subject stock. Imagery is decorative: generic
+ * adventure scenes under a heavy scrim, never tied to a specific listing.
+ */
+const HERO_PHOTO_IDS = [
+  'photo-1530866495561-507c9faab2ed', // canonical hero (mountain scene) — LCP
+  'photo-1512675628397-28288d1220ef', // rafting
+  'photo-1546779175-a70fdbd4481d', // paragliding
+  'photo-1526772662000-3f88f10405ff', // trekking
+  'photo-1583212292454-1fe6229603b7', // scuba
+]
 
 export function getRegionImage(regionSlug: string): string {
   return REGION_IMAGES[regionSlug] ?? REGION_IMAGES.rishikesh
 }
 
+/** The full rotating hero pool as delivery URLs (1600×900 hero crop). */
+export function getHeroImages(): string[] {
+  return HERO_PHOTO_IDS.map((id) => px(id, 1600, 900))
+}
+
+/** The first (LCP/preload) hero frame — always `getHeroImages()[0]`. */
 export function getHeroImage(): string {
-  return HERO_IMAGE
+  return getHeroImages()[0]
 }

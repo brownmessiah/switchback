@@ -112,6 +112,10 @@ describe('shouldExcludeFromI18n()', () => {
       expect(shouldExcludeFromI18n('/bookings/123')).toBe(true)
     })
 
+    it('excludes /cart (home-redesign issue 11 — locale-rewrite would 404 it)', () => {
+      expect(shouldExcludeFromI18n('/cart')).toBe(true)
+    })
+
     it('excludes /wishlist', () => {
       expect(shouldExcludeFromI18n('/wishlist')).toBe(true)
     })
@@ -177,8 +181,8 @@ describe('shouldExcludeFromI18n()', () => {
   })
 
   describe('EXCLUDED_PREFIXES constant', () => {
-    it('contains all 21 excluded prefixes', () => {
-      expect(EXCLUDED_PREFIXES).toHaveLength(21)
+    it('contains all 22 excluded prefixes', () => {
+      expect(EXCLUDED_PREFIXES).toHaveLength(22)
     })
 
     it('includes /vendor/team', () => {
@@ -195,6 +199,10 @@ describe('shouldExcludeFromI18n()', () => {
 
     it('includes /wallet', () => {
       expect(EXCLUDED_PREFIXES).toContain('/wallet')
+    })
+
+    it('includes /cart', () => {
+      expect(EXCLUDED_PREFIXES).toContain('/cart')
     })
 
     it('includes /wishlist', () => {

@@ -4,30 +4,29 @@ import { describe, expect, it } from 'vitest'
 import { glob } from 'glob'
 
 /**
- * Hero contract (issue 02 / DECISION D1, simplified per owner screenshots
- * 2026-06-11 — Headout-style).
+ * Hero copy contract (home-redesign issue 01, owner brief CR2/CR3 + D4,
+ * 2026-07-14 — supersedes the issue-02/D1 keyword-H1 contract).
  *
- * The homepage hero stays marketplace-credible but minimal:
- *   - H1 is the KEYWORD line "Book Verified Adventure Experiences Across India"
- *     (the `HomePage.hero.title` key, which the route renders as the single
- *     <h1>).
- *   - "Book the scene you want to live." is kept as a SECONDARY brand line
- *     (`HomePage.hero.brandLine`) — present, but NOT the H1.
- *   - The search bar IS the call to action: ONE single-field GET form
- *     (HomeHeroSearch) replaces the issue-02 CTA buttons AND the issue-09
- *     4-field module + popular/trust/category chip rows (all judged clutter
- *     in the owner's screenshot pass). Supply-side "List your experience"
- *     lives permanently in the header + footer instead.
- *   - The subtitle names the four flagship activities and the marketplace
- *     promises (verified Vendors, transparent pricing, real-time availability).
+ * The H1 softens to the brand-forward "Book best experiences around you"
+ * and the visible subtitle is removed (owner declutter directive). The SEO
+ * keywords both lines carried (verified / adventure / experiences / India +
+ * the four flagship activities) are PRESERVED elsewhere (decision D4):
+ *   - `Metadata.title` + `Metadata.description` (the homepage <title> +
+ *     meta description via generateMetadata);
+ *   - the Organization JSON-LD description in page.tsx;
+ *   - a visually-hidden keyword-bearing <h2> (`hero.seoSubheading`) in the
+ *     hero, so the page keeps a crawlable keyword heading without visual
+ *     clutter.
  *
  * Layers asserted:
  *   1. en.json copy contract (the shipped source-of-truth strings).
  *   2. The route source (`page.tsx`) wiring: exactly one <h1>, bound to
- *      hero.title; the brand line outside any <h1>; the single hero search
- *      mounted; no hero CTA buttons / chip rows; the compact trust strip
- *      directly after the hero, before Popular destinations.
- *   3. Locale parity: every locale file carries the hero keys.
+ *      hero.title; NO subtitle render; the sr-only keyword <h2>; the brand
+ *      line outside any <h1> (it survives until issue 05's carousel); the
+ *      single hero search mounted; no hero CTA buttons / chip rows; the
+ *      keyword-bearing Organization JSON-LD description.
+ *   3. Locale parity: every locale carries the hero keys; none carries the
+ *      removed `hero.subtitle`.
  */
 
 const ROOT = resolve(__dirname, '../../..')
@@ -35,8 +34,8 @@ const EN_PATH = resolve(ROOT, 'lib/i18n/messages/en.json')
 const PAGE_PATH = resolve(ROOT, 'app/[locale]/(marketing)/page.tsx')
 const MESSAGES_GLOB = 'lib/i18n/messages/*.json'
 
-const KEYWORD_H1 = 'Book Verified Adventure Experiences Across India'
-const BRAND_LINE = 'Book the scene you'
+const NEW_H1 = 'Book best experiences around you'
+const FLAGSHIP_ACTIVITIES = ['rafting', 'paragliding', 'scuba', 'trekking']
 
 function get(obj: Record<string, unknown>, dotted: string): unknown {
   return dotted.split('.').reduce<unknown>((acc, key) => {
@@ -60,30 +59,41 @@ function localeFiles(): { locale: string; json: Record<string, unknown> }[] {
   }))
 }
 
-describe('hero rework copy contract (en.json)', () => {
+describe('hero copy contract (en.json)', () => {
   const en = loadEn()
 
-  it('hero.title is the keyword H1 line', () => {
-    expect(get(en, 'HomePage.hero.title')).toBe(KEYWORD_H1)
+  it('hero.title is the brand-forward H1 line (CR2)', () => {
+    expect(get(en, 'HomePage.hero.title')).toBe(NEW_H1)
   })
 
-  it('hero.brandLine is the secondary emotional brand line', () => {
-    const brand = get(en, 'HomePage.hero.brandLine')
-    expect(typeof brand).toBe('string')
-    expect(brand as string).toContain(BRAND_LINE)
+  it('hero.subtitle is removed (CR3)', () => {
+    expect(get(en, 'HomePage.hero.subtitle')).toBeUndefined()
   })
 
-  it('hero.subtitle names the flagship activities and marketplace promises', () => {
-    const subtitle = get(en, 'HomePage.hero.subtitle') as string
-    expect(typeof subtitle).toBe('string')
-    for (const word of ['rafting', 'paragliding', 'scuba', 'trekking']) {
-      expect(subtitle.toLowerCase()).toContain(word)
+  it('hero.brandLine is removed (issue 05: the feature carousel replaced it)', () => {
+    expect(get(en, 'HomePage.hero.brandLine')).toBeUndefined()
+  })
+
+  it('hero.seoSubheading carries the keywords the H1/subtitle dropped (D4)', () => {
+    const seo = get(en, 'HomePage.hero.seoSubheading') as string
+    expect(typeof seo).toBe('string')
+    expect(seo).toMatch(/verified/i)
+    expect(seo).toMatch(/adventure experiences/i)
+    expect(seo).toMatch(/india/i)
+    for (const word of FLAGSHIP_ACTIVITIES) {
+      expect(seo.toLowerCase()).toContain(word)
     }
-    // Verified Vendors (never "operators"), transparent pricing, real-time
-    // availability — the marketplace-credible promise.
-    expect(subtitle).toMatch(/verified vendors/i)
-    expect(subtitle).toMatch(/transparent pricing/i)
-    expect(subtitle).toMatch(/real-time availability/i)
+  })
+
+  it('Metadata title+description preserve the keyword set (D4)', () => {
+    const title = get(en, 'Metadata.title') as string
+    const description = get(en, 'Metadata.description') as string
+    expect(title).toMatch(/verified adventure experiences/i)
+    expect(title).toMatch(/india/i)
+    expect(description).toMatch(/india/i)
+    for (const word of FLAGSHIP_ACTIVITIES) {
+      expect(description.toLowerCase()).toContain(word)
+    }
   })
 
   it('hero copy never says "operator" (domain _Avoid_)', () => {
@@ -92,7 +102,7 @@ describe('hero rework copy contract (en.json)', () => {
   })
 })
 
-describe('hero rework route wiring (page.tsx)', () => {
+describe('hero route wiring (page.tsx)', () => {
   const source = readFileSync(PAGE_PATH, 'utf-8')
 
   it('renders exactly one <h1>', () => {
@@ -100,18 +110,40 @@ describe('hero rework route wiring (page.tsx)', () => {
     expect(opens.length).toBe(1)
   })
 
-  it('the <h1> binds to hero.title (the keyword line)', () => {
-    // <h1 ...> ... {t('hero.title')} ... </h1>
+  it('the <h1> binds to hero.title', () => {
     const h1Block = source.match(/<h1[\s\S]*?<\/h1>/)
     expect(h1Block).not.toBeNull()
     expect(h1Block?.[0]).toContain("t('hero.title')")
   })
 
-  it('renders the brand line via hero.brandLine outside any <h1>', () => {
-    expect(source).toContain("t('hero.brandLine')")
-    const h1Block = source.match(/<h1[\s\S]*?<\/h1>/)
-    expect(h1Block?.[0]).not.toContain("t('hero.brandLine')")
+  it('no longer renders the subtitle (CR3)', () => {
+    expect(source).not.toContain("t('hero.subtitle')")
   })
+
+  it('renders the visually-hidden keyword <h2> bound to hero.seoSubheading (D4)', () => {
+    const h2Block = source.match(/<h2[^>]*sr-only[\s\S]*?<\/h2>/)
+    expect(h2Block).not.toBeNull()
+    expect(h2Block?.[0]).toContain("t('hero.seoSubheading')")
+  })
+
+  it('no longer renders the brand line (issue 05: carousel replaced it)', () => {
+    expect(source).not.toContain("t('hero.brandLine')")
+  })
+
+  it('the Organization JSON-LD description stays keyword-bearing (D4)', () => {
+    // Pin the exact description literal passed to organization() — a direct
+    // string assertion is robust against call-site reshuffles (a lazy regex
+    // over the call would truncate at any nested `})`).
+    expect(source).toContain('Indian adventure-activity marketplace')
+    expect(source).toContain(
+      'rafting, paragliding, scuba, trekking from KYC-verified vendors'
+    )
+  })
+
+  // The trust-strip ordering guardrail moved to
+  // tests/unit/components/home-trust-sections.test.tsx ("placement"): since
+  // issue 02 the strip closes the page (after HomeHowItWorks), so it is no
+  // longer part of the hero's first-screen contract.
 
   it('mounts the single hero search and drops the CTA buttons (screenshots 2026-06-11)', () => {
     expect(source).toContain('HomeHeroSearch')
@@ -125,24 +157,14 @@ describe('hero rework route wiring (page.tsx)', () => {
     expect(source).not.toContain('trustChips')
     expect(source).not.toContain('getActivityIcon')
   })
-
-  it('renders the compact trust strip directly after the hero, before Popular destinations', () => {
-    const trustIdx = source.indexOf('<HomeTrust />')
-    const destinationsIdx = source.indexOf("t('destinations.heading')")
-    const featuredIdx = source.indexOf("t('featured.heading')")
-    expect(trustIdx).toBeGreaterThan(-1)
-    expect(destinationsIdx).toBeGreaterThan(-1)
-    expect(trustIdx).toBeLessThan(destinationsIdx)
-    expect(destinationsIdx).toBeLessThan(featuredIdx)
-  })
 })
 
-describe('hero rework locale parity', () => {
+describe('hero locale parity', () => {
   for (const { locale, json } of localeFiles()) {
-    it(`${locale}.json carries hero.title, brandLine, exploreCta, listCta`, () => {
+    it(`${locale}.json carries hero.title, seoSubheading, exploreCta, listCta`, () => {
       for (const key of [
         'HomePage.hero.title',
-        'HomePage.hero.brandLine',
+        'HomePage.hero.seoSubheading',
         'HomePage.hero.exploreCta',
         'HomePage.hero.listCta',
       ]) {
@@ -150,6 +172,11 @@ describe('hero rework locale parity', () => {
         expect(typeof value, `${locale} missing ${key}`).toBe('string')
         expect((value as string).length).toBeGreaterThan(0)
       }
+    })
+
+    it(`${locale}.json no longer carries the removed hero.subtitle or hero.brandLine`, () => {
+      expect(get(json, 'HomePage.hero.subtitle'), `${locale} still has hero.subtitle`).toBeUndefined()
+      expect(get(json, 'HomePage.hero.brandLine'), `${locale} still has hero.brandLine`).toBeUndefined()
     })
 
     it(`${locale}.json hero copy never says "operator"`, () => {

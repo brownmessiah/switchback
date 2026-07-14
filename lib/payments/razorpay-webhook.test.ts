@@ -8,6 +8,7 @@ import { availabilitySlots } from '@/db/schema/availability-slots'
 import { bookings } from '@/db/schema/bookings'
 import { experiences } from '@/db/schema/experiences'
 import { payments } from '@/db/schema/payments'
+import { orders } from '@/db/schema/orders'
 import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { _resetRedisCacheForTests, getRedis } from '@/lib/redis'
@@ -61,6 +62,39 @@ function buildPaymentCapturedBody(args: {
           status: 'captured',
           order_id: args.orderId,
           notes: { booking_id: args.bookingId },
+          captured: true,
+          created_at: 1_700_000_000,
+        },
+      },
+    },
+    created_at: 1_700_000_000,
+    id: args.eventId,
+  })
+}
+
+
+function buildOrderScopedCapturedBody(args: {
+  eventId: string
+  paymentId: string
+  dbOrderId: string
+  rzpOrderId: string
+  amountPaise: number
+}): string {
+  return JSON.stringify({
+    entity: 'event',
+    account_id: 'acc_test',
+    event: 'payment.captured',
+    contains: ['payment'],
+    payload: {
+      payment: {
+        entity: {
+          id: args.paymentId,
+          entity: 'payment',
+          amount: args.amountPaise,
+          currency: 'INR',
+          status: 'captured',
+          order_id: args.rzpOrderId,
+          notes: { order_id: args.dbOrderId },
           captured: true,
           created_at: 1_700_000_000,
         },
@@ -791,6 +825,125 @@ describe('processRazorpayWebhook (ADR-0001)', () => {
       })
       const result = await call({ body })
       expect(result.status).toBe(400)
+    })
+  })
+  describe('payment.captured — order-scoped (issue 12, ADR-0021)', () => {
+    async function seedOrder(rzpOrderId: string): Promise<string> {
+      const [order] = await db
+        .insert(orders)
+        .values({
+          customerUserId: 'u_c',
+          razorpayOrderId: rzpOrderId,
+          amountTotalSnapshot: '5000.00',
+        })
+        .returning({ id: orders.id })
+      return order!.id
+    }
+
+    it('records ONE order-scoped payment row (booking_id NULL) + audit + flips the order to paid', async () => {
+      const dbOrderId = await seedOrder('order_rzp_cart_1')
+      const body = buildOrderScopedCapturedBody({
+        eventId: 'evt_order_1',
+        paymentId: 'pay_order_1',
+        dbOrderId,
+        rzpOrderId: 'order_rzp_cart_1',
+        amountPaise: 500_000,
+      })
+      const result = await call({ body })
+      expect(result.status).toBe(200)
+
+      const rows = await db
+        .select()
+        .from(payments)
+        .where(eq(payments.razorpayPaymentId, 'pay_order_1'))
+      expect(rows).toHaveLength(1)
+      expect(rows[0]!.orderId).toBe(dbOrderId)
+      expect(rows[0]!.bookingId).toBeNull()
+      expect(rows[0]!.amount).toBe('5000.00')
+
+      const [orderRow] = await db.select().from(orders).where(eq(orders.id, dbOrderId))
+      expect(orderRow!.state).toBe('paid')
+
+      const audits = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.action, 'webhook.payment.captured'))
+      expect(audits.length).toBeGreaterThanOrEqual(1)
+    })
+
+    it('is idempotent against replay (dedup + unique payment id): 3 deliveries, one row', async () => {
+      const dbOrderId = await seedOrder('order_rzp_cart_2')
+      const body = buildOrderScopedCapturedBody({
+        eventId: 'evt_order_2',
+        paymentId: 'pay_order_2',
+        dbOrderId,
+        rzpOrderId: 'order_rzp_cart_2',
+        amountPaise: 500_000,
+      })
+      const first = await call({ body })
+      expect(first.status).toBe(200)
+      const second = await call({ body })
+      expect(second.deduped).toBe(true)
+      // Simulate Redis eviction: the DB unique is the structural floor.
+      _resetRedisCacheForTests()
+      const third = await call({ body })
+      expect(third.status).toBe(200)
+
+      const rows = await db
+        .select()
+        .from(payments)
+        .where(eq(payments.razorpayPaymentId, 'pay_order_2'))
+      expect(rows).toHaveLength(1)
+    })
+
+    it('400 when notes carry NEITHER booking_id nor order_id', async () => {
+      const body = buildOrderScopedCapturedBody({
+        eventId: 'evt_order_3',
+        paymentId: 'pay_order_3',
+        dbOrderId: '',
+        rzpOrderId: 'order_rzp_cart_3',
+        amountPaise: 100,
+      }).replace('"notes":{"order_id":""}', '"notes":{}')
+      const result = await call({ body })
+      expect(result.status).toBe(400)
+    })
+    it('order-scoped payment.failed is AUDITED, never dropped as 400 (M2)', async () => {
+      const dbOrderId = await seedOrder('order_rzp_cart_fail')
+      const body = JSON.stringify({
+        entity: 'event',
+        account_id: 'acc_test',
+        event: 'payment.failed',
+        contains: ['payment'],
+        payload: {
+          payment: {
+            entity: {
+              id: 'pay_order_fail_1',
+              entity: 'payment',
+              amount: 500_000,
+              currency: 'INR',
+              status: 'failed',
+              order_id: 'order_rzp_cart_fail',
+              notes: { order_id: dbOrderId },
+              captured: false,
+              created_at: 1_700_000_000,
+              error_code: 'BAD_REQUEST_ERROR',
+            },
+          },
+        },
+        created_at: 1_700_000_000,
+        id: 'evt_order_fail_1',
+      })
+      const result = await call({ body })
+      expect(result.status).toBe(200)
+
+      const audits = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.action, 'webhook.payment.failed'))
+      const orderScoped = audits.filter(
+        (a) => (a.payload as { orderId?: string }).orderId === dbOrderId,
+      )
+      expect(orderScoped).toHaveLength(1)
     })
   })
 })

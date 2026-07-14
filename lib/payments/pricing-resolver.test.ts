@@ -61,7 +61,12 @@ describe('resolvePricing (ADR-0011)', () => {
   })
 
   beforeEach(async () => {
-    await db.execute(sql`TRUNCATE TABLE pricing_tiers, experience_pricing_variations`)
+    // CASCADE: cart_items (issue 11) references variations — plain TRUNCATE
+    // refuses when an FK points at the table. Cascading also empties any
+    // cart lines, which is exactly what a clean slate wants here.
+    await db.execute(
+      sql`TRUNCATE TABLE pricing_tiers, experience_pricing_variations CASCADE`,
+    )
   })
 
   describe('group-size brackets', () => {

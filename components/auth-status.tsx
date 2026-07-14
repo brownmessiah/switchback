@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 
+import { CartIndicator } from './cart-indicator'
 import { NotificationBell } from './notification-bell'
 import { UserMenu } from './user-menu'
 import { authClient } from '@/lib/auth/client'
@@ -55,6 +56,8 @@ export function AuthStatus() {
   if (user) {
     return (
       <div className="flex items-center gap-2">
+        {/* Cart icon + count (issue 11) — the slot deferred from issue 06. */}
+        <CartIndicator />
         <NotificationBell userId={user.id} />
         <UserMenu user={user} role={role} />
       </div>

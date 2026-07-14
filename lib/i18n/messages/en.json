@@ -108,8 +108,8 @@
   },
   "HomeSearch": {
     "single": {
-      "label": "Search places or activities",
-      "placeholder": "Search places or activities",
+      "label": "Destination or activity",
+      "placeholder": "Destination or activity",
       "submit": "Search"
     },
     "participants": {

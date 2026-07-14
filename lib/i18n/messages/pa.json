@@ -1800,8 +1800,8 @@
   },
   "HomeSearch": {
     "single": {
-      "label": "ਥਾਵਾਂ ਜਾਂ ਗਤੀਵਿਧੀਆਂ ਖੋਜੋ",
-      "placeholder": "ਥਾਵਾਂ ਜਾਂ ਗਤੀਵਿਧੀਆਂ ਖੋਜੋ",
+      "label": "ਮੰਜ਼ਿਲ ਜਾਂ ਗਤੀਵਿਧੀ",
+      "placeholder": "ਮੰਜ਼ਿਲ ਜਾਂ ਗਤੀਵਿਧੀ",
       "submit": "ਖੋਜੋ"
     },
     "participants": {

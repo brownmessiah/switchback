@@ -1800,8 +1800,8 @@
   },
   "HomeSearch": {
     "single": {
-      "label": "સ્થળો અથવા પ્રવૃત્તિઓ શોધો",
-      "placeholder": "સ્થળો અથવા પ્રવૃત્તિઓ શોધો",
+      "label": "સ્થળ કે પ્રવૃત્તિ",
+      "placeholder": "સ્થળ કે પ્રવૃત્તિ",
       "submit": "શોધો"
     },
     "participants": {

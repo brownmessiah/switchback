@@ -1800,8 +1800,8 @@
   },
   "HomeSearch": {
     "single": {
-      "label": "مقامات یا سرگرمیاں تلاش کریں",
-      "placeholder": "مقامات یا سرگرمیاں تلاش کریں",
+      "label": "منزل یا سرگرمی",
+      "placeholder": "منزل یا سرگرمی",
       "submit": "تلاش کریں"
     },
     "participants": {

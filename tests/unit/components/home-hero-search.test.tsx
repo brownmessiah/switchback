@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 /**
  * Unified hero search bar (home-redesign issue 07 / CR5+CR7):
- * `[Search places or activities] [participants stepper] [Search]` in ONE
+ * `[Destination or activity] [participants stepper] [Search]` in ONE
  * responsive pill bar.
  *
  * Contract:
@@ -53,6 +53,30 @@ describe('HomeHeroSearch — unified bar (issue 07)', () => {
       'placeholder',
       'HomeSearch.single.placeholder',
     )
+  })
+
+  it('stays stacked until md — the row layout is too cramped at sm (640px)', () => {
+    // Measured 2026-07-14: at exactly 640px the single-row pill leaves the
+    // query input just 118px (53px in Tamil) — every placeholder ellipsizes.
+    // Airbnb's segmented pill stacks on narrow screens for the same reason;
+    // the row starts at md (768px), where the en placeholder fits (182px).
+    const { container } = render(<HomeHeroSearch />)
+    const pill = container.querySelector('form > div')
+    expect(pill?.className).toContain('md:flex-row')
+    expect(pill?.className).not.toContain('sm:flex-row')
+    // The segment dividers flip orientation at the SAME breakpoint.
+    expect(container.innerHTML).not.toContain('sm:border-l')
+  })
+
+  it('guards long-locale placeholders with an ellipsis backstop (placeholder:truncate)', () => {
+    // Some locales (e.g. Tamil) translate the placeholder well past the field
+    // width; ::placeholder gets no ellipsis from the browser, so the input
+    // carries the truncate backstop (graceful "…" where engines support it).
+    render(<HomeHeroSearch />)
+    const input = screen.getByRole('searchbox', {
+      name: 'HomeSearch.single.label',
+    })
+    expect(input.className).toContain('placeholder:truncate')
   })
 
   it('has a labelled submit button', () => {
@@ -130,9 +154,21 @@ describe('hero search copy contract (en.json)', () => {
     }
   }
 
-  it('the q field reads "Search places or activities" (owner brief CR5)', () => {
-    expect(en.HomeSearch.single.placeholder).toBe('Search places or activities')
-    expect(en.HomeSearch.single.label).toBe('Search places or activities')
+  it('the q field reads "Destination or activity" (placeholder-truncation fix, 2026-07-14)', () => {
+    // Supersedes the CR5 "Search places or activities" copy: at sm+ the query
+    // field shares its row with the date/participants segments and the 27-char
+    // string clipped mid-word ("…activitie"). Booking.com's segmented
+    // attractions search — the same layout shape — uses this 23-char pattern.
+    expect(en.HomeSearch.single.placeholder).toBe('Destination or activity')
+    // Placeholder and accessible name stay IDENTICAL (WCAG 2.5.3
+    // label-in-name — voice-control users speak what they see).
+    expect(en.HomeSearch.single.label).toBe(en.HomeSearch.single.placeholder)
+  })
+
+  it('placeholder stays within the segmented-field budget (≤ 25 chars)', () => {
+    // Length budgeting at copy time is the primary defense against silent
+    // placeholder clipping (browsers add no ellipsis to ::placeholder).
+    expect(en.HomeSearch.single.placeholder.length).toBeLessThanOrEqual(25)
   })
 
   it('participants.count is an ICU plural over {count}', () => {

@@ -1800,8 +1800,8 @@
   },
   "HomeSearch": {
     "single": {
-      "label": "स्थान या गतिविधियाँ खोजें",
-      "placeholder": "स्थान या गतिविधियाँ खोजें",
+      "label": "गंतव्य या गतिविधि",
+      "placeholder": "गंतव्य या गतिविधि",
       "submit": "खोजें"
     },
     "participants": {

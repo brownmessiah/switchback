@@ -1800,8 +1800,8 @@
   },
   "HomeSearch": {
     "single": {
-      "label": "ठिकाणे किंवा उपक्रम शोधा",
-      "placeholder": "ठिकाणे किंवा उपक्रम शोधा",
+      "label": "ठिकाण किंवा उपक्रम",
+      "placeholder": "ठिकाण किंवा उपक्रम",
       "submit": "शोधा"
     },
     "participants": {

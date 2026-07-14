@@ -10,7 +10,12 @@ import { ParticipantsStepper } from '@/components/search/participants-stepper'
 
 /**
  * Unified hero search bar (home-redesign issue 07 / CR5+CR7):
- * `[Search places or activities] [participants] [Search]` in one pill.
+ * `[Destination or activity] [date] [participants] [Search]` in one pill.
+ *
+ * Placeholder copy is length-budgeted (≤ 25 chars) so it never clips in the
+ * segmented sm+ row — the Booking.com pattern for this layout shape; browsers
+ * clip ::placeholder silently (no ellipsis), so `placeholder:truncate` is
+ * only a backstop for long locale translations.
  *
  * Still a plain GET form to /search — the `q` field submits with ZERO JS
  * (progressive enhancement; the WebSite JSON-LD SearchAction /search?q=
@@ -41,7 +46,10 @@ export function HomeHeroSearch(): ReactElement {
       data-testid="home-hero-search"
       className="mt-7 w-full max-w-2xl"
     >
-      <div className="flex flex-col gap-2 rounded-[var(--radius-card)] bg-surface-0/95 p-2 shadow-[var(--shadow-lg)] ring-1 ring-foreground/10 backdrop-blur-sm sm:flex-row sm:items-center sm:rounded-[var(--radius-pill)]">
+      {/* Stacked below md: at 640–767px the single row leaves the query
+          input ~118px (53px in Tamil) and every placeholder ellipsizes —
+          the Airbnb segmented-pill pattern stacks on narrow screens. */}
+      <div className="flex flex-col gap-2 rounded-[var(--radius-card)] bg-surface-0/95 p-2 shadow-[var(--shadow-lg)] ring-1 ring-foreground/10 backdrop-blur-sm md:flex-row md:items-center md:rounded-[var(--radius-pill)]">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <Search
             aria-hidden="true"
@@ -53,14 +61,14 @@ export function HomeHeroSearch(): ReactElement {
             aria-label={t('single.label')}
             placeholder={t('single.placeholder')}
             autoComplete="off"
-            className="min-tap h-11 w-full bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
+            className="min-tap h-11 w-full bg-transparent text-base text-foreground placeholder:truncate placeholder:text-muted-foreground focus:outline-none"
           />
         </div>
 
         {/* Date segment (issue 10 / CR6): popover with quick pills + a
             2-month grid (ADR-0020). The hidden input exists only when a day
             is picked, so the default submit stays /search?q=. */}
-        <div className="flex items-center border-t border-border/60 px-2 pt-2 sm:border-l sm:border-t-0 sm:pt-0">
+        <div className="flex items-center border-t border-border/60 px-2 pt-2 md:border-l md:border-t-0 md:pt-0">
           <DatePopover value={date} onChange={setDate} />
           {date !== null && <input type="hidden" name="date" value={date} />}
         </div>
@@ -69,7 +77,7 @@ export function HomeHeroSearch(): ReactElement {
             translated ICU count ("2 people") as its live value. The hidden
             input only exists above the default so a plain submit stays
             /search?q=. */}
-        <div className="flex items-center justify-between gap-3 border-t border-border/60 px-3 pt-2 sm:border-l sm:border-t-0 sm:pt-0">
+        <div className="flex items-center justify-between gap-3 border-t border-border/60 px-3 pt-2 md:border-l md:border-t-0 md:pt-0">
           <Users
             aria-hidden="true"
             className="size-4 shrink-0 text-muted-foreground"

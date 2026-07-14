@@ -188,44 +188,44 @@
     }
   },
   "VendorAnalytics": {
-    "title": "Analytics",
-    "subtitle": "Your headline performance, drawn from real Bookings.",
-    "totalRevenue": "Total revenue",
-    "totalRevenueHint": "Gross Booking value, before commission, GST, and TDS.",
-    "totalBookings": "Total bookings",
-    "totalBookingsHint": "All-time Bookings across your Experiences.",
-    "emptyState": "No Bookings yet. Once customers start booking your Experiences, your revenue and booking numbers will appear here.",
-    "keyMetricsHeading": "Key metrics",
-    "last30RevenueLabel": "Revenue (last 30 days)",
-    "last30BookingsLabel": "Bookings (last 30 days)",
-    "vsPriorPeriod": "vs prior 30 days",
-    "noPriorPeriod": "No prior-period data to compare",
-    "avgBookingValueLabel": "Average Booking value",
-    "avgBookingValueHint": "Gross revenue divided by all-time Bookings.",
-    "upcoming7Label": "Upcoming (next 7 days)",
-    "upcoming7Hint": "Confirmed Bookings starting within a week.",
-    "newBookings7Label": "New Bookings (last 7 days)",
-    "newBookings7Hint": "Bookings confirmed in the past week.",
-    "cancellationRateLabel": "Cancellation rate",
-    "cancellationRateHint": "Cancelled Bookings as a share of all Bookings.",
-    "repeatCustomersLabel": "Repeat Customers",
-    "repeatCustomersHint": "Customers who have booked more than once.",
-    "chartsHeading": "Trends",
-    "revenueDayChartTitle": "Revenue — last 30 days",
-    "revenueMonthChartTitle": "Monthly revenue",
-    "chartNoData": "No data yet.",
-    "statusBreakdownHeading": "Booking status breakdown",
-    "statusBreakdownEmpty": "No Bookings yet, so there is nothing to break down.",
-    "statusColumnLabel": "Status",
-    "statusCountColumn": "Bookings",
-    "revenueByExperienceHeading": "Revenue by Experience",
-    "revenueByExperienceEmpty": "No Bookings yet, so there is no revenue to attribute to your Experiences.",
-    "experienceColumn": "Experience",
-    "bookingsColumn": "Bookings",
-    "revenueColumn": "Revenue",
-    "dailyBreakdownHeading": "Daily breakdown",
-    "dateColumn": "Date",
-    "dailyBreakdownEmpty": "No Bookings in the last 30 days."
+    "title": "تجزیات",
+    "subtitle": "آپ کی مجموعی کارکردگی، حقیقی Bookings سے اخذ کردہ۔",
+    "totalRevenue": "کل آمدنی",
+    "totalRevenueHint": "کمیشن، GST اور TDS سے پہلے کی مجموعی Booking قیمت۔",
+    "totalBookings": "کل بکنگز",
+    "totalBookingsHint": "آپ کے تمام Experiences میں اب تک کی تمام Bookings۔",
+    "emptyState": "ابھی تک کوئی Booking نہیں ہوئی۔ جیسے ہی کسٹمرز آپ کے Experiences بک کرنا شروع کریں گے، آپ کی آمدنی اور بکنگ کے اعداد و شمار یہاں ظاہر ہوں گے۔",
+    "keyMetricsHeading": "اہم اعداد و شمار",
+    "last30RevenueLabel": "آمدنی (پچھلے 30 دن)",
+    "last30BookingsLabel": "بکنگز (پچھلے 30 دن)",
+    "vsPriorPeriod": "پچھلے 30 دنوں کے مقابلے میں",
+    "noPriorPeriod": "موازنے کے لیے پچھلے دورانیے کا کوئی ڈیٹا موجود نہیں",
+    "avgBookingValueLabel": "اوسط Booking قیمت",
+    "avgBookingValueHint": "مجموعی آمدنی کو اب تک کی کل Bookings پر تقسیم کیا گیا ہے۔",
+    "upcoming7Label": "آنے والی (اگلے 7 دن)",
+    "upcoming7Hint": "ایک ہفتے کے اندر شروع ہونے والی تصدیق شدہ Bookings۔",
+    "newBookings7Label": "نئی Bookings (پچھلے 7 دن)",
+    "newBookings7Hint": "پچھلے ہفتے میں تصدیق شدہ Bookings۔",
+    "cancellationRateLabel": "منسوخی کی شرح",
+    "cancellationRateHint": "تمام Bookings کے مقابلے میں منسوخ شدہ Bookings کا تناسب۔",
+    "repeatCustomersLabel": "دوبارہ آنے والے کسٹمرز",
+    "repeatCustomersHint": "وہ کسٹمرز جنہوں نے ایک سے زیادہ بار بکنگ کی ہے۔",
+    "chartsHeading": "رجحانات",
+    "revenueDayChartTitle": "آمدنی — پچھلے 30 دن",
+    "revenueMonthChartTitle": "ماہانہ آمدنی",
+    "chartNoData": "ابھی تک کوئی ڈیٹا نہیں۔",
+    "statusBreakdownHeading": "Booking کی صورتحال کے مطابق تقسیم",
+    "statusBreakdownEmpty": "ابھی تک کوئی Booking نہیں ہوئی، اس لیے تقسیم کرنے کے لیے کچھ نہیں ہے۔",
+    "statusColumnLabel": "صورتحال",
+    "statusCountColumn": "بکنگز",
+    "revenueByExperienceHeading": "Experience کے حساب سے آمدنی",
+    "revenueByExperienceEmpty": "ابھی تک کوئی Booking نہیں ہوئی، اس لیے آپ کے Experiences سے منسوب کرنے کے لیے کوئی آمدنی موجود نہیں ہے۔",
+    "experienceColumn": "تجربہ",
+    "bookingsColumn": "بکنگز",
+    "revenueColumn": "آمدنی",
+    "dailyBreakdownHeading": "روزانہ کی تقسیم",
+    "dateColumn": "تاریخ",
+    "dailyBreakdownEmpty": "پچھلے 30 دنوں میں کوئی Booking نہیں ہوئی۔"
   },
   "VendorTeam": {
     "title": "ٹیم اور کردار",
@@ -285,35 +285,35 @@
     "emptyTokenError": "پہلے ایک چیک ان کوڈ درج کریں۔"
   },
   "VendorQuickActions": {
-    "heading": "Quick actions",
-    "addExperience": "Add Experience",
-    "viewBookings": "View Bookings",
-    "manageAvailability": "Manage Availability",
-    "viewEarnings": "View Earnings"
+    "heading": "فوری اقدامات",
+    "addExperience": "Experience شامل کریں",
+    "viewBookings": "Bookings دیکھیں",
+    "manageAvailability": "دستیابی کا انتظام کریں",
+    "viewEarnings": "آمدنی دیکھیں"
   },
   "VendorSettingsClosure": {
-    "sectionTitle": "Close vendor account",
-    "sectionDescription": "Closing stops you from selling on Outvers. You stay an Outvers member as a Customer — nothing is deleted on your side.",
-    "trigger": "Close vendor account",
-    "blockedTitle": "You can't close your Vendor account yet",
-    "blockedInFlight": "You have {count} in-flight Bookings. Complete or cancel them first.",
-    "blockedInFlightLink": "View Bookings",
-    "blockedDues": "You have {count} Bookings with Payouts still to settle. Closing is blocked until they settle.",
-    "blockedDuesLink": "View Payout",
-    "blockedSuspended": "Your Vendor account is suspended. Contact support before you can close it.",
-    "blockedSuspendedLink": "Contact support",
-    "dialogTitle": "Close your Vendor account",
-    "dialogConsequenceExperiences": "Your {count} active Experiences will be archived and removed from search.",
-    "dialogConsequenceCustomer": "You'll return to a Customer-only account. Your Bookings, wallet, and history are kept.",
-    "dialogConsequenceRetention": "Outvers retains your financial and tax records as required by law.",
-    "dialogReversibility": "You can reopen your Vendor account by starting onboarding again.",
-    "reasonLabel": "Reason for closing (optional)",
-    "confirmLabel": "To confirm, type CLOSE",
+    "sectionTitle": "Vendor اکاؤنٹ بند کریں",
+    "sectionDescription": "بند کرنے سے آپ Outvers پر فروخت کرنا بند کر دیتے ہیں۔ آپ بطور Customer Outvers کے رکن رہتے ہیں — آپ کی جانب سے کچھ بھی حذف نہیں ہوتا۔",
+    "trigger": "Vendor اکاؤنٹ بند کریں",
+    "blockedTitle": "آپ ابھی اپنا Vendor اکاؤنٹ بند نہیں کر سکتے",
+    "blockedInFlight": "آپ کے پاس {count} جاری Bookings ہیں۔ پہلے انہیں مکمل کریں یا منسوخ کریں۔",
+    "blockedInFlightLink": "Bookings دیکھیں",
+    "blockedDues": "آپ کے پاس {count} Bookings ہیں جن کے Payouts ابھی طے ہونا باقی ہیں۔ جب تک وہ طے نہیں ہو جاتے، بند کرنا مسدود ہے۔",
+    "blockedDuesLink": "Payout دیکھیں",
+    "blockedSuspended": "آپ کا Vendor اکاؤنٹ معطل ہے۔ بند کرنے سے پہلے سپورٹ سے رابطہ کریں۔",
+    "blockedSuspendedLink": "سپورٹ سے رابطہ کریں",
+    "dialogTitle": "اپنا Vendor اکاؤنٹ بند کریں",
+    "dialogConsequenceExperiences": "آپ کے {count} فعال Experiences آرکائیو کر دیے جائیں گے اور تلاش سے ہٹا دیے جائیں گے۔",
+    "dialogConsequenceCustomer": "آپ صرف-Customer اکاؤنٹ پر واپس چلے جائیں گے۔ آپ کی Bookings، والیٹ اور تاریخ محفوظ رہے گی۔",
+    "dialogConsequenceRetention": "Outvers قانون کے تقاضے کے مطابق آپ کے مالی اور ٹیکس ریکارڈ محفوظ رکھتا ہے۔",
+    "dialogReversibility": "آپ دوبارہ آن بورڈنگ شروع کر کے اپنا Vendor اکاؤنٹ دوبارہ کھول سکتے ہیں۔",
+    "reasonLabel": "بند کرنے کی وجہ (اختیاری)",
+    "confirmLabel": "تصدیق کے لیے CLOSE ٹائپ کریں",
     "confirmPhrase": "CLOSE",
-    "cancel": "Keep my account",
-    "submit": "Close Vendor account",
-    "successToast": "Your Vendor account is closed.",
-    "errorGeneric": "Couldn't close your account. Try again."
+    "cancel": "میرا اکاؤنٹ برقرار رکھیں",
+    "submit": "Vendor اکاؤنٹ بند کریں",
+    "successToast": "آپ کا Vendor اکاؤنٹ بند کر دیا گیا ہے۔",
+    "errorGeneric": "آپ کا اکاؤنٹ بند نہیں ہو سکا۔ دوبارہ کوشش کریں۔"
   },
   "BookingStatus": {
     "pending_payment": "ادائیگی باقی ہے",
@@ -405,38 +405,38 @@
   },
   "ActivitiesPage": {
     "metadata": {
-      "title": "{activity} across India · Outvers",
-      "description": "Book {activity} Experiences across India from KYC-verified Vendors. Transparent pricing, real-time slot availability, and a 24-hour refund SLA."
+      "title": "{activity} پورے بھارت میں · Outvers",
+      "description": "KYC-تصدیق شدہ Vendors سے پورے بھارت میں {activity} Experiences بک کریں۔ شفاف قیمتیں، حقیقی وقت میں سلاٹ دستیابی، اور 24 گھنٹے کا ریفنڈ SLA۔"
     },
-    "heroEyebrow": "Every region, one place",
-    "heroTitle": "{activity} across India",
-    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {activity} Experience below, booked on Outvers, is covered.",
-    "editorialIntro": "A hand-checked collection of {activity} from every region we operate in, run only by KYC-verified Vendors. Compare across destinations, then book with transparent pricing and refunds credited within 24 hours.",
-    "regionHint": "Looking for {activity} in a specific destination? Open an Experience to see its region, or browse {activity} by city from each listing.",
+    "heroEyebrow": "ہر خطہ، ایک جگہ",
+    "heroTitle": "پورے بھارت میں {activity}",
+    "refundLead": "اگر آپ اپنے سلاٹ سے 24 گھنٹے پہلے منسوخ کریں تو مکمل ریفنڈ حاصل کریں — نیچے دیا گیا ہر {activity} Experience، جو Outvers پر بک کیا گیا ہو، اس میں شامل ہے۔",
+    "editorialIntro": "ہمارے کام کرنے والے ہر خطے سے {activity} کا ہاتھ سے چیک کیا گیا مجموعہ، صرف KYC-تصدیق شدہ Vendors کے ذریعے چلایا جاتا ہے۔ منزلوں کا موازنہ کریں، پھر شفاف قیمتوں اور 24 گھنٹوں میں جمع ہونے والے ریفنڈز کے ساتھ بک کریں۔",
+    "regionHint": "کسی مخصوص منزل میں {activity} تلاش کر رہے ہیں؟ اس کا خطہ دیکھنے کے لیے کوئی Experience کھولیں، یا ہر لسٹنگ سے شہر کے حساب سے {activity} براؤز کریں۔",
     "experiences": {
-      "sectionLabel": "{activity} Experiences",
-      "heading": "Top {activity} Experiences across India",
-      "count": "{count, plural, =0 {No Experiences yet} one {# Experience} other {# Experiences}}",
-      "rankingDisclosure": "How we rank: results are ordered by recency and Vendor verification — never by paid placement.",
-      "emptyTitle": "No {activity} experiences listed yet",
-      "emptySubtitle": "Check back soon — new listings are added regularly."
+      "sectionLabel": "{activity} تجربات",
+      "heading": "پورے بھارت میں ٹاپ {activity} Experiences",
+      "count": "{count, plural, =0 {ابھی تک کوئی Experience نہیں} one {# Experience} other {# Experiences}}",
+      "rankingDisclosure": "ہم کیسے درجہ بندی کرتے ہیں: نتائج کو تازگی اور Vendor تصدیق کے مطابق ترتیب دیا جاتا ہے — کبھی بھی ادا شدہ جگہ کے مطابق نہیں۔",
+      "emptyTitle": "ابھی تک کوئی {activity} experiences درج نہیں",
+      "emptySubtitle": "جلد دوبارہ چیک کریں — نئی لسٹنگز باقاعدگی سے شامل کی جاتی ہیں۔"
     },
     "itemList": {
-      "name": "Top {activity} Experiences across India"
+      "name": "پورے بھارت میں ٹاپ {activity} Experiences"
     },
     "faq": {
-      "heading": "Frequently asked questions",
-      "safetyQuestion": "Is {activity} safe?",
-      "safetyAnswer": "All Outvers-listed Experiences are run by KYC-verified Vendors. Safety-stack Experiences require a trusted contact and feature in-trip check-in pings.",
-      "regionsQuestion": "Where can I do {activity} in India?",
-      "regionsAnswer": "Each Experience listing shows its region. Open a listing to see its destination, seasonality, and any region-closure windows surfaced at the booking step.",
-      "cancellationQuestion": "What is the cancellation policy?",
-      "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
+      "heading": "اکثر پوچھے جانے والے سوالات",
+      "safetyQuestion": "کیا {activity} محفوظ ہے؟",
+      "safetyAnswer": "Outvers پر درج تمام Experiences KYC-تصدیق شدہ Vendors کے ذریعے چلائی جاتی ہیں۔ حفاظت-اسٹیک Experiences کے لیے ایک قابل اعتماد رابطہ اور سفر کے دوران چیک-اِن پنگز درکار ہوتی ہیں۔",
+      "regionsQuestion": "میں بھارت میں {activity} کہاں کر سکتا ہوں؟",
+      "regionsAnswer": "ہر Experience لسٹنگ اپنا خطہ دکھاتی ہے۔ اس کی منزل، موسمی مناسبت اور بکنگ کے مرحلے پر ظاہر ہونے والی کسی بھی خطہ-بندش کی مدت دیکھنے کے لیے لسٹنگ کھولیں۔",
+      "cancellationQuestion": "منسوخی کی پالیسی کیا ہے؟",
+      "cancellationAnswer": "ہر Experience کی اپنی منسوخی کی پالیسی ہوتی ہے (لچکدار / معتدل / سخت)۔ پالیسی کے اندر منسوخیوں کے ریفنڈز 24 گھنٹوں کے اندر آپ کے Outvers والیٹ میں جمع ہو جاتے ہیں۔"
     },
     "trust": {
-      "freeCancellation": "Flexible cancellation up to 24h",
-      "verifiedVendor": "Identity-verified Vendors",
-      "refundSla": "24-hour refund SLA"
+      "freeCancellation": "24 گھنٹے تک لچکدار منسوخی",
+      "verifiedVendor": "شناخت-تصدیق شدہ Vendors",
+      "refundSla": "24 گھنٹے کا ریفنڈ SLA"
     },
     "intelligence": {
       "priceRangeHeading": "قیمت کی حد",
@@ -449,13 +449,13 @@
   },
   "CategoryPage": {
     "metadata": {
-      "title": "{category} adventures across India · Outvers",
-      "description": "Explore {category} Experiences across India from KYC-verified Vendors. Transparent pricing, real-time slot availability, and a 24-hour refund SLA."
+      "title": "پورے بھارت میں {category} مہم جوئیاں · Outvers",
+      "description": "KYC-تصدیق شدہ Vendors سے پورے بھارت میں {category} Experiences دریافت کریں۔ شفاف قیمتیں، حقیقی وقت میں سلاٹ دستیابی، اور 24 گھنٹے کا ریفنڈ SLA۔"
     },
-    "heroEyebrow": "Curated category",
-    "heroTitle": "{category} adventures across India",
-    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {category} Experience below, booked on Outvers, is covered.",
-    "editorialIntro": "A hand-checked rollup of {category} adventures from every region we operate in, run only by KYC-verified Vendors. Transparent pricing, real-time slot availability, and refunds credited within 24 hours.",
+    "heroEyebrow": "منتخب کیٹیگری",
+    "heroTitle": "پورے بھارت میں {category} مہم جوئیاں",
+    "refundLead": "اگر آپ اپنے سلاٹ سے 24 گھنٹے پہلے منسوخ کریں تو مکمل ریفنڈ حاصل کریں — نیچے دیا گیا ہر {category} Experience، جو Outvers پر بک کیا گیا ہو، اس میں شامل ہے۔",
+    "editorialIntro": "ہمارے کام کرنے والے ہر خطے سے {category} مہم جوئیوں کا ہاتھ سے چیک کیا گیا مجموعہ، صرف KYC-تصدیق شدہ Vendors کے ذریعے چلایا جاتا ہے۔ شفاف قیمتیں، حقیقی وقت میں سلاٹ دستیابی، اور 24 گھنٹوں میں جمع ہونے والے ریفنڈز۔",
     "categories": {
       "water": "آبی کھیل",
       "aerial": "فضائی",
@@ -464,29 +464,29 @@
       "urban": "شہری"
     },
     "experiences": {
-      "sectionLabel": "{category} Experiences",
-      "heading": "Top {category} Experiences across India",
-      "count": "{count, plural, =0 {No Experiences yet} one {# Experience} other {# Experiences}}",
-      "rankingDisclosure": "How we rank: results are ordered by recency and Vendor verification — never by paid placement.",
-      "emptyTitle": "No {category} experiences listed yet",
-      "emptySubtitle": "Check back soon — new listings are added regularly."
+      "sectionLabel": "{category} تجربات",
+      "heading": "پورے بھارت میں ٹاپ {category} Experiences",
+      "count": "{count, plural, =0 {ابھی تک کوئی Experience نہیں} one {# Experience} other {# Experiences}}",
+      "rankingDisclosure": "ہم کیسے درجہ بندی کرتے ہیں: نتائج کو تازگی اور Vendor تصدیق کے مطابق ترتیب دیا جاتا ہے — کبھی بھی ادا شدہ جگہ کے مطابق نہیں۔",
+      "emptyTitle": "ابھی تک کوئی {category} experiences درج نہیں",
+      "emptySubtitle": "جلد دوبارہ چیک کریں — نئی لسٹنگز باقاعدگی سے شامل کی جاتی ہیں۔"
     },
     "itemList": {
-      "name": "Top {category} Experiences across India"
+      "name": "پورے بھارت میں ٹاپ {category} Experiences"
     },
     "faq": {
-      "heading": "Frequently asked questions",
-      "safetyQuestion": "Are {category} Experiences safe?",
-      "safetyAnswer": "All Outvers-listed Experiences are run by KYC-verified Vendors. Safety-stack Experiences require a trusted contact and feature in-trip check-in pings.",
-      "includesQuestion": "What does the {category} category include?",
-      "includesAnswer": "This category groups related activities. Open any Experience to see its specific activity, region, and seasonality.",
-      "cancellationQuestion": "What is the cancellation policy?",
-      "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
+      "heading": "اکثر پوچھے جانے والے سوالات",
+      "safetyQuestion": "کیا {category} Experiences محفوظ ہیں؟",
+      "safetyAnswer": "Outvers پر درج تمام Experiences KYC-تصدیق شدہ Vendors کے ذریعے چلائی جاتی ہیں۔ حفاظت-اسٹیک Experiences کے لیے ایک قابل اعتماد رابطہ اور سفر کے دوران چیک-اِن پنگز درکار ہوتی ہیں۔",
+      "includesQuestion": "{category} کیٹیگری میں کیا شامل ہے؟",
+      "includesAnswer": "یہ کیٹیگری متعلقہ سرگرمیوں کو یکجا کرتی ہے۔ اس کی مخصوص سرگرمی، خطہ اور موسمی مناسبت دیکھنے کے لیے کوئی بھی Experience کھولیں۔",
+      "cancellationQuestion": "منسوخی کی پالیسی کیا ہے؟",
+      "cancellationAnswer": "ہر Experience کی اپنی منسوخی کی پالیسی ہوتی ہے (لچکدار / معتدل / سخت)۔ پالیسی کے اندر منسوخیوں کے ریفنڈز 24 گھنٹوں کے اندر آپ کے Outvers والیٹ میں جمع ہو جاتے ہیں۔"
     },
     "trust": {
-      "freeCancellation": "Flexible cancellation up to 24h",
-      "verifiedVendor": "Identity-verified Vendors",
-      "refundSla": "24-hour refund SLA"
+      "freeCancellation": "24 گھنٹے تک لچکدار منسوخی",
+      "verifiedVendor": "شناخت-تصدیق شدہ Vendors",
+      "refundSla": "24 گھنٹے کا ریفنڈ SLA"
     }
   },
   "ExperiencePage": {
@@ -1116,11 +1116,11 @@
     "kyc": {
       "heading": "ہر بیچنے والا تین درجے کی تصدیق سیڑھی چڑھتا ہے",
       "intro": "ایک بیچنے والے کا KYC درجہ طے کرتا ہے کہ وہ کیا فہرست اور لین دین کر سکتا ہے۔ ہر تجربہ کارڈ پر موجود بیج آپ کو بالکل بتاتا ہے کہ بیچنے والا کتنی دور تصدیق ہوا ہے — تصدیق اور جواب الگ الگ ٹریک ہوتے ہیں۔",
-      "phoneTitle": "Phone verified",
+      "phoneTitle": "فون تصدیق شدہ",
       "phoneBody": "سائن اپ کے وقت OTP-تصدیق شدہ فون نمبر۔ ایک Phone verified بیچنے والا تجربات کا مسودہ بنا سکتا ہے لیکن شائع، بکنگ قبول، یا پے آؤٹ حاصل نہیں کر سکتا۔ اس درجے پر فہرستوں پر بیج نظر نہیں آتا۔",
-      "identityTitle": "Identity verified",
+      "identityTitle": "شناخت تصدیق شدہ",
       "identityBody": "Aadhaar eKYC کے ساتھ فارمیٹ-تصدیق شدہ PAN، اور کم از کم ایک تجربہ ایڈمن کے ذریعے جائزہ لیا گیا۔ ایک Identity verified بیچنے والا فی فرد Rs.5,000 تک اور فی سلاٹ 8 شرکاء تک ایک دن کے تجربات شائع کر سکتا ہے، اور \"Identity verified\" بیج رکھتا ہے۔",
-      "businessTitle": "Business verified",
+      "businessTitle": "کاروبار تصدیق شدہ",
       "businessBody": "Identity تصدیق کے ساتھ احاطے اور آلات کی ریکارڈ شدہ ویڈیو کال جانچ، ایک GSTIN یا Udyam رجسٹریشن کے ساتھ حد سے کم خود اعلامیہ، اور زمرہ سے متعلق گائیڈ سرٹیفکیٹ (مثلاً ATOAI، RMI، NIM، یا APPI)۔ ایک Business verified بیچنے والے کے پاس لامحدود فہرست کے حقوق ہیں اور \"Business verified\" بیج رکھتا ہے۔"
     },
     "money": {
@@ -1458,55 +1458,55 @@
       "channels": {
         "in_app": "ایپ میں",
         "email": "ای میل",
-        "whatsapp": "WhatsApp",
-        "sms": "SMS"
+        "whatsapp": "واٹس ایپ",
+        "sms": "ایس ایم ایس"
       }
     }
   },
   "TripPlannerPage": {
     "metadata": {
-      "title": "AI Trip Planner · Outvers",
-      "description": "Build a day-by-day adventure itinerary grounded in real, bookable Outvers experiences. Pick a destination, days, budget, group size, and style."
+      "title": "AI ٹرپ پلانر · Outvers",
+      "description": "حقیقی، بک کے قابل Outvers experiences پر مبنی روزانہ کی مہم جوئی کا سفرنامہ بنائیں۔ منزل، دن، بجٹ، گروپ سائز اور انداز منتخب کریں۔"
     },
     "heading": "AI کے ساتھ اپنے ایڈونچر کی منصوبہ بندی کریں",
-    "subheading": "Tell us where and how you like to travel. We build a day-by-day itinerary from real, bookable experiences — never made-up ones.",
-    "aiLabel": "AI-assisted · grounded in live Outvers inventory",
+    "subheading": "بتائیں کہ آپ کہاں اور کیسے سفر کرنا پسند کرتے ہیں۔ ہم حقیقی، بک کے قابل experiences سے روزانہ کا سفرنامہ بناتے ہیں — کبھی من گھڑت نہیں۔",
+    "aiLabel": "AI-معاون · Outvers کی لائیو انوینٹری پر مبنی",
     "form": {
-      "region": "Destination",
-      "regionPlaceholder": "Choose a destination",
-      "activity": "Activity (optional)",
-      "anyActivity": "Any activity",
-      "days": "Days",
-      "budget": "Total budget (₹)",
-      "budgetPlaceholder": "e.g. 15000",
-      "groupSize": "Group size",
-      "travelStyle": "Travel style",
-      "submit": "Build my itinerary",
-      "submitting": "Building your itinerary…"
+      "region": "منزل",
+      "regionPlaceholder": "ایک منزل منتخب کریں",
+      "activity": "سرگرمی (اختیاری)",
+      "anyActivity": "کوئی بھی سرگرمی",
+      "days": "دن",
+      "budget": "کل بجٹ (₹)",
+      "budgetPlaceholder": "مثلاً 15000",
+      "groupSize": "گروپ کا سائز",
+      "travelStyle": "سفر کا انداز",
+      "submit": "میرا سفرنامہ بنائیں",
+      "submitting": "آپ کا سفرنامہ بنایا جا رہا ہے…"
     },
     "style": {
-      "adventure": "Adventure",
-      "relaxed": "Relaxed",
-      "family": "Family",
-      "budget": "Budget"
+      "adventure": "مہم جوئی",
+      "relaxed": "پرسکون",
+      "family": "خاندانی",
+      "budget": "بجٹ"
     },
     "result": {
-      "heading": "Your {days}-day {region} itinerary",
-      "dayHeading": "Day {day}: {title}",
-      "itemCount": "{count} experience{count, plural, one {} other {s}}",
-      "viewExperience": "View experience",
-      "perPerson": "₹{price}/person",
-      "packingHeading": "Packing list",
-      "emptyDay": "A free day — explore on your own or add an experience.",
-      "disclaimer": "Every experience above is real and bookable on Outvers. AI helps arrange them; it never invents experiences."
+      "heading": "آپ کا {days}-دن کا {region} سفرنامہ",
+      "dayHeading": "دن {day}: {title}",
+      "itemCount": "{count, plural, one {# تجربہ} other {# تجربات}}",
+      "viewExperience": "Experience دیکھیں",
+      "perPerson": "₹{price}/فی کس",
+      "packingHeading": "سامان کی فہرست",
+      "emptyDay": "ایک آزاد دن — خود گھومیں یا کوئی experience شامل کریں۔",
+      "disclaimer": "اوپر دیا گیا ہر experience حقیقی ہے اور Outvers پر بک کیا جا سکتا ہے۔ AI انہیں ترتیب دینے میں مدد کرتا ہے؛ یہ کبھی experiences ایجاد نہیں کرتا۔"
     },
     "empty": {
-      "title": "No live experiences for that destination yet",
-      "body": "We could not find published experiences to ground an itinerary. Try another destination or remove the activity filter."
+      "title": "اس منزل کے لیے ابھی تک کوئی لائیو experiences نہیں",
+      "body": "ہمیں سفرنامہ بنانے کے لیے شائع شدہ experiences نہیں مل سکے۔ کوئی دوسری منزل آزمائیں یا سرگرمی کا فلٹر ہٹا دیں۔"
     },
     "error": {
-      "title": "We could not build that itinerary",
-      "body": "Something went wrong. Please adjust your inputs and try again."
+      "title": "ہم وہ سفرنامہ نہیں بنا سکے",
+      "body": "کچھ غلط ہو گیا۔ براہ کرم اپنے ان پٹس درست کریں اور دوبارہ کوشش کریں۔"
     }
   },
   "TrustBadges": {
@@ -1532,7 +1532,7 @@
       "eyebrow": "Vendors کے لیے",
       "title": "Outvers پر اپنا ایڈونچر کاروبار درج کریں",
       "description": "Outvers تصدیق شدہ ایڈونچر Experiences کے لیے بھارت کا مارکیٹ پلیس ہے۔ اپنا ریفٹنگ، ٹریکنگ، پیراگلائیڈنگ یا ڈائیونگ کاروبار آن لائن لائیں، ملک بھر کے customers سے Bookings لیں، اور قابل اعتماد طریقے سے ادائیگی حاصل کریں — ہر فہرست کے پیچھے ایک تصدیق شدہ Vendor پروفائل کے اعتماد کے ساتھ۔",
-      "cta": "Start Vendor Onboarding"
+      "cta": "Vendor آن بورڈنگ شروع کریں"
     },
     "benefits": {
       "heading": "Outvers پر کیوں درج کریں",
@@ -1562,17 +1562,17 @@
     "documents": {
       "heading": "تصدیق کی سطح کے مطابق درکار دستاویزات",
       "intro": "Outvers Vendors کی تین سطحی KYC سیڑھی پر (ADR-0007) تصدیق کرتا ہے۔ آپ Tier 1 پر درج کرنا شروع کرتے ہیں اور تصدیق کے ساتھ مزید کھولتے ہیں۔ اس کے علاوہ، ہر کمائی کے قابل سطح پر Payouts کے لیے بینک تفصیلات درکار ہیں۔",
-      "phoneTitle": "Tier 1 — Phone verified",
+      "phoneTitle": "درجہ 1 — فون تصدیق شدہ",
       "phoneDocs": "سائن اپ پر OTP سے تصدیق شدہ فون نمبر۔ بس اتنا ہی — رجسٹر کرتے ہی خودبخود۔",
       "phoneCan": "اپنی Vendor پروفائل بنائیں اور Experiences کا مسودہ تیار کریں (غیر شائع شدہ محفوظ)۔",
       "phoneCannot": "ابھی شائع نہیں کر سکتے، Bookings قبول نہیں کر سکتے، یا Payouts حاصل نہیں کر سکتے۔ کوئی بیج نہیں۔",
-      "identityTitle": "Tier 2 — Identity verified",
-      "identityBadge": "Identity verified",
+      "identityTitle": "درجہ 2 — شناخت تصدیق شدہ",
+      "identityBadge": "شناخت تصدیق شدہ",
       "identityDocs": "OTP (UIDAI eKYC) سے تصدیق شدہ Aadhaar، جمع کرایا اور تصدیق شدہ PAN، انتظامی جائزے کے لیے جمع کرایا گیا کم از کم ایک Experience، اور Payouts کے لیے بینک تفصیلات۔",
       "identityCan": "حدود کے اندر شائع کریں (ایک دن کی Experiences، فی شخص ₹5,000 تک، فی سلاٹ 8 شرکاء تک)، Bookings قبول کریں اور Payouts حاصل کریں۔",
       "identityCannot": "Tier 3 تک کوئی Combo Experiences نہیں اور کوئی کئی دن کے ٹریک نہیں۔",
-      "businessTitle": "Tier 3 — Business verified",
-      "businessBadge": "Business verified",
+      "businessTitle": "درجہ 3 — کاروبار تصدیق شدہ",
+      "businessBadge": "کاروبار تصدیق شدہ",
       "businessDocs": "Tier 2 کی ہر چیز، اس کے ساتھ ایک GSTIN (اگر آپ کا اعلان کردہ ٹرن اوور ₹20L یا اس سے زیادہ ہے) یا Udyam Aadhaar رجسٹریشن کے ساتھ حد سے کم خود اعلامیہ، اور درکار کسی بھی ایڈونچر زمرے کے لیے کم از کم ایک گائیڈ-سرٹیفکیشن دستاویز (ATOAI / RMI / NIM)۔",
       "businessCan": "بلا پابندی فہرست — کئی دن کی Experiences، Combos، کوئی بھی ٹکٹ سائز، کوئی بھی شرکاء کی تعداد۔",
       "businessCannot": "ہماری ٹیم کے ساتھ 30 منٹ کی ریکارڈ شدہ ویڈیو کال تصدیق کے بعد کھلتا ہے۔"
@@ -1596,7 +1596,7 @@
     "finalCta": {
       "heading": "اپنا ایڈونچر کاروبار درج کرنے کے لیے تیار ہیں؟",
       "body": "منٹوں میں اپنی Vendor پروفائل بنائیں اور آج ہی Experiences کا مسودہ بنانا شروع کریں۔",
-      "cta": "Start Vendor Onboarding"
+      "cta": "Vendor آن بورڈنگ شروع کریں"
     }
   },
   "TermsPage": {

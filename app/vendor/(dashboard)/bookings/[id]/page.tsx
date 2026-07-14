@@ -115,6 +115,7 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
   const [booking] = await db
     .select({
       id: bookings.id,
+      orderId: bookings.orderId,
       state: bookings.state,
       participantCount: bookings.participantCount,
       paymentMode: bookings.paymentMode,
@@ -167,6 +168,11 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
       razorpayPaymentId: payments.razorpayPaymentId,
     })
     .from(payments)
+    // Deliberately booking-scoped ONLY: a cart's order payment covers OTHER
+    // vendors' bookings and the customer's total spend — exposing it here
+    // would leak cross-vendor amounts. Vendors read their money from the
+    // per-booking snapshots (payout math below); the admin detail view
+    // (a support surface) does include the order-scoped payment.
     .where(eq(payments.bookingId, id))
     .orderBy(payments.capturedAt)
 

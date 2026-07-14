@@ -217,11 +217,11 @@
     "statusBreakdownHeading": "Booking स्थिति विवरण",
     "statusBreakdownEmpty": "अभी कोई Booking नहीं है, इसलिए विभाजित करने के लिए कुछ नहीं है।",
     "statusColumnLabel": "स्थिति",
-    "statusCountColumn": "Bookings",
+    "statusCountColumn": "बुकिंग",
     "revenueByExperienceHeading": "Experience के अनुसार राजस्व",
     "revenueByExperienceEmpty": "अभी कोई Booking नहीं है, इसलिए आपके Experiences को कोई राजस्व नहीं सौंपा जा सकता।",
-    "experienceColumn": "Experience",
-    "bookingsColumn": "Bookings",
+    "experienceColumn": "अनुभव",
+    "bookingsColumn": "बुकिंग",
     "revenueColumn": "राजस्व",
     "dailyBreakdownHeading": "दैनिक विवरण",
     "dateColumn": "तारीख़",
@@ -414,7 +414,7 @@
     "editorialIntro": "हमारे हर क्षेत्र से {activity} का हाथ से जाँचा गया संग्रह, केवल KYC-सत्यापित Vendors द्वारा संचालित। गंतव्यों की तुलना करें, फिर पारदर्शी मूल्य और 24 घंटे के भीतर रिफंड के साथ बुक करें।",
     "regionHint": "किसी विशेष गंतव्य में {activity} खोज रहे हैं? कोई Experience खोलकर उसका क्षेत्र देखें, या हर लिस्टिंग से शहर के अनुसार {activity} ब्राउज़ करें।",
     "experiences": {
-      "sectionLabel": "{activity} Experiences",
+      "sectionLabel": "{activity} अनुभव",
       "heading": "भारत भर में शीर्ष {activity} Experiences",
       "count": "{count, plural, =0 {अभी कोई Experience नहीं} one {# Experience} other {# Experiences}}",
       "rankingDisclosure": "हम कैसे रैंक करते हैं: परिणाम नवीनता और Vendor सत्यापन के अनुसार क्रमित होते हैं — कभी भी सशुल्क प्लेसमेंट से नहीं।",
@@ -464,7 +464,7 @@
       "urban": "शहरी"
     },
     "experiences": {
-      "sectionLabel": "{category} Experiences",
+      "sectionLabel": "{category} अनुभव",
       "heading": "भारत भर में शीर्ष {category} Experiences",
       "count": "{count, plural, =0 {अभी कोई Experience नहीं} one {# Experience} other {# Experiences}}",
       "rankingDisclosure": "हम कैसे रैंक करते हैं: परिणाम नवीनता और Vendor सत्यापन के अनुसार क्रमित होते हैं — कभी भी सशुल्क प्लेसमेंट से नहीं।",
@@ -1116,11 +1116,11 @@
     "kyc": {
       "heading": "हर विक्रेता तीन-स्तरीय सत्यापन सीढ़ी चढ़ता है",
       "intro": "विक्रेता का KYC स्तर तय करता है कि उसे क्या सूचीबद्ध करने और लेन-देन करने की अनुमति है। हर अनुभव कार्ड पर लगा बैज आपको ठीक-ठीक बताता है कि विक्रेता कितनी दूर तक सत्यापित हुआ है — सत्यापन और प्रतिक्रिया अलग-अलग ट्रैक होते हैं, इसलिए बैज पहचान के बारे में है, लोकप्रियता के बारे में नहीं।",
-      "phoneTitle": "Phone verified",
+      "phoneTitle": "फ़ोन सत्यापित",
       "phoneBody": "साइनअप पर OTP से पुष्ट किया गया फ़ोन नंबर। एक Phone verified विक्रेता अनुभव का मसौदा बना सकता है पर प्रकाशित नहीं कर सकता, बुकिंग स्वीकार नहीं कर सकता, या पेआउट प्राप्त नहीं कर सकता। इस स्तर पर लिस्टिंग पर कोई बैज नहीं दिखता।",
-      "identityTitle": "Identity verified",
+      "identityTitle": "पहचान सत्यापित",
       "identityBody": "Aadhaar eKYC के साथ फ़ॉर्मेट-सत्यापित PAN, और कम-से-कम एक अनुभव की एडमिन समीक्षा। एक Identity verified विक्रेता प्रति व्यक्ति Rs.5,000 तक और प्रति स्लॉट 8 प्रतिभागियों तक के एक-दिनी अनुभव प्रकाशित कर सकता है, और \"Identity verified\" बैज रखता है।",
-      "businessTitle": "Business verified",
+      "businessTitle": "व्यवसाय सत्यापित",
       "businessBody": "Identity सत्यापन के साथ परिसर और उपकरणों की रिकॉर्ड की गई वीडियो-कॉल जाँच, एक GSTIN या Udyam पंजीकरण के साथ सीमा-से-नीचे स्व-घोषणा, और श्रेणी-संबंधित गाइड प्रमाणपत्र (उदाहरण के लिए ATOAI, RMI, NIM, या APPI)। एक Business verified विक्रेता के पास असीमित लिस्टिंग अधिकार होते हैं और \"Business verified\" बैज रखता है।"
     },
     "money": {
@@ -1532,7 +1532,7 @@
       "eyebrow": "विक्रेताओं के लिए",
       "title": "Outvers पर अपना एडवेंचर व्यवसाय सूचीबद्ध करें",
       "description": "Outvers सत्यापित एडवेंचर Experiences के लिए भारत का मार्केटप्लेस है। अपने रिवर-राफ्टिंग, ट्रेकिंग, पैराग्लाइडिंग या डाइविंग व्यवसाय को ऑनलाइन लाएँ, देशभर के customers से Bookings लें, और भरोसेमंद ढंग से भुगतान पाएँ — हर लिस्टिंग के पीछे एक सत्यापित Vendor प्रोफ़ाइल के भरोसे के साथ।",
-      "cta": "Start Vendor Onboarding"
+      "cta": "Vendor Onboarding शुरू करें"
     },
     "benefits": {
       "heading": "Outvers पर सूचीबद्ध क्यों करें",
@@ -1562,17 +1562,17 @@
     "documents": {
       "heading": "सत्यापन स्तर के अनुसार आवश्यक दस्तावेज़",
       "intro": "Outvers विक्रेताओं को तीन-स्तरीय KYC सीढ़ी (ADR-0007) पर सत्यापित करता है। आप Tier 1 पर सूचीबद्ध करना शुरू करते हैं और सत्यापन के साथ और अधिक अनलॉक करते हैं। साथ ही, हर कमाई-योग्य स्तर पर Payouts के लिए बैंक विवरण आवश्यक हैं।",
-      "phoneTitle": "Tier 1 — Phone verified",
+      "phoneTitle": "Tier 1 — फ़ोन सत्यापित",
       "phoneDocs": "साइनअप पर OTP से पुष्टि किया गया फ़ोन नंबर। बस इतना ही — पंजीकरण करते ही अपने-आप।",
       "phoneCan": "अपनी Vendor प्रोफ़ाइल बनाएँ और Experiences का मसौदा तैयार करें (अप्रकाशित सहेजे जाते हैं)।",
       "phoneCannot": "अभी प्रकाशित नहीं कर सकते, Bookings स्वीकार नहीं कर सकते, या Payouts प्राप्त नहीं कर सकते। कोई बैज नहीं।",
-      "identityTitle": "Tier 2 — Identity verified",
-      "identityBadge": "Identity verified",
+      "identityTitle": "Tier 2 — पहचान सत्यापित",
+      "identityBadge": "पहचान सत्यापित",
       "identityDocs": "OTP (UIDAI eKYC) से सत्यापित Aadhaar, प्रस्तुत और मान्य किया गया PAN, प्रशासनिक समीक्षा के लिए प्रस्तुत कम-से-कम एक Experience, और Payouts के लिए बैंक विवरण।",
       "identityCan": "सीमाओं के भीतर प्रकाशित करें (एक-दिन की Experiences, प्रति व्यक्ति ₹5,000 तक, प्रति स्लॉट 8 प्रतिभागी तक), Bookings स्वीकार करें और Payouts प्राप्त करें।",
       "identityCannot": "Tier 3 तक कोई Combo Experiences और कोई बहु-दिवसीय ट्रेक नहीं।",
-      "businessTitle": "Tier 3 — Business verified",
-      "businessBadge": "Business verified",
+      "businessTitle": "Tier 3 — व्यवसाय सत्यापित",
+      "businessBadge": "व्यवसाय सत्यापित",
       "businessDocs": "Tier 2 की सब कुछ, साथ में GSTIN (यदि आपका घोषित टर्नओवर ₹20L या अधिक है) या Udyam Aadhaar पंजीकरण के साथ सीमा-से-नीचे स्व-घोषणा, और किसी भी ऐसी एडवेंचर श्रेणी के लिए जिसमें आवश्यक हो, कम-से-कम एक गाइड-प्रमाणन दस्तावेज़ (ATOAI / RMI / NIM)।",
       "businessCan": "बिना प्रतिबंध की लिस्टिंग — बहु-दिवसीय Experiences, Combos, कोई भी टिकट आकार, कोई भी प्रतिभागी संख्या।",
       "businessCannot": "हमारी टीम के साथ 30-मिनट की रिकॉर्ड की गई वीडियो-कॉल सत्यापन के बाद अनलॉक होता है।"
@@ -1596,7 +1596,7 @@
     "finalCta": {
       "heading": "अपना एडवेंचर व्यवसाय सूचीबद्ध करने के लिए तैयार हैं?",
       "body": "मिनटों में अपनी Vendor प्रोफ़ाइल बनाएँ और आज ही Experiences का मसौदा बनाना शुरू करें।",
-      "cta": "Start Vendor Onboarding"
+      "cta": "Vendor Onboarding शुरू करें"
     }
   },
   "TermsPage": {

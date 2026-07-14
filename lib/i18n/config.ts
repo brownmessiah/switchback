@@ -13,10 +13,18 @@ export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
 export const DEFAULT_LOCALE: SupportedLocale = 'en'
 
 /**
- * Launch locales — only these appear in the language selector at v1.
- * ta, mr, bn are infrastructure-supported but hidden until they have content.
+ * Launch locales — the locales exposed in the language selector, sitemaps,
+ * and hreflang alternates.
+ *
+ * 2026-07-14 (amends ADR-0012's v1 posture): originally `en + hi` only,
+ * with the rest "hidden until they have content". All 13 locale files are
+ * now fully translated (≈1,900 remaining en-identical values were hand-
+ * reviewed/translated in the pre-merge i18n pass), so every supported
+ * locale launches. The selector, sitemap, and hreflang all derive from
+ * this constant — no other code change was needed (the designed extension
+ * point).
  */
-export const LAUNCH_LOCALES = ['en', 'hi'] as const satisfies readonly SupportedLocale[]
+export const LAUNCH_LOCALES = SUPPORTED_LOCALES
 
 export type LaunchLocale = (typeof LAUNCH_LOCALES)[number]
 

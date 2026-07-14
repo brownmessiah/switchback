@@ -35,6 +35,9 @@ export const orders = pgTable('orders', {
     precision: 14,
     scale: 2,
   }).notNull(),
+  // NOTE: updated_at doubles as the paid-instant proxy (revenue windows in
+  // lib/vendor/dashboard-loader.ts) — the paid flip is the last writer
+  // today. Any future post-paid UPDATE must add a dedicated paid_at first.
   state: orderStateEnum('state').default('created').notNull(),
   ...timestamps,
 })

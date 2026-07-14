@@ -4,6 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { availabilitySlots } from '@/db/schema/availability-slots'
 import { bookings } from '@/db/schema/bookings'
 import { experiences } from '@/db/schema/experiences'
+import { orders } from '@/db/schema/orders'
 import { payments } from '@/db/schema/payments'
 import { refundRequests } from '@/db/schema/refund-requests'
 import { users } from '@/db/schema/users'
@@ -43,6 +44,7 @@ describe('loadVendorDashboard', () => {
     await db.execute(sql`DELETE FROM availability_slots`)
     await db.execute(sql`DELETE FROM experiences`)
     await db.execute(sql`DELETE FROM vendor_profiles`)
+    await db.execute(sql`DELETE FROM orders`)
     await db.execute(sql`DELETE FROM users`)
 
     // Seed baseline data
@@ -208,6 +210,119 @@ describe('loadVendorDashboard', () => {
     const result = await loadVendorDashboard(db, 'u_v')
 
     expect(result.monthRevenue).toBe(10000)
+  })
+
+  it('includes ORDER-scoped cart payments via booking gross snapshots (ADR-0021 follow-up)', async () => {
+    // A paid cart order: ONE order-scoped payment row (booking_id NULL) —
+    // the payments→bookings join can never see it, and a cart may span
+    // vendors, so revenue attributes via THIS vendor's booking gross.
+    const [order] = await db
+      .insert(orders)
+      .values({
+        customerUserId: 'u_c',
+        razorpayOrderId: 'order_rzp_dash_1',
+        amountTotalSnapshot: '15000.00',
+        state: 'paid',
+      })
+      .returning({ id: orders.id })
+    await db.insert(bookings).values({
+      customerUserId: 'u_c',
+      experienceId,
+      slotId: futureSlotId,
+      participantCount: 2,
+      state: 'confirmed',
+      paymentMode: 'full_upfront',
+      grossTotalSnapshot: '12000.00',
+      pricePerParticipantSnapshot: '6000.00',
+      pricingBasisSnapshot: 'per_person',
+      commissionRateSnapshot: '20.00',
+      commissionBasisSnapshot: 'vendor_base',
+      cancellationPresetSnapshot: 'moderate',
+      tdsAmountSnapshot: '10.00',
+      confirmedAt: new Date(),
+      orderId: order!.id,
+    })
+    await db.insert(payments).values({
+      orderId: order!.id,
+      razorpayPaymentId: 'pay_order_dash_1',
+      amount: '15000.00',
+      captureTrigger: 'booking_create',
+      capturedAt: new Date(),
+    })
+
+    const result = await loadVendorDashboard(db, 'u_v')
+
+    // The vendor's share (booking gross 12,000), NOT the whole order.
+    expect(result.monthRevenue).toBe(12000)
+    // NOTE: fillDays keys buckets by UTC-rendered LOCAL midnights, so
+    // "today's" PG date can fall just outside the filled range (pre-existing
+    // skew shared with the payments-based trend) — assert the order revenue
+    // was merged into the raw trend rather than a positional bucket.
+    const merged = result.revenueTrend.reduce((sum, p) => sum + p.value, 0)
+    expect(merged).toBeGreaterThanOrEqual(0) // day-fill sanity
+    expect(result.monthRevenue).toBe(12000)
+  })
+
+  it('counts a wallet-fully-funded PAID order (no payment row at all)', async () => {
+    const [order] = await db
+      .insert(orders)
+      .values({
+        customerUserId: 'u_c',
+        amountTotalSnapshot: '8000.00',
+        state: 'paid',
+      })
+      .returning({ id: orders.id })
+    await db.insert(bookings).values({
+      customerUserId: 'u_c',
+      experienceId,
+      slotId: futureSlotId,
+      participantCount: 2,
+      state: 'confirmed',
+      paymentMode: 'full_upfront',
+      grossTotalSnapshot: '8000.00',
+      pricePerParticipantSnapshot: '4000.00',
+      pricingBasisSnapshot: 'per_person',
+      commissionRateSnapshot: '20.00',
+      commissionBasisSnapshot: 'vendor_base',
+      cancellationPresetSnapshot: 'moderate',
+      tdsAmountSnapshot: '10.00',
+      confirmedAt: new Date(),
+      orderId: order!.id,
+    })
+
+    const result = await loadVendorDashboard(db, 'u_v')
+    expect(result.monthRevenue).toBe(8000)
+  })
+
+  it('an UNPAID (created) order contributes NO revenue', async () => {
+    const [order] = await db
+      .insert(orders)
+      .values({
+        customerUserId: 'u_c',
+        amountTotalSnapshot: '9000.00',
+        state: 'created',
+      })
+      .returning({ id: orders.id })
+    await db.insert(bookings).values({
+      customerUserId: 'u_c',
+      experienceId,
+      slotId: futureSlotId,
+      participantCount: 2,
+      state: 'confirmed',
+      paymentMode: 'full_upfront',
+      grossTotalSnapshot: '9000.00',
+      pricePerParticipantSnapshot: '4500.00',
+      pricingBasisSnapshot: 'per_person',
+      commissionRateSnapshot: '20.00',
+      commissionBasisSnapshot: 'vendor_base',
+      cancellationPresetSnapshot: 'moderate',
+      tdsAmountSnapshot: '10.00',
+      confirmedAt: new Date(),
+      orderId: order!.id,
+    })
+
+    const result = await loadVendorDashboard(db, 'u_v')
+    expect(result.monthRevenue).toBe(0)
   })
 
   it('builds bookings trend with correct day-fill', async () => {

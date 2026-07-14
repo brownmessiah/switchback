@@ -40,8 +40,8 @@ describe('DEFAULT_LOCALE', () => {
 })
 
 describe('LAUNCH_LOCALES', () => {
-  it('contains exactly en and hi', () => {
-    expect([...LAUNCH_LOCALES]).toEqual(['en', 'hi'])
+  it('now launches ALL supported locales (full-translation launch, 2026-07-14)', () => {
+    expect([...LAUNCH_LOCALES]).toEqual(['en', 'hi', 'ta', 'te', 'kn', 'bn', 'mr', 'ml', 'gu', 'pa', 'or', 'as', 'ur'])
   })
 
   it('is a subset of SUPPORTED_LOCALES', () => {
@@ -50,11 +50,6 @@ describe('LAUNCH_LOCALES', () => {
     }
   })
 
-  it('does not contain infrastructure locales ta, mr, bn', () => {
-    expect(LAUNCH_LOCALES).not.toContain('ta')
-    expect(LAUNCH_LOCALES).not.toContain('mr')
-    expect(LAUNCH_LOCALES).not.toContain('bn')
-  })
 })
 
 describe('LOCALE_NAMES', () => {

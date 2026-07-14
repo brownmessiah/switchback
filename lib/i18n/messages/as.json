@@ -188,44 +188,44 @@
     }
   },
   "VendorAnalytics": {
-    "title": "Analytics",
-    "subtitle": "Your headline performance, drawn from real Bookings.",
-    "totalRevenue": "Total revenue",
-    "totalRevenueHint": "Gross Booking value, before commission, GST, and TDS.",
-    "totalBookings": "Total bookings",
-    "totalBookingsHint": "All-time Bookings across your Experiences.",
-    "emptyState": "No Bookings yet. Once customers start booking your Experiences, your revenue and booking numbers will appear here.",
-    "keyMetricsHeading": "Key metrics",
-    "last30RevenueLabel": "Revenue (last 30 days)",
-    "last30BookingsLabel": "Bookings (last 30 days)",
-    "vsPriorPeriod": "vs prior 30 days",
-    "noPriorPeriod": "No prior-period data to compare",
-    "avgBookingValueLabel": "Average Booking value",
-    "avgBookingValueHint": "Gross revenue divided by all-time Bookings.",
-    "upcoming7Label": "Upcoming (next 7 days)",
-    "upcoming7Hint": "Confirmed Bookings starting within a week.",
-    "newBookings7Label": "New Bookings (last 7 days)",
-    "newBookings7Hint": "Bookings confirmed in the past week.",
-    "cancellationRateLabel": "Cancellation rate",
-    "cancellationRateHint": "Cancelled Bookings as a share of all Bookings.",
-    "repeatCustomersLabel": "Repeat Customers",
-    "repeatCustomersHint": "Customers who have booked more than once.",
-    "chartsHeading": "Trends",
-    "revenueDayChartTitle": "Revenue — last 30 days",
-    "revenueMonthChartTitle": "Monthly revenue",
-    "chartNoData": "No data yet.",
-    "statusBreakdownHeading": "Booking status breakdown",
-    "statusBreakdownEmpty": "No Bookings yet, so there is nothing to break down.",
-    "statusColumnLabel": "Status",
-    "statusCountColumn": "Bookings",
-    "revenueByExperienceHeading": "Revenue by Experience",
-    "revenueByExperienceEmpty": "No Bookings yet, so there is no revenue to attribute to your Experiences.",
-    "experienceColumn": "Experience",
-    "bookingsColumn": "Bookings",
-    "revenueColumn": "Revenue",
-    "dailyBreakdownHeading": "Daily breakdown",
-    "dateColumn": "Date",
-    "dailyBreakdownEmpty": "No Bookings in the last 30 days."
+    "title": "বিশ্লেষণ",
+    "subtitle": "আপোনাৰ মুখ্য কাৰ্যক্ষমতা, প্ৰকৃত Bookings ৰ পৰা লোৱা।",
+    "totalRevenue": "মুঠ আয়",
+    "totalRevenueHint": "commission, GST, আৰু TDS ৰ আগৰ মুঠ Booking মূল্য।",
+    "totalBookings": "মুঠ Bookings",
+    "totalBookingsHint": "আপোনাৰ সকলো Experiences জুৰি সৰ্বকালৰ Bookings।",
+    "emptyState": "এতিয়াও কোনো Bookings নাই। Customers-এ আপোনাৰ Experiences বুক কৰা আৰম্ভ কৰিলে, আপোনাৰ আয় আৰু বুকিং সংখ্যা ইয়াত দেখা যাব।",
+    "keyMetricsHeading": "মূল মেট্ৰিক",
+    "last30RevenueLabel": "আয় (যোৱা 30 দিন)",
+    "last30BookingsLabel": "Bookings (যোৱা 30 দিন)",
+    "vsPriorPeriod": "আগৰ 30 দিনৰ তুলনাত",
+    "noPriorPeriod": "তুলনা কৰিবলৈ আগৰ সময়ৰ তথ্য নাই",
+    "avgBookingValueLabel": "গড় Booking মূল্য",
+    "avgBookingValueHint": "মুঠ আয়ক সৰ্বকালৰ Bookings ৰে ভাগ কৰি পোৱা।",
+    "upcoming7Label": "আগন্তুক (পৰৱৰ্তী 7 দিন)",
+    "upcoming7Hint": "এসপ্তাহৰ ভিতৰত আৰম্ভ হ'ব লগা নিশ্চিত Bookings।",
+    "newBookings7Label": "নতুন Bookings (যোৱা 7 দিন)",
+    "newBookings7Hint": "যোৱা সপ্তাহত নিশ্চিত হোৱা Bookings।",
+    "cancellationRateLabel": "বাতিলকৰণ হাৰ",
+    "cancellationRateHint": "সকলো Bookings ৰ ভিতৰত বাতিল হোৱা Bookings ৰ অংশ।",
+    "repeatCustomersLabel": "পুনৰাবৃত্তি Customers",
+    "repeatCustomersHint": "এবাৰতকৈ অধিক বুকিং কৰা Customers।",
+    "chartsHeading": "প্ৰৱণতা",
+    "revenueDayChartTitle": "আয় — যোৱা 30 দিন",
+    "revenueMonthChartTitle": "মাহেকীয়া আয়",
+    "chartNoData": "এতিয়াও কোনো তথ্য নাই।",
+    "statusBreakdownHeading": "Booking স্থিতিৰ বিভাজন",
+    "statusBreakdownEmpty": "এতিয়াও কোনো Bookings নাই, সেয়ে বিভাজন কৰিবলৈ একো নাই।",
+    "statusColumnLabel": "স্থিতি",
+    "statusCountColumn": "বুকিং",
+    "revenueByExperienceHeading": "Experience অনুসৰি আয়",
+    "revenueByExperienceEmpty": "এতিয়াও কোনো Bookings নাই, সেয়ে আপোনাৰ Experiences লৈ কোনো আয় দাঙি ধৰিবলৈ নাই।",
+    "experienceColumn": "অভিজ্ঞতা",
+    "bookingsColumn": "বুকিং",
+    "revenueColumn": "আয়",
+    "dailyBreakdownHeading": "দৈনিক বিভাজন",
+    "dateColumn": "তাৰিখ",
+    "dailyBreakdownEmpty": "যোৱা 30 দিনত কোনো Bookings নাই।"
   },
   "VendorTeam": {
     "title": "দল আৰু ভূমিকা",
@@ -285,35 +285,35 @@
     "emptyTokenError": "প্ৰথমে এটা চেক-ইন ক'ড দিয়ক।"
   },
   "VendorQuickActions": {
-    "heading": "Quick actions",
-    "addExperience": "Add Experience",
-    "viewBookings": "View Bookings",
-    "manageAvailability": "Manage Availability",
-    "viewEarnings": "View Earnings"
+    "heading": "দ্ৰুত কাৰ্য",
+    "addExperience": "Experience যোগ কৰক",
+    "viewBookings": "Bookings চাওক",
+    "manageAvailability": "উপলব্ধতা পৰিচালনা কৰক",
+    "viewEarnings": "উপাৰ্জন চাওক"
   },
   "VendorSettingsClosure": {
-    "sectionTitle": "Close vendor account",
-    "sectionDescription": "Closing stops you from selling on Outvers. You stay an Outvers member as a Customer — nothing is deleted on your side.",
-    "trigger": "Close vendor account",
-    "blockedTitle": "You can't close your Vendor account yet",
-    "blockedInFlight": "You have {count} in-flight Bookings. Complete or cancel them first.",
-    "blockedInFlightLink": "View Bookings",
-    "blockedDues": "You have {count} Bookings with Payouts still to settle. Closing is blocked until they settle.",
-    "blockedDuesLink": "View Payout",
-    "blockedSuspended": "Your Vendor account is suspended. Contact support before you can close it.",
-    "blockedSuspendedLink": "Contact support",
-    "dialogTitle": "Close your Vendor account",
-    "dialogConsequenceExperiences": "Your {count} active Experiences will be archived and removed from search.",
-    "dialogConsequenceCustomer": "You'll return to a Customer-only account. Your Bookings, wallet, and history are kept.",
-    "dialogConsequenceRetention": "Outvers retains your financial and tax records as required by law.",
-    "dialogReversibility": "You can reopen your Vendor account by starting onboarding again.",
-    "reasonLabel": "Reason for closing (optional)",
-    "confirmLabel": "To confirm, type CLOSE",
+    "sectionTitle": "Vendor একাউণ্ট বন্ধ কৰক",
+    "sectionDescription": "বন্ধ কৰিলে আপুনি Outvers ত বিক্ৰী কৰিব নোৱাৰিব। আপুনি এজন Customer হিচাপে Outvers সদস্য হৈয়েই থাকিব — আপোনাৰ ফালৰ পৰা একো মচা নহয়।",
+    "trigger": "Vendor একাউণ্ট বন্ধ কৰক",
+    "blockedTitle": "আপুনি এতিয়াও আপোনাৰ Vendor একাউণ্ট বন্ধ কৰিব নোৱাৰে",
+    "blockedInFlight": "আপোনাৰ {count}টা চলি থকা Bookings আছে। প্ৰথমে সেইবোৰ সম্পূৰ্ণ কৰক বা বাতিল কৰক।",
+    "blockedInFlightLink": "Bookings চাওক",
+    "blockedDues": "আপোনাৰ {count}টা Bookings আছে যাৰ Payouts এতিয়াও নিষ্পত্তি হ'বলগীয়া আছে। সেইবোৰ নিষ্পত্তি নোহোৱালৈকে বন্ধ কৰা অৱৰোধিত।",
+    "blockedDuesLink": "Payout চাওক",
+    "blockedSuspended": "আপোনাৰ Vendor একাউণ্ট স্থগিত কৰা হৈছে। বন্ধ কৰাৰ আগতে সহায় কেন্দ্ৰৰ সৈতে যোগাযোগ কৰক।",
+    "blockedSuspendedLink": "সহায় কেন্দ্ৰৰ সৈতে যোগাযোগ কৰক",
+    "dialogTitle": "আপোনাৰ Vendor একাউণ্ট বন্ধ কৰক",
+    "dialogConsequenceExperiences": "আপোনাৰ {count}টা সক্ৰিয় Experiences আৰ্কাইভ কৰা হ'ব আৰু সন্ধানৰ পৰা আঁতৰোৱা হ'ব।",
+    "dialogConsequenceCustomer": "আপুনি কেৱল Customer একাউণ্টলৈ উভতি যাব। আপোনাৰ Bookings, wallet, আৰু ইতিহাস ৰখা হ'ব।",
+    "dialogConsequenceRetention": "আইনৰ প্ৰয়োজন অনুসৰি Outvers এ আপোনাৰ আৰ্থিক আৰু কৰ সম্বন্ধীয় নথি সংৰক্ষণ কৰি ৰাখে।",
+    "dialogReversibility": "পুনৰ onboarding আৰম্ভ কৰি আপুনি আপোনাৰ Vendor একাউণ্ট পুনৰাই খুলিব পাৰে।",
+    "reasonLabel": "বন্ধ কৰাৰ কাৰণ (বৈকল্পিক)",
+    "confirmLabel": "নিশ্চিত কৰিবলৈ, CLOSE টাইপ কৰক",
     "confirmPhrase": "CLOSE",
-    "cancel": "Keep my account",
-    "submit": "Close Vendor account",
-    "successToast": "Your Vendor account is closed.",
-    "errorGeneric": "Couldn't close your account. Try again."
+    "cancel": "মোৰ একাউণ্ট ৰাখক",
+    "submit": "Vendor একাউণ্ট বন্ধ কৰক",
+    "successToast": "আপোনাৰ Vendor একাউণ্ট বন্ধ কৰা হ'ল।",
+    "errorGeneric": "আপোনাৰ একাউণ্ট বন্ধ কৰিব পৰা নগ'ল। পুনৰ চেষ্টা কৰক।"
   },
   "BookingStatus": {
     "pending_payment": "পৰিশোধ বাকী আছে",
@@ -1243,38 +1243,38 @@
   },
   "ActivitiesPage": {
     "metadata": {
-      "title": "{activity} across India · Outvers",
-      "description": "Book {activity} Experiences across India from KYC-verified Vendors. Transparent pricing, real-time slot availability, and a 24-hour refund SLA."
+      "title": "সমগ্ৰ ভাৰতত {activity} · Outvers",
+      "description": "KYC-প্ৰমাণিত Vendors ৰ পৰা সমগ্ৰ ভাৰতত {activity} Experiences বুক কৰক। স্বচ্ছ মূল্য, ৰিয়েল-টাইম স্লট উপলব্ধতা, আৰু 24-ঘণ্টা ৰিফাণ্ড SLA।"
     },
-    "heroEyebrow": "Every region, one place",
-    "heroTitle": "{activity} across India",
-    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {activity} Experience below, booked on Outvers, is covered.",
-    "editorialIntro": "A hand-checked collection of {activity} from every region we operate in, run only by KYC-verified Vendors. Compare across destinations, then book with transparent pricing and refunds credited within 24 hours.",
-    "regionHint": "Looking for {activity} in a specific destination? Open an Experience to see its region, or browse {activity} by city from each listing.",
+    "heroEyebrow": "প্ৰতিটো অঞ্চল, এখন ঠাই",
+    "heroTitle": "সমগ্ৰ ভাৰতত {activity}",
+    "refundLead": "আপোনাৰ স্লটৰ 24 ঘণ্টা আগতে বাতিল কৰিলে সম্পূৰ্ণ ৰিফাণ্ড পাব — Outvers ত বুক কৰা তলৰ প্ৰতিটো {activity} Experience এই সুবিধাৰ অন্তৰ্ভুক্ত।",
+    "editorialIntro": "আমি কাম কৰা প্ৰতিটো অঞ্চলৰ পৰা হাতেৰে পৰীক্ষা কৰা {activity} ৰ এটা সংগ্ৰহ, কেৱল KYC-প্ৰমাণিত Vendors দ্বাৰা পৰিচালিত। গন্তব্যসমূহৰ মাজত তুলনা কৰক, তাৰ পিছত স্বচ্ছ মূল্যৰে বুক কৰক আৰু 24 ঘণ্টাৰ ভিতৰত ৰিফাণ্ড জমা হয়।",
+    "regionHint": "কোনো নিৰ্দিষ্ট গন্তব্যত {activity} বিচাৰিছে? ইয়াৰ অঞ্চল চাবলৈ এটা Experience খোলক, বা প্ৰতিটো তালিকাৰ পৰা চহৰ অনুসৰি {activity} ব্ৰাউজ কৰক।",
     "experiences": {
-      "sectionLabel": "{activity} Experiences",
-      "heading": "Top {activity} Experiences across India",
-      "count": "{count, plural, =0 {No Experiences yet} one {# Experience} other {# Experiences}}",
-      "rankingDisclosure": "How we rank: results are ordered by recency and Vendor verification — never by paid placement.",
-      "emptyTitle": "No {activity} experiences listed yet",
-      "emptySubtitle": "Check back soon — new listings are added regularly."
+      "sectionLabel": "{activity} অভিজ্ঞতা",
+      "heading": "সমগ্ৰ ভাৰতৰ শীৰ্ষ {activity} Experiences",
+      "count": "{count, plural, =0 {এতিয়াও কোনো Experience নাই} one {# Experience} other {# Experiences}}",
+      "rankingDisclosure": "আমি কেনেকৈ ৰেংক কৰোঁ: ফলাফলসমূহ সাম্প্ৰতিকতা আৰু Vendor সত্যাপনৰ অনুসৰি সজোৱা হয় — কেতিয়াও পইচা দি পোৱা স্থানৰ অনুসৰি নহয়।",
+      "emptyTitle": "এতিয়াও কোনো {activity} experiences তালিকাভুক্ত নাই",
+      "emptySubtitle": "সোনকালে পুনৰ চাওক — নতুন তালিকা নিয়মীয়াকৈ যোগ কৰা হয়।"
     },
     "itemList": {
-      "name": "Top {activity} Experiences across India"
+      "name": "সমগ্ৰ ভাৰতৰ শীৰ্ষ {activity} Experiences"
     },
     "faq": {
-      "heading": "Frequently asked questions",
-      "safetyQuestion": "Is {activity} safe?",
-      "safetyAnswer": "All Outvers-listed Experiences are run by KYC-verified Vendors. Safety-stack Experiences require a trusted contact and feature in-trip check-in pings.",
-      "regionsQuestion": "Where can I do {activity} in India?",
-      "regionsAnswer": "Each Experience listing shows its region. Open a listing to see its destination, seasonality, and any region-closure windows surfaced at the booking step.",
-      "cancellationQuestion": "What is the cancellation policy?",
-      "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
+      "heading": "সঘনাই সোধা প্ৰশ্ন",
+      "safetyQuestion": "{activity} সুৰক্ষিতনে?",
+      "safetyAnswer": "সকলো Outvers-তালিকাভুক্ত Experiences KYC-প্ৰমাণিত Vendors দ্বাৰা পৰিচালিত। Safety stack Experiences ৰ বাবে এজন trusted contact প্ৰয়োজন আৰু ভ্ৰমণৰ সময়ত check-in পিং থাকে।",
+      "regionsQuestion": "ভাৰতত ক'ত {activity} কৰিব পাৰোঁ?",
+      "regionsAnswer": "প্ৰতিটো Experience তালিকাই ইয়াৰ অঞ্চল দেখুৱায়। ইয়াৰ গন্তব্য, ঋতুকাল, আৰু বুকিং পদক্ষেপত দেখুওৱা যিকোনো অঞ্চল-বন্ধ সময়সীমা চাবলৈ এটা তালিকা খোলক।",
+      "cancellationQuestion": "বাতিলকৰণ নীতি কি?",
+      "cancellationAnswer": "প্ৰতিটো Experience ৰ নিজস্ব Cancellation policy আছে (Flexible / Moderate / Strict)। নীতি-ভিতৰৰ বাতিলকৰণৰ বাবে ৰিফাণ্ড 24 ঘণ্টাৰ ভিতৰত আপোনাৰ Outvers wallet লৈ জমা হয়।"
     },
     "trust": {
-      "freeCancellation": "Flexible cancellation up to 24h",
-      "verifiedVendor": "Identity-verified Vendors",
-      "refundSla": "24-hour refund SLA"
+      "freeCancellation": "24h লৈকে নমনীয় বাতিলকৰণ",
+      "verifiedVendor": "Identity-প্ৰমাণিত Vendors",
+      "refundSla": "24-ঘণ্টা ৰিফাণ্ড SLA"
     },
     "intelligence": {
       "priceRangeHeading": "মূল্যৰ পৰিসৰ",
@@ -1287,13 +1287,13 @@
   },
   "CategoryPage": {
     "metadata": {
-      "title": "{category} adventures across India · Outvers",
-      "description": "Explore {category} Experiences across India from KYC-verified Vendors. Transparent pricing, real-time slot availability, and a 24-hour refund SLA."
+      "title": "সমগ্ৰ ভাৰতত {category} দুঃসাহসিক কাৰ্যকলাপ · Outvers",
+      "description": "KYC-প্ৰমাণিত Vendors ৰ পৰা সমগ্ৰ ভাৰতত {category} Experiences অন্বেষণ কৰক। স্বচ্ছ মূল্য, ৰিয়েল-টাইম স্লট উপলব্ধতা, আৰু 24-ঘণ্টা ৰিফাণ্ড SLA।"
     },
-    "heroEyebrow": "Curated category",
-    "heroTitle": "{category} adventures across India",
-    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {category} Experience below, booked on Outvers, is covered.",
-    "editorialIntro": "A hand-checked rollup of {category} adventures from every region we operate in, run only by KYC-verified Vendors. Transparent pricing, real-time slot availability, and refunds credited within 24 hours.",
+    "heroEyebrow": "সংগৃহীত শ্ৰেণী",
+    "heroTitle": "সমগ্ৰ ভাৰতত {category} দুঃসাহসিক কাৰ্যকলাপ",
+    "refundLead": "আপোনাৰ স্লটৰ 24 ঘণ্টা আগতে বাতিল কৰিলে সম্পূৰ্ণ ৰিফাণ্ড পাব — Outvers ত বুক কৰা তলৰ প্ৰতিটো {category} Experience এই সুবিধাৰ অন্তৰ্ভুক্ত।",
+    "editorialIntro": "আমি কাম কৰা প্ৰতিটো অঞ্চলৰ পৰা হাতেৰে পৰীক্ষা কৰা {category} দুঃসাহসিক কাৰ্যকলাপৰ এটা সংকলন, কেৱল KYC-প্ৰমাণিত Vendors দ্বাৰা পৰিচালিত। স্বচ্ছ মূল্য, ৰিয়েল-টাইম স্লট উপলব্ধতা, আৰু 24 ঘণ্টাৰ ভিতৰত ৰিফাণ্ড জমা।",
     "categories": {
       "water": "জল ক্ৰীড়া",
       "aerial": "আকাশপথ",
@@ -1302,29 +1302,29 @@
       "urban": "নগৰ"
     },
     "experiences": {
-      "sectionLabel": "{category} Experiences",
-      "heading": "Top {category} Experiences across India",
-      "count": "{count, plural, =0 {No Experiences yet} one {# Experience} other {# Experiences}}",
-      "rankingDisclosure": "How we rank: results are ordered by recency and Vendor verification — never by paid placement.",
-      "emptyTitle": "No {category} experiences listed yet",
-      "emptySubtitle": "Check back soon — new listings are added regularly."
+      "sectionLabel": "{category} অভিজ্ঞতা",
+      "heading": "সমগ্ৰ ভাৰতৰ শীৰ্ষ {category} Experiences",
+      "count": "{count, plural, =0 {এতিয়াও কোনো Experience নাই} one {# Experience} other {# Experiences}}",
+      "rankingDisclosure": "আমি কেনেকৈ ৰেংক কৰোঁ: ফলাফলসমূহ সাম্প্ৰতিকতা আৰু Vendor সত্যাপনৰ অনুসৰি সজোৱা হয় — কেতিয়াও পইচা দি পোৱা স্থানৰ অনুসৰি নহয়।",
+      "emptyTitle": "এতিয়াও কোনো {category} experiences তালিকাভুক্ত নাই",
+      "emptySubtitle": "সোনকালে পুনৰ চাওক — নতুন তালিকা নিয়মীয়াকৈ যোগ কৰা হয়।"
     },
     "itemList": {
-      "name": "Top {category} Experiences across India"
+      "name": "সমগ্ৰ ভাৰতৰ শীৰ্ষ {category} Experiences"
     },
     "faq": {
-      "heading": "Frequently asked questions",
-      "safetyQuestion": "Are {category} Experiences safe?",
-      "safetyAnswer": "All Outvers-listed Experiences are run by KYC-verified Vendors. Safety-stack Experiences require a trusted contact and feature in-trip check-in pings.",
-      "includesQuestion": "What does the {category} category include?",
-      "includesAnswer": "This category groups related activities. Open any Experience to see its specific activity, region, and seasonality.",
-      "cancellationQuestion": "What is the cancellation policy?",
-      "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
+      "heading": "সঘনাই সোধা প্ৰশ্ন",
+      "safetyQuestion": "{category} Experiences সুৰক্ষিতনে?",
+      "safetyAnswer": "সকলো Outvers-তালিকাভুক্ত Experiences KYC-প্ৰমাণিত Vendors দ্বাৰা পৰিচালিত। Safety stack Experiences ৰ বাবে এজন trusted contact প্ৰয়োজন আৰু ভ্ৰমণৰ সময়ত check-in পিং থাকে।",
+      "includesQuestion": "{category} শ্ৰেণীত কি অন্তৰ্ভুক্ত?",
+      "includesAnswer": "এই শ্ৰেণীয়ে সম্পৰ্কীয় কাৰ্যকলাপসমূহ একত্ৰিত কৰে। ইয়াৰ নিৰ্দিষ্ট কাৰ্যকলাপ, অঞ্চল, আৰু ঋতুকাল চাবলৈ যিকোনো Experience খোলক।",
+      "cancellationQuestion": "বাতিলকৰণ নীতি কি?",
+      "cancellationAnswer": "প্ৰতিটো Experience ৰ নিজস্ব Cancellation policy আছে (Flexible / Moderate / Strict)। নীতি-ভিতৰৰ বাতিলকৰণৰ বাবে ৰিফাণ্ড 24 ঘণ্টাৰ ভিতৰত আপোনাৰ Outvers wallet লৈ জমা হয়।"
     },
     "trust": {
-      "freeCancellation": "Flexible cancellation up to 24h",
-      "verifiedVendor": "Identity-verified Vendors",
-      "refundSla": "24-hour refund SLA"
+      "freeCancellation": "24h লৈকে নমনীয় বাতিলকৰণ",
+      "verifiedVendor": "Identity-প্ৰমাণিত Vendors",
+      "refundSla": "24-ঘণ্টা ৰিফাণ্ড SLA"
     }
   },
   "WalletPage": {
@@ -1465,48 +1465,48 @@
   },
   "TripPlannerPage": {
     "metadata": {
-      "title": "AI Trip Planner · Outvers",
-      "description": "Build a day-by-day adventure itinerary grounded in real, bookable Outvers experiences. Pick a destination, days, budget, group size, and style."
+      "title": "AI ভ্ৰমণ পৰিকল্পক · Outvers",
+      "description": "প্ৰকৃত, বুক কৰিব পৰা Outvers experiences ৰ ভিত্তিত দিনে দিনে দুঃসাহসিক ভ্ৰমণসূচী তৈয়াৰ কৰক। এখন গন্তব্য, দিন, বাজেট, দলৰ আকাৰ, আৰু শৈলী বাছনি কৰক।"
     },
     "heading": "AI ৰ সৈতে আপোনাৰ এডভেঞ্চাৰ পৰিকল্পনা কৰক",
-    "subheading": "Tell us where and how you like to travel. We build a day-by-day itinerary from real, bookable experiences — never made-up ones.",
-    "aiLabel": "AI-assisted · grounded in live Outvers inventory",
+    "subheading": "আপুনি ক'ত আৰু কেনেদৰে ভ্ৰমণ কৰিব বিচাৰে আমাক জনাওক। আমি প্ৰকৃত, বুক কৰিব পৰা experiences ৰ পৰা দিনে দিনে ভ্ৰমণসূচী তৈয়াৰ কৰোঁ — কেতিয়াও বনাই লোৱা নহয়।",
+    "aiLabel": "AI-সহায়ক · লাইভ Outvers ইনভেণ্টৰিৰ ভিত্তিত",
     "form": {
-      "region": "Destination",
-      "regionPlaceholder": "Choose a destination",
-      "activity": "Activity (optional)",
-      "anyActivity": "Any activity",
-      "days": "Days",
-      "budget": "Total budget (₹)",
-      "budgetPlaceholder": "e.g. 15000",
-      "groupSize": "Group size",
-      "travelStyle": "Travel style",
-      "submit": "Build my itinerary",
-      "submitting": "Building your itinerary…"
+      "region": "গন্তব্য",
+      "regionPlaceholder": "এখন গন্তব্য বাছনি কৰক",
+      "activity": "কাৰ্যকলাপ (বৈকল্পিক)",
+      "anyActivity": "যিকোনো কাৰ্যকলাপ",
+      "days": "দিন",
+      "budget": "মুঠ বাজেট (₹)",
+      "budgetPlaceholder": "উদাহৰণ 15000",
+      "groupSize": "দলৰ আকাৰ",
+      "travelStyle": "ভ্ৰমণ শৈলী",
+      "submit": "মোৰ ভ্ৰমণসূচী তৈয়াৰ কৰক",
+      "submitting": "আপোনাৰ ভ্ৰমণসূচী তৈয়াৰ কৰি থকা হৈছে…"
     },
     "style": {
-      "adventure": "Adventure",
-      "relaxed": "Relaxed",
-      "family": "Family",
-      "budget": "Budget"
+      "adventure": "দুঃসাহসিক",
+      "relaxed": "আৰামদায়ক",
+      "family": "পাৰিবাৰিক",
+      "budget": "বাজেট"
     },
     "result": {
-      "heading": "Your {days}-day {region} itinerary",
-      "dayHeading": "Day {day}: {title}",
-      "itemCount": "{count} experience{count, plural, one {} other {s}}",
-      "viewExperience": "View experience",
-      "perPerson": "₹{price}/person",
-      "packingHeading": "Packing list",
-      "emptyDay": "A free day — explore on your own or add an experience.",
-      "disclaimer": "Every experience above is real and bookable on Outvers. AI helps arrange them; it never invents experiences."
+      "heading": "আপোনাৰ {days}-দিনীয়া {region} ভ্ৰমণসূচী",
+      "dayHeading": "দিন {day}: {title}",
+      "itemCount": "{count}টা experience{count, plural, one {} other {}}",
+      "viewExperience": "Experience চাওক",
+      "perPerson": "₹{price}/জন",
+      "packingHeading": "পেকিং তালিকা",
+      "emptyDay": "এটা মুক্ত দিন — নিজেই অন্বেষণ কৰক বা এটা experience যোগ কৰক।",
+      "disclaimer": "ওপৰৰ প্ৰতিটো experience প্ৰকৃত আৰু Outvers ত বুক কৰিব পৰা। AI এ সেইবোৰ সজাবলৈ সহায় কৰে; ই কেতিয়াও experience সৃষ্টি নকৰে।"
     },
     "empty": {
-      "title": "No live experiences for that destination yet",
-      "body": "We could not find published experiences to ground an itinerary. Try another destination or remove the activity filter."
+      "title": "সেই গন্তব্যৰ বাবে এতিয়াও কোনো লাইভ experiences নাই",
+      "body": "ভ্ৰমণসূচী তৈয়াৰ কৰিবলৈ প্ৰকাশিত experiences বিচাৰি নাপালোঁ। আন এখন গন্তব্য চেষ্টা কৰক বা কাৰ্যকলাপ ফিল্টাৰ আঁতৰাওক।"
     },
     "error": {
-      "title": "We could not build that itinerary",
-      "body": "Something went wrong. Please adjust your inputs and try again."
+      "title": "আমি সেই ভ্ৰমণসূচী তৈয়াৰ কৰিব নোৱাৰিলোঁ",
+      "body": "কিবা এটা ভুল হ'ল। অনুগ্ৰহ কৰি আপোনাৰ ইনপুটবোৰ সমন্বয় কৰক আৰু পুনৰ চেষ্টা কৰক।"
     }
   },
   "TrustBadges": {
@@ -1532,7 +1532,7 @@
       "eyebrow": "Vendors ৰ বাবে",
       "title": "Outvers ত আপোনাৰ এডভেঞ্চাৰ ব্যৱসায় তালিকাভুক্ত কৰক",
       "description": "Outvers হৈছে সত্যাপিত এডভেঞ্চাৰ Experiences ৰ বাবে ভাৰতৰ মাৰ্কেটপ্লেচ। আপোনাৰ ৰাফটিং, ট্ৰেকিং, পেৰাগ্লাইডিং বা ডাইভিং ব্যৱসায় অনলাইনলৈ আনক, দেশজুৰি customers ৰ পৰা Bookings লওক, আৰু নিৰ্ভৰযোগ্যভাৱে দিতীয়া পাওক — প্ৰতিটো তালিকাৰ আঁৰত এটা সত্যাপিত Vendor প্ৰ'ফাইলৰ বিশ্বাসৰ সৈতে।",
-      "cta": "Start Vendor Onboarding"
+      "cta": "Vendor Onboarding আৰম্ভ কৰক"
     },
     "benefits": {
       "heading": "Outvers ত কিয় তালিকাভুক্ত কৰিব",
@@ -1596,7 +1596,7 @@
     "finalCta": {
       "heading": "আপোনাৰ এডভেঞ্চাৰ ব্যৱসায় তালিকাভুক্ত কৰিবলৈ সাজু নেকি?",
       "body": "মিনিটৰ ভিতৰত আপোনাৰ Vendor প্ৰ'ফাইল সৃষ্টি কৰক আৰু আজিয়েই Experiences ৰ খচৰা প্ৰস্তুত কৰা আৰম্ভ কৰক।",
-      "cta": "Start Vendor Onboarding"
+      "cta": "Vendor Onboarding আৰম্ভ কৰক"
     }
   },
   "TermsPage": {

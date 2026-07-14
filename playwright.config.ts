@@ -1,7 +1,38 @@
 import { defineConfig, devices } from '@playwright/test'
+import { readFileSync } from 'node:fs'
 import path from 'node:path'
 
 const AUTH_DIR = path.resolve(__dirname, 'tests/e2e/.auth')
+
+/**
+ * The E2E database URL the webServer MUST run against (harness-bifurcation
+ * fix, home-redesign issue 11 finding): global-setup resets/pushes/seeds
+ * `outvers_e2e` (derived from .env.local's DATABASE_URL) and injects the
+ * .auth sessions THERE — but `pnpm dev` reads .env.local directly, so
+ * without this override the app serves a DIFFERENT database and every
+ * injected session is invalid. Derivation mirrors
+ * tests/e2e/helpers/config.ts `e2eDbUrl()`.
+ */
+function e2eWebServerDatabaseUrl(): string | undefined {
+  if (process.env.DATABASE_URL) {
+    return process.env.DATABASE_URL.replace(/\/[^/?]+(\?|$)/, '/outvers_e2e$1')
+  }
+  try {
+    const envFile = readFileSync(path.resolve(__dirname, '.env.local'), 'utf-8')
+    const line = envFile
+      .split('\n')
+      .map((l) => l.trim())
+      .find((l) => l.startsWith('DATABASE_URL='))
+    if (!line) return undefined
+    return line
+      .slice('DATABASE_URL='.length)
+      .replace(/\/[^/?]+(\?|$)/, '/outvers_e2e$1')
+  } catch {
+    return undefined
+  }
+}
+
+const E2E_DATABASE_URL = e2eWebServerDatabaseUrl()
 
 export default defineConfig({
   globalSetup: process.env.E2E_SKIP_SETUP ? undefined : './tests/e2e/global-setup.ts',
@@ -31,13 +62,19 @@ export default defineConfig({
         // mock, payout-provisioning hooks) that are intentionally absent from a
         // production build, so it must run against the dev server.
         command: 'pnpm dev',
+        // The app under test must use the SAME DB global-setup seeds +
+        // injects sessions into (outvers_e2e) — .env.local points at the
+        // dev DB. Merged over process.env by Playwright.
+        env: E2E_DATABASE_URL ? { DATABASE_URL: E2E_DATABASE_URL } : {},
         // Readiness check on the DB-INDEPENDENT shallow healthz (process-up, no
         // SELECT) — NOT the home page. The home page 500s until global-setup
         // creates+seeds outvers_e2e, but Playwright awaits the webServer BEFORE
         // running global-setup; checking the home page deadlocks (home needs the
         // DB ↔ DB created after the webServer is ready). Shallow healthz breaks it.
         url: 'http://localhost:3000/api/healthz?shallow',
-        reuseExistingServer: !process.env.CI,
+        // Never reuse a stale server: it may be bound to the WRONG database
+        // (.env.local's dev DB) — precisely the bifurcation this fixes.
+        reuseExistingServer: false,
         timeout: 120_000,
       },
   projects: [

@@ -5,7 +5,7 @@
  *   - compact: globe icon + two-letter locale code (for site header)
  *   - full: globe icon + full language name (for site footer)
  *
- * Only LAUNCH_LOCALES (en, hi) appear in the dropdown.
+ * Every LAUNCH_LOCALES entry (all 13 supported locales since 2026-07-14) appears in the dropdown.
  * Uses useIntl().switchLocale for cookie + URL + re-render handling.
  */
 

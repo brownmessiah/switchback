@@ -44,14 +44,11 @@ beforeEach(() => {
 // ---- LAUNCH_LOCALES config ----
 
 describe('LAUNCH_LOCALES', () => {
-  it('contains exactly en and hi', () => {
-    expect([...LAUNCH_LOCALES]).toEqual(['en', 'hi'])
-  })
-
-  it('does not contain infrastructure locales ta, mr, bn', () => {
-    expect(LAUNCH_LOCALES).not.toContain('ta')
-    expect(LAUNCH_LOCALES).not.toContain('mr')
-    expect(LAUNCH_LOCALES).not.toContain('bn')
+  it('launches ALL 13 supported locales (full-translation launch, 2026-07-14)', () => {
+    expect([...LAUNCH_LOCALES]).toHaveLength(13)
+    for (const code of ['en', 'hi', 'ta', 'mr', 'bn', 'ur']) {
+      expect(LAUNCH_LOCALES).toContain(code)
+    }
   })
 })
 
@@ -84,15 +81,17 @@ describe('LanguageSelector variant="compact"', () => {
     }
   })
 
-  it('does NOT show infrastructure locales (ta, mr, bn) in dropdown', async () => {
+  it('shows EVERY launch locale in its native script (13 options)', async () => {
     const user = userEvent.setup()
     render(<LanguageSelector variant="compact" />)
 
     await user.click(screen.getByRole('button', { name: /language/i }))
 
-    expect(screen.queryByText('தமிழ்')).not.toBeInTheDocument()
-    expect(screen.queryByText('मराठी')).not.toBeInTheDocument()
-    expect(screen.queryByText('বাংলা')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('option')).toHaveLength(13)
+    expect(screen.getByText('தமிழ்')).toBeInTheDocument()
+    expect(screen.getByText('मराठी')).toBeInTheDocument()
+    expect(screen.getByText('বাংলা')).toBeInTheDocument()
+    expect(screen.getByText('اردو')).toBeInTheDocument()
   })
 
   it('calls switchLocale when a different locale is selected', async () => {
@@ -231,8 +230,7 @@ describe('LanguageSelector accessibility', () => {
     // ArrowDown should move focus to the first/next option
     await user.keyboard('{ArrowDown}')
     const options = screen.getAllByRole('option')
-    // At least one option should have focus or data-focused
-    expect(options.length).toBe(2) // en and hi
+    expect(options.length).toBe(13) // every launch locale
   })
 
   it('selects option with Enter key', async () => {
@@ -240,8 +238,7 @@ describe('LanguageSelector accessibility', () => {
     render(<LanguageSelector variant="compact" />)
 
     await user.click(screen.getByRole('button', { name: /language/i }))
-    await user.keyboard('{ArrowDown}') // focus first option
-    await user.keyboard('{ArrowDown}') // focus second option (hi)
+    await user.keyboard('{ArrowDown}') // from current (en) to the next option (hi)
     await user.keyboard('{Enter}')
 
     expect(mockSwitchLocale).toHaveBeenCalledWith('hi')
@@ -269,7 +266,6 @@ describe('LanguageSelector onDark', () => {
 
 describe('LanguageSelector font class', () => {
   it('sets data-locale attribute on document for font loading coordination', async () => {
-    const user = userEvent.setup()
     mockLocale = 'hi'
     render(<LanguageSelector variant="compact" />)
 

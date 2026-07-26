@@ -25,7 +25,17 @@ import { resolvePostAuthPath } from './actions'
 type Mode = 'signin' | 'signup'
 type Step = 'email' | 'credentials'
 
-export function SignInForm() {
+interface SignInFormProps {
+  /**
+   * Post-auth destination intent (launch-readiness 02), raw from the
+   * URL. Passed back to the resolvePostAuthPath action, which sanitizes
+   * server-side. Held as a prop, so it survives sign-in ↔ sign-up mode
+   * toggles for free (toggling only resets `error`).
+   */
+  returnTo?: string | null
+}
+
+export function SignInForm({ returnTo = null }: SignInFormProps) {
   const t = useTranslations('SignInPage.form')
   const tp = useTranslations('SignInPage.trustPanel')
 
@@ -76,7 +86,9 @@ export function SignInForm() {
 
       // Route to the role-appropriate dashboard (admin / vendor / customer)
       // rather than always the marketing home (ADR-0006 role resolution).
-      const dest = await resolvePostAuthPath()
+      // A sanitized returnTo (e.g. Vendor onboarding intent) wins over
+      // the role default; hostile values fall back to role routing.
+      const dest = await resolvePostAuthPath(returnTo ?? undefined)
       // Hard navigation, NOT router.push()+refresh(): (1) the post-auth session
       // UI (header AuthStatus + role-aware menu) lives in the PERSISTENT root
       // layout, which a soft nav doesn't re-render; (2) push() followed by

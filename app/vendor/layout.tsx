@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { getLocale, getMessages } from 'next-intl/server'
 
 import { auth } from '@/lib/auth'
+import { sanitizeReturnTo } from '@/lib/auth/return-to'
 import { IntlProvider } from '@/lib/i18n/provider'
 
 /**
@@ -19,9 +20,22 @@ export default async function VendorLayout({
 }: {
   children: React.ReactNode
 }) {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const requestHeaders = await headers()
+  const session = await auth.api.getSession({ headers: requestHeaders })
   if (!session?.user) {
-    redirect('/sign-in')
+    // Carry the visitor's destination through authentication
+    // (launch-readiness 02): a logged-out click on the Vendor CTA
+    // (→ /vendor/onboarding) must land back here after sign-up/sign-in,
+    // not on the Customer dashboard. x-request-path is stamped by
+    // proxy.ts for i18n-excluded routes; sanitizeReturnTo guards it
+    // (it is client-spoofable, and a hostile value must degrade to the
+    // bare redirect, never break the sign-in URL).
+    const requestPath = sanitizeReturnTo(requestHeaders.get('x-request-path'))
+    redirect(
+      requestPath
+        ? `/sign-in?returnTo=${encodeURIComponent(requestPath)}`
+        : '/sign-in',
+    )
   }
 
   const [locale, messages] = await Promise.all([getLocale(), getMessages()])

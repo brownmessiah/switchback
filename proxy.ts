@@ -17,9 +17,14 @@ export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl
 
   // Skip i18n rewriting for excluded routes (admin, vendor dashboard,
-  // customer dashboard, API)
+  // customer dashboard, API). Stamp the requested path so auth-gate
+  // layouts (which cannot see the URL) can carry it through sign-in as
+  // `returnTo` (launch-readiness 02). `.set` overwrites any inbound
+  // client value; consumers still sanitize before use.
   if (shouldExcludeFromI18n(pathname)) {
-    return NextResponse.next()
+    const requestHeaders = new Headers(request.headers)
+    requestHeaders.set('x-request-path', pathname + request.nextUrl.search)
+    return NextResponse.next({ request: { headers: requestHeaders } })
   }
 
   return intlMiddleware(request)

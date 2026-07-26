@@ -22,7 +22,10 @@ export interface Msg91Config {
 
 export type SendOtpResult =
   | { success: true; requestId: string }
-  | { success: false; reason: 'rate_limited' | 'upstream_error' | 'invalid_response' | 'network_error' }
+  | {
+      success: false
+      reason: 'rate_limited' | 'upstream_error' | 'invalid_response' | 'network_error' | 'not_configured'
+    }
 
 const SEND_URL = 'https://control.msg91.com/api/v5/otp'
 const VERIFY_URL = 'https://control.msg91.com/api/v5/otp/verify'
@@ -33,11 +36,26 @@ function normalizePhone(phoneNumber: string): string {
 
 const DEV_BYPASS_CODE = '000000'
 
+/**
+ * SECURITY (launch-readiness 01): the dev bypass must be impossible in
+ * production. Before this guard, an absent MSG91_AUTH_KEY turned '000000'
+ * into a universal OTP for any phone number — a missing environment
+ * variable becoming an authentication bypass. Reads process.env directly
+ * (not the frozen lib/env snapshot) so the guard observes the runtime
+ * environment, per the precedent in lib/payments/razorpay-client.ts.
+ */
+function isProductionRuntime(): boolean {
+  return process.env.NODE_ENV === 'production'
+}
+
 export async function sendOtpViaMsg91(
   config: Msg91Config,
   phoneNumber: string,
 ): Promise<SendOtpResult> {
   if (!config.authKey) {
+    if (isProductionRuntime()) {
+      return { success: false, reason: 'not_configured' }
+    }
     return { success: true, requestId: 'dev-bypass' }
   }
 
@@ -92,6 +110,9 @@ export async function verifyOtpViaMsg91(
   code: string,
 ): Promise<boolean> {
   if (!config.authKey) {
+    if (isProductionRuntime()) {
+      return false
+    }
     return code === DEV_BYPASS_CODE
   }
 

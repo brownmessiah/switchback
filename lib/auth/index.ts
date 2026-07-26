@@ -7,7 +7,8 @@ import { db } from '@/db/client'
 import { accounts, sessions, users, verifications } from '@/db/schema'
 import { env } from '@/lib/env'
 
-import { sendOtpViaMsg91, verifyOtpViaMsg91, type Msg91Config } from './msg91-provider'
+import { sendOtpViaMsg91, type Msg91Config } from './msg91-provider'
+import { verifyOtpIfPhoneAuthEnabled } from './otp-availability'
 
 const msg91Config: Msg91Config = {
   authKey: env.MSG91_AUTH_KEY ?? '',
@@ -65,7 +66,10 @@ export const auth = betterAuth({
         await sendOtpViaMsg91(msg91Config, phone)
       },
       verifyOTP: async ({ phoneNumber: phone, code }) => {
-        return verifyOtpViaMsg91(msg91Config, phone, code)
+        // Availability-gated (launch-readiness 01): shares
+        // lib/auth/otp-availability with the sign-in UI, so a hidden
+        // phone tab cannot be bypassed by calling the endpoint directly.
+        return verifyOtpIfPhoneAuthEnabled(env, msg91Config, phone, code)
       },
       otpLength: 6,
       expiresIn: 300,

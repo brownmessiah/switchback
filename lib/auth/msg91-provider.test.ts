@@ -140,3 +140,153 @@ describe('verifyOtpViaMsg91', () => {
     expect(ok).toBe(false)
   })
 })
+
+/**
+ * SECURITY REGRESSION — launch-readiness 01.
+ *
+ * VULNERABILITY: verifyOtpViaMsg91 used to accept the universal dev-bypass
+ * code '000000' for ANY phone number whenever MSG91_AUTH_KEY was unset.
+ * Production runs without MSG91 credentials (absent from terraform
+ * secret_env_keys), so shipping any phone-auth UI would have shipped a
+ * full authentication bypass: a missing environment variable becoming a
+ * universal login. The bypass must be impossible when NODE_ENV is
+ * 'production', regardless of configuration — and must keep working in
+ * development and test, where live SMS is not available.
+ *
+ * NODE_ENV is manipulated directly with try/finally restore, per the
+ * repo precedent in lib/payments/razorpay-client.test.ts.
+ */
+async function withNodeEnv<T>(nodeEnv: string, fn: () => Promise<T>): Promise<T> {
+  const envRecord = process.env as Record<string, string | undefined>
+  const original = envRecord['NODE_ENV']
+  envRecord['NODE_ENV'] = nodeEnv
+  try {
+    return await fn()
+  } finally {
+    envRecord['NODE_ENV'] = original
+  }
+}
+
+const noKeyConfig: Msg91Config = { authKey: '', senderId: '', templateId: '' }
+
+describe('verifyOtpViaMsg91 dev-bypass production guard (security regression)', () => {
+  let fetchMock: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it("rejects the '000000' bypass code in production when no auth key is configured", async () => {
+    const ok = await withNodeEnv('production', () =>
+      verifyOtpViaMsg91(noKeyConfig, '+919876543210', '000000'),
+    )
+    expect(ok).toBe(false)
+  })
+
+  it('rejects every other code in production when no auth key is configured', async () => {
+    const ok = await withNodeEnv('production', () =>
+      verifyOtpViaMsg91(noKeyConfig, '+919876543210', '123456'),
+    )
+    expect(ok).toBe(false)
+  })
+
+  it('never calls MSG91 in production when no auth key is configured (fails closed, not open)', async () => {
+    await withNodeEnv('production', () =>
+      verifyOtpViaMsg91(noKeyConfig, '+919876543210', '000000'),
+    )
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it("still accepts '000000' in development with no auth key (local dev bypass)", async () => {
+    const ok = await withNodeEnv('development', () =>
+      verifyOtpViaMsg91(noKeyConfig, '+919876543210', '000000'),
+    )
+    expect(ok).toBe(true)
+  })
+
+  it("still accepts '000000' in test/E2E with no auth key (harness bypass)", async () => {
+    const ok = await withNodeEnv('test', () =>
+      verifyOtpViaMsg91(noKeyConfig, '+919876543210', '000000'),
+    )
+    expect(ok).toBe(true)
+  })
+
+  it('still rejects non-bypass codes in development with no auth key', async () => {
+    const ok = await withNodeEnv('development', () =>
+      verifyOtpViaMsg91(noKeyConfig, '+919876543210', '123456'),
+    )
+    expect(ok).toBe(false)
+  })
+
+  it('uses the real MSG91 verify path in production when an auth key is present', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ type: 'success' }), { status: 200 }),
+    )
+
+    const ok = await withNodeEnv('production', () =>
+      verifyOtpViaMsg91(config, '+919876543210', '123456'),
+    )
+
+    expect(ok).toBe(true)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('sendOtpViaMsg91 dev-bypass production guard (security regression)', () => {
+  let fetchMock: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('fails closed with not_configured in production when no auth key is configured', async () => {
+    const result = await withNodeEnv('production', () =>
+      sendOtpViaMsg91(noKeyConfig, '+919876543210'),
+    )
+    expect(result).toEqual({ success: false, reason: 'not_configured' })
+  })
+
+  it('never calls MSG91 in production when no auth key is configured', async () => {
+    await withNodeEnv('production', () => sendOtpViaMsg91(noKeyConfig, '+919876543210'))
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('still short-circuits success in development with no auth key (dev bypass)', async () => {
+    const result = await withNodeEnv('development', () =>
+      sendOtpViaMsg91(noKeyConfig, '+919876543210'),
+    )
+    expect(result).toEqual({ success: true, requestId: 'dev-bypass' })
+  })
+
+  it('still short-circuits success in test/E2E with no auth key (harness bypass)', async () => {
+    const result = await withNodeEnv('test', () =>
+      sendOtpViaMsg91(noKeyConfig, '+919876543210'),
+    )
+    expect(result).toEqual({ success: true, requestId: 'dev-bypass' })
+  })
+
+  it('uses the real MSG91 send path in production when an auth key is present', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ type: 'success', request_id: 'req_9' }), {
+        status: 200,
+      }),
+    )
+
+    const result = await withNodeEnv('production', () =>
+      sendOtpViaMsg91(config, '+919876543210'),
+    )
+
+    expect(result).toEqual({ success: true, requestId: 'req_9' })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+})

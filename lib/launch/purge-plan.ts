@@ -69,6 +69,24 @@ export interface PurgeExclusion {
   reason: string
 }
 
+/**
+ * How execution should delete a table's rows. The plan carries these so
+ * slice 06 applies exactly what the dry-run counted, rather than
+ * re-evaluating a predicate against a database that may have changed.
+ */
+export type DeleteTarget =
+  | { kind: 'ids'; ids: string[] }
+  | { kind: 'column-in'; column: string; values: string[] }
+  | { kind: 'like'; column: string; pattern: string }
+  /**
+   * Traversal tables: the exact column -> seeded-id clauses the planner
+   * COUNTED with, OR'd together. Carried rather than re-derived so the
+   * delete predicate is identical to the count predicate by
+   * construction. Also the only workable form for tables with no `id`
+   * column (e.g. trip_group_members has a composite primary key).
+   */
+  | { kind: 'root-columns'; clauses: Array<{ column: string; ids: string[] }> }
+
 /** Seeded id sets, expanded level by level from the User roots. */
 export interface SeedRoots {
   users: string[]
@@ -99,6 +117,8 @@ export interface PurgePlan {
   safeToExecute: boolean
   seedUserIds: string[]
   seedExperienceIds: string[]
+  /** Per-table delete instructions, consumed verbatim by slice 06. */
+  deleteTargets: Record<string, DeleteTarget>
 }
 
 /** `email ILIKE '%@seed.outvers.dev'` — NULL-safe, so phone-only Users never match. */
@@ -272,6 +292,8 @@ export async function buildPurgePlan(db: DBOrTx): Promise<PurgePlan> {
   // ── Counts, in FK-safe order ───────────────────────────────────────
   const entries: PurgePlanEntry[] = []
 
+  const deleteTargets: Record<string, DeleteTarget> = {}
+
   for (const table of PURGE_TABLE_ORDER) {
     let rowCount = 0
     let reason = 'reachable from a seeded User'
@@ -281,18 +303,26 @@ export async function buildPurgePlan(db: DBOrTx): Promise<PurgePlan> {
       rowCount = seedUserIds.length
       reason = `Users whose email ends ${SEED_EMAIL_DOMAIN}, excluding the preserved admin`
       predicate = `lower(email) LIKE '%${SEED_EMAIL_DOMAIN}' AND id <> '${SEED_ADMIN_USER_ID}'`
+      deleteTargets[table] = { kind: 'ids', ids: seedUserIds }
     } else if (table === 'experiences') {
       rowCount = seedExperienceIds.length
       reason = 'Experiences owned by a seeded Vendor'
       predicate = 'vendor_user_id IN (seeded users)'
+      deleteTargets[table] = { kind: 'ids', ids: seedExperienceIds }
     } else if (table === 'promo_codes') {
       rowCount = await countByColumnIn(db, 'promo_codes', 'code', SEEDED_PROMO_CODES)
       reason = 'seeded promo codes — redeemable by any Customer, no ownership check'
       predicate = `code IN (${SEEDED_PROMO_CODES.join(', ')})`
+      deleteTargets[table] = { kind: 'column-in', column: 'code', values: [...SEEDED_PROMO_CODES] }
     } else if (table === 'region_closures') {
       rowCount = await countByColumnIn(db, 'region_closures', 'region_slug', SEEDED_REGION_CLOSURE_REGIONS)
       reason = 'seeded region closures — they suppress slot materialisation for real Vendors'
       predicate = `region_slug IN (${SEEDED_REGION_CLOSURE_REGIONS.join(', ')})`
+      deleteTargets[table] = {
+        kind: 'column-in',
+        column: 'region_slug',
+        values: [...SEEDED_REGION_CLOSURE_REGIONS],
+      }
     } else if (table === 'commission_tiers' || table === 'pricing_tiers') {
       const names =
         table === 'commission_tiers'
@@ -301,12 +331,23 @@ export async function buildPurgePlan(db: DBOrTx): Promise<PurgePlan> {
       rowCount = await countByColumnIn(db, table, 'name', names)
       reason = 'seeded tier overrides scoped to catalog Experiences'
       predicate = `name IN (${names.join(', ')})`
+      deleteTargets[table] = { kind: 'column-in', column: 'name', values: names }
     } else if (table === 'media_assets') {
       rowCount = await countSeedMedia(db)
       reason = `media whose storage_key starts '${SEED_MEDIA_KEY_PREFIX}' (Unsplash hotlinks, no bucket object)`
       predicate = `storage_key LIKE '${SEED_MEDIA_KEY_PREFIX}%'`
+      deleteTargets[table] = {
+        kind: 'like',
+        column: 'storage_key',
+        pattern: `${SEED_MEDIA_KEY_PREFIX}%`,
+      }
     } else {
+      const columns = await tableColumns(db, table)
+      const clauses = resolveColumnRoots(columns, roots)
+        .filter(([, ids]) => ids.length > 0)
+        .map(([column, ids]) => ({ column, ids }))
       rowCount = await countTransitive(db, table, roots)
+      deleteTargets[table] = { kind: 'root-columns', clauses }
     }
 
     entries.push({ table, rowCount, reason, predicate })
@@ -322,6 +363,7 @@ export async function buildPurgePlan(db: DBOrTx): Promise<PurgePlan> {
     safeToExecute: blockers.length === 0,
     seedUserIds,
     seedExperienceIds,
+    deleteTargets,
   }
 }
 

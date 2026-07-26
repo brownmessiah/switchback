@@ -17,10 +17,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { authClient } from '@/lib/auth/client'
 import { getHeroImage } from '@/lib/images'
 
 import { resolvePostAuthPath } from './actions'
+import { PhonePanel } from './phone-panel'
+import { usePhoneAuthFlow } from './use-phone-auth'
 
 type Mode = 'signin' | 'signup'
 type Step = 'email' | 'credentials'
@@ -33,11 +36,22 @@ interface SignInFormProps {
    * toggles for free (toggling only resets `error`).
    */
   returnTo?: string | null
+  /**
+   * Availability gate (launch-readiness 01/03), computed server-side in
+   * page.tsx from `isPhoneAuthEnabled(env)` and passed as a prop — NEVER
+   * recomputed here from `process.env`, which would bake `false` into
+   * the 13-locale static build (RECON.md §F4). When false, the phone tab
+   * does not render at all; production without MSG91 credentials shows
+   * email only. The server rejects verification independently, so a
+   * hidden UI can never be bypassed by calling the endpoint directly.
+   */
+  phoneAuthEnabled?: boolean
 }
 
-export function SignInForm({ returnTo = null }: SignInFormProps) {
+export function SignInForm({ returnTo = null, phoneAuthEnabled = false }: SignInFormProps) {
   const t = useTranslations('SignInPage.form')
   const tp = useTranslations('SignInPage.trustPanel')
+  const tTabs = useTranslations('SignInPage.tabs')
 
   const [mode, setMode] = useState<Mode>('signin')
   const [step, setStep] = useState<Step>('email')
@@ -46,6 +60,13 @@ export function SignInForm({ returnTo = null }: SignInFormProps) {
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Phone/OTP state lives in its own hook (launch-readiness 03), called
+  // unconditionally regardless of `phoneAuthEnabled` — React hooks must
+  // run every render, and the cost of an idle hook when the phone tab is
+  // hidden is negligible. The panel below the hook is what actually gates
+  // on availability.
+  const phoneFlow = usePhoneAuthFlow({ returnTo })
 
   // STEP 1 → STEP 2 is pure client-side progressive disclosure. There is NO
   // server "does this email exist" check (that would be an email-enumeration
@@ -114,6 +135,136 @@ export function SignInForm({ returnTo = null }: SignInFormProps) {
     { key: 'partialPay', Icon: CreditCard, label: tp('chipPartialPay'), variant: 'info' as const },
   ]
 
+  const emailForm = (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {/* The email field (stable input#email[type=email]) is always
+          rendered — its value feeds the real auth call. On step 2 it stays
+          visible but read-only, with an inline "edit" affordance back to
+          step 1. */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="email">{t('emailLabel')}</Label>
+          {step === 'credentials' && (
+            <button
+              type="button"
+              onClick={backToEmail}
+              className="text-xs font-medium text-primary-strong underline-offset-4 hover:underline"
+            >
+              {t('editEmail')}
+            </button>
+          )}
+        </div>
+        <Input
+          id="email"
+          type="email"
+          placeholder={t('emailPlaceholder')}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          readOnly={step === 'credentials'}
+          autoFocus={step === 'email'}
+          className={step === 'credentials' ? 'bg-muted/40' : undefined}
+        />
+      </div>
+
+      {step === 'credentials' && (
+        <>
+          {mode === 'signup' && (
+            <div className="space-y-2">
+              <Label htmlFor="name">{t('nameLabel')}</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder={t('namePlaceholder')}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="password">{t('passwordLabel')}</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder={t('passwordPlaceholder')}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={8}
+              autoFocus
+            />
+          </div>
+        </>
+      )}
+
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
+
+      {step === 'email' ? (
+        // Always rendered at full brand crimson — NOT disabled-on-empty,
+        // which made the primary auth CTA read as a washed-out/disabled pale
+        // pink on first paint. handleContinue still guards the empty case.
+        <Button
+          type="button"
+          data-testid="continue-step1"
+          className="w-full"
+          onClick={handleContinue}
+        >
+          {t('continue')}
+        </Button>
+      ) : (
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={loading || !email || password.length < 8}
+        >
+          {loading && <Loader2 className="animate-spin" aria-hidden="true" />}
+          {loading
+            ? t('loading')
+            : mode === 'signin'
+              ? t('signInButton')
+              : t('signUpButton')}
+        </Button>
+      )}
+
+      <p className="text-center text-sm text-muted-foreground">
+        {mode === 'signin' ? (
+          <>
+            {t('newHere')}{' '}
+            <button
+              type="button"
+              className="font-medium text-primary-strong underline-offset-4 hover:underline"
+              onClick={() => {
+                setMode('signup')
+                setError('')
+              }}
+            >
+              {t('createAccount')}
+            </button>
+          </>
+        ) : (
+          <>
+            {t('alreadyHaveAccount')}{' '}
+            <button
+              type="button"
+              className="font-medium text-primary-strong underline-offset-4 hover:underline"
+              onClick={() => {
+                setMode('signin')
+                setError('')
+              }}
+            >
+              {t('signInLink')}
+            </button>
+          </>
+        )}
+      </p>
+    </form>
+  )
+
   return (
     <div className="grid w-full max-w-5xl overflow-hidden rounded-[var(--radius-card)] border border-border bg-surface-1 shadow-[var(--shadow-lg)] md:grid-cols-2">
       {/* ── Trust Wall panel: warm adventure visual + 3 trust chips ─────────
@@ -147,7 +298,8 @@ export function SignInForm({ returnTo = null }: SignInFormProps) {
         </div>
       </section>
 
-      {/* ── Lean email-first form (two-step progressive disclosure) ────────── */}
+      {/* ── Lean email-first form (two-step progressive disclosure), with
+          phone as a sibling tab when phone auth is available ────────── */}
       <section className="flex flex-col justify-center gap-6 p-6 md:p-10">
         <div className="space-y-1.5">
           <h1 className="font-heading text-h2 font-bold text-foreground">
@@ -162,133 +314,31 @@ export function SignInForm({ returnTo = null }: SignInFormProps) {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* The email field (stable input#email[type=email]) is always
-              rendered — its value feeds the real auth call. On step 2 it stays
-              visible but read-only, with an inline "edit" affordance back to
-              step 1. */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="email">{t('emailLabel')}</Label>
-              {step === 'credentials' && (
-                <button
-                  type="button"
-                  onClick={backToEmail}
-                  className="text-xs font-medium text-primary-strong underline-offset-4 hover:underline"
-                >
-                  {t('editEmail')}
-                </button>
-              )}
-            </div>
-            <Input
-              id="email"
-              type="email"
-              placeholder={t('emailPlaceholder')}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              readOnly={step === 'credentials'}
-              autoFocus={step === 'email'}
-              className={step === 'credentials' ? 'bg-muted/40' : undefined}
-            />
-          </div>
-
-          {step === 'credentials' && (
-            <>
-              {mode === 'signup' && (
-                <div className="space-y-2">
-                  <Label htmlFor="name">{t('nameLabel')}</Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder={t('namePlaceholder')}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="password">{t('passwordLabel')}</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder={t('passwordPlaceholder')}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={8}
-                  autoFocus
-                />
-              </div>
-            </>
-          )}
-
-          {error && (
-            <p role="alert" className="text-sm text-destructive">
-              {error}
-            </p>
-          )}
-
-          {step === 'email' ? (
-            // Always rendered at full brand crimson — NOT disabled-on-empty,
-            // which made the primary auth CTA read as a washed-out/disabled pale
-            // pink on first paint. handleContinue still guards the empty case.
-            <Button
-              type="button"
-              data-testid="continue-step1"
-              className="w-full"
-              onClick={handleContinue}
-            >
-              {t('continue')}
-            </Button>
-          ) : (
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading || !email || password.length < 8}
-            >
-              {loading && <Loader2 className="animate-spin" aria-hidden="true" />}
-              {loading
-                ? t('loading')
-                : mode === 'signin'
-                  ? t('signInButton')
-                  : t('signUpButton')}
-            </Button>
-          )}
-
-          <p className="text-center text-sm text-muted-foreground">
-            {mode === 'signin' ? (
-              <>
-                {t('newHere')}{' '}
-                <button
-                  type="button"
-                  className="font-medium text-primary-strong underline-offset-4 hover:underline"
-                  onClick={() => {
-                    setMode('signup')
-                    setError('')
-                  }}
-                >
-                  {t('createAccount')}
-                </button>
-              </>
-            ) : (
-              <>
-                {t('alreadyHaveAccount')}{' '}
-                <button
-                  type="button"
-                  className="font-medium text-primary-strong underline-offset-4 hover:underline"
-                  onClick={() => {
-                    setMode('signin')
-                    setError('')
-                  }}
-                >
-                  {t('signInLink')}
-                </button>
-              </>
-            )}
-          </p>
-        </form>
+        {phoneAuthEnabled ? (
+          <Tabs defaultValue="email">
+            <TabsList className="mb-2 grid w-full grid-cols-2">
+              <TabsTrigger value="email">{tTabs('email')}</TabsTrigger>
+              <TabsTrigger value="phone">{tTabs('phone')}</TabsTrigger>
+            </TabsList>
+            {/* keepMounted on BOTH panels (launch-readiness 03 AC: switching
+                tabs must not lose entered state) — Base UI unmounts inactive
+                panels by default, which would reset the phone flow's local
+                state on every switch. Email's state already lives above in
+                SignInForm regardless, but keeping both panels mounted also
+                means the two `<form>` elements stay independent — the phone
+                form is never nested inside the email form, so the existing
+                E2E selector contract (scoped to the form containing
+                input#email) is unaffected either way. */}
+            <TabsContent value="email" keepMounted>
+              {emailForm}
+            </TabsContent>
+            <TabsContent value="phone" keepMounted>
+              <PhonePanel flow={phoneFlow} />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          emailForm
+        )}
 
         <Separator />
 

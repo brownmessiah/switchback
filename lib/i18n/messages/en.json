@@ -958,6 +958,30 @@
       "vendorPrompt": "Are you a Vendor?",
       "vendorCta": "Start onboarding"
     },
+    "tabs": {
+      "email": "Email",
+      "phone": "Phone"
+    },
+    "phone": {
+      "numberLabel": "Mobile number",
+      "numberPlaceholder": "98765 43210",
+      "numberHint": "We'll text you a one-time code to confirm it's you.",
+      "sendCodeButton": "Send code",
+      "sending": "Sending...",
+      "codeSentTo": "We sent a code to {number}",
+      "editNumber": "Use a different number",
+      "codeLabel": "Verification code",
+      "codePlaceholder": "000000",
+      "verifyButton": "Verify and continue",
+      "verifying": "Verifying...",
+      "resendButton": "Resend code",
+      "resendCooldown": "Resend in {seconds}s",
+      "invalidNumber": "Enter a valid 10-digit mobile number.",
+      "invalidCode": "That code didn't work. Check it and try again.",
+      "sendFailed": "We couldn't send the code. Please try again.",
+      "sendRateLimited": "Too many attempts. Please wait a moment and try again.",
+      "verifyFailed": "Something went wrong verifying that code. Please try again."
+    },
     "trustPanel": {
       "heading": "Built for verified adventure bookings across India.",
       "chipVerified": "Identity & Business verified Vendors",

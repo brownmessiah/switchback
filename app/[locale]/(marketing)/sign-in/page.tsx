@@ -1,5 +1,7 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
+import { isPhoneAuthEnabled } from '@/lib/auth/otp-availability'
+import { env } from '@/lib/env'
 import { generateAlternates } from '@/lib/seo/hreflang'
 
 import { SignInForm } from './sign-in-form'
@@ -35,9 +37,18 @@ export default async function SignInPage({ params, searchParams }: PageProps) {
   // never trust what the page passed anyway). Never rendered as a href.
   const rawReturnTo = Array.isArray(returnTo) ? returnTo[0] : returnTo
 
+  // launch-readiness 03: computed here, in the Server Component, and
+  // passed down as a prop — NEVER inside the client component from
+  // `process.env`, which would bake `false` into the static HTML for
+  // all 13 locales (RECON.md §F4). This page is already dynamic (via
+  // `searchParams` above), so this evaluates at request time: going
+  // live is a configuration change (setting the MSG91_* env vars), not
+  // a code change or a rebuild.
+  const phoneAuthEnabled = isPhoneAuthEnabled(env)
+
   return (
     <main className="flex min-h-[80vh] items-center justify-center px-4 py-8">
-      <SignInForm returnTo={rawReturnTo ?? null} />
+      <SignInForm returnTo={rawReturnTo ?? null} phoneAuthEnabled={phoneAuthEnabled} />
     </main>
   )
 }

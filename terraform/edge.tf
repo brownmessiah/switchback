@@ -43,10 +43,19 @@ resource "google_compute_url_map" "web" {
   default_service = google_compute_backend_service.web.id
 }
 
+# The live proxy serves `outvers-cert-2`: the original `outvers-cert` stuck in
+# FAILED_NOT_VISIBLE during the domain cutover and was recreated under a new
+# name, but the rename was never codified. While this said `outvers-cert`, ANY
+# apply — including one fixing something unrelated — would swap the live proxy
+# back to a certificate that no longer serves, taking TLS down on the apex
+# domain. prevent_destroy makes that failure mode loud instead of silent.
 resource "google_compute_managed_ssl_certificate" "web" {
-  name = "outvers-cert"
+  name = "outvers-cert-2"
   managed {
     domains = [var.domain, "www.${var.domain}"]
+  }
+  lifecycle {
+    prevent_destroy = true
   }
 }
 

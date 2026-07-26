@@ -10,6 +10,12 @@ locals {
     "CRON_SECRET",
     "RAZORPAY_KEY_ID",
     "RAZORPAY_KEY_SECRET",
+    # Required by app/api/webhooks/razorpay: without it the handler returns 500
+    # BEFORE signature verification, so a Customer who has actually paid never
+    # gets their Booking confirmed. Per the header note above, its VERSION must
+    # be added out-of-band BEFORE this is applied — Cloud Run will not boot on a
+    # secret env ref to a versionless secret.
+    "RAZORPAY_WEBHOOK_SECRET",
     "RAZORPAYX_WEBHOOK_SECRET",
   ]
 }

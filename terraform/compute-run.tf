@@ -10,11 +10,18 @@ locals {
     "CRON_SECRET",
     "RAZORPAY_KEY_ID",
     "RAZORPAY_KEY_SECRET",
+    "RAZORPAY_WEBHOOK_SECRET",
     "RAZORPAYX_WEBHOOK_SECRET",
   ]
+  # RAZORPAY_TEST_MODE is deliberately ABSENT. It forces an in-process demo
+  # stub that fabricates order/payment/refund ids, so both the client and the
+  # signature verifier throw when it is set alongside NODE_ENV=production
+  # (which the Dockerfile bakes in). Setting it here made every checkout,
+  # refund, capture and webhook 500 on production. Using Razorpay's TEST KEYS
+  # against the REAL API is a different thing entirely, and is the correct
+  # pre-launch state — that is configured through RAZORPAY_KEY_ID/SECRET.
   web_plain_env = {
     NEXT_PUBLIC_APP_URL = var.app_url
-    RAZORPAY_TEST_MODE  = "true"
     GCS_BUCKET          = google_storage_bucket.uploads.name
     STORAGE_BACKEND     = "gcs"
   }

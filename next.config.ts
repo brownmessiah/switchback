@@ -19,6 +19,17 @@ const allowedOrigins = serverActionAllowedOrigins(
 const nextConfig: NextConfig = {
   // Self-contained server output for the Cloud Run container (ADR-0019).
   output: "standalone",
+  // launch-readiness/04: the `prelaunch` Playwright project runs a SECOND
+  // `next dev` instance (port 3100, isolated DB) from this SAME working
+  // directory so it can assert the pre-launch home composition against an
+  // empty database. Turbopack's dev build cache lives under
+  // `<distDir>/dev` — two concurrent `next dev` processes writing the same
+  // `.next/dev` would race and could corrupt each other's cache and take
+  // down the PRIMARY (port 3000) dev server every other E2E project
+  // depends on. NEXT_DIST_DIR gives the second instance a private build
+  // directory; unset everywhere else (local dev, `next build`, Cloud Run)
+  // this is a no-op — distDir defaults to ".next".
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   experimental: {
     serverActions: {
       allowedOrigins,

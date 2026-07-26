@@ -12,10 +12,14 @@ const AUTH_DIR = path.resolve(__dirname, 'tests/e2e/.auth')
  * without this override the app serves a DIFFERENT database and every
  * injected session is invalid. Derivation mirrors
  * tests/e2e/helpers/config.ts `e2eDbUrl()`.
+ *
+ * `dbName` is parameterised (launch-readiness 04) so the SAME derivation
+ * also produces the pre-launch webServer's DATABASE_URL
+ * (`outvers_e2e_prelaunch`, mirrors `e2ePrelaunchDbUrl()`).
  */
-function e2eWebServerDatabaseUrl(): string | undefined {
+function e2eWebServerDatabaseUrl(dbName: string): string | undefined {
   if (process.env.DATABASE_URL) {
-    return process.env.DATABASE_URL.replace(/\/[^/?]+(\?|$)/, '/outvers_e2e$1')
+    return process.env.DATABASE_URL.replace(/\/[^/?]+(\?|$)/, `/${dbName}$1`)
   }
   try {
     const envFile = readFileSync(path.resolve(__dirname, '.env.local'), 'utf-8')
@@ -26,13 +30,17 @@ function e2eWebServerDatabaseUrl(): string | undefined {
     if (!line) return undefined
     return line
       .slice('DATABASE_URL='.length)
-      .replace(/\/[^/?]+(\?|$)/, '/outvers_e2e$1')
+      .replace(/\/[^/?]+(\?|$)/, `/${dbName}$1`)
   } catch {
     return undefined
   }
 }
 
-const E2E_DATABASE_URL = e2eWebServerDatabaseUrl()
+const E2E_DATABASE_URL = e2eWebServerDatabaseUrl('outvers_e2e')
+// launch-readiness/04: SECOND, isolated database the `prelaunch*` projects'
+// webServer runs against — see tests/e2e/helpers/prelaunch-db-setup.ts for
+// why this cannot share `outvers_e2e` with every other project.
+const E2E_PRELAUNCH_DATABASE_URL = e2eWebServerDatabaseUrl('outvers_e2e_prelaunch')
 
 export default defineConfig({
   globalSetup: process.env.E2E_SKIP_SETUP ? undefined : './tests/e2e/global-setup.ts',
@@ -56,27 +64,54 @@ export default defineConfig({
   },
   webServer: process.env.E2E_SKIP_SETUP
     ? undefined
-    : {
-        // `pnpm dev` (NOT a prebuilt server): the suite relies on dev/test-only
-        // simulation hooks (?simulateAvailabilityError, the Razorpay checkout
-        // mock, payout-provisioning hooks) that are intentionally absent from a
-        // production build, so it must run against the dev server.
-        command: 'pnpm dev',
-        // The app under test must use the SAME DB global-setup seeds +
-        // injects sessions into (outvers_e2e) — .env.local points at the
-        // dev DB. Merged over process.env by Playwright.
-        env: E2E_DATABASE_URL ? { DATABASE_URL: E2E_DATABASE_URL } : {},
-        // Readiness check on the DB-INDEPENDENT shallow healthz (process-up, no
-        // SELECT) — NOT the home page. The home page 500s until global-setup
-        // creates+seeds outvers_e2e, but Playwright awaits the webServer BEFORE
-        // running global-setup; checking the home page deadlocks (home needs the
-        // DB ↔ DB created after the webServer is ready). Shallow healthz breaks it.
-        url: 'http://localhost:3000/api/healthz?shallow',
-        // Never reuse a stale server: it may be bound to the WRONG database
-        // (.env.local's dev DB) — precisely the bifurcation this fixes.
-        reuseExistingServer: false,
-        timeout: 120_000,
-      },
+    : [
+        {
+          name: 'primary',
+          // `pnpm dev` (NOT a prebuilt server): the suite relies on dev/test-only
+          // simulation hooks (?simulateAvailabilityError, the Razorpay checkout
+          // mock, payout-provisioning hooks) that are intentionally absent from a
+          // production build, so it must run against the dev server.
+          command: 'pnpm dev',
+          // The app under test must use the SAME DB global-setup seeds +
+          // injects sessions into (outvers_e2e) — .env.local points at the
+          // dev DB. Merged over process.env by Playwright.
+          env: E2E_DATABASE_URL ? { DATABASE_URL: E2E_DATABASE_URL } : {},
+          // Readiness check on the DB-INDEPENDENT shallow healthz (process-up, no
+          // SELECT) — NOT the home page. The home page 500s until global-setup
+          // creates+seeds outvers_e2e, but Playwright awaits the webServer BEFORE
+          // running global-setup; checking the home page deadlocks (home needs the
+          // DB ↔ DB created after the webServer is ready). Shallow healthz breaks it.
+          url: 'http://localhost:3000/api/healthz?shallow',
+          // Never reuse a stale server: it may be bound to the WRONG database
+          // (.env.local's dev DB) — precisely the bifurcation this fixes.
+          reuseExistingServer: false,
+          timeout: 120_000,
+        },
+        {
+          name: 'prelaunch',
+          // launch-readiness/04: a SECOND `next dev` instance, same repo, same
+          // command — only PORT/DATABASE_URL/NEXT_DIST_DIR differ. This is what
+          // lets the `prelaunch*` projects assert the pre-launch home
+          // composition against a database with zero Experiences, without
+          // truncating (and thereby racing) the shared `outvers_e2e` every
+          // other, fullyParallel project depends on.
+          command: 'pnpm dev',
+          env: {
+            ...(E2E_PRELAUNCH_DATABASE_URL ? { DATABASE_URL: E2E_PRELAUNCH_DATABASE_URL } : {}),
+            PORT: '3100',
+            // Turbopack's dev cache lives under `<distDir>/dev` — a private
+            // distDir keeps this instance's build cache from racing (and
+            // potentially corrupting) the primary instance's `.next/dev`.
+            NEXT_DIST_DIR: '.next-prelaunch',
+          },
+          // Same shallow/DB-independent reasoning as the primary entry above:
+          // the home page 500s until resetPrelaunchDatabase() has run, and
+          // Playwright awaits every webServer BEFORE global-setup.
+          url: 'http://localhost:3100/api/healthz?shallow',
+          reuseExistingServer: false,
+          timeout: 120_000,
+        },
+      ],
   projects: [
     // ── Unauthenticated: no storage state ───────────────────────
     {
@@ -160,6 +195,39 @@ export default defineConfig({
         hasTouch: true,
         isMobile: true,
         storageState: path.join(AUTH_DIR, 'admin-demo-storage.json'),
+      },
+    },
+
+    // ── Pre-launch home (launch-readiness 04): fully isolated — own DB
+    //    (outvers_e2e_prelaunch, zero Experiences) + own webServer
+    //    (localhost:3100). Never truncates the shared outvers_e2e, so it
+    //    cannot race the other (fullyParallel, state='live') projects above.
+    //    Phone/tablet variants re-run the same spec dir at those viewports,
+    //    mirroring the responsive-{phone,tablet}-public pattern — including
+    //    re-running the DevTools fixture's axe pass at each size. ──
+    {
+      name: 'prelaunch',
+      testDir: './tests/e2e/specs/prelaunch',
+      use: { baseURL: 'http://localhost:3100' },
+    },
+    {
+      name: 'prelaunch-phone',
+      testDir: './tests/e2e/specs/prelaunch',
+      use: {
+        baseURL: 'http://localhost:3100',
+        viewport: { width: 390, height: 844 },
+        hasTouch: true,
+        isMobile: true,
+      },
+    },
+    {
+      name: 'prelaunch-tablet',
+      testDir: './tests/e2e/specs/prelaunch',
+      use: {
+        baseURL: 'http://localhost:3100',
+        viewport: { width: 820, height: 1180 },
+        hasTouch: true,
+        isMobile: true,
       },
     },
   ],

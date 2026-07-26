@@ -22,6 +22,7 @@ tests/e2e/.auth/
 
 # next.js
 /.next/
+/.next-prelaunch/
 /out/
 
 # production

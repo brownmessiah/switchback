@@ -2,6 +2,7 @@ import { copyFileSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 import { resetDatabase } from './helpers/db-setup'
+import { resetPrelaunchDatabase } from './helpers/prelaunch-db-setup'
 import { injectSession } from './helpers/auth-setup'
 
 function loadEnvFile() {
@@ -26,7 +27,16 @@ async function globalSetup() {
   loadEnvFile()
   console.log('[E2E] Resetting database...')
   await resetDatabase()
-  console.log('[E2E] Database ready. Injecting sessions...')
+  // launch-readiness/04: also provisions the SECOND, isolated pre-launch
+  // database (`outvers_e2e_prelaunch`) the `prelaunch*` projects' webServer
+  // (port 3100) runs against. Sequential (not Promise.all) with
+  // resetDatabase() above — both issue CREATE/DROP DATABASE against the same
+  // Postgres server's `postgres` maintenance DB, and concurrent
+  // CREATE DATABASE calls can contend on template1; determinism over the
+  // (small) time saving.
+  console.log('[E2E] Resetting pre-launch database...')
+  await resetPrelaunchDatabase()
+  console.log('[E2E] Databases ready. Injecting sessions...')
   await injectSession('customer')
   await injectSession('vendor')
   const adminStoragePath = await injectSession('admin')

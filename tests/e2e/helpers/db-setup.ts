@@ -18,9 +18,11 @@ import { e2eDbUrl } from './config'
 
 /**
  * Derives a connection URL pointing at the `postgres` maintenance
- * database (used for CREATE/DROP operations).
+ * database (used for CREATE/DROP operations). Exported so
+ * `prelaunch-db-setup.ts` (launch-readiness 04) can provision the SECOND,
+ * isolated pre-launch E2E database against the same Postgres server.
  */
-function maintenanceDbUrl(): string {
+export function maintenanceDbUrl(): string {
   const base = process.env.DATABASE_URL
   if (!base) throw new Error('DATABASE_URL env var is required')
   return base.replace(/\/[^/?]+(\?|$)/, '/postgres$1')

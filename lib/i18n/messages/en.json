@@ -9,6 +9,20 @@
       "searchPlaceholder": "Try \"rafting Rishikesh\" or \"scuba Goa\"",
       "searchButton": "Search"
     },
+    "preLaunch": {
+      "eyebrow": "Launching soon",
+      "title": "India's adventure marketplace is almost here",
+      "subtitle": "We're onboarding verified Vendors across rafting, paragliding, scuba and trekking. Experiences go live the moment our first Vendors publish.",
+      "vendorHeading": "Run an adventure business?",
+      "vendorBody": "List your Experiences on Outvers and reach Customers across India. Zero upfront fees — you keep control of pricing, availability and cancellations.",
+      "vendorCta": "Become a Vendor",
+      "vendorSecondaryCta": "See how it works",
+      "blogHeading": "Meanwhile, from our guides",
+      "blogBody": "Route notes, safety guidance and season-by-season advice for adventure travel in India.",
+      "blogCta": "Read all guides",
+      "comingSoonHeading": "Experiences are coming soon",
+      "comingSoonBody": "Nothing is listed yet — we'd rather show you an honest empty page than a fake one."
+    },
     "featureCarousel": {
       "label": "Why book on Outvers",
       "dotLabel": "Go to highlight {number}",

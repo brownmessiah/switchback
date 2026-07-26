@@ -12,10 +12,13 @@ import { HomeFeatureCarousel } from '@/components/home/feature-carousel'
 import { HeroRotator } from '@/components/home/hero-rotator'
 import { HomeHeroSearch } from '@/components/home/hero-search'
 import { HomeHowItWorks } from '@/components/home/how-it-works'
+import { PreLaunchHome } from '@/components/home/pre-launch-home'
 import { HomeTrust } from '@/components/home/trust'
 import { db } from '@/db/client'
+import { listPublishedBlogPosts } from '@/lib/blog/queries'
 import { env } from '@/lib/env'
 import { loadHomePageData } from '@/lib/home/queries'
+import { getMarketplaceState } from '@/lib/launch/marketplace-state'
 import { getHeroImages, getRegionImage } from '@/lib/images'
 import { generateAlternates } from '@/lib/seo/hreflang'
 import { organization } from '@/lib/seo/schemas/organization'
@@ -43,6 +46,15 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
   setRequestLocale(locale)
 
   const t = await getTranslations({ locale, namespace: 'HomePage' })
+
+  // Pre-launch composition (launch-readiness 04) — derived from data, not
+  // a flag: the day a real Vendor publishes their first Experience this
+  // returns 'live' and the marketplace home below renders by itself.
+  if ((await getMarketplaceState(db)) === 'pre-launch') {
+    const { posts } = await listPublishedBlogPosts(db, { page: 1, pageSize: 6 })
+    return <PreLaunchHome locale={locale} posts={posts} />
+  }
+
   const data = await loadHomePageData(db)
   const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
 

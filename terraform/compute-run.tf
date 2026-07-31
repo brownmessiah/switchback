@@ -41,8 +41,8 @@ resource "google_cloud_run_v2_service" "web" {
     }
     vpc_access {
       network_interfaces {
-        network    = google_compute_network.vpc.id
-        subnetwork = google_compute_subnetwork.main.id
+        network    = google_compute_network.vpc_v2.id
+        subnetwork = google_compute_subnetwork.main_v2.id
       }
       egress = "PRIVATE_RANGES_ONLY"
     }
@@ -132,8 +132,8 @@ resource "google_cloud_run_v2_service" "cron" {
     }
     vpc_access {
       network_interfaces {
-        network    = google_compute_network.vpc.id
-        subnetwork = google_compute_subnetwork.main.id
+        network    = google_compute_network.vpc_v2.id
+        subnetwork = google_compute_subnetwork.main_v2.id
       }
       egress = "PRIVATE_RANGES_ONLY"
     }
@@ -207,8 +207,8 @@ resource "google_cloud_run_v2_job" "migrate" {
       max_retries     = 1
       vpc_access {
         network_interfaces {
-          network    = google_compute_network.vpc.id
-          subnetwork = google_compute_subnetwork.main.id
+          network    = google_compute_network.vpc_v2.id
+          subnetwork = google_compute_subnetwork.main_v2.id
         }
         egress = "PRIVATE_RANGES_ONLY"
       }

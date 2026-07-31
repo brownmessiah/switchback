@@ -23,7 +23,7 @@ locals {
     "payout-batch"            = "0 17 * * *"
     # ADR-0020 launch dependency: rolling ~90-day slot materialization so
     # date-availability search never shrinks for quiet listings.
-    "materialize-slots"       = "0 8 * * *"
+    "materialize-slots" = "0 8 * * *"
   }
 }
 

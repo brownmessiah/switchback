@@ -31,14 +31,18 @@ resource "google_cloud_run_v2_service" "web" {
   template {
     service_account                  = google_service_account.runtime.email
     max_instance_request_concurrency = 80
+    # Scale to zero when idle. A warm floor (min=1) bills a full instance 24/7 —
+    # the single largest Cloud Run line — and buys nothing while traffic is
+    # near-zero. Cold starts return to the critical path; startup_cpu_boost below
+    # keeps them short.
     scaling {
-      min_instance_count = 1
+      min_instance_count = 0
       max_instance_count = 4
     }
     vpc_access {
       network_interfaces {
-        network    = google_compute_network.vpc.id
-        subnetwork = google_compute_subnetwork.main.id
+        network    = google_compute_network.vpc_v2.id
+        subnetwork = google_compute_subnetwork.main_v2.id
       }
       egress = "PRIVATE_RANGES_ONLY"
     }
@@ -52,6 +56,14 @@ resource "google_cloud_run_v2_service" "web" {
           cpu    = "1"
           memory = "1Gi"
         }
+        # Request-based billing: CPU is throttled outside a request, so an
+        # instance that is alive but idle bills nothing. Left unset this defaults
+        # to always-allocated (instance-based) billing — 1 vCPU charged around the
+        # clock. This plus min=0 is what takes idle spend to ~zero.
+        cpu_idle = true
+        # min=0 puts cold starts on the user path; boost CPU during startup so the
+        # deep /api/healthz probe (which dials Cloud SQL) clears quickly.
+        startup_cpu_boost = true
       }
       dynamic "env" {
         for_each = local.web_plain_env
@@ -120,8 +132,8 @@ resource "google_cloud_run_v2_service" "cron" {
     }
     vpc_access {
       network_interfaces {
-        network    = google_compute_network.vpc.id
-        subnetwork = google_compute_subnetwork.main.id
+        network    = google_compute_network.vpc_v2.id
+        subnetwork = google_compute_subnetwork.main_v2.id
       }
       egress = "PRIVATE_RANGES_ONLY"
     }
@@ -135,6 +147,12 @@ resource "google_cloud_run_v2_service" "cron" {
           cpu    = "1"
           memory = "1Gi"
         }
+        # Matters more here than it looks: partial-pay-autocapture fires every 15
+        # min, and an instance lingers after each request. Under always-allocated
+        # billing that lingering adds up to near-continuous CPU charges for a
+        # service that does a few seconds of real work per hour.
+        cpu_idle          = true
+        startup_cpu_boost = true
       }
       dynamic "env" {
         for_each = local.cron_plain_env
@@ -189,8 +207,8 @@ resource "google_cloud_run_v2_job" "migrate" {
       max_retries     = 1
       vpc_access {
         network_interfaces {
-          network    = google_compute_network.vpc.id
-          subnetwork = google_compute_subnetwork.main.id
+          network    = google_compute_network.vpc_v2.id
+          subnetwork = google_compute_subnetwork.main_v2.id
         }
         egress = "PRIVATE_RANGES_ONLY"
       }

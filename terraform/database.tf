@@ -8,7 +8,11 @@ resource "google_sql_database_instance" "main" {
   region              = var.region
   deletion_protection = false # demo phase — allow teardown
 
-  depends_on = [google_service_networking_connection.private_vpc]
+  # v2 network — the original outvers-vpc is broken (see network.tf header).
+  # The instance was migrated with `gcloud sql instances patch --network=...` on
+  # 2026-07-31; its private IP moved 10.140.0.3 -> 10.150.0.3 and the
+  # DATABASE_URL secret was updated to match (version 2).
+  depends_on = [google_service_networking_connection.private_vpc_v2]
 
   settings {
     tier              = "db-custom-1-3840" # 1 vCPU / 3.75 GB
@@ -30,8 +34,8 @@ resource "google_sql_database_instance" "main" {
     }
 
     ip_configuration {
-      ipv4_enabled    = false # no public IP
-      private_network = google_compute_network.vpc.id
+      ipv4_enabled    = false # no public IP — ADR-0019 private-IP-only holds
+      private_network = google_compute_network.vpc_v2.id
     }
   }
 }

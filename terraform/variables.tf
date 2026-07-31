@@ -40,6 +40,34 @@ variable "billing_account" {
   default = "01A6C8-6EEE44-C29C64"
 }
 
+# ---- Cost controls ---------------------------------------------------------
+
+# The budget in ops.tf is off by default so `apply` still succeeds on an identity
+# without roles/billing.costsManager on the billing account. Flip to true once the
+# grant exists — see the runbook comment above the resource.
+variable "enable_billing_budget" {
+  type        = bool
+  description = "Create the alert-only monthly billing budget (needs billing.costsManager)"
+  default     = false
+}
+
+variable "monthly_budget_usd" {
+  type        = number
+  description = "Alert-only monthly budget ceiling; alerts at 50/90/100%"
+  default     = 120
+}
+
+# The global external ALB + Cloud CDN in edge.tf costs ~$18-25/mo in forwarding
+# rules alone before a byte is served. Defaults to true because the live GoDaddy
+# apex + www A records point at the LB's static IP — flipping this to false
+# without re-pointing DNS first takes outvers.com offline. See edge.tf for the
+# Cloud Run domain-mapping alternative and the DNS cutover order.
+variable "enable_lb" {
+  type        = bool
+  description = "Provision the global external ALB + Cloud CDN in front of Cloud Run"
+  default     = true
+}
+
 # Placeholder image used until the GitHub Actions pipeline pushes the first real
 # one (Cloud Run requires an image to create a service).
 variable "placeholder_image" {

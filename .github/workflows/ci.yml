@@ -224,6 +224,17 @@ jobs:
           curl -fsS -o /dev/null "${TAGGED_URL}/"
           gcloud run services update-traffic "${WEB_SERVICE}" --to-latest \
             --region "${REGION}" --project "${PROJECT_ID}"
+          # Drop the smoke-test tag once traffic has shifted. The tag is only
+          # needed for the pre-shift smoke test above, but a tag pins its revision
+          # permanently — Cloud Run must keep every tagged revision provisionable.
+          # Left to accumulate (one per deploy), they wedged the service on
+          # 2026-07-31: five tagged revisions carrying an older min-instances=1
+          # could not start, so no traffic change could ever reconcile and both
+          # `gcloud run services update-traffic` and `terraform apply` timed out.
+          # Best-effort: never fail a good deploy over tag cleanup.
+          gcloud run services update-traffic "${WEB_SERVICE}" --remove-tags "${TAG}" \
+            --region "${REGION}" --project "${PROJECT_ID}" || \
+            echo "WARN: could not remove tag ${TAG} — check for tag buildup"
 
       - name: Deploy cron service
         run: |

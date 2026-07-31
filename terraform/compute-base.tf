@@ -27,4 +27,26 @@ resource "google_artifact_registry_repository" "app" {
   location      = var.region
   format        = "DOCKER"
   description   = "outvers-next application images"
+
+  # Every push to main pushes a fresh image and nothing ever removed the old one,
+  # so the repo grew unbounded (44 images between 2026-06-20 and 2026-07-31).
+  # KEEP rules win over DELETE in Artifact Registry, so the 5 newest always
+  # survive regardless of age — that preserves rollback targets.
+  cleanup_policy_dry_run = false
+
+  cleanup_policies {
+    id     = "keep-recent-rollback-targets"
+    action = "KEEP"
+    most_recent_versions {
+      keep_count = 5
+    }
+  }
+
+  cleanup_policies {
+    id     = "delete-stale"
+    action = "DELETE"
+    condition {
+      older_than = "2592000s" # 30 days
+    }
+  }
 }

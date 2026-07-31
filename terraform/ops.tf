@@ -10,34 +10,57 @@ resource "google_monitoring_notification_channel" "email" {
   }
 }
 
-# DEFERRED: $120/mo alert-only budget. The deploy identity (aishwarye@outvers.com)
-# lacks billing-account permissions on 01A6C8-6EEE44-C29C64 (billing.budgets.create
-# → PERMISSION_DENIED), which is a separate grant from project billing-linkage.
-# Re-enable once `roles/billing.costsManager` is granted on the billing account:
+# Alert-only monthly budget (no auto-disable — that would hard-down the site).
 #
-# resource "google_billing_budget" "monthly" {
-#   billing_account = var.billing_account
-#   display_name    = "outvers-adventure monthly"
-#   budget_filter {
-#     projects               = ["projects/${var.project_number}"]
-#     credit_types_treatment = "INCLUDE_ALL_CREDITS"
-#   }
-#   amount { specified_amount { currency_code = "USD" units = "120" } }
-#   threshold_rules { threshold_percent = 0.5 }
-#   threshold_rules { threshold_percent = 0.9 }
-#   threshold_rules { threshold_percent = 1.0 }
-#   all_updates_rule {
-#     monitoring_notification_channels = [google_monitoring_notification_channel.email.id]
-#     disable_default_iam_recipients   = false
-#   }
-# }
+# This was the one piece of the ADR-0019 cost guardrail that never shipped: the
+# deploy identity lacks billing.budgets.create on the billing account, so the
+# resource stayed commented out and NO alert ever fired. The project ran unwatched
+# from 2026-06-20 until billing was disabled and it was suspended.
+#
+# It is now real but gated, so `apply` still succeeds on an identity without the
+# grant. To arm it:
+#   1. Grant roles/billing.costsManager to var.alert_email on the billing account
+#      (a billing-account grant — separate from project billing-linkage):
+#      gcloud billing accounts add-iam-policy-binding 01A6C8-6EEE44-C29C64 \
+#        --member="user:aishwarye@outvers.com" --role="roles/billing.costsManager"
+#   2. terraform apply -var enable_billing_budget=true
+resource "google_billing_budget" "monthly" {
+  count = var.enable_billing_budget ? 1 : 0
+
+  billing_account = var.billing_account
+  display_name    = "outvers-adventure monthly"
+
+  budget_filter {
+    projects               = ["projects/${var.project_number}"]
+    credit_types_treatment = "INCLUDE_ALL_CREDITS"
+  }
+
+  amount {
+    specified_amount {
+      currency_code = "USD"
+      units         = tostring(var.monthly_budget_usd)
+    }
+  }
+
+  threshold_rules { threshold_percent = 0.5 }
+  threshold_rules { threshold_percent = 0.9 }
+  threshold_rules { threshold_percent = 1.0 }
+
+  all_updates_rule {
+    monitoring_notification_channels = [google_monitoring_notification_channel.email.id]
+    disable_default_iam_recipients   = false
+  }
+}
 
 # Synthetic uptime check on the public web service (deep healthz → also alerts if
 # Cloud SQL is unreachable). Re-targets to outvers.com after the domain is wired.
 resource "google_monitoring_uptime_check_config" "web" {
   display_name = "outvers web /api/healthz"
   timeout      = "10s"
-  period       = "300s"
+  # 300s → 900s. Checkers fan out from ~6 regions, so a 5-min period was ~1.7k
+  # deep healthz hits/day, each opening a Cloud SQL connection, and it kept an
+  # instance alive around the clock. 15 min is ample detection latency pre-revenue.
+  period = "900s"
 
   http_check {
     path    = "/api/healthz"

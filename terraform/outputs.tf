@@ -23,6 +23,16 @@ output "uploads_bucket" {
   description = "Public uploads bucket name (GCS_BUCKET)"
 }
 
+output "lb_ip_address" {
+  value       = var.enable_lb ? google_compute_global_address.lb_ip[0].address : null
+  description = "Static anycast IP the GoDaddy apex + www A records point at (null when enable_lb = false)"
+}
+
+output "web_url" {
+  value       = google_cloud_run_v2_service.web.uri
+  description = "Cloud Run service URL — the origin behind the LB, and the fallback target if enable_lb = false"
+}
+
 output "vpc_network" {
   value = google_compute_network.vpc.id
 }

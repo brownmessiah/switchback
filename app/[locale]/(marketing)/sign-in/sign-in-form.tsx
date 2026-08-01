@@ -25,7 +25,16 @@ import { resolvePostAuthPath } from './actions'
 type Mode = 'signin' | 'signup'
 type Step = 'email' | 'credentials'
 
-export function SignInForm() {
+interface SignInFormProps {
+  /**
+   * Where to land after authenticating, when the visitor was bounced here
+   * from an auth-gated page. Untrusted — validated server-side by
+   * resolvePostAuthPath (allowlist, open-redirect guard).
+   */
+  nextPath?: string
+}
+
+export function SignInForm({ nextPath }: SignInFormProps = {}) {
   const t = useTranslations('SignInPage.form')
   const tp = useTranslations('SignInPage.trustPanel')
 
@@ -76,7 +85,7 @@ export function SignInForm() {
 
       // Route to the role-appropriate dashboard (admin / vendor / customer)
       // rather than always the marketing home (ADR-0006 role resolution).
-      const dest = await resolvePostAuthPath()
+      const dest = await resolvePostAuthPath(nextPath)
       // Hard navigation, NOT router.push()+refresh(): (1) the post-auth session
       // UI (header AuthStatus + role-aware menu) lives in the PERSISTENT root
       // layout, which a soft nav doesn't re-render; (2) push() followed by

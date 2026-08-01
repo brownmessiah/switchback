@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 
@@ -12,10 +12,15 @@ export default async function VendorOnboardingPage() {
   const session = await auth.api.getSession({ headers: await headers() })
   const userId = session!.user.id
 
+  // "Is an active Vendor" means an OPEN profile — closed_at IS NULL — the same
+  // predicate lib/auth/permissions.ts uses. Without it a soft-closed Vendor
+  // bounces forever: the dashboard sends them here, and here sent them back.
+  // Falling through to the wizard lets them re-onboard, which
+  // executeCreateVendorProfile handles as a reactivation.
   const [existing] = await db
     .select({ userId: vendorProfiles.userId })
     .from(vendorProfiles)
-    .where(eq(vendorProfiles.userId, userId))
+    .where(and(eq(vendorProfiles.userId, userId), isNull(vendorProfiles.closedAt)))
     .limit(1)
 
   if (existing) {

@@ -4,6 +4,9 @@ import { headers } from 'next/headers'
 
 import { db as prodDb } from '@/db/client'
 import { auth } from '@/lib/auth'
+import { getEmailSender } from '@/lib/email/resend'
+import { adaptEmailSender } from '@/lib/email/vendor-lifecycle'
+import { notifyVendorApplicationReceived } from '@/lib/email/vendor-notifications'
 
 import {
   executeCreateVendorProfile,
@@ -33,5 +36,18 @@ export async function createVendorProfileAction(
     return { ok: false, error: 'Sign in to continue.' }
   }
 
-  return executeCreateVendorProfile(prodDb, session.user.id, input)
+  const result = await executeCreateVendorProfile(prodDb, session.user.id, input)
+
+  // Confirm to the Vendor that their account exists and a review is pending.
+  // Best-effort by construction: the profile has already committed, so a
+  // delivery failure is logged inside the notifier and never surfaces here.
+  if (result.ok) {
+    await notifyVendorApplicationReceived(
+      prodDb,
+      adaptEmailSender(getEmailSender()),
+      session.user.id,
+    )
+  }
+
+  return result
 }

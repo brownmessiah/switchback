@@ -78,6 +78,21 @@ variable "placeholder_image" {
 # Public app URL baked into the build + set as the runtime NEXT_PUBLIC_APP_URL.
 # Placeholder until the first deploy (#15) reads the assigned Cloud Run URL; flips
 # to https://outvers.com at the domain step (#16).
+variable "google_client_id" {
+  type = string
+  # Public by design — it ships in the OAuth redirect URL. Empty until the
+  # owner creates the OAuth client; better-auth then rejects the flow and the
+  # sign-in button surfaces the error rather than failing silently.
+  default = ""
+}
+
+variable "email_from" {
+  type = string
+  # Envelope sender for transactional email. Must be on a domain verified with
+  # Resend (SPF/DKIM/DMARC) or delivery is rejected at the provider.
+  default = "Outvers <hello@outvers.com>"
+}
+
 variable "app_url" {
   type = string
   # Domain step (#16) complete: DNS (GoDaddy apex + www) points at the LB and the

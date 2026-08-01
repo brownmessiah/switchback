@@ -11,12 +11,35 @@ locals {
     "RAZORPAY_KEY_ID",
     "RAZORPAY_KEY_SECRET",
     "RAZORPAYX_WEBHOOK_SECRET",
+    # NOTE — the following are NOT listed yet ON PURPOSE. A secret env ref to a
+    # VERSIONLESS secret blocks Cloud Run from starting (see the header of
+    # secrets.tf), so each is a two-step owner task:
+    #   1. Create the secret version out-of-band:
+    #      printf %s "$VALUE" | gcloud secrets versions add <NAME> --data-file=-
+    #   2. Add <NAME> to this list AND to local.secret_ids, then apply.
+    #
+    #   "RESEND_API_KEY"      — transactional email (vendor welcome + KYC
+    #                           decision). Until wired, getEmailSender()
+    #                           reports a hard failure in production rather
+    #                           than silently pretending to deliver.
+    #   "GOOGLE_CLIENT_SECRET" — Google sign-in. Until wired, the button is
+    #                           present but better-auth rejects the flow and
+    #                           the error is surfaced to the user.
   ]
   web_plain_env = {
     NEXT_PUBLIC_APP_URL = var.app_url
     RAZORPAY_TEST_MODE  = "true"
     GCS_BUCKET          = google_storage_bucket.uploads.name
-    STORAGE_BACKEND     = "gcs"
+    # PRIVATE bucket for KYC documents. Never falls back to GCS_BUCKET — that
+    # one is world-readable (see lib/storage/private-factory.ts).
+    GCS_KYC_BUCKET  = google_storage_bucket.kyc.name
+    STORAGE_BACKEND = "gcs"
+    # Google sign-in. The client ID is public by design (it ships in the OAuth
+    # redirect); only GOOGLE_CLIENT_SECRET is a secret, and it is pending the
+    # two-step activation noted above.
+    GOOGLE_CLIENT_ID = var.google_client_id
+    # Envelope sender; must be on a Resend-verified domain (SPF/DKIM).
+    EMAIL_FROM = var.email_from
   }
   cron_plain_env = merge(local.web_plain_env, { RUN_CRON_ROUTES = "true" })
 }

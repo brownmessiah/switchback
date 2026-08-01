@@ -78,6 +78,20 @@ variable "placeholder_image" {
 # Public app URL baked into the build + set as the runtime NEXT_PUBLIC_APP_URL.
 # Placeholder until the first deploy (#15) reads the assigned Cloud Run URL; flips
 # to https://outvers.com at the domain step (#16).
+variable "msg91_sender_id" {
+  type = string
+  # DLT-registered sender ID (6 alphanumeric chars). Indian TRAI rules require
+  # the sender ID AND the OTP template to be registered and approved on the DLT
+  # portal, or MSG91 rejects the send.
+  default = ""
+}
+
+variable "msg91_otp_template_id" {
+  type = string
+  # DLT-approved OTP template registered in the MSG91 dashboard.
+  default = ""
+}
+
 variable "google_client_id" {
   type = string
   # Public by design — it ships in the OAuth redirect URL. Empty until the

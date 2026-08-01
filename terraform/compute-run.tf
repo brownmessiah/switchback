@@ -25,6 +25,10 @@ locals {
     #   "GOOGLE_CLIENT_SECRET" — Google sign-in. Until wired, the button is
     #                           present but better-auth rejects the flow and
     #                           the error is surfaced to the user.
+    #   "MSG91_AUTH_KEY"      — phone OTP. Until wired, sendOtpViaMsg91 takes
+    #                           its dev-bypass branch and NO SMS is sent, so
+    #                           phone signup must not be advertised in prod
+    #                           before this lands.
   ]
   web_plain_env = {
     NEXT_PUBLIC_APP_URL = var.app_url
@@ -38,6 +42,12 @@ locals {
     # redirect); only GOOGLE_CLIENT_SECRET is a secret, and it is pending the
     # two-step activation noted above.
     GOOGLE_CLIENT_ID = var.google_client_id
+    # MSG91 phone OTP. Neither is a secret: the sender ID is visible on every
+    # SMS and the template id is an account-scoped reference. Only
+    # MSG91_AUTH_KEY is sensitive, and it is pending the two-step activation
+    # noted above.
+    MSG91_SENDER_ID       = var.msg91_sender_id
+    MSG91_OTP_TEMPLATE_ID = var.msg91_otp_template_id
     # Envelope sender; must be on a Resend-verified domain (SPF/DKIM).
     EMAIL_FROM = var.email_from
   }

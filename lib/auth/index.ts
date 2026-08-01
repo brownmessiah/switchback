@@ -67,7 +67,15 @@ export const auth = betterAuth({
         // MSG91 generates and stores its own OTP — the `code` arg
         // from better-auth is therefore unused. better-auth still
         // tracks the verification attempt for rate limiting.
-        await sendOtpViaMsg91(msg91Config, phone)
+        const result = await sendOtpViaMsg91(msg91Config, phone)
+
+        // The result must NOT be swallowed. better-auth reports "code sent"
+        // purely on this callback returning, so ignoring a failure would send
+        // the user to a code screen for an SMS that never left — indefinitely,
+        // and with no signal anywhere that MSG91 is misconfigured.
+        if (!result.success) {
+          throw new Error(`MSG91 OTP send failed: ${result.reason}`)
+        }
       },
       verifyOTP: async ({ phoneNumber: phone, code }) => {
         return verifyOtpViaMsg91(msg91Config, phone, code)

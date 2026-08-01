@@ -12,6 +12,66 @@ const config: Msg91Config = {
   templateId: 'tpl_abc123',
 }
 
+/**
+ * MSG91's send-OTP API requires template_id, and for Indian numbers that
+ * template must be DLT-registered (TRAI). Sending an empty one returns MSG91
+ * error 211 ("No DLT Template ID or Invalid Template ID"), which reaches us as
+ * an opaque upstream failure.
+ *
+ * That is a live trap during setup: the auth key usually arrives BEFORE the
+ * DLT template is approved, so the half-configured state is the normal one.
+ * Guarding on the auth key alone would let it through and make a missing
+ * template look like a flaky provider.
+ */
+describe('sendOtpViaMsg91 — incomplete configuration', () => {
+  let fetchMock: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('does not call MSG91 when the template id is missing', async () => {
+    const result = await sendOtpViaMsg91({ ...config, templateId: '' }, '+919876543210')
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(result).toEqual({ success: false, reason: 'not_configured' })
+  })
+
+  it('does not call MSG91 when the sender id is missing', async () => {
+    const result = await sendOtpViaMsg91({ ...config, senderId: '' }, '+919876543210')
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(result).toEqual({ success: false, reason: 'not_configured' })
+  })
+
+  it('keeps the dev bypass when NOTHING is configured', async () => {
+    // A developer with no MSG91 setup at all still gets a working local flow.
+    const result = await sendOtpViaMsg91(
+      { authKey: '', senderId: '', templateId: '' },
+      '+919876543210',
+    )
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(result).toEqual({ success: true, requestId: 'dev-bypass' })
+  })
+
+  it('still sends when everything is configured', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ type: 'success', request_id: 'req_ok' }), { status: 200 }),
+    )
+
+    const result = await sendOtpViaMsg91(config, '+919876543210')
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(result).toEqual({ success: true, requestId: 'req_ok' })
+  })
+})
+
 describe('sendOtpViaMsg91', () => {
   let fetchMock: ReturnType<typeof vi.fn>
 

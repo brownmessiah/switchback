@@ -22,7 +22,15 @@ export interface Msg91Config {
 
 export type SendOtpResult =
   | { success: true; requestId: string }
-  | { success: false; reason: 'rate_limited' | 'upstream_error' | 'invalid_response' | 'network_error' }
+  | {
+      success: false
+      reason:
+        | 'rate_limited'
+        | 'upstream_error'
+        | 'invalid_response'
+        | 'network_error'
+        | 'not_configured'
+    }
 
 const SEND_URL = 'https://control.msg91.com/api/v5/otp'
 const VERIFY_URL = 'https://control.msg91.com/api/v5/otp/verify'
@@ -37,8 +45,21 @@ export async function sendOtpViaMsg91(
   config: Msg91Config,
   phoneNumber: string,
 ): Promise<SendOtpResult> {
-  if (!config.authKey) {
+  // Nothing configured at all — local development. Keep the bypass so the
+  // flow is exercisable without an MSG91 account.
+  if (!config.authKey && !config.senderId && !config.templateId) {
     return { success: true, requestId: 'dev-bypass' }
+  }
+
+  // PARTIALLY configured. MSG91's send-OTP API requires template_id, and for
+  // Indian numbers that template must be DLT-registered (TRAI); an empty one
+  // returns error 211 and reaches us as an opaque upstream failure.
+  //
+  // This half-configured state is the NORMAL one during setup — the auth key
+  // arrives well before DLT approval — so failing loudly here is what stops a
+  // missing template being mistaken for a flaky provider.
+  if (!config.authKey || !config.senderId || !config.templateId) {
+    return { success: false, reason: 'not_configured' }
   }
 
   const mobile = normalizePhone(phoneNumber)

@@ -23,7 +23,10 @@ async function seedAdmin(db: TestDB): Promise<string> {
   return adminId
 }
 
-async function seedVendor(db: TestDB): Promise<string> {
+async function seedVendor(
+  db: TestDB,
+  overrides: { applicationStatus?: 'pending' | 'approved' | 'rejected' } = {},
+): Promise<string> {
   const vendorId = 'vendor_exp_1'
   await db.insert(users).values({ id: vendorId, email: 'vendor-exp@test.com' })
   await db.insert(vendorProfiles).values({
@@ -32,6 +35,9 @@ async function seedVendor(db: TestDB): Promise<string> {
     slug: 'river-rafting-co',
     kycTier: 'identity',
     commissionRate: '20.00',
+    // The default case is a Vendor the admin has accepted — publishing is
+    // only reachable for them at all.
+    applicationStatus: overrides.applicationStatus ?? 'approved',
   })
   return vendorId
 }
@@ -119,6 +125,42 @@ describe('Admin experience moderation actions', () => {
         previousStatus: 'pending_review',
         newStatus: 'published',
       })
+    })
+
+    // The application decision gates going live. Publishing a listing for a
+    // Vendor nobody has accepted (or one who was rejected) would put an
+    // unvetted operator on the public site through the side door.
+    it('refuses to publish for a Vendor whose application is still pending', async () => {
+      const adminId = await seedAdmin(db)
+      const vendorId = await seedVendor(db, { applicationStatus: 'pending' })
+      const expId = await seedExperience(db, vendorId, { status: 'pending_review' })
+
+      const result = await executeApproveExperience(db, adminId, { experienceId: expId })
+
+      expect(result.ok).toBe(false)
+      expect(!result.ok && result.error).toMatch(/approved|application/i)
+
+      const [exp] = await db
+        .select({ status: experiences.status })
+        .from(experiences)
+        .where(eq(experiences.id, expId))
+      expect(exp?.status).toBe('pending_review')
+    })
+
+    it('refuses to publish for a Vendor whose application was rejected', async () => {
+      const adminId = await seedAdmin(db)
+      const vendorId = await seedVendor(db, { applicationStatus: 'rejected' })
+      const expId = await seedExperience(db, vendorId, { status: 'pending_review' })
+
+      const result = await executeApproveExperience(db, adminId, { experienceId: expId })
+
+      expect(result.ok).toBe(false)
+
+      const [exp] = await db
+        .select({ status: experiences.status })
+        .from(experiences)
+        .where(eq(experiences.id, expId))
+      expect(exp?.status).toBe('pending_review')
     })
 
     it('rejects approval of non-pending_review experience (draft)', async () => {

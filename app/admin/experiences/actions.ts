@@ -7,6 +7,7 @@ import { z } from 'zod'
 
 import { db as prodDb } from '@/db/client'
 import { experiences } from '@/db/schema/experiences'
+import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { auth } from '@/lib/auth'
 import { hasAdminPermission } from '@/lib/auth/permissions'
 import { writeAuditLog } from '@/lib/audit/write'
@@ -76,6 +77,24 @@ export async function executeApproveExperience(
     return {
       ok: false,
       error: `Cannot approve: experience must be in pending_review status (current: ${exp.status}).`,
+    }
+  }
+
+  // The Vendor's application decision gates going live (ADR-0007 amended).
+  // Publishing here for a Vendor nobody has accepted — or one who was
+  // rejected — would put an unvetted operator on the public site through the
+  // side door, bypassing the accept/reject workflow entirely.
+  const [vendor] = await db
+    .select({ applicationStatus: vendorProfiles.applicationStatus })
+    .from(vendorProfiles)
+    .innerJoin(experiences, eq(experiences.vendorUserId, vendorProfiles.userId))
+    .where(eq(experiences.id, experienceId))
+    .limit(1)
+
+  if (vendor?.applicationStatus !== 'approved') {
+    return {
+      ok: false,
+      error: `Cannot publish: this Vendor's application is ${vendor?.applicationStatus ?? 'missing'}. Approve the Vendor before publishing their listings.`,
     }
   }
 

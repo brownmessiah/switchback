@@ -141,4 +141,31 @@ describe('VendorsTable (A3)', () => {
     render(<VendorsTable rows={[]} />)
     expect(screen.getAllByText(/No vendors/i).length).toBeGreaterThan(0)
   })
+
+  // The admin's accept/reject decision is the thing they came to this screen
+  // to act on, so it belongs in the list — otherwise finding who is waiting
+  // means opening every Vendor in turn.
+  describe('application decision column', () => {
+    it('shows which vendors are awaiting a decision', () => {
+      const { container } = render(<VendorsTable rows={ROWS} />)
+      const row = within(table(container))
+        .getByText('River Adventures')
+        .closest('tr') as HTMLElement
+      expect(within(row).getByText(/Awaiting decision/i)).toBeInTheDocument()
+    })
+
+    it('distinguishes approved from rejected', () => {
+      const rows: VendorsTableRow[] = [
+        { ...ROWS[0]!, userId: 'v_ok', businessName: 'Approved Co', applicationStatus: 'approved' },
+        { ...ROWS[0]!, userId: 'v_no', businessName: 'Rejected Co', applicationStatus: 'rejected' },
+      ]
+      const { container } = render(<VendorsTable rows={rows} />)
+      const grid = within(table(container))
+      const approvedRow = grid.getByText('Approved Co').closest('tr') as HTMLElement
+      const rejectedRow = grid.getByText('Rejected Co').closest('tr') as HTMLElement
+
+      expect(within(approvedRow).getByText(/^Approved$/i)).toBeInTheDocument()
+      expect(within(rejectedRow).getByText(/^Rejected$/i)).toBeInTheDocument()
+    })
+  })
 })

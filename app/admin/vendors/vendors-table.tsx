@@ -29,12 +29,32 @@ export interface VendorsTableRow {
   businessName: string
   slug: string
   kycTier: string
+  /**
+   * The admin's accept/reject decision. Distinct from `kycTier`: the tier is
+   * how much has been verified, this is whether the Vendor may go live.
+   * Optional so older callers keep compiling; absent reads as 'pending'.
+   */
+  applicationStatus?: 'pending' | 'approved' | 'rejected'
   commissionRate: string | number
   responseTimeSlaScore: string | number
   suspended: boolean
   createdAt: Date | string
   userName: string | null
   userEmail: string | null
+}
+
+/**
+ * Decision badge presentation. "Awaiting decision" rather than "Pending" so an
+ * admin scanning the list reads it as a task assigned to them, not as a state
+ * the Vendor is responsible for.
+ */
+const APPLICATION_BADGE: Record<
+  'pending' | 'approved' | 'rejected',
+  { label: string; variant: 'warning' | 'success' | 'destructive' }
+> = {
+  pending: { label: 'Awaiting decision', variant: 'warning' },
+  approved: { label: 'Approved', variant: 'success' },
+  rejected: { label: 'Rejected', variant: 'destructive' },
 }
 
 function formatDate(date: Date | string): string {
@@ -66,6 +86,14 @@ const COLUMNS: ResponsiveTableColumn<VendorsTableRow>[] = [
         {v.userEmail ?? v.userName ?? '—'}
       </span>
     ),
+  },
+  {
+    key: 'application',
+    header: 'Application',
+    cell: (v) => {
+      const decision = APPLICATION_BADGE[v.applicationStatus ?? 'pending']
+      return <Badge variant={decision.variant}>{decision.label}</Badge>
+    },
   },
   {
     key: 'kyc',

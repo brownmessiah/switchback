@@ -44,6 +44,26 @@ export const vendorTaxpayerTypeEnum = pgEnum('vendor_taxpayer_type', [
 ])
 
 /**
+ * The admin's decision on a Vendor's application to sell (amends ADR-0007).
+ *
+ * A SEPARATE axis from `kycTier`, on purpose:
+ *   - kycTier            = verification LEVEL; drives the ADR-0007 tier caps.
+ *   - applicationStatus  = the admin's DECISION; gates whether the Vendor's
+ *                          listings may go live at all.
+ *
+ * A Vendor may always draft and submit Experiences for review — ADR-0007's
+ * Tier-2 gate requires at least one submitted Experience before approval is
+ * even possible — but nothing is published until this reads 'approved'.
+ * Rejection returns queued Experiences to draft; the Vendor can fix the stated
+ * problem and re-apply.
+ */
+export const vendorApplicationStatusEnum = pgEnum('vendor_application_status', [
+  'pending',
+  'approved',
+  'rejected',
+])
+
+/**
  * Vendor-role data per ADR-0006 + ADR-0007 + ADR-0008 + ADR-0016.
  * FK to users.id; cascade on delete.
  *
@@ -58,6 +78,19 @@ export const vendorProfiles = pgTable('vendor_profiles', {
   businessName: text('business_name').notNull(),
   slug: text('slug').notNull().unique(),
   about: text('about'),
+
+  // ADR-0007 (amended) — the admin's accept/reject decision. Gates publishing;
+  // orthogonal to kycTier, which gates the tier caps.
+  applicationStatus: vendorApplicationStatusEnum('application_status')
+    .default('pending')
+    .notNull(),
+  /** Admin's stated reason on rejection — shown to the Vendor so they can fix it. */
+  applicationDecisionReason: text('application_decision_reason'),
+  applicationDecidedAt: timestamp('application_decided_at', { withTimezone: true }),
+  /** ON DELETE SET NULL — removing the deciding admin must not remove the Vendor. */
+  applicationDecidedBy: text('application_decided_by').references(() => users.id, {
+    onDelete: 'set null',
+  }),
 
   // ADR-0007 — KYC state.
   kycTier: kycTierEnum('kyc_tier').default('phone').notNull(),
@@ -106,7 +139,11 @@ export const vendorProfiles = pgTable('vendor_profiles', {
   closureReason: text('closure_reason'),
 
   ...timestamps,
-}, (t) => [index('vendor_profiles_by_closed_at').on(t.closedAt)])
+}, (t) => [
+  index('vendor_profiles_by_closed_at').on(t.closedAt),
+  // The admin queue reads "who is waiting on a decision".
+  index('vendor_profiles_by_application_status').on(t.applicationStatus),
+])
 
 export type VendorProfile = typeof vendorProfiles.$inferSelect
 export type NewVendorProfile = typeof vendorProfiles.$inferInsert

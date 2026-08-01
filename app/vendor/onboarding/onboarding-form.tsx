@@ -321,12 +321,19 @@ export function OnboardingForm({ userId: _userId }: OnboardingFormProps) {
               </p>
             </div>
 
-            <div className="rounded-lg border border-dashed p-6 text-center">
+            <div className="space-y-2 rounded-lg border border-dashed p-6">
+              <p className="text-sm font-medium">Documents come next</p>
               <p className="text-sm text-muted-foreground">
-                Aadhaar verification and document upload will be available when
-                external services are connected. Until then, our team verifies
-                you manually after you create your profile — you keep full access
-                to draft listings in the meantime.
+                Once your profile exists you can upload your government ID, a selfie
+                holding it, and your PAN card from{' '}
+                <span className="font-medium text-foreground">
+                  Settings → Verification documents
+                </span>
+                . Our team reviews them manually and approves your account.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                You can draft listings straight away — they go live as soon as
+                you&apos;re approved.
               </p>
             </div>
 

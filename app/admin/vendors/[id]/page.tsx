@@ -17,6 +17,7 @@ import { auditLogs } from '@/db/schema/audit-logs'
 import { bookings, experiences, users, vendorProfiles } from '@/db/schema'
 import { auth } from '@/lib/auth'
 import { requirePermission } from '@/lib/auth/permissions'
+import { listKycDocumentsForVendor } from '@/lib/vendor/kyc-documents'
 
 import { AdminStatusBadge } from '../../_components/admin-status-badge'
 import { CommissionRateForm } from './commission-rate-form'
@@ -33,6 +34,13 @@ const TIER_LABEL: Record<string, string> = {
   phone: 'Phone tier',
   identity: 'Identity verified Vendor',
   business: 'Business verified Vendor',
+}
+
+const KYC_DOC_LABEL: Record<string, string> = {
+  government_id: 'Government ID',
+  selfie: 'Selfie holding ID',
+  pan_card: 'PAN card',
+  business_proof: 'Business proof',
 }
 
 export default async function AdminVendorDetailPage({
@@ -130,6 +138,8 @@ export default async function AdminVendorDetailPage({
         .catch(() => []),
     ])
 
+  const kycDocuments = await listKycDocumentsForVendor(db, vendorUserId)
+
   const listingCount = listingCountResult[0]?.value ?? 0
   const bookingCount = bookingCountResult[0]?.value ?? 0
   const totalRevenue = totalRevenueResult[0]?.value ?? '0'
@@ -219,6 +229,41 @@ export default async function AdminVendorDetailPage({
                 verifiedAt={vendorRow.videoCallVerifiedAt}
               />
             </div>
+          </section>
+
+          {/* ADR-0007 interim path: the documents the Vendor actually uploaded.
+              Each link goes through the admin-gated route, which re-checks the
+              'vendors' permission and mints a short-lived signed URL — the
+              documents are never publicly reachable. */}
+          <section className="space-y-3" aria-label="KYC documents">
+            <h2 className="font-heading text-base font-semibold">Uploaded documents</h2>
+            {kycDocuments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                This Vendor has not uploaded any verification documents yet.
+              </p>
+            ) : (
+              <ul data-testid="vendor-kyc-documents" className="divide-y rounded-[var(--radius-card)] border">
+                {kycDocuments.map((doc) => (
+                  <li key={doc.id} className="flex items-center justify-between gap-4 px-4 py-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">{KYC_DOC_LABEL[doc.kind] ?? doc.kind}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {doc.originalFilename ?? doc.storageKey} ·{' '}
+                        {Math.max(1, Math.round(doc.sizeBytes / 1024))} KB
+                      </p>
+                    </div>
+                    <a
+                      className="shrink-0 text-sm font-medium underline underline-offset-4"
+                      href={`/api/admin/kyc-document?key=${encodeURIComponent(doc.storageKey)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      View
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
 
           {/* Business Information */}

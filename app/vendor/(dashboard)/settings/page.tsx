@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm'
 import { db } from '@/db/client'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
 import { getActingVendorContext } from '@/lib/vendor/acting-context'
+import { listKycDocumentsForVendor } from '@/lib/vendor/kyc-documents'
 
 import { BusinessDetailsForm } from './business-details-form'
 import {
@@ -10,7 +11,9 @@ import {
   getVendorClosureEligibility,
 } from './close-account-core'
 import { CloseAccountDangerZone } from './close-account-danger-zone'
+import { ApplicationStatusCard } from './application-status-card'
 import { KycDisplay } from './kyc-display'
+import { KycDocumentsCard } from './kyc-documents-card'
 import { PayoutMethodForm } from './payout-method-form'
 import { SettingsAnchorNav } from './settings-anchor-nav'
 
@@ -42,6 +45,8 @@ export default async function VendorSettingsPage() {
   if (!vendor) {
     return null // Layout guard should have redirected
   }
+
+  const kycDocuments = await listKycDocumentsForVendor(db, vendorUserId)
 
   const payoutDest =
     vendor.payoutDestination as Record<string, string> | null
@@ -97,6 +102,27 @@ export default async function VendorSettingsPage() {
               initialPayoutDestination={payoutDest}
               payoutDestinationChangedAt={vendor.payoutDestinationChangedAt}
             />
+          </section>
+
+          <section
+            id="application"
+            className="scroll-mt-[calc(var(--header-offset,4rem)+1rem)]"
+          >
+            {/* The Vendor's side of the admin accept/reject decision. Without
+                this a rejected Vendor is never told — the decision lives only
+                in audit_logs, which they cannot see. */}
+            <ApplicationStatusCard
+              status={vendor.applicationStatus}
+              reason={vendor.applicationDecisionReason}
+              decidedAt={vendor.applicationDecidedAt}
+            />
+          </section>
+
+          <section
+            id="documents"
+            className="scroll-mt-[calc(var(--header-offset,4rem)+1rem)]"
+          >
+            <KycDocumentsCard documents={kycDocuments} />
           </section>
 
           <section

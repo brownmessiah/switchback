@@ -22,6 +22,7 @@ import { getHeroImage } from '@/lib/images'
 
 import { resolvePostAuthPath } from './actions'
 import { GoogleSignInButton } from './google-sign-in-button'
+import { PhoneOtpForm } from './phone-otp-form'
 
 type Mode = 'signin' | 'signup'
 type Step = 'email' | 'credentials'
@@ -41,6 +42,9 @@ export function SignInForm({ nextPath }: SignInFormProps = {}) {
 
   const [mode, setMode] = useState<Mode>('signin')
   const [step, setStep] = useState<Step>('email')
+  // Phone is a first-class method, not a fallback: ADR-0007 Tier 1 is defined
+  // as "MSG91 OTP confirmed at signup". It both signs in and signs up.
+  const [method, setMethod] = useState<'email' | 'phone'>('email')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
@@ -160,6 +164,20 @@ export function SignInForm({ nextPath }: SignInFormProps = {}) {
           </p>
         </div>
 
+        {method === 'phone' ? (
+          <div className="space-y-3">
+            <PhoneOtpForm nextPath={nextPath} />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="w-full"
+              onClick={() => setMethod('email')}
+            >
+              Use email instead
+            </Button>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* The email field (stable input#email[type=email]) is always
               rendered — its value feeds the real auth call. On step 2 it stays
@@ -287,12 +305,26 @@ export function SignInForm({ nextPath }: SignInFormProps = {}) {
             )}
           </p>
         </form>
+        )}
 
         <Separator />
 
-        {/* Google OAuth was configured server-side but had no entry point at
-            all, so email + password was in practice the only way in. */}
-        <GoogleSignInButton nextPath={nextPath} />
+        {method === 'email' && (
+          <div className="space-y-3">
+            {/* Google OAuth was configured server-side but had no entry point
+                at all, so email + password was in practice the only way in. */}
+            <GoogleSignInButton nextPath={nextPath} />
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => setMethod('phone')}
+            >
+              Continue with phone
+            </Button>
+          </div>
+        )}
 
         <Separator />
 

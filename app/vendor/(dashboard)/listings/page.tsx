@@ -21,6 +21,7 @@ import { getActingVendorContext } from '@/lib/vendor/acting-context'
 import { computeListingCompleteness } from '@/lib/vendor/listing-completeness'
 
 import { CompletenessRing } from './completeness-ring'
+import { SubmitForReviewButton } from './submit-for-review-button'
 import { ListingsControls } from './listings-controls'
 import {
   LISTING_SORTS,
@@ -234,6 +235,20 @@ export default async function VendorListingsPage({
           percent={listing.completeness.percent}
           filled={listing.completeness.filled}
           total={listing.completeness.total}
+        />
+      ),
+    },
+    {
+      // A draft goes nowhere until it is submitted — this is the only route
+      // from a Vendor's listing into the admin moderation queue, and from
+      // there onto the public site.
+      key: 'submit',
+      header: 'Review',
+      cell: (listing) => (
+        <SubmitForReviewButton
+          experienceId={listing.id}
+          status={listing.status}
+          completenessPercent={listing.completeness.percent}
         />
       ),
     },

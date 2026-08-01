@@ -21,6 +21,7 @@ import { authClient } from '@/lib/auth/client'
 import { getHeroImage } from '@/lib/images'
 
 import { resolvePostAuthPath } from './actions'
+import { GoogleSignInButton } from './google-sign-in-button'
 
 type Mode = 'signin' | 'signup'
 type Step = 'email' | 'credentials'
@@ -286,6 +287,12 @@ export function SignInForm({ nextPath }: SignInFormProps = {}) {
             )}
           </p>
         </form>
+
+        <Separator />
+
+        {/* Google OAuth was configured server-side but had no entry point at
+            all, so email + password was in practice the only way in. */}
+        <GoogleSignInButton nextPath={nextPath} />
 
         <Separator />
 

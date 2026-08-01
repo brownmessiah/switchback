@@ -109,6 +109,31 @@ describe('vendor email notifications', () => {
     expect(sent[0]?.text).toMatch(/PAN does not match the submitted name\./)
   })
 
+  it('sends nothing to a phone-signup placeholder address', async () => {
+    // Phone-only accounts carry an RFC 2606 `.invalid` placeholder. Mail to it
+    // can only bounce, and bounces damage the sending domain's reputation —
+    // which would degrade real transactional email for everyone.
+    await seedVendor(db, 'v1', '919876543210@phone.invalid')
+    const { sender, sent } = recordingSender()
+
+    await notifyVendorApplicationReceived(db, sender, 'v1')
+
+    expect(sent).toHaveLength(0)
+  })
+
+  it('still emails a phone-signup vendor once they add a real address', async () => {
+    await seedVendor(db, 'v1', 'realvendor@example.test')
+    const { sender, sent } = recordingSender()
+
+    await notifyVendorKycDecision(db, sender, 'v1', {
+      decision: 'approved',
+      tier: 'identity',
+      publishedCount: 1,
+    })
+
+    expect(sent).toHaveLength(1)
+  })
+
   it('sends nothing when the Vendor has no email address', async () => {
     await seedVendor(db, 'v1', null)
     const { sender, sent } = recordingSender()

@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm'
 
 import { users } from '@/db/schema/users'
 import { vendorProfiles } from '@/db/schema/vendor-profiles'
+import { isPlaceholderEmail } from '@/lib/auth/phone-identity'
 import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
 import {
@@ -41,6 +42,12 @@ async function loadRecipient(
     .limit(1)
 
   if (!row?.email) return null
+
+  // Phone-only signups carry an RFC 2606 `.invalid` placeholder. Mail to it can
+  // only bounce, and bounces damage the sending domain's reputation — which
+  // degrades real transactional email for every user. Treat it as "no address".
+  if (isPlaceholderEmail(row.email)) return null
+
   return { email: row.email, businessName: row.businessName }
 }
 

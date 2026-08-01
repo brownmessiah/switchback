@@ -8,6 +8,11 @@ import { accounts, sessions, users, verifications } from '@/db/schema'
 import { env } from '@/lib/env'
 
 import { sendOtpViaMsg91, verifyOtpViaMsg91, type Msg91Config } from './msg91-provider'
+import {
+  isValidPhoneNumber,
+  tempEmailForPhone,
+  tempNameForPhone,
+} from './phone-identity'
 
 const msg91Config: Msg91Config = {
   authKey: env.MSG91_AUTH_KEY ?? '',
@@ -70,6 +75,25 @@ export const auth = betterAuth({
       otpLength: 6,
       expiresIn: 300,
       requireVerification: true,
+      // Reject a malformed number BEFORE it reaches MSG91. Without a country
+      // code the SMS cannot be routed, so an unvalidated send is spend on a
+      // message nobody receives.
+      phoneNumberValidator: (phone) => isValidPhoneNumber(phone),
+      /**
+       * Phone is a first-class SIGNUP method, not only a verification step on
+       * an existing account (ADR-0007 Tier 1 is defined as "MSG91 OTP
+       * confirmed at signup", which was previously true of nobody — the only
+       * signup path was email + password).
+       *
+       * better-auth requires an email on every user, so a phone-only account
+       * gets a placeholder on the RFC 2606 reserved `.invalid` domain. It is
+       * unregistrable and never resolves, and `isPlaceholderEmail` gates every
+       * send so we never bounce mail at it.
+       */
+      signUpOnVerification: {
+        getTempEmail: tempEmailForPhone,
+        getTempName: tempNameForPhone,
+      },
     }),
     nextCookies(),
   ],

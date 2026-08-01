@@ -38,6 +38,11 @@ const schema = z.object({
 
   // ===== Email (M2) =====
   RESEND_API_KEY: z.string().optional(),
+  /**
+   * Envelope sender for transactional email. Must be on a domain verified
+   * with Resend (SPF/DKIM) or delivery is rejected.
+   */
+  EMAIL_FROM: z.string().optional(),
 
   // ===== Maps =====
   MAPBOX_TOKEN: z.string().optional(),
@@ -70,6 +75,13 @@ const schema = z.object({
   GCS_BUCKET: z.string().optional(),
   /** Force a backend: 'gcs' (prod) or 'local' (dev/test). Defaults to GCS when GCS_BUCKET is set. */
   STORAGE_BACKEND: z.enum(['gcs', 'local']).optional(),
+  /**
+   * PRIVATE bucket for KYC documents. Has NO public IAM binding — objects are
+   * served only via short-lived signed URLs. Kept separate from GCS_BUCKET on
+   * purpose: that bucket grants `allUsers: objectViewer`, so identity
+   * documents must never land there.
+   */
+  GCS_KYC_BUCKET: z.string().optional(),
 })
 
 export type Env = z.infer<typeof schema>

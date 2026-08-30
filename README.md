@@ -204,3 +204,26 @@ This is a solo build with Claude as the implementing engineer. The user (Shivam)
 - ADRs in `docs/adr/` capture load-bearing decisions
 - Per-milestone plans in `docs/plans/` capture implementation strategy
 - TDD discipline + code review by `everything-claude-code:code-reviewer` and `everything-claude-code:security-reviewer` agents on every major commit
+
+---
+
+## License
+
+Copyright (C) 2026 Shivam Chauhan
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along
+with this program. If not, see <https://www.gnu.org/licenses/>.
+
+Because this is network server software, the AGPL's section 13 applies: if you
+run a modified version and let users interact with it over a network, you must
+offer those users the corresponding source of your modified version. The full
+text is in [LICENSE](./LICENSE).

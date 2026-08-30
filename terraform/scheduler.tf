@@ -4,7 +4,7 @@
 # (the secret value never enters tf state), so headers are lifecycle-ignored.
 
 resource "google_service_account" "scheduler" {
-  account_id   = "outvers-scheduler"
+  account_id   = "${var.resource_prefix}-scheduler"
   display_name = "Cloud Scheduler → cron invoker"
 }
 

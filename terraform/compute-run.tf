@@ -23,7 +23,7 @@ locals {
 
 # ---- Public web service ----------------------------------------------------
 resource "google_cloud_run_v2_service" "web" {
-  name                = "outvers-web"
+  name                = "${var.resource_prefix}-web"
   location            = var.region
   deletion_protection = false
   ingress             = "INGRESS_TRAFFIC_ALL"
@@ -118,7 +118,7 @@ resource "google_cloud_run_v2_service_iam_member" "web_public" {
 
 # ---- Private cron service (OIDC-only; invoker bound in scheduler.tf) --------
 resource "google_cloud_run_v2_service" "cron" {
-  name                = "outvers-cron"
+  name                = "${var.resource_prefix}-cron"
   location            = var.region
   deletion_protection = false
   ingress             = "INGRESS_TRAFFIC_ALL"
@@ -197,7 +197,7 @@ resource "google_cloud_run_v2_service" "cron" {
 
 # ---- Migrate Cloud Run Job (alternate entrypoint, in-VPC) -------------------
 resource "google_cloud_run_v2_job" "migrate" {
-  name                = "outvers-migrate"
+  name                = "${var.resource_prefix}-migrate"
   location            = var.region
   deletion_protection = false
 

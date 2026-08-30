@@ -66,7 +66,7 @@
         },
         "bookingSupport": {
           "title": "آسان بکنگ مدد",
-          "body": "بکنگ سے پہلے یا بعد میں کوئی سوال؟ support@outvers.com پر ہماری ٹیم سے رابطہ کریں اور ہم اسے حل کرنے میں آپ کی مدد کریں گے۔"
+          "body": "بکنگ سے پہلے یا بعد میں کوئی سوال؟ {supportEmail} پر ہماری ٹیم سے رابطہ کریں اور ہم اسے حل کرنے میں آپ کی مدد کریں گے۔"
         },
         "instantConfirmation": {
           "title": "فوری تصدیق",
@@ -332,7 +332,7 @@
       "refundBalance": "ریفنڈ بیلنس",
       "refundHint": "نقد یا اگلی بکنگ میں استعمال کریں",
       "cashoutOption": "5–7 کاروباری دنوں میں اپنے اصل ادائیگی کے طریقے پر نقد نکالیں، یا اگلی بکنگ پر استعمال کریں۔",
-      "outversCredit": "Switchback کریڈٹ",
+      "switchbackCredit": "Switchback کریڈٹ",
       "creditHint": "پروموشنل کریڈٹ — کسی بھی بکنگ پر استعمال کریں",
       "creditExpiry": "{date} کو ختم ہوگا",
       "viewWallet": "والیٹ دیکھیں"
@@ -994,7 +994,7 @@
     "questions": {
       "heading": "ابھی سوالات ہیں؟",
       "body": "{email} پر ای میل کریں یا کسی بھی بکنگ پر اِن-ایپ چیٹ استعمال کریں — پالیسی ونڈو کے اندر دائر تنازعات 48 گھنٹوں میں حل ہوتے ہیں۔",
-      "emailAddress": "support@outvers.com"
+      "emailAddress": "{supportEmail}"
     }
   },
   "Nav": {
@@ -1145,7 +1145,7 @@
     "contact": {
       "heading": "حفاظت کے بارے میں سوالات؟",
       "body": "{email} پر ای میل کریں، ہماری ٹیم مدد کرے گی — پالیسی ونڈو کے اندر دائر تنازعات کو 48 گھنٹوں میں حل کرنے کا ہمارا ہدف ہے۔",
-      "emailAddress": "support@outvers.com"
+      "emailAddress": "{supportEmail}"
     }
   },
   "AboutPage": {
@@ -1180,7 +1180,7 @@
     "contact": {
       "heading": "رابطہ کریں",
       "body": "{email} پر ہم سے رابطہ کریں۔ اگر آپ ایڈونچر تجربات چلاتے ہیں اور انہیں فہرست میں شامل کرنا چاہتے ہیں، تو وینڈر آن بورڈنگ سے شروع کریں۔",
-      "emailAddress": "support@outvers.com",
+      "emailAddress": "{supportEmail}",
       "vendorCta": "اپنا تجربہ فہرست میں شامل کریں"
     }
   },
@@ -1197,7 +1197,7 @@
       "description": "Customers سب سے زیادہ جو سوالات پوچھتے ہیں ان کے جوابات — بکنگ، ادائیگی، رقم کی واپسی، آپ کا Wallet، Vendor کی تصدیق، اور Switchback پر حفاظت کے بارے میں۔"
     },
     "faq": {
-      "whatIsOutvers": {
+      "whatIsSwitchback": {
         "question": "Switchback کیا ہے؟",
         "answer": "Switchback ایک بھارتی مہم جوئی-سرگرمی مارکیٹ پلیس ہے؛ یہاں آپ آزاد Vendors کے چلائے ہوئے Experiences — ریفٹنگ، پیراگلائیڈنگ، ٹریک وغیرہ — بک کرتے ہیں۔ ہر Vendor KYC-تصدیق شدہ ہوتا ہے، ہر Experience ایک واضح Cancellation policy دکھاتا ہے، اور جگہ ہونے پر ہی بک کرنے کے لیے slot کی دستیابی حقیقی وقت میں دکھائی جاتی ہے۔"
       },
@@ -1331,8 +1331,8 @@
     "title": "والیٹ",
     "subtitle": "آپ کا Switchback کریڈٹ اور ریفنڈ بیلنس، مکمل لین دین کی تاریخ کے ساتھ۔",
     "backToDashboard": "ڈیش بورڈ پر واپس جائیں",
-    "outversCredit": "Switchback کریڈٹ",
-    "outversCreditHint": "پروموشنل کریڈٹ — کسی بھی بکنگ پر استعمال کریں۔ کبھی نقد نہیں کیا جا سکتا۔",
+    "switchbackCredit": "Switchback کریڈٹ",
+    "switchbackCreditHint": "پروموشنل کریڈٹ — کسی بھی بکنگ پر استعمال کریں۔ کبھی نقد نہیں کیا جا سکتا۔",
     "refundBalance": "ریفنڈ بیلنس",
     "refundBalanceHint": "منسوخیوں اور ریفنڈ سے۔ اپنی اگلی بکنگ پر خرچ کریں، یا کیش آؤٹ کریں۔",
     "creditExpiry": "قریب ترین کریڈٹ {date} کو ختم ہوتا ہے",
@@ -1648,8 +1648,8 @@
     },
     "contact": {
       "heading": "رابطہ",
-      "body": "ان شرائط کے بارے میں سوالات؟ support@outvers.com پر ای میل کریں۔",
-      "email": "support@outvers.com"
+      "body": "ان شرائط کے بارے میں سوالات؟ {supportEmail} پر ای میل کریں۔",
+      "email": "{supportEmail}"
     }
   },
   "PrivacyPage": {
@@ -1691,8 +1691,8 @@
     },
     "contact": {
       "heading": "رابطہ",
-      "body": "رازداری کے سوالات یا درخواستیں؟ support@outvers.com پر ای میل کریں۔",
-      "email": "support@outvers.com"
+      "body": "رازداری کے سوالات یا درخواستیں؟ {supportEmail} پر ای میل کریں۔",
+      "email": "{supportEmail}"
     }
   },
   "RefundCancellationPage": {
@@ -1748,8 +1748,8 @@
     },
     "contact": {
       "heading": "سوالات",
-      "body": "ریفنڈ میں مدد درکار ہے؟ support@outvers.com پر ای میل کریں۔",
-      "email": "support@outvers.com"
+      "body": "ریفنڈ میں مدد درکار ہے؟ {supportEmail} پر ای میل کریں۔",
+      "email": "{supportEmail}"
     }
   },
   "VendorTermsPage": {
@@ -1794,8 +1794,8 @@
     },
     "contact": {
       "heading": "رابطہ",
-      "body": "وینڈر شرائط کے بارے میں سوالات؟ support@outvers.com پر ای میل کریں۔",
-      "email": "support@outvers.com"
+      "body": "وینڈر شرائط کے بارے میں سوالات؟ {supportEmail} پر ای میل کریں۔",
+      "email": "{supportEmail}"
     }
   },
   "HomeSearch": {

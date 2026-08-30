@@ -56,7 +56,7 @@
         },
         "bookingSupport": {
           "title": "Easy booking support",
-          "body": "Questions before or after you book? Reach our team at support@outvers.com and we will help you sort it out."
+          "body": "Questions before or after you book? Reach our team at {supportEmail} and we will help you sort it out."
         },
         "instantConfirmation": {
           "title": "Instant confirmation",
@@ -441,7 +441,7 @@
       "refundBalance": "Refund balance",
       "refundHint": "Cashable or usable on next booking",
       "cashoutOption": "Cash out to your original payment method in 5–7 working days, or spend it on your next booking.",
-      "outversCredit": "Switchback credit",
+      "switchbackCredit": "Switchback credit",
       "creditHint": "Promotional credit — use on any booking",
       "creditExpiry": "Expires {date}",
       "viewWallet": "View wallet"
@@ -1070,7 +1070,7 @@
     "questions": {
       "heading": "Still have questions?",
       "body": "Email {email} or use the in-app chat on any booking — disputes filed inside the policy window are resolved within 48 hours.",
-      "emailAddress": "support@outvers.com"
+      "emailAddress": "{supportEmail}"
     }
   },
   "SafetyPage": {
@@ -1117,7 +1117,7 @@
     "contact": {
       "heading": "Questions about safety?",
       "body": "Email {email} and our team will help — we aim to resolve disputes filed inside the policy window within 48 hours.",
-      "emailAddress": "support@outvers.com"
+      "emailAddress": "{supportEmail}"
     }
   },
   "AboutPage": {
@@ -1152,7 +1152,7 @@
     "contact": {
       "heading": "Get in touch",
       "body": "Reach us at {email}. If you operate adventure Experiences and want to list them, start with vendor onboarding.",
-      "emailAddress": "support@outvers.com",
+      "emailAddress": "{supportEmail}",
       "vendorCta": "List your experience"
     }
   },
@@ -1273,7 +1273,7 @@
       "description": "Answers to the questions Customers ask most — about booking, payments, refunds, your Wallet, Vendor verification, and safety on Switchback."
     },
     "faq": {
-      "whatIsOutvers": {
+      "whatIsSwitchback": {
         "question": "What is Switchback?",
         "answer": "Switchback is an Indian adventure-activity marketplace where you book Experiences — rafting, paragliding, treks and more — run by independent Vendors. Every Vendor is KYC-verified, every Experience shows a clear Cancellation policy, and slot availability is real-time so you only ever book a slot that still has room."
       },
@@ -1448,8 +1448,8 @@
     "title": "Wallet",
     "subtitle": "Your Switchback credit and refund balance, with a full transaction history.",
     "backToDashboard": "Back to dashboard",
-    "outversCredit": "Switchback credit",
-    "outversCreditHint": "Promotional credit — use on any booking. Never cashable.",
+    "switchbackCredit": "Switchback credit",
+    "switchbackCreditHint": "Promotional credit — use on any booking. Never cashable.",
     "refundBalance": "Refund balance",
     "refundBalanceHint": "From cancellations and refunds. Spend it on your next booking, or cash out.",
     "creditExpiry": "Soonest credit expires {date}",
@@ -1754,8 +1754,8 @@
     },
     "contact": {
       "heading": "Contact",
-      "body": "Questions about these terms? Email support@outvers.com.",
-      "email": "support@outvers.com"
+      "body": "Questions about these terms? Email {supportEmail}.",
+      "email": "{supportEmail}"
     }
   },
   "PrivacyPage": {
@@ -1797,8 +1797,8 @@
     },
     "contact": {
       "heading": "Contact",
-      "body": "Privacy questions or requests? Email support@outvers.com.",
-      "email": "support@outvers.com"
+      "body": "Privacy questions or requests? Email {supportEmail}.",
+      "email": "{supportEmail}"
     }
   },
   "RefundCancellationPage": {
@@ -1854,8 +1854,8 @@
     },
     "contact": {
       "heading": "Questions",
-      "body": "Need help with a refund? Email support@outvers.com.",
-      "email": "support@outvers.com"
+      "body": "Need help with a refund? Email {supportEmail}.",
+      "email": "{supportEmail}"
     }
   },
   "VendorTermsPage": {
@@ -1900,8 +1900,8 @@
     },
     "contact": {
       "heading": "Contact",
-      "body": "Questions about Vendor terms? Email support@outvers.com.",
-      "email": "support@outvers.com"
+      "body": "Questions about Vendor terms? Email {supportEmail}.",
+      "email": "{supportEmail}"
     }
   }
 }

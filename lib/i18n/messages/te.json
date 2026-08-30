@@ -66,7 +66,7 @@
         },
         "bookingSupport": {
           "title": "సులభమైన బుకింగ్ మద్దతు",
-          "body": "బుకింగ్‌కు ముందు లేదా తర్వాత ఏవైనా ప్రశ్నలు? support@outvers.com వద్ద మా బృందాన్ని సంప్రదించండి, మేము పరిష్కరించడంలో సహాయం చేస్తాము."
+          "body": "బుకింగ్‌కు ముందు లేదా తర్వాత ఏవైనా ప్రశ్నలు? {supportEmail} వద్ద మా బృందాన్ని సంప్రదించండి, మేము పరిష్కరించడంలో సహాయం చేస్తాము."
         },
         "instantConfirmation": {
           "title": "తక్షణ ధృవీకరణ",
@@ -332,7 +332,7 @@
       "refundBalance": "రీఫండ్ బ్యాలెన్స్",
       "refundHint": "నగదుగా లేదా తదుపరి బుకింగ్‌లో ఉపయోగించవచ్చు",
       "cashoutOption": "5–7 పని దినాల్లో మీ అసలు చెల్లింపు పద్ధతికి నగదు తీసుకోండి, లేదా తదుపరి బుకింగ్‌లో ఉపయోగించండి.",
-      "outversCredit": "Switchback క్రెడిట్",
+      "switchbackCredit": "Switchback క్రెడిట్",
       "creditHint": "ప్రచార క్రెడిట్ — ఏ బుకింగ్‌లోనైనా ఉపయోగించండి",
       "creditExpiry": "{date}న గడువు ముగుస్తుంది",
       "viewWallet": "వాలెట్ చూడండి"
@@ -994,7 +994,7 @@
     "questions": {
       "heading": "ఇంకా ప్రశ్నలు ఉన్నాయా?",
       "body": "{email} కు ఈమెయిల్ చేయండి లేదా ఏ బుకింగ్‌లోనైనా ఇన్-యాప్ చాట్ ఉపయోగించండి — పాలసీ విండోలో దాఖలు చేసిన వివాదాలు 48 గంటల్లో పరిష్కరించబడతాయి.",
-      "emailAddress": "support@outvers.com"
+      "emailAddress": "{supportEmail}"
     }
   },
   "Nav": {
@@ -1145,7 +1145,7 @@
     "contact": {
       "heading": "భద్రత గురించి ప్రశ్నలా?",
       "body": "{email} కు ఇమెయిల్ చేయండి, మా బృందం సహాయం చేస్తుంది — విధాన విండోలో దాఖలు చేసిన వివాదాలను 48 గంటల్లో పరిష్కరించడం మా లక్ష్యం.",
-      "emailAddress": "support@outvers.com"
+      "emailAddress": "{supportEmail}"
     }
   },
   "AboutPage": {
@@ -1180,7 +1180,7 @@
     "contact": {
       "heading": "సంప్రదించండి",
       "body": "{email} వద్ద మమ్మల్ని సంప్రదించండి. మీరు సాహస అనుభవాలను నడిపి వాటిని జాబితా చేయాలనుకుంటే, విక్రేత ఆన్‌బోర్డింగ్‌తో ప్రారంభించండి.",
-      "emailAddress": "support@outvers.com",
+      "emailAddress": "{supportEmail}",
       "vendorCta": "మీ అనుభవాన్ని జాబితా చేయండి"
     }
   },
@@ -1197,7 +1197,7 @@
       "description": "Customers ఎక్కువగా అడిగే ప్రశ్నలకు సమాధానాలు — బుకింగ్, చెల్లింపు, రీఫండ్, మీ Wallet, Vendor ధృవీకరణ, మరియు Switchback లో భద్రత గురించి."
     },
     "faq": {
-      "whatIsOutvers": {
+      "whatIsSwitchback": {
         "question": "Switchback అంటే ఏమిటి?",
         "answer": "Switchback అనేది ఒక భారతీయ సాహస-కార్యకలాప మార్కెట్‌ప్లేస్; ఇక్కడ మీరు స్వతంత్ర Vendors నడిపే Experiences — రాఫ్టింగ్, పారాగ్లైడింగ్, ట్రెక్‌లు మొదలైనవి — బుక్ చేస్తారు. ప్రతి Vendor KYC-ధృవీకరించబడినవారు, ప్రతి Experience స్పష్టమైన Cancellation policy ని చూపిస్తుంది, మరియు slot లభ్యత నిజ-సమయంలో ఉంటుంది కాబట్టి స్థలం ఉన్న slot ని మాత్రమే మీరు బుక్ చేస్తారు."
       },
@@ -1331,8 +1331,8 @@
     "title": "వాలెట్",
     "subtitle": "మీ Switchback క్రెడిట్ మరియు రీఫండ్ బ్యాలెన్స్, పూర్తి లావాదేవీల చరిత్రతో.",
     "backToDashboard": "డాష్‌బోర్డ్‌కు తిరిగి వెళ్లండి",
-    "outversCredit": "Switchback క్రెడిట్",
-    "outversCreditHint": "ప్రోమోషనల్ క్రెడిట్ — ఏ బుకింగ్‌లోనైనా వాడండి. ఎప్పుడూ నగదుగా మార్చలేరు.",
+    "switchbackCredit": "Switchback క్రెడిట్",
+    "switchbackCreditHint": "ప్రోమోషనల్ క్రెడిట్ — ఏ బుకింగ్‌లోనైనా వాడండి. ఎప్పుడూ నగదుగా మార్చలేరు.",
     "refundBalance": "రీఫండ్ బ్యాలెన్స్",
     "refundBalanceHint": "రద్దులు మరియు రీఫండ్‌ల నుండి. మీ తదుపరి బుకింగ్‌లో ఖర్చు చేయండి, లేదా క్యాష్ అవుట్ చేయండి.",
     "creditExpiry": "సమీప క్రెడిట్ {date}న గడువు ముగుస్తుంది",
@@ -1648,8 +1648,8 @@
     },
     "contact": {
       "heading": "సంప్రదింపు",
-      "body": "ఈ నిబంధనల గురించి ప్రశ్నలా? support@outvers.com కు ఇమెయిల్ చేయండి.",
-      "email": "support@outvers.com"
+      "body": "ఈ నిబంధనల గురించి ప్రశ్నలా? {supportEmail} కు ఇమెయిల్ చేయండి.",
+      "email": "{supportEmail}"
     }
   },
   "PrivacyPage": {
@@ -1691,8 +1691,8 @@
     },
     "contact": {
       "heading": "సంప్రదింపు",
-      "body": "గోప్యతా ప్రశ్నలు లేదా అభ్యర్థనలా? support@outvers.com కు ఇమెయిల్ చేయండి.",
-      "email": "support@outvers.com"
+      "body": "గోప్యతా ప్రశ్నలు లేదా అభ్యర్థనలా? {supportEmail} కు ఇమెయిల్ చేయండి.",
+      "email": "{supportEmail}"
     }
   },
   "RefundCancellationPage": {
@@ -1748,8 +1748,8 @@
     },
     "contact": {
       "heading": "ప్రశ్నలు",
-      "body": "రీఫండ్‌తో సహాయం కావాలా? support@outvers.com కు ఇమెయిల్ చేయండి.",
-      "email": "support@outvers.com"
+      "body": "రీఫండ్‌తో సహాయం కావాలా? {supportEmail} కు ఇమెయిల్ చేయండి.",
+      "email": "{supportEmail}"
     }
   },
   "VendorTermsPage": {
@@ -1794,8 +1794,8 @@
     },
     "contact": {
       "heading": "సంప్రదింపు",
-      "body": "విక్రేత నిబంధనల గురించి ప్రశ్నలా? support@outvers.com కు ఇమెయిల్ చేయండి.",
-      "email": "support@outvers.com"
+      "body": "విక్రేత నిబంధనల గురించి ప్రశ్నలా? {supportEmail} కు ఇమెయిల్ చేయండి.",
+      "email": "{supportEmail}"
     }
   },
   "HomeSearch": {

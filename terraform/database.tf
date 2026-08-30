@@ -3,7 +3,7 @@
 # stored straight in Secret Manager, so no DB secret ever lands in tf state.
 
 resource "google_sql_database_instance" "main" {
-  name                = "outvers-pg"
+  name                = "${var.resource_prefix}-pg"
   database_version    = "POSTGRES_16"
   region              = var.region
   deletion_protection = false # demo phase — allow teardown
@@ -42,6 +42,6 @@ resource "google_sql_database_instance" "main" {
 
 # Application database. pg_trgm is created by migration 0034 at first migrate.
 resource "google_sql_database" "app" {
-  name     = "outvers"
+  name     = var.resource_prefix
   instance = google_sql_database_instance.main.name
 }

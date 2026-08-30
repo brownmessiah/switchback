@@ -8,7 +8,7 @@ import { accounts } from './schema'
 import type { SeedDb } from './seed-extras'
 
 /** The shared demo password for the role accounts the owner signs in as. */
-export const DEMO_PASSWORD = 'OutversDemo!2026'
+export const DEMO_PASSWORD = 'SwitchbackDemo!2026'
 
 /** Seed user ids that get an email/password credential for the live demo. */
 const DEMO_LOGIN_USER_IDS = [

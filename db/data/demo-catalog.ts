@@ -58,18 +58,18 @@ export interface DemoListing {
 }
 
 export const DEMO_VENDORS: DemoVendor[] = [
-  { userId: "u_cat_ganga", email: "catalog+ganga@seed.outvers.dev", businessName: "Ganga Rapids Collective", slug: "ganga-rapids-collective", pan: "AAACG1212A", vpa: "gangarapids@upi" },
-  { userId: "u_cat_himair", email: "catalog+himair@seed.outvers.dev", businessName: "Himalayan Air Sports", slug: "himalayan-air-sports", pan: "AAACH1313B", vpa: "himair@upi" },
-  { userId: "u_cat_dhaula", email: "catalog+dhaula@seed.outvers.dev", businessName: "Dhauladhar Trails", slug: "dhauladhar-trails", pan: "AAACD1414C", vpa: "dhauladhar@upi" },
-  { userId: "u_cat_bluewater", email: "catalog+bluewater@seed.outvers.dev", businessName: "Blue Water Andaman", slug: "blue-water-andaman", pan: "AAACB1515D", vpa: "bluewater@upi" },
-  { userId: "u_cat_snowpeak", email: "catalog+snowpeak@seed.outvers.dev", businessName: "SnowPeak Auli", slug: "snowpeak-auli", pan: "AAACS1616E", vpa: "snowpeak@upi" },
-  { userId: "u_cat_ghats", email: "catalog+ghats@seed.outvers.dev", businessName: "Western Ghats Adventures", slug: "western-ghats-adventures", pan: "AAACW1717F", vpa: "westernghats@upi" },
-  { userId: "u_cat_zanskar", email: "catalog+zanskar@seed.outvers.dev", businessName: "Zanskar Expeditions", slug: "zanskar-expeditions", pan: "AAACZ1818G", vpa: "zanskarexp@upi" },
-  { userId: "u_cat_spitiwild", email: "catalog+spitiwild@seed.outvers.dev", businessName: "Spiti Wilderness", slug: "spiti-wilderness", pan: "AAACS1919H", vpa: "spitiwild@upi" },
-  { userId: "u_cat_goablue", email: "catalog+goablue@seed.outvers.dev", businessName: "Goa Blue Adventures", slug: "goa-blue-adventures", pan: "AAACG2020I", vpa: "goablue@upi" },
-  { userId: "u_cat_parvatipk", email: "catalog+parvatipk@seed.outvers.dev", businessName: "Parvati Peaks", slug: "parvati-peaks", pan: "AAACP2121J", vpa: "parvatipeaks@upi" },
-  { userId: "u_cat_highjump", email: "catalog+highjump@seed.outvers.dev", businessName: "High Altitude Jumps", slug: "high-altitude-jumps", pan: "AAACH2222K", vpa: "highjump@upi" },
-  { userId: "u_cat_trailblaze", email: "catalog+trailblaze@seed.outvers.dev", businessName: "TrailBlaze Outdoors", slug: "trailblaze-outdoors", pan: "AAACT2323L", vpa: "trailblaze@upi" },
+  { userId: "u_cat_ganga", email: "catalog+ganga@seed.switchback.dev", businessName: "Ganga Rapids Collective", slug: "ganga-rapids-collective", pan: "AAACG1212A", vpa: "gangarapids@upi" },
+  { userId: "u_cat_himair", email: "catalog+himair@seed.switchback.dev", businessName: "Himalayan Air Sports", slug: "himalayan-air-sports", pan: "AAACH1313B", vpa: "himair@upi" },
+  { userId: "u_cat_dhaula", email: "catalog+dhaula@seed.switchback.dev", businessName: "Dhauladhar Trails", slug: "dhauladhar-trails", pan: "AAACD1414C", vpa: "dhauladhar@upi" },
+  { userId: "u_cat_bluewater", email: "catalog+bluewater@seed.switchback.dev", businessName: "Blue Water Andaman", slug: "blue-water-andaman", pan: "AAACB1515D", vpa: "bluewater@upi" },
+  { userId: "u_cat_snowpeak", email: "catalog+snowpeak@seed.switchback.dev", businessName: "SnowPeak Auli", slug: "snowpeak-auli", pan: "AAACS1616E", vpa: "snowpeak@upi" },
+  { userId: "u_cat_ghats", email: "catalog+ghats@seed.switchback.dev", businessName: "Western Ghats Adventures", slug: "western-ghats-adventures", pan: "AAACW1717F", vpa: "westernghats@upi" },
+  { userId: "u_cat_zanskar", email: "catalog+zanskar@seed.switchback.dev", businessName: "Zanskar Expeditions", slug: "zanskar-expeditions", pan: "AAACZ1818G", vpa: "zanskarexp@upi" },
+  { userId: "u_cat_spitiwild", email: "catalog+spitiwild@seed.switchback.dev", businessName: "Spiti Wilderness", slug: "spiti-wilderness", pan: "AAACS1919H", vpa: "spitiwild@upi" },
+  { userId: "u_cat_goablue", email: "catalog+goablue@seed.switchback.dev", businessName: "Goa Blue Adventures", slug: "goa-blue-adventures", pan: "AAACG2020I", vpa: "goablue@upi" },
+  { userId: "u_cat_parvatipk", email: "catalog+parvatipk@seed.switchback.dev", businessName: "Parvati Peaks", slug: "parvati-peaks", pan: "AAACP2121J", vpa: "parvatipeaks@upi" },
+  { userId: "u_cat_highjump", email: "catalog+highjump@seed.switchback.dev", businessName: "High Altitude Jumps", slug: "high-altitude-jumps", pan: "AAACH2222K", vpa: "highjump@upi" },
+  { userId: "u_cat_trailblaze", email: "catalog+trailblaze@seed.switchback.dev", businessName: "TrailBlaze Outdoors", slug: "trailblaze-outdoors", pan: "AAACT2323L", vpa: "trailblaze@upi" },
 ]
 
 export const DEMO_LISTINGS: DemoListing[] = [

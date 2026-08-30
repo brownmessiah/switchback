@@ -5,7 +5,7 @@
  * Drives the REAL settings page → payout-method form → `updatePayoutMethodAction`
  * Server Action → `executeUpdatePayoutMethod` core → the deterministic Razorpay X
  * demo stub (RAZORPAY_TEST_MODE=true), then asserts the persisted side-effects in
- * outvers_e2e:
+ * switchback_e2e:
  *   - vendor_profiles.razorpay_contact_id is cached (a `cont_demo_*` id), and
  *   - a vendor_fund_accounts row exists for `destinationFingerprint({ vpa })`
  *     with a coolingOffUntil ~7 days out.

@@ -70,7 +70,7 @@ test.describe('Vendor Team & Roles', () => {
 
     // Scope ALL field assertions to the Add-User dialog. `getByLabel('Email')`
     // is too broad page-wide — it also matches the footer newsletter input and
-    // the support@outvers.com mailto link — so every field locator below is
+    // the support@switchback.com mailto link — so every field locator below is
     // anchored to the modal's `role="dialog"`.
     const modal = page.getByRole('dialog')
     await expect(modal).toBeVisible()

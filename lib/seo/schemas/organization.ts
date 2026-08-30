@@ -15,7 +15,7 @@ export interface OrganizationArgs {
   url: string
   /** Optional real logo asset URL. Omitted when no brand logo is published. */
   logo?: string
-  /** Optional customer-support email (e.g. support@outvers.com). */
+  /** Optional customer-support email (e.g. support@switchback.com). */
   contactEmail?: string
   /** Optional real social-profile URLs. Empty / undefined → omitted (D0). */
   sameAs?: string[]

@@ -2,7 +2,7 @@
 
 > ## Handoff notes for the next Claude Code session
 >
-> **What this is:** A ground-up rebuild of the Switchback travel-app currently at `/Users/aishwaryechauhan/Personal/travel-app/` (built on Hercules + React 19 + Convex). This folder (`/Users/aishwaryechauhan/Personal/outvers-next/`) is where the new app lives. The old folder stays untouched as reference.
+> **What this is:** A ground-up rebuild of the Switchback travel-app currently at `/Users/aishwaryechauhan/Personal/travel-app/` (built on Hercules + React 19 + Convex). This folder (`/Users/aishwaryechauhan/Personal/switchback-next/`) is where the new app lives. The old folder stays untouched as reference.
 >
 > **Where to start:** Read this file end-to-end, then `CONTEXT.md` for domain language, then `docs/adr/` (16 ADRs covering load-bearing decisions), then `RESEARCH.md` for competitive context. Begin with **M1 — Foundation** below.
 >
@@ -11,8 +11,8 @@
 > **Reference the legacy app for parity work:** When porting a module, read the matching file in `/Users/aishwaryechauhan/Personal/travel-app/convex/<module>.ts` for the existing logic and `/Users/aishwaryechauhan/Personal/travel-app/src/pages/<area>/` for UI patterns. The legacy app's Convex schema (`/Users/aishwaryechauhan/Personal/travel-app/convex/schema.ts`) is the authoritative source for domain shape — translate it to Drizzle, don't rewrite the domain.
 >
 > **Open items the user needs to confirm before serious implementation** (defaulted but flag if blocked):
-> - Folder name: defaulted `outvers-next/` — confirm or rename
-> - Domain: keep `outvers.onhercules.app` or move to custom domain at launch
+> - Folder name: defaulted `switchback-next/` — confirm or rename
+> - Domain: keep `switchback.onhercules.app` or move to custom domain at launch
 > - Team size + start date (drives 6-month timeline realism)
 > - Aadhaar API account: transfer from current app or fresh application
 > - Bokun / FareHarbor: who initiates commercial conversations
@@ -23,7 +23,7 @@
 
 ## Context
 
-The current app at `/Users/aishwaryechauhan/Personal/travel-app/` is **Switchback**, an Indian adventure-activity marketplace (rafting, paragliding, scuba, trekking, etc.) built on **Hercules** (a Vite plugin + auth SDK over React 19 + Convex). It runs at `outvers.onhercules.app`. The codebase is functional but has accumulated:
+The current app at `/Users/aishwaryechauhan/Personal/travel-app/` is **Switchback**, an Indian adventure-activity marketplace (rafting, paragliding, scuba, trekking, etc.) built on **Hercules** (a Vite plugin + auth SDK over React 19 + Convex). It runs at `switchback.onhercules.app`. The codebase is functional but has accumulated:
 
 - **Vendor lock-in** on Hercules (auth + Vite plugin + AI gateway) AND on Convex (DB + functions, hosted-only)
 - **Bloated modules** (`convex/admin.ts` is 38KB, `convex/seed.ts` is 29KB)
@@ -44,7 +44,7 @@ This plan was informed by parallel competitive research on (1) Indian incumbents
 | Form factor | Responsive web only (no native) |
 | Stack | Next.js 15 (App Router) + TypeScript + Tailwind v4 + shadcn/ui |
 | DB / ORM | Postgres + Drizzle ORM |
-| Folder | `/Users/aishwaryechauhan/Personal/outvers-next/` (this folder) |
+| Folder | `/Users/aishwaryechauhan/Personal/switchback-next/` (this folder) |
 | Scope | Full parity + Indian moat + Trust & safety + Content/community + Vendor channel ingestion + Full AI suite |
 | Auth | `better-auth` + MSG91 (OTP/WhatsApp) + Google OAuth |
 | Real-time | Pusher Channels |
@@ -73,7 +73,7 @@ This plan was informed by parallel competitive research on (1) Indian incumbents
 ### Folder layout
 
 ```
-outvers-next/
+switchback-next/
 ├── app/                      # Next.js App Router
 │   ├── (marketing)/          # Public SEO-heavy routes (RSC)
 │   │   ├── page.tsx          # Home
@@ -375,7 +375,7 @@ Given the scope (full parity + 4 new-capability buckets), this is realistically 
 1. **Confirm the open items with the user** (folder name, domain, team size, Aadhaar account, Bokun outreach owner). Default and proceed if they say "use your defaults."
 2. **Initialize Next.js 15 in this folder:**
    ```bash
-   cd /Users/aishwaryechauhan/Personal/outvers-next
+   cd /Users/aishwaryechauhan/Personal/switchback-next
    pnpm create next-app@latest . --typescript --app --tailwind --eslint --src-dir=false --import-alias="@/*" --turbopack
    ```
 3. **Add core deps:** `pnpm add drizzle-orm postgres better-auth @upstash/redis pusher pusher-js meilisearch razorpay openai ai @ai-sdk/openai resend react-email zod`. Dev: `pnpm add -D drizzle-kit vitest @playwright/test @types/node tsx`

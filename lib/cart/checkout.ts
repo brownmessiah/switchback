@@ -72,7 +72,7 @@ export interface CartCheckoutSuccess {
   razorpayRemainderRupees: number
   bookingIds: string[]
   walletApplied: {
-    outversCreditAppliedRupees: number
+    switchbackCreditAppliedRupees: number
     refundBalanceAppliedRupees: number
   }
   /** Set when the post-commit Razorpay order creation failed (retryable). */
@@ -247,7 +247,7 @@ export async function executeCartCheckout(
           orderId: order!.id,
           bookingIds,
           amountTotalRupees,
-          outversCreditAppliedRupees: wallet.outversCreditAppliedRupees,
+          switchbackCreditAppliedRupees: wallet.switchbackCreditAppliedRupees,
           refundBalanceAppliedRupees: wallet.refundBalanceAppliedRupees,
           razorpayRemainderRupees: wallet.razorpayRemainderRupees,
         },
@@ -299,7 +299,7 @@ export async function executeCartCheckout(
       razorpayRemainderRupees: txResult.wallet.razorpayRemainderRupees,
       bookingIds: txResult.bookingIds,
       walletApplied: {
-        outversCreditAppliedRupees: txResult.wallet.outversCreditAppliedRupees,
+        switchbackCreditAppliedRupees: txResult.wallet.switchbackCreditAppliedRupees,
         refundBalanceAppliedRupees: txResult.wallet.refundBalanceAppliedRupees,
       },
       ...(paymentSetupFailed ? { paymentSetupFailed: true } : {}),

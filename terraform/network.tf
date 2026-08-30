@@ -21,7 +21,7 @@
 # them until Google confirms the "not ready" state is cleared.
 
 resource "google_compute_network" "vpc" {
-  name                    = "outvers-vpc"
+  name                    = "${var.resource_prefix}-vpc"
   auto_create_subnetworks = false
 }
 
@@ -29,7 +29,7 @@ resource "google_compute_network" "vpc" {
 # ADR's /28 — Cloud Run Direct VPC egress needs far more headroom; /28 fails the
 # deploy health check with "no sufficient IP addresses").
 resource "google_compute_subnetwork" "main" {
-  name                     = "outvers-subnet"
+  name                     = "${var.resource_prefix}-subnet"
   ip_cidr_range            = "10.10.0.0/24"
   region                   = var.region
   network                  = google_compute_network.vpc.id
@@ -39,7 +39,7 @@ resource "google_compute_subnetwork" "main" {
 # Private Services Access — reserved range + VPC peering so Cloud SQL gets a
 # private IP (no public IP anywhere on the data tier).
 resource "google_compute_global_address" "private_ip_range" {
-  name          = "outvers-psa-range"
+  name          = "${var.resource_prefix}-psa-range"
   purpose       = "VPC_PEERING"
   address_type  = "INTERNAL"
   prefix_length = 16
@@ -57,14 +57,14 @@ resource "google_service_networking_connection" "private_vpc" {
 # ---------------------------------------------------------------------------
 
 resource "google_compute_network" "vpc_v2" {
-  name                    = "outvers-vpc-v2"
+  name                    = "${var.resource_prefix}-vpc-v2"
   auto_create_subnetworks = false
 }
 
 # Same /24 rationale as the original subnet: Direct VPC egress reserves /28
 # blocks and holds them after scale-down, so a /28 subnet fails to deploy.
 resource "google_compute_subnetwork" "main_v2" {
-  name                     = "outvers-subnet-v2"
+  name                     = "${var.resource_prefix}-subnet-v2"
   ip_cidr_range            = "10.11.0.0/24"
   region                   = var.region
   network                  = google_compute_network.vpc_v2.id
@@ -74,7 +74,7 @@ resource "google_compute_subnetwork" "main_v2" {
 # PSA range for the v2 network. 10.150.0.0/16 — deliberately disjoint from the
 # original 10.140.0.0/16 so both can coexist while the old VPC is being repaired.
 resource "google_compute_global_address" "private_ip_range_v2" {
-  name          = "outvers-psa-range-v2"
+  name          = "${var.resource_prefix}-psa-range-v2"
   purpose       = "VPC_PEERING"
   address_type  = "INTERNAL"
   prefix_length = 16

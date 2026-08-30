@@ -26,8 +26,8 @@ describe('support ticket actions', () => {
     teardown = setup.teardown
 
     await db.insert(users).values([
-      { id: 'u_admin', email: 'admin@outvers.com', name: 'Admin' },
-      { id: 'u_admin2', email: 'admin2@outvers.com', name: 'Admin 2' },
+      { id: 'u_admin', email: 'admin@switchback.com', name: 'Admin' },
+      { id: 'u_admin2', email: 'admin2@switchback.com', name: 'Admin 2' },
       { id: 'u_customer', email: 'customer@test.com', name: 'Customer' },
     ])
   })

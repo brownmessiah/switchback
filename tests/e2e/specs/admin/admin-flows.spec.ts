@@ -105,7 +105,7 @@ const SEED_IDENTITY_VENDOR_ID = 'u_seed_v_identity'
 // #24 refund-queue + payout-queue dedicated fixtures — must match db/seed.ts.
 const SEED_REFUND_QUEUE_CUSTOMER_ID = 'u_seed_customer_refundq'
 const SEED_PAYOUT_QUEUE_VENDOR_ID = 'u_seed_v_payout'
-const REFUND_QUEUE_CUSTOMER_EMAIL = 'customer-refundq@seed.outvers.dev'
+const REFUND_QUEUE_CUSTOMER_EMAIL = 'customer-refundq@seed.switchback.dev'
 
 // #28 permission-gate dedicated payout Vendor — must match db/seed.ts. Owns a
 // single completed pending-payout Booking touched by NO other admin spec, so
@@ -115,7 +115,7 @@ const SEED_PAYOUT_GATE_VENDOR_ID = 'u_seed_v_payout_gate'
 
 // #26 commission-tier scope-count + loyalty-grant fixtures — must match db/seed.ts.
 const SEED_LOYALTY_CUSTOMER_ID = 'u_seed_customer_loyalty'
-const SEED_LOYALTY_CUSTOMER_EMAIL = 'customer-loyalty@seed.outvers.dev'
+const SEED_LOYALTY_CUSTOMER_EMAIL = 'customer-loyalty@seed.switchback.dev'
 const SEED_COMMISSION_SCOPE_SLUG = 'commission-scope-fixture-bir-billing'
 // The fixed September-2026 window the commission-scope fixture Bookings sit in.
 // `*_FILL` are minute-precision strings for the datetime-local inputs (no
@@ -2437,11 +2437,11 @@ test.describe('Admin promo CRUD (#26)', () => {
 // Drives the manual loyalty grant Server Action (adminGrantCredit) FROM THE UI
 // and asserts the grant lands in the CORRECT wallet bucket per ADR-0004:
 //
-//   - OUTVERS CREDIT : a grant of Switchback credit creates an admin-source
-//                      wallet_transactions row in the outvers_credit bucket
+//   - SWITCHBACK CREDIT : a grant of Switchback credit creates an admin-source
+//                      wallet_transactions row in the switchback_credit bucket
 //                      (NOT refund_balance) WITH an expires_at 12–18 months out
 //                      (ADR-0004 — closed-loop promo credit expires), the
-//                      aggregate outvers_credit balance increments by the
+//                      aggregate switchback_credit balance increments by the
 //                      amount, the Refund balance is UNTOUCHED, and a
 //                      wallet.grant_credit audit row records the admin actor +
 //                      the expiry.
@@ -2451,13 +2451,13 @@ test.describe('Admin promo CRUD (#26)', () => {
 // The customer's wallet is cleared in a finally so the grant leaves no residue.
 // ---------------------------------------------------------------------------
 test.describe('Admin loyalty grant — Switchback credit bucket + expiry (#26)', () => {
-  test('grant Switchback credit → outvers_credit bucket WITH expiry, NOT Refund balance + audit', async ({
+  test('grant Switchback credit → switchback_credit bucket WITH expiry, NOT Refund balance + audit', async ({
     page,
   }) => {
     const GRANT_RUPEES = 750
-    const outversBefore = await getWalletBalanceRupees(
+    const switchbackBefore = await getWalletBalanceRupees(
       SEED_LOYALTY_CUSTOMER_ID,
-      'outvers_credit',
+      'switchback_credit',
     )
     const refundBefore = await getWalletBalanceRupees(
       SEED_LOYALTY_CUSTOMER_ID,
@@ -2472,7 +2472,7 @@ test.describe('Admin loyalty grant — Switchback credit bucket + expiry (#26)',
       // loyalty Customer.
       await page.locator('#userId').fill(SEED_LOYALTY_CUSTOMER_ID)
       await page.locator('#amountRupees').fill(String(GRANT_RUPEES))
-      await page.selectOption('#balanceType', 'outvers_credit')
+      await page.selectOption('#balanceType', 'switchback_credit')
       await page.locator('#reason').fill(`E2E goodwill loyalty grant ${Date.now()}`)
       await page.getByRole('button', { name: 'Grant Credit' }).click()
 
@@ -2495,14 +2495,14 @@ test.describe('Admin loyalty grant — Switchback credit bucket + expiry (#26)',
         timeout: 15_000,
       })
 
-      // ── Assert: an admin-source outvers_credit ledger row WITH expiry ────
-      const outversTxns = await getWalletTransactions(
+      // ── Assert: an admin-source switchback_credit ledger row WITH expiry ────
+      const switchbackTxns = await getWalletTransactions(
         SEED_LOYALTY_CUSTOMER_ID,
-        'outvers_credit',
+        'switchback_credit',
         'admin',
       )
-      expect(outversTxns.length, 'one admin Switchback-credit grant must exist').toBe(1)
-      const txn = outversTxns[0]
+      expect(switchbackTxns.length, 'one admin Switchback-credit grant must exist').toBe(1)
+      const txn = switchbackTxns[0]
       expect(txn.amountRupees).toBe(GRANT_RUPEES)
       // ── ADR-0004: Switchback credit MUST carry an expiry 12–18 months out ──
       expect(txn.expiresAt, 'Switchback credit grant must have an expiry (ADR-0004)').not.toBeNull()
@@ -2513,11 +2513,11 @@ test.describe('Admin loyalty grant — Switchback credit bucket + expiry (#26)',
       expect(monthsOut).toBeLessThanOrEqual(18.5)
 
       // ── Assert: the Switchback credit aggregate incremented by the amount ──
-      const outversAfter = await getWalletBalanceRupees(
+      const switchbackAfter = await getWalletBalanceRupees(
         SEED_LOYALTY_CUSTOMER_ID,
-        'outvers_credit',
+        'switchback_credit',
       )
-      expect(outversAfter).toBe(outversBefore + GRANT_RUPEES)
+      expect(switchbackAfter).toBe(switchbackBefore + GRANT_RUPEES)
 
       // ── Assert: the Refund balance bucket is UNTOUCHED ──────────────────
       const refundAfter = await getWalletBalanceRupees(
@@ -2538,7 +2538,7 @@ test.describe('Admin loyalty grant — Switchback credit bucket + expiry (#26)',
       expect(audit!.payload).toMatchObject({
         userId: SEED_LOYALTY_CUSTOMER_ID,
         amountRupees: GRANT_RUPEES,
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
         source: 'admin',
       })
       expect(audit!.payload.expiresAt, 'the audit must record the expiry').not.toBeNull()
@@ -3039,7 +3039,7 @@ test.describe('Admin sub-admin CRUD + audit (#28)', () => {
   // A dedicated, isolated seed User invited → edited → revoked across the three
   // serial tests. No other project references it, so the CRUD flow never races
   // a parallel spec and re-runs start from a known "not an admin" state.
-  const INVITEE_EMAIL = 'invite-target@seed.outvers.dev'
+  const INVITEE_EMAIL = 'invite-target@seed.switchback.dev'
   const INVITEE_USER_ID = 'u_seed_invite_target'
 
   test.afterAll(async () => {
@@ -3344,7 +3344,7 @@ test.describe('Admin CSV report export produces a valid CSV (#28)', () => {
       expect(line.split(',').length).toBe(headerCols)
     }
     // The seed admin's email appears in the export (real data, not a stub).
-    expect(body).toContain('admin@seed.outvers.dev')
+    expect(body).toContain('admin@seed.switchback.dev')
   })
 
   test('the CSV route rejects an unknown entity with 400', async ({ page }) => {
@@ -3713,7 +3713,7 @@ test.describe('Admin money confirm Dialog — keyboard/focus contract (#110)', (
   }) => {
     const balanceBefore = await getWalletBalanceRupees(
       SEED_LOYALTY_CUSTOMER_ID,
-      'outvers_credit',
+      'switchback_credit',
     )
 
     await page.goto('/admin/loyalty')
@@ -3724,7 +3724,7 @@ test.describe('Admin money confirm Dialog — keyboard/focus contract (#110)', (
     // button is the Dialog trigger.
     await page.locator('#userId').fill(SEED_LOYALTY_CUSTOMER_ID)
     await page.locator('#amountRupees').fill('500')
-    await page.selectOption('#balanceType', 'outvers_credit')
+    await page.selectOption('#balanceType', 'switchback_credit')
     await page.locator('#reason').fill(`#110 a11y focus probe ${Date.now()}`)
 
     const trigger = page
@@ -3788,7 +3788,7 @@ test.describe('Admin money confirm Dialog — keyboard/focus contract (#110)', (
     //    walk (open → Cancel-reachable → trap → Escape) granted nothing.
     const balanceAfter = await getWalletBalanceRupees(
       SEED_LOYALTY_CUSTOMER_ID,
-      'outvers_credit',
+      'switchback_credit',
     )
     expect(balanceAfter).toBe(balanceBefore)
   })

@@ -66,7 +66,7 @@
         },
         "bookingSupport": {
           "title": "ਸੌਖੀ ਬੁਕਿੰਗ ਸਹਾਇਤਾ",
-          "body": "ਬੁਕਿੰਗ ਤੋਂ ਪਹਿਲਾਂ ਜਾਂ ਬਾਅਦ ਕੋਈ ਸਵਾਲ? support@outvers.com ’ਤੇ ਸਾਡੀ ਟੀਮ ਨਾਲ ਸੰਪਰਕ ਕਰੋ ਅਤੇ ਅਸੀਂ ਇਸ ਨੂੰ ਹੱਲ ਕਰਨ ਵਿੱਚ ਮਦਦ ਕਰਾਂਗੇ।"
+          "body": "ਬੁਕਿੰਗ ਤੋਂ ਪਹਿਲਾਂ ਜਾਂ ਬਾਅਦ ਕੋਈ ਸਵਾਲ? {supportEmail} ’ਤੇ ਸਾਡੀ ਟੀਮ ਨਾਲ ਸੰਪਰਕ ਕਰੋ ਅਤੇ ਅਸੀਂ ਇਸ ਨੂੰ ਹੱਲ ਕਰਨ ਵਿੱਚ ਮਦਦ ਕਰਾਂਗੇ।"
         },
         "instantConfirmation": {
           "title": "ਤੁਰੰਤ ਪੁਸ਼ਟੀ",
@@ -332,7 +332,7 @@
       "refundBalance": "ਰਿਫੰਡ ਬੈਲੰਸ",
       "refundHint": "ਨਕਦ ਜਾਂ ਅਗਲੀ ਬੁਕਿੰਗ ਵਿੱਚ ਵਰਤੋ",
       "cashoutOption": "5–7 ਕੰਮਕਾਜੀ ਦਿਨਾਂ ਵਿੱਚ ਆਪਣੇ ਮੂਲ ਭੁਗਤਾਨ ਢੰਗ 'ਤੇ ਨਕਦ ਕਢਵਾਓ, ਜਾਂ ਅਗਲੀ ਬੁਕਿੰਗ 'ਤੇ ਵਰਤੋ।",
-      "outversCredit": "Switchback ਕ੍ਰੈਡਿਟ",
+      "switchbackCredit": "Switchback ਕ੍ਰੈਡਿਟ",
       "creditHint": "ਪ੍ਰਚਾਰ ਕ੍ਰੈਡਿਟ — ਕਿਸੇ ਵੀ ਬੁਕਿੰਗ 'ਤੇ ਵਰਤੋ",
       "creditExpiry": "{date} ਨੂੰ ਮਿਆਦ ਖਤਮ ਹੁੰਦੀ ਹੈ",
       "viewWallet": "ਵਾਲਿਟ ਵੇਖੋ"
@@ -994,7 +994,7 @@
     "questions": {
       "heading": "ਅਜੇ ਸਵਾਲ ਹਨ?",
       "body": "{email} 'ਤੇ ਈਮੇਲ ਕਰੋ ਜਾਂ ਕਿਸੇ ਵੀ ਬੁਕਿੰਗ 'ਤੇ ਇਨ-ਐਪ ਚੈਟ ਵਰਤੋ — ਨੀਤੀ ਵਿੰਡੋ ਅੰਦਰ ਦਾਇਰ ਕੀਤੇ ਵਿਵਾਦ 48 ਘੰਟਿਆਂ ਵਿੱਚ ਹੱਲ ਕੀਤੇ ਜਾਂਦੇ ਹਨ।",
-      "emailAddress": "support@outvers.com"
+      "emailAddress": "{supportEmail}"
     }
   },
   "Nav": {
@@ -1145,7 +1145,7 @@
     "contact": {
       "heading": "ਸੁਰੱਖਿਆ ਬਾਰੇ ਸਵਾਲ?",
       "body": "{email} ਉੱਤੇ ਈਮੇਲ ਕਰੋ, ਸਾਡੀ ਟੀਮ ਮਦਦ ਕਰੇਗੀ — ਨੀਤੀ ਵਿੰਡੋ ਅੰਦਰ ਦਾਇਰ ਵਿਵਾਦਾਂ ਨੂੰ 48 ਘੰਟਿਆਂ ਵਿੱਚ ਹੱਲ ਕਰਨ ਦਾ ਸਾਡਾ ਟੀਚਾ ਹੈ।",
-      "emailAddress": "support@outvers.com"
+      "emailAddress": "{supportEmail}"
     }
   },
   "AboutPage": {
@@ -1180,7 +1180,7 @@
     "contact": {
       "heading": "ਸੰਪਰਕ ਕਰੋ",
       "body": "{email} ਉੱਤੇ ਸਾਡੇ ਨਾਲ ਸੰਪਰਕ ਕਰੋ। ਜੇ ਤੁਸੀਂ ਸਾਹਸ ਅਨੁਭਵ ਚਲਾਉਂਦੇ ਹੋ ਅਤੇ ਉਨ੍ਹਾਂ ਨੂੰ ਸੂਚੀਬੱਧ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ, ਤਾਂ ਵਿਕਰੇਤਾ ਆਨਬੋਰਡਿੰਗ ਨਾਲ ਸ਼ੁਰੂ ਕਰੋ।",
-      "emailAddress": "support@outvers.com",
+      "emailAddress": "{supportEmail}",
       "vendorCta": "ਆਪਣਾ ਅਨੁਭਵ ਸੂਚੀਬੱਧ ਕਰੋ"
     }
   },
@@ -1197,7 +1197,7 @@
       "description": "Customers ਵੱਲੋਂ ਸਭ ਤੋਂ ਵੱਧ ਪੁੱਛੇ ਜਾਂਦੇ ਸਵਾਲਾਂ ਦੇ ਜਵਾਬ — ਬੁਕਿੰਗ, ਭੁਗਤਾਨ, ਰਿਫੰਡ, ਤੁਹਾਡਾ Wallet, Vendor ਤਸਦੀਕ, ਅਤੇ Switchback ਉੱਤੇ ਸੁਰੱਖਿਆ ਬਾਰੇ।"
     },
     "faq": {
-      "whatIsOutvers": {
+      "whatIsSwitchback": {
         "question": "Switchback ਕੀ ਹੈ?",
         "answer": "Switchback ਇੱਕ ਭਾਰਤੀ ਸਾਹਸ-ਗਤੀਵਿਧੀ ਮਾਰਕੀਟਪਲੇਸ ਹੈ; ਇੱਥੇ ਤੁਸੀਂ ਸੁਤੰਤਰ Vendors ਵੱਲੋਂ ਚਲਾਏ ਜਾਂਦੇ Experiences — ਰਾਫ਼ਟਿੰਗ, ਪੈਰਾਗਲਾਈਡਿੰਗ, ਟ੍ਰੈਕ ਆਦਿ — ਬੁੱਕ ਕਰਦੇ ਹੋ। ਹਰ Vendor KYC-ਤਸਦੀਕਸ਼ੁਦਾ ਹੁੰਦਾ ਹੈ, ਹਰ Experience ਇੱਕ ਸਪੱਸ਼ਟ Cancellation policy ਦਿਖਾਉਂਦਾ ਹੈ, ਅਤੇ ਜਗ੍ਹਾ ਹੋਣ ’ਤੇ ਹੀ ਬੁੱਕ ਕਰਨ ਲਈ slot ਉਪਲਬਧਤਾ ਰੀਅਲ-ਟਾਈਮ ਵਿੱਚ ਦਿਖਾਈ ਜਾਂਦੀ ਹੈ।"
       },
@@ -1331,8 +1331,8 @@
     "title": "ਵਾਲਿਟ",
     "subtitle": "ਤੁਹਾਡਾ Switchback ਕ੍ਰੈਡਿਟ ਅਤੇ ਰਿਫੰਡ ਬੈਲੇਂਸ, ਪੂਰੇ ਲੈਣ-ਦੇਣ ਇਤਿਹਾਸ ਨਾਲ।",
     "backToDashboard": "ਡੈਸ਼ਬੋਰਡ ਤੇ ਵਾਪਸ ਜਾਓ",
-    "outversCredit": "Switchback ਕ੍ਰੈਡਿਟ",
-    "outversCreditHint": "ਪ੍ਰਮੋਸ਼ਨਲ ਕ੍ਰੈਡਿਟ — ਕਿਸੇ ਵੀ ਬੁਕਿੰਗ ਤੇ ਵਰਤੋਂ। ਕਦੇ ਵੀ ਨਕਦ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ।",
+    "switchbackCredit": "Switchback ਕ੍ਰੈਡਿਟ",
+    "switchbackCreditHint": "ਪ੍ਰਮੋਸ਼ਨਲ ਕ੍ਰੈਡਿਟ — ਕਿਸੇ ਵੀ ਬੁਕਿੰਗ ਤੇ ਵਰਤੋਂ। ਕਦੇ ਵੀ ਨਕਦ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ।",
     "refundBalance": "ਰਿਫੰਡ ਬੈਲੇਂਸ",
     "refundBalanceHint": "ਰੱਦ ਕਰਨ ਅਤੇ ਰਿਫੰਡ ਤੋਂ। ਆਪਣੀ ਅਗਲੀ ਬੁਕਿੰਗ ਤੇ ਖਰਚ ਕਰੋ, ਜਾਂ ਕੈਸ਼ ਆਊਟ ਕਰੋ।",
     "creditExpiry": "ਸਭ ਤੋਂ ਨੇੜਲਾ ਕ੍ਰੈਡਿਟ {date} ਨੂੰ ਖਤਮ ਹੁੰਦਾ ਹੈ",
@@ -1648,8 +1648,8 @@
     },
     "contact": {
       "heading": "ਸੰਪਰਕ",
-      "body": "ਇਹਨਾਂ ਸ਼ਰਤਾਂ ਬਾਰੇ ਸਵਾਲ? support@outvers.com 'ਤੇ ਈਮੇਲ ਕਰੋ।",
-      "email": "support@outvers.com"
+      "body": "ਇਹਨਾਂ ਸ਼ਰਤਾਂ ਬਾਰੇ ਸਵਾਲ? {supportEmail} 'ਤੇ ਈਮੇਲ ਕਰੋ।",
+      "email": "{supportEmail}"
     }
   },
   "PrivacyPage": {
@@ -1691,8 +1691,8 @@
     },
     "contact": {
       "heading": "ਸੰਪਰਕ",
-      "body": "ਪਰਾਈਵੇਸੀ ਸਵਾਲ ਜਾਂ ਬੇਨਤੀਆਂ? support@outvers.com 'ਤੇ ਈਮੇਲ ਕਰੋ।",
-      "email": "support@outvers.com"
+      "body": "ਪਰਾਈਵੇਸੀ ਸਵਾਲ ਜਾਂ ਬੇਨਤੀਆਂ? {supportEmail} 'ਤੇ ਈਮੇਲ ਕਰੋ।",
+      "email": "{supportEmail}"
     }
   },
   "RefundCancellationPage": {
@@ -1748,8 +1748,8 @@
     },
     "contact": {
       "heading": "ਸਵਾਲ",
-      "body": "ਰਿਫੰਡ ਵਿੱਚ ਮਦਦ ਚਾਹੀਦੀ ਹੈ? support@outvers.com 'ਤੇ ਈਮੇਲ ਕਰੋ।",
-      "email": "support@outvers.com"
+      "body": "ਰਿਫੰਡ ਵਿੱਚ ਮਦਦ ਚਾਹੀਦੀ ਹੈ? {supportEmail} 'ਤੇ ਈਮੇਲ ਕਰੋ।",
+      "email": "{supportEmail}"
     }
   },
   "VendorTermsPage": {
@@ -1794,8 +1794,8 @@
     },
     "contact": {
       "heading": "ਸੰਪਰਕ",
-      "body": "Vendor ਸ਼ਰਤਾਂ ਬਾਰੇ ਸਵਾਲ? support@outvers.com 'ਤੇ ਈਮੇਲ ਕਰੋ।",
-      "email": "support@outvers.com"
+      "body": "Vendor ਸ਼ਰਤਾਂ ਬਾਰੇ ਸਵਾਲ? {supportEmail} 'ਤੇ ਈਮੇਲ ਕਰੋ।",
+      "email": "{supportEmail}"
     }
   },
   "HomeSearch": {

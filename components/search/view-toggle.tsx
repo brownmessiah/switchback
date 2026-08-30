@@ -19,7 +19,7 @@ interface ViewToggleProps {
 }
 
 /**
- * Grid/list results-layout toggle for /search (parity with outvers.com). The
+ * Grid/list results-layout toggle for /search (parity with switchback.com). The
  * view is URL state (`?view=list`) so it is shareable and SSR-rendered; grid is
  * the default and drops the param. `view` is a display-only param — it is NOT
  * part of `SearchExperiencesParams`, so it never affects the result set,

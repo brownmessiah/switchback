@@ -9,16 +9,16 @@ describe('itemList JSON-LD', () => {
       items: [
         {
           name: 'Grand Rafting Adventure',
-          url: 'https://outvers.com/experience/grand-rafting',
-          image: 'https://cdn.outvers.com/img/grand-rafting.jpg',
+          url: 'https://switchback.com/experience/grand-rafting',
+          image: 'https://cdn.switchback.com/img/grand-rafting.jpg',
           priceRupees: 1500,
           ratingValue: 4.7,
           ratingCount: 132,
         },
         {
           name: 'Easy Day Rafting',
-          url: 'https://outvers.com/experience/easy-rafting',
-          image: 'https://cdn.outvers.com/img/easy-rafting.jpg',
+          url: 'https://switchback.com/experience/easy-rafting',
+          image: 'https://cdn.switchback.com/img/easy-rafting.jpg',
           priceRupees: 800,
         },
       ],
@@ -33,8 +33,8 @@ describe('itemList JSON-LD', () => {
       item: {
         '@type': 'Product',
         name: 'Grand Rafting Adventure',
-        url: 'https://outvers.com/experience/grand-rafting',
-        image: 'https://cdn.outvers.com/img/grand-rafting.jpg',
+        url: 'https://switchback.com/experience/grand-rafting',
+        image: 'https://cdn.switchback.com/img/grand-rafting.jpg',
         offers: {
           '@type': 'Offer',
           price: '1500',

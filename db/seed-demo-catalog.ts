@@ -61,10 +61,10 @@ const ago = (n: number): Date => new Date(Date.now() - n * 86400 * 1000)
 
 /** Real customer names for the demo review authors. */
 const DEMO_PEOPLE: Array<{ id: string; name: string; email: string }> = [
-  { id: 'u_demo_cust_arjun', name: 'Arjun Reddy', email: 'demo+arjun@seed.outvers.dev' },
-  { id: 'u_demo_cust_sara', name: 'Sara Pinto', email: 'demo+sara@seed.outvers.dev' },
-  { id: 'u_demo_cust_neel', name: 'Neel Joshi', email: 'demo+neel@seed.outvers.dev' },
-  { id: 'u_demo_cust_tara', name: 'Tara Menon', email: 'demo+tara@seed.outvers.dev' },
+  { id: 'u_demo_cust_arjun', name: 'Arjun Reddy', email: 'demo+arjun@seed.switchback.dev' },
+  { id: 'u_demo_cust_sara', name: 'Sara Pinto', email: 'demo+sara@seed.switchback.dev' },
+  { id: 'u_demo_cust_neel', name: 'Neel Joshi', email: 'demo+neel@seed.switchback.dev' },
+  { id: 'u_demo_cust_tara', name: 'Tara Menon', email: 'demo+tara@seed.switchback.dev' },
 ]
 
 const DEMO_REVIEW_BANK: Array<{ rating: number; title: string; body: string; resp?: string }> = [

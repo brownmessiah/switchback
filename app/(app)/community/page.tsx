@@ -22,7 +22,7 @@ export default async function CommunityPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  // Public browse (parity with outvers.com Community): anyone can see open trip
+  // Public browse (parity with switchback.com Community): anyone can see open trip
   // groups; signing in is only required to CONVENE or JOIN one.
   const session = await auth.api.getSession({ headers: await headers() })
 

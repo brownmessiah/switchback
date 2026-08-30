@@ -37,7 +37,7 @@ describe('admin dispute resolution (ADR-0003)', () => {
     teardown = setup.teardown
 
     await db.insert(users).values([
-      { id: 'u_admin', email: 'admin@outvers.com', name: 'Admin User' },
+      { id: 'u_admin', email: 'admin@switchback.com', name: 'Admin User' },
       { id: 'u_vendor', email: 'vendor@test.com', name: 'Test Vendor' },
       { id: 'u_customer', email: 'customer@test.com', name: 'Test Customer' },
     ])

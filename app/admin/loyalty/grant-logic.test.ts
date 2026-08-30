@@ -47,16 +47,16 @@ describe('admin loyalty grant (executeGrantCredit)', () => {
   // ── computeGrantExpiry (ADR-0004) ─────────────────────────────────
 
   describe('computeGrantExpiry', () => {
-    it('returns a +12-month expiry for outvers_credit (ADR-0004)', () => {
+    it('returns a +12-month expiry for switchback_credit (ADR-0004)', () => {
       const issuedAt = new Date('2026-05-30T00:00:00.000Z')
-      const expiry = computeGrantExpiry('outvers_credit', issuedAt)
+      const expiry = computeGrantExpiry('switchback_credit', issuedAt)
       expect(expiry).toBeInstanceOf(Date)
       expect(expiry!.toISOString()).toBe('2027-05-30T00:00:00.000Z')
     })
 
     it('places the expiry inside the ADR-0004 12–18 month window', () => {
       const issuedAt = new Date('2026-05-30T00:00:00.000Z')
-      const expiry = computeGrantExpiry('outvers_credit', issuedAt)!
+      const expiry = computeGrantExpiry('switchback_credit', issuedAt)!
       const monthsOut =
         (expiry.getTime() - issuedAt.getTime()) / (1000 * 60 * 60 * 24 * 30)
       expect(monthsOut).toBeGreaterThanOrEqual(11.5)
@@ -71,24 +71,24 @@ describe('admin loyalty grant (executeGrantCredit)', () => {
 
   // ── Switchback-credit grant ──────────────────────────────────────────
 
-  describe('executeGrantCredit → outvers_credit', () => {
+  describe('executeGrantCredit → switchback_credit', () => {
     it('credits the Switchback-credit bucket WITH an expiry + audit row', async () => {
       const result = await executeGrantCredit(db, ADMIN_ID, {
         userId: CUSTOMER_ID,
         amountRupees: 500,
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
         reason: 'Goodwill gesture for delay',
       })
 
       expect(result.ok).toBe(true)
 
-      // The ledger row lands in the outvers_credit bucket WITH an expiry.
+      // The ledger row lands in the switchback_credit bucket WITH an expiry.
       const txns = await db
         .select()
         .from(walletTransactions)
         .where(eq(walletTransactions.userId, CUSTOMER_ID))
       expect(txns).toHaveLength(1)
-      expect(txns[0]!.balanceType).toBe('outvers_credit')
+      expect(txns[0]!.balanceType).toBe('switchback_credit')
       expect(Math.floor(Number(txns[0]!.amount))).toBe(500)
       expect(txns[0]!.source).toBe('admin')
       // ── The defect this test guards: Switchback credit MUST expire (ADR-0004).
@@ -100,12 +100,12 @@ describe('admin loyalty grant (executeGrantCredit)', () => {
       expect(monthsOut).toBeGreaterThanOrEqual(11.5)
       expect(monthsOut).toBeLessThanOrEqual(18.5)
 
-      // The aggregate balance lands in the SAME (outvers_credit) bucket.
+      // The aggregate balance lands in the SAME (switchback_credit) bucket.
       const [balance] = await db
         .select()
         .from(walletBalances)
         .where(eq(walletBalances.userId, CUSTOMER_ID))
-      expect(balance!.balanceType).toBe('outvers_credit')
+      expect(balance!.balanceType).toBe('switchback_credit')
       expect(Math.floor(Number(balance!.amount))).toBe(500)
 
       // wallet.grant_credit audit row with the admin as actor.
@@ -118,7 +118,7 @@ describe('admin loyalty grant (executeGrantCredit)', () => {
       expect(logs[0]!.payload).toMatchObject({
         userId: CUSTOMER_ID,
         amountRupees: 500,
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
         source: 'admin',
       })
       expect((logs[0]!.payload as Record<string, unknown>).expiresAt).not.toBeNull()
@@ -128,7 +128,7 @@ describe('admin loyalty grant (executeGrantCredit)', () => {
       await executeGrantCredit(db, ADMIN_ID, {
         userId: CUSTOMER_ID,
         amountRupees: 300,
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
         reason: 'loyalty reward',
       })
 
@@ -169,7 +169,7 @@ describe('admin loyalty grant (executeGrantCredit)', () => {
       const result = await executeGrantCredit(db, ADMIN_ID, {
         userId: CUSTOMER_ID,
         amountRupees: 0,
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
         reason: 'invalid',
       })
       expect(result.ok).toBe(false)
@@ -179,7 +179,7 @@ describe('admin loyalty grant (executeGrantCredit)', () => {
       const result = await executeGrantCredit(db, ADMIN_ID, {
         userId: CUSTOMER_ID,
         amountRupees: 100,
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
         reason: '',
       })
       expect(result.ok).toBe(false)

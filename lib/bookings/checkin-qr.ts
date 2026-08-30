@@ -34,7 +34,7 @@ export function checkInExpiryFor(slotEnd: Date): number {
 }
 
 export interface BuildCheckInDeepLinkArgs {
-  /** Absolute origin, e.g. `https://outvers.com` (trailing slash tolerated). */
+  /** Absolute origin, e.g. `https://switchback.com` (trailing slash tolerated). */
   origin: string
   bookingId: string
   /** The booking's slot end — drives the token expiry via {@link checkInExpiryFor}. */

@@ -19,7 +19,7 @@ interface SearchBoxProps {
 }
 
 /**
- * Prominent keyword search bar for /search (parity with outvers.com's hero
+ * Prominent keyword search bar for /search (parity with switchback.com's hero
  * search). Submitting navigates with the `q` searchParam merged into the live
  * query (so it composes with the facet rail) — same URL-state contract the
  * FacetForm uses. Empty/whitespace clears `q`. `{ scroll: false }` keeps the

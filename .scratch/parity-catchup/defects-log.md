@@ -47,9 +47,9 @@ prior-month bucket and the asserted current-month bucket is 0.
 **Found during:** issue 02 verification (`pnpm e2e --project=unauthenticated` in isolation).
 
 **Symptom:** `public-pages.spec.ts › region facet … ?region=goa yields only Goa experiences` fails:
-`region=goa returned a non-Goa result: /experience/outvers-xsurface-collection-beacon<ts>-goa-kayaking-<rnd>`.
+`region=goa returned a non-Goa result: /experience/switchback-xsurface-collection-beacon<ts>-goa-kayaking-<rnd>`.
 
-**Root cause:** `tests/e2e/global-setup.ts` → `resetDatabase()` drops/recreates the Postgres DB and reseeds, but **does not flush the Meilisearch `experiences` index** (it only waits for Meili health). The index is populated incrementally by admin-approve / cross-surface flows and **persists across runs**. A cross-surface "beacon" experience (region=`goa`, slug `outvers-xsurface-collection-beacon…`, which is NOT `goa-`-prefixed) from a prior run remains indexed; `?region=goa` returns it and the "every result slug starts with `goa-`" assertion fails. Only manifests when the index carries a leftover goa-region non-`goa-`-slug doc (run-order / prior-run dependent — passed in the issue 01 full run).
+**Root cause:** `tests/e2e/global-setup.ts` → `resetDatabase()` drops/recreates the Postgres DB and reseeds, but **does not flush the Meilisearch `experiences` index** (it only waits for Meili health). The index is populated incrementally by admin-approve / cross-surface flows and **persists across runs**. A cross-surface "beacon" experience (region=`goa`, slug `switchback-xsurface-collection-beacon…`, which is NOT `goa-`-prefixed) from a prior run remains indexed; `?region=goa` returns it and the "every result slug starts with `goa-`" assertion fails. Only manifests when the index carries a leftover goa-region non-`goa-`-slug doc (run-order / prior-run dependent — passed in the issue 01 full run).
 
 **Proof it is not catchup code:** the offending doc is a timestamped beacon from a prior run; issue 02 only **reads** `media_assets` and never writes Meilisearch. 42/43 unauthenticated tests passed (all rendered surfaces fine).
 

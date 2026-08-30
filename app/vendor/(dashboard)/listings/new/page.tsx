@@ -10,7 +10,7 @@ import {
 } from '../listing-form-stepper'
 import { createExperienceAction } from './actions'
 
-const DRAFT_KEY = 'outvers:vendor-listing-new-draft'
+const DRAFT_KEY = 'switchback:vendor-listing-new-draft'
 
 const INITIAL_VALUES: ListingFormValues = {
   title: '',

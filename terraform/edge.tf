@@ -32,12 +32,12 @@
 
 resource "google_compute_global_address" "lb_ip" {
   count = var.enable_lb ? 1 : 0
-  name  = "outvers-lb-ip"
+  name  = "${var.resource_prefix}-lb-ip"
 }
 
 resource "google_compute_region_network_endpoint_group" "web_neg" {
   count                 = var.enable_lb ? 1 : 0
-  name                  = "outvers-web-neg"
+  name                  = "${var.resource_prefix}-web-neg"
   network_endpoint_type = "SERVERLESS"
   region                = var.region
   cloud_run {
@@ -47,7 +47,7 @@ resource "google_compute_region_network_endpoint_group" "web_neg" {
 
 resource "google_compute_backend_service" "web" {
   count                 = var.enable_lb ? 1 : 0
-  name                  = "outvers-web-backend"
+  name                  = "${var.resource_prefix}-web-backend"
   load_balancing_scheme = "EXTERNAL_MANAGED"
   enable_cdn            = true
 
@@ -70,7 +70,7 @@ resource "google_compute_backend_service" "web" {
 
 resource "google_compute_url_map" "web" {
   count           = var.enable_lb ? 1 : 0
-  name            = "outvers-urlmap"
+  name            = "${var.resource_prefix}-urlmap"
   default_service = google_compute_backend_service.web[0].id
 }
 
@@ -81,7 +81,7 @@ resource "google_compute_managed_ssl_certificate" "web" {
   # outvers-cert-2 (ACTIVE since 2026-07-08), but state kept pointing at the dead
   # one — so a plan wanted to swap the live HTTPS proxy back onto a cert that can
   # never provision. Reconciled 2026-07-31 via state rm + import.
-  name = "outvers-cert-2"
+  name = "${var.resource_prefix}-cert-2"
   managed {
     domains = [var.domain, "www.${var.domain}"]
   }
@@ -96,14 +96,14 @@ resource "google_compute_managed_ssl_certificate" "web" {
 
 resource "google_compute_target_https_proxy" "web" {
   count            = var.enable_lb ? 1 : 0
-  name             = "outvers-https-proxy"
+  name             = "${var.resource_prefix}-https-proxy"
   url_map          = google_compute_url_map.web[0].id
   ssl_certificates = [google_compute_managed_ssl_certificate.web[0].id]
 }
 
 resource "google_compute_global_forwarding_rule" "https" {
   count                 = var.enable_lb ? 1 : 0
-  name                  = "outvers-https-fr"
+  name                  = "${var.resource_prefix}-https-fr"
   load_balancing_scheme = "EXTERNAL_MANAGED"
   target                = google_compute_target_https_proxy.web[0].id
   port_range            = "443"
@@ -113,7 +113,7 @@ resource "google_compute_global_forwarding_rule" "https" {
 # Port 80 → 301 to HTTPS.
 resource "google_compute_url_map" "http_redirect" {
   count = var.enable_lb ? 1 : 0
-  name  = "outvers-http-redirect"
+  name  = "${var.resource_prefix}-http-redirect"
   default_url_redirect {
     https_redirect         = true
     redirect_response_code = "MOVED_PERMANENTLY_DEFAULT"
@@ -123,13 +123,13 @@ resource "google_compute_url_map" "http_redirect" {
 
 resource "google_compute_target_http_proxy" "web" {
   count   = var.enable_lb ? 1 : 0
-  name    = "outvers-http-proxy"
+  name    = "${var.resource_prefix}-http-proxy"
   url_map = google_compute_url_map.http_redirect[0].id
 }
 
 resource "google_compute_global_forwarding_rule" "http" {
   count                 = var.enable_lb ? 1 : 0
-  name                  = "outvers-http-fr"
+  name                  = "${var.resource_prefix}-http-fr"
   load_balancing_scheme = "EXTERNAL_MANAGED"
   target                = google_compute_target_http_proxy.web[0].id
   port_range            = "80"

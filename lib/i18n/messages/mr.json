@@ -66,7 +66,7 @@
         },
         "bookingSupport": {
           "title": "सोपी बुकिंग मदत",
-          "body": "बुकिंगपूर्वी किंवा नंतर काही प्रश्न? support@outvers.com वर आमच्या टीमशी संपर्क साधा आणि आम्ही ते सोडवण्यास मदत करू."
+          "body": "बुकिंगपूर्वी किंवा नंतर काही प्रश्न? {supportEmail} वर आमच्या टीमशी संपर्क साधा आणि आम्ही ते सोडवण्यास मदत करू."
         },
         "instantConfirmation": {
           "title": "त्वरित पुष्टी",
@@ -332,7 +332,7 @@
       "refundBalance": "परतावा शिल्लक",
       "refundHint": "रोख किंवा पुढील बुकिंगमध्ये वापरा",
       "cashoutOption": "5–7 कामकाजाच्या दिवसांत तुमच्या मूळ पेमेंट पद्धतीत रोख काढा, किंवा पुढील बुकिंगवर वापरा.",
-      "outversCredit": "Switchback क्रेडिट",
+      "switchbackCredit": "Switchback क्रेडिट",
       "creditHint": "प्रचार क्रेडिट — कोणत्याही बुकिंगवर वापरा",
       "creditExpiry": "{date} रोजी कालबाह्य होते",
       "viewWallet": "वॉलेट पहा"
@@ -994,7 +994,7 @@
     "questions": {
       "heading": "अजून प्रश्न आहेत?",
       "body": "{email} वर ईमेल करा किंवा कोणत्याही बुकिंगवर इन-अॅप चॅट वापरा — धोरण कालावधीत दाखल केलेले विवाद 48 तासांत निराकरण होतात.",
-      "emailAddress": "support@outvers.com"
+      "emailAddress": "{supportEmail}"
     }
   },
   "Nav": {
@@ -1145,7 +1145,7 @@
     "contact": {
       "heading": "सुरक्षेबद्दल प्रश्न?",
       "body": "{email} वर ईमेल करा, आमची टीम मदत करेल — धोरण विंडोमध्ये दाखल केलेले वाद 48 तासांत सोडवण्याचे आमचे लक्ष्य आहे.",
-      "emailAddress": "support@outvers.com"
+      "emailAddress": "{supportEmail}"
     }
   },
   "AboutPage": {
@@ -1180,7 +1180,7 @@
     "contact": {
       "heading": "संपर्क साधा",
       "body": "{email} वर आमच्याशी संपर्क साधा. तुम्ही साहसी अनुभव चालवत असाल आणि ते सूचीबद्ध करू इच्छित असाल, तर विक्रेता ऑनबोर्डिंगपासून सुरुवात करा.",
-      "emailAddress": "support@outvers.com",
+      "emailAddress": "{supportEmail}",
       "vendorCta": "तुमचा अनुभव सूचीबद्ध करा"
     }
   },
@@ -1197,7 +1197,7 @@
       "description": "Customers सर्वाधिक विचारतात त्या प्रश्नांची उत्तरे — बुकिंग, पेमेंट, परतावा, तुमचे Wallet, Vendor पडताळणी, आणि Switchback वरील सुरक्षेबद्दल."
     },
     "faq": {
-      "whatIsOutvers": {
+      "whatIsSwitchback": {
         "question": "Switchback म्हणजे काय?",
         "answer": "Switchback हे एक भारतीय साहस-क्रियाकलाप मार्केटप्लेस आहे; येथे तुम्ही स्वतंत्र Vendors चालवत असलेले Experiences — राफ्टिंग, पॅराग्लायडिंग, ट्रेक इत्यादी — बुक करता. प्रत्येक Vendor KYC-पडताळलेला असतो, प्रत्येक Experience स्पष्ट Cancellation policy दाखवतो, आणि जागा असेल तेव्हाच बुक करता यावे म्हणून slot उपलब्धता रिअल-टाइममध्ये दाखवली जाते."
       },
@@ -1331,8 +1331,8 @@
     "title": "वॉलेट",
     "subtitle": "तुमचे Switchback क्रेडिट आणि परतावा शिल्लक, संपूर्ण व्यवहार इतिहासासह.",
     "backToDashboard": "डॅशबोर्डवर परत जा",
-    "outversCredit": "Switchback क्रेडिट",
-    "outversCreditHint": "जाहिरात क्रेडिट — कोणत्याही बुकिंगवर वापरा. कधीही रोख करता येत नाही.",
+    "switchbackCredit": "Switchback क्रेडिट",
+    "switchbackCreditHint": "जाहिरात क्रेडिट — कोणत्याही बुकिंगवर वापरा. कधीही रोख करता येत नाही.",
     "refundBalance": "परतावा शिल्लक",
     "refundBalanceHint": "रद्दीकरण आणि परताव्यांमधून. तुमच्या पुढील बुकिंगवर खर्च करा, किंवा कॅश आउट करा.",
     "creditExpiry": "सर्वात जवळचे क्रेडिट {date} रोजी संपते",
@@ -1648,8 +1648,8 @@
     },
     "contact": {
       "heading": "संपर्क",
-      "body": "या अटींबद्दल प्रश्न आहेत? support@outvers.com वर ईमेल करा.",
-      "email": "support@outvers.com"
+      "body": "या अटींबद्दल प्रश्न आहेत? {supportEmail} वर ईमेल करा.",
+      "email": "{supportEmail}"
     }
   },
   "PrivacyPage": {
@@ -1691,8 +1691,8 @@
     },
     "contact": {
       "heading": "संपर्क",
-      "body": "गोपनीयतेसंबंधी प्रश्न किंवा विनंत्या? support@outvers.com वर ईमेल करा.",
-      "email": "support@outvers.com"
+      "body": "गोपनीयतेसंबंधी प्रश्न किंवा विनंत्या? {supportEmail} वर ईमेल करा.",
+      "email": "{supportEmail}"
     }
   },
   "RefundCancellationPage": {
@@ -1748,8 +1748,8 @@
     },
     "contact": {
       "heading": "प्रश्न",
-      "body": "परताव्यासंबंधी मदत हवी आहे? support@outvers.com वर ईमेल करा.",
-      "email": "support@outvers.com"
+      "body": "परताव्यासंबंधी मदत हवी आहे? {supportEmail} वर ईमेल करा.",
+      "email": "{supportEmail}"
     }
   },
   "VendorTermsPage": {
@@ -1794,8 +1794,8 @@
     },
     "contact": {
       "heading": "संपर्क",
-      "body": "विक्रेता अटींबद्दल प्रश्न आहेत? support@outvers.com वर ईमेल करा.",
-      "email": "support@outvers.com"
+      "body": "विक्रेता अटींबद्दल प्रश्न आहेत? {supportEmail} वर ईमेल करा.",
+      "email": "{supportEmail}"
     }
   },
   "HomeSearch": {

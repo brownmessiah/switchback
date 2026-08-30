@@ -7,7 +7,7 @@ const AUTH_DIR = path.resolve(__dirname, 'tests/e2e/.auth')
 /**
  * The E2E database URL the webServer MUST run against (harness-bifurcation
  * fix, home-redesign issue 11 finding): global-setup resets/pushes/seeds
- * `outvers_e2e` (derived from .env.local's DATABASE_URL) and injects the
+ * `switchback_e2e` (derived from .env.local's DATABASE_URL) and injects the
  * .auth sessions THERE — but `pnpm dev` reads .env.local directly, so
  * without this override the app serves a DIFFERENT database and every
  * injected session is invalid. Derivation mirrors
@@ -15,7 +15,7 @@ const AUTH_DIR = path.resolve(__dirname, 'tests/e2e/.auth')
  */
 function e2eWebServerDatabaseUrl(): string | undefined {
   if (process.env.DATABASE_URL) {
-    return process.env.DATABASE_URL.replace(/\/[^/?]+(\?|$)/, '/outvers_e2e$1')
+    return process.env.DATABASE_URL.replace(/\/[^/?]+(\?|$)/, '/switchback_e2e$1')
   }
   try {
     const envFile = readFileSync(path.resolve(__dirname, '.env.local'), 'utf-8')
@@ -26,7 +26,7 @@ function e2eWebServerDatabaseUrl(): string | undefined {
     if (!line) return undefined
     return line
       .slice('DATABASE_URL='.length)
-      .replace(/\/[^/?]+(\?|$)/, '/outvers_e2e$1')
+      .replace(/\/[^/?]+(\?|$)/, '/switchback_e2e$1')
   } catch {
     return undefined
   }
@@ -63,12 +63,12 @@ export default defineConfig({
         // production build, so it must run against the dev server.
         command: 'pnpm dev',
         // The app under test must use the SAME DB global-setup seeds +
-        // injects sessions into (outvers_e2e) — .env.local points at the
+        // injects sessions into (switchback_e2e) — .env.local points at the
         // dev DB. Merged over process.env by Playwright.
         env: E2E_DATABASE_URL ? { DATABASE_URL: E2E_DATABASE_URL } : {},
         // Readiness check on the DB-INDEPENDENT shallow healthz (process-up, no
         // SELECT) — NOT the home page. The home page 500s until global-setup
-        // creates+seeds outvers_e2e, but Playwright awaits the webServer BEFORE
+        // creates+seeds switchback_e2e, but Playwright awaits the webServer BEFORE
         // running global-setup; checking the home page deadlocks (home needs the
         // DB ↔ DB created after the webServer is ready). Shallow healthz breaks it.
         url: 'http://localhost:3000/api/healthz?shallow',

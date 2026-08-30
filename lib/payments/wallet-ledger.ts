@@ -25,7 +25,7 @@ export interface GrantCreditArgs {
   userId: string
   amountRupees: number
   source: 'promo' | 'referral' | 'admin' | 'refund'
-  balanceType: 'outvers_credit' | 'refund_balance'
+  balanceType: 'switchback_credit' | 'refund_balance'
   referenceId?: string
   expiresAt?: Date
   actorUserId?: string | null
@@ -199,7 +199,7 @@ export async function redeemPromo(
     userId: args.userId,
     amountRupees: creditAmount,
     source: 'promo',
-    balanceType: 'outvers_credit',
+    balanceType: 'switchback_credit',
     referenceId: promo.id,
   })
 
@@ -233,7 +233,7 @@ export async function redeemPromo(
 // ============================================================================
 
 export interface LedgerBalance {
-  outversCredit: number
+  switchbackCredit: number
   refundBalance: number
 }
 
@@ -258,19 +258,19 @@ export async function balanceFromLedger(
     .where(eq(walletTransactions.userId, userId))
     .groupBy(walletTransactions.balanceType)
 
-  let outversCredit = 0
+  let switchbackCredit = 0
   let refundBalance = 0
 
   for (const row of rows) {
     const total = Math.floor(Number(row.total ?? 0))
-    if (row.balanceType === 'outvers_credit') {
-      outversCredit = total
+    if (row.balanceType === 'switchback_credit') {
+      switchbackCredit = total
     } else if (row.balanceType === 'refund_balance') {
       refundBalance = total
     }
   }
 
-  return { outversCredit, refundBalance }
+  return { switchbackCredit, refundBalance }
 }
 
 // ============================================================================

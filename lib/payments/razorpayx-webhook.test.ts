@@ -36,7 +36,7 @@ import {
  * 1000x replay must produce exactly ONE status transition + ONE audit row +
  * ONE notification per member Booking.
  */
-const X_WEBHOOK_SECRET = 'whsec_test_outvers_x'
+const X_WEBHOOK_SECRET = 'whsec_test_switchback_x'
 
 function sign(body: string): string {
   return createHmac('sha256', X_WEBHOOK_SECRET).update(body).digest('hex')

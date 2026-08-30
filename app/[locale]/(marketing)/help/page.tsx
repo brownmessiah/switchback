@@ -31,7 +31,7 @@ interface PageProps {
 
 /** The 9 FAQ entries, by stable key. Q + A text come from i18n. */
 const FAQ_KEYS = [
-  'whatIsOutvers',
+  'whatIsSwitchback',
   'howToBook',
   'partialPay',
   'cancellation',

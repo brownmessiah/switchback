@@ -1,6 +1,19 @@
+# Defaults below name the CURRENTLY PROVISIONED resources, so a plan against
+# the live project is a no-op. They are deliberately NOT the product name: a
+# rebrand does not rename cloud objects. GCP project IDs in particular are
+# permanently immutable — moving projects means creating a new one and
+# migrating, not editing this default. Override via tfvars to target another
+# environment; changing `resource_prefix` on the live project would destroy and
+# recreate every resource below it.
 variable "project_id" {
   type    = string
   default = "outvers-adventure"
+}
+
+variable "resource_prefix" {
+  type        = string
+  description = "Name prefix for Cloud Run / SQL / LB resources. Changing this on a provisioned project forces replacement of every resource."
+  default     = "outvers"
 }
 
 variable "project_number" {

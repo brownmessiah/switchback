@@ -53,13 +53,13 @@ describe('buildCheckInDeepLink', () => {
   it('builds an <origin>/vendor/checkin?token=… URL that round-trips', () => {
     const slotEnd = new Date(Date.now() + 60_000)
     const url = buildCheckInDeepLink({
-      origin: 'https://outvers.com',
+      origin: 'https://switchback.com',
       bookingId: BOOKING_ID,
       slotEnd,
       secret: SECRET,
     })
 
-    expect(url.startsWith('https://outvers.com/vendor/checkin?token=')).toBe(true)
+    expect(url.startsWith('https://switchback.com/vendor/checkin?token=')).toBe(true)
 
     const token = new URL(url).searchParams.get('token')
     expect(token).toBeTruthy()
@@ -70,12 +70,12 @@ describe('buildCheckInDeepLink', () => {
 
   it('strips a trailing slash on the origin so the path is not doubled', () => {
     const url = buildCheckInDeepLink({
-      origin: 'https://outvers.com/',
+      origin: 'https://switchback.com/',
       bookingId: BOOKING_ID,
       slotEnd: new Date(Date.now() + 60_000),
       secret: SECRET,
     })
-    expect(url.startsWith('https://outvers.com/vendor/checkin?token=')).toBe(true)
+    expect(url.startsWith('https://switchback.com/vendor/checkin?token=')).toBe(true)
     expect(url).not.toContain('//vendor')
   })
 })

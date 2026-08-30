@@ -53,7 +53,7 @@ const REFUND_STATE_LABEL: Record<string, string> = {
 function destinationLabel(destination: string): string {
   // The Refund balance bucket is the cashable bucket (CONTEXT.md / ADR-0004).
   if (destination === 'refund_balance') return 'Refund balance'
-  if (destination === 'outvers_credit') return 'Switchback credit'
+  if (destination === 'switchback_credit') return 'Switchback credit'
   return destination.replace(/_/g, ' ')
 }
 

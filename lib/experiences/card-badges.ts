@@ -7,7 +7,7 @@ import { loadTrustBadgeFieldResolver } from '@/lib/trust-badges/card-trust-field
 import type { ExperienceCardData } from '@/components/experience-card'
 
 /**
- * Card social-proof + rating enrichment (parity with outvers.com card tags).
+ * Card social-proof + rating enrichment (parity with switchback.com card tags).
  *
  * Two batch loaders (one group-by query each, no N+1 — mirroring
  * `loadExperienceCoverMap`) plus a pure `deriveHighlight` so a card earns at

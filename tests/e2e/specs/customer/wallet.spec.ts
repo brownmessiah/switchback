@@ -3,11 +3,11 @@
  *
  * The page promotes the dashboard wallet aside to a full route under
  * app/(app)/wallet — auth-gated, excluded from the i18n proxy. It surfaces
- * BOTH ADR-0004 buckets (outvers_credit + refund_balance), the paginated
+ * BOTH ADR-0004 buckets (switchback_credit + refund_balance), the paginated
  * wallet_transactions ledger, and the soonest credit-expiry chip.
  *
  * Seeded customer `u_seed_customer` (db/seed.ts) has wallet rows on the core
- * seed: refund_balance ₹500 + outvers_credit ₹200, plus a credit grant
+ * seed: refund_balance ₹500 + switchback_credit ₹200, plus a credit grant
  * ledger row carrying a deterministic +12-month expiry. Authenticated via the
  * customer storage state injected by the customer project.
  *
@@ -18,7 +18,7 @@
  */
 
 import { test, expect } from '../../fixtures/devtools'
-import { getWalletBalanceRupees, grantOutversCredit } from '../../helpers/db-assertions'
+import { getWalletBalanceRupees, grantSwitchbackCredit } from '../../helpers/db-assertions'
 
 const SEED_CUSTOMER = 'u_seed_customer'
 
@@ -27,7 +27,7 @@ test.describe.configure({ mode: 'serial' })
 test.describe('Wallet page (/wallet)', () => {
   // Isolation: the customer E2E project shares ONE seeded customer, and the
   // revenue-spine checkout spec (customer-flows.spec.ts) legitimately debits
-  // this customer's outvers_credit to ₹0 via applyWalletToCheckout
+  // this customer's switchback_credit to ₹0 via applyWalletToCheckout
   // (app/(app)/checkout/actions.ts — a real ADR-0004 feature). That is correct
   // product behaviour, not a regression, but it leaves the shared seed customer
   // with no credit by the time this suite runs → no balance, no ledger grant,
@@ -36,7 +36,7 @@ test.describe('Wallet page (/wallet)', () => {
   // checkout spec did. A single beforeAll suffices (the suite is serial).
   test.beforeAll(async () => {
     const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // ~90 days out
-    await grantOutversCredit(SEED_CUSTOMER, 500, expiresAt)
+    await grantSwitchbackCredit(SEED_CUSTOMER, 500, expiresAt)
   })
 
   test('renders both bucket balances with their ADR-0004 labels', async ({ page }) => {
@@ -46,7 +46,7 @@ test.describe('Wallet page (/wallet)', () => {
 
     await expect(page.getByTestId('wallet-page')).toBeVisible()
 
-    const creditCard = page.getByTestId('wallet-bucket-outvers_credit')
+    const creditCard = page.getByTestId('wallet-bucket-switchback_credit')
     const refundCard = page.getByTestId('wallet-bucket-refund_balance')
     await expect(creditCard).toBeVisible()
     await expect(refundCard).toBeVisible()
@@ -59,8 +59,8 @@ test.describe('Wallet page (/wallet)', () => {
     // checkout spec earlier in the customer run may have drawn it down to ₹0.
     // We therefore assert render==DB (the real contract) and a non-negative
     // balance; the seeded credit GRANT's existence is covered by the ledger test.
-    const creditRupees = await getWalletBalanceRupees(SEED_CUSTOMER, 'outvers_credit')
-    await expect(creditCard.getByTestId('wallet-amount-outvers_credit')).toHaveText(
+    const creditRupees = await getWalletBalanceRupees(SEED_CUSTOMER, 'switchback_credit')
+    await expect(creditCard.getByTestId('wallet-amount-switchback_credit')).toHaveText(
       `₹${creditRupees.toLocaleString('en-IN')}`,
     )
     expect(creditRupees).toBeGreaterThanOrEqual(0)
@@ -116,7 +116,7 @@ test.describe('Wallet page (/wallet)', () => {
 
     // The never-cashable Switchback credit card carries no cash-out affordance.
     await expect(
-      page.getByTestId('wallet-bucket-outvers_credit').getByTestId('wallet-cashout'),
+      page.getByTestId('wallet-bucket-switchback_credit').getByTestId('wallet-cashout'),
     ).toHaveCount(0)
   })
 })

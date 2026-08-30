@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import type { ReactElement } from 'react'
 
 import { isBackOfficePath } from '@/lib/chrome/back-office-path'
+import { BRAND } from '@/lib/config/brand'
 
 import { LanguageSelector } from './language-selector'
 import { NewsletterForm } from './newsletter-form'
@@ -207,11 +208,11 @@ export function SiteFooter(): ReactElement | null {
             <ul className="mt-3 space-y-2 text-sm">
               <li>
                 <a
-                  href="mailto:support@outvers.com"
+                  href={`mailto:${BRAND.supportEmail}`}
                   aria-label={tf('emailUs')}
                   className="min-tap inline-flex items-center text-foreground/80 transition hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
                 >
-                  support@outvers.com
+                  {BRAND.supportEmail}
                 </a>
               </li>
               <li>

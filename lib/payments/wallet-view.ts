@@ -11,7 +11,7 @@ import type { DBOrTx } from './commission-resolver'
  * data sources the dashboard wallet aside already reads:
  *
  *   - `wallet_balances` (aggregate hot-read) for each ADR-0004 bucket:
- *       outvers_credit (closed-loop promo, EXPIRES) and
+ *       switchback_credit (closed-loop promo, EXPIRES) and
  *       refund_balance (cashable to original method).
  *   - `wallet_transactions` (immutable ledger) for the paginated,
  *       newest-first transaction list and the soonest upcoming credit
@@ -25,7 +25,7 @@ import type { DBOrTx } from './commission-resolver'
 
 export interface WalletViewTransaction {
   id: string
-  /** 'outvers_credit' | 'refund_balance' (schema's string column). */
+  /** 'switchback_credit' | 'refund_balance' (schema's string column). */
   balanceType: string
   /** Signed integer rupees: positive = credit, negative = debit. */
   amount: number
@@ -37,14 +37,14 @@ export interface WalletViewTransaction {
 
 export interface WalletView {
   balances: {
-    outversCredit: number
+    switchbackCredit: number
     refundBalance: number
   }
   transactions: WalletViewTransaction[]
   total: number
   page: number
   totalPages: number
-  /** Soonest upcoming expiry among outvers_credit ledger rows, or null. */
+  /** Soonest upcoming expiry among switchback_credit ledger rows, or null. */
   soonestCreditExpiry: Date | null
 }
 
@@ -80,8 +80,8 @@ export async function loadWalletView(
     .where(eq(walletBalances.userId, userId))
 
   const balances = {
-    outversCredit: toIntRupees(
-      balanceRows.find((r) => r.balanceType === 'outvers_credit')?.amount ?? null,
+    switchbackCredit: toIntRupees(
+      balanceRows.find((r) => r.balanceType === 'switchback_credit')?.amount ?? null,
     ),
     refundBalance: toIntRupees(
       balanceRows.find((r) => r.balanceType === 'refund_balance')?.amount ?? null,
@@ -125,14 +125,14 @@ export async function loadWalletView(
   }))
 
   // 4. Soonest upcoming Switchback-credit expiry (closed-loop credit is
-  //    time-bound, ADR-0004). Only outvers_credit rows can expire.
+  //    time-bound, ADR-0004). Only switchback_credit rows can expire.
   const [nextExpiry] = await db
     .select({ expiresAt: walletTransactions.expiresAt })
     .from(walletTransactions)
     .where(
       and(
         eq(walletTransactions.userId, userId),
-        eq(walletTransactions.balanceType, 'outvers_credit'),
+        eq(walletTransactions.balanceType, 'switchback_credit'),
         isNotNull(walletTransactions.expiresAt),
         gt(walletTransactions.expiresAt, new Date()),
       ),

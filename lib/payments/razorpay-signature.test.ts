@@ -15,7 +15,7 @@ import { verifyWebhookSignature } from './razorpay-signature'
  * checking length-mismatch returns false instead of throwing.
  */
 
-const SECRET = 'whsec_test_outvers'
+const SECRET = 'whsec_test_switchback'
 
 function sign(body: string, secret: string): string {
   return createHmac('sha256', secret).update(body).digest('hex')

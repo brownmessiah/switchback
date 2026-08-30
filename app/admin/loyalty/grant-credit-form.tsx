@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { adminGrantCredit } from './actions'
 import { type GrantCreditResult } from './grant-logic'
 
-type BalanceType = 'outvers_credit' | 'refund_balance'
+type BalanceType = 'switchback_credit' | 'refund_balance'
 
 /**
  * #96 — manual loyalty credit grant. A grant CREDITS real money to a Customer's
@@ -29,7 +29,7 @@ export function GrantCreditForm() {
   const [confirmOpen, setConfirmOpen] = useState(false)
   // The exact figure + bucket restated in the A4 confirm.
   const [amountRupees, setAmountRupees] = useState(0)
-  const [balanceType, setBalanceType] = useState<BalanceType>('outvers_credit')
+  const [balanceType, setBalanceType] = useState<BalanceType>('switchback_credit')
   // The captured submission — the EXACT inputs the action will receive, frozen
   // at submit time so React 19's post-action form reset can't lose them before
   // the operator confirms in the dialog.
@@ -38,7 +38,7 @@ export function GrantCreditForm() {
   // Clicking the form's submit opens the A4 confirm; it does NOT grant inline.
   function handleOpenConfirm(formData: FormData) {
     const amount = Number(formData.get('amountRupees'))
-    const bucket = (formData.get('balanceType') as BalanceType) ?? 'outvers_credit'
+    const bucket = (formData.get('balanceType') as BalanceType) ?? 'switchback_credit'
     setResult(null)
     setAmountRupees(Number.isFinite(amount) ? Math.floor(amount) : 0)
     setBalanceType(bucket)
@@ -61,8 +61,8 @@ export function GrantCreditForm() {
     })
   }
 
-  const isOutversCredit = balanceType === 'outvers_credit'
-  const bucketLabel = isOutversCredit ? 'Switchback credit' : 'Refund balance'
+  const isSwitchbackCredit = balanceType === 'switchback_credit'
+  const bucketLabel = isSwitchbackCredit ? 'Switchback credit' : 'Refund balance'
 
   return (
     <>
@@ -89,10 +89,10 @@ export function GrantCreditForm() {
               id="balanceType"
               name="balanceType"
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              defaultValue="outvers_credit"
+              defaultValue="switchback_credit"
               required
             >
-              <option value="outvers_credit">Switchback Credit</option>
+              <option value="switchback_credit">Switchback Credit</option>
               <option value="refund_balance">Refund Balance</option>
             </select>
           </div>
@@ -136,7 +136,7 @@ export function GrantCreditForm() {
         actionLabel="Grant Credit"
         amountRupees={amountRupees}
         amountCaption={
-          isOutversCredit
+          isSwitchbackCredit
             ? 'Credited to Switchback credit (closed-loop promotional balance — expires 12 months from issue, ADR-0004).'
             : 'Credited to the Refund balance (cashable to the original payment method — no expiry).'
         }
@@ -144,7 +144,7 @@ export function GrantCreditForm() {
         confirmDisabled={isPending || amountRupees <= 0}
         error={result && !result.ok ? result.error : null}
         description={
-          isOutversCredit ? (
+          isSwitchbackCredit ? (
             <>
               This grants real money to the Customer&apos;s <strong>Switchback credit</strong>{' '}
               bucket — closed-loop promotional balance that <strong>expires</strong> 12 months

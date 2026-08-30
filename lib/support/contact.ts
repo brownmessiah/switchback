@@ -25,7 +25,7 @@ import type { DBOrTx } from '@/lib/payments/commission-resolver'
 
 /** Fixed id of the dedicated system User that owns every guest-contact ticket. */
 export const GUEST_CONTACT_USER_ID = 'u_guest_contact'
-const GUEST_CONTACT_EMAIL = 'guest-contact@outvers.system'
+const GUEST_CONTACT_EMAIL = 'guest-contact@switchback.system'
 const GUEST_CONTACT_NAME = 'Guest Contact'
 
 /**

@@ -10,6 +10,7 @@
 
 import { getRequestConfig } from 'next-intl/server'
 import { cookies, headers } from 'next/headers'
+import { BRAND, applyBrandTokens } from '../config/brand'
 import { resolveLocale } from './resolve-locale'
 
 export default getRequestConfig(async ({ requestLocale }) => {
@@ -22,6 +23,12 @@ export default getRequestConfig(async ({ requestLocale }) => {
     acceptLanguage: headerStore.get('accept-language') ?? undefined,
   })
 
-  const messages = (await import(`./messages/${locale}.json`)).default
+  // Substitute {supportEmail}/{adminEmail}/{brandName} once here, so the
+  // catalogues stay brand-agnostic and no t() call site has to pass them.
+  // next-intl v4 dropped defaultTranslationValues, hence load-time expansion.
+  const messages = applyBrandTokens(
+    (await import(`./messages/${locale}.json`)).default,
+    BRAND,
+  )
   return { locale, messages, timeZone: 'Asia/Kolkata' }
 })

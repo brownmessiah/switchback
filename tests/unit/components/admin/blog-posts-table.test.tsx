@@ -37,7 +37,7 @@ const ROWS: BlogPostTableRow[] = [
     authorAdminId: 'admin-1',
     createdAt: new Date('2026-04-28T10:00:00Z'),
     updatedAt: new Date('2026-05-01T10:00:00Z'),
-    authorEmail: 'editor@outvers.test',
+    authorEmail: 'editor@switchback.test',
     authorName: 'Editor',
   },
   {
@@ -53,7 +53,7 @@ const ROWS: BlogPostTableRow[] = [
     authorAdminId: 'admin-1',
     createdAt: new Date('2026-04-30T10:00:00Z'),
     updatedAt: new Date('2026-04-30T10:00:00Z'),
-    authorEmail: 'editor@outvers.test',
+    authorEmail: 'editor@switchback.test',
     authorName: 'Editor',
   },
 ]

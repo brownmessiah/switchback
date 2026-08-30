@@ -35,7 +35,7 @@ describe('wallet_balances + audit_logs + ai_generations (ADRs 0004, 0010)', () =
   describe('wallet_balances (ADR-0004)', () => {
     it('allows the same User to have both balance types simultaneously', async () => {
       await db.insert(walletBalances).values([
-        { userId: 'u_1', balanceType: 'outvers_credit', amount: '500.00' },
+        { userId: 'u_1', balanceType: 'switchback_credit', amount: '500.00' },
         { userId: 'u_1', balanceType: 'refund_balance', amount: '1200.00' },
       ])
       const rows = await db
@@ -43,7 +43,7 @@ describe('wallet_balances + audit_logs + ai_generations (ADRs 0004, 0010)', () =
         .from(walletBalances)
         .where(eq(walletBalances.userId, 'u_1'))
       expect(rows).toHaveLength(2)
-      const credit = rows.find((r) => r.balanceType === 'outvers_credit')
+      const credit = rows.find((r) => r.balanceType === 'switchback_credit')
       const refund = rows.find((r) => r.balanceType === 'refund_balance')
       expect(credit?.amount).toBe('500.00')
       expect(refund?.amount).toBe('1200.00')
@@ -52,13 +52,13 @@ describe('wallet_balances + audit_logs + ai_generations (ADRs 0004, 0010)', () =
     it('rejects duplicate (user_id, balance_type) — primary key', async () => {
       await db.insert(walletBalances).values({
         userId: 'u_1',
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
         amount: '100',
       })
       await expect(
         db.insert(walletBalances).values({
           userId: 'u_1',
-          balanceType: 'outvers_credit',
+          balanceType: 'switchback_credit',
           amount: '200',
         }),
       ).rejects.toThrow()
@@ -68,7 +68,7 @@ describe('wallet_balances + audit_logs + ai_generations (ADRs 0004, 0010)', () =
       await expect(
         db.insert(walletBalances).values({
           userId: 'u_1',
-          balanceType: 'outvers_credit',
+          balanceType: 'switchback_credit',
           amount: '-1.00',
         }),
       ).rejects.toThrow()
@@ -96,7 +96,7 @@ describe('wallet_balances + audit_logs + ai_generations (ADRs 0004, 0010)', () =
 
     it('cascades wallet rows when the User is deleted', async () => {
       await db.insert(walletBalances).values([
-        { userId: 'u_2', balanceType: 'outvers_credit', amount: '50' },
+        { userId: 'u_2', balanceType: 'switchback_credit', amount: '50' },
         { userId: 'u_2', balanceType: 'refund_balance', amount: '100' },
       ])
       await db.delete(users).where(eq(users.id, 'u_2'))

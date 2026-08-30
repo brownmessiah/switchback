@@ -66,7 +66,7 @@
         },
         "bookingSupport": {
           "title": "সহজ বুকিং সহায়তা",
-          "body": "বুকিঙৰ আগতে বা পিছত কোনো প্ৰশ্ন? support@outvers.com-ত আমাৰ দলৰ সৈতে যোগাযোগ কৰক, আমি ইয়াক সমাধান কৰাত সহায় কৰিম।"
+          "body": "বুকিঙৰ আগতে বা পিছত কোনো প্ৰশ্ন? {supportEmail}-ত আমাৰ দলৰ সৈতে যোগাযোগ কৰক, আমি ইয়াক সমাধান কৰাত সহায় কৰিম।"
         },
         "instantConfirmation": {
           "title": "তাৎক্ষণিক নিশ্চিতকৰণ",
@@ -332,7 +332,7 @@
       "refundBalance": "ৰিফাণ্ড বেলেন্স",
       "refundHint": "নগদযোগ্য বা পৰৱৰ্তী বুকিংত ব্যৱহাৰযোগ্য",
       "cashoutOption": "5–7 কৰ্মদিৱসত আপোনাৰ মূল পৰিশোধ পদ্ধতিলৈ নগদ উলিয়াওক, বা পৰৱৰ্তী বুকিংত ব্যৱহাৰ কৰক।",
-      "outversCredit": "Switchback ক্ৰেডিট",
+      "switchbackCredit": "Switchback ক্ৰেডিট",
       "creditHint": "প্ৰম'চনেল ক্ৰেডিট — যিকোনো বুকিংত ব্যৱহাৰ কৰক",
       "creditExpiry": "{date} তাৰিখে মেয়াদ উকলিব",
       "viewWallet": "ৱালেট চাওক"
@@ -908,7 +908,7 @@
     "questions": {
       "heading": "এতিয়াও প্ৰশ্ন আছে?",
       "body": "{email}লৈ ইমেইল কৰক বা যিকোনো বুকিংত ইন-এপ চাট ব্যৱহাৰ কৰক — নীতিৰ সীমাৰ ভিতৰত দাখিল কৰা বিবাদ ৪৮ ঘণ্টাৰ ভিতৰত সমাধান হয়।",
-      "emailAddress": "support@outvers.com"
+      "emailAddress": "{supportEmail}"
     }
   },
   "CheckoutPage": {
@@ -1059,7 +1059,7 @@
     "contact": {
       "heading": "সুৰক্ষাৰ বিষয়ে প্ৰশ্ন?",
       "body": "{email} লৈ ইমেইল কৰক, আমাৰ দলে সহায় কৰিব — নীতি উইণ্ডোৰ ভিতৰত দাখিল কৰা বিবাদ 48 ঘণ্টাৰ ভিতৰত সমাধান কৰাটো আমাৰ লক্ষ্য।",
-      "emailAddress": "support@outvers.com"
+      "emailAddress": "{supportEmail}"
     }
   },
   "AboutPage": {
@@ -1094,7 +1094,7 @@
     "contact": {
       "heading": "যোগাযোগ কৰক",
       "body": "{email} ত আমাৰ সৈতে যোগাযোগ কৰক। যদি আপুনি সাহসিক অভিজ্ঞতা চলায় আৰু সেইবোৰ তালিকাভুক্ত কৰিব বিচাৰে, বিক্ৰেতা অনবৰ্ডিঙৰ সৈতে আৰম্ভ কৰক।",
-      "emailAddress": "support@outvers.com",
+      "emailAddress": "{supportEmail}",
       "vendorCta": "আপোনাৰ অভিজ্ঞতা তালিকাভুক্ত কৰক"
     }
   },
@@ -1111,7 +1111,7 @@
       "description": "Customers-এ সৰ্বাধিক সোধা প্ৰশ্নৰ উত্তৰ — বুকিং, পেমেণ্ট, ৰিফাণ্ড, আপোনাৰ Wallet, Vendor সত্যাপন, আৰু Switchback-ত সুৰক্ষাৰ বিষয়ে।"
     },
     "faq": {
-      "whatIsOutvers": {
+      "whatIsSwitchback": {
         "question": "Switchback কি?",
         "answer": "Switchback এটা ভাৰতীয় দুঃসাহসিক-কাৰ্যকলাপ মাৰ্কেটপ্লেচ; ইয়াত আপুনি স্বাধীন Vendors-এ চলোৱা Experiences — ৰাফটিং, পেৰাগ্লাইডিং, ট্ৰেক ইত্যাদি — বুক কৰে। প্ৰতিটো Vendor KYC-সত্যাপিত, প্ৰতিটো Experience-এ এটা স্পষ্ট Cancellation policy দেখুৱায়, আৰু ঠাই থাকিলেহে বুক কৰিবলৈ slot উপলব্ধতা ৰিয়েল-টাইমত দেখুৱা হয়।"
       },
@@ -1331,8 +1331,8 @@
     "title": "ৱালেট",
     "subtitle": "আপোনাৰ Switchback ক্ৰেডিট আৰু ৰিফাণ্ড বেলেন্স, সম্পূৰ্ণ লেনদেনৰ ইতিহাসৰ সৈতে।",
     "backToDashboard": "ডেশবৰ্ডলৈ উভতি যাওক",
-    "outversCredit": "Switchback ক্ৰেডিট",
-    "outversCreditHint": "প্ৰমোচনেল ক্ৰেডিট — যিকোনো বুকিঙত ব্যৱহাৰ কৰক। কেতিয়াও নগদ কৰিব নোৱাৰি।",
+    "switchbackCredit": "Switchback ক্ৰেডিট",
+    "switchbackCreditHint": "প্ৰমোচনেল ক্ৰেডিট — যিকোনো বুকিঙত ব্যৱহাৰ কৰক। কেতিয়াও নগদ কৰিব নোৱাৰি।",
     "refundBalance": "ৰিফাণ্ড বেলেন্স",
     "refundBalanceHint": "বাতিল আৰু ৰিফাণ্ডৰ পৰা। আপোনাৰ পৰৱৰ্তী বুকিঙত খৰচ কৰক, বা কেশ আউট কৰক।",
     "creditExpiry": "নিকটতম ক্ৰেডিট {date} তাৰিখে শেষ হয়",
@@ -1648,8 +1648,8 @@
     },
     "contact": {
       "heading": "যোগাযোগ",
-      "body": "এই চৰ্তাৱলীৰ বিষয়ে প্ৰশ্ন আছেনে? support@outvers.com লৈ ইমেইল কৰক।",
-      "email": "support@outvers.com"
+      "body": "এই চৰ্তাৱলীৰ বিষয়ে প্ৰশ্ন আছেনে? {supportEmail} লৈ ইমেইল কৰক।",
+      "email": "{supportEmail}"
     }
   },
   "PrivacyPage": {
@@ -1691,8 +1691,8 @@
     },
     "contact": {
       "heading": "যোগাযোগ",
-      "body": "গোপনীয়তা সম্পৰ্কীয় প্ৰশ্ন বা অনুৰোধ আছেনে? support@outvers.com লৈ ইমেইল কৰক।",
-      "email": "support@outvers.com"
+      "body": "গোপনীয়তা সম্পৰ্কীয় প্ৰশ্ন বা অনুৰোধ আছেনে? {supportEmail} লৈ ইমেইল কৰক।",
+      "email": "{supportEmail}"
     }
   },
   "RefundCancellationPage": {
@@ -1748,8 +1748,8 @@
     },
     "contact": {
       "heading": "প্ৰশ্ন",
-      "body": "ৰিফাণ্ডৰ সৈতে সহায়ৰ প্ৰয়োজন? support@outvers.com লৈ ইমেইল কৰক।",
-      "email": "support@outvers.com"
+      "body": "ৰিফাণ্ডৰ সৈতে সহায়ৰ প্ৰয়োজন? {supportEmail} লৈ ইমেইল কৰক।",
+      "email": "{supportEmail}"
     }
   },
   "VendorTermsPage": {
@@ -1794,8 +1794,8 @@
     },
     "contact": {
       "heading": "যোগাযোগ",
-      "body": "বিক্ৰেতাৰ চৰ্তাৱলীৰ বিষয়ে প্ৰশ্ন আছেনে? support@outvers.com লৈ ইমেইল কৰক।",
-      "email": "support@outvers.com"
+      "body": "বিক্ৰেতাৰ চৰ্তাৱলীৰ বিষয়ে প্ৰশ্ন আছেনে? {supportEmail} লৈ ইমেইল কৰক।",
+      "email": "{supportEmail}"
     }
   },
   "HomeSearch": {

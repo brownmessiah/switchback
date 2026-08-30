@@ -9,7 +9,7 @@ import { ShoppingCart } from 'lucide-react'
 import { getCartCountAction } from '@/app/(app)/cart/actions'
 
 /** Window event carrying the fresh count after a cart mutation. */
-export const CART_COUNT_EVENT = 'outvers:cart-count'
+export const CART_COUNT_EVENT = 'switchback:cart-count'
 
 /** Fire-and-forget count broadcast for mutation call sites. */
 export function broadcastCartCount(count: number): void {

@@ -19,7 +19,7 @@ import { setupTestDb, type TestDB } from '@/tests/helpers/db'
 
 import {
   applyWalletToCheckout,
-  creditOutversBalance,
+  creditSwitchbackBalance,
   creditRefundBalance,
   requestCashout,
 } from './wallet'
@@ -28,7 +28,7 @@ import {
  * Wallet operations per ADR-0004 (two-balance wallet model). The single
  * customer-facing Wallet UI is backed by TWO balance buckets:
  *
- *   outvers_credit  — closed-loop promotional balance (referral, promo, loyalty).
+ *   switchback_credit  — closed-loop promotional balance (referral, promo, loyalty).
  *                     Never cashable. Expires 12-18 months from issue.
  *   refund_balance  — closed-loop by default, cashable to original payment
  *                     method on Customer request (5-7d Razorpay round-trip).
@@ -77,7 +77,7 @@ describe('wallet operations (ADR-0004)', () => {
 
   async function seedBalance(
     userId: string,
-    type: 'outvers_credit' | 'refund_balance',
+    type: 'switchback_credit' | 'refund_balance',
     amountRupees: number,
   ): Promise<void> {
     await db
@@ -91,7 +91,7 @@ describe('wallet operations (ADR-0004)', () => {
 
   async function readBalance(
     userId: string,
-    type: 'outvers_credit' | 'refund_balance',
+    type: 'switchback_credit' | 'refund_balance',
   ): Promise<number> {
     const [row] = await db
       .select()
@@ -152,41 +152,41 @@ describe('wallet operations (ADR-0004)', () => {
     it('returns zeros when both balances are absent', async () => {
       const r = await applyWalletToCheckout(db, { userId: 'u_c', grossRupees: 5000 })
       expect(r).toEqual({
-        outversCreditAppliedRupees: 0,
+        switchbackCreditAppliedRupees: 0,
         refundBalanceAppliedRupees: 0,
         razorpayRemainderRupees: 5000,
       })
     })
 
     it('applies Switchback credit first up to gross', async () => {
-      await seedBalance('u_c', 'outvers_credit', 2000)
+      await seedBalance('u_c', 'switchback_credit', 2000)
       const r = await applyWalletToCheckout(db, { userId: 'u_c', grossRupees: 5000 })
-      expect(r.outversCreditAppliedRupees).toBe(2000)
+      expect(r.switchbackCreditAppliedRupees).toBe(2000)
       expect(r.refundBalanceAppliedRupees).toBe(0)
       expect(r.razorpayRemainderRupees).toBe(3000)
-      // outvers_credit row decremented to 0
-      expect(await readBalance('u_c', 'outvers_credit')).toBe(0)
+      // switchback_credit row decremented to 0
+      expect(await readBalance('u_c', 'switchback_credit')).toBe(0)
     })
 
     it('falls through to Refund balance after exhausting Switchback credit', async () => {
-      await seedBalance('u_c', 'outvers_credit', 1000)
+      await seedBalance('u_c', 'switchback_credit', 1000)
       await seedBalance('u_c', 'refund_balance', 1500)
       const r = await applyWalletToCheckout(db, { userId: 'u_c', grossRupees: 5000 })
-      expect(r.outversCreditAppliedRupees).toBe(1000)
+      expect(r.switchbackCreditAppliedRupees).toBe(1000)
       expect(r.refundBalanceAppliedRupees).toBe(1500)
       expect(r.razorpayRemainderRupees).toBe(2500)
-      expect(await readBalance('u_c', 'outvers_credit')).toBe(0)
+      expect(await readBalance('u_c', 'switchback_credit')).toBe(0)
       expect(await readBalance('u_c', 'refund_balance')).toBe(0)
     })
 
     it('returns razorpayRemainder=0 when wallet covers the gross', async () => {
-      await seedBalance('u_c', 'outvers_credit', 3000)
+      await seedBalance('u_c', 'switchback_credit', 3000)
       await seedBalance('u_c', 'refund_balance', 5000)
       const r = await applyWalletToCheckout(db, { userId: 'u_c', grossRupees: 4000 })
-      expect(r.outversCreditAppliedRupees).toBe(3000)
+      expect(r.switchbackCreditAppliedRupees).toBe(3000)
       expect(r.refundBalanceAppliedRupees).toBe(1000)
       expect(r.razorpayRemainderRupees).toBe(0)
-      expect(await readBalance('u_c', 'outvers_credit')).toBe(0)
+      expect(await readBalance('u_c', 'switchback_credit')).toBe(0)
       expect(await readBalance('u_c', 'refund_balance')).toBe(4000)
     })
 
@@ -194,31 +194,31 @@ describe('wallet operations (ADR-0004)', () => {
       // The canonical three-bucket split: Switchback credit (expires) drains
       // first, then Refund balance (cashable), then Razorpay charges the
       // remainder. Both buckets nonzero AND a nonzero Razorpay remainder.
-      await seedBalance('u_c', 'outvers_credit', 500)
+      await seedBalance('u_c', 'switchback_credit', 500)
       await seedBalance('u_c', 'refund_balance', 300)
       const r = await applyWalletToCheckout(db, { userId: 'u_c', grossRupees: 1000 })
-      expect(r.outversCreditAppliedRupees).toBe(500)
+      expect(r.switchbackCreditAppliedRupees).toBe(500)
       expect(r.refundBalanceAppliedRupees).toBe(300)
       expect(r.razorpayRemainderRupees).toBe(200)
       // Both buckets fully drained; Razorpay covers the 200 remainder.
-      expect(await readBalance('u_c', 'outvers_credit')).toBe(0)
+      expect(await readBalance('u_c', 'switchback_credit')).toBe(0)
       expect(await readBalance('u_c', 'refund_balance')).toBe(0)
       // And the split reconstitutes the gross.
       expect(
-        r.outversCreditAppliedRupees +
+        r.switchbackCreditAppliedRupees +
           r.refundBalanceAppliedRupees +
           r.razorpayRemainderRupees,
       ).toBe(1000)
     })
 
     it('does not touch Refund balance when Switchback credit alone covers gross', async () => {
-      await seedBalance('u_c', 'outvers_credit', 10000)
+      await seedBalance('u_c', 'switchback_credit', 10000)
       await seedBalance('u_c', 'refund_balance', 5000)
       const r = await applyWalletToCheckout(db, { userId: 'u_c', grossRupees: 3000 })
-      expect(r.outversCreditAppliedRupees).toBe(3000)
+      expect(r.switchbackCreditAppliedRupees).toBe(3000)
       expect(r.refundBalanceAppliedRupees).toBe(0)
       expect(r.razorpayRemainderRupees).toBe(0)
-      expect(await readBalance('u_c', 'outvers_credit')).toBe(7000)
+      expect(await readBalance('u_c', 'switchback_credit')).toBe(7000)
       expect(await readBalance('u_c', 'refund_balance')).toBe(5000)
     })
 
@@ -235,7 +235,7 @@ describe('wallet operations (ADR-0004)', () => {
     })
 
     it('writes a wallet.apply audit row including the booking link', async () => {
-      await seedBalance('u_c', 'outvers_credit', 500)
+      await seedBalance('u_c', 'switchback_credit', 500)
       await seedBalance('u_c', 'refund_balance', 500)
       const bookingId = crypto.randomUUID()
       await applyWalletToCheckout(db, { userId: 'u_c', grossRupees: 5000, bookingId })
@@ -247,7 +247,7 @@ describe('wallet operations (ADR-0004)', () => {
       const payload = rows[0]?.payload as Record<string, unknown>
       expect(payload.userId).toBe('u_c')
       expect(payload.grossRupees).toBe(5000)
-      expect(payload.outversCreditAppliedRupees).toBe(500)
+      expect(payload.switchbackCreditAppliedRupees).toBe(500)
       expect(payload.refundBalanceAppliedRupees).toBe(500)
       expect(payload.razorpayRemainderRupees).toBe(4000)
       expect(payload.bookingId).toBe(bookingId)
@@ -372,18 +372,18 @@ describe('wallet operations (ADR-0004)', () => {
     })
   })
 
-  describe('creditOutversBalance', () => {
+  describe('creditSwitchbackBalance', () => {
     it('credits a new Switchback credit bucket and writes audit with source=referral', async () => {
-      await creditOutversBalance(db, {
+      await creditSwitchbackBalance(db, {
         userId: 'u_c',
         amountRupees: 500,
         source: 'referral',
       })
-      expect(await readBalance('u_c', 'outvers_credit')).toBe(500)
+      expect(await readBalance('u_c', 'switchback_credit')).toBe(500)
       const rows = await db
         .select()
         .from(auditLogs)
-        .where(eq(auditLogs.action, 'wallet.credit_outvers_credit'))
+        .where(eq(auditLogs.action, 'wallet.credit_switchback_credit'))
       expect(rows).toHaveLength(1)
       const payload = rows[0]?.payload as Record<string, unknown>
       expect(payload.source).toBe('referral')
@@ -391,14 +391,14 @@ describe('wallet operations (ADR-0004)', () => {
     })
 
     it('accepts source=promo and source=loyalty', async () => {
-      await creditOutversBalance(db, { userId: 'u_c', amountRupees: 100, source: 'promo' })
-      await creditOutversBalance(db, { userId: 'u_c', amountRupees: 200, source: 'loyalty' })
-      expect(await readBalance('u_c', 'outvers_credit')).toBe(300)
+      await creditSwitchbackBalance(db, { userId: 'u_c', amountRupees: 100, source: 'promo' })
+      await creditSwitchbackBalance(db, { userId: 'u_c', amountRupees: 200, source: 'loyalty' })
+      expect(await readBalance('u_c', 'switchback_credit')).toBe(300)
     })
 
     it('rejects an unknown source', async () => {
       await expect(
-        creditOutversBalance(db, {
+        creditSwitchbackBalance(db, {
           userId: 'u_c',
           amountRupees: 100,
           source: 'cashback' as never,
@@ -408,15 +408,15 @@ describe('wallet operations (ADR-0004)', () => {
 
     it('rejects non-positive amount', async () => {
       await expect(
-        creditOutversBalance(db, { userId: 'u_c', amountRupees: 0, source: 'referral' }),
+        creditSwitchbackBalance(db, { userId: 'u_c', amountRupees: 0, source: 'referral' }),
       ).rejects.toThrow(/positive/i)
       await expect(
-        creditOutversBalance(db, { userId: 'u_c', amountRupees: -10, source: 'referral' }),
+        creditSwitchbackBalance(db, { userId: 'u_c', amountRupees: -10, source: 'referral' }),
       ).rejects.toThrow(/positive/i)
     })
 
     it('persists the optional reason in the audit payload', async () => {
-      await creditOutversBalance(db, {
+      await creditSwitchbackBalance(db, {
         userId: 'u_c',
         amountRupees: 250,
         source: 'referral',
@@ -425,7 +425,7 @@ describe('wallet operations (ADR-0004)', () => {
       const rows = await db
         .select()
         .from(auditLogs)
-        .where(eq(auditLogs.action, 'wallet.credit_outvers_credit'))
+        .where(eq(auditLogs.action, 'wallet.credit_switchback_credit'))
       expect((rows[0]?.payload as Record<string, unknown>).reason).toBe(
         'invitee_first_booking',
       )

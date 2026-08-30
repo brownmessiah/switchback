@@ -14,6 +14,7 @@ import { HomeHeroSearch } from '@/components/home/hero-search'
 import { HomeHowItWorks } from '@/components/home/how-it-works'
 import { HomeTrust } from '@/components/home/trust'
 import { db } from '@/db/client'
+import { BRAND } from '@/lib/config/brand'
 import { env } from '@/lib/env'
 import { loadHomePageData } from '@/lib/home/queries'
 import { getHeroImages, getRegionImage } from '@/lib/images'
@@ -60,7 +61,7 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
   const organizationJson = organization({
     url: baseUrl,
     logo: `${baseUrl}/favicon.ico`,
-    contactEmail: 'support@outvers.com',
+    contactEmail: BRAND.supportEmail,
     description:
       'Indian adventure-activity marketplace — rafting, paragliding, scuba, trekking from KYC-verified vendors.',
   })
@@ -242,7 +243,7 @@ export default async function HomePage({ params }: Props): Promise<ReactElement>
           leak), and renders newest-first. Hidden entirely when empty. */}
       <RecentlyViewedRail fetchCards={loadRecentlyViewedCardsAction} />
 
-      {/* HOW OUTVERS WORKS — five sequential steps (issue 08). Crawlable HTML,
+      {/* HOW SWITCHBACK WORKS — five sequential steps (issue 08). Crawlable HTML,
           stacks on mobile, no horizontal scroll. */}
       <HomeHowItWorks />
 

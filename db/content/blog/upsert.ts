@@ -20,7 +20,7 @@ const LEGACY_PLACEHOLDER_SLUGS = [
   'best-time-bir-billing-paragliding',
   'first-scuba-dive-india-checklist',
   'packing-for-a-himalayan-trek',
-  'how-outvers-verifies-vendors',
+  'how-switchback-verifies-vendors',
   'monsoon-adventures-in-the-sahyadris',
   'understanding-free-cancellation',
   'leh-ladakh-acclimatisation-guide',
@@ -38,7 +38,7 @@ const MIN_BODY_CHARS = 800
  */
 export const EDITORIAL_AUTHOR = {
   id: 'u_content_editor',
-  email: 'editorial@outvers.com',
+  email: 'editorial@switchback.com',
   name: 'Switchback Editorial Team',
 } as const
 

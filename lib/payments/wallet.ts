@@ -14,7 +14,7 @@ import { createRefund, type RazorpaySdkLike } from './razorpay-client'
  * Wallet operations per ADR-0004 (two-balance wallet model). Backed by
  * the two-row `wallet_balances` table keyed on (user_id, balance_type):
  *
- *   outvers_credit  — closed-loop promotional balance (referral, promo,
+ *   switchback_credit  — closed-loop promotional balance (referral, promo,
  *                     loyalty). Never cashable.
  *   refund_balance  — closed-loop by default, cashable to original
  *                     payment method on Customer request via Razorpay.
@@ -38,8 +38,8 @@ import { createRefund, type RazorpaySdkLike } from './razorpay-client'
  * reconciliation dashboard.
  */
 
-const OutversCreditSourceSchema = z.enum(['referral', 'promo', 'loyalty'])
-export type OutversCreditSource = z.infer<typeof OutversCreditSourceSchema>
+const SwitchbackCreditSourceSchema = z.enum(['referral', 'promo', 'loyalty'])
+export type SwitchbackCreditSource = z.infer<typeof SwitchbackCreditSourceSchema>
 
 function assertPositiveInteger(amountRupees: number, field = 'amountRupees'): void {
   if (!Number.isInteger(amountRupees)) {
@@ -71,14 +71,14 @@ export interface ApplyWalletToOrderArgs {
 }
 
 export interface ApplyWalletToOrderResult {
-  outversCreditAppliedRupees: number
+  switchbackCreditAppliedRupees: number
   refundBalanceAppliedRupees: number
   razorpayRemainderRupees: number
 }
 
 /**
  * Apply the wallet ONCE against a cart-checkout order total (ADR-0021):
- * the ADR-0004 spend order (outvers_credit → refund_balance → Razorpay
+ * the ADR-0004 spend order (switchback_credit → refund_balance → Razorpay
  * remainder) runs a single time over the summed gross — looping the
  * per-booking `applyWalletToCheckout` would re-run the spend order N times.
  * The spend is then ALLOCATED back to the individual bookings greedily in
@@ -98,7 +98,7 @@ export async function applyWalletToOrder(
 
   if (totalRupees === 0 || args.lines.length === 0) {
     return {
-      outversCreditAppliedRupees: 0,
+      switchbackCreditAppliedRupees: 0,
       refundBalanceAppliedRupees: 0,
       razorpayRemainderRupees: 0,
     }
@@ -111,7 +111,7 @@ export async function applyWalletToOrder(
     .for('update')
 
   const creditAvail = Math.floor(
-    Number(rows.find((r) => r.balanceType === 'outvers_credit')?.amount ?? 0),
+    Number(rows.find((r) => r.balanceType === 'switchback_credit')?.amount ?? 0),
   )
   const refundAvail = Math.floor(
     Number(rows.find((r) => r.balanceType === 'refund_balance')?.amount ?? 0),
@@ -132,7 +132,7 @@ export async function applyWalletToOrder(
       .where(
         and(
           eq(walletBalances.userId, args.userId),
-          eq(walletBalances.balanceType, 'outvers_credit'),
+          eq(walletBalances.balanceType, 'switchback_credit'),
         ),
       )
   }
@@ -170,7 +170,7 @@ export async function applyWalletToOrder(
         orderId: args.orderId,
         bookingId: line.bookingId,
         grossRupees: line.grossRupees,
-        outversCreditAppliedRupees: lineCredit,
+        switchbackCreditAppliedRupees: lineCredit,
         refundBalanceAppliedRupees: lineRefund,
         razorpayRemainderRupees: line.grossRupees - lineCredit - lineRefund,
       },
@@ -178,7 +178,7 @@ export async function applyWalletToOrder(
   }
 
   return {
-    outversCreditAppliedRupees: creditApplied,
+    switchbackCreditAppliedRupees: creditApplied,
     refundBalanceAppliedRupees: refundApplied,
     razorpayRemainderRupees: razorpayRemainder,
   }
@@ -196,7 +196,7 @@ export interface ApplyWalletToCheckoutArgs {
 }
 
 export interface ApplyWalletToCheckoutResult {
-  outversCreditAppliedRupees: number
+  switchbackCreditAppliedRupees: number
   refundBalanceAppliedRupees: number
   razorpayRemainderRupees: number
 }
@@ -219,7 +219,7 @@ export async function applyWalletToCheckout(
 
   if (args.grossRupees === 0) {
     return {
-      outversCreditAppliedRupees: 0,
+      switchbackCreditAppliedRupees: 0,
       refundBalanceAppliedRupees: 0,
       razorpayRemainderRupees: 0,
     }
@@ -231,32 +231,32 @@ export async function applyWalletToCheckout(
     .where(eq(walletBalances.userId, args.userId))
     .for('update')
 
-  const outversCreditRow = rows.find((r) => r.balanceType === 'outvers_credit')
+  const switchbackCreditRow = rows.find((r) => r.balanceType === 'switchback_credit')
   const refundBalanceRow = rows.find((r) => r.balanceType === 'refund_balance')
 
-  const outversCreditAvail = outversCreditRow
-    ? Math.floor(Number(outversCreditRow.amount))
+  const switchbackCreditAvail = switchbackCreditRow
+    ? Math.floor(Number(switchbackCreditRow.amount))
     : 0
   const refundBalanceAvail = refundBalanceRow
     ? Math.floor(Number(refundBalanceRow.amount))
     : 0
 
-  const outversCreditApplied = Math.min(outversCreditAvail, args.grossRupees)
-  const afterOutvers = args.grossRupees - outversCreditApplied
-  const refundBalanceApplied = Math.min(refundBalanceAvail, afterOutvers)
-  const razorpayRemainder = afterOutvers - refundBalanceApplied
+  const switchbackCreditApplied = Math.min(switchbackCreditAvail, args.grossRupees)
+  const afterSwitchback = args.grossRupees - switchbackCreditApplied
+  const refundBalanceApplied = Math.min(refundBalanceAvail, afterSwitchback)
+  const razorpayRemainder = afterSwitchback - refundBalanceApplied
 
-  if (outversCreditApplied > 0) {
+  if (switchbackCreditApplied > 0) {
     await db
       .update(walletBalances)
       .set({
-        amount: sql`${walletBalances.amount} - ${outversCreditApplied}`,
+        amount: sql`${walletBalances.amount} - ${switchbackCreditApplied}`,
         updatedAt: sql`now()`,
       })
       .where(
         and(
           eq(walletBalances.userId, args.userId),
-          eq(walletBalances.balanceType, 'outvers_credit'),
+          eq(walletBalances.balanceType, 'switchback_credit'),
         ),
       )
   }
@@ -283,7 +283,7 @@ export async function applyWalletToCheckout(
     payload: {
       userId: args.userId,
       grossRupees: args.grossRupees,
-      outversCreditAppliedRupees: outversCreditApplied,
+      switchbackCreditAppliedRupees: switchbackCreditApplied,
       refundBalanceAppliedRupees: refundBalanceApplied,
       razorpayRemainderRupees: razorpayRemainder,
       bookingId: args.bookingId ?? null,
@@ -291,7 +291,7 @@ export async function applyWalletToCheckout(
   })
 
   return {
-    outversCreditAppliedRupees: outversCreditApplied,
+    switchbackCreditAppliedRupees: switchbackCreditApplied,
     refundBalanceAppliedRupees: refundBalanceApplied,
     razorpayRemainderRupees: razorpayRemainder,
   }
@@ -352,13 +352,13 @@ export async function creditRefundBalance(
 }
 
 // ============================================================================
-// creditOutversBalance
+// creditSwitchbackBalance
 // ============================================================================
 
-export interface CreditOutversBalanceArgs {
+export interface CreditSwitchbackBalanceArgs {
   userId: string
   amountRupees: number
-  source: OutversCreditSource
+  source: SwitchbackCreditSource
   reason?: string
 }
 
@@ -366,18 +366,18 @@ export interface CreditOutversBalanceArgs {
  * Credit the Customer's Switchback credit bucket from a promotional source
  * (referral, promo, loyalty). Never cashable per ADR-0004.
  */
-export async function creditOutversBalance(
+export async function creditSwitchbackBalance(
   db: DBOrTx,
-  args: CreditOutversBalanceArgs,
+  args: CreditSwitchbackBalanceArgs,
 ): Promise<void> {
-  OutversCreditSourceSchema.parse(args.source)
+  SwitchbackCreditSourceSchema.parse(args.source)
   assertPositiveInteger(args.amountRupees, 'amountRupees')
 
   await db
     .insert(walletBalances)
     .values({
       userId: args.userId,
-      balanceType: 'outvers_credit',
+      balanceType: 'switchback_credit',
       amount: args.amountRupees.toFixed(2),
     })
     .onConflictDoUpdate({
@@ -390,7 +390,7 @@ export async function creditOutversBalance(
 
   await writeAuditLog(db, {
     actorUserId: null,
-    action: 'wallet.credit_outvers_credit',
+    action: 'wallet.credit_switchback_credit',
     entityType: 'wallet_balance',
     entityId: args.userId,
     payload: {

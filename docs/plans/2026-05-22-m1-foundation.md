@@ -54,7 +54,7 @@ Skip TDD only for pure-scaffold tasks where there's nothing meaningful to test (
 **Step 1: git init + first commit of bare docs**
 
 ```bash
-cd /Users/aishwaryechauhan/Personal/outvers-next
+cd /Users/aishwaryechauhan/Personal/switchback-next
 git init
 git add CLAUDE.md CONTEXT.md PLAN.md RESEARCH.md TODO_FOR_SHIVAM.md docs/
 git commit -m "chore: snapshot planning docs before scaffold"
@@ -975,7 +975,7 @@ git commit -m "feat(db): add bookings, payments, commission_tiers, pricing_tiers
 - Modify: `db/schema/index.ts`
 
 **Step 1: Failing tests** — assert:
-- `wallet_balances` unique on `(user_id, balance_type)`; `balance_type` enum `outvers_credit | refund_balance` (ADR-0004)
+- `wallet_balances` unique on `(user_id, balance_type)`; `balance_type` enum `switchback_credit | refund_balance` (ADR-0004)
 - `audit_logs` shape: `actor_user_id`, `action`, `entity_type`, `entity_id`, `payload jsonb`, `created_at` — immutable from the application layer
 - `ai_generations.surface` enum `review_summary | listing_draft | inbox_reply | trip_planner`
 - `ai_generations.citation_traces` required (NOT NULL `jsonb` default `'[]'`) so the application layer can enforce the ADR-0010 drop-on-missing-citations rule
@@ -988,7 +988,7 @@ git commit -m "feat(db): add bookings, payments, commission_tiers, pricing_tiers
 import { pgTable, text, timestamp, numeric, pgEnum, primaryKey } from 'drizzle-orm/pg-core'
 import { users } from './users'
 
-export const walletBalanceTypeEnum = pgEnum('wallet_balance_type', ['outvers_credit', 'refund_balance'])
+export const walletBalanceTypeEnum = pgEnum('wallet_balance_type', ['switchback_credit', 'refund_balance'])
 
 export const walletBalances = pgTable('wallet_balances', {
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
@@ -1209,7 +1209,7 @@ git commit -m "ci: add lint/typecheck/test/e2e pipeline + onboarding README"
 
 ## After M1
 
-- Push to GitHub. Create the `outvers/outvers-next` repo if it doesn't exist. Set up the Vercel project linked to the repo.
+- Push to GitHub. Create the `switchback/switchback-next` repo if it doesn't exist. Set up the Vercel project linked to the repo.
 - Verify the Vercel preview deploys produce a working URL.
 - Run `superpowers:finishing-a-development-branch` to decide on integration strategy (likely: merge to `main`, tag `v0.1-foundation`).
 - Update `MEMORY.md` with a one-line "M1 complete on YYYY-MM-DD" entry so future sessions can resume.

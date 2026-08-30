@@ -107,7 +107,7 @@ These all involve a third party (a KYC provider, the telecom regulator, Meta, Ra
 - **Why:** The website address customers use, and what the company email and links are built on.
 - **Where:** Any registrar (Cloudflare Registrar is at-cost and recommended).
 - **Time & cost:** minutes; ~₹1,000/year.
-- **What to do:** Register `outvers.com` (or the chosen name) and hand the login to your tech side to point it at the app.
+- **What to do:** Register `switchback.com` (or the chosen name) and hand the login to your tech side to point it at the app.
 - **Gotcha:** Lock this in early — the email setup and Google sign-in both depend on owning the domain.
 
 ---

@@ -1,6 +1,6 @@
 # Switchback
 
-Switchback is an Indian adventure-activity marketplace where **Customers** browse and book **Experiences** offered by independent **Vendors** (rafting operators, paragliding outfits, trekking companies, etc.). This `CONTEXT.md` defines the domain language used across the rebuild at `/outvers-next/`.
+Switchback is an Indian adventure-activity marketplace where **Customers** browse and book **Experiences** offered by independent **Vendors** (rafting operators, paragliding outfits, trekking companies, etc.). This `CONTEXT.md` defines the domain language used across the rebuild at `/switchback-next/`.
 
 ## Language
 

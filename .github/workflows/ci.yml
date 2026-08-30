@@ -85,11 +85,11 @@ jobs:
     timeout-minutes: 30
     # The E2E harness manages its own database: global-setup connects to the
     # `postgres` maintenance DB (derived from DATABASE_URL), drops/recreates
-    # `outvers_e2e`, runs `drizzle-kit push`, and seeds it. The Next dev server
+    # `switchback_e2e`, runs `drizzle-kit push`, and seeds it. The Next dev server
     # (`pnpm dev`, started by Playwright's webServer) inherits this job's
-    # DATABASE_URL and serves the same `outvers_e2e` DB. So DATABASE_URL must
-    # point at `outvers_e2e`: maintenance ops resolve to `/postgres`, push/seed
-    # and the dev server resolve to `/outvers_e2e`. All three stay aligned.
+    # DATABASE_URL and serves the same `switchback_e2e` DB. So DATABASE_URL must
+    # point at `switchback_e2e`: maintenance ops resolve to `/postgres`, push/seed
+    # and the dev server resolve to `/switchback_e2e`. All three stay aligned.
     services:
       postgres:
         image: postgres:15
@@ -123,9 +123,9 @@ jobs:
           # a cold dev server compiling 45 routes while serving the suite can
           # otherwise OOM/stall and start refusing connections mid-run.
           NODE_OPTIONS: --max-old-space-size=4096
-          # Point at outvers_e2e: the harness swaps the db name to `postgres`
-          # for DROP/CREATE, and push/seed + the dev server use outvers_e2e.
-          DATABASE_URL: postgres://ci:ci@localhost:5432/outvers_e2e
+          # Point at switchback_e2e: the harness swaps the db name to `postgres`
+          # for DROP/CREATE, and push/seed + the dev server use switchback_e2e.
+          DATABASE_URL: postgres://ci:ci@localhost:5432/switchback_e2e
           BETTER_AUTH_SECRET: ci-only-ci-only-ci-only-ci-only-ci
           NEXT_PUBLIC_APP_URL: http://localhost:3000
           # Deterministic Razorpay / Razorpay X demo stub (lib/payments) — the
@@ -152,33 +152,41 @@ jobs:
   # smoke check, NOT the (non-blocking, free-runner-bound) Playwright job.
   # Safety net: tagged --no-traffic → smoke → shift, so a bad revision never
   # serves. Rollback (no rebuild):
-  #   gcloud run services update-traffic outvers-web --region asia-south1 \
+  #   gcloud run services update-traffic switchback-web --region asia-south1 \
   #     --to-revisions PREVIOUS_REVISION=100
   deploy:
     name: Deploy (Cloud Run)
     needs: [lint, typecheck, unit]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # GCP_PROJECT_ID gates the whole job: a fork or a fresh repo with no GCP
+    # variables configured skips deploy cleanly instead of failing at auth.
+    if: >-
+      github.event_name == 'push' && github.ref == 'refs/heads/main'
+      && vars.GCP_PROJECT_ID != ''
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
       id-token: write
+    # Every resource name is a repo variable. Defaults match the currently
+    # provisioned project, so an unconfigured repo that DOES set
+    # GCP_PROJECT_ID still resolves the rest. Note GCP project IDs are
+    # immutable — renaming the product does not rename the project.
     env:
-      PROJECT_ID: outvers-adventure
-      REGION: asia-south1
-      AR_REPO: outvers
-      WEB_SERVICE: outvers-web
-      CRON_SERVICE: outvers-cron
-      MIGRATE_JOB: outvers-migrate
-      SQL_INSTANCE: outvers-pg
+      PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      REGION: ${{ vars.GCP_REGION || 'asia-south1' }}
+      AR_REPO: ${{ vars.GCP_AR_REPO || 'outvers' }}
+      WEB_SERVICE: ${{ vars.GCP_WEB_SERVICE || 'outvers-web' }}
+      CRON_SERVICE: ${{ vars.GCP_CRON_SERVICE || 'outvers-cron' }}
+      MIGRATE_JOB: ${{ vars.GCP_MIGRATE_JOB || 'outvers-migrate' }}
+      SQL_INSTANCE: ${{ vars.GCP_SQL_INSTANCE || 'outvers-pg' }}
     steps:
       - uses: actions/checkout@v5
 
       - id: auth
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: projects/695802542841/locations/global/workloadIdentityPools/github-pool/providers/github-provider
-          service_account: gh-deployer@outvers-adventure.iam.gserviceaccount.com
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER || 'projects/695802542841/locations/global/workloadIdentityPools/github-pool/providers/github-provider' }}
+          service_account: ${{ vars.GCP_DEPLOY_SA || 'gh-deployer@outvers-adventure.iam.gserviceaccount.com' }}
 
       - uses: google-github-actions/setup-gcloud@v2
 

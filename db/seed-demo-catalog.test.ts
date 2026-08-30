@@ -31,7 +31,7 @@ import { seedDemoCatalog } from './seed-demo-catalog'
 async function seedAdmin(db: TestDB): Promise<void> {
   await db
     .insert(users)
-    .values({ id: 'u_seed_admin', email: 'admin@seed.outvers.dev', name: 'Seed Admin' })
+    .values({ id: 'u_seed_admin', email: 'admin@seed.switchback.dev', name: 'Seed Admin' })
     .onConflictDoNothing()
 }
 

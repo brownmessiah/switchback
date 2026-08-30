@@ -87,7 +87,7 @@ describe('createContactTicket', () => {
     const guests = await db.select().from(users)
     expect(guests).toHaveLength(1)
     expect(guests[0].id).toBe(GUEST_CONTACT_USER_ID)
-    expect(guests[0].email).toBe('guest-contact@outvers.system')
+    expect(guests[0].email).toBe('guest-contact@switchback.system')
 
     const tickets = await db.select().from(supportTickets)
     expect(tickets).toHaveLength(1)

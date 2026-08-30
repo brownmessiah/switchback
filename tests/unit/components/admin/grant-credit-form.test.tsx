@@ -40,7 +40,7 @@ afterEach(() => {
 
 async function fillForm(
   user: ReturnType<typeof userEvent.setup>,
-  { amount = '750', bucket = 'outvers_credit' }: { amount?: string; bucket?: string } = {},
+  { amount = '750', bucket = 'switchback_credit' }: { amount?: string; bucket?: string } = {},
 ) {
   await user.type(screen.getByLabelText('User ID'), 'u_seed_customer_loyalty')
   await user.clear(screen.getByLabelText(/Amount/))
@@ -73,7 +73,7 @@ describe('GrantCreditForm — A4 money confirm before granting credit', () => {
   it('the confirm names the Switchback credit bucket WITH expiry, NOT the Refund balance', async () => {
     const user = userEvent.setup()
     render(<GrantCreditForm />)
-    await fillForm(user, { bucket: 'outvers_credit' })
+    await fillForm(user, { bucket: 'switchback_credit' })
 
     await user.click(screen.getByRole('button', { name: 'Grant Credit' }))
     const dialog = screen.getByTestId('grant-credit-confirm')
@@ -95,7 +95,7 @@ describe('GrantCreditForm — A4 money confirm before granting credit', () => {
   it('only fires adminGrantCredit AFTER the explicit confirm, with the same FormData inputs', async () => {
     const user = userEvent.setup()
     render(<GrantCreditForm />)
-    await fillForm(user, { amount: '750', bucket: 'outvers_credit' })
+    await fillForm(user, { amount: '750', bucket: 'switchback_credit' })
 
     await user.click(screen.getByRole('button', { name: 'Grant Credit' }))
     expect(adminGrantCredit).not.toHaveBeenCalled()
@@ -107,7 +107,7 @@ describe('GrantCreditForm — A4 money confirm before granting credit', () => {
     const fd = adminGrantCredit.mock.calls[0][0]
     expect(fd.get('userId')).toBe('u_seed_customer_loyalty')
     expect(fd.get('amountRupees')).toBe('750')
-    expect(fd.get('balanceType')).toBe('outvers_credit')
+    expect(fd.get('balanceType')).toBe('switchback_credit')
     expect(fd.get('reason')).toBe('goodwill')
   })
 

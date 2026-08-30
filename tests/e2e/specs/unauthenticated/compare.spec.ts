@@ -18,7 +18,7 @@
 
 import { test, expect } from '../../fixtures/devtools'
 
-const STORAGE_KEY = 'outvers-compare'
+const STORAGE_KEY = 'switchback-compare'
 const TRAY = 'compare-tray'
 
 /**

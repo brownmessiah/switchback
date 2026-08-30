@@ -2,7 +2,7 @@
  * Read-only DB query helpers for E2E assertions.
  *
  * The customer-checkout spec verifies the revenue-spine invariants
- * directly against the `outvers_e2e` database after a UI-driven checkout:
+ * directly against the `switchback_e2e` database after a UI-driven checkout:
  * booking row created atomically, capacity decremented, Commission
  * snapshot locked, and a `booking.create` audit row written.
  *
@@ -219,10 +219,10 @@ export async function getConfirmedBookingForExperienceSlug(
   })
 }
 
-/** Fetch a user's wallet balance for a given bucket (refund_balance / outvers_credit). */
+/** Fetch a user's wallet balance for a given bucket (refund_balance / switchback_credit). */
 export async function getWalletBalanceRupees(
   userId: string,
-  balanceType: 'refund_balance' | 'outvers_credit',
+  balanceType: 'refund_balance' | 'switchback_credit',
 ): Promise<number> {
   return withSql(async (sql) => {
     const rows = await sql<{ amount: string }[]>`
@@ -237,7 +237,7 @@ export async function getWalletBalanceRupees(
 }
 
 /**
- * Grant (restore) a deterministic, unexpired `outvers_credit` balance for a
+ * Grant (restore) a deterministic, unexpired `switchback_credit` balance for a
  * user — used by the wallet E2E suite to own its credit state.
  *
  * The customer E2E project shares ONE seeded customer (`u_seed_customer`), and
@@ -258,7 +258,7 @@ export async function getWalletBalanceRupees(
  * `referenceId` with delete-before-insert (wallet_transactions has no natural
  * unique key) so repeated `beforeAll` runs never accumulate duplicate grants.
  */
-export async function grantOutversCredit(
+export async function grantSwitchbackCredit(
   userId: string,
   rupees: number,
   expiresAt: Date,
@@ -271,7 +271,7 @@ export async function grantOutversCredit(
     // drawn it down to 0 — restore it deterministically).
     await sql`
       INSERT INTO wallet_balances (user_id, balance_type, amount)
-      VALUES (${userId}, 'outvers_credit', ${amount})
+      VALUES (${userId}, 'switchback_credit', ${amount})
       ON CONFLICT (user_id, balance_type)
       DO UPDATE SET amount = ${amount}, updated_at = now()
     `
@@ -284,7 +284,7 @@ export async function grantOutversCredit(
       INSERT INTO wallet_transactions
         (user_id, balance_type, amount, source, reference_id, expires_at)
       VALUES
-        (${userId}, 'outvers_credit', ${amount}, 'promo', ${referenceId}, ${expiresAt})
+        (${userId}, 'switchback_credit', ${amount}, 'promo', ${referenceId}, ${expiresAt})
     `
   })
 }
@@ -399,18 +399,18 @@ export async function getRefundBalanceCreditAuditForBooking(
 }
 
 /**
- * Count `wallet.credit_outvers_credit` audit rows for a booking id. The
+ * Count `wallet.credit_switchback_credit` audit rows for a booking id. The
  * inside-policy refund must NEVER credit the Switchback (promo) bucket — this
  * proves the refund went to the cashable Refund balance, not promo credit.
  */
-export async function countOutversCreditAuditForBooking(
+export async function countSwitchbackCreditAuditForBooking(
   bookingId: string,
 ): Promise<number> {
   return withSql(async (sql) => {
     const rows = await sql<{ n: string }[]>`
       SELECT count(*)::text AS n
       FROM audit_logs
-      WHERE action = 'wallet.credit_outvers_credit'
+      WHERE action = 'wallet.credit_switchback_credit'
         AND payload->>'bookingId' = ${bookingId}
     `
     return Number(rows[0]?.n ?? '0')
@@ -2374,13 +2374,13 @@ export interface WalletTransactionRow {
 
 /**
  * Fetch a user's wallet_transactions of a given balance_type + source (newest
- * first). The #26 loyalty-grant E2E reads the admin-source outvers_credit /
+ * first). The #26 loyalty-grant E2E reads the admin-source switchback_credit /
  * refund_balance ledger rows to assert the grant landed in the RIGHT bucket
  * with the RIGHT expiry (ADR-0004).
  */
 export async function getWalletTransactions(
   userId: string,
-  balanceType: 'outvers_credit' | 'refund_balance',
+  balanceType: 'switchback_credit' | 'refund_balance',
   source?: string,
 ): Promise<WalletTransactionRow[]> {
   return withSql(async (sql) => {
@@ -3341,7 +3341,7 @@ export async function deleteGuestContactTicketsBySubject(
 // ---------------------------------------------------------------------------
 // Razorpay X vendor-payout leg assertions (slices 01–07, ADR-0016 amendment)
 //
-// These drive + assert the NEW payout SEND path end-to-end against outvers_e2e:
+// These drive + assert the NEW payout SEND path end-to-end against switchback_e2e:
 //   - the 5pm-IST Payout Batch cron (/api/cron/payout-batch) that groups
 //     matured-eligible Payouts into one Razorpay X transfer per
 //     (vendor, destination, batchDay), keyed unique on that triple;

@@ -30,7 +30,7 @@ Switchback charges its standard commission per ADR-0008. Bokun separately charge
 
 ### Reconciliation
 
-Nightly job compares `(channel_booking_ref, outvers_booking_id)` across the two systems. Discrepancies raise admin alerts in an M3-built reconciliation queue. Common case (cancellation didn't propagate due to CM outage) auto-retries with exponential backoff up to 24h before escalating.
+Nightly job compares `(channel_booking_ref, switchback_booking_id)` across the two systems. Discrepancies raise admin alerts in an M3-built reconciliation queue. Common case (cancellation didn't propagate due to CM outage) auto-retries with exponential backoff up to 24h before escalating.
 
 ### Inbound Booking ingestion is out of scope for v1
 

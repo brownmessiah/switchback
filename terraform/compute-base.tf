@@ -3,7 +3,7 @@
 # secret versions exist (#14) so they can boot.
 
 resource "google_service_account" "runtime" {
-  account_id   = "outvers-run"
+  account_id   = "${var.resource_prefix}-run"
   display_name = "Cloud Run runtime SA"
 }
 
@@ -23,7 +23,7 @@ resource "google_storage_bucket_iam_member" "runtime_uploads_admin" {
 
 # Docker image repository (the deploy pipeline pushes here).
 resource "google_artifact_registry_repository" "app" {
-  repository_id = "outvers"
+  repository_id = var.resource_prefix
   location      = var.region
   format        = "DOCKER"
   description   = "outvers-next application images"

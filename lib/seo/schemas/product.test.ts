@@ -5,7 +5,7 @@ import { product, type ProductArgs } from './product'
 describe('Product JSON-LD (ADR-0013)', () => {
   const base: ProductArgs = {
     name: 'Grand Rafting Trip',
-    url: 'https://outvers.com/en/experience/grand-rafting-trip',
+    url: 'https://switchback.com/en/experience/grand-rafting-trip',
     description: 'A thrilling rafting experience in Rishikesh',
     priceRupees: 2500,
   }
@@ -15,7 +15,7 @@ describe('Product JSON-LD (ADR-0013)', () => {
     expect(result['@context']).toBe('https://schema.org')
     expect(result['@type']).toBe('Product')
     expect(result.name).toBe('Grand Rafting Trip')
-    expect(result.url).toBe('https://outvers.com/en/experience/grand-rafting-trip')
+    expect(result.url).toBe('https://switchback.com/en/experience/grand-rafting-trip')
     expect(result.description).toBe('A thrilling rafting experience in Rishikesh')
     expect(result.offers['@type']).toBe('Offer')
     expect(result.offers.price).toBe('2500')
@@ -24,8 +24,8 @@ describe('Product JSON-LD (ADR-0013)', () => {
   })
 
   it('includes image when provided', () => {
-    const result = product({ ...base, image: 'https://outvers.com/img/raft.jpg' })
-    expect(result.image).toBe('https://outvers.com/img/raft.jpg')
+    const result = product({ ...base, image: 'https://switchback.com/img/raft.jpg' })
+    expect(result.image).toBe('https://switchback.com/img/raft.jpg')
   })
 
   it('omits image when not provided', () => {

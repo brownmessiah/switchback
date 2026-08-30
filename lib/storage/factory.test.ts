@@ -11,13 +11,13 @@ import { LocalFileAdapter } from './local'
  */
 describe('getStorageAdapter', () => {
   it('returns GcsAdapter when STORAGE_BACKEND=gcs and GCS_BUCKET is set', () => {
-    expect(getStorageAdapter({ STORAGE_BACKEND: 'gcs', GCS_BUCKET: 'outvers-uploads' })).toBeInstanceOf(
+    expect(getStorageAdapter({ STORAGE_BACKEND: 'gcs', GCS_BUCKET: 'switchback-uploads' })).toBeInstanceOf(
       GcsAdapter,
     )
   })
 
   it('returns GcsAdapter when GCS_BUCKET is set even if STORAGE_BACKEND is unset', () => {
-    expect(getStorageAdapter({ GCS_BUCKET: 'outvers-uploads' })).toBeInstanceOf(GcsAdapter)
+    expect(getStorageAdapter({ GCS_BUCKET: 'switchback-uploads' })).toBeInstanceOf(GcsAdapter)
   })
 
   it('returns LocalFileAdapter when no GCS config is present', () => {
@@ -25,7 +25,7 @@ describe('getStorageAdapter', () => {
   })
 
   it('returns LocalFileAdapter when STORAGE_BACKEND=local even if GCS_BUCKET is set', () => {
-    expect(getStorageAdapter({ STORAGE_BACKEND: 'local', GCS_BUCKET: 'outvers-uploads' })).toBeInstanceOf(
+    expect(getStorageAdapter({ STORAGE_BACKEND: 'local', GCS_BUCKET: 'switchback-uploads' })).toBeInstanceOf(
       LocalFileAdapter,
     )
   })

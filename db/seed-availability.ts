@@ -18,7 +18,7 @@ export const DEFAULT_AVAILABILITY_DAYS = [1, 2, 4, 5, 6] as const
 
 /**
  * Multiple time windows per available day (morning / midday / afternoon) so
- * each date offers SEVERAL time slots — parity with outvers.com, where a
+ * each date offers SEVERAL time slots — parity with switchback.com, where a
  * customer picks both a date and a time. Each window materialises its own slot
  * (one `availability_slots` row per day × window), each with its own capacity.
  */

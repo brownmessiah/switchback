@@ -124,8 +124,8 @@ test.describe('responsive · public surfaces (< lg)', () => {
     for (const link of await contactLinks.all()) {
       await expect(link).toHaveAttribute('href', /\/contact/)
     }
-    // support@outvers.com mailto present
-    await expect(footer.locator('a[href="mailto:support@outvers.com"]')).toBeVisible()
+    // support@switchback.com mailto present
+    await expect(footer.locator('a[href="mailto:support@switchback.com"]')).toBeVisible()
     // NOTE(e2e-ci): social links were REMOVED from the footer — they are
     // "intentionally ABSENT until real accounts exist" (components/site-footer.tsx
     // line ~193). This spec previously asserted placeholder Instagram/YouTube/

@@ -123,7 +123,7 @@ const VENDORS: Array<{
 }> = [
   {
     userId: 'u_seed_v_phone',
-    email: 'phone-tier@seed.outvers.dev',
+    email: 'phone-tier@seed.switchback.dev',
     businessName: 'Riverbend Adventures (Phone Tier)',
     slug: 'riverbend-adventures',
     kycTier: 'phone' as const,
@@ -134,7 +134,7 @@ const VENDORS: Array<{
   },
   {
     userId: 'u_seed_v_identity',
-    email: 'identity-tier@seed.outvers.dev',
+    email: 'identity-tier@seed.switchback.dev',
     businessName: 'Himalayan Hikes Co (Identity Tier)',
     slug: 'himalayan-hikes-co',
     kycTier: 'identity' as const,
@@ -151,7 +151,7 @@ const VENDORS: Array<{
   },
   {
     userId: 'u_seed_v_business',
-    email: 'business-tier@seed.outvers.dev',
+    email: 'business-tier@seed.switchback.dev',
     businessName: 'Goa Dive Center (Business Tier)',
     slug: 'goa-dive-center',
     kycTier: 'business' as const,
@@ -182,7 +182,7 @@ const VENDORS: Array<{
  */
 const NO_PROFILE_VENDOR = {
   userId: 'u_seed_v_onboarding',
-  email: 'onboarding@seed.outvers.dev',
+  email: 'onboarding@seed.switchback.dev',
   name: 'Onboarding Candidate',
 } as const
 
@@ -196,7 +196,7 @@ const NO_PROFILE_VENDOR = {
  */
 const BUSINESS_VENDOR_CUSTOMER = {
   userId: 'u_seed_customer_biz',
-  email: 'customer-biz@seed.outvers.dev',
+  email: 'customer-biz@seed.switchback.dev',
   name: 'Seed Customer (Business-Vendor Bookings)',
 } as const
 
@@ -209,7 +209,7 @@ const BUSINESS_VENDOR_CUSTOMER = {
  */
 const REFUND_QUEUE_CUSTOMER = {
   userId: 'u_seed_customer_refundq',
-  email: 'customer-refundq@seed.outvers.dev',
+  email: 'customer-refundq@seed.switchback.dev',
   name: 'Seed Customer (Admin Refund Queue)',
 } as const
 
@@ -224,7 +224,7 @@ const REFUND_QUEUE_CUSTOMER = {
  */
 const PAYOUT_QUEUE_VENDOR = {
   userId: 'u_seed_v_payout',
-  email: 'payout-queue@seed.outvers.dev',
+  email: 'payout-queue@seed.switchback.dev',
   businessName: 'Apex Payout Vendor (Identity Tier)',
   slug: 'apex-payout-vendor',
 } as const
@@ -244,7 +244,7 @@ const PAYOUT_QUEUE_VENDOR = {
  */
 const PAYOUT_GATE_VENDOR = {
   userId: 'u_seed_v_payout_gate',
-  email: 'payout-gate@seed.outvers.dev',
+  email: 'payout-gate@seed.switchback.dev',
   businessName: 'Sentinel Payout-Gate Vendor (Identity Tier)',
   slug: 'sentinel-payout-gate-vendor',
 } as const
@@ -258,7 +258,7 @@ const PAYOUT_GATE_VENDOR = {
  */
 const LOYALTY_GRANT_CUSTOMER = {
   userId: 'u_seed_customer_loyalty',
-  email: 'customer-loyalty@seed.outvers.dev',
+  email: 'customer-loyalty@seed.switchback.dev',
   name: 'Seed Customer (Admin Loyalty Grant)',
 } as const
 
@@ -552,19 +552,19 @@ async function seed(): Promise<void> {
       // Public-grade display name: blog_posts.author_admin_id → users.name is
       // the PUBLIC blog byline (NOT NULL column), so this user's name renders
       // on every seeded article. Never an internal label here (QA fix pass).
-      { id: 'u_seed_admin', email: 'admin@seed.outvers.dev', name: 'Switchback Editorial Team' },
+      { id: 'u_seed_admin', email: 'admin@seed.switchback.dev', name: 'Switchback Editorial Team' },
       // #28 Sub-admin governance fixture — an Admin whose permissions are a
       // STRICT SUBSET (ADR-0006). Holds vendors/audit/analytics but NOT
       // payouts/refunds/sub_admins/reports. Drives the server-side permission
       // gate E2E: a gated action outside this subset must be DENIED.
-      { id: 'u_seed_subadmin', email: 'subadmin@seed.outvers.dev', name: 'Seed Sub-Admin' },
+      { id: 'u_seed_subadmin', email: 'subadmin@seed.switchback.dev', name: 'Seed Sub-Admin' },
       // #28 Dedicated invite target for the sub-admin CRUD E2E (invite → edit
       // → revoke). A plain User with NO vendor/admin profile and referenced by
       // no other project, so the CRUD flow is fully isolated from parallel
       // specs and re-runs start from a known "not an admin" state.
       {
         id: 'u_seed_invite_target',
-        email: 'invite-target@seed.outvers.dev',
+        email: 'invite-target@seed.switchback.dev',
         name: 'Sub-Admin Invite Target',
       },
       // #28 Dedicated phone-tier Vendor the Sub-admin (who HOLDS the 'vendors'
@@ -572,10 +572,10 @@ async function seed(): Promise<void> {
       // Isolated from #22's u_seed_v_phone so neither test disturbs the other.
       {
         id: 'u_seed_subadmin_vendor',
-        email: 'subadmin-vendor@seed.outvers.dev',
+        email: 'subadmin-vendor@seed.switchback.dev',
         name: 'Sub-Admin KYC Fixture Vendor',
       },
-      { id: 'u_seed_customer', email: 'customer@seed.outvers.dev', name: 'Seed Customer' },
+      { id: 'u_seed_customer', email: 'customer@seed.switchback.dev', name: 'Seed Customer' },
       {
         id: BUSINESS_VENDOR_CUSTOMER.userId,
         email: BUSINESS_VENDOR_CUSTOMER.email,
@@ -2467,13 +2467,13 @@ async function seed(): Promise<void> {
   // Two SEPARATE balance buckets:
   //   refund_balance  — cashable to the original payment method (5–7 day
   //                     Razorpay round-trip). Real liability on the books.
-  //   outvers_credit  — closed-loop promo credit, never cashable, EXPIRES
+  //   switchback_credit  — closed-loop promo credit, never cashable, EXPIRES
   //                     12–18 months from issue.
   await db
     .insert(walletBalances)
     .values([
       { userId: 'u_seed_customer', balanceType: 'refund_balance' as const, amount: '500.00' },
-      { userId: 'u_seed_customer', balanceType: 'outvers_credit' as const, amount: '200.00' },
+      { userId: 'u_seed_customer', balanceType: 'switchback_credit' as const, amount: '200.00' },
     ])
     .onConflictDoNothing()
 
@@ -2495,7 +2495,7 @@ async function seed(): Promise<void> {
     .where(eq(walletTransactions.referenceId, SEED_CREDIT_GRANT_REF))
   await db.insert(walletTransactions).values({
     userId: 'u_seed_customer',
-    balanceType: 'outvers_credit',
+    balanceType: 'switchback_credit',
     amount: '200.00',
     source: 'promo',
     referenceId: SEED_CREDIT_GRANT_REF,

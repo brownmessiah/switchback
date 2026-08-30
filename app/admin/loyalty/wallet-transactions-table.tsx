@@ -31,7 +31,7 @@ function isOpaqueRef(ref: string): boolean {
 export interface WalletTransactionRow {
   id: string
   userId: string
-  /** 'outvers_credit' | 'refund_balance' (kept as the schema's string column). */
+  /** 'switchback_credit' | 'refund_balance' (kept as the schema's string column). */
   balanceType: string
   amount: number
   source: string
@@ -42,14 +42,14 @@ export interface WalletTransactionRow {
 }
 
 const BUCKET_LABEL: Record<string, string> = {
-  outvers_credit: 'Switchback credit',
+  switchback_credit: 'Switchback credit',
   refund_balance: 'Refund balance',
 }
 
 // The two-bucket Wallet (ADR-0004): Switchback credit is the closed-loop credit
 // bucket → `credit` token; the cashable Refund balance reads as `success`.
 const BUCKET_STATUS: Record<string, string> = {
-  outvers_credit: 'credit',
+  switchback_credit: 'credit',
   refund_balance: 'credited',
 }
 

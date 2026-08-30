@@ -1,4 +1,4 @@
-# Outvers
+# Switchback
 
 Indian adventure-activity marketplace — rafting, paragliding, scuba, trekking, multi-day expeditions. Ground-up rebuild of the legacy app at `/Users/aishwaryechauhan/Personal/travel-app/` on a portable, owned stack.
 

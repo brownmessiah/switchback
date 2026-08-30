@@ -11,7 +11,7 @@ import { loadWalletView } from './wallet-view'
 /**
  * loadWalletView — the pure read model that backs the dedicated /wallet
  * page. Returns both bucket balances (ADR-0004), a paginated newest-first
- * ledger of wallet_transactions, and the soonest upcoming Outvers-credit
+ * ledger of wallet_transactions, and the soonest upcoming Switchback-credit
  * expiry. No writes, no audit — read-only.
  */
 describe('loadWalletView', () => {
@@ -165,7 +165,7 @@ describe('loadWalletView', () => {
   // Soonest credit expiry
   // ------------------------------------------------------------------------
 
-  it('computes the soonest upcoming Outvers-credit expiry', async () => {
+  it('computes the soonest upcoming Switchback-credit expiry', async () => {
     const soon = new Date('2027-01-01T00:00:00.000Z')
     const later = new Date('2027-06-01T00:00:00.000Z')
     await db.insert(walletTransactions).values([
@@ -202,7 +202,7 @@ describe('loadWalletView', () => {
     expect(view.soonestCreditExpiry!.toISOString()).toBe(soon.toISOString())
   })
 
-  it('returns null soonest expiry when no Outvers-credit txn carries an expiry', async () => {
+  it('returns null soonest expiry when no Switchback-credit txn carries an expiry', async () => {
     await db.insert(walletTransactions).values([
       {
         userId: 'u_wv1',

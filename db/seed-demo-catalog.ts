@@ -72,7 +72,7 @@ const DEMO_REVIEW_BANK: Array<{ rating: number; title: string; body: string; res
   { rating: 5, title: 'Exactly as described', body: 'The highlights and what-to-bring list were spot on. Small group, real safety briefing, unforgettable views.' },
   { rating: 4, title: 'Brilliant, minor delay', body: 'Five-star experience; pickup ran a touch late but the crew more than made up for it.', resp: 'Apologies for the delay — we have tightened our pickup window.' },
   { rating: 5, title: 'Felt completely safe', body: 'As a first-timer the clear inclusions and the verified-vendor badge gave me total confidence.' },
-  { rating: 4, title: 'Stunning and well run', body: 'Knowledgeable guide, fair price, gorgeous setting. Would book through Outvers again.' },
+  { rating: 4, title: 'Stunning and well run', body: 'Knowledgeable guide, fair price, gorgeous setting. Would book through Switchback again.' },
   { rating: 5, title: 'Best part of the trip', body: 'Professional, punctual, and so much fun. The season info on the page helped us pick the perfect window.' },
 ]
 
@@ -110,7 +110,7 @@ export async function seedDemoCatalog(db: SeedDb): Promise<void> {
         responseTimeSlaScore: variety.responseTimeSlaScore,
         createdAt: variety.createdAt,
         about:
-          'A KYC-verified Outvers operator running certified, safety-first adventures with experienced local guides. Small groups, transparent pricing, flexible cancellation within policy.',
+          'A KYC-verified Switchback operator running certified, safety-first adventures with experienced local guides. Small groups, transparent pricing, flexible cancellation within policy.',
       })
       .onConflictDoNothing()
   }

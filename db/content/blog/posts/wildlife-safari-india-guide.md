@@ -34,7 +34,7 @@ Permits are booked through state-government portals, and for the most popular pa
 
 A shared jeep (usually six tourists) costs approximately **₹1,500 to ₹4,500 per person** depending on the park and whether you are in the buffer or core zone. A private jeep booking runs roughly **₹4,000 to ₹8,000 for the vehicle** across most parks. These figures are approximate — costs vary by park, zone, and season, and both permit fees and operator charges change periodically. Always confirm the current price directly with the operator or the park's booking portal before committing.
 
-Booking through a verified local operator takes the logistics off your plate. They handle the permits, arrange the naturalist guide, and brief you on protocol. You can explore [wildlife safaris](/activities/safari) on Outvers to find operators who have completed KYC verification and list their pricing transparently.
+Booking through a verified local operator takes the logistics off your plate. They handle the permits, arrange the naturalist guide, and brief you on protocol. You can explore [wildlife safaris](/activities/safari) on Switchback to find operators who have completed KYC verification and list their pricing transparently.
 
 ## What to Wear and Bring Into the Park
 
@@ -90,4 +90,4 @@ Morning safaris typically start before sunrise — around 5:30 to 6:30 AM depend
 
 Many families do jeep safaris with children successfully. Most parks allow children above a certain age (check with your specific park and operator). The hours can be long and bumpy, so it helps to frame it as an adventure, bring snacks and water, and go with a patient guide who is good with families. Elephant-back safaris, once common in some parks, have been phased out in most places on animal welfare grounds — jeep safaris are now the standard.
 
-Planning a wildlife trip takes a bit of research, but the payoff — sitting in a quiet jeep at dawn as a tiger walks across a dusty track — is one of those experiences that genuinely stays with you. [Browse destinations](/destinations) across India to find the park that suits your travel window, and explore verified [wildlife safaris](/activities/safari) on Outvers to book with operators who know their jungle and run it responsibly.
+Planning a wildlife trip takes a bit of research, but the payoff — sitting in a quiet jeep at dawn as a tiger walks across a dusty track — is one of those experiences that genuinely stays with you. [Browse destinations](/destinations) across India to find the park that suits your travel window, and explore verified [wildlife safaris](/activities/safari) on Switchback to book with operators who know their jungle and run it responsibly.

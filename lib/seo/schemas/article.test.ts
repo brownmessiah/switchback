@@ -7,7 +7,7 @@ describe('Article JSON-LD (ADR-0013)', () => {
     headline: 'Rishikesh Rafting Grades, Explained',
     url: 'https://outvers.in/blog/rishikesh-rafting-grades-explained',
     datePublished: '2026-05-01',
-    authorName: 'Outvers Editorial',
+    authorName: 'Switchback Editorial',
   }
 
   it('generates a valid Article schema with required fields', () => {
@@ -17,7 +17,7 @@ describe('Article JSON-LD (ADR-0013)', () => {
     expect(result.headline).toBe('Rishikesh Rafting Grades, Explained')
     expect(result.url).toBe('https://outvers.in/blog/rishikesh-rafting-grades-explained')
     expect(result.datePublished).toBe('2026-05-01')
-    expect(result.author).toEqual({ '@type': 'Person', name: 'Outvers Editorial' })
+    expect(result.author).toEqual({ '@type': 'Person', name: 'Switchback Editorial' })
   })
 
   it('includes image + description + dateModified when provided', () => {

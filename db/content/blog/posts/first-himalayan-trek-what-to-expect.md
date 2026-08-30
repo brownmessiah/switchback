@@ -67,7 +67,7 @@ Keep your pack under 12 to 14 kg. That is not a suggestion; it is the difference
 - Overpacking "just in case" clothes
 - Bulky camera equipment unless you are a serious photographer
 
-Your operator will typically provide sleeping bags, tents, and camp meals. Confirm the exact inclusion list when you book. If you are browsing [beginner-friendly treks](/activities/trekking) on Outvers, the inclusions are listed clearly on each listing before you confirm.
+Your operator will typically provide sleeping bags, tents, and camp meals. Confirm the exact inclusion list when you book. If you are browsing [beginner-friendly treks](/activities/trekking) on Switchback, the inclusions are listed clearly on each listing before you confirm.
 
 ## Choosing an Operator You Can Actually Trust
 
@@ -101,4 +101,4 @@ Costs vary widely by route, duration, group size, and operator. A 4 to 6 day tre
 
 ---
 
-If you are ready to start narrowing down your options, the trekking listings on Outvers show verified operators, clear inclusions, and honest difficulty ratings so you can make a properly informed choice rather than a hopeful guess. The mountain will be there. Go prepared.
+If you are ready to start narrowing down your options, the trekking listings on Switchback show verified operators, clear inclusions, and honest difficulty ratings so you can make a properly informed choice rather than a hopeful guess. The mountain will be there. Go prepared.

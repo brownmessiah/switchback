@@ -46,7 +46,7 @@ In both cases, the guidance here is general. Insurance policies differ significa
 
 ## Choosing a Verified Operator Reduces Risk — But Does Not Replace Insurance
 
-A good insurance policy and a responsible, verified operator are not substitutes for each other — they work together. Choosing operators who conduct proper safety briefings, use certified equipment, and respect weather-based go/no-go decisions significantly reduces the probability of an incident. You can read more about [how Outvers keeps you safe](/safety) and why operator verification matters.
+A good insurance policy and a responsible, verified operator are not substitutes for each other — they work together. Choosing operators who conduct proper safety briefings, use certified equipment, and respect weather-based go/no-go decisions significantly reduces the probability of an incident. You can read more about [how Switchback keeps you safe](/safety) and why operator verification matters.
 
 But responsible operators cannot eliminate all risk, and insurance cannot replace the judgment of a well-run operation. The combination of the two — a verified operator who knows the conditions, and a policy that actually covers what you are doing — is what lets you participate confidently rather than just hoping nothing goes wrong.
 

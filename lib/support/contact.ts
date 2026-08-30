@@ -8,7 +8,7 @@ import type { DBOrTx } from '@/lib/payments/commission-resolver'
  *
  * A `/contact` submission is NOT a silent no-op or a fake lead form — it
  * creates a real `support_ticket` (+ first `support_message`) under a fixed
- * system "guest-contact" User, so Outvers ops sees the enquiry in the same
+ * system "guest-contact" User, so Switchback ops sees the enquiry in the same
  * Support queue as authenticated tickets.
  *
  * The submitter is anonymous (logged-out), so we attribute the ticket to a
@@ -137,7 +137,7 @@ export async function createContactTicket(
     const body = [
       message,
       '',
-      '— Submitted via the Outvers contact form',
+      '— Submitted via the Switchback contact form',
       `From: ${name} <${email}>`,
       `Category: ${category}`,
       ...(bookingId ? [`Booking ID: ${bookingId}`] : []),

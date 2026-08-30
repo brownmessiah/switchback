@@ -152,7 +152,7 @@ export const bookings = pgTable(
     tdsAmountSnapshot: numeric('tds_amount_snapshot', { precision: 14, scale: 2 })
       .default('0.00')
       .notNull(),
-    // ADR-0016 — GST rate on Outvers commission. Snapshotted so historical
+    // ADR-0016 — GST rate on Switchback commission. Snapshotted so historical
     // payout math doesn't drift if the IGST rate changes (currently 18%).
     gstRateOnCommissionSnapshot: numeric('gst_rate_on_commission_snapshot', {
       precision: 5,

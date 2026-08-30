@@ -38,7 +38,7 @@ Every Experience defines `price_per_person_1_2`, `price_per_person_3_5`, `price_
 - `experiences.required_permits[]` is an array of permit slugs (`ilp_sikkim`, `ilp_arunachal_pradesh`, `pap_andaman`, `wildlife_corbett`, ...).
 - Booking page surfaces a Permits Required panel: plain-language description per permit, link to official application URL, mandatory acknowledgement checkbox.
 - T-7d WhatsApp reminder fires for permit-required Bookings.
-- **Outvers does not obtain permits on Customer's behalf in v1.** Permit-broker partnership is a v2 question.
+- **Switchback does not obtain permits on Customer's behalf in v1.** Permit-broker partnership is a v2 question.
 
 ### Permit registry as code constant
 
@@ -50,7 +50,7 @@ Every Experience defines `price_per_person_1_2`, `price_per_person_3_5`, `price_
 - **Experience-scoped monsoon closures** — duplicates the same closure window across N Vendors operating in the same region; inevitably goes inconsistent. Region-scoped closures are shared knowledge by definition.
 - **Recomputed pricing at payment time** — same failure mode as recomputed commission; opens silent rate drift after the Customer has committed. Snapshotting is non-negotiable.
 - **Arbitrary group-size price curves** — overengineered for Indian-marketplace convention. Three brackets covers the realistic distribution; bespoke curves go through admin-gated pricing tier entries.
-- **Outvers-as-permit-broker** — out of scope for solo v1. The right framing is "we'll tell you exactly what permits you need and how to get them" — explicit, helpful, but not a service Outvers underwrites.
+- **Switchback-as-permit-broker** — out of scope for solo v1. The right framing is "we'll tell you exactly what permits you need and how to get them" — explicit, helpful, but not a service Switchback underwrites.
 
 ## Consequences
 

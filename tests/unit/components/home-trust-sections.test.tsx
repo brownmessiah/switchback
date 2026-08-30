@@ -5,7 +5,7 @@ import { cleanup, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 /**
- * Issue 08 — Homepage trust + "How Outvers Works" sections.
+ * Issue 08 — Homepage trust + "How Switchback Works" sections.
  *
  * Both sections are extracted as pure, props-free presentational components so
  * they can be rendered in jsdom (the home page itself is a Server Component
@@ -43,7 +43,7 @@ const TRUST_CARD_KEYS = [
   'instantConfirmation',
 ] as const
 
-// The five "How Outvers Works" steps, in order.
+// The five "How Switchback Works" steps, in order.
 const STEP_KEYS = [
   'search',
   'compare',
@@ -139,7 +139,7 @@ describe('HomeTrust placement — closes the homepage (home-redesign issue 02 / 
   })
 })
 
-describe('HomeHowItWorks — "How Outvers Works" section (issue 08)', () => {
+describe('HomeHowItWorks — "How Switchback Works" section (issue 08)', () => {
   it('renders inside a labelled <section> with a single <h2> heading', () => {
     render(<HomeHowItWorks />)
     const region = screen.getByRole('region', {

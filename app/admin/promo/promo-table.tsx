@@ -14,7 +14,7 @@ import { PromoActionsCell } from './promo-actions-cell'
  *  - status (active / inactive / scheduled / expired) as a semantic
  *    `AdminStatusBadge` (status color + paired icon, never color alone —
  *    DESIGN.md §1.3 / §5).
- *  - the promo grants Outvers credit, so the credit amount is money →
+ *  - the promo grants Switchback credit, so the credit amount is money →
  *    right-aligned + `.tabular-nums` with the ₹ glyph (DESIGN.md §1.3 / §2.2).
  *  - the promo CODE text stays in the row DOM (the E2E #26 flow matches the row
  *    by its code text).

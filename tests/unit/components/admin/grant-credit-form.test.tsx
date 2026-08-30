@@ -7,7 +7,7 @@ import { GrantCreditForm } from '@/app/admin/loyalty/grant-credit-form'
 // #96 loyalty grant form. A manual grant CREDITS real money to a Customer's
 // Wallet, so the action is gated behind the shared A4 ConfirmMoneyDialog
 // (DESIGN.md §4 A4): clicking "Grant Credit" opens a confirm that RESTATES the
-// EXACT ₹ figure being granted AND which bucket it lands in — the Outvers
+// EXACT ₹ figure being granted AND which bucket it lands in — the Switchback
 // credit bucket (closed-loop, WITH expiry per ADR-0004), NOT the Refund balance
 // — before the operator commits. A misclick must NOT grant money: adminGrantCredit
 // only fires from the explicit Confirm inside the dialog, never inline.
@@ -70,14 +70,14 @@ describe('GrantCreditForm — A4 money confirm before granting credit', () => {
     expect(figure.className).toContain('tabular-nums')
   })
 
-  it('the confirm names the Outvers credit bucket WITH expiry, NOT the Refund balance', async () => {
+  it('the confirm names the Switchback credit bucket WITH expiry, NOT the Refund balance', async () => {
     const user = userEvent.setup()
     render(<GrantCreditForm />)
     await fillForm(user, { bucket: 'outvers_credit' })
 
     await user.click(screen.getByRole('button', { name: 'Grant Credit' }))
     const dialog = screen.getByTestId('grant-credit-confirm')
-    expect(dialog.textContent).toMatch(/Outvers credit/i)
+    expect(dialog.textContent).toMatch(/Switchback credit/i)
     expect(dialog.textContent).toMatch(/expir/i)
     expect(dialog.textContent).not.toMatch(/Refund balance/i)
   })

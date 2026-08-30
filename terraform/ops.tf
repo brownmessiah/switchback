@@ -3,7 +3,7 @@
 # the infra alerts: 5xx, Cloud SQL health, and a synthetic uptime check → email.
 
 resource "google_monitoring_notification_channel" "email" {
-  display_name = "Outvers ops email"
+  display_name = "Switchback ops email"
   type         = "email"
   labels = {
     email_address = var.alert_email

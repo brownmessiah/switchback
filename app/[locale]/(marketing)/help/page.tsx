@@ -18,7 +18,7 @@ import { faqPage } from '@/lib/seo/schemas/faq-page'
  * /help — a static, i18n-backed FAQ help centre (Issue 07, Decision 1).
  *
  * FAQ content is STATIC (no CMS, no new schema) — the Q&As live in the
- * `HelpPage` i18n namespace, grounded in real Outvers features (booking,
+ * `HelpPage` i18n namespace, grounded in real Switchback features (booking,
  * cancellation/refund presets, two-bucket Wallet, Partial pay, KYC-verified
  * Vendors, Required permits + Safety stack). Rendered as an accordion and
  * emitted as FAQPage JSON-LD (plain-text answers) per ADR-0013, alongside a

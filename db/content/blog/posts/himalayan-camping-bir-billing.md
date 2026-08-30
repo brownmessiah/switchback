@@ -58,7 +58,7 @@ When evaluating a camp operator, ask:
 3. What is their plan if a guest needs medical attention?
 4. Are they registered and reachable through a verifiable platform?
 
-Booking through a platform like [camping in Bir Billing](/adventure/camping-in-bir-billing) on Outvers gives you operators who have been through KYC verification, which at minimum confirms that the operator is a real, identifiable entity. That's a floor — it doesn't replace your own judgement, but it removes the most obvious category of problem.
+Booking through a platform like [camping in Bir Billing](/adventure/camping-in-bir-billing) on Switchback gives you operators who have been through KYC verification, which at minimum confirms that the operator is a real, identifiable entity. That's a floor — it doesn't replace your own judgement, but it removes the most obvious category of problem.
 
 ## Leave No Trace in the Meadows
 
@@ -97,4 +97,4 @@ Most organised camps welcome families and children. However, check with the spec
 
 The nearest railhead is Pathankot (roughly 160 km away), with connections to Delhi and Chandigarh. Dharamsala / Gaggal airport is the closest airport. From either point, Bir is reachable by bus or taxi — the road journey from Dharamsala takes approximately 3 hours. Your camp operator can usually advise on local transport from Bir town to the landing field area, but confirm this in advance as it is typically not included in the camping fee.
 
-If a night in the Himalayas — proper cold air, a real bonfire, a sky full of stars, and a mountain sunrise — is what you're looking for, Bir Billing delivers it without the circus of the more commercialised hill stations. Browse verified operators and availability for [camping in Bir Billing](/adventure/camping-in-bir-billing) on Outvers and find a camp that suits your dates and budget.
+If a night in the Himalayas — proper cold air, a real bonfire, a sky full of stars, and a mountain sunrise — is what you're looking for, Bir Billing delivers it without the circus of the more commercialised hill stations. Browse verified operators and availability for [camping in Bir Billing](/adventure/camping-in-bir-billing) on Switchback and find a camp that suits your dates and budget.

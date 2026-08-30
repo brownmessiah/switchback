@@ -1,8 +1,8 @@
-# Outvers Modernization — Implementation Plan
+# Switchback Modernization — Implementation Plan
 
 > ## Handoff notes for the next Claude Code session
 >
-> **What this is:** A ground-up rebuild of the Outvers travel-app currently at `/Users/aishwaryechauhan/Personal/travel-app/` (built on Hercules + React 19 + Convex). This folder (`/Users/aishwaryechauhan/Personal/outvers-next/`) is where the new app lives. The old folder stays untouched as reference.
+> **What this is:** A ground-up rebuild of the Switchback travel-app currently at `/Users/aishwaryechauhan/Personal/travel-app/` (built on Hercules + React 19 + Convex). This folder (`/Users/aishwaryechauhan/Personal/outvers-next/`) is where the new app lives. The old folder stays untouched as reference.
 >
 > **Where to start:** Read this file end-to-end, then `CONTEXT.md` for domain language, then `docs/adr/` (16 ADRs covering load-bearing decisions), then `RESEARCH.md` for competitive context. Begin with **M1 — Foundation** below.
 >
@@ -23,7 +23,7 @@
 
 ## Context
 
-The current app at `/Users/aishwaryechauhan/Personal/travel-app/` is **Outvers**, an Indian adventure-activity marketplace (rafting, paragliding, scuba, trekking, etc.) built on **Hercules** (a Vite plugin + auth SDK over React 19 + Convex). It runs at `outvers.onhercules.app`. The codebase is functional but has accumulated:
+The current app at `/Users/aishwaryechauhan/Personal/travel-app/` is **Switchback**, an Indian adventure-activity marketplace (rafting, paragliding, scuba, trekking, etc.) built on **Hercules** (a Vite plugin + auth SDK over React 19 + Convex). It runs at `outvers.onhercules.app`. The codebase is functional but has accumulated:
 
 - **Vendor lock-in** on Hercules (auth + Vite plugin + AI gateway) AND on Convex (DB + functions, hosted-only)
 - **Bloated modules** (`convex/admin.ts` is 38KB, `convex/seed.ts` is 29KB)
@@ -164,7 +164,7 @@ Each module is its own slice (schema + queries + Server Actions + UI). **Bold = 
 | **Push / WhatsApp** | `pushNotifications.ts`, `whatsapp.ts` | Web push, basic WhatsApp | **Full transactional flow**: confirm + T-24h + T-2h + post-trip review prompt; **AI-drafted replies** |
 | **API Keys / Partner API** | `apiKeys.ts` | Internal API keys | **Public Partner API v1** (Viator-style: separate endpoints for media, availability, reviews, bookings) |
 | **Channel Managers** | — | — | **Bokun + FareHarbor inbound connectors** (poll + webhook) |
-| **Trip Planner** | `tripPlanner.ts` | Basic AI placeholder | **Inventory-constrained AI planner** — chat → day-by-day itinerary built only from bookable Outvers experiences |
+| **Trip Planner** | `tripPlanner.ts` | Basic AI placeholder | **Inventory-constrained AI planner** — chat → day-by-day itinerary built only from bookable Switchback experiences |
 | **Safety** | — | — | **SOS button** (one-tap shares live location with platform + designated contact), **check-in pings** at trip start/end |
 | **Gift Experiences** | — | — | **Tinggly-style open-box gift cards** (recipient chooses experience within validity window) |
 | **Site Content / FAQs** | `siteContent.ts` | CMS via siteContent | Keep parity; multi-locale (en, hi, ta, mr, bn) |

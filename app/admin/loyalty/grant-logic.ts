@@ -23,10 +23,10 @@ export const manualGrantSchema = z.object({
 
 export type ManualGrantInput = z.infer<typeof manualGrantSchema>
 
-// ── Outvers-credit expiry (ADR-0004) ────────────────────────────────
+// ── Switchback-credit expiry (ADR-0004) ────────────────────────────────
 //
-// Per ADR-0004 the Outvers credit bucket is closed-loop promotional balance
-// that "Expires 12–18 months from issue." A manual admin grant of Outvers
+// Per ADR-0004 the Switchback credit bucket is closed-loop promotional balance
+// that "Expires 12–18 months from issue." A manual admin grant of Switchback
 // credit MUST therefore carry an expires_at on its ledger row. We anchor it
 // to the short end of the window (12 months from the grant instant), matching
 // the seed's deterministic convention (creditIssuedAt + 12 months).
@@ -36,7 +36,7 @@ export type ManualGrantInput = z.infer<typeof manualGrantSchema>
 const OUTVERS_CREDIT_EXPIRY_MONTHS = 12
 
 /**
- * Compute the expiry for a manual grant. Outvers credit expires
+ * Compute the expiry for a manual grant. Switchback credit expires
  * OUTVERS_CREDIT_EXPIRY_MONTHS from `issuedAt` (ADR-0004); the Refund balance
  * has no expiry.
  */
@@ -53,7 +53,7 @@ export function computeGrantExpiry(
 // ── Core: grant credit ──────────────────────────────────────────────
 
 /**
- * Grant credit to a Customer's wallet. Outvers-credit grants land in the
+ * Grant credit to a Customer's wallet. Switchback-credit grants land in the
  * closed-loop promotional bucket WITH an expiry (ADR-0004); refund-balance
  * grants land in the cashable bucket with no expiry. Both write the
  * wallet.grant_credit audit row via the ledger helper.

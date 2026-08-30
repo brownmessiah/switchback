@@ -50,10 +50,10 @@ test.describe('Wallet page (/wallet)', () => {
     const refundCard = page.getByTestId('wallet-bucket-refund_balance')
     await expect(creditCard).toBeVisible()
     await expect(refundCard).toBeVisible()
-    await expect(creditCard).toContainText('Outvers credit')
+    await expect(creditCard).toContainText('Switchback credit')
     await expect(refundCard).toContainText('Refund balance')
 
-    // The Outvers-credit card renders the live DB balance exactly. Note: the
+    // The Switchback-credit card renders the live DB balance exactly. Note: the
     // balance is debitable — a completed checkout applies wallet credit via
     // applyWalletToCheckout (app/(app)/checkout/actions.ts), so the revenue-spine
     // checkout spec earlier in the customer run may have drawn it down to ₹0.
@@ -83,7 +83,7 @@ test.describe('Wallet page (/wallet)', () => {
 
     const ledger = page.getByTestId('wallet-ledger')
     await expect(ledger).toBeVisible()
-    // The seed grants the Outvers credit via a ledger row → at least one row.
+    // The seed grants the Switchback credit via a ledger row → at least one row.
     const rows = page.getByTestId('wallet-ledger-row')
     expect(await rows.count()).toBeGreaterThanOrEqual(1)
     // A credit row renders its signed amount with a leading + (color + text,
@@ -114,7 +114,7 @@ test.describe('Wallet page (/wallet)', () => {
     await expect(cashout).toContainText(/cash out/i)
     await expect(cashout).toContainText(/5[–-]7 working days/i)
 
-    // The never-cashable Outvers credit card carries no cash-out affordance.
+    // The never-cashable Switchback credit card carries no cash-out affordance.
     await expect(
       page.getByTestId('wallet-bucket-outvers_credit').getByTestId('wallet-cashout'),
     ).toHaveCount(0)

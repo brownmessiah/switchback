@@ -1,4 +1,4 @@
-# Ship-Readiness Summary — Outvers MVP Validation + Redesign (#113)
+# Ship-Readiness Summary — Switchback MVP Validation + Redesign (#113)
 
 **Date:** 2026-05-31 · **Program:** World-Class MVP Validation + Redesign (113 issues; this is the final one). · **Companion:** the evidence pack (before/after pack + friction-delta table) at `.scratch/mvp-validation-redesign/EVIDENCE-PACK.md`, backed by the 97 before/after PNGs in `.scratch/mvp-validation-redesign/evidence/`.
 
@@ -52,9 +52,9 @@
 
 ## 5. Money-correctness (shipped + consistent)
 
-- **A4 exact-figure confirm Dialog on every admin money action** — refunds, payouts, commission, loyalty manual-credit grant, and KYC-reject/suspend. The operator types/confirms the exact figure before commit. This closed the program's biggest unguarded-money risk: money actions previously fired **inline** (one misclick could approve a real ₹29,625 payout or grant Outvers credit). The Dialog's default focus is the safe Cancel control (keyboard-verified, #110).
+- **A4 exact-figure confirm Dialog on every admin money action** — refunds, payouts, commission, loyalty manual-credit grant, and KYC-reject/suspend. The operator types/confirms the exact figure before commit. This closed the program's biggest unguarded-money risk: money actions previously fired **inline** (one misclick could approve a real ₹29,625 payout or grant Switchback credit). The Dialog's default focus is the safe Cancel control (keyboard-verified, #110).
 - **Full Gross→Commission→GST→TDS→TCS→Net waterfall surfaced consistently** across the vendor Booking detail (#79), the vendor tri-tab earnings ledger / payout queues (#80–82), and the admin split-view money detail (#58 / admin booking detail #102) — the breakdown and the approve action are now co-present.
-- **Two-bucket Wallet** (Outvers credit vs cash Refund balance) is first-class on the customer dashboard (#72), with the bucket a refund lands in labeled.
+- **Two-bucket Wallet** (Switchback credit vs cash Refund balance) is first-class on the customer dashboard (#72), with the bucket a refund lands in labeled.
 - **Partial-pay split shown before commit** — the Advance/balance split is permanently in view on the PDP sticky rail (#65), selectable in the checkout payment step (#70), and restated on the money-honest confirmation timeline (#71, Advance paid → balance auto-charged at T-24h → Experience date).
 
 ---

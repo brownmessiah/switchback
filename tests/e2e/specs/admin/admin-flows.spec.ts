@@ -2432,12 +2432,12 @@ test.describe('Admin promo CRUD (#26)', () => {
 })
 
 // ---------------------------------------------------------------------------
-// 21. Functional: admin loyalty grant — Outvers credit bucket + expiry (#26)
+// 21. Functional: admin loyalty grant — Switchback credit bucket + expiry (#26)
 //
 // Drives the manual loyalty grant Server Action (adminGrantCredit) FROM THE UI
 // and asserts the grant lands in the CORRECT wallet bucket per ADR-0004:
 //
-//   - OUTVERS CREDIT : a grant of Outvers credit creates an admin-source
+//   - OUTVERS CREDIT : a grant of Switchback credit creates an admin-source
 //                      wallet_transactions row in the outvers_credit bucket
 //                      (NOT refund_balance) WITH an expires_at 12–18 months out
 //                      (ADR-0004 — closed-loop promo credit expires), the
@@ -2450,8 +2450,8 @@ test.describe('Admin promo CRUD (#26)', () => {
 // it never disturbs #13–#15's u_seed_customer two-bucket wallet determinism.
 // The customer's wallet is cleared in a finally so the grant leaves no residue.
 // ---------------------------------------------------------------------------
-test.describe('Admin loyalty grant — Outvers credit bucket + expiry (#26)', () => {
-  test('grant Outvers credit → outvers_credit bucket WITH expiry, NOT Refund balance + audit', async ({
+test.describe('Admin loyalty grant — Switchback credit bucket + expiry (#26)', () => {
+  test('grant Switchback credit → outvers_credit bucket WITH expiry, NOT Refund balance + audit', async ({
     page,
   }) => {
     const GRANT_RUPEES = 750
@@ -2468,7 +2468,7 @@ test.describe('Admin loyalty grant — Outvers credit bucket + expiry (#26)', ()
       await page.goto('/admin/loyalty')
       await expect(page.locator('h1')).toContainText('Loyalty & Credits')
 
-      // Fill the Manual Credit Grant form: Outvers credit to the dedicated
+      // Fill the Manual Credit Grant form: Switchback credit to the dedicated
       // loyalty Customer.
       await page.locator('#userId').fill(SEED_LOYALTY_CUSTOMER_ID)
       await page.locator('#amountRupees').fill(String(GRANT_RUPEES))
@@ -2478,14 +2478,14 @@ test.describe('Admin loyalty grant — Outvers credit bucket + expiry (#26)', ()
 
       // #96: the grant is a MONEY action, gated behind the shared A4
       // ConfirmMoneyDialog (DESIGN.md §4 A4). The confirm restates the EXACT ₹
-      // figure and that it lands in the Outvers credit bucket WITH expiry
+      // figure and that it lands in the Switchback credit bucket WITH expiry
       // (ADR-0004), NOT the Refund balance — a misclick must NOT grant money.
       const grantConfirm = page.getByTestId('grant-credit-confirm')
       await expect(grantConfirm).toBeVisible()
       await expect(grantConfirm.getByTestId('confirm-money-amount')).toHaveText(
         `₹${GRANT_RUPEES}`,
       )
-      await expect(grantConfirm).toContainText(/Outvers credit/i)
+      await expect(grantConfirm).toContainText(/Switchback credit/i)
       await expect(grantConfirm).toContainText(/expir/i)
       // Commit the grant from the dialog's explicit Confirm.
       await grantConfirm.getByRole('button', { name: 'Grant Credit' }).click()
@@ -2501,18 +2501,18 @@ test.describe('Admin loyalty grant — Outvers credit bucket + expiry (#26)', ()
         'outvers_credit',
         'admin',
       )
-      expect(outversTxns.length, 'one admin Outvers-credit grant must exist').toBe(1)
+      expect(outversTxns.length, 'one admin Switchback-credit grant must exist').toBe(1)
       const txn = outversTxns[0]
       expect(txn.amountRupees).toBe(GRANT_RUPEES)
-      // ── ADR-0004: Outvers credit MUST carry an expiry 12–18 months out ──
-      expect(txn.expiresAt, 'Outvers credit grant must have an expiry (ADR-0004)').not.toBeNull()
+      // ── ADR-0004: Switchback credit MUST carry an expiry 12–18 months out ──
+      expect(txn.expiresAt, 'Switchback credit grant must have an expiry (ADR-0004)').not.toBeNull()
       const monthsOut =
         (txn.expiresAt!.getTime() - txn.createdAt.getTime()) /
         (1000 * 60 * 60 * 24 * 30)
       expect(monthsOut).toBeGreaterThanOrEqual(11.5)
       expect(monthsOut).toBeLessThanOrEqual(18.5)
 
-      // ── Assert: the Outvers credit aggregate incremented by the amount ──
+      // ── Assert: the Switchback credit aggregate incremented by the amount ──
       const outversAfter = await getWalletBalanceRupees(
         SEED_LOYALTY_CUSTOMER_ID,
         'outvers_credit',
@@ -2529,7 +2529,7 @@ test.describe('Admin loyalty grant — Outvers credit bucket + expiry (#26)', ()
         SEED_LOYALTY_CUSTOMER_ID,
         'refund_balance',
       )
-      expect(refundTxns, 'no refund-balance row may be written by an Outvers grant').toHaveLength(0)
+      expect(refundTxns, 'no refund-balance row may be written by an Switchback grant').toHaveLength(0)
 
       // ── Assert: a wallet.grant_credit audit row with actor + expiry ─────
       const audit = await getWalletGrantAudit(txn.id)
@@ -3704,7 +3704,7 @@ test.describe('Admin reports — render + axe coverage (#110)', () => {
 //   - close on Escape (a keyboard-only cancel path).
 // Verified against the loyalty-grant ConfirmMoneyDialog — a DETERMINISTIC,
 // contention-free path (the grant only fires from the explicit Confirm inside
-// the Dialog, so opening + Escape/Cancel grants nothing). The Customer's Outvers
+// the Dialog, so opening + Escape/Cancel grants nothing). The Customer's Switchback
 // credit balance is asserted UNCHANGED, proving the focus walk moved no money.
 // ---------------------------------------------------------------------------
 test.describe('Admin money confirm Dialog — keyboard/focus contract (#110)', () => {
@@ -3784,7 +3784,7 @@ test.describe('Admin money confirm Dialog — keyboard/focus contract (#110)', (
     // ── Focus returns to the trigger that opened the Dialog (focus restore).
     await expect(trigger).toBeFocused()
 
-    // ── The Customer's Outvers credit balance is UNCHANGED — the full focus
+    // ── The Customer's Switchback credit balance is UNCHANGED — the full focus
     //    walk (open → Cancel-reachable → trap → Escape) granted nothing.
     const balanceAfter = await getWalletBalanceRupees(
       SEED_LOYALTY_CUSTOMER_ID,

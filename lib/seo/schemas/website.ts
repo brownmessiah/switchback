@@ -2,7 +2,7 @@
  * WebSite JSON-LD per ADR-0013, with a SearchAction `potentialAction`.
  *
  * Emitted ONCE on the home page so search engines can offer a sitelinks
- * search box that deep-links into Outvers' `/search?q=` query. There must be
+ * search box that deep-links into Switchback' `/search?q=` query. There must be
  * exactly one WebSite node on the home page — this generator consolidates the
  * brand name, URL, and the SearchAction into a single node (no duplicate
  * WebSite/SearchAction).
@@ -27,7 +27,7 @@ interface SearchActionBlock {
 export interface WebSiteJsonLd {
   '@context': 'https://schema.org'
   '@type': 'WebSite'
-  name: 'Outvers'
+  name: 'Switchback'
   url: string
   potentialAction: SearchActionBlock
 }
@@ -43,7 +43,7 @@ export function website(args: WebSiteArgs): WebSiteJsonLd {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'Outvers',
+    name: 'Switchback',
     url: args.url,
     potentialAction: {
       '@type': 'SearchAction',

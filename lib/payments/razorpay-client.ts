@@ -6,7 +6,7 @@ import { env } from '@/lib/env'
  * Razorpay SDK wrapper per ADR-0001 + docs/plans/2026-05-23-m2-money-path.md
  * Task 10. Three concerns layered into one file:
  *
- *  1. Money translation. The Outvers stack carries money as integer
+ *  1. Money translation. The Switchback stack carries money as integer
  *     rupees everywhere (calculators, snapshots, audit payloads). Razorpay
  *     speaks paise on the wire (1 rupee = 100 paise). The boundary is here:
  *     callers pass `amountRupees: number`, we multiply by 100 and pass

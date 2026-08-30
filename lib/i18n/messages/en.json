@@ -10,7 +10,7 @@
       "searchButton": "Search"
     },
     "featureCarousel": {
-      "label": "Why book on Outvers",
+      "label": "Why book on Switchback",
       "dotLabel": "Go to highlight {number}",
       "items": {
         "verified": "Book verified experiences",
@@ -40,7 +40,7 @@
     },
     "trust": {
       "heading": "Adventure you can trust",
-      "subheading": "Every Experience on Outvers is run by a Vendor we verify, priced transparently, and booked through a secure checkout.",
+      "subheading": "Every Experience on Switchback is run by a Vendor we verify, priced transparently, and booked through a secure checkout.",
       "cards": {
         "verifiedVendors": {
           "title": "Verified adventure Vendors",
@@ -64,12 +64,12 @@
         },
         "secureCheckout": {
           "title": "Secure checkout",
-          "body": "Payments are processed through Razorpay, so your card and UPI details are never stored on Outvers."
+          "body": "Payments are processed through Razorpay, so your card and UPI details are never stored on Switchback."
         }
       }
     },
     "howItWorks": {
-      "heading": "How Outvers works",
+      "heading": "How Switchback works",
       "subheading": "From search to confirmation in five simple steps.",
       "steps": {
         "search": {
@@ -159,7 +159,7 @@
       "subheading": "A side-by-side look at the Experiences you selected."
     },
     "metadata": {
-      "title": "Compare Experiences · Outvers",
+      "title": "Compare Experiences · Switchback",
       "description": "Compare your selected adventure Experiences side by side — price, duration, difficulty, inclusions, cancellation policy, rating and more."
     },
     "empty": {
@@ -216,14 +216,14 @@
     "beginnerFriendly": "Beginner Friendly"
   },
   "Metadata": {
-    "title": "Outvers — book verified adventure experiences across India",
+    "title": "Switchback — book verified adventure experiences across India",
     "description": "Book rafting, paragliding, scuba, trekking and more across India. Vendor-verified Experiences with transparent refund policy and a 24-hour refund SLA."
   },
   "Common": {
     "breadcrumb": {
       "home": "Home"
     },
-    "notFound": "Not found · Outvers",
+    "notFound": "Not found · Switchback",
     "actions": {
       "save": "Save",
       "cancel": "Cancel",
@@ -402,7 +402,7 @@
   },
   "VendorSettingsClosure": {
     "sectionTitle": "Close vendor account",
-    "sectionDescription": "Closing stops you from selling on Outvers. You stay an Outvers member as a Customer — nothing is deleted on your side.",
+    "sectionDescription": "Closing stops you from selling on Switchback. You stay an Switchback member as a Customer — nothing is deleted on your side.",
     "trigger": "Close vendor account",
     "blockedTitle": "You can't close your Vendor account yet",
     "blockedInFlight": "You have {count} in-flight Bookings. Complete or cancel them first.",
@@ -414,7 +414,7 @@
     "dialogTitle": "Close your Vendor account",
     "dialogConsequenceExperiences": "Your {count} active Experiences will be archived and removed from search.",
     "dialogConsequenceCustomer": "You'll return to a Customer-only account. Your Bookings, wallet, and history are kept.",
-    "dialogConsequenceRetention": "Outvers retains your financial and tax records as required by law.",
+    "dialogConsequenceRetention": "Switchback retains your financial and tax records as required by law.",
     "dialogReversibility": "You can reopen your Vendor account by starting onboarding again.",
     "reasonLabel": "Reason for closing (optional)",
     "confirmLabel": "To confirm, type CLOSE",
@@ -441,7 +441,7 @@
       "refundBalance": "Refund balance",
       "refundHint": "Cashable or usable on next booking",
       "cashoutOption": "Cash out to your original payment method in 5–7 working days, or spend it on your next booking.",
-      "outversCredit": "Outvers credit",
+      "outversCredit": "Switchback credit",
       "creditHint": "Promotional credit — use on any booking",
       "creditExpiry": "Expires {date}",
       "viewWallet": "View wallet"
@@ -476,7 +476,7 @@
   },
   "AdventurePage": {
     "metadata": {
-      "title": "{activity} in {region} · Outvers",
+      "title": "{activity} in {region} · Switchback",
       "description": "Book {activity} Experiences in {region} from KYC-verified Vendors. Transparent pricing, 24-hour refund SLA, real-time slot availability."
     },
     "hero": {
@@ -493,18 +493,18 @@
     "faq": {
       "heading": "Frequently asked questions",
       "safetyQuestion": "Is {activity} in {region} safe?",
-      "safetyAnswer": "All Outvers-listed Experiences are run by KYC-verified Vendors. Safety-stack Experiences require a trusted contact and feature in-trip check-in pings.",
+      "safetyAnswer": "All Switchback-listed Experiences are run by KYC-verified Vendors. Safety-stack Experiences require a trusted contact and feature in-trip check-in pings.",
       "bestTimeQuestion": "When is the best time for {activity} in {region}?",
       "bestTimeAnswer": "Refer to each Experience listing for seasonality and region-closure windows. Monsoon and weather closures are surfaced inline at the booking step.",
       "cancellationQuestion": "What is the cancellation policy?",
-      "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
+      "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Switchback wallet within 24 hours."
     },
     "itemList": {
       "name": "Top {activity} Experiences in {region}"
     },
     "heroTitle": "{activity} in {region} — Flexible Cancellation",
     "heroEyebrow": "Curated adventures",
-    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {activity} Experience in {region} below, booked on Outvers, is covered.",
+    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {activity} Experience in {region} below, booked on Switchback, is covered.",
     "editorialIntro": "A hand-checked collection of {activity} in {region}, run only by KYC-verified Vendors. Transparent pricing, real-time slot availability, and refunds credited within 24 hours.",
     "trust": {
       "freeCancellation": "Flexible cancellation up to 24h",
@@ -514,18 +514,18 @@
   },
   "DestinationsPage": {
     "index": {
-      "metadataTitle": "Adventure destinations across India · Outvers",
+      "metadataTitle": "Adventure destinations across India · Switchback",
       "metadataDescription": "Explore adventure destinations across India. Each region lists KYC-verified Vendor Experiences with transparent pricing and a 24-hour refund SLA.",
       "breadcrumb": "Destinations",
       "heroEyebrow": "Where to go",
       "heroTitle": "Adventure destinations across India",
-      "heroSubtitle": "From Himalayan passes to coastal reefs — browse every region Outvers covers, each with KYC-verified Vendors and flexible cancellation up to 24h.",
+      "heroSubtitle": "From Himalayan passes to coastal reefs — browse every region Switchback covers, each with KYC-verified Vendors and flexible cancellation up to 24h.",
       "regionsHeading": "All destinations",
       "regionCount": "{count, plural, =0 {No experiences yet} one {# experience} other {# experiences}}",
       "exploreCta": "Explore {region}"
     },
     "detail": {
-      "metadataTitle": "{region} adventures · Outvers",
+      "metadataTitle": "{region} adventures · Switchback",
       "metadataDescription": "Book adventure Experiences in {region}, {state} from KYC-verified Vendors. Transparent pricing, real-time slot availability, and a 24-hour refund SLA.",
       "heroEyebrow": "Destination",
       "heroTitle": "Adventures in {region}",
@@ -541,11 +541,11 @@
       "itemListName": "Top Experiences in {region}",
       "faqHeading": "Frequently asked questions",
       "faqSafetyQuestion": "Are adventures in {region} safe?",
-      "faqSafetyAnswer": "Every Outvers-listed Experience in {region} is run by a KYC-verified Vendor. Safety-stack Experiences require a trusted contact and feature in-trip check-in pings.",
+      "faqSafetyAnswer": "Every Switchback-listed Experience in {region} is run by a KYC-verified Vendor. Safety-stack Experiences require a trusted contact and feature in-trip check-in pings.",
       "faqBestTimeQuestion": "When is the best time to visit {region}?",
       "faqBestTimeAnswer": "Seasonality varies by Experience. Each listing surfaces its own season and region-closure windows, and weather closures are shown inline at the booking step.",
       "faqCancellationQuestion": "What is the cancellation policy?",
-      "faqCancellationAnswer": "Each Experience carries its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours.",
+      "faqCancellationAnswer": "Each Experience carries its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Switchback wallet within 24 hours.",
       "intelligence": {
         "priceRangeHeading": "Price range",
         "priceRangeValue": "From ₹{min} to ₹{max}",
@@ -559,7 +559,7 @@
   },
   "ExperiencePage": {
     "metadata": {
-      "title": "{title} · {activity} in {region} · Outvers",
+      "title": "{title} · {activity} in {region} · Switchback",
       "description": "Book {title} in {region} from a KYC-verified Vendor. Transparent pricing, 24-hour refund SLA."
     },
     "vendor": {
@@ -569,7 +569,7 @@
       "about": "About this experience",
       "cancellationPolicy": "Cancellation policy",
       "requiredPermits": "Required permits",
-      "permitsNotice": "You need the following permits before participating. Outvers does not obtain permits on your behalf.",
+      "permitsNotice": "You need the following permits before participating. Switchback does not obtain permits on your behalf.",
       "reviews": "Reviews",
       "faq": "Frequently asked questions",
       "highlights": "Highlights",
@@ -622,14 +622,14 @@
       "strict": "Full refund if you cancel up to 14 days before the Experience. 50% refund up to 7 days before. No refund after.",
       "fallback": "This Experience follows the {preset} cancellation policy.",
       "nonCancellableBadge": "Non-cancellable",
-      "nonCancellableDescription": "This Experience is non-cancellable — no refund after payment. Outvers may still handle exceptional refunds.",
+      "nonCancellableDescription": "This Experience is non-cancellable — no refund after payment. Switchback may still handle exceptional refunds.",
       "freeUpToHours": "Full refund if you cancel up to {hours}h before the activity"
     },
     "faq": {
       "safetyQuestion": "Is {title} safe?",
-      "safetyAnswer": "All Outvers-listed Experiences are run by KYC-verified Vendors. Safety-stack Experiences require a trusted contact and feature in-trip check-in pings.",
+      "safetyAnswer": "All Switchback-listed Experiences are run by KYC-verified Vendors. Safety-stack Experiences require a trusted contact and feature in-trip check-in pings.",
       "cancellationQuestion": "What is the cancellation policy for {title}?",
-      "cancellationAnswer": "This Experience follows the {preset} cancellation policy. Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours.",
+      "cancellationAnswer": "This Experience follows the {preset} cancellation policy. Refunds for inside-policy cancellations credit to your Switchback wallet within 24 hours.",
       "paymentQuestion": "How does payment work?",
       "paymentAnswerPartial": "You can pay 25% now and the rest 24 hours before the Experience starts. Full upfront payment is also available.",
       "paymentAnswerFull": "Full payment is collected at booking time."
@@ -721,15 +721,15 @@
       "onlyNLeft": "Only {count} {count, plural, one {space} other {spaces}} left at this time"
     },
     "disclosure": {
-      "heading": "How Outvers works with Vendors",
-      "body": "All Experiences are operated by independent third-party Vendors. Outvers verifies vendor information, booking rules, and payment flow where applicable."
+      "heading": "How Switchback works with Vendors",
+      "body": "All Experiences are operated by independent third-party Vendors. Switchback verifies vendor information, booking rules, and payment flow where applicable."
     },
     "afterBooking": {
       "heading": "What happens after booking?",
       "steps": {
         "select": "Select your date and participants.",
         "payAdvance": "Pay the 25% Advance securely (Partial pay).",
-        "confirm": "Outvers confirms your Booking instantly.",
+        "confirm": "Switchback confirms your Booking instantly.",
         "receive": "You receive the meeting point and Vendor details.",
         "conduct": "The Vendor conducts the Experience as per the listed terms."
       }
@@ -737,7 +737,7 @@
     "askQuestion": {
       "cta": "Ask a Question",
       "dialogTitle": "Ask a Question",
-      "dialogDescription": "Send your question about this Experience to the Outvers support team. We never share Vendor contact details.",
+      "dialogDescription": "Send your question about this Experience to the Switchback support team. We never share Vendor contact details.",
       "messageLabel": "Your question",
       "messagePlaceholder": "What would you like to know about this Experience?",
       "submit": "Send question",
@@ -767,7 +767,7 @@
   },
   "SearchPage": {
     "metadata": {
-      "title": "Search Experiences · Outvers",
+      "title": "Search Experiences · Switchback",
       "description": "Search and filter adventure Experiences across India. Rafting, paragliding, trekking, scuba diving, and more from KYC-verified Vendors."
     },
     "heading": {
@@ -914,11 +914,11 @@
   },
   "SignInPage": {
     "metadata": {
-      "title": "Sign in — Outvers",
-      "description": "Sign in to Outvers to book adventure experiences across India."
+      "title": "Sign in — Switchback",
+      "description": "Sign in to Switchback to book adventure experiences across India."
     },
     "form": {
-      "signInTitle": "Sign in to Outvers",
+      "signInTitle": "Sign in to Switchback",
       "signUpTitle": "Create an account",
       "signInSubtitle": "Enter your email to continue",
       "signUpSubtitle": "Sign up to book adventures",
@@ -953,9 +953,9 @@
   },
   "VendorPage": {
     "metadata": {
-      "title": "{name} · Outvers Vendor",
-      "description": "Book adventure experiences from {name} on Outvers. KYC-verified, transparent pricing, 24-hour refund SLA.",
-      "notFound": "Vendor not found · Outvers"
+      "title": "{name} · Switchback Vendor",
+      "description": "Book adventure experiences from {name} on Switchback. KYC-verified, transparent pricing, 24-hour refund SLA.",
+      "notFound": "Vendor not found · Switchback"
     },
     "eyebrow": "Verified Vendor storefront",
     "stats": {
@@ -967,7 +967,7 @@
       "responseScore": "Response score: {score}%"
     },
     "message": {
-      "contactSupport": "Contact Outvers support"
+      "contactSupport": "Contact Switchback support"
     },
     "trust": {
       "provenanceHeading": "What we verified",
@@ -996,8 +996,8 @@
   },
   "CancellationPolicyPage": {
     "metadata": {
-      "title": "Refund and cancellation policy · Outvers",
-      "description": "Outvers refund policy explained — Flexible, Moderate, Strict presets, refund SLA, vendor-cancelled bookings, and how to request a cashout from your wallet."
+      "title": "Refund and cancellation policy · Switchback",
+      "description": "Switchback refund policy explained — Flexible, Moderate, Strict presets, refund SLA, vendor-cancelled bookings, and how to request a cashout from your wallet."
     },
     "breadcrumb": {
       "refundPolicy": "Refund policy"
@@ -1022,11 +1022,11 @@
       "promptEmpty": "Enter an amount and both dates to see your refund.",
       "promptInvalid": "Your cancellation is on or after the start time, so it falls outside the policy window and would open a support dispute rather than an automatic refund.",
       "walletNoteHeading": "Where the refund lands",
-      "walletNoteBody": "An eligible refund credits your Refund balance — the cash-returnable bucket of your two-bucket Wallet. You can spend it on a future booking or cash it out to your original payment method (5–7 working days). It is not Outvers credit, which is promotional and spendable on Outvers only."
+      "walletNoteBody": "An eligible refund credits your Refund balance — the cash-returnable bucket of your two-bucket Wallet. You can spend it on a future booking or cash it out to your original payment method (5–7 working days). It is not Switchback credit, which is promotional and spendable on Switchback only."
     },
     "hero": {
       "title": "Refund and cancellation policy",
-      "description": "Every Outvers Experience has one of three named cancellation presets — Flexible, Moderate, or Strict. The preset is locked when you book and is shown on every Experience card, the checkout page, the confirmation email, and the WhatsApp confirmation. Refund math is a pure function of the preset, your cancellation timestamp, and the booking total. No human review inside the policy window."
+      "description": "Every Switchback Experience has one of three named cancellation presets — Flexible, Moderate, or Strict. The preset is locked when you book and is shown on every Experience card, the checkout page, the confirmation email, and the WhatsApp confirmation. Refund math is a pure function of the preset, your cancellation timestamp, and the booking total. No human review inside the policy window."
     },
     "presets": {
       "heading": "The three presets",
@@ -1065,7 +1065,7 @@
     },
     "refundSla": {
       "heading": "When you'll see the money",
-      "body": "Eligible refunds credit to your Outvers wallet within 24 hours of an inside-policy cancellation. The wallet balance is spendable on any future booking; you can request a cashout to your original payment method any time — Razorpay round-trips bank transfers in 5–7 working days."
+      "body": "Eligible refunds credit to your Switchback wallet within 24 hours of an inside-policy cancellation. The wallet balance is spendable on any future booking; you can request a cashout to your original payment method any time — Razorpay round-trips bank transfers in 5–7 working days."
     },
     "questions": {
       "heading": "Still have questions?",
@@ -1075,15 +1075,15 @@
   },
   "SafetyPage": {
     "metadata": {
-      "title": "Safety and trust · Outvers",
-      "description": "How Outvers builds trust: a three-tier KYC verification ladder for vendors, transparent cancellation presets with SLA-backed wallet refunds, partial pay, surfaced permit requirements, and a notification-based safety stack."
+      "title": "Safety and trust · Switchback",
+      "description": "How Switchback builds trust: a three-tier KYC verification ladder for vendors, transparent cancellation presets with SLA-backed wallet refunds, partial pay, surfaced permit requirements, and a notification-based safety stack."
     },
     "breadcrumb": {
       "safety": "Safety & trust"
     },
     "hero": {
-      "title": "Safety and trust at Outvers",
-      "description": "Outvers is an adventure marketplace, so trust is the product. We do not own the rafts, the harnesses, or the trails — independent vendors do. Our job is to verify who they are, make the money rules predictable, and notify the right people when something goes wrong. Some safety and verification features may vary by experience and vendor. Each Experience shows what is verified before you book. Where Outvers does not do something — like obtaining your permits or dispatching emergency services — we say so plainly."
+      "title": "Safety and trust at Switchback",
+      "description": "Switchback is an adventure marketplace, so trust is the product. We do not own the rafts, the harnesses, or the trails — independent vendors do. Our job is to verify who they are, make the money rules predictable, and notify the right people when something goes wrong. Some safety and verification features may vary by experience and vendor. Each Experience shows what is verified before you book. Where Switchback does not do something — like obtaining your permits or dispatching emergency services — we say so plainly."
     },
     "kyc": {
       "heading": "Every vendor climbs a three-tier verification ladder",
@@ -1100,19 +1100,19 @@
       "cancellationTitle": "Three cancellation presets, locked at booking",
       "cancellationBody": "Every Experience uses one of three named cancellation presets — Flexible, Moderate, or Strict. The preset is locked when you book and shown on the Experience card, the checkout page, and your confirmation. Refund math is a pure function of the preset, your cancellation time, and the booking total — no human review inside the policy window. Read the full breakdown on our cancellation policy page.",
       "cancellationLink": "See the cancellation policy",
-      "walletTitle": "Two-bucket wallet — Outvers credit and Refund balance",
-      "walletBody": "Your Wallet shows two separate buckets. Outvers credit is promotional balance from referrals and offers — spendable on Outvers bookings only. Refund balance is real money: an inside-policy cancellation auto-credits it within minutes, and you can cash it back to your original payment method via a 5–7 working-day Razorpay round-trip. A vendor-cancelled booking is always a full refund regardless of preset.",
+      "walletTitle": "Two-bucket wallet — Switchback credit and Refund balance",
+      "walletBody": "Your Wallet shows two separate buckets. Switchback credit is promotional balance from referrals and offers — spendable on Switchback bookings only. Refund balance is real money: an inside-policy cancellation auto-credits it within minutes, and you can cash it back to your original payment method via a 5–7 working-day Razorpay round-trip. A vendor-cancelled booking is always a full refund regardless of preset.",
       "partialPayTitle": "Partial pay — a 25% Advance now, the rest at T-24h",
       "partialPayBody": "For eligible bookings you pay a 25% Advance at booking time, and the remaining 75% is auto-captured 24 hours before the Experience starts. You see both figures before you commit, so there is no surprise charge."
     },
     "onground": {
       "heading": "On the ground: permits surfaced, safety notified",
       "permitsTitle": "Required permits, surfaced — not brokered",
-      "permitsBody": "Some Experiences sit in permit-gated areas (for example Inner Line Permits or wildlife-area entry). Outvers surfaces each required permit in plain language with a link to the official application and a mandatory acknowledgement before you book. To be clear: Outvers does not obtain permits on your behalf — we tell you exactly what you need and where to get it.",
+      "permitsBody": "Some Experiences sit in permit-gated areas (for example Inner Line Permits or wildlife-area entry). Switchback surfaces each required permit in plain language with a link to the official application and a mandatory acknowledgement before you book. To be clear: Switchback does not obtain permits on your behalf — we tell you exactly what you need and where to get it.",
       "safetyStackTitle": "The safety stack: trusted contact, SOS, and check-in pings",
-      "safetyStackBody": "Experiences that need it — treks, paragliding, scuba, rafting, and high-flagged regions — turn on the safety stack. You record a trusted contact before booking. Where SOS is enabled for an Experience, triggering it notifies your trusted contact, the vendor, and Outvers ops; automated check-in pings ask \"arrived safely?\" at trip start and end where supported. Each listing shows which safety features apply before you book.",
+      "safetyStackBody": "Experiences that need it — treks, paragliding, scuba, rafting, and high-flagged regions — turn on the safety stack. You record a trusted contact before booking. Where SOS is enabled for an Experience, triggering it notifies your trusted contact, the vendor, and Switchback ops; automated check-in pings ask \"arrived safely?\" at trip start and end where supported. Each listing shows which safety features apply before you book.",
       "postureTitle": "A notification tool, not an emergency service",
-      "postureBody": "Outvers SOS notifies people; it does not dispatch emergency services and does not promise a response. In a life-threatening emergency, dial 112. If trip location sharing is enabled, routine location is visible only to you and is deleted after the trip ends — we keep no standing surveillance log."
+      "postureBody": "Switchback SOS notifies people; it does not dispatch emergency services and does not promise a response. In a life-threatening emergency, dial 112. If trip location sharing is enabled, routine location is visible only to you and is deleted after the trip ends — we keep no standing surveillance log."
     },
     "contact": {
       "heading": "Questions about safety?",
@@ -1122,22 +1122,22 @@
   },
   "AboutPage": {
     "metadata": {
-      "title": "About Outvers · India's adventure-activity marketplace",
-      "description": "Outvers connects adventure-seeking customers across India with KYC-verified independent vendors — rafting operators, paragliding outfits, trekking companies, and more — with transparent pricing and refunds."
+      "title": "About Switchback · India's adventure-activity marketplace",
+      "description": "Switchback connects adventure-seeking customers across India with KYC-verified independent vendors — rafting operators, paragliding outfits, trekking companies, and more — with transparent pricing and refunds."
     },
     "breadcrumb": {
       "about": "About"
     },
     "hero": {
-      "title": "About Outvers",
-      "description": "Outvers is an Indian adventure-activity marketplace. We connect customers who want to raft, trek, paraglide, dive, and explore with independent vendors who run those Experiences — verified, priced transparently, and bookable in a few taps."
+      "title": "About Switchback",
+      "description": "Switchback is an Indian adventure-activity marketplace. We connect customers who want to raft, trek, paraglide, dive, and explore with independent vendors who run those Experiences — verified, priced transparently, and bookable in a few taps."
     },
     "mission": {
       "heading": "Our mission",
-      "body": "India's adventure-activity market is enormous and fragmented — thousands of skilled local operators, most without an online storefront, and customers who struggle to tell a verified outfit from a risky one. Outvers exists to close that gap honestly: bring real operators online, verify who they are, and make the rules of money and safety predictable for everyone."
+      "body": "India's adventure-activity market is enormous and fragmented — thousands of skilled local operators, most without an online storefront, and customers who struggle to tell a verified outfit from a risky one. Switchback exists to close that gap honestly: bring real operators online, verify who they are, and make the rules of money and safety predictable for everyone."
     },
     "howItWorks": {
-      "heading": "How Outvers works",
+      "heading": "How Switchback works",
       "browseTitle": "Browse real Experiences",
       "browseBody": "Search single-day and multi-day Experiences across regions and activities. Pricing brackets, availability, and the cancellation preset are shown up front.",
       "bookTitle": "Book with transparent money rules",
@@ -1147,7 +1147,7 @@
     },
     "honesty": {
       "heading": "What we are — and what we are not",
-      "body": "Outvers is a marketplace. The Experiences are operated by independent third-party vendors, not by Outvers. We verify vendors, hold the money rules, and — where SOS is enabled — notify your contacts when you trigger it. But we do not run the trips ourselves, we do not obtain permits on your behalf, and our SOS is a notification tool, not an emergency response service. Being clear about this is part of the trust."
+      "body": "Switchback is a marketplace. The Experiences are operated by independent third-party vendors, not by Switchback. We verify vendors, hold the money rules, and — where SOS is enabled — notify your contacts when you trigger it. But we do not run the trips ourselves, we do not obtain permits on your behalf, and our SOS is a notification tool, not an emergency response service. Being clear about this is part of the trust."
     },
     "contact": {
       "heading": "Get in touch",
@@ -1158,15 +1158,15 @@
   },
   "Nav": {
     "themeToggle": "Toggle dark mode",
-    "home": "Outvers",
-    "homeAriaLabel": "Outvers home",
+    "home": "Switchback",
+    "homeAriaLabel": "Switchback home",
     "search": "Search",
     "adventures": "Adventures",
     "refundPolicy": "Refund policy",
     "signIn": "Sign in",
     "openMenu": "Open menu",
     "footer": {
-      "brandTagline": "Outvers - Your Adventure Partner",
+      "brandTagline": "Switchback - Your Adventure Partner",
       "tagline": "Adventure activities across India from KYC-verified vendors. Transparent refund policy, real-time slot availability.",
       "explore": "Explore",
       "paragliding": "Paragliding",
@@ -1175,7 +1175,7 @@
       "safety": "Safety & trust",
       "helpCentre": "Help centre",
       "contactUs": "Contact us",
-      "about": "About Outvers",
+      "about": "About Switchback",
       "forVendors": "For Vendors",
       "listYourExperience": "List your experience",
       "vendorDashboard": "Vendor dashboard",
@@ -1191,10 +1191,10 @@
       "emailUs": "Email us",
       "followUs": "Follow us",
       "social": {
-        "instagram": "Outvers on Instagram",
-        "youtube": "Outvers on YouTube",
-        "facebook": "Outvers on Facebook",
-        "x": "Outvers on X"
+        "instagram": "Switchback on Instagram",
+        "youtube": "Switchback on YouTube",
+        "facebook": "Switchback on Facebook",
+        "x": "Switchback on X"
       },
       "newsletter": {
         "heading": "Stay in the loop",
@@ -1242,10 +1242,10 @@
   },
   "BlogPage": {
     "metadata": {
-      "title": "Blog · Outvers",
-      "description": "Guides, tips and destination stories for adventure travel in India — from KYC-verified Outvers operators."
+      "title": "Blog · Switchback",
+      "description": "Guides, tips and destination stories for adventure travel in India — from KYC-verified Switchback operators."
     },
-    "heading": "The Outvers Blog",
+    "heading": "The Switchback Blog",
     "subheading": "Guides, tips and destination stories for safer, better adventures across India.",
     "empty": "No posts published yet — check back soon.",
     "pagination": {
@@ -1256,26 +1256,26 @@
     },
     "article": {
       "by": "By {author}",
-      "defaultAuthor": "Outvers Editorial",
+      "defaultAuthor": "Switchback Editorial",
       "backToBlog": "← Back to the blog"
     }
   },
   "HelpPage": {
     "metadata": {
-      "title": "Help centre · Outvers",
-      "description": "Answers to common questions about booking adventure Experiences on Outvers — Partial pay, the Cancellation policy presets, your two-bucket Wallet, KYC-verified Vendors, Required permits, and the Safety stack."
+      "title": "Help centre · Switchback",
+      "description": "Answers to common questions about booking adventure Experiences on Switchback — Partial pay, the Cancellation policy presets, your two-bucket Wallet, KYC-verified Vendors, Required permits, and the Safety stack."
     },
     "breadcrumb": {
       "help": "Help centre"
     },
     "hero": {
       "title": "How can we help?",
-      "description": "Answers to the questions Customers ask most — about booking, payments, refunds, your Wallet, Vendor verification, and safety on Outvers."
+      "description": "Answers to the questions Customers ask most — about booking, payments, refunds, your Wallet, Vendor verification, and safety on Switchback."
     },
     "faq": {
       "whatIsOutvers": {
-        "question": "What is Outvers?",
-        "answer": "Outvers is an Indian adventure-activity marketplace where you book Experiences — rafting, paragliding, treks and more — run by independent Vendors. Every Vendor is KYC-verified, every Experience shows a clear Cancellation policy, and slot availability is real-time so you only ever book a slot that still has room."
+        "question": "What is Switchback?",
+        "answer": "Switchback is an Indian adventure-activity marketplace where you book Experiences — rafting, paragliding, treks and more — run by independent Vendors. Every Vendor is KYC-verified, every Experience shows a clear Cancellation policy, and slot availability is real-time so you only ever book a slot that still has room."
       },
       "howToBook": {
         "question": "How do I book an Experience?",
@@ -1283,7 +1283,7 @@
       },
       "partialPay": {
         "question": "Do I have to pay the full amount upfront?",
-        "answer": "Most Bookings 48 hours or more away and up to Rs.25,000 default to Partial pay: Outvers captures a 25% Advance when you book, and the remaining 75% is auto-captured 24 hours before the Experience starts. The exact Advance and balance are shown on the checkout page before you pay."
+        "answer": "Most Bookings 48 hours or more away and up to Rs.25,000 default to Partial pay: Switchback captures a 25% Advance when you book, and the remaining 75% is auto-captured 24 hours before the Experience starts. The exact Advance and balance are shown on the checkout page before you pay."
       },
       "cancellation": {
         "question": "Can I cancel, and how much do I get back?",
@@ -1294,8 +1294,8 @@
         "answer": "An inside-policy cancellation auto-credits your Refund balance with no human review, usually within 24-48 hours. Your Refund balance defaults to a Wallet credit you can spend on your next Booking, but it is cashable back to your original payment method on request — a 5-7 working-day Razorpay round-trip."
       },
       "walletBuckets": {
-        "question": "What is the difference between Outvers credit and Refund balance?",
-        "answer": "Your Wallet holds two separate buckets. Outvers credit is promotional balance from referrals, festive promos and loyalty rewards — spendable only on Outvers Bookings and never cashable, and it expires 12-18 months after it is issued. Refund balance is your accrued refunds, which you can spend on Bookings or cash out to your bank."
+        "question": "What is the difference between Switchback credit and Refund balance?",
+        "answer": "Your Wallet holds two separate buckets. Switchback credit is promotional balance from referrals, festive promos and loyalty rewards — spendable only on Switchback Bookings and never cashable, and it expires 12-18 months after it is issued. Refund balance is your accrued refunds, which you can spend on Bookings or cash out to your bank."
       },
       "vendorVerification": {
         "question": "How do I know a Vendor is trustworthy?",
@@ -1303,30 +1303,30 @@
       },
       "permits": {
         "question": "Do I need a permit for some Experiences?",
-        "answer": "Some Experiences are permit-gated and need a Required permit — for example an Inner Line Permit or a wildlife-area entry. Outvers surfaces the requirement on the Experience page and links you to the official process. In v1 you obtain the permit yourself; Outvers does not obtain permits on your behalf."
+        "answer": "Some Experiences are permit-gated and need a Required permit — for example an Inner Line Permit or a wildlife-area entry. Switchback surfaces the requirement on the Experience page and links you to the official process. In v1 you obtain the permit yourself; Switchback does not obtain permits on your behalf."
       },
       "safetyStack": {
-        "question": "What safety features does Outvers offer?",
-        "answer": "Experiences flagged for it use the Safety stack: a Trusted contact you record before booking, plus — where enabled — automated check-in pings at trip start and end, an SOS button, and ephemeral live-location sharing. On an SOS trigger, Outvers notifies your Trusted contact, the Vendor, and Outvers ops — Outvers notifies, it does not dispatch."
+        "question": "What safety features does Switchback offer?",
+        "answer": "Experiences flagged for it use the Safety stack: a Trusted contact you record before booking, plus — where enabled — automated check-in pings at trip start and end, an SOS button, and ephemeral live-location sharing. On an SOS trigger, Switchback notifies your Trusted contact, the Vendor, and Switchback ops — Switchback notifies, it does not dispatch."
       }
     },
     "stillStuck": {
       "title": "Still need a hand?",
-      "body": "If your question is not answered here, send us a message and the Outvers support team will get back to you.",
+      "body": "If your question is not answered here, send us a message and the Switchback support team will get back to you.",
       "cta": "Contact us"
     }
   },
   "ContactPage": {
     "metadata": {
-      "title": "Contact us · Outvers",
-      "description": "Get in touch with the Outvers support team. Send us a message about a Booking, a payment, an Experience, or anything else and we will be in touch."
+      "title": "Contact us · Switchback",
+      "description": "Get in touch with the Switchback support team. Send us a message about a Booking, a payment, an Experience, or anything else and we will be in touch."
     },
     "breadcrumb": {
       "contact": "Contact us"
     },
     "hero": {
       "title": "Contact us",
-      "description": "Have a question about a Booking, a refund, or an Experience? Send us a message and the Outvers support team will get back to you by email."
+      "description": "Have a question about a Booking, a refund, or an Experience? Send us a message and the Switchback support team will get back to you by email."
     },
     "helpHint": "Many questions are answered on our",
     "helpHintLink": "help centre",
@@ -1349,7 +1349,7 @@
       "submit": "Send message",
       "submitting": "Sending…",
       "successTitle": "Thanks — we'll be in touch",
-      "successBody": "Your message has reached the Outvers support team. We'll reply to the email address you gave us.",
+      "successBody": "Your message has reached the Switchback support team. We'll reply to the email address you gave us.",
       "errors": {
         "name": "Please enter your name.",
         "email": "Please enter a valid email address.",
@@ -1360,12 +1360,12 @@
   },
   "ActivitiesPage": {
     "metadata": {
-      "title": "{activity} across India · Outvers",
+      "title": "{activity} across India · Switchback",
       "description": "Book {activity} Experiences across India from KYC-verified Vendors. Transparent pricing, real-time slot availability, and a 24-hour refund SLA."
     },
     "heroEyebrow": "Every region, one place",
     "heroTitle": "{activity} across India",
-    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {activity} Experience below, booked on Outvers, is covered.",
+    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {activity} Experience below, booked on Switchback, is covered.",
     "editorialIntro": "A hand-checked collection of {activity} from every region we operate in, run only by KYC-verified Vendors. Compare across destinations, then book with transparent pricing and refunds credited within 24 hours.",
     "regionHint": "Looking for {activity} in a specific destination? Open an Experience to see its region, or browse {activity} by city from each listing.",
     "experiences": {
@@ -1382,11 +1382,11 @@
     "faq": {
       "heading": "Frequently asked questions",
       "safetyQuestion": "Is {activity} safe?",
-      "safetyAnswer": "All Outvers-listed Experiences are run by KYC-verified Vendors. Safety-stack Experiences require a trusted contact and feature in-trip check-in pings.",
+      "safetyAnswer": "All Switchback-listed Experiences are run by KYC-verified Vendors. Safety-stack Experiences require a trusted contact and feature in-trip check-in pings.",
       "regionsQuestion": "Where can I do {activity} in India?",
       "regionsAnswer": "Each Experience listing shows its region. Open a listing to see its destination, seasonality, and any region-closure windows surfaced at the booking step.",
       "cancellationQuestion": "What is the cancellation policy?",
-      "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
+      "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Switchback wallet within 24 hours."
     },
     "trust": {
       "freeCancellation": "Flexible cancellation up to 24h",
@@ -1404,12 +1404,12 @@
   },
   "CategoryPage": {
     "metadata": {
-      "title": "{category} adventures across India · Outvers",
+      "title": "{category} adventures across India · Switchback",
       "description": "Explore {category} Experiences across India from KYC-verified Vendors. Transparent pricing, real-time slot availability, and a 24-hour refund SLA."
     },
     "heroEyebrow": "Curated category",
     "heroTitle": "{category} adventures across India",
-    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {category} Experience below, booked on Outvers, is covered.",
+    "refundLead": "Get a full refund if you cancel up to 24 hours before your slot — every {category} Experience below, booked on Switchback, is covered.",
     "editorialIntro": "A hand-checked rollup of {category} adventures from every region we operate in, run only by KYC-verified Vendors. Transparent pricing, real-time slot availability, and refunds credited within 24 hours.",
     "categories": {
       "water": "Water sports",
@@ -1432,11 +1432,11 @@
     "faq": {
       "heading": "Frequently asked questions",
       "safetyQuestion": "Are {category} Experiences safe?",
-      "safetyAnswer": "All Outvers-listed Experiences are run by KYC-verified Vendors. Safety-stack Experiences require a trusted contact and feature in-trip check-in pings.",
+      "safetyAnswer": "All Switchback-listed Experiences are run by KYC-verified Vendors. Safety-stack Experiences require a trusted contact and feature in-trip check-in pings.",
       "includesQuestion": "What does the {category} category include?",
       "includesAnswer": "This category groups related activities. Open any Experience to see its specific activity, region, and seasonality.",
       "cancellationQuestion": "What is the cancellation policy?",
-      "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Outvers wallet within 24 hours."
+      "cancellationAnswer": "Each Experience has its own Cancellation policy (Flexible / Moderate / Strict). Refunds for inside-policy cancellations credit to your Switchback wallet within 24 hours."
     },
     "trust": {
       "freeCancellation": "Flexible cancellation up to 24h",
@@ -1446,9 +1446,9 @@
   },
   "WalletPage": {
     "title": "Wallet",
-    "subtitle": "Your Outvers credit and refund balance, with a full transaction history.",
+    "subtitle": "Your Switchback credit and refund balance, with a full transaction history.",
     "backToDashboard": "Back to dashboard",
-    "outversCredit": "Outvers credit",
+    "outversCredit": "Switchback credit",
     "outversCreditHint": "Promotional credit — use on any booking. Never cashable.",
     "refundBalance": "Refund balance",
     "refundBalanceHint": "From cancellations and refunds. Spend it on your next booking, or cash out.",
@@ -1514,7 +1514,7 @@
     },
     "thread": {
       "you": "You",
-      "supportTeam": "Outvers Support",
+      "supportTeam": "Switchback Support",
       "openedOn": "Opened {date}",
       "messagesHeading": "Conversation"
     },
@@ -1532,7 +1532,7 @@
     "subtitle": "Manage your profile, address, and notification preferences.",
     "profile": {
       "heading": "Profile",
-      "description": "Your display name and avatar appear across Outvers.",
+      "description": "Your display name and avatar appear across Switchback.",
       "displayName": "Display name",
       "displayNamePlaceholder": "Your name",
       "avatarUrl": "Avatar image URL",
@@ -1582,12 +1582,12 @@
   },
   "TripPlannerPage": {
     "metadata": {
-      "title": "AI Trip Planner · Outvers",
-      "description": "Build a day-by-day adventure itinerary grounded in real, bookable Outvers experiences. Pick a destination, days, budget, group size, and style."
+      "title": "AI Trip Planner · Switchback",
+      "description": "Build a day-by-day adventure itinerary grounded in real, bookable Switchback experiences. Pick a destination, days, budget, group size, and style."
     },
     "heading": "Plan your adventure with AI",
     "subheading": "Tell us where and how you like to travel. We build a day-by-day itinerary from real, bookable experiences — never made-up ones.",
-    "aiLabel": "AI-assisted · grounded in live Outvers inventory",
+    "aiLabel": "AI-assisted · grounded in live Switchback inventory",
     "form": {
       "region": "Destination",
       "regionPlaceholder": "Choose a destination",
@@ -1615,7 +1615,7 @@
       "perPerson": "₹{price}/person",
       "packingHeading": "Packing list",
       "emptyDay": "A free day — explore on your own or add an experience.",
-      "disclaimer": "Every experience above is real and bookable on Outvers. AI helps arrange them; it never invents experiences."
+      "disclaimer": "Every experience above is real and bookable on Switchback. AI helps arrange them; it never invents experiences."
     },
     "empty": {
       "title": "No live experiences for that destination yet",
@@ -1628,34 +1628,34 @@
   },
   "VendorPartnerPage": {
     "metadata": {
-      "title": "List your adventure business on Outvers · Become a Vendor",
-      "description": "List your adventure-activity business on Outvers — India's marketplace for verified Experiences. Take online Bookings, earn a Verified Vendor badge, track Payouts, and reach adventure-seeking customers. Start Vendor onboarding."
+      "title": "List your adventure business on Switchback · Become a Vendor",
+      "description": "List your adventure-activity business on Switchback — India's marketplace for verified Experiences. Take online Bookings, earn a Verified Vendor badge, track Payouts, and reach adventure-seeking customers. Start Vendor onboarding."
     },
     "breadcrumb": {
       "label": "Become a Vendor"
     },
     "hero": {
       "eyebrow": "For Vendors",
-      "title": "List your adventure business on Outvers",
-      "description": "Outvers is India's marketplace for verified adventure Experiences. Bring your rafting, trekking, paragliding, or diving business online, take Bookings from customers across the country, and get paid reliably — with the trust of a verified Vendor profile behind every listing.",
+      "title": "List your adventure business on Switchback",
+      "description": "Switchback is India's marketplace for verified adventure Experiences. Bring your rafting, trekking, paragliding, or diving business online, take Bookings from customers across the country, and get paid reliably — with the trust of a verified Vendor profile behind every listing.",
       "cta": "Start Vendor Onboarding"
     },
     "benefits": {
-      "heading": "Why list on Outvers",
+      "heading": "Why list on Switchback",
       "onlineBookingsTitle": "Take Bookings online",
-      "onlineBookingsBody": "Customers discover, book, and pay for your Experiences on Outvers — with partial pay (a 25% Advance now, the rest auto-captured 24 hours before the activity) handled for you.",
+      "onlineBookingsBody": "Customers discover, book, and pay for your Experiences on Switchback — with partial pay (a 25% Advance now, the rest auto-captured 24 hours before the activity) handled for you.",
       "verifiedBadgeTitle": "Earn a Verified Vendor badge",
       "verifiedBadgeBody": "Climb the KYC ladder and display an \"Identity verified\" or \"Business verified\" badge on every Experience card — the trust signal that converts browsers into bookings.",
       "dashboardTitle": "Run it from one dashboard",
       "dashboardBody": "Manage listings, availability, Bookings, and customer messages from a single Vendor dashboard built for adventure businesses.",
       "payoutTrackingTitle": "Track every Payout",
-      "payoutTrackingBody": "See exactly what you've earned and when each Payout lands. Outvers handles GST and TDS on your behalf so the math is never a guess.",
+      "payoutTrackingBody": "See exactly what you've earned and when each Payout lands. Switchback handles GST and TDS on your behalf so the math is never a guess.",
       "visibilityTitle": "Get found across India",
       "visibilityBody": "Your Experiences surface in destination, activity, and search pages optimised for the customers already looking for what you offer."
     },
     "whoCanJoin": {
       "heading": "Who can join",
-      "intro": "Outvers is for independent adventure-activity Vendors running real Experiences in India:",
+      "intro": "Switchback is for independent adventure-activity Vendors running real Experiences in India:",
       "raftingTitle": "Rafting outfits",
       "raftingBody": "River-rafting Vendors with certified guides and the permits their stretch requires.",
       "trekkingTitle": "Trekking companies",
@@ -1667,7 +1667,7 @@
     },
     "documents": {
       "heading": "Documents required, by verification tier",
-      "intro": "Outvers verifies Vendors on a three-tier KYC ladder (ADR-0007). You start listing at Tier 1 and unlock more as you verify. Plus, bank details are required for Payouts at every tier that can earn.",
+      "intro": "Switchback verifies Vendors on a three-tier KYC ladder (ADR-0007). You start listing at Tier 1 and unlock more as you verify. Plus, bank details are required for Payouts at every tier that can earn.",
       "phoneTitle": "Tier 1 — Phone verified",
       "phoneDocs": "A phone number confirmed by OTP at signup. That's it — automatic when you register.",
       "phoneCan": "Create your Vendor profile and draft Experiences (saved unpublished).",
@@ -1692,12 +1692,12 @@
     },
     "bookingPayout": {
       "heading": "How Bookings and Payouts work",
-      "bookingTitle": "Customers book and pay on Outvers",
+      "bookingTitle": "Customers book and pay on Switchback",
       "bookingBody": "Customers browse your Experiences, choose a slot, and pay securely. You confirm the Booking from your dashboard.",
       "partialPayTitle": "Partial pay, handled for you",
       "partialPayBody": "Eligible Bookings collect a 25% Advance up front; the remaining 75% is auto-captured 24 hours before the activity — no chasing balances.",
       "payoutTitle": "Reliable Payouts to your bank",
-      "payoutBody": "Once an Experience is delivered, your earnings are paid out to your registered bank account. Outvers handles GST and TDS so the Payout amount is always clear."
+      "payoutBody": "Once an Experience is delivered, your earnings are paid out to your registered bank account. Switchback handles GST and TDS so the Payout amount is always clear."
     },
     "finalCta": {
       "heading": "Ready to list your adventure business?",
@@ -1707,8 +1707,8 @@
   },
   "TermsPage": {
     "metadata": {
-      "title": "Terms of Service · Outvers",
-      "description": "The terms governing your use of Outvers — a marketplace connecting Customers with independent third-party Vendors who run adventure Experiences across India."
+      "title": "Terms of Service · Switchback",
+      "description": "The terms governing your use of Switchback — a marketplace connecting Customers with independent third-party Vendors who run adventure Experiences across India."
     },
     "breadcrumb": {
       "label": "Terms of Service"
@@ -1716,13 +1716,13 @@
     "hero": {
       "title": "Terms of Service",
       "updated": "These terms are a working draft.",
-      "intro": "These Terms of Service govern your access to and use of Outvers. By creating an account, browsing, or making a Booking, you agree to these terms."
+      "intro": "These Terms of Service govern your access to and use of Switchback. By creating an account, browsing, or making a Booking, you agree to these terms."
     },
-    "reviewNotice": "Working draft — pending final legal review. This document reflects how Outvers actually operates today, but the final wording is being reviewed by counsel before launch and may change.",
+    "reviewNotice": "Working draft — pending final legal review. This document reflects how Switchback actually operates today, but the final wording is being reviewed by counsel before launch and may change.",
     "marketplace": {
-      "heading": "Outvers is a marketplace, not the provider of Experiences",
-      "body": "Outvers operates an online marketplace that connects Customers with independent third-party Vendors. The adventure Experiences listed on Outvers — rafting, trekking, paragliding, diving and more — are owned, run and delivered by those Vendors, who are independent businesses, not employees or agents of Outvers. Outvers acts as an intermediary that lists Experiences, takes Bookings and processes payments on the Vendor's behalf. Outvers does not itself operate any Experience.",
-      "vendorResponsibility": "Each Vendor is responsible for the safety, quality, accuracy and lawful conduct of its own Experiences, including holding the licences, certifications and insurance its activity requires. Outvers verifies Vendors through a tiered KYC process (Phone verified, Identity verified, Business verified) but does not guarantee any Vendor's conduct or the outcome of any Experience."
+      "heading": "Switchback is a marketplace, not the provider of Experiences",
+      "body": "Switchback operates an online marketplace that connects Customers with independent third-party Vendors. The adventure Experiences listed on Switchback — rafting, trekking, paragliding, diving and more — are owned, run and delivered by those Vendors, who are independent businesses, not employees or agents of Switchback. Switchback acts as an intermediary that lists Experiences, takes Bookings and processes payments on the Vendor's behalf. Switchback does not itself operate any Experience.",
+      "vendorResponsibility": "Each Vendor is responsible for the safety, quality, accuracy and lawful conduct of its own Experiences, including holding the licences, certifications and insurance its activity requires. Switchback verifies Vendors through a tiered KYC process (Phone verified, Identity verified, Business verified) but does not guarantee any Vendor's conduct or the outcome of any Experience."
     },
     "accounts": {
       "heading": "Your account",
@@ -1730,7 +1730,7 @@
     },
     "bookings": {
       "heading": "Bookings and payment",
-      "body": "When you make a Booking you enter into a contract with the Vendor for that Experience; Outvers facilitates that contract and the payment. Outvers uses a partial-pay model: by default a 25% Advance is captured at the time of Booking and the remaining 75% is captured automatically 24 hours before the Experience starts. For Experiences starting within 48 hours, or priced above ₹25,000, the full amount is captured upfront. Prices shown include applicable taxes as displayed at checkout."
+      "body": "When you make a Booking you enter into a contract with the Vendor for that Experience; Switchback facilitates that contract and the payment. Switchback uses a partial-pay model: by default a 25% Advance is captured at the time of Booking and the remaining 75% is captured automatically 24 hours before the Experience starts. For Experiences starting within 48 hours, or priced above ₹25,000, the full amount is captured upfront. Prices shown include applicable taxes as displayed at checkout."
     },
     "cancellations": {
       "heading": "Cancellations and refunds",
@@ -1738,7 +1738,7 @@
     },
     "permits": {
       "heading": "Permits and eligibility",
-      "body": "Some Experiences require a permit — for example certain high-altitude treks or protected areas. Where a permit is required, Outvers surfaces the requirement and links to the official process, but you are responsible for obtaining the required permit yourself. Outvers is not a permit broker and does not obtain permits on your behalf."
+      "body": "Some Experiences require a permit — for example certain high-altitude treks or protected areas. Where a permit is required, Switchback surfaces the requirement and links to the official process, but you are responsible for obtaining the required permit yourself. Switchback is not a permit broker and does not obtain permits on your behalf."
     },
     "conduct": {
       "heading": "Acceptable use",
@@ -1746,7 +1746,7 @@
     },
     "liability": {
       "heading": "Liability",
-      "body": "Adventure activities carry inherent risks. Because Experiences are run by independent third-party Vendors, your contract for the activity itself is with the Vendor. To the extent permitted by law, Outvers is not liable for the acts, omissions or outcomes of any Vendor or Experience. Nothing in these terms limits any liability that cannot lawfully be limited."
+      "body": "Adventure activities carry inherent risks. Because Experiences are run by independent third-party Vendors, your contract for the activity itself is with the Vendor. To the extent permitted by law, Switchback is not liable for the acts, omissions or outcomes of any Vendor or Experience. Nothing in these terms limits any liability that cannot lawfully be limited."
     },
     "changes": {
       "heading": "Changes and governing law",
@@ -1760,20 +1760,20 @@
   },
   "PrivacyPage": {
     "metadata": {
-      "title": "Privacy Policy · Outvers",
-      "description": "How Outvers collects, uses and protects your personal data as a marketplace connecting Customers with independent third-party Vendors."
+      "title": "Privacy Policy · Switchback",
+      "description": "How Switchback collects, uses and protects your personal data as a marketplace connecting Customers with independent third-party Vendors."
     },
     "breadcrumb": {
       "label": "Privacy Policy"
     },
     "hero": {
       "title": "Privacy Policy",
-      "intro": "This policy explains what personal data Outvers collects, why we collect it, how we use it, and the choices you have."
+      "intro": "This policy explains what personal data Switchback collects, why we collect it, how we use it, and the choices you have."
     },
-    "reviewNotice": "Working draft — pending final legal review. This document reflects how Outvers actually handles data today, but the final wording is being reviewed by counsel before launch and may change.",
+    "reviewNotice": "Working draft — pending final legal review. This document reflects how Switchback actually handles data today, but the final wording is being reviewed by counsel before launch and may change.",
     "collect": {
       "heading": "Personal data we collect",
-      "body": "We collect the personal information you give us when you create an account, make a Booking, contact support or subscribe to updates — such as your name, email, phone number and Booking details. We collect payment information through our payment processor (Razorpay); Outvers does not store full card details. We also collect technical data such as device, browser and usage information to operate and improve the service."
+      "body": "We collect the personal information you give us when you create an account, make a Booking, contact support or subscribe to updates — such as your name, email, phone number and Booking details. We collect payment information through our payment processor (Razorpay); Switchback does not store full card details. We also collect technical data such as device, browser and usage information to operate and improve the service."
     },
     "use": {
       "heading": "How we use your data",
@@ -1803,8 +1803,8 @@
   },
   "RefundCancellationPage": {
     "metadata": {
-      "title": "Refund & Cancellation Policy · Outvers",
-      "description": "How cancellations and refunds work on Outvers — Flexible, Moderate and Strict presets, refund timing to your Refund balance, and bank cashout via Razorpay."
+      "title": "Refund & Cancellation Policy · Switchback",
+      "description": "How cancellations and refunds work on Switchback — Flexible, Moderate and Strict presets, refund timing to your Refund balance, and bank cashout via Razorpay."
     },
     "breadcrumb": {
       "label": "Refund & Cancellation"
@@ -1813,7 +1813,7 @@
       "title": "Refund & Cancellation Policy",
       "intro": "Every Experience carries a cancellation preset chosen by the Vendor and locked when you book. This page explains the presets, what you get back, and when."
     },
-    "reviewNotice": "Working draft — pending final legal review. This summary reflects how cancellations and refunds actually work on Outvers today, but the final wording is being reviewed by counsel before launch and may change.",
+    "reviewNotice": "Working draft — pending final legal review. This summary reflects how cancellations and refunds actually work on Switchback today, but the final wording is being reviewed by counsel before launch and may change.",
     "presets": {
       "heading": "The three cancellation presets",
       "intro": "Each Experience uses one of three presets. The preset is shown on the Experience before you book and is locked at the time of Booking. Windows are measured against the Experience start time.",
@@ -1834,7 +1834,7 @@
     },
     "insidePolicy": {
       "heading": "Inside-policy cancellations",
-      "body": "When you cancel within your Experience's preset window, the eligible amount is credited automatically to your Outvers Wallet (your Refund balance) — there's nothing to claim; see the refund timing below."
+      "body": "When you cancel within your Experience's preset window, the eligible amount is credited automatically to your Switchback Wallet (your Refund balance) — there's nothing to claim; see the refund timing below."
     },
     "vendorCancelled": {
       "heading": "If the Vendor cancels",
@@ -1846,7 +1846,7 @@
     },
     "refundSla": {
       "heading": "When you'll see the money",
-      "body": "Refunds are credited to your Outvers Wallet (your Refund balance) within 24–48 hours of an inside-policy cancellation. Your Refund balance is spendable on any future Booking; if you prefer, you can request a cashout to your original payment method, which Razorpay round-trips to your bank in 5–7 working days. The 24–48 hour window is when your Wallet is credited — the 5–7 working days applies only if you choose the bank cashout."
+      "body": "Refunds are credited to your Switchback Wallet (your Refund balance) within 24–48 hours of an inside-policy cancellation. Your Refund balance is spendable on any future Booking; if you prefer, you can request a cashout to your original payment method, which Razorpay round-trips to your bank in 5–7 working days. The 24–48 hour window is when your Wallet is credited — the 5–7 working days applies only if you choose the bank cashout."
     },
     "policyLink": {
       "label": "See the full policy and refund calculator",
@@ -1860,20 +1860,20 @@
   },
   "VendorTermsPage": {
     "metadata": {
-      "title": "Vendor Terms · Outvers",
-      "description": "Terms for independent third-party Vendors on Outvers — KYC verification tiers, Commission, Payout flow, TDS and GST, and cancellation obligations."
+      "title": "Vendor Terms · Switchback",
+      "description": "Terms for independent third-party Vendors on Switchback — KYC verification tiers, Commission, Payout flow, TDS and GST, and cancellation obligations."
     },
     "breadcrumb": {
       "label": "Vendor Terms"
     },
     "hero": {
       "title": "Vendor Terms",
-      "intro": "These terms apply to independent third-party Vendors who list and run Experiences on the Outvers marketplace."
+      "intro": "These terms apply to independent third-party Vendors who list and run Experiences on the Switchback marketplace."
     },
-    "reviewNotice": "Working draft — pending final legal review. This document reflects how Vendor onboarding, Payouts and tax actually work on Outvers today, but the final wording is being reviewed by counsel before launch and may change.",
+    "reviewNotice": "Working draft — pending final legal review. This document reflects how Vendor onboarding, Payouts and tax actually work on Switchback today, but the final wording is being reviewed by counsel before launch and may change.",
     "relationship": {
-      "heading": "Your relationship with Outvers",
-      "body": "As a Vendor you are an independent business listing your own Experiences on the Outvers marketplace. You — not Outvers — own, operate and deliver your Experiences and are responsible for their safety, quality, legality, and for holding the licences, certifications and insurance your activity requires. Outvers is an intermediary that lists your Experiences, takes Bookings and processes payments on your behalf."
+      "heading": "Your relationship with Switchback",
+      "body": "As a Vendor you are an independent business listing your own Experiences on the Switchback marketplace. You — not Switchback — own, operate and deliver your Experiences and are responsible for their safety, quality, legality, and for holding the licences, certifications and insurance your activity requires. Switchback is an intermediary that lists your Experiences, takes Bookings and processes payments on your behalf."
     },
     "kyc": {
       "heading": "Verification (KYC) tiers",
@@ -1884,15 +1884,15 @@
     },
     "commission": {
       "heading": "Commission",
-      "body": "Outvers charges a Commission on each completed Booking. The Commission is deducted from your Payout and is realised at the Completion of the Experience, not at the time of Booking. GST applies to the Commission and is shown on your invoice."
+      "body": "Switchback charges a Commission on each completed Booking. The Commission is deducted from your Payout and is realised at the Completion of the Experience, not at the time of Booking. GST applies to the Commission and is shown on your invoice."
     },
     "payout": {
       "heading": "Payouts",
-      "body": "A Payout is the money Outvers transfers to you for a completed Experience, net of Commission, GST on the Commission, and TDS. Payouts are issued T+7 from Booking Completion in daily batches. A Payout may be paused while a Dispute on the related Booking is open. You must keep accurate bank details on file to receive Payouts."
+      "body": "A Payout is the money Switchback transfers to you for a completed Experience, net of Commission, GST on the Commission, and TDS. Payouts are issued T+7 from Booking Completion in daily batches. A Payout may be paused while a Dispute on the related Booking is open. You must keep accurate bank details on file to receive Payouts."
     },
     "tax": {
       "heading": "TDS and GST",
-      "body": "Under Section 194-O, Outvers withholds TDS at 0.1% on the gross Booking value for resident-Indian Vendors. We file Form 26Q quarterly and issue you Form 16A. GST is applied to the Commission. You remain responsible for your own tax registration and filings."
+      "body": "Under Section 194-O, Switchback withholds TDS at 0.1% on the gross Booking value for resident-Indian Vendors. We file Form 26Q quarterly and issue you Form 16A. GST is applied to the Commission. You remain responsible for your own tax registration and filings."
     },
     "cancellation": {
       "heading": "Cancellations and service levels",

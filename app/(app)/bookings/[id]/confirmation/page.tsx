@@ -277,7 +277,7 @@ export default async function BookingConfirmationPage({
             <span className="font-medium text-foreground">Refund balance</span> —
             the cash-returnable bucket of your Wallet, which you can cash out to
             your original payment method or reuse on a future booking. (This is
-            distinct from promotional Outvers credit.)
+            distinct from promotional Switchback credit.)
           </p>
         </CardContent>
       </Card>

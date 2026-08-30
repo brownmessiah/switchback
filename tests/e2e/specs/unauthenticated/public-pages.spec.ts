@@ -17,7 +17,7 @@ test.describe('Home page', () => {
   test('loads 200, axe passes, no console errors', async ({ page }) => {
     const response = await page.goto('/')
     expect(response?.status()).toBe(200)
-    await expect(page).toHaveTitle(/Outvers/)
+    await expect(page).toHaveTitle(/Switchback/)
 
     await page.screenshot({
       path: 'tests/e2e/screenshots/home.png',
@@ -60,7 +60,7 @@ test.describe('Home page', () => {
 
       if (parsed['@type'] === 'WebSite') {
         websiteCount += 1
-        expect(parsed.name).toBe('Outvers')
+        expect(parsed.name).toBe('Switchback')
         const action = parsed.potentialAction as {
           '@type': string
           target: string
@@ -71,7 +71,7 @@ test.describe('Home page', () => {
       }
       if (parsed['@type'] === 'Organization') {
         organizationCount += 1
-        expect(parsed.name).toBe('Outvers')
+        expect(parsed.name).toBe('Switchback')
       }
     }
 
@@ -130,7 +130,7 @@ test.describe('Home page', () => {
 
     await expect(page.getByText('Book the scene you want to live.')).toHaveCount(0)
 
-    const carousel = page.getByRole('region', { name: 'Why book on Outvers' })
+    const carousel = page.getByRole('region', { name: 'Why book on Switchback' })
     await expect(carousel).toBeVisible()
     await expect(carousel.getByTestId('feature-card')).toHaveCount(4)
     const dots = carousel.getByTestId('feature-carousel-dot')
@@ -158,7 +158,7 @@ test.describe('Home page', () => {
 
   // Issue 08: two new trust sections render as crawlable, labelled <section>
   // landmarks below the hero — each with its own <h2>, keeping the single H1.
-  test('renders the "Adventure you can trust" + "How Outvers works" sections', async ({
+  test('renders the "Adventure you can trust" + "How Switchback works" sections', async ({
     page,
   }) => {
     await page.goto('/')
@@ -167,7 +167,7 @@ test.describe('Home page', () => {
     const trust = page.getByRole('region', { name: 'Adventure you can trust' })
     await expect(trust).toBeVisible()
     const howItWorks = page.getByRole('region', {
-      name: 'How Outvers works',
+      name: 'How Switchback works',
     })
     await expect(howItWorks).toBeVisible()
 
@@ -177,7 +177,7 @@ test.describe('Home page', () => {
       page.getByRole('heading', { level: 2, name: 'Adventure you can trust' }),
     ).toBeVisible()
     await expect(
-      page.getByRole('heading', { level: 2, name: 'How Outvers works' }),
+      page.getByRole('heading', { level: 2, name: 'How Switchback works' }),
     ).toBeVisible()
   })
 
@@ -207,7 +207,7 @@ test.describe('Home page', () => {
     page,
   }) => {
     await page.goto('/')
-    const how = page.getByRole('region', { name: 'How Outvers works' })
+    const how = page.getByRole('region', { name: 'How Switchback works' })
 
     await expect(how.getByTestId('how-step')).toHaveCount(5)
     for (const title of [
@@ -228,7 +228,7 @@ test.describe('Home page', () => {
   }) => {
     await page.goto('/')
 
-    for (const name of ['Adventure you can trust', 'How Outvers works']) {
+    for (const name of ['Adventure you can trust', 'How Switchback works']) {
       const region = page.getByRole('region', { name })
       const text = ((await region.textContent()) ?? '').toLowerCase()
       for (const forbidden of [
@@ -283,7 +283,7 @@ test.describe('Home page', () => {
     await expect(footerCta).toHaveAttribute('href', '/vendor-partner')
   })
 
-  test('the compact trust strip closes the page, after How-Outvers-works (issue 02)', async ({
+  test('the compact trust strip closes the page, after How-Switchback-works (issue 02)', async ({
     page,
   }) => {
     await page.goto('/')
@@ -293,9 +293,9 @@ test.describe('Home page', () => {
 
     // Position: the strip moved from under-the-hero to the bottom of <main>
     // (home-redesign issue 02 / CR9) — it must render BELOW the
-    // "How Outvers works" section.
+    // "How Switchback works" section.
     const trust = page.getByRole('region', { name: 'Adventure you can trust' })
-    const howItWorks = page.getByRole('region', { name: 'How Outvers works' })
+    const howItWorks = page.getByRole('region', { name: 'How Switchback works' })
     await expect(trust).toBeVisible()
     await expect(howItWorks).toBeVisible()
     const trustBox = await trust.boundingBox()
@@ -776,7 +776,7 @@ test.describe('Vendor profile', () => {
     await page.goto('/vendor/himalayan-hikes-co')
 
     // QA fix pass: no "Coming soon" dead-end on the storefront. The contact
-    // affordance is a REAL link routing to Outvers support (D6: no direct
+    // affordance is a REAL link routing to Switchback support (D6: no direct
     // customer→Vendor messaging until moderation/support rules exist).
     const contactLink = page.getByTestId('message-vendor')
     await expect(contactLink).toBeVisible()

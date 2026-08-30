@@ -15,7 +15,7 @@
 
 ---
 
-# Outvers demo-catalog fact-check report
+# Switchback demo-catalog fact-check report
 
 > dev-only demo catalog, web-fact-checked; issue 06 bounded pilot
 

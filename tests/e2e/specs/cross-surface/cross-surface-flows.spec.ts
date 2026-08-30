@@ -40,9 +40,9 @@ const AUTH_DIR = path.join(__dirname, '../../.auth')
 // Dedicated #30 fixture (db/seed.ts): a pending_review Experience whose title
 // carries a unique beacon token so a `?q=` text search matches ONLY this row.
 const XSURFACE_SEARCH_SLUG = 'xsurface-approve-search-rishikesh'
-const XSURFACE_SEARCH_TITLE = 'Outvers Xsurface Approve-Search Beacon (Rishikesh)'
+const XSURFACE_SEARCH_TITLE = 'Switchback Xsurface Approve-Search Beacon (Rishikesh)'
 // Unique multi-word query the Postgres-native text search ranks this title top for.
-const XSURFACE_SEARCH_QUERY = 'Outvers Xsurface Beacon'
+const XSURFACE_SEARCH_QUERY = 'Switchback Xsurface Beacon'
 
 // ---------------------------------------------------------------------------
 // 1. Admin approves -> CUSTOMER SEARCH PAGE finds it -> remove -> gone
@@ -155,7 +155,7 @@ test.describe('Cross-surface: admin approve -> customer search finds -> remove -
     const foundCard = page
       .locator(`a[href*="/experience/${XSURFACE_SEARCH_SLUG}"]`)
       .first()
-    await expect(foundCard.locator('h3')).toContainText('Outvers Xsurface')
+    await expect(foundCard.locator('h3')).toContainText('Switchback Xsurface')
     await expect(foundCard.getByText('/ person')).toBeVisible()
 
     await page.screenshot({
@@ -240,7 +240,7 @@ test.describe('Cross-surface: vendor creates -> admin approves -> collection sho
   const COLLECTION_PATH = '/adventure/kayaking-in-goa'
   // Unique beacon token so the collection selector resolves to ONLY this row.
   const beacon = `Beacon${Date.now()}${Math.floor(Math.random() * 1e4)}`
-  const uniqueTitle = `Outvers Xsurface Collection ${beacon} (Goa Kayaking)`
+  const uniqueTitle = `Switchback Xsurface Collection ${beacon} (Goa Kayaking)`
 
   // TODO(e2e-ci): flaky under CI for the same reason as the search round-trip
   // above — after the admin UI approve, the newly-published Experience does not

@@ -114,7 +114,7 @@ export function PromoActionsCell({ id, active, currentUses }: PromoActionsCellPr
             <DialogTitle>Deactivate promo code</DialogTitle>
             <DialogDescription>
               This stops a live promo immediately — Customers can no longer redeem
-              it for Outvers credit until it is reactivated. Existing grants are
+              it for Switchback credit until it is reactivated. Existing grants are
               unaffected.
             </DialogDescription>
           </DialogHeader>

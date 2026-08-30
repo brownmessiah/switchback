@@ -1,4 +1,4 @@
-# Outvers Modernization — Competitive Research (Refreshed)
+# Switchback Modernization — Competitive Research (Refreshed)
 
 > Source intelligence backing the MVP-validation + redesign program. This document
 > **supersedes the 2026-05-22 RESEARCH.md** (stale). Every section below is
@@ -16,11 +16,11 @@
 > Use this when designing a specific module to remember *why* a feature is in the plan and *what
 > the bar to beat looks like, surface by surface*.
 
-**Domain language note:** competitor terms are mapped to Outvers' `CONTEXT.md` vocabulary —
-Experience, Vendor, Customer, Booking, Availability slot, Wallet, Outvers credit, Refund balance,
+**Domain language note:** competitor terms are mapped to Switchback' `CONTEXT.md` vocabulary —
+Experience, Vendor, Customer, Booking, Availability slot, Wallet, Switchback credit, Refund balance,
 Group-size bracket, Combo Experience, Identity/Business verified Vendor — verbatim. Where a
 competitor says "activity/tour/product" read **Experience**; "supplier/operator/host" read
-**Vendor**; "traveler/buyer" read **Customer**; "credits/cash/voucher" map to **Outvers credit /
+**Vendor**; "traveler/buyer" read **Customer**; "credits/cash/voucher" map to **Switchback credit /
 Refund balance** in the two-bucket Wallet.
 
 ---
@@ -161,7 +161,7 @@ Detail: [`research/01-discovery-detail.md`](../research/01-discovery-detail.md).
   pay-later (GYG) or Lowest-Price-Guarantee + mobile ticket (Viator); Vendor attribution;
   meeting-point maps; AI review summary (GYG); per-component price breakdown (Viator).
 - **Paid-placement / ranking transparency appears on BOTH** (GYG search; Viator carousel) — now a
-  standard compliance pattern Outvers should match.
+  standard compliance pattern Switchback should match.
 
 ---
 
@@ -249,14 +249,14 @@ redesign opportunity is to combine both.
 - **Indiahikes:** Shield as an inline priced upsell (₹750) sold as a *story* ("Why you should opt for
   the Shield" — rain/roadblocks/floods/landslides/permit restrictions), a heavy safety section
   (medical kit, oxygen, gear, trained leaders) + a safety-declaration accordion, on-page named
-  reviews with trek dates, IMF official-partner badge. **Voucher-first refunds** (Outvers-credit
+  reviews with trek dates, IMF official-partner badge. **Voucher-first refunds** (Switchback-credit
   analog): force-majeure suspension → full-fee voucher valid 1 year (not cash); add-on cancels → 96%
   refund (4% txn charge) to original method OR back as voucher if paid by voucher.
 - **Thrillophilia:** very social-proof-volume-forward — **12,70,891 reviews (1.27M)**, **4.8★ "Rated
   By 3L+ Travellers"**, an **ET "Best Leisure Tours Brand" award badge** (third-party authority),
   "verified stays, on-ground support," a human-support trust block ("real humans… before, during,
   after"). **Thrillcash** is its wallet currency. Inline term flagged: **100% prepayment, 5% GST**
-  (no deposit/partial-pay shown — contrast with Outvers' partial-pay model).
+  (no deposit/partial-pay shown — contrast with Switchback' partial-pay model).
 
 ### Trust + refund friction notes
 - **Click-count to refund terms:** Indiahikes = **1 click** from any trek detail (Cancellation Policy
@@ -327,16 +327,16 @@ Hotels), selling marketing solutions, NOT an Experience-listing flow. Thrillophi
 itineraries are "designed in-house, not picked from a catalogue… not pulled from a supplier list" —
 it's a **DMC / in-house operator**, onboarding local Vendors **manually/offline**. No public listing
 form, availability calendar, or payout dashboard. **This absence is itself the finding** and the wedge
-Outvers exploits in India.
+Switchback exploits in India.
 
 ### Vendor-side friction to BEAT
-1. **Commission opacity** — both GYG & Viator hide the rate until in-flow → Outvers shows it up front
+1. **Commission opacity** — both GYG & Viator hide the rate until in-flow → Switchback shows it up front
    (ties to commission-resolution ADRs).
-2. **Upfront per-listing fee** (Viator $29) → Outvers: free to list.
+2. **Upfront per-listing fee** (Viator $29) → Switchback: free to list.
 3. **Verification brittleness** (GYG: char-by-char registry match, 3 attempts, selfie liveness) →
-   Outvers: India-appropriate, forgiving KYC (PAN/GST/Udyam/IFSC) with clear fix-paths, mapping to
+   Switchback: India-appropriate, forgiving KYC (PAN/GST/Udyam/IFSC) with clear fix-paths, mapping to
    Identity-verified vs Business-verified Vendor states + the vendor-verification ADR.
-4. **No self-serve at all** (Thrillophilia) → self-serve is Outvers' India wedge.
+4. **No self-serve at all** (Thrillophilia) → self-serve is Switchback' India wedge.
 5. **Payout-timing opacity** → make "you get paid ₹X on date Y (post-travel-date)" explicit in the
    dashboard; tie to payouts/GST/TDS ADR.
 
@@ -350,7 +350,7 @@ Outvers exploits in India.
 - Lead nav with **intent verbs** ("Things to do / Places to see / Trip inspiration"); keep deep
   category permutations in the SEO footer.
 - Ship a **3–4 pillar trust band** ("Book with confidence / Free cancellation & flexibility / 24-7
-  support") — both leaders have one; Outvers' refund + cancellation ADRs map directly.
+  support") — both leaders have one; Switchback' refund + cancellation ADRs map directly.
 - Show **destination/attraction tiles with Experience counts** (supply-depth signal).
 - Display an India **payment-method wall** (UPI, cards, netbanking, wallets) as a checkout-trust
   signal in the footer.
@@ -367,7 +367,7 @@ Outvers exploits in India.
   rich **Sort by** (Recommended / Lowest price / Most booked / Top rated / Recently added). Numeric
   pagination is acceptable (no infinite scroll required).
 - **MANDATORY: ship a ranking-transparency disclosure** ("How we rank") — both GYG (search) and
-  Viator (sponsored carousel) expose one; aligns with Outvers' commission-resolution model and
+  Viator (sponsored carousel) expose one; aligns with Switchback' commission-resolution model and
   pre-empts P2B/consumer-law exposure.
 - Surface **per-Group-size-bracket vs per-person pricing** explicitly on cards, and a **provider
   rating** distinct from per-Experience rating (feeds vendor-profile).
@@ -381,27 +381,27 @@ Outvers exploits in India.
   Know-before-you-go → booking module → cross-sell → **full filterable reviews block**.
 - Add a **sticky in-page anchor nav** (Viator) for long PDPs.
 - **Price transparency:** break out ticket/**permit**/fee vs service portion (Viator per-component
-  attribution) — strongly relevant to Outvers' permit + commission + GST/TDS money path.
+  attribution) — strongly relevant to Switchback' permit + commission + GST/TDS money path.
 - **Reviews:** teaser above the fold + full block low with sort + filter + sub-rating bars + optional
   AI summary, every review tagged "Verified booking"; consider theme-chip filtering.
 - State **free cancellation / refund window TWICE** (assurance row + booking module) — maps to
   cancellation/refund ADRs.
 
 ### checkout
-- **Collapse selection into the PDP.** Outvers checkout should begin with the Availability slot
+- **Collapse selection into the PDP.** Switchback checkout should begin with the Availability slot
   already chosen; the dedicated checkout page is only identity + payment.
 - **≤2 screens, email-first, guest-allowed** (GYG floor). Do NOT gate Booking behind account creation
   (Klook Step 1 is the anti-pattern).
 - **Persistent order-summary rail** (price, date, cancellation terms) on every screen.
-- **Multi-item cart is optional but a differentiator** (Klook) — directly relevant to Outvers' Trip
+- **Multi-item cart is optional but a differentiator** (Klook) — directly relevant to Switchback' Trip
   Groups / multi-Experience itineraries (single-payment multi-Experience cart).
 - **Surface a "hold without paying" / "reserve now, pay later" mechanism** in the checkout box with
-  eligibility (free cancellation + instant confirmation) shown up front. Outvers' partial-pay /
+  eligibility (free cancellation + instant confirmation) shown up front. Switchback' partial-pay /
   T-24h auto-capture money path is the closest analog to GYG RNPL ($0 at booking, charge 72h before).
 - **Put cancellation/refund clarity inside checkout**, not on a separate policy page (where
   Indiahikes/Thrillophilia under-deliver and GYG wins).
 - **Handle the ineligible-item edge case gracefully** (GYG blocks RNPL+standard mixing → book
-  separately). Outvers must define the equivalent rule for partial-pay-ineligible Experiences.
+  separately). Switchback must define the equivalent rule for partial-pay-ineligible Experiences.
 
 ### confirmation
 - **Single, unambiguous confirmation.** Avoid Klook's two-email pattern. Send one "Booking confirmed
@@ -415,25 +415,25 @@ Outvers exploits in India.
 - Build a **single, dated, ToC-structured Cancellation & Refund page** (Indiahikes), NOT a
   redirect-to-home (Thrillophilia fails this — cheapest high-trust win).
 - **Sell trust as a story, not a clause** (Indiahikes "Why opt for the Shield" / "Why we don't refund
-  on shutdown" essay) — narrate the *reason* behind force-majeure-Outvers-credit rules.
+  on shutdown" essay) — narrate the *reason* behind force-majeure-Switchback-credit rules.
 - Surface **third-party authority + volume badges** (ET award + review count) as a credibility anchor.
 - **Show the refund slab at point-of-sale**, inline near the price (Thrillophilia 25/50/100%), but
   ABOVE the fold, not at page bottom.
 
 ### customer-dashboard / wallet
 - **Self-serve cancel with a LIVE refund quote before confirm** (Indiahikes) — the headline pattern.
-  Ties to Outvers' two-bucket Wallet + refund-flow: compute and display the exact **Outvers credit vs
+  Ties to Switchback' two-bucket Wallet + refund-flow: compute and display the exact **Switchback credit vs
   cash Refund balance** split *before* the Customer commits.
-- **Outvers credit / Refund balance as a first-class refund rail** — label which Wallet bucket a
+- **Switchback credit / Refund balance as a first-class refund rail** — label which Wallet bucket a
   refund lands in and its expiry (Indiahikes voucher-if-paid-by-voucher edge case).
 - **Group / per-participant cancel** (Indiahikes primary-can-cancel-for-group) — relevant to Trip
   Groups + Group-size brackets.
 - **Honest constraint messaging** (Indiahikes RBI >6-month note) — explain *why* and route to support
   when the refund path can't auto-process.
 - **Refund-protection upsell** (Indiahikes Shield, priced, addable up to T-20d) — a wallet-adjacent
-  monetizable trust product for Outvers' cancellation/refund stack.
+  monetizable trust product for Switchback' cancellation/refund stack.
 
-### vendor-profile (Outvers differentiator)
+### vendor-profile (Switchback differentiator)
 - Competitors expose Vendor identity only as a **named provider link from the PDP** (GYG
   `/{provider}-s{id}/`) + a **Provider rating** on search cards — none surface a rich, standalone,
   traveler-facing Vendor storefront (deep vendor management stays in the gated extranet).
@@ -444,11 +444,11 @@ Outvers exploits in India.
 
 ### Vendor archetypes (onboarding-wizard / vendor-form / availability-calendar / vendor-dashboard / vendor-table / settings-forms)
 
-| Archetype | Best-in-class reference | Copy / improve for Outvers |
+| Archetype | Best-in-class reference | Copy / improve for Switchback |
 |---|---|---|
 | **onboarding-wizard** | GYG 6-step register + Viator "reuse existing login" speed | Branch on legal status early (GST-registered vs unregistered). "List in under 30 min." **Reveal commission BEFORE the final step.** **NO upfront fee** (beat Viator $29). |
-| **vendor-form** (listing) | GYG 13-step product builder | Adopt the IA almost wholesale + Outvers fields (permits, safety stack per ADRs). AI-assist description generation. Itinerary builder is table-stakes. |
-| **availability-calendar** | GYG (self-serve + reservation sync) + Viator (calendar **and** manifest, cutoffs) | Offer calendar + manifest/roster views; booking cutoffs. Plan channel-manager ingestion (Outvers ADR) — external-calendar sync is a known bottleneck. |
+| **vendor-form** (listing) | GYG 13-step product builder | Adopt the IA almost wholesale + Switchback fields (permits, safety stack per ADRs). AI-assist description generation. Itinerary builder is table-stakes. |
+| **availability-calendar** | GYG (self-serve + reservation sync) + Viator (calendar **and** manifest, cutoffs) | Offer calendar + manifest/roster views; booking cutoffs. Plan channel-manager ingestion (Switchback ADR) — external-calendar sync is a known bottleneck. |
 | **vendor-dashboard** | GYG (Analytics + "Likely to Sell Out" Insights + Special Offers + Connectivity) | Lead with a performance snapshot + actionable insights; special-offers module; single hub. |
 | **vendor-table** | Viator manifest + GYG bookings overview | Sortable Experiences/Bookings table with status + calendar/manifest toggle. |
 | **settings-forms** (payout/KYC/profile) | GYG verification + Viator payout cadence | India-localize KYC (PAN/GST/IFSC), forgiving fix-paths (avoid GYG's 3-attempt hostility). Payout cadence + currency in settings. Make payout *visibility* (when/how much, post-travel-date) explicit. Tie to payouts/GST/TDS ADR. |
@@ -467,11 +467,11 @@ Outvers exploits in India.
 - **Thrillophilia (the gorilla):** SEO moat on `/adventure-sports-in-{city}` + `/tours/{slug}` with
   FAQ schema + price-in-title. Editorial-discovery funnel; Combo Experiences sold heavily.
   Razorpay + UPI + cards, instant-cashback bank tie-ins, EMI on 3K+. **Consistent refund-delay
-  complaints (1+ month) across Trustpilot/PissedConsumer/MouthShut — Outvers' biggest opening on
+  complaints (1+ month) across Trustpilot/PissedConsumer/MouthShut — Switchback' biggest opening on
   refund SLA.** *(NOTE: the live #03 pass refined the "refund clarity gap" framing — see §4; the
   refund-SLA pain remains the strategic opening.)*
 - **MakeMyTrip Activities:** voucher-based; voucher "usually instant after payment, within 24h in
-  unforeseen circumstances" — **the 24h voucher SLA is the industry expectation Outvers must match.**
+  unforeseen circumstances" — **the 24h voucher SLA is the industry expectation Switchback must match.**
   UPI/EMI/MMT Wallet/MyCash/Pay-Later; cashback-on-cancellation deducted from refund. MMT Partner
   portal = GST + PAN + Udyam onboarding.
 - **Tripoto:** content/community/commerce; demand-generation layer, not a direct competitor —
@@ -480,7 +480,7 @@ Outvers exploits in India.
   cert displayed). Bikat = small-batch safety positioning, same refund pain. Most are fixed-date
   group-departure with no real-time inventory APIs.
 
-| Dimension | Indian norm | Outvers implication |
+| Dimension | Indian norm | Switchback implication |
 |---|---|---|
 | **KYC** | Aadhaar OTP (Customers); PAN + GSTIN + Udyam (Vendors) | Aadhaar OTP for Customers; layer PAN+GST for Identity/Business-verified Vendor |
 | **Commission** | 15–25% activities, post-experience (T+7); 30% on Combos | `commissionRate` correct; default 18–20% w/ Combo/festival tiers |
@@ -489,7 +489,7 @@ Outvers exploits in India.
 | **SEO** | `/{activity}-in-{city}` wins; FAQ/Product/Review/Breadcrumb schema; listicles → product pages | `/adventure/{activity}-in-{city-slug}` + `/vendor/{slug}` + editorial layer |
 | **Pricing** | Dynamic by season/weekend; Group-size brackets (1-2,3-5,6+); festive banners; strike-through | `seasonalPricing` + festival calendar |
 | **Trust** | Photo reviews common, video rare (opportunity); guide cert (RMI/NIM/ABVIMAS); ATOAI/ISO | Display ATOAI/guide-cert/insurance; **refund-policy clarity out-trusts Thrillophilia** |
-| **Loyalty** | Wallet/cashback > points (MMT MyCash, goCash); referral flat ₹200–500 both-sided | Wallet first (Outvers credit); both-sided referral credit |
+| **Loyalty** | Wallet/cashback > points (MMT MyCash, goCash); referral flat ₹200–500 both-sided | Wallet first (Switchback credit); both-sided referral credit |
 | **Group/community** | No one does stranger-matching for adventure well | Trip Groups genuinely differentiated — lean in |
 | **India-specific** | Monsoon closures; regional languages; state permits (ILP Sikkim/Ladakh); waivers; veg/Jain flags | Monsoon-aware Availability; multilingual vendor app; per-state permit handling |
 
@@ -527,7 +527,7 @@ safety/liability); ChatGPT-plugin external AI distribution (AI-native traveler s
   ID-verified hosts + cert; "Airbnb Originals" halo content; story-led editorial framing.
 - **Local-guide marketplaces (Withlocals / ToursByLocals / Showaround):** ToursByLocals manual vetting
   + **reviews only from travelers whose guide confirmed delivery** (kills fake reviews — critical
-  pattern for Outvers); rich guide profiles (response time, repeat-booking rate, badges).
+  pattern for Switchback); rich guide profiles (response time, repeat-booking rate, badges).
 - **Strangers-to-buddies (Couchsurfing Hangouts / Meetup):** lightweight intent + radius filter
   (Trip Groups analog); 4-tier verification; **lesson: monetize the supply side, not the social side**
   (Couchsurfing paywall killed trust).
@@ -543,7 +543,7 @@ safety/liability); ChatGPT-plugin external AI distribution (AI-native traveler s
 **Stream 3 features to add/fix:** women-verified Trip Groups filter; three-tier Vendor verification
 badge on every card; delivery-confirmed reviews only; vernacular content + voice-note reviews;
 auto-tracked trip diaries; real-time collaborative itinerary builder; AI trip planner constrained to
-Outvers inventory; gift Experiences (open-box + B2B corporate); host video intros + response-time SLA
+Switchback inventory; gift Experiences (open-box + B2B corporate); host video intros + response-time SLA
 badges; safety stack (in-app SOS + trusted-contact check-in pings).
 
 ---

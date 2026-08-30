@@ -94,7 +94,7 @@ export function SignInForm() {
   }
 
   // Each chip pairs a semantic-status colour WITH a lucide icon, so trust is
-  // never conveyed by colour alone (DESIGN.md §1.3, WCAG 1.4.1). Real Outvers
+  // never conveyed by colour alone (DESIGN.md §1.3, WCAG 1.4.1). Real Switchback
   // value props (CONTEXT.md verbatim: Vendor, Refund, Partial pay).
   const trustChips = [
     { key: 'verified', Icon: ShieldCheck, label: tp('chipVerified'), variant: 'success' as const },

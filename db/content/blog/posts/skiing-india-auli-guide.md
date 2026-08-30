@@ -60,7 +60,7 @@ A few things to look for in any ski operator or instructor:
 - Certification or formal training (ask directly; a good instructor will have documentation)
 - Clear briefing before you hit the slopes covering how to stop, how to fall, and what to do if you lose control
 - Honest assessment of which slopes are appropriate for your level — a guide pushing a beginner onto steep terrain is not a good sign
-- KYC-verified operators, like those listed on Outvers, have gone through identity and legitimacy checks that give you a baseline of confidence
+- KYC-verified operators, like those listed on Switchback, have gone through identity and legitimacy checks that give you a baseline of confidence
 
 Know the basic limits before you book: most beginner programmes have age minimums (usually around 5–7 years) and some have weight limits for lift equipment. Anyone with cardiovascular issues, recent surgeries, or knee problems should consult a doctor before skiing. Skiing is a physical sport; minor falls are part of learning, but uncontrolled falls on icy slopes can cause injury, and the nearest well-equipped hospital is several hours away.
 
@@ -100,4 +100,4 @@ For peak season (late January through mid-February), especially on weekends or a
 
 ---
 
-Whether you are a complete beginner wanting your first run on snow or an intermediate skier ready to explore steeper terrain, India's Himalayan resorts offer experiences that most travellers do not realise are within reach. Start your planning by browsing [Auli](/destinations/auli) on Outvers — you will find verified local operators, activity details, and everything you need to book with confidence.
+Whether you are a complete beginner wanting your first run on snow or an intermediate skier ready to explore steeper terrain, India's Himalayan resorts offer experiences that most travellers do not realise are within reach. Start your planning by browsing [Auli](/destinations/auli) on Switchback — you will find verified local operators, activity details, and everything you need to book with confidence.

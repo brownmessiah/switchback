@@ -184,7 +184,7 @@ export async function processRefund(
   // `routesToDispute` is true for `outside_policy` AND for `non_cancellable`
   // (ADR-0005 amendment 2026-06-16 / issue #09): a Customer cancellation on a
   // non_cancellable Booking behaves like an outside-policy case and routes to
-  // support as a Dispute (ADR-0003), where Outvers may grant an exceptional
+  // support as a Dispute (ADR-0003), where Switchback may grant an exceptional
   // refund at discretion. It is false for vendor_cancelled / free_window /
   // 50%_window / no_refund_window — all of which still go to handleInsidePolicy
   // exactly as before, so this change is behaviour-preserving for those four

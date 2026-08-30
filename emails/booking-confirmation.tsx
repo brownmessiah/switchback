@@ -63,7 +63,7 @@ export function BookingConfirmationEmail({
             If you have questions about this booking, reply to this email or
             reach out to our support team.
           </Text>
-          <Text style={footerStyle}>— Outvers</Text>
+          <Text style={footerStyle}>— Switchback</Text>
         </Container>
       </Body>
     </Html>

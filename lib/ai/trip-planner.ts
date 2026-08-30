@@ -67,13 +67,13 @@ const RETRIEVAL_LIMIT = 24
 
 /** Stable system prompt — kept byte-identical so it caches (ADR-0010 + caching). */
 const SYSTEM_PROMPT =
-  'You are the Outvers trip planner. You build day-by-day adventure itineraries ' +
+  'You are the Switchback trip planner. You build day-by-day adventure itineraries ' +
   'for India using ONLY the candidate experiences supplied in each request. ' +
   'You must never invent or recommend an experience that is not in the candidate ' +
   'list. Every itinerary item must reference a candidate experience_id verbatim. ' +
   'Spread the experiences sensibly across the requested number of days, write a ' +
   'short, concrete rationale per item, and produce a practical packing list ' +
-  'appropriate to the activities and region. "Outvers" is a brand name — never ' +
+  'appropriate to the activities and region. "Switchback" is a brand name — never ' +
   'translate it.'
 
 /** Hash of the prompt template — provenance key for regression reproducibility. */

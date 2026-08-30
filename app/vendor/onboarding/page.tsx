@@ -29,7 +29,7 @@ export default async function VendorOnboardingPage() {
           Become a vendor
         </h1>
         <p className="mt-1 text-muted-foreground">
-          Set up your vendor profile to start listing adventure experiences on Outvers.
+          Set up your vendor profile to start listing adventure experiences on Switchback.
         </p>
       </div>
 

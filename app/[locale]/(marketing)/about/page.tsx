@@ -9,10 +9,10 @@ import { generateAlternates } from '@/lib/seo/hreflang'
 /**
  * About page (issue 06).
  *
- * Honest company/mission page: Outvers is an India adventure-activity
+ * Honest company/mission page: Switchback is an India adventure-activity
  * marketplace connecting customers with KYC-verified independent vendors.
  * Uses CONTEXT.md vocabulary (Experience, Vendor, KYC tier, partial pay,
- * Advance, safety stack) and is explicit about what Outvers is NOT (it does
+ * Advance, safety stack) and is explicit about what Switchback is NOT (it does
  * not run trips, does not broker permits, SOS is a notification tool — per
  * ADR-0015). Static SSR, no DB. Mirrors the cancellation-policy template.
  */

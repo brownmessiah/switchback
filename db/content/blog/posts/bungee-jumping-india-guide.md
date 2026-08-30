@@ -70,7 +70,7 @@ When assessing an operator, look for:
 - **Clear medical and weight restrictions**, enforced without exception
 - **Emergency protocols** — they should be able to tell you exactly what happens if something goes wrong
 
-Outvers lists [bungee jumping experiences](/activities/bungee-jumping) only from KYC-verified operators who meet documented safety criteria. You can also read more about [how we vet operators for safety](/safety) — the process includes document verification, on-site checks, and ongoing monitoring.
+Switchback lists [bungee jumping experiences](/activities/bungee-jumping) only from KYC-verified operators who meet documented safety criteria. You can also read more about [how we vet operators for safety](/safety) — the process includes document verification, on-site checks, and ongoing monitoring.
 
 ## What to Wear and Bring
 
@@ -102,4 +102,4 @@ Glasses and contact lenses are generally not recommended for the jump — the fo
 
 October through February is generally the most comfortable period — weather is clear and cool. The monsoon (roughly July to September) brings heavy rain and the Ganges swells; some operators close or reduce operations during this period. April to June is hot but functional. If you're combining bungee with white-water rafting or other outdoor activities, October to early April is the sweet spot for conditions across all of them.
 
-Rishikesh combines bungee with a full menu of adventure — rafting, cliff jumping, and kayaking are all available within a few kilometres of the jump site. If you're planning a trip around it, exploring the broader [Rishikesh](/destinations/rishikesh) activity calendar makes the journey worthwhile beyond a single jump. For a full overview of verified experiences across sites, the [bungee jumping experiences](/activities/bungee-jumping) listing on Outvers shows live availability, current pricing, and operator credentials in one place.
+Rishikesh combines bungee with a full menu of adventure — rafting, cliff jumping, and kayaking are all available within a few kilometres of the jump site. If you're planning a trip around it, exploring the broader [Rishikesh](/destinations/rishikesh) activity calendar makes the journey worthwhile beyond a single jump. For a full overview of verified experiences across sites, the [bungee jumping experiences](/activities/bungee-jumping) listing on Switchback shows live availability, current pricing, and operator credentials in one place.

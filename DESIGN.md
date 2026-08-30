@@ -1,6 +1,6 @@
-# DESIGN.md — Outvers Design System
+# DESIGN.md — Switchback Design System
 
-**Status: FINAL (2026-05-30).** This is the single design source of truth for the Outvers
+**Status: FINAL (2026-05-30).** This is the single design source of truth for the Switchback
 redesign. It supersedes the staged working notes (`06-codify.md` as-is inventory,
 `07-foundations.md` foundations spec, `08-flows.md` pattern contract); where any of those
 disagree with this document, **this document wins**, and where the as-is conflicts with the
@@ -14,7 +14,7 @@ today keeps its name; we **re-value** some tokens and **add** new token families
 swap, no font-loader swap, no OKLCH change, no primitive-API break.
 
 Domain language is used verbatim per `CONTEXT.md`: **Experience**, **Vendor**, **Customer**,
-**Booking**, **Availability slot**, **Wallet**, **Outvers credit**, **Refund balance**,
+**Booking**, **Availability slot**, **Wallet**, **Switchback credit**, **Refund balance**,
 **Group-size bracket**, **Combo Experience**, **Identity verified Vendor**, **Business verified
 Vendor**, **Advance**, **Partial pay**, **Commission**, **Required permit**, **TripGroup**.
 **RNPL caveat:** "Reserve now, pay later" is schema-named but **not implemented in v1**; the live
@@ -34,7 +34,7 @@ not rebrands**. Coral remains the one brand color; everything else upgrades arou
 
 The redesign exists to win on **trust and money-correctness** in the India experiences market. The
 foundations and patterns are built to serve five jobs, each derived from competitor research and
-the Outvers domain:
+the Switchback domain:
 
 1. **Trust is legible at a glance.** Every card/row/module is *decision-complete*: rating, price,
    cancellation token, status, and verified-Vendor signal are visible before the click. This
@@ -45,7 +45,7 @@ the Outvers domain:
 3. **Long, scrollable PDPs and policy pages** need a clear heading hierarchy distinct from body and
    a capped reading measure, plus sticky in-page anchor navigation.
 4. **Money & refunds are shown visually, before commit.** Prices, refund slabs, and the two-bucket
-   Wallet (Outvers credit + Refund balance) render the exact figure and split *before* the Customer
+   Wallet (Switchback credit + Refund balance) render the exact figure and split *before* the Customer
    confirms — tabular figures + status colors mapped to wallet buckets.
 5. **India-first, multi-script** (ADR-0012: en + hi at launch; ta/mr/bn to follow). Foundations hold
    across Latin and Devanagari (and future Tamil/Bengali) without per-page line-height re-tuning.
@@ -116,7 +116,7 @@ components keep working unchanged.
 #### Semantic status family (new — the headline upgrade)
 
 The as-is had exactly one brand color + `destructive`, so there was no token for "free
-cancellation", "instant confirmation", "verified Vendor", "Outvers credit", or urgency. Five
+cancellation", "instant confirmation", "verified Vendor", "Switchback credit", or urgency. Five
 functional roles, each with a saturated **base**, a **foreground** (text on the base), and a
 **subtle tint** (chip/banner fills) — mirroring the existing `--primary` / `--primary-foreground`
 contract so CVA variant additions are mechanical.
@@ -129,7 +129,7 @@ tint (badge/chip/alert ink) clears WCAG AA ≥4.5:1 — see §5.1. Dark bases ar
 | **success / affirmative** | `--success` | `oklch(0.52 0.13 155)` | `oklch(0.72 0.15 155)` | Free cancellation, instant confirmation, Booking `confirmed`, **Identity/Business verified Vendor** dot |
 | **warning / caution** | `--warning` | `oklch(0.535 0.15 75)` | `oklch(0.80 0.15 80)` | Urgency ("Likely to sell out"), `awaiting_completion`, balance-due-soon, region-closed |
 | **info / neutral-accent** | `--info` | `oklch(0.53 0.14 250)` | `oklch(0.72 0.13 250)` | Partial-pay schedule notice, ranking-disclosure ("How we rank") callout |
-| **credit / wallet** | `--credit` | `oklch(0.545 0.14 300)` | `oklch(0.74 0.13 300)` | **Outvers credit** bucket, voucher refunds (distinct from cash) |
+| **credit / wallet** | `--credit` | `oklch(0.545 0.14 300)` | `oklch(0.74 0.13 300)` | **Switchback credit** bucket, voucher refunds (distinct from cash) |
 | **danger** *(kept hue/chroma; L darkened 0.577→0.54 for AA-on-subtle)* | `--destructive` | `oklch(0.54 0.245 27.3)` | `oklch(0.704 0.191 22.2)` | Cancellation fee, declined verification, errors |
 
 Each role also defines `--<role>-foreground` (`oklch(1 0 0)` light; near-black dark) and a subtle
@@ -193,7 +193,7 @@ Tokens under `@theme inline` (generate `text-*` utilities; size + line-height pa
 
 Add a `.tabular-nums` / `tnum` convention (`font-variant-numeric: tabular-nums`) applied to: prices
 (`₹{…}`), Group-size bracket counts, review counts/ratings, refund-slab percentages (25/50/100%),
-**Wallet** balances (Outvers credit + Refund balance), and any column of figures. DM Sans supports
+**Wallet** balances (Switchback credit + Refund balance), and any column of figures. DM Sans supports
 tabular figures — a feature flag, not a font swap.
 
 ### 2.3 Spacing
@@ -465,11 +465,11 @@ Viator-style sticky anchor nav:
 4. Gallery → one-line value prop.
 5. **Assurance row:** Free-cancellation (explicit window + full-refund wording) · **Partial pay**
    (25% Advance now, balance at T-24h — *not* an RNPL badge) · validity · **Required permit** notice
-   (links to official process; Outvers is not the broker) · accessibility.
+   (links to official process; Switchback is not the broker) · accessibility.
 6. **Reviews teaser (HIGH)** — verified-Booking snippets above the description.
 7. Highlights → Full description → Includes + explicit exclusions.
 8. **Price-transparency block:** per-participant base · **Required permit/fee** · service portion
-   (Outvers permit + Commission + GST/TDS money path).
+   (Switchback permit + Commission + GST/TDS money path).
 9. Meeting point (map deep-link) → Know-before-you-go.
 10. **Booking module (B3)** — restates Free-cancellation + Partial-pay (stated **twice**).
 11. Cross-sell (Combo / related) with **paid-placement disclosure** if sponsored.
@@ -508,9 +508,9 @@ price breakdown is `aria-live`; order-summary rail is a labelled complementary l
 ### B4. Wallet two-bucket display
 
 **Use** for the Customer `Wallet` surface and any refund-quote landing money in a bucket. Two Cards,
-one per bucket (the distinction is load-bearing — CONTEXT.md / ADR-0004): **Outvers credit bucket**
+one per bucket (the distinction is load-bearing — CONTEXT.md / ADR-0004): **Switchback credit bucket**
 (`--credit` + wallet icon; balance `.tabular-nums`; source tags; **expiry** as `--warning` chip when
-near; copy: spendable only on Outvers Bookings, never cashable) and **Refund balance bucket**
+near; copy: spendable only on Switchback Bookings, never cashable) and **Refund balance bucket**
 (neutral/`--success` + check icon; **dual affordance** "use as Wallet credit (24–48h SLA)" vs "cash
 out to original method (5–7 working-day Razorpay round-trip)"). **Combined header** shows the total
 **always decomposed into the two buckets** (never one blended number). **Live refund quote** (from
@@ -556,10 +556,10 @@ lands on H1; destructive confirms default-focus cancel; status by icon+text; rea
 **Use** for Customer-initiated cancellation from a Booking detail (the headline trust flow). Booking
 detail → "Cancel Booking" → **Dialog (A4)** that computes and shows, **before confirm:** the active
 Cancellation policy slab (Flexible/Moderate/Strict, locked at create), the **exact refund amount**
-and **which Wallet bucket** it lands in (Outvers credit vs Refund balance, B4), and the
+and **which Wallet bucket** it lands in (Switchback credit vs Refund balance, B4), and the
 cancellation-fee portion. `.tabular-nums`, deliberate reveal. Confirm is non-default focus.
 Inside-policy → auto-credit, no human review; outside-policy → explained as a Dispute route to
-support (honest constraint). **The Outvers differentiator:** exact-refund-before-confirm + two-bucket
+support (honest constraint). **The Switchback differentiator:** exact-refund-before-confirm + two-bucket
 split.
 
 ### B8. Vendor-profile (differentiator surface)
@@ -708,7 +708,7 @@ error / 404 (A6, `app/error.tsx` + `app/not-found.tsx`), and loading skeleton (A
 
 | # | Change | Why (best-practice + research) |
 |---|---|---|
-| 1 | **Added a semantic-status color family** (`--success/-warning/-info/-credit` + subtle tints), keeping `--destructive` | The as-is had only coral + `destructive` — no token for free-cancellation, instant-confirm, verified-Vendor, urgency, or **Outvers credit**. Every competitor renders these on every card; they must be foundational. (Material 3 / Radix functional-status convention.) |
+| 1 | **Added a semantic-status color family** (`--success/-warning/-info/-credit` + subtle tints), keeping `--destructive` | The as-is had only coral + `destructive` — no token for free-cancellation, instant-confirm, verified-Vendor, urgency, or **Switchback credit**. Every competitor renders these on every card; they must be foundational. (Material 3 / Radix functional-status convention.) |
 | 2 | **Unified neutrals on the warm hue (≈30) + added a 4-step surface ramp** (`--surface-0..3`); re-hued `--border`/`--input`/`--muted-foreground` | The as-is mixed warm surface (hue 30/60) with cool-slate text/borders (hue 250) — a subtle clash that muddied elevation. Single-hue ramps are a Radix/Material best practice and give the sticky booking module a defined elevation. |
 | 3 | **Added `--primary-strong` for coral-as-foreground**; `--primary` is fills only | As-is coral-on-white text ≈ 3.5:1 fails AA (4.5:1 floor). Fix is a darkened action ink for links/labels/icons; `--ring` rebinds to it. |
 | 4 | **Darkened `--muted-foreground`** (≈4.6:1 → ≈5.6:1) | It was borderline AA yet used for *all* secondary copy/captions/table sub-labels — exactly where headroom matters, and where multi-script counters need it. |

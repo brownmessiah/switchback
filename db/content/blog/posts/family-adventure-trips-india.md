@@ -55,7 +55,7 @@ Teenagers often push their own limits, which is part of the point. The adult rol
 
 ## Finding the Right Destinations for Your Family
 
-India's adventure destinations each have a different character. Rishikesh suits families looking to combine rafting, yoga, and gentle treks. Spiti and Ladakh suit older families comfortable with altitude. The Andamans are ideal when you want water-based activity and beach time together. Coorg and Munnar offer nature walks, wildlife, and camping with lush scenery and manageable logistics. Browse the full list of [family-friendly destinations](/destinations) on Outvers to filter by region, activity type, and time of year — most of India's adventure calendar is heavily season-dependent, and getting the timing right makes a large difference to what's available.
+India's adventure destinations each have a different character. Rishikesh suits families looking to combine rafting, yoga, and gentle treks. Spiti and Ladakh suit older families comfortable with altitude. The Andamans are ideal when you want water-based activity and beach time together. Coorg and Munnar offer nature walks, wildlife, and camping with lush scenery and manageable logistics. Browse the full list of [family-friendly destinations](/destinations) on Switchback to filter by region, activity type, and time of year — most of India's adventure calendar is heavily season-dependent, and getting the timing right makes a large difference to what's available.
 
 Prices for family adventure activities vary widely by region, operator, group size, and season. As rough context, a jeep safari typically runs somewhere between ₹1,500–₹4,000 per person, beginner rafting packages often start around ₹600–₹1,500 per person, tandem paragliding is commonly ₹2,500–₹4,500, and multi-day trek packages covering guide, camp, and meals can range from ₹3,000–₹8,000 per person per day. Always confirm current prices directly with the operator at the time of booking — these figures are indicative only.
 
@@ -79,4 +79,4 @@ Yes, and this is actually quite common. A practical approach is to plan activiti
 
 ---
 
-Ready to start putting an itinerary together? Outvers lists verified operators across India for everything from [wildlife safaris](/activities/safari) and [family camping](/activities/camping) to paragliding and high-altitude treks. Browse by activity or region to find options that fit your family's age range, fitness level, and travel dates.
+Ready to start putting an itinerary together? Switchback lists verified operators across India for everything from [wildlife safaris](/activities/safari) and [family camping](/activities/camping) to paragliding and high-altitude treks. Browse by activity or region to find options that fit your family's age range, fitness level, and travel dates.

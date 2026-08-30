@@ -49,7 +49,7 @@ traveling → completed (all member Bookings hit Completion per ADR-0003)
 - Payment isolation: one member's failed capture doesn't block the group.
 - Refund isolation: a member dropout only cancels their Bookings.
 - KYC: booking requires the booking member's verified identity, not the host's.
-- Liability: each Customer's contract is with Outvers (and via Outvers, the Vendor), not with other group members.
+- Liability: each Customer's contract is with Switchback (and via Switchback, the Vendor), not with other group members.
 
 ### Women-verified mechanics
 

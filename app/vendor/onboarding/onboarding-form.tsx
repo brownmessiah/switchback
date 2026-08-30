@@ -118,7 +118,7 @@ export function OnboardingForm({ userId: _userId }: OnboardingFormProps) {
         // Non-fatal.
       }
       // Vendor application saved (issue 24).
-      toast.success('Vendor profile created. Welcome to Outvers.')
+      toast.success('Vendor profile created. Welcome to Switchback.')
       router.push('/vendor/dashboard')
     } catch {
       setError('Something went wrong. Please try again.')
@@ -144,7 +144,7 @@ export function OnboardingForm({ userId: _userId }: OnboardingFormProps) {
         />
         <div className="space-y-0.5 text-sm">
           <p className="font-medium text-success">
-            0% upfront fee — listing on Outvers is free.
+            0% upfront fee — listing on Switchback is free.
           </p>
           <p className="text-foreground/80">
             Commission is shown before you finish — you only pay when you earn.

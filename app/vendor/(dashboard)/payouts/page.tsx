@@ -434,7 +434,7 @@ export default async function VendorPayoutsPage() {
           <h3 className="mb-2 text-sm font-semibold">How payouts work</h3>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>Payouts are processed T+7 days after experience completion.</li>
-            <li>Outvers deducts platform commission ({vendor?.commissionRate ?? '20'}%) + 18% GST on commission.</li>
+            <li>Switchback deducts platform commission ({vendor?.commissionRate ?? '20'}%) + 18% GST on commission.</li>
             <li>0.1% TDS (Section 194-O, Finance Act 2024) is withheld for resident Indian vendors.</li>
             <li>0.5% GST TCS (Section 52) is collected and remitted monthly via GSTR-8.</li>
             <li>The first 3 payouts after KYC Tier 2 require manual admin approval.</li>

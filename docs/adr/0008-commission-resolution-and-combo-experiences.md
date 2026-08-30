@@ -55,7 +55,7 @@ Every money-relevant value on a Booking (rate, basis, cancellation preset, captu
 - The Booking-create transaction must resolve the commission chain *before* writing the Booking row, in the same transaction. Resolution function lives in `lib/payments/commission-resolver.ts` with its own Vitest suite.
 - `experiences.combo_constituents` is an `int[]` with a CHECK constraint that all referenced IDs exist and belong to the same Vendor (no cross-Vendor combos in v1).
 - Combo cancellation: the Combo Experience has its own preset; if a Customer cancels a Combo, the Combo's preset governs — *not* a min/max across constituents.
-- **GST on commission is an open question** (Outvers' commission is a service to the Vendor; GST applies; Vendor's payout = `booking_gross × (1 - commission_rate) − TDS_if_applicable`; Outvers issues a separate GST invoice). Tracked as the next money-path ADR.
+- **GST on commission is an open question** (Switchback' commission is a service to the Vendor; GST applies; Vendor's payout = `booking_gross × (1 - commission_rate) − TDS_if_applicable`; Switchback issues a separate GST invoice). Tracked as the next money-path ADR.
 
 ## Amendment — customer checkout cart (see ADR-0021)
 

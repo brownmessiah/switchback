@@ -7,7 +7,7 @@ import { glob } from 'glob'
 
 /**
  * Home-redesign issue 03 (CR10): the footer brand band carries the brand
- * tagline "Outvers - Your Adventure Partner" directly beneath the wordmark.
+ * tagline "Switchback - Your Adventure Partner" directly beneath the wordmark.
  * A dedicated `Nav.footer.brandTagline` key is used — the pre-existing
  * descriptive `Nav.footer.tagline` (keyword-bearing SEO copy) stays.
  */
@@ -64,7 +64,7 @@ describe('SiteFooter — brand tagline (issue 03 / CR10)', () => {
     const en = JSON.parse(
       readFileSync(resolve(ROOT, 'lib/i18n/messages/en.json'), 'utf-8'),
     ) as { Nav: { footer: Record<string, unknown> } }
-    expect(en.Nav.footer.brandTagline).toBe('Outvers - Your Adventure Partner')
+    expect(en.Nav.footer.brandTagline).toBe('Switchback - Your Adventure Partner')
   })
 
   it('every locale carries a non-empty Nav.footer.brandTagline', () => {
@@ -79,7 +79,7 @@ describe('SiteFooter — brand tagline (issue 03 / CR10)', () => {
       expect((value as string).length).toBeGreaterThan(0)
       // Latin brand name + the exact spaced-hyphen separator in every locale
       // (guards against en-dash / colon drift in future locale edits).
-      expect(value as string).toContain('Outvers - ')
+      expect(value as string).toContain('Switchback - ')
     }
   })
 })

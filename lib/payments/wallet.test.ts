@@ -33,7 +33,7 @@ import {
  *   refund_balance  — closed-loop by default, cashable to original payment
  *                     method on Customer request (5-7d Razorpay round-trip).
  *
- * Spend order on checkout: Outvers credit → Refund balance → Razorpay
+ * Spend order on checkout: Switchback credit → Refund balance → Razorpay
  * remainder.
  *
  * Every wallet movement writes an audit_logs row with the source bucket,
@@ -158,7 +158,7 @@ describe('wallet operations (ADR-0004)', () => {
       })
     })
 
-    it('applies Outvers credit first up to gross', async () => {
+    it('applies Switchback credit first up to gross', async () => {
       await seedBalance('u_c', 'outvers_credit', 2000)
       const r = await applyWalletToCheckout(db, { userId: 'u_c', grossRupees: 5000 })
       expect(r.outversCreditAppliedRupees).toBe(2000)
@@ -168,7 +168,7 @@ describe('wallet operations (ADR-0004)', () => {
       expect(await readBalance('u_c', 'outvers_credit')).toBe(0)
     })
 
-    it('falls through to Refund balance after exhausting Outvers credit', async () => {
+    it('falls through to Refund balance after exhausting Switchback credit', async () => {
       await seedBalance('u_c', 'outvers_credit', 1000)
       await seedBalance('u_c', 'refund_balance', 1500)
       const r = await applyWalletToCheckout(db, { userId: 'u_c', grossRupees: 5000 })
@@ -190,8 +190,8 @@ describe('wallet operations (ADR-0004)', () => {
       expect(await readBalance('u_c', 'refund_balance')).toBe(4000)
     })
 
-    it('applies all three sources in ADR-0004 order: Outvers credit, then Refund balance, then Razorpay (500 + 300 + 1000 → 500/300/200)', async () => {
-      // The canonical three-bucket split: Outvers credit (expires) drains
+    it('applies all three sources in ADR-0004 order: Switchback credit, then Refund balance, then Razorpay (500 + 300 + 1000 → 500/300/200)', async () => {
+      // The canonical three-bucket split: Switchback credit (expires) drains
       // first, then Refund balance (cashable), then Razorpay charges the
       // remainder. Both buckets nonzero AND a nonzero Razorpay remainder.
       await seedBalance('u_c', 'outvers_credit', 500)
@@ -211,7 +211,7 @@ describe('wallet operations (ADR-0004)', () => {
       ).toBe(1000)
     })
 
-    it('does not touch Refund balance when Outvers credit alone covers gross', async () => {
+    it('does not touch Refund balance when Switchback credit alone covers gross', async () => {
       await seedBalance('u_c', 'outvers_credit', 10000)
       await seedBalance('u_c', 'refund_balance', 5000)
       const r = await applyWalletToCheckout(db, { userId: 'u_c', grossRupees: 3000 })
@@ -373,7 +373,7 @@ describe('wallet operations (ADR-0004)', () => {
   })
 
   describe('creditOutversBalance', () => {
-    it('credits a new Outvers credit bucket and writes audit with source=referral', async () => {
+    it('credits a new Switchback credit bucket and writes audit with source=referral', async () => {
       await creditOutversBalance(db, {
         userId: 'u_c',
         amountRupees: 500,

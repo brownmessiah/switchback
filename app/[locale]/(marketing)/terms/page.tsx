@@ -11,7 +11,7 @@ import { breadcrumbList } from '@/lib/seo/schemas/breadcrumb-list'
 /**
  * /terms — Terms of Service (issue 07).
  *
- * A business-safe DRAFT reflecting the real Outvers model: a marketplace /
+ * A business-safe DRAFT reflecting the real Switchback model: a marketplace /
  * intermediary connecting Customers with independent third-party Vendors who
  * run the Experiences (CONTEXT.md — never "operator"). Carries a visible
  * "pending final legal review" note (DECISION D7); copy is pinned in

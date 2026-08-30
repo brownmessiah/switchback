@@ -98,7 +98,7 @@ export function quoteRefund(args: QuoteRefundArgs): RefundQuote {
   // `non_cancellable` Booking yields 0 refund in EVERY window — there is no
   // window math, so it is decided here before the windowed-preset table. It
   // behaves like outside-policy (full fee held, routes to Dispute per ADR-0003,
-  // where Outvers may still grant an exceptional refund at discretion).
+  // where Switchback may still grant an exceptional refund at discretion).
   if (preset === 'non_cancellable') {
     return {
       refundAmountRupees: 0,

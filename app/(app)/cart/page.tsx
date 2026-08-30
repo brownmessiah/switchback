@@ -18,7 +18,7 @@ import { CartView } from './cart-view'
  */
 
 export const metadata = {
-  title: 'Your cart — Outvers',
+  title: 'Your cart — Switchback',
   robots: { index: false },
 }
 

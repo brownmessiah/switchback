@@ -60,4 +60,4 @@ October to early December and March to May are the most comfortable months. Summ
 
 Largely yes, though the community does eat meat. Most cafe menus have a full vegetarian section covering momos, thukpa, tingmo, and rice dishes. Always ask if you have dietary restrictions, as the kitchen will usually accommodate you if you ask clearly.
 
-Bir rewards slow travel. If you want to plan your trip — whether the cultural side, the flying, or both — browsing the full activity and stay options at [Bir Billing](/destinations/bir-billing) on Outvers is a good place to start.
+Bir rewards slow travel. If you want to plan your trip — whether the cultural side, the flying, or both — browsing the full activity and stay options at [Bir Billing](/destinations/bir-billing) on Switchback is a good place to start.

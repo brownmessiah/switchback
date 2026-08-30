@@ -2,7 +2,7 @@
  * Single source of truth for the four legal pages (issue 07):
  *   /terms, /privacy, /refund-cancellation, /vendor-terms.
  *
- * These pages are business-safe DRAFTS reflecting the real Outvers model,
+ * These pages are business-safe DRAFTS reflecting the real Switchback model,
  * each carrying a visible "pending final legal review" note (DECISION D7).
  * Counsel reviews before launch.
  *

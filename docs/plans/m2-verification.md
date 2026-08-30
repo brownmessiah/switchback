@@ -49,7 +49,7 @@ This document is the verification gate before tagging `v0.2-money-path`.
   - [x] 500 body does NOT echo `err.message`
 
 ### Phase 3 — Wallet + refund flow + cancellation (Tasks 13–15)
-- [x] `applyWalletToCheckout` — spend order Outvers credit → Refund balance → Razorpay remainder, with FOR UPDATE on both rows
+- [x] `applyWalletToCheckout` — spend order Switchback credit → Refund balance → Razorpay remainder, with FOR UPDATE on both rows
 - [x] `creditRefundBalance` / `creditOutversBalance` — UPSERT + audit row
 - [x] `requestCashout` — joins payments⋈bookings with `customerUserId` filter (ownership at library layer); audit written BEFORE Razorpay so a failed audit rolls back without a real-money refund in flight
 - [x] `processRefund` — inside-policy auto-credit, no-refund-window rejected row, outside-policy dispute routing, vendor-cancelled 100%

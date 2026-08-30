@@ -14,7 +14,7 @@ import { users } from './users'
 
 /**
  * Promo codes per ADR-0004. Credit-grant model — redemption issues
- * Outvers credit into the customer's wallet. Admin-created, with
+ * Switchback credit into the customer's wallet. Admin-created, with
  * global and per-user usage limits.
  *
  * The `current_uses` column is atomically incremented via

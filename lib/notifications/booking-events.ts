@@ -133,7 +133,7 @@ export async function notifyRefundCredited(
     userId: args.customerUserId,
     type: 'booking_cancelled',
     title: 'Refund credited to your wallet',
-    body: `₹${args.amountRupees} has been credited to your Outvers wallet.`,
+    body: `₹${args.amountRupees} has been credited to your Switchback wallet.`,
     link: `/wallet`,
     eventId: `refund_credited:${args.refundRequestId}`,
   })

@@ -66,7 +66,7 @@ This is the most important section of this guide. Paragliding is an adventure sp
 
 **Avoid touts at the landing zone.** Bir has a well-known issue with unlicensed operators soliciting passengers informally. Book through a verified platform or directly with a named, licensed operator whose credentials you have checked.
 
-On Outvers, operators who list [paragliding in Bir Billing](/adventure/paragliding-in-bir-billing) are KYC-verified, which means their business credentials and operator licences have been checked. That does not replace your own due diligence, but it removes a meaningful layer of uncertainty before you even arrive.
+On Switchback, operators who list [paragliding in Bir Billing](/adventure/paragliding-in-bir-billing) are KYC-verified, which means their business credentials and operator licences have been checked. That does not replace your own due diligence, but it removes a meaningful layer of uncertainty before you even arrive.
 
 ## Getting to Bir Billing
 

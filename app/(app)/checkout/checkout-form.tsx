@@ -218,7 +218,7 @@ export function CheckoutForm({
       key: result.keyId,
       amount: result.amountRupees * 100,
       currency: 'INR',
-      name: 'Outvers',
+      name: 'Switchback',
       description: experienceTitle,
       order_id: result.orderId,
       prefill: {
@@ -324,7 +324,7 @@ export function CheckoutForm({
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-xs text-muted-foreground">
-                  Booking under your signed-in Outvers account. Review and continue
+                  Booking under your signed-in Switchback account. Review and continue
                   to payment.
                 </p>
                 <div className="flex justify-between text-sm">
@@ -399,7 +399,7 @@ export function CheckoutForm({
                   <span className="text-sm text-muted-foreground">cancellation policy</span>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Inside-policy cancellations credit your Outvers wallet within 24 hours.
+                  Inside-policy cancellations credit your Switchback wallet within 24 hours.
                 </p>
               </CardContent>
             </Card>
@@ -471,7 +471,7 @@ export function CheckoutForm({
                   />
                   <p className="text-xs text-info">
                     Secure payment. You can cancel under the policy shown for a refund
-                    to your Outvers wallet.
+                    to your Switchback wallet.
                   </p>
                 </div>
               </CardContent>

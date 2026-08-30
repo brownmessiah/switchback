@@ -52,7 +52,7 @@ test.describe('responsive · public surfaces (< lg)', () => {
     }
 
     await expect(
-      page.getByRole('region', { name: 'How Outvers works' }),
+      page.getByRole('region', { name: 'How Switchback works' }),
     ).toBeVisible()
 
     // No page-level horizontal overflow (re-asserted after the sections render).

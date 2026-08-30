@@ -31,9 +31,9 @@ afterEach(() => {
 })
 
 const DISCLOSURE = {
-  heading: 'How Outvers works with Vendors',
+  heading: 'How Switchback works with Vendors',
   body:
-    'All Experiences are operated by independent third-party Vendors. Outvers verifies vendor information, booking rules, and payment flow where applicable.',
+    'All Experiences are operated by independent third-party Vendors. Switchback verifies vendor information, booking rules, and payment flow where applicable.',
 }
 
 const AFTER_BOOKING = {
@@ -41,7 +41,7 @@ const AFTER_BOOKING = {
   steps: [
     'Select your date and participants.',
     'Pay the 25% Advance securely (Partial pay).',
-    'Outvers confirms instantly.',
+    'Switchback confirms instantly.',
     'Receive the meeting point and Vendor details.',
     'The Vendor conducts the Experience as per the listed terms.',
   ],

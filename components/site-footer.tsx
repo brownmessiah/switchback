@@ -14,7 +14,7 @@ import { NewsletterForm } from './newsletter-form'
  * Bottom-of-page footer present on every public route. v3 (issue 02):
  * a confident brand band (wordmark + tagline + newsletter) leads, then a
  * link grid (Explore, Support, For Vendors, Contact + social), then the
- * copyright bar. NO trust/accreditation badges — Outvers holds none and
+ * copyright bar. NO trust/accreditation badges — Switchback holds none and
  * they are explicitly out of scope (CONTEXT.md).
  *
  * Cancellation policy is the load-bearing link (ADR-0005 -- "link to it
@@ -226,7 +226,7 @@ export function SiteFooter(): ReactElement | null {
 
       <div className="border-t border-border">
         <p className="mx-auto max-w-6xl px-4 py-6 text-xs text-muted-foreground sm:px-6">
-          &copy; {new Date().getFullYear()} Outvers. {tf('copyright')}
+          &copy; {new Date().getFullYear()} Switchback. {tf('copyright')}
         </p>
       </div>
     </footer>

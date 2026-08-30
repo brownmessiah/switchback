@@ -526,7 +526,7 @@ export function ListingFormStepper({
         <ShieldCheck aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-success" />
         <div className="space-y-0.5 text-sm">
           <p className="font-medium text-success">
-            0% upfront fee — listing on Outvers is free.
+            0% upfront fee — listing on Switchback is free.
           </p>
           <p className="text-foreground/80">
             Commission is shown before you finish — the platform rate is{' '}
@@ -799,7 +799,7 @@ export function ListingFormStepper({
                         </span>
                         {isNonCancel && (
                           <span className="block text-xs text-muted-foreground">
-                            Customers cannot cancel after payment. Outvers may still handle
+                            Customers cannot cancel after payment. Switchback may still handle
                             exceptional refunds.
                           </span>
                         )}

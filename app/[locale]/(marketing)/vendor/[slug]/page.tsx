@@ -180,7 +180,7 @@ export default async function VendorProfilePage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* Contact affordance — routes to Outvers support (/contact), per
+            {/* Contact affordance — routes to Switchback support (/contact), per
                 D6: no direct customer→Vendor messaging until moderation and
                 support rules exist. Never a disabled "coming soon" dead-end
                 on an investor-facing storefront (QA fix pass). */}

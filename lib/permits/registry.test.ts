@@ -14,7 +14,7 @@ import {
  * registry is the single catalogue that resolves a slug to the metadata
  * the Booking Permits panel surfaces: name, issuing authority, official
  * URL, processing time, indicative cost, validity, and a short
- * description. Outvers does NOT broker permits in v1 — the panel is
+ * description. Switchback does NOT broker permits in v1 — the panel is
  * informational + a mandatory acknowledgement at checkout.
  */
 describe('permits registry (ADR-0011)', () => {

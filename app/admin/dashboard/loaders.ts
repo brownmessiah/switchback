@@ -51,7 +51,7 @@ export interface PendingCounts {
  * the queue it links into.
  *
  *  - pendingPayouts  = Σ netPayoutRupees   (owed to Vendors, not yet disbursed)
- *  - commission      = Σ commissionRupees  (Outvers platform commission earned)
+ *  - commission      = Σ commissionRupees  (Switchback platform commission earned)
  *  - gstTdsDue       = Σ (gstOnCommission + tds + tcs)  (statutory amounts to remit;
  *                      a LIABILITY/remittance figure, never platform income)
  *  - netRevenue      = commission − gstOnCommission     (platform-RETAINED take —

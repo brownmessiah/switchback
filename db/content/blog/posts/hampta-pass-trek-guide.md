@@ -80,7 +80,7 @@ Budget a bit extra for:
 - Acclimatization day in Manali (food and accommodation)
 - Gear rental if you do not own trekking poles or a cold-rated sleeping bag
 
-Always confirm the current price directly with your operator before booking — costs shift with fuel prices, permit structures, and seasonal demand. On Outvers, pricing is shown transparently with what is and is not included clearly listed.
+Always confirm the current price directly with your operator before booking — costs shift with fuel prices, permit structures, and seasonal demand. On Switchback, pricing is shown transparently with what is and is not included clearly listed.
 
 ## Safety, Guides, and What to Watch For
 
@@ -94,7 +94,7 @@ No mountain trek is without risk, and honesty about that is more useful to you t
 
 **Scree descent injuries** — slow, deliberate steps and trekking poles prevent most ankle rolls.
 
-Choosing an operator who employs certified mountain guides, carries a first-aid kit and emergency oxygen, and has a clear protocol for evacuating an injured or ill trekker is not a detail — it is the most important decision you make. Outvers lists only KYC-verified operators, which means the business and guides have been vetted before they appear on the platform. Browse the range of [guided Himalayan treks](/activities/trekking) to compare operators, read genuine reviews, and check cancellation policies before you commit.
+Choosing an operator who employs certified mountain guides, carries a first-aid kit and emergency oxygen, and has a clear protocol for evacuating an injured or ill trekker is not a detail — it is the most important decision you make. Switchback lists only KYC-verified operators, which means the business and guides have been vetted before they appear on the platform. Browse the range of [guided Himalayan treks](/activities/trekking) to compare operators, read genuine reviews, and check cancellation policies before you commit.
 
 ## Frequently asked questions
 
@@ -114,4 +114,4 @@ Inner Line Permits and forest permits for this region are typically arranged by 
 
 Technically yes, but the route involves multiple stream crossings, some unmarked sections near the pass, and emergency situations that are much harder to manage alone. The organised trek cost is modest relative to the safety benefit of having an experienced guide who knows the terrain and can respond if conditions turn. Solo travel at altitude without local knowledge is a risk that is hard to justify given the pricing of organised options.
 
-Whether you are a first-time Himalayan trekker or adding Hampta Pass to a growing list of crossovers, you will find a well-organised trip makes an enormous difference to how much you can actually enjoy the landscape rather than worry about logistics. When you are ready to book, [Manali](/destinations/manali) is your gateway — and the operators on Outvers running this route have been verified so you can focus on the trek itself.
+Whether you are a first-time Himalayan trekker or adding Hampta Pass to a growing list of crossovers, you will find a well-organised trip makes an enormous difference to how much you can actually enjoy the landscape rather than worry about logistics. When you are ready to book, [Manali](/destinations/manali) is your gateway — and the operators on Switchback running this route have been verified so you can focus on the trek itself.

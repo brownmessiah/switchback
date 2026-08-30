@@ -110,4 +110,4 @@ Do not try to make up missed sessions by doubling the following week. If you mis
 
 An 8-week base is a solid foundation, but routes above 5,000 m — like Stok Kangri or Friendship Peak — benefit from a longer preparation window of 12–16 weeks and a prior trek at moderate altitude in your history. They also typically require more acclimatisation days built into the itinerary itself. For your first Himalayan experience, a moderate route is a smarter choice, and one good season makes the harder routes far more achievable the next.
 
-When you are ready to find the right route for where you are in your training journey, browse verified [Himalayan treks](/activities/trekking) on Outvers — each listing includes difficulty ratings, altitude profiles, and operator credentials so you can match the trek to your preparation, not the other way around.
+When you are ready to find the right route for where you are in your training journey, browse verified [Himalayan treks](/activities/trekking) on Switchback — each listing includes difficulty ratings, altitude profiles, and operator credentials so you can match the trek to your preparation, not the other way around.

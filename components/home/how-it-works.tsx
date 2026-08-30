@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 
 /**
- * "How Outvers Works" — five sequential steps (issue 08).
+ * "How Switchback Works" — five sequential steps (issue 08).
  *
  * Maps the real Customer journey, in order:
  *   1. search            → /search keyword + facets.

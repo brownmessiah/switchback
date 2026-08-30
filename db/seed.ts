@@ -250,7 +250,7 @@ const PAYOUT_GATE_VENDOR = {
 } as const
 
 /**
- * A DEDICATED Customer who receives the manual Outvers-credit / Refund-balance
+ * A DEDICATED Customer who receives the manual Switchback-credit / Refund-balance
  * grants the admin loyalty-grant E2E (#26) issues. Kept DISTINCT from
  * `u_seed_customer` (whose two-bucket wallet is asserted exactly by #13–#15)
  * so granting credit to THIS customer never disturbs any other spec's wallet
@@ -552,7 +552,7 @@ async function seed(): Promise<void> {
       // Public-grade display name: blog_posts.author_admin_id → users.name is
       // the PUBLIC blog byline (NOT NULL column), so this user's name renders
       // on every seeded article. Never an internal label here (QA fix pass).
-      { id: 'u_seed_admin', email: 'admin@seed.outvers.dev', name: 'Outvers Editorial Team' },
+      { id: 'u_seed_admin', email: 'admin@seed.outvers.dev', name: 'Switchback Editorial Team' },
       // #28 Sub-admin governance fixture — an Admin whose permissions are a
       // STRICT SUBSET (ADR-0006). Holds vendors/audit/analytics but NOT
       // payouts/refunds/sub_admins/reports. Drives the server-side permission
@@ -1819,7 +1819,7 @@ async function seed(): Promise<void> {
   // cross-surface Playwright project depends on the `admin` project, which
   // approves/pauses/archives every `mod-*` fixture before cross-surface runs,
   // so reusing one would leave nothing pending to approve. The title carries a
-  // UNIQUE token ("Outvers Xsurface Approve-Search Beacon") so a `?q=` text
+  // UNIQUE token ("Switchback Xsurface Approve-Search Beacon") so a `?q=` text
   // search matches only this Experience — never any other seed row. Same
   // identity-tier Vendor, distinct 09:00-UTC slot, within the tier price cap so
   // admin-approve publishes cleanly (no ADR-0007 rejection).
@@ -1829,7 +1829,7 @@ async function seed(): Promise<void> {
     .values({
       vendorUserId: 'u_seed_v_identity',
       slug: XSURFACE_SEARCH_SLUG,
-      title: 'Outvers Xsurface Approve-Search Beacon (Rishikesh)',
+      title: 'Switchback Xsurface Approve-Search Beacon (Rishikesh)',
       shortDescription:
         'Dedicated pending_review fixture for the #30 cross-surface approve → index → search E2E.',
       longDescription:
@@ -2477,7 +2477,7 @@ async function seed(): Promise<void> {
     ])
     .onConflictDoNothing()
 
-  // The Outvers credit aggregate carries no expiry of its own — expiry lives
+  // The Switchback credit aggregate carries no expiry of its own — expiry lives
   // on the immutable ledger (wallet_transactions.expires_at) per ADR-0004.
   // Seed the matching grant transaction so the dashboard can surface the
   // credit's expiry. Anchor the expiry deterministically to a fixed issue

@@ -83,9 +83,9 @@ test.describe('Customer dashboard', () => {
     await expect(h1).toBeVisible()
     await expect(h1).toContainText('My bookings')
 
-    // Wallet cards — refund balance and Outvers credit
+    // Wallet cards — refund balance and Switchback credit
     await expect(page.getByText('Refund balance')).toBeVisible()
-    await expect(page.getByText('Outvers credit')).toBeVisible()
+    await expect(page.getByText('Switchback credit')).toBeVisible()
 
     // Wallet amounts render (seed: refund=500, credit=200)
     // Just verify the currency symbol is visible in the wallet section
@@ -107,7 +107,7 @@ test.describe('Customer dashboard', () => {
 
   // -------------------------------------------------------------------------
   // 1b. Functional deepening (Issue #15): correct Booking statuses, two
-  //     SEPARATE Wallet buckets with correct totals, Outvers credit EXPIRY,
+  //     SEPARATE Wallet buckets with correct totals, Switchback credit EXPIRY,
   //     and the Refund balance CASHABLE-to-original-method option (ADR-0004).
   // -------------------------------------------------------------------------
   test('lists Bookings with their correct seeded statuses', async ({ page }) => {
@@ -139,7 +139,7 @@ test.describe('Customer dashboard', () => {
     ).toBeVisible()
   })
 
-  test('Wallet shows Outvers credit and Refund balance as separate buckets with correct totals', async ({
+  test('Wallet shows Switchback credit and Refund balance as separate buckets with correct totals', async ({
     page,
   }) => {
     await page.goto('/dashboard')
@@ -151,10 +151,10 @@ test.describe('Customer dashboard', () => {
     await expect(refundCard).toBeVisible()
 
     // Each card labels its own bucket — they are NOT merged into one number.
-    await expect(creditCard).toContainText('Outvers credit')
+    await expect(creditCard).toContainText('Switchback credit')
     await expect(refundCard).toContainText('Refund balance')
 
-    // Correct per-bucket totals, read live from the DB. Outvers credit is never
+    // Correct per-bucket totals, read live from the DB. Switchback credit is never
     // mutated by any other spec, so assert it exactly. Refund balance, however,
     // is CREDITED in parallel by the `Cancel booking` describe (inside-policy
     // cancels) and nothing debits it (no spec calls applyWalletToCheckout), so
@@ -174,7 +174,7 @@ test.describe('Customer dashboard', () => {
     expect(renderedRefund).toBeLessThanOrEqual(dbRefundNow)
   })
 
-  test('Outvers credit shows an expiry; Refund balance shows the cash-out option (ADR-0004)', async ({
+  test('Switchback credit shows an expiry; Refund balance shows the cash-out option (ADR-0004)', async ({
     page,
   }) => {
     await page.goto('/dashboard')
@@ -182,7 +182,7 @@ test.describe('Customer dashboard', () => {
     const creditCard = page.getByTestId('wallet-bucket-outvers_credit')
     const refundCard = page.getByTestId('wallet-bucket-refund_balance')
 
-    // ── Outvers credit EXPIRES (12–18mo from issue, ADR-0004). The card must
+    // ── Switchback credit EXPIRES (12–18mo from issue, ADR-0004). The card must
     //    surface an expiry date for the credit so the Customer knows the
     //    closed-loop credit is time-bound. ──
     const expiry = creditCard.getByTestId('wallet-credit-expiry')
@@ -196,12 +196,12 @@ test.describe('Customer dashboard', () => {
     // ── Refund balance is CASHABLE back to the original payment method via
     //    Razorpay (5–7 working days, ADR-0004). The card must surface that
     //    option — copy + an affordance — which distinguishes it from the
-    //    never-cashable Outvers credit. ──
+    //    never-cashable Switchback credit. ──
     const cashout = refundCard.getByTestId('wallet-cashout-option')
     await expect(cashout).toBeVisible()
     await expect(cashout).toContainText(/original payment method/i)
     await expect(cashout).toContainText(/5[–-]7 working days/i)
-    // The Outvers credit card must NOT offer cashout (it is never cashable).
+    // The Switchback credit card must NOT offer cashout (it is never cashable).
     await expect(creditCard.getByTestId('wallet-cashout-option')).toHaveCount(0)
   })
 
@@ -671,7 +671,7 @@ test.describe('Cancel booking', () => {
     expect(await getBookingState(bookingId)).toBe('cancelled_by_customer')
 
     // ── WIRED outcome 2: the credit landed in the Refund balance bucket
-    //    (NOT Outvers credit), for the full free-window amount. Asserted
+    //    (NOT Switchback credit), for the full free-window amount. Asserted
     //    against the immutable wallet.credit_refund_balance audit row rather
     //    than the live wallet_balances delta — the seed customer's single
     //    wallet is shared across bookings and concurrent checkouts in other
@@ -681,7 +681,7 @@ test.describe('Cancel booking', () => {
     expect(creditAudit, 'a refund-balance credit audit row must exist').toBeTruthy()
     expect(creditAudit!.amountRupees).toBe(grossRupees)
     expect(creditAudit!.userId).toBe(SEED_CUSTOMER)
-    // The refund must NOT have been routed to the Outvers (promo) bucket.
+    // The refund must NOT have been routed to the Switchback (promo) bucket.
     expect(await countOutversCreditAuditForBooking(bookingId)).toBe(0)
     // Live balance sanity: it reflects at least the credited amount.
     expect(
@@ -746,7 +746,7 @@ test.describe('Cancel booking', () => {
     expect(disputePayload!.basis).toBe('outside_policy')
 
     // ── WIRED outcome 3: NO refund of any kind for this booking — no
-    //    refund_requests row, no Refund balance credit, no Outvers credit,
+    //    refund_requests row, no Refund balance credit, no Switchback credit,
     //    and no inside-policy booking.cancel audit row. Asserted per-booking
     //    (not against the shared live wallet balance) so a concurrent
     //    checkout in another parallel spec cannot perturb the result. ──

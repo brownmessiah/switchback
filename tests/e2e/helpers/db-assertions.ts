@@ -400,7 +400,7 @@ export async function getRefundBalanceCreditAuditForBooking(
 
 /**
  * Count `wallet.credit_outvers_credit` audit rows for a booking id. The
- * inside-policy refund must NEVER credit the Outvers (promo) bucket — this
+ * inside-policy refund must NEVER credit the Switchback (promo) bucket — this
  * proves the refund went to the cashable Refund balance, not promo credit.
  */
 export async function countOutversCreditAuditForBooking(
@@ -2094,7 +2094,7 @@ export async function getEarliestBookingCommissionSnapshotForVendor(
 // loyalty grant (adminGrantCredit) FROM THE UI and assert the persisted
 // commission_tiers / promo_codes / wallet rows plus the append-only audit
 // trail. Per ADR-0008 a Festival tier is time-windowed + scoped; per ADR-0004
-// an Outvers-credit grant lands in the closed-loop bucket WITH an expiry,
+// an Switchback-credit grant lands in the closed-loop bucket WITH an expiry,
 // distinct from the cashable Refund balance.
 // ---------------------------------------------------------------------------
 

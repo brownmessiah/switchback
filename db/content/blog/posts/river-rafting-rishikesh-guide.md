@@ -64,7 +64,7 @@ Wear clothes you do not mind getting completely wet: a quick-dry synthetic top a
 
 Prices across the four stretches currently run approximately **₹600 at the lower end to ₹2,500 at the upper end** per person, varying by stretch length, group size, inclusions (meals, transport, wetsuits), and operator. These are approximate ranges — always confirm the live price directly with the operator at the time of booking, as rates shift with season and demand.
 
-When choosing an operator, verify that guides hold recognised certification, that life jackets and helmets are in sound condition (not cracked, faded to brittleness, or missing buckles), and that a safety kayak is part of the setup. Look for operators with transparent cancellation policies. [Rafting trips](/activities/rafting) booked through Outvers list KYC-verified operators, so you can see credentials before you commit.
+When choosing an operator, verify that guides hold recognised certification, that life jackets and helmets are in sound condition (not cracked, faded to brittleness, or missing buckles), and that a safety kayak is part of the setup. Look for operators with transparent cancellation policies. [Rafting trips](/activities/rafting) booked through Switchback list KYC-verified operators, so you can see credentials before you commit.
 
 Avoid any operator who offers to skip the safety briefing, who seems casual about life jackets, or who applies heavy pressure to upsell you to a harder stretch than you are comfortable with. The river will still be there tomorrow.
 
@@ -84,6 +84,6 @@ The Ganga at Rishikesh, above the main town discharge points, is considerably cl
 
 ### What happens if the trip gets cancelled due to high water?
 
-Responsible operators monitor river gauges and will cancel or reschedule when levels exceed safe thresholds, particularly in June and post-rain periods in October. Confirm the cancellation and refund policy at the time of booking. Outvers operators are required to maintain transparent cancellation terms, so you will know exactly where you stand before you pay.
+Responsible operators monitor river gauges and will cancel or reschedule when levels exceed safe thresholds, particularly in June and post-rain periods in October. Confirm the cancellation and refund policy at the time of booking. Switchback operators are required to maintain transparent cancellation terms, so you will know exactly where you stand before you pay.
 
 Whether you are a first-timer looking for a manageable half-day adventure or an experienced paddler chasing the full 36-kilometre gorge, Rishikesh delivers. Browse available dates and verified operators for [river rafting in Rishikesh](/adventure/rafting-in-rishikesh) and get on the water with a guide you can trust.

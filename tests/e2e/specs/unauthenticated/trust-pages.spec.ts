@@ -22,7 +22,7 @@ test.describe('Safety page', () => {
   test('renders 200, H1, and the real trust sections', async ({ page }) => {
     const response = await page.goto('/safety')
     expect(response?.status()).toBe(200)
-    await expect(page).toHaveTitle(/Outvers/)
+    await expect(page).toHaveTitle(/Switchback/)
 
     // H1 present
     const h1 = page.locator('h1')
@@ -33,7 +33,7 @@ test.describe('Safety page', () => {
 
     // Credibility copy (issue 01): the hero softens the old over-promise
     // ("Everything below is a feature that exists today, not a promise.") to
-    // honest, vendor/experience-scoped language. Outvers NOTIFIES, does not
+    // honest, vendor/experience-scoped language. Switchback NOTIFIES, does not
     // dispatch — safety copy must not over-promise.
     await expect(
       page.getByText(
@@ -82,7 +82,7 @@ test.describe('About page', () => {
   test('renders 200 and H1', async ({ page }) => {
     const response = await page.goto('/about')
     expect(response?.status()).toBe(200)
-    await expect(page).toHaveTitle(/Outvers/)
+    await expect(page).toHaveTitle(/Switchback/)
 
     const h1 = page.locator('h1')
     await expect(h1).toBeVisible()

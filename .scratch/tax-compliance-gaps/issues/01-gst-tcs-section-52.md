@@ -4,7 +4,7 @@ Status: ready-for-human
 
 ## Problem
 
-Outvers collects Customer payments on the Vendor's behalf, making it an "e-commerce operator" under CGST Act Section 52, which **must collect TCS** on the Vendor's supplies and file monthly GSTR-8. The money path did not model TCS at all.
+Switchback collects Customer payments on the Vendor's behalf, making it an "e-commerce operator" under CGST Act Section 52, which **must collect TCS** on the Vendor's supplies and file monthly GSTR-8. The money path did not model TCS at all.
 
 ADR-0016 now documents the obligation (see GST TCS — Section 52).
 

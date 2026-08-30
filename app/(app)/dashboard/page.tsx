@@ -103,7 +103,7 @@ export default async function CustomerDashboardPage() {
     Number(walletRows.find((r) => r.balanceType === 'outvers_credit')?.amount ?? 0),
   )
 
-  // Outvers credit expires 12–18mo from issue (ADR-0004). The aggregate
+  // Switchback credit expires 12–18mo from issue (ADR-0004). The aggregate
   // wallet_balances row has no expiry of its own — expiry lives on the
   // immutable ledger. Surface the SOONEST upcoming expiry for the credit
   // bucket so the Customer knows their closed-loop credit is time-bound.
@@ -288,7 +288,7 @@ export default async function CustomerDashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Outvers credit — credit tone; closed-loop, never cashable, EXPIRES */}
+          {/* Switchback credit — credit tone; closed-loop, never cashable, EXPIRES */}
           <Card data-testid="wallet-bucket-outvers_credit" className="border-credit/30">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">

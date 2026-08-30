@@ -47,7 +47,7 @@ Over the wetsuit, wear a splash jacket to cut wind and water entry at the neck a
 
 Your operator provides the two pieces of mandatory safety equipment: the personal flotation device (PFD, commonly called a life jacket) and the helmet. Both should be rated and inspected before each use.
 
-Do not bring your own PFD or helmet unless you are a trained paddler who knows exactly what standard you need for the river grade you're running. An unrated or ill-fitting life jacket is not better than none — it gives false confidence. A good operator, including the KYC-verified operators listed on [rafting in Rishikesh](/adventure/rafting-in-rishikesh) and other Outvers destinations, will fit you properly and brief you on how to use the equipment.
+Do not bring your own PFD or helmet unless you are a trained paddler who knows exactly what standard you need for the river grade you're running. An unrated or ill-fitting life jacket is not better than none — it gives false confidence. A good operator, including the KYC-verified operators listed on [rafting in Rishikesh](/adventure/rafting-in-rishikesh) and other Switchback destinations, will fit you properly and brief you on how to use the equipment.
 
 If a helmet or life jacket is handed to you without explanation, ask. Any operator worth your booking will take five minutes to explain the fit and the safety drill.
 
@@ -86,4 +86,4 @@ Possible, but uncomfortable and risky. Contacts can be dislodged by water impact
 
 You want something that stays on your foot if you go overboard: a sport sandal with a full heel strap, or an old pair of closed trainers or water shoes you're happy to soak. Many people keep a dedicated pair of old trainers specifically for water activities. Slip-ons, flip-flops, and bare feet are all hazards both in the boat and on the rocky riverbank.
 
-Packing right is a small investment that pays off in a genuinely better experience on the water. When you're ready to book, browse the full range of [river rafting](/activities/rafting) options on Outvers — all operators are KYC-verified, pricing is transparent, and you can check seasonal availability before you commit.
+Packing right is a small investment that pays off in a genuinely better experience on the water. When you're ready to book, browse the full range of [river rafting](/activities/rafting) options on Switchback — all operators are KYC-verified, pricing is transparent, and you can check seasonal availability before you commit.

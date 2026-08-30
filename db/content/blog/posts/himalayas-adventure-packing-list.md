@@ -78,4 +78,4 @@ Spare batteries for the headlamp, lip balm with SPF, enough cash, and a rain cov
 
 Visually clean mountain streams can carry giardia and other pathogens. Always purify water before drinking — iodine tablets, a filter bottle, or a UV pen are all effective options. Carry enough purification capacity for the full day's water needs.
 
-Getting the packing right is the first step to a genuinely great adventure in the mountains. Once your kit is sorted, the next step is finding the right trip — explore verified Himalayan [trekking trips](/activities/trekking) on Outvers, where every operator is KYC-verified and pricing is fully transparent before you book.
+Getting the packing right is the first step to a genuinely great adventure in the mountains. Once your kit is sorted, the next step is finding the right trip — explore verified Himalayan [trekking trips](/activities/trekking) on Switchback, where every operator is KYC-verified and pricing is fully transparent before you book.

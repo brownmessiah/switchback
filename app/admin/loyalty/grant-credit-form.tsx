@@ -16,7 +16,7 @@ type BalanceType = 'outvers_credit' | 'refund_balance'
  * #96 — manual loyalty credit grant. A grant CREDITS real money to a Customer's
  * Wallet, so the action is gated behind the shared A4 ConfirmMoneyDialog
  * (DESIGN.md §4 A4): clicking "Grant Credit" opens a confirm that RESTATES the
- * EXACT ₹ figure being granted AND which bucket it lands in — the Outvers
+ * EXACT ₹ figure being granted AND which bucket it lands in — the Switchback
  * credit bucket (closed-loop, WITH expiry per ADR-0004), NOT the cashable Refund
  * balance — before the operator commits. A misclick must NOT grant money:
  * adminGrantCredit fires only from the explicit Confirm inside the dialog. The
@@ -62,7 +62,7 @@ export function GrantCreditForm() {
   }
 
   const isOutversCredit = balanceType === 'outvers_credit'
-  const bucketLabel = isOutversCredit ? 'Outvers credit' : 'Refund balance'
+  const bucketLabel = isOutversCredit ? 'Switchback credit' : 'Refund balance'
 
   return (
     <>
@@ -92,7 +92,7 @@ export function GrantCreditForm() {
               defaultValue="outvers_credit"
               required
             >
-              <option value="outvers_credit">Outvers Credit</option>
+              <option value="outvers_credit">Switchback Credit</option>
               <option value="refund_balance">Refund Balance</option>
             </select>
           </div>
@@ -124,7 +124,7 @@ export function GrantCreditForm() {
       </form>
 
       {/* A4 exact-figure confirm: restates the ₹ + the bucket it lands in
-          (Outvers credit, closed-loop WITH expiry per ADR-0004, vs the cashable
+          (Switchback credit, closed-loop WITH expiry per ADR-0004, vs the cashable
           Refund balance) before the money write. */}
       <ConfirmMoneyDialog
         open={confirmOpen}
@@ -137,7 +137,7 @@ export function GrantCreditForm() {
         amountRupees={amountRupees}
         amountCaption={
           isOutversCredit
-            ? 'Credited to Outvers credit (closed-loop promotional balance — expires 12 months from issue, ADR-0004).'
+            ? 'Credited to Switchback credit (closed-loop promotional balance — expires 12 months from issue, ADR-0004).'
             : 'Credited to the Refund balance (cashable to the original payment method — no expiry).'
         }
         onConfirm={handleConfirmGrant}
@@ -146,7 +146,7 @@ export function GrantCreditForm() {
         description={
           isOutversCredit ? (
             <>
-              This grants real money to the Customer&apos;s <strong>Outvers credit</strong>{' '}
+              This grants real money to the Customer&apos;s <strong>Switchback credit</strong>{' '}
               bucket — closed-loop promotional balance that <strong>expires</strong> 12 months
               from issue (ADR-0004). It does <strong>not</strong> touch the cashable bucket.
               Recorded in the audit log.

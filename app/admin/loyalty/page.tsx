@@ -97,7 +97,7 @@ export default async function LoyaltyPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Outvers Credit
+              Total Switchback Credit
             </CardTitle>
           </CardHeader>
           <CardContent>

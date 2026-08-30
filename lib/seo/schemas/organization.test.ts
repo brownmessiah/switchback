@@ -7,11 +7,11 @@ describe('Organization JSON-LD (ADR-0013)', () => {
     url: 'https://outvers.com',
   }
 
-  it('generates a valid Organization schema with the Outvers brand name', () => {
+  it('generates a valid Organization schema with the Switchback brand name', () => {
     const result = organization(base)
     expect(result['@context']).toBe('https://schema.org')
     expect(result['@type']).toBe('Organization')
-    expect(result.name).toBe('Outvers')
+    expect(result.name).toBe('Switchback')
     expect(result.url).toBe('https://outvers.com')
   })
 

@@ -40,7 +40,7 @@ Because the N `createBooking` calls run sequentially in one uncommitted transact
 
 ### Wallet applies once, at order level, attributable per booking
 
-Wallet (ADR-0004: Outvers credit → Refund balance → Razorpay remainder) is applied once against the cart total in the mandated order; the spend is allocated back to individual bookings for audit/reconciliation, because the Refund-balance liability must stay per-booking attributable.
+Wallet (ADR-0004: Switchback credit → Refund balance → Razorpay remainder) is applied once against the cart total in the mandated order; the spend is allocated back to individual bookings for audit/reconciliation, because the Refund-balance liability must stay per-booking attributable.
 
 ## Why not the alternatives
 

@@ -162,7 +162,7 @@ export default async function WalletPage({ searchParams }: WalletPageProps) {
       {/* ── Two SEPARATE buckets (ADR-0004) — money cards stack (base) → 2-col
           (md); both decision-complete with tabular-nums balances, never blended. */}
       <div className="grid gap-4 md:grid-cols-2">
-        {/* Outvers credit — closed-loop promo, never cashable, EXPIRES. */}
+        {/* Switchback credit — closed-loop promo, never cashable, EXPIRES. */}
         <Card data-testid="wallet-bucket-outvers_credit" className="border-credit/30">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">

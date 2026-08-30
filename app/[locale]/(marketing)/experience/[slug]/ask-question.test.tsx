@@ -22,7 +22,7 @@ import { AskQuestion } from './ask-question'
 const baseLabels = {
   cta: 'Ask a Question',
   dialogTitle: 'Ask a Question',
-  dialogDescription: 'Send your question about this Experience to Outvers support.',
+  dialogDescription: 'Send your question about this Experience to Switchback support.',
   messageLabel: 'Your question',
   messagePlaceholder: 'What would you like to know?',
   submit: 'Send question',

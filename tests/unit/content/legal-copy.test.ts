@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest'
  *
  * These are business-safe drafts pending final counsel review. The copy must
  * reflect the REAL model and must not over-promise:
- *   - Outvers is a marketplace / intermediary; Experiences are run by
+ *   - Switchback is a marketplace / intermediary; Experiences are run by
  *     independent third-party Vendors.
  *   - Cancellation presets per ADR-0005 (Flexible / Moderate / Strict).
  *   - Refund SLA per ADR-0004: wallet (Refund balance) credited 24–48h;
@@ -79,7 +79,7 @@ describe('every legal page carries a "pending final legal review" note', () => {
 
 describe('Terms copy: marketplace / intermediary with independent third-party Vendors', () => {
   const all = flatten(en.TermsPage).join(' ')
-  it('describes Outvers as a marketplace / intermediary', () => {
+  it('describes Switchback as a marketplace / intermediary', () => {
     expect(all).toMatch(/marketplace|intermediary/i)
   })
   it('states Experiences are run by independent third-party Vendors', () => {

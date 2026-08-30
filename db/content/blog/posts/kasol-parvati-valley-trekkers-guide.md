@@ -103,4 +103,4 @@ Kheerganga does not require a separate trekking permit for Indian nationals as o
 
 Kasol and the main trails see a significant number of solo women trekkers, both Indian and international. The general experience reported is positive, particularly when travelling with a registered guide or group. As with anywhere, practical steps matter: stick to daylight for trail sections, stay at established guesthouses, and trust your instincts on who to spend time with. Book through operators with verifiable track records rather than ad-hoc arrangements made on arrival.
 
-Planning a trip to the valley soon? Browse verified [Parvati valley treks](/activities/trekking) and [riverside camping](/activities/camping) options on Outvers, where operator credentials and cancellation terms are visible upfront before you commit to anything.
+Planning a trip to the valley soon? Browse verified [Parvati valley treks](/activities/trekking) and [riverside camping](/activities/camping) options on Switchback, where operator credentials and cancellation terms are visible upfront before you commit to anything.

@@ -3,9 +3,9 @@ import { describe, expect, it } from 'vitest'
 import { GST_RATE_ON_COMMISSION, quoteGstOnCommission } from './gst-calculator'
 
 /**
- * 18% IGST on the Outvers commission revenue per ADR-0016. Applies
+ * 18% IGST on the Switchback commission revenue per ADR-0016. Applies
  * regardless of Vendor GSTIN status — the difference is whether the
- * Vendor can claim input credit on their own return. Outvers issues a
+ * Vendor can claim input credit on their own return. Switchback issues a
  * GST invoice in both cases.
  */
 describe('quoteGstOnCommission (ADR-0016)', () => {

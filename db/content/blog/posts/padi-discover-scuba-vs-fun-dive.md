@@ -57,7 +57,7 @@ If you are planning a diving day before a flight, build in a buffer. The standar
 
 A few other practical notes. Arrive hydrated and avoid alcohol the night before. Equalise early and gently on descent — do not wait until you feel pain in your ears. Listen to the full briefing even if you have dived before; every site has different conditions and every centre has its own protocols.
 
-For booking any [discover scuba diving](/activities/scuba-diving) experience or fun dive, choose centres that are PADI or SSI affiliated, have current equipment (ask when gear was last serviced), and will show you their instructor certifications if asked. Outvers lists KYC-verified operators, which removes most of the guesswork on credentials.
+For booking any [discover scuba diving](/activities/scuba-diving) experience or fun dive, choose centres that are PADI or SSI affiliated, have current equipment (ask when gear was last serviced), and will show you their instructor certifications if asked. Switchback lists KYC-verified operators, which removes most of the guesswork on credentials.
 
 ## Frequently Asked Questions
 

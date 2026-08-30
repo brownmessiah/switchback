@@ -66,7 +66,7 @@ Not every hour in Manali needs to be spent at altitude. The town itself has text
 
 Manali has a large and uneven adventure operator market. This matters because the same activity — paragliding, rafting, trekking — can range from well-run and genuinely safe to shoddily managed with second-rate equipment.
 
-- **Check verification.** Look for operators who can show you instructor certification, equipment maintenance records, and insurance. KYC-verified operators on platforms like Outvers have been checked against these standards.
+- **Check verification.** Look for operators who can show you instructor certification, equipment maintenance records, and insurance. KYC-verified operators on platforms like Switchback have been checked against these standards.
 - **Read the briefing seriously.** A rushed or skipped safety briefing is a red flag, not a time-saver.
 - **Know the weight, age, and health limits.** Every reputable operator has them. If someone waves them away to close a sale, walk away.
 - **Ask what happens if conditions are bad.** The answer should be: the activity is called off and you're rescheduled or refunded. Free cancellation within policy is a baseline expectation, not a luxury.

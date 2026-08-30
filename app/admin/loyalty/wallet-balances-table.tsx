@@ -39,7 +39,7 @@ const COLUMNS: ResponsiveTableColumn<WalletBalanceRow>[] = [
   },
   {
     key: 'outversCredit',
-    header: 'Outvers credit',
+    header: 'Switchback credit',
     align: 'right',
     cell: (u) => formatRupees(u.outversCredit),
   },

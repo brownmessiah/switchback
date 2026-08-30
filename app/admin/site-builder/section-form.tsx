@@ -24,7 +24,7 @@ interface FieldDef {
 
 const SECTION_FIELDS: Record<SiteSection, readonly FieldDef[]> = {
   hero: [
-    { name: 'title', label: 'Title', type: 'text', required: true, placeholder: 'Welcome to Outvers' },
+    { name: 'title', label: 'Title', type: 'text', required: true, placeholder: 'Welcome to Switchback' },
     { name: 'subtitle', label: 'Subtitle', type: 'text', placeholder: 'Adventure awaits' },
     { name: 'ctaText', label: 'CTA Button Text', type: 'text', placeholder: 'Explore Now' },
     { name: 'ctaLink', label: 'CTA Link', type: 'url', placeholder: '/experiences' },
@@ -43,21 +43,21 @@ const SECTION_FIELDS: Record<SiteSection, readonly FieldDef[]> = {
     { name: 'showTestimonials', label: 'Show Testimonials', type: 'boolean' },
   ],
   branding: [
-    { name: 'siteName', label: 'Site Name', type: 'text', placeholder: 'Outvers' },
+    { name: 'siteName', label: 'Site Name', type: 'text', placeholder: 'Switchback' },
     { name: 'logoUrl', label: 'Logo URL', type: 'url', placeholder: 'https://...' },
     { name: 'faviconUrl', label: 'Favicon URL', type: 'url', placeholder: 'https://...' },
     { name: 'primaryColor', label: 'Primary Color', type: 'color', placeholder: '#FF5A5F' },
   ],
   seo: [
-    { name: 'defaultTitle', label: 'Default Page Title', type: 'text', placeholder: 'Outvers — Adventure Awaits' },
-    { name: 'titleTemplate', label: 'Title Template', type: 'text', placeholder: '%s | Outvers' },
+    { name: 'defaultTitle', label: 'Default Page Title', type: 'text', placeholder: 'Switchback — Adventure Awaits' },
+    { name: 'titleTemplate', label: 'Title Template', type: 'text', placeholder: '%s | Switchback' },
     { name: 'defaultDescription', label: 'Default Description', type: 'textarea', placeholder: 'Discover and book outdoor adventures...' },
     { name: 'ogImageUrl', label: 'Default OG Image URL', type: 'url', placeholder: 'https://...' },
     { name: 'robots', label: 'Robots Meta', type: 'text', placeholder: 'index, follow' },
   ],
   footer: [
-    { name: 'companyName', label: 'Company Name', type: 'text', placeholder: 'Outvers' },
-    { name: 'copyrightText', label: 'Copyright Text', type: 'text', placeholder: '2026 Outvers. All rights reserved.' },
+    { name: 'companyName', label: 'Company Name', type: 'text', placeholder: 'Switchback' },
+    { name: 'copyrightText', label: 'Copyright Text', type: 'text', placeholder: '2026 Switchback. All rights reserved.' },
   ],
 }
 

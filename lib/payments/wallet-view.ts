@@ -124,7 +124,7 @@ export async function loadWalletView(
     createdAt: r.createdAt,
   }))
 
-  // 4. Soonest upcoming Outvers-credit expiry (closed-loop credit is
+  // 4. Soonest upcoming Switchback-credit expiry (closed-loop credit is
   //    time-bound, ADR-0004). Only outvers_credit rows can expire.
   const [nextExpiry] = await db
     .select({ expiresAt: walletTransactions.expiresAt })

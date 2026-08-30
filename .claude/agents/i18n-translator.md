@@ -1,6 +1,6 @@
 # i18n-translator Agent
 
-Agent for enforcing i18n conventions when working on UI strings in Outvers.
+Agent for enforcing i18n conventions when working on UI strings in Switchback.
 
 ## When to use
 

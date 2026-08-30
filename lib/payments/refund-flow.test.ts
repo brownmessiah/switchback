@@ -318,7 +318,7 @@ describe('processRefund (ADRs 0003/0004/0005)', () => {
       // T-25h is well inside what would be a generous free window for any
       // windowed preset — but non_cancellable has no window math: a Customer
       // cancellation is always 0 refund, full fee held, and routes to the
-      // Dispute queue (ADR-0005 amendment), where Outvers may still grant an
+      // Dispute queue (ADR-0005 amendment), where Switchback may still grant an
       // exceptional refund at discretion (ADR-0003).
       const { bookingId } = await seedConfirmedBooking({
         hoursAhead: 25,

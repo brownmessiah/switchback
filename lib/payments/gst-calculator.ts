@@ -1,9 +1,9 @@
 /**
- * GST on Outvers commission per ADR-0016.
+ * GST on Switchback commission per ADR-0016.
  *
  * 18% IGST applies regardless of the Vendor's GSTIN status — the
  * difference is whether the Vendor can claim input credit on their own
- * GST return. Outvers issues a GST invoice in either case. The rate
+ * GST return. Switchback issues a GST invoice in either case. The rate
  * snapshots onto bookings.gst_rate_on_commission_snapshot at create
  * time so historical payouts do not drift if the IGST rate changes
  * in a future Finance Bill.

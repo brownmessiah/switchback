@@ -5,7 +5,7 @@ Surfaced 2026-05-29 while fact-checking the operator setup checklist (`docs/ops/
 ## Background
 
 - TDS Section 194-O rate dropped 1% → **0.1%** (Finance Act 2024, w.e.f. 1 Oct 2024). The code (`lib/payments/tds-calculator.ts`) already uses 0.1%; ADR-0016 had lagged and is now fixed.
-- GST **TCS under Section 52** (0.5%, monthly GSTR-8) applies to Outvers as an e-commerce operator collecting consideration on vendors' behalf. It was absent from ADR-0016 **and** the code. ADR now documents it.
+- GST **TCS under Section 52** (0.5%, monthly GSTR-8) applies to Switchback as an e-commerce operator collecting consideration on vendors' behalf. It was absent from ADR-0016 **and** the code. ADR now documents it.
 - Section 194-O has a **₹5L individual/HUF threshold exemption** the code does not apply.
 
 ## Issues

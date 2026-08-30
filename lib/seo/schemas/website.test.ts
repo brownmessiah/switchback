@@ -8,11 +8,11 @@ describe('WebSite JSON-LD (ADR-0013)', () => {
     searchUrlTemplate: 'https://outvers.com/search?q={search_term_string}',
   }
 
-  it('generates a valid WebSite schema with the Outvers brand name', () => {
+  it('generates a valid WebSite schema with the Switchback brand name', () => {
     const result = website(base)
     expect(result['@context']).toBe('https://schema.org')
     expect(result['@type']).toBe('WebSite')
-    expect(result.name).toBe('Outvers')
+    expect(result.name).toBe('Switchback')
     expect(result.url).toBe('https://outvers.com')
   })
 

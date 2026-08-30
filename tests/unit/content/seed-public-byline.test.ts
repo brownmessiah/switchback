@@ -22,8 +22,8 @@ describe('seed data — public byline hygiene', () => {
     },
   )
 
-  it('db/seed.ts names the blog-authoring admin "Outvers Editorial Team"', () => {
+  it('db/seed.ts names the blog-authoring admin "Switchback Editorial Team"', () => {
     const source = readFileSync(join(root, 'db/seed.ts'), 'utf8')
-    expect(source).toContain('Outvers Editorial Team')
+    expect(source).toContain('Switchback Editorial Team')
   })
 })

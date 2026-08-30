@@ -1,7 +1,7 @@
 // One-shot: inject the SupportPage namespace (native translations) into all
 // 12 non-English locale files, right after the CustomerNav namespace, matching
 // en.json key order. ICU placeholders ({count, plural,...}, {date}) and the
-// brand token "Outvers" are kept verbatim.
+// brand token "Switchback" are kept verbatim.
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -50,7 +50,7 @@ const T = {
     },
     thread: {
       you: 'आप',
-      supportTeam: 'Outvers सहायता',
+      supportTeam: 'Switchback सहायता',
       openedOn: '{date} को खोला गया',
       messagesHeading: 'बातचीत',
     },
@@ -104,7 +104,7 @@ const T = {
     },
     thread: {
       you: 'আপনি',
-      supportTeam: 'Outvers সহায়তা',
+      supportTeam: 'Switchback সহায়তা',
       openedOn: '{date} তারিখে খোলা হয়েছে',
       messagesHeading: 'কথোপকথন',
     },
@@ -158,7 +158,7 @@ const T = {
     },
     thread: {
       you: 'நீங்கள்',
-      supportTeam: 'Outvers ஆதரவு',
+      supportTeam: 'Switchback ஆதரவு',
       openedOn: '{date} அன்று திறக்கப்பட்டது',
       messagesHeading: 'உரையாடல்',
     },
@@ -212,7 +212,7 @@ const T = {
     },
     thread: {
       you: 'మీరు',
-      supportTeam: 'Outvers మద్దతు',
+      supportTeam: 'Switchback మద్దతు',
       openedOn: '{date}న తెరవబడింది',
       messagesHeading: 'సంభాషణ',
     },
@@ -266,7 +266,7 @@ const T = {
     },
     thread: {
       you: 'तुम्ही',
-      supportTeam: 'Outvers मदत',
+      supportTeam: 'Switchback मदत',
       openedOn: '{date} रोजी उघडले',
       messagesHeading: 'संभाषण',
     },
@@ -320,7 +320,7 @@ const T = {
     },
     thread: {
       you: 'તમે',
-      supportTeam: 'Outvers સહાય',
+      supportTeam: 'Switchback સહાય',
       openedOn: '{date} ના રોજ ખોલાયું',
       messagesHeading: 'વાતચીત',
     },
@@ -374,7 +374,7 @@ const T = {
     },
     thread: {
       you: 'ನೀವು',
-      supportTeam: 'Outvers ಬೆಂಬಲ',
+      supportTeam: 'Switchback ಬೆಂಬಲ',
       openedOn: '{date} ರಂದು ತೆರೆಯಲಾಗಿದೆ',
       messagesHeading: 'ಸಂಭಾಷಣೆ',
     },
@@ -428,7 +428,7 @@ const T = {
     },
     thread: {
       you: 'നിങ്ങൾ',
-      supportTeam: 'Outvers പിന്തുണ',
+      supportTeam: 'Switchback പിന്തുണ',
       openedOn: '{date}ന് തുറന്നു',
       messagesHeading: 'സംഭാഷണം',
     },
@@ -482,7 +482,7 @@ const T = {
     },
     thread: {
       you: 'ਤੁਸੀਂ',
-      supportTeam: 'Outvers ਸਹਾਇਤਾ',
+      supportTeam: 'Switchback ਸਹਾਇਤਾ',
       openedOn: '{date} ਨੂੰ ਖੋਲ੍ਹਿਆ ਗਿਆ',
       messagesHeading: 'ਗੱਲਬਾਤ',
     },
@@ -536,7 +536,7 @@ const T = {
     },
     thread: {
       you: 'ଆପଣ',
-      supportTeam: 'Outvers ସହାୟତା',
+      supportTeam: 'Switchback ସହାୟତା',
       openedOn: '{date}ରେ ଖୋଲାଯାଇଛି',
       messagesHeading: 'ବାର୍ତ୍ତାଳାପ',
     },
@@ -590,7 +590,7 @@ const T = {
     },
     thread: {
       you: 'আপুনি',
-      supportTeam: 'Outvers সহায়তা',
+      supportTeam: 'Switchback সহায়তা',
       openedOn: '{date} তাৰিখে খোলা হৈছিল',
       messagesHeading: 'বাৰ্তালাপ',
     },
@@ -644,7 +644,7 @@ const T = {
     },
     thread: {
       you: 'آپ',
-      supportTeam: 'Outvers مدد',
+      supportTeam: 'Switchback مدد',
       openedOn: '{date} کو کھولا گیا',
       messagesHeading: 'گفتگو',
     },

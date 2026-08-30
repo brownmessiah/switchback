@@ -2,7 +2,7 @@
 
 ## Context
 
-The plan committed to "T+7 typical, Bank transfer + UPI" for Vendor Payouts but never specified Dispute interaction with the Payout timer, batching strategy, or any tax treatment. Three Indian regulatory obligations were absent: 18% IGST on Outvers' commission to Vendors (mandatory regardless of Vendor's GSTIN status), TDS under Section 194-O on the gross value paid to resident-Indian Vendors, and GST TCS under Section 52 on Vendors' supplies made through the platform — all real legal obligations for e-commerce operators. Getting these wrong is a tax-authority audit risk, not just a feature gap. (See **Amendments** at the foot of this ADR for post-decision rate corrections.)
+The plan committed to "T+7 typical, Bank transfer + UPI" for Vendor Payouts but never specified Dispute interaction with the Payout timer, batching strategy, or any tax treatment. Three Indian regulatory obligations were absent: 18% IGST on Switchback' commission to Vendors (mandatory regardless of Vendor's GSTIN status), TDS under Section 194-O on the gross value paid to resident-Indian Vendors, and GST TCS under Section 52 on Vendors' supplies made through the platform — all real legal obligations for e-commerce operators. Getting these wrong is a tax-authority audit risk, not just a feature gap. (See **Amendments** at the foot of this ADR for post-decision rate corrections.)
 
 ## Decision
 
@@ -10,7 +10,7 @@ The plan committed to "T+7 typical, Bank transfer + UPI" for Vendor Payouts but 
 
 - **T+7 from Completion** (per ADR-0003).
 - **Dispute open at T+7:** Payout held; timer pauses; resumes T+7 after Dispute resolves for Vendor, or Payout cancelled if Customer wins.
-- **Dispute opened after Payout issued:** Outvers carries the refund liability (paid from the Refund balance pool). Mitigation: configurable per-category extended dispute window — T+30 for permit-required Bookings and multi-day treks, default T+7 for day trips.
+- **Dispute opened after Payout issued:** Switchback carries the refund liability (paid from the Refund balance pool). Mitigation: configurable per-category extended dispute window — T+30 for permit-required Bookings and multi-day treks, default T+7 for day trips.
 - **First 3 Payouts for an Identity-verified Vendor** queued for manual admin approval; auto thereafter.
 
 ### Payout method
@@ -32,10 +32,10 @@ The plan committed to "T+7 typical, Bank transfer + UPI" for Vendor Payouts but 
 
 ### GST TCS — Section 52 (e-commerce operator)
 
-- Outvers collects Customer payments on the Vendor's behalf, so it is an "e-commerce operator" under CGST Act Section 52 and **must collect TCS** on the Vendor's supplies made through the platform.
+- Switchback collects Customer payments on the Vendor's behalf, so it is an "e-commerce operator" under CGST Act Section 52 and **must collect TCS** on the Vendor's supplies made through the platform.
 - **Rate: 0.5%** (0.25% CGST + 0.25% SGST intra-state, or 0.5% IGST inter-state) on the **net taxable value** of the Vendor's supply, net of returns (reduced from 1% w.e.f. 10 Jul 2024). Confirm the exact taxable base with the CA before implementation.
-- **Separate from and additional to** the 18% IGST on Outvers' own commission. TCS is withheld from the Vendor's payout and deposited against the Vendor's GSTIN; the Vendor claims it as input credit on their own return.
-- Adventure Experiences are **not** a Section 9(5) notified service (unlike hotel accommodation / passenger transport), so the TCS regime applies — Outvers does not discharge the Vendor's output GST itself.
+- **Separate from and additional to** the 18% IGST on Switchback' own commission. TCS is withheld from the Vendor's payout and deposited against the Vendor's GSTIN; the Vendor claims it as input credit on their own return.
+- Adventure Experiences are **not** a Section 9(5) notified service (unlike hotel accommodation / passenger transport), so the TCS regime applies — Switchback does not discharge the Vendor's output GST itself.
 - **Monthly GSTR-8** by the 10th of the following month; per-Vendor TCS statements feed the Vendor's GST credit.
 - Schema: snapshot `bookings.tcs_amount_snapshot` and `bookings.tcs_rate_snapshot` at Booking-create — same immutability rule as commission/TDS.
 

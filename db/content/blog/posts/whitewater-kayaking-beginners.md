@@ -67,7 +67,7 @@ Introductory sessions and short courses in India typically run from approximatel
 
 On safety: choose an instructor who holds a recognised paddling certification (organisations such as Paddle India or international equivalents), insists on a full safety briefing before entering the water, provides properly fitted helmets and PFDs for every participant, and maintains a sensible student-to-instructor ratio — no more than four or five beginners per qualified guide on moving water. Any operator who skips the briefing or waves away your questions about safety qualifications is a red flag.
 
-Outvers lists [kayaking lessons](/activities/kayaking) from KYC-verified operators with transparent pricing, so you can compare options and book with confidence.
+Switchback lists [kayaking lessons](/activities/kayaking) from KYC-verified operators with transparent pricing, so you can compare options and book with confidence.
 
 ## Frequently Asked Questions
 
@@ -89,4 +89,4 @@ Do not paddle alone, ever. Do not remove your PFD or helmet on the water, even i
 
 ---
 
-If you are ready to get on the water, start by exploring verified [kayaking in Rishikesh](/adventure/kayaking-in-rishikesh) options or browse the full range of [kayaking lessons](/activities/kayaking) across India on Outvers, where every operator is background-checked and pricing is shown upfront before you commit to anything.
+If you are ready to get on the water, start by exploring verified [kayaking in Rishikesh](/adventure/kayaking-in-rishikesh) options or browse the full range of [kayaking lessons](/activities/kayaking) across India on Switchback, where every operator is background-checked and pricing is shown upfront before you commit to anything.

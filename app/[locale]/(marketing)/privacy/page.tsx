@@ -11,7 +11,7 @@ import { breadcrumbList } from '@/lib/seo/schemas/breadcrumb-list'
 /**
  * /privacy — Privacy Policy (issue 07).
  *
- * Business-safe DRAFT describing how Outvers actually handles personal data as
+ * Business-safe DRAFT describing how Switchback actually handles personal data as
  * a marketplace connecting Customers with independent third-party Vendors.
  * Carries a visible "pending final legal review" note (DECISION D7); copy is
  * pinned in lib/i18n/messages/en.json under the PrivacyPage namespace.

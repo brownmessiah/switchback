@@ -16,7 +16,7 @@ import type { DBOrTx } from '@/lib/payments/commission-resolver'
  * No Vendor PII: the signature deliberately accepts ONLY the Experience slug +
  * title + the Customer's message. It never reads, looks up, or embeds the
  * Vendor's phone / email / personal contact — the ticket is a conversation
- * between the Customer and Outvers support.
+ * between the Customer and Switchback support.
  *
  * Pure (takes a Drizzle handle, no auth/headers) so it can be exercised
  * directly against PGlite. The `'use server'` auth wrapper lives in the PDP

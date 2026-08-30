@@ -17,7 +17,7 @@ const msg91Config: Msg91Config = {
 
 /**
  * better-auth instance backing every authentication flow on the
- * Outvers app. Composition:
+ * Switchback app. Composition:
  *
  *  - drizzleAdapter over Postgres (Neon Mumbai).
  *  - Google OAuth (Customer-side signup; Vendors typically use phone).

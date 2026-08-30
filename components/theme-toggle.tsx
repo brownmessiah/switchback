@@ -31,7 +31,7 @@ const getServerSnapshot = (): boolean => false
  * Light/dark theme toggle. The dark palette already lives in globals.css
  * (`.dark`); the no-flash script in the root layout sets the initial class from
  * localStorage/OS. This button flips the `.dark` class on <html> and persists
- * the choice (`outvers-theme`). No theme library — just a class + localStorage.
+ * the choice (`switchback-theme`). No theme library — just a class + localStorage.
  *
  * The current theme is read via `useSyncExternalStore` over a MutationObserver
  * on the <html> class, so it stays hydration-safe (server snapshot = light) and
@@ -44,7 +44,7 @@ export function ThemeToggle({ label, className }: ThemeToggleProps): ReactElemen
     const next = !document.documentElement.classList.contains('dark')
     document.documentElement.classList.toggle('dark', next)
     try {
-      localStorage.setItem('outvers-theme', next ? 'dark' : 'light')
+      localStorage.setItem('switchback-theme', next ? 'dark' : 'light')
     } catch {
       // storage unavailable (private mode) — the in-page toggle still works.
     }

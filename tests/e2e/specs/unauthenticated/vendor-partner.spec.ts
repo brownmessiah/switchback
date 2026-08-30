@@ -21,17 +21,17 @@ test.describe('/vendor-partner — public partner page', () => {
     const response = await page.goto('/vendor-partner')
     expect(response?.status()).toBe(200)
 
-    // Single H1 = the hero "List your adventure business on Outvers".
+    // Single H1 = the hero "List your adventure business on Switchback".
     const h1 = page.locator('h1')
     await expect(h1).toHaveCount(1)
-    await expect(h1).toContainText('List your adventure business on Outvers')
+    await expect(h1).toContainText('List your adventure business on Switchback')
 
     // Breadcrumb present.
     await expect(page.getByRole('navigation', { name: 'Breadcrumb' })).toBeVisible()
 
     // Section headings present (benefits, who-can-join, documents,
     // verification, Booking & Payout).
-    await expect(page.getByRole('heading', { name: 'Why list on Outvers' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Why list on Switchback' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Who can join' })).toBeVisible()
     await expect(
       page.getByRole('heading', { name: 'Documents required, by verification tier' }),
@@ -96,7 +96,7 @@ test.describe('/vendor-partner — public partner page', () => {
     const html = await pageResponse!.text()
     expect(html).not.toMatch(/<meta[^>]+name=["']robots["'][^>]*noindex/i)
     // The hero headline is server-rendered into the HTML (crawlable).
-    expect(html).toContain('List your adventure business on Outvers')
+    expect(html).toContain('List your adventure business on Switchback')
 
     // Present in the en sitemap.
     const sitemap = await page.request.get('/sitemap-en.xml')

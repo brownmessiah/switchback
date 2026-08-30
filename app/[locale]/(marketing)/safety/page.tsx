@@ -22,7 +22,7 @@ import { generateAlternates } from '@/lib/seo/hreflang'
  * no aspirational copy:
  *   - Three-tier KYC verification ladder (phone → identity → business): ADR-0007.
  *   - Cancellation presets + pure-function refund math + two-bucket wallet
- *     (Outvers credit / Refund balance): ADR-0005 + ADR-0004.
+ *     (Switchback credit / Refund balance): ADR-0005 + ADR-0004.
  *   - Partial pay (25% Advance now, 75% auto-captured at T-24h): CONTEXT.md / ADR-0001.
  *   - Required permits surfaced (not brokered): ADR-0011.
  *   - Safety stack (trusted contact / SOS event / check-in pings) with the

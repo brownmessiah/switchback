@@ -2,7 +2,7 @@
  * E2E hardening spec — graceful degradation of out-of-scope feature
  * entry-points (Issue #112).
  *
- * Outvers v1 ships a deliberately bounded surface. A set of features are
+ * Switchback v1 ships a deliberately bounded surface. A set of features are
  * NAMED in the schema / ADRs but NOT implemented, and must therefore never
  * present a live, working-looking entry-point that leads to a 500, a console
  * error, or a dead link. Per the PRD + ADRs the out-of-scope set is:

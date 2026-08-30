@@ -38,7 +38,7 @@ Popular routes include the trek from Kibber to Tashigang and on to Losar, passin
 
 What to carry: layered clothing (temperatures can drop below freezing even in July at altitude), a reliable sleeping bag rated to at least -10°C for high camps, sunscreen rated SPF 50 or higher (the UV intensity at altitude is punishing), and a basic first-aid kit that includes diamox if your doctor recommends it. Check with your operator about what is provided versus what you need to bring.
 
-Book your trekking through a [verified operator on Outvers](/destinations/spiti) who can confirm current trail conditions, permit requirements, and whether the route is appropriate for your fitness level.
+Book your trekking through a [verified operator on Switchback](/destinations/spiti) who can confirm current trail conditions, permit requirements, and whether the route is appropriate for your fitness level.
 
 ## Camping under some of the clearest skies in India
 
@@ -66,7 +66,7 @@ A few things that matter:
 - Water is scarce. Use it accordingly.
 - Carry a bag for your rubbish and use the collection points in Kaza. Do not burn plastic.
 
-Outvers lists KYC-verified local operators for exactly this reason — operators who are accountable to the communities they work in and who have a stake in keeping Spiti worth visiting.
+Switchback lists KYC-verified local operators for exactly this reason — operators who are accountable to the communities they work in and who have a stake in keeping Spiti worth visiting.
 
 ## Frequently asked questions
 
@@ -86,4 +86,4 @@ Take it seriously from the start. Ascend gradually — ideally one significant a
 
 Yes, with caveats. The main Spiti circuit — Kaza, Key, Kibber, Tabo, Dhankar, Chandratal — does not require technical mountaineering skills and is accessible to fit, well-prepared travellers who are careful about acclimatisation. The harder treks like Pin–Parvati Pass are not suitable for beginners. Be honest about your fitness and experience when speaking to an operator, and follow their guidance on route selection.
 
-Whether you are planning your first Himalayan camping night or working your way through every major trek in the region, [Spiti Valley](/destinations/spiti) has something that stays with you long after the dust of the drive has settled. Browse verified operators and find the right trip for your level and timeline on Outvers.
+Whether you are planning your first Himalayan camping night or working your way through every major trek in the region, [Spiti Valley](/destinations/spiti) has something that stays with you long after the dust of the drive has settled. Browse verified operators and find the right trip for your level and timeline on Switchback.

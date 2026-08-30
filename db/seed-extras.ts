@@ -596,13 +596,13 @@ const REVIEW_BANK: Array<{ rating: number; title: string; body: string; resp?: s
   { rating: 3, title: 'Good but crowded', body: 'Enjoyed it overall. The site was busier than expected so it felt a little rushed at peak hour.', resp: 'Thanks for the honest note — we now offer early-morning slots to avoid the rush.' },
   { rating: 5, title: 'Felt completely safe', body: 'As a solo traveller this mattered most. Verified vendor badge was accurate — proper gear and a real safety stack.' },
   { rating: 4, title: 'Stunning scenery', body: 'A genuine highlight. Knock a star only because the meeting point was a little hard to find on Maps.' },
-  { rating: 2, title: 'Weather cut it short', body: 'Not the operators fault, but the session ended early due to conditions. They handled the refund fairly though.', resp: 'Sorry the weather turned — your refund was processed to your Outvers wallet the same day.' },
+  { rating: 2, title: 'Weather cut it short', body: 'Not the operators fault, but the session ended early due to conditions. They handled the refund fairly though.', resp: 'Sorry the weather turned — your refund was processed to your Switchback wallet the same day.' },
   { rating: 5, title: 'Incredible guides', body: 'Knowledgeable, funny, and patient. They made the whole thing memorable for our group of six.' },
   { rating: 4, title: 'Smooth from start to finish', body: 'Clear instructions, good gear, fair price. Checkout was quick and the confirmation was instant.' },
   { rating: 5, title: 'Highly recommend', body: 'Already planning to come back with friends. The transparent pricing and verified badge sealed it for us.' },
   { rating: 3, title: 'Decent value', body: 'Solid experience for the price. Equipment was a touch worn but everything worked and felt safe.' },
   { rating: 5, title: 'Five stars, no notes', body: 'Punctual, professional, and genuinely thrilling. The kind of trip you talk about for months.' },
-  { rating: 4, title: 'Loved it', body: 'Great instructors and a gorgeous setting. Would book through Outvers again in a heartbeat.', resp: 'Means a lot — thank you for choosing us!' },
+  { rating: 4, title: 'Loved it', body: 'Great instructors and a gorgeous setting. Would book through Switchback again in a heartbeat.', resp: 'Means a lot — thank you for choosing us!' },
 ]
 
 /**
@@ -679,7 +679,7 @@ async function main(db: SeedDb): Promise<void> {
         responseTimeSlaScore: variety.responseTimeSlaScore,
         createdAt: variety.createdAt,
         about:
-          'A KYC-verified Outvers operator running certified, safety-first adventures with experienced local guides. Small groups, transparent pricing, flexible cancellation within policy.',
+          'A KYC-verified Switchback operator running certified, safety-first adventures with experienced local guides. Small groups, transparent pricing, flexible cancellation within policy.',
       })
       .onConflictDoNothing()
   }
@@ -1081,9 +1081,9 @@ async function main(db: SeedDb): Promise<void> {
     { section: 'hero', value: { title: 'Find your next adventure', subtitle: 'KYC-verified vendors. Transparent pricing. Flexible cancellation.', ctaText: 'Explore experiences', ctaLink: '/search', backgroundImageUrl: IMG('photo-1530866495561-507c9faab2ed', 1600) } },
     { section: 'announcement_bar', value: { text: 'Monsoon season is here — waterfall rappelling now live in Lonavala', linkText: 'Browse', linkUrl: '/search?region=lonavala', enabled: true, backgroundColor: '#0f766e' } },
     { section: 'homepage', value: { featuredSectionTitle: 'Featured experiences', featuredExperienceIds: featuredIds, showCategories: true, showTestimonials: true } },
-    { section: 'branding', value: { siteName: 'Outvers', primaryColor: '#0f766e', logoUrl: IMG('photo-1557804506-669a67965ba0', 256), faviconUrl: IMG('photo-1557804506-669a67965ba0', 64) } },
-    { section: 'seo', value: { defaultTitle: 'Outvers — India adventure marketplace', titleTemplate: '%s · Outvers', defaultDescription: 'Book rafting, paragliding, scuba, trekking and more from KYC-verified Indian adventure operators.', ogImageUrl: IMG('photo-1530866495561-507c9faab2ed', 1200), robots: 'index,follow' } },
-    { section: 'footer', value: { companyName: 'Outvers', copyrightText: '© 2026 Outvers. All rights reserved.', links: [{ label: 'Cancellation policy', url: '/cancellation-policy' }, { label: 'Search', url: '/search' }], socialLinks: [{ platform: 'instagram', url: 'https://instagram.com/outvers' }] } },
+    { section: 'branding', value: { siteName: 'Switchback', primaryColor: '#0f766e', logoUrl: IMG('photo-1557804506-669a67965ba0', 256), faviconUrl: IMG('photo-1557804506-669a67965ba0', 64) } },
+    { section: 'seo', value: { defaultTitle: 'Switchback — India adventure marketplace', titleTemplate: '%s · Switchback', defaultDescription: 'Book rafting, paragliding, scuba, trekking and more from KYC-verified Indian adventure operators.', ogImageUrl: IMG('photo-1530866495561-507c9faab2ed', 1200), robots: 'index,follow' } },
+    { section: 'footer', value: { companyName: 'Switchback', copyrightText: '© 2026 Switchback. All rights reserved.', links: [{ label: 'Cancellation policy', url: '/cancellation-policy' }, { label: 'Search', url: '/search' }], socialLinks: [{ platform: 'instagram', url: 'https://instagram.com/outvers' }] } },
   ]
   for (const s of SITE) {
     const exists = await db
@@ -1137,7 +1137,7 @@ async function main(db: SeedDb): Promise<void> {
 
   // ── 12. Support tickets (>=8) + threaded messages — catalog customers ─────
   const TICKETS: Array<{ id: string; subject: string; status: 'open' | 'in_progress' | 'resolved' | 'closed'; priority: 'low' | 'medium' | 'high'; category: 'booking' | 'payment' | 'experience' | 'account' | 'cancellation' | 'other'; creator: string; msgs: Array<{ from: string; body: string }> }> = [
-    { id: ns('tkt', 1), subject: 'Refund not yet credited to wallet', status: 'in_progress', priority: 'high', category: 'cancellation', creator: PEOPLE[0].id, msgs: [{ from: PEOPLE[0].id, body: 'I cancelled within policy 3 days ago but the refund has not shown in my Outvers wallet yet.' }, { from: ADMIN_ID, body: 'Thanks for flagging — I have escalated this to our payments team and will update you within 24h.' }] },
+    { id: ns('tkt', 1), subject: 'Refund not yet credited to wallet', status: 'in_progress', priority: 'high', category: 'cancellation', creator: PEOPLE[0].id, msgs: [{ from: PEOPLE[0].id, body: 'I cancelled within policy 3 days ago but the refund has not shown in my Switchback wallet yet.' }, { from: ADMIN_ID, body: 'Thanks for flagging — I have escalated this to our payments team and will update you within 24h.' }] },
     { id: ns('tkt', 2), subject: 'Cannot change my booking date', status: 'open', priority: 'medium', category: 'booking', creator: PEOPLE[1].id, msgs: [{ from: PEOPLE[1].id, body: 'Is it possible to move my rafting slot to next weekend?' }] },
     { id: ns('tkt', 3), subject: 'Vendor was 30 minutes late', status: 'resolved', priority: 'medium', category: 'experience', creator: PEOPLE[2].id, msgs: [{ from: PEOPLE[2].id, body: 'The operator showed up late and we missed part of the session.' }, { from: ADMIN_ID, body: 'Sorry to hear that. We have issued a 20% goodwill credit to your wallet.' }, { from: PEOPLE[2].id, body: 'Received, thank you!' }] },
     { id: ns('tkt', 4), subject: 'Payment charged twice', status: 'in_progress', priority: 'high', category: 'payment', creator: PEOPLE[3].id, msgs: [{ from: PEOPLE[3].id, body: 'My card was charged twice for the same booking.' }, { from: ADMIN_ID, body: 'We see the duplicate and are reversing the second charge now.' }] },

@@ -61,7 +61,7 @@ What the price difference actually buys you is not luxury but safety margin: ver
 
 ## Safety, Permits, and Respecting the Mountain
 
-Choose a verified operator. This is not a formality — it is the most consequential decision you make. Guides on popular routes like Kheerganga are numerous and uneven in quality. A KYC-verified operator on a platform like Outvers has been checked against legal and safety standards; an unknown operator found through a hostel notice board has not. The difference matters at altitude.
+Choose a verified operator. This is not a formality — it is the most consequential decision you make. Guides on popular routes like Kheerganga are numerous and uneven in quality. A KYC-verified operator on a platform like Switchback has been checked against legal and safety standards; an unknown operator found through a hostel notice board has not. The difference matters at altitude.
 
 Register your trek. Many routes now require forest department or district permits. Your operator handles this if they are reputable; if you are trekking independently, check the current permit requirement for your specific route before you leave the trailhead.
 

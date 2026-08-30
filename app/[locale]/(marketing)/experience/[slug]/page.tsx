@@ -1038,7 +1038,7 @@ export default async function ExperienceDetailPage({
                 the content flow adjacent to the Booking box (the desktop sticky
                 rail sits beside this column; the mobile bottom-bar follows). It
                 states, in plain language, that Experiences are operated by
-                independent third-party Vendors and what Outvers verifies. The
+                independent third-party Vendors and what Switchback verifies. The
                 NOUN is always "Vendor" (CONTEXT.md). Server-rendered → crawlable
                 on every Experience. */}
             <section id="vendorDisclosure">

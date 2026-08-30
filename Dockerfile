@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 #
-# outvers-next container (ADR-0019). One image, two run modes:
+# switchback container (ADR-0019). One image, two run modes:
 #   - default CMD ["server.js"]  → the public/cron Next standalone web server
 #   - command ["migrate.cjs"]    → the tracked migration runner (Cloud Run Job)
 #

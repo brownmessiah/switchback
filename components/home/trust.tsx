@@ -23,7 +23,7 @@ import {
  *   - Transparent Pricing        → ADR-0011 group-size brackets + Partial-pay
  *                                   Advance/balance breakdown shown pre-commit.
  *   - Safety-First Experiences   → safety stack + Trusted-contact NOTIFY
- *                                   (cautious copy: Outvers notifies, it does
+ *                                   (cautious copy: Switchback notifies, it does
  *                                   NOT dispatch — no "guaranteed safety").
  *   - Instant Confirmation       → ADR-0003 every paid Booking confirms instantly.
  *

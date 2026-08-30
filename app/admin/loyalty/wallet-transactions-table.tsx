@@ -23,7 +23,7 @@ function isOpaqueRef(ref: string): boolean {
  * #96 — recent Wallet transactions as a DESIGN.md §4 A3 table, migrated to the
  * shared `ResponsiveTable` (ADR-0018 / DESIGN.md §8.5): the `≥ md` Table reverses
  * to a stacked label:value Card list `< md`. Each entry's bucket is tagged via
- * the shared semantic Badge (Outvers credit → `credit` + wallet icon, Refund
+ * the shared semantic Badge (Switchback credit → `credit` + wallet icon, Refund
  * balance → `success` + check — status color + icon, never color alone,
  * DESIGN.md §1.3 / §5). Signed amounts are right-aligned + `.tabular-nums`
  * (DESIGN.md §1.3 / §2.2). Presentational + unit-testable.
@@ -42,11 +42,11 @@ export interface WalletTransactionRow {
 }
 
 const BUCKET_LABEL: Record<string, string> = {
-  outvers_credit: 'Outvers credit',
+  outvers_credit: 'Switchback credit',
   refund_balance: 'Refund balance',
 }
 
-// The two-bucket Wallet (ADR-0004): Outvers credit is the closed-loop credit
+// The two-bucket Wallet (ADR-0004): Switchback credit is the closed-loop credit
 // bucket → `credit` token; the cashable Refund balance reads as `success`.
 const BUCKET_STATUS: Record<string, string> = {
   outvers_credit: 'credit',

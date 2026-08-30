@@ -8,13 +8,13 @@
 
 **Tech Stack:** Next.js 16 App Router (Server Actions + Server Components) · Drizzle ORM 0.45 · postgres-js · PGlite (test DB) · Razorpay v2 SDK + raw HMAC signature verification · Upstash Redis (webhook dedup + slug-redirect cache) · Meilisearch v1.x · Vitest + Playwright · Zod 4 schemas at every boundary.
 
-**Domain language:** Use the terms in `CONTEXT.md` *verbatim*. Booking, Advance, Partial pay, Commission, Commission snapshot, Cancellation policy, Inside-policy cancellation, Outside-policy cancellation, Vendor-cancelled Booking, Completion, Dispute, Wallet, Outvers credit, Refund balance, Payout, TDS, Pricing tier, Group-size bracket, Availability slot, Region closure, Required permit, Canonical path, Slug redirect, Activity-city collection.
+**Domain language:** Use the terms in `CONTEXT.md` *verbatim*. Booking, Advance, Partial pay, Commission, Commission snapshot, Cancellation policy, Inside-policy cancellation, Outside-policy cancellation, Vendor-cancelled Booking, Completion, Dispute, Wallet, Switchback credit, Refund balance, Payout, TDS, Pricing tier, Group-size bracket, Availability slot, Region closure, Required permit, Canonical path, Slug redirect, Activity-city collection.
 
 **Reference ADRs:**
 - ADR-0001 Partial payment capture model (25% Advance + 75% T-24h with <48h / >Rs.25K carve-outs)
 - ADR-0002 RNPL deferred but reserved in schema (must reject cleanly)
 - ADR-0003 Booking completion state machine (confirmed → awaiting_completion → completed | disputed)
-- ADR-0004 Two-balance wallet model (Outvers credit + Refund balance, spend order)
+- ADR-0004 Two-balance wallet model (Switchback credit + Refund balance, spend order)
 - ADR-0005 Cancellation policy presets (Flexible / Moderate / Strict / Custom)
 - ADR-0008 Commission resolution chain and Combo Experiences (festival → exp → vendor → platform default)
 - ADR-0011 Availability + Pricing + Permits (slot capacity, pricing chain, group-size brackets)
@@ -580,7 +580,7 @@ git commit -m "feat(payments): pricing resolution chain with group-size brackets
 
 ### Task 7: `lib/payments/tds-calculator.ts` + `lib/payments/gst-calculator.ts`
 
-**Why:** TDS u/s 194-O is 1% on gross Booking value for resident-Indian Vendors (legal obligation, audit risk). GST is 18% IGST on Outvers commission regardless of Vendor GSTIN status.
+**Why:** TDS u/s 194-O is 1% on gross Booking value for resident-Indian Vendors (legal obligation, audit risk). GST is 18% IGST on Switchback commission regardless of Vendor GSTIN status.
 
 **Files:**
 - Create: `lib/payments/tds-calculator.ts`, `lib/payments/tds-calculator.test.ts`
@@ -877,7 +877,7 @@ export async function createBooking(
       captureTrigger = 'booking_create'
     } else if (parsed.paymentMode === 'partial_pay' && grossRupees > 25_000) {
       // Escrow-flavoured: still record as partial_pay (per ADR-0001 customer UX),
-      // but funds collected upfront and held by Outvers until T+7 from Completion
+      // but funds collected upfront and held by Switchback until T+7 from Completion
       effectivePaymentMode = 'partial_pay'
       captureTrigger = 'escrow_full_capture'
     } else {
@@ -1104,7 +1104,7 @@ git commit -m "feat(webhooks): idempotent Razorpay webhook with Redis dedup (ADR
 - Create: `lib/payments/wallet.test.ts`
 
 **Step 1: Failing tests** (ADR-0004 spend order):
-- `applyWalletToCheckout({ userId, grossRupees })` returns `{ outversCreditApplied, refundBalanceApplied, razorpayRemainder }` with spend order: Outvers credit → Refund balance → Razorpay charge
+- `applyWalletToCheckout({ userId, grossRupees })` returns `{ outversCreditApplied, refundBalanceApplied, razorpayRemainder }` with spend order: Switchback credit → Refund balance → Razorpay charge
 - Wallet bucket amounts ≥ gross → razorpayRemainder=0
 - Wallet bucket amounts < gross → razorpayRemainder=gross-applied
 - `creditRefundBalance({ userId, amount, refundRequestId })` increments `wallet_balances.refund_balance` and writes an `audit_logs` row with source=refund
@@ -1455,7 +1455,7 @@ pnpm e2e
 - [ ] Inside-policy cancellation auto-credits Refund balance + reverses commission
 - [ ] Outside-policy cancellation routes to Dispute queue
 - [ ] Vendor-cancelled → 100% refund regardless of preset
-- [ ] Wallet spend order: Outvers credit → Refund balance → Razorpay remainder
+- [ ] Wallet spend order: Switchback credit → Refund balance → Razorpay remainder
 - [ ] Activity-city + Experience detail + JSON-LD validates against schema.org
 - [ ] Slug redirects: old slug 301s to canonical with 24h Redis cache
 - [ ] Meilisearch indexer fires `after()` publish; facets work
@@ -1491,7 +1491,7 @@ git tag v0.2-money-path
 - Run `superpowers:requesting-code-review` for a final pass on the money path before M3 begins.
 - **Operational items (per TODO_FOR_SHIVAM.md):**
   - Razorpay live activation must complete before M3 verification gates.
-  - GSTIN active for Outvers Pvt Ltd verified.
+  - GSTIN active for Switchback Pvt Ltd verified.
   - TAN active for TDS deduction verified.
 
 **Next session:** open `docs/plans/<date>-m3-trust-and-safety.md` (KYC tiers + WhatsApp + Reviews + SOS).

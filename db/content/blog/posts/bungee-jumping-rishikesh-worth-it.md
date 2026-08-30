@@ -63,7 +63,7 @@ If you are on the edge about a health condition, get a doctor's sign-off before 
 
 ## Choosing a Certified Operator
 
-Rishikesh has a strong outdoor adventure culture and serious operators, but not everyone at every site has the same standards. Look for operators who can demonstrate equipment certification, trained jump masters with visible credentials, and clear safety protocols. On platforms like Outvers, operators go through KYC verification, which gives you a baseline assurance that you are dealing with a registered, identifiable business — not someone who set up a swing over a gorge last week.
+Rishikesh has a strong outdoor adventure culture and serious operators, but not everyone at every site has the same standards. Look for operators who can demonstrate equipment certification, trained jump masters with visible credentials, and clear safety protocols. On platforms like Switchback, operators go through KYC verification, which gives you a baseline assurance that you are dealing with a registered, identifiable business — not someone who set up a swing over a gorge last week.
 
 Ask whether their cord and harness equipment is regularly inspected. A good operator will answer this without hesitation. One who deflects or gets vague is a signal to look elsewhere.
 

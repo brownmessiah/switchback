@@ -48,7 +48,7 @@ export interface PartnerPageContent {
 
 /**
  * The page sections, in render order:
- *   - benefits      — why list on Outvers (online Bookings, Verified Vendor
+ *   - benefits      — why list on Switchback (online Bookings, Verified Vendor
  *                     badge, dashboard, Payout tracking, visibility)
  *   - whoCanJoin     — who the marketplace is for
  *   - documents      — documents required, mapped to the ADR-0007 KYC tiers

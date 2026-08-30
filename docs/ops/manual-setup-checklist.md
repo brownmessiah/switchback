@@ -1,6 +1,6 @@
 # Manual setup checklist (operations & compliance)
 
-The business, compliance, and operational tasks **you** need to handle to take Outvers from build to launch — and keep it running. These are the things only a person can do: KYC, government/telecom registrations, financial verifications, and recurring legal/ops duties. Anything technical (servers, code, API wiring) is handled by the tech side and is **not** on this list — see the short FYI at the bottom.
+The business, compliance, and operational tasks **you** need to handle to take Switchback from build to launch — and keep it running. These are the things only a person can do: KYC, government/telecom registrations, financial verifications, and recurring legal/ops duties. Anything technical (servers, code, API wiring) is handled by the tech side and is **not** on this list — see the short FYI at the bottom.
 
 **How to use:** Start every **Phase 0** item *today* — they sit in third-party approval queues that take weeks and will hold up launch if started late. Everything else can be done closer to when it's needed. Tick `- [ ]` → `- [x]` and update the status table as you go.
 
@@ -37,7 +37,7 @@ These all involve a third party (a KYC provider, the telecom regulator, Meta, Ra
 - **Documents you'll need:** GST certificate, company PAN, certificate of incorporation, authorised-signatory ID, and a rough estimate of how many verifications per month.
 - **Time & cost:** 2–4 weeks for approval; roughly ₹0 to set up, then ~₹2–5 per verification (cheaper at volume).
 - **What to do:**
-  1. First check whether Outvers already has an identity-verification provider from the existing app — reusing that relationship is the fastest path. If starting fresh, **Cashfree Secure ID** (simple, pay-as-you-go), KarzaScore, or IDfy all work.
+  1. First check whether Switchback already has an identity-verification provider from the existing app — reusing that relationship is the fastest path. If starting fresh, **Cashfree Secure ID** (simple, pay-as-you-go), KarzaScore, or IDfy all work.
   2. Sign up and submit the business documents above; request **Aadhaar OTP verification** access. This is the slow part: the aggregator sponsors you onto the government identity system (UIDAI) as a sub-user. (A direct route also exists — under the 2025 Aadhaar "Good Governance" amendment, travel/tourism businesses can apply for their own Aadhaar authentication approval via the tourism ministry/UIDAI — but going through an aggregator is far simpler for a single founder.)
   3. Hand the provider account details to your tech side so they can connect it.
 - **Gotcha:** The Aadhaar approval can take the full 2–4 weeks. **Don't let it block launch** — there's an approved interim path (vendor uploads PAN + a selfie + an ID, and you approve manually) that lets vendors get verified while the Aadhaar approval is pending. Those vendors get automatically asked to re-verify via Aadhaar once it's live. The verified badge looks identical either way, so customers never see the difference.
@@ -59,7 +59,7 @@ These all involve a third party (a KYC provider, the telecom regulator, Meta, Ra
 ### 0.3 — WhatsApp Business + Meta verification
 - [ ] **WhatsApp sender live (+ Meta business verification for higher limits)**
 
-- **Why:** Required for the safety system. An **SOS alert** fans out over WhatsApp to the customer's emergency contact, the vendor, and you (the Outvers ops contact). Separate **trip check-in pings** go to the customer ("arrived safely?"); if they don't reply, that escalates to the vendor and you. Not optional.
+- **Why:** Required for the safety system. An **SOS alert** fans out over WhatsApp to the customer's emergency contact, the vendor, and you (the Switchback ops contact). Separate **trip check-in pings** go to the customer ("arrived safely?"); if they don't reply, that escalates to the vendor and you. Not optional.
 - **Where:** Through a WhatsApp provider — MSG91 (https://msg91.com/whatsapp), Interakt, or Gupshup. Underlying account: Meta Business Manager (https://business.facebook.com).
 - **Documents you'll need:** A Meta Business Manager account, business verification documents (GST, incorporation), a dedicated phone number that isn't already on regular WhatsApp, and a display name that matches your registered business.
 - **Time & cost:** a few days to start sending at low limits; 1–3 weeks for Meta's business verification (the slow part, needed for higher volume). Billed **per delivered template message** — Meta switched from per-conversation to per-message pricing in mid-2025 — with rates depending on message type, country, and your provider's markup. Service replies inside an open 24-hour customer window are free.
@@ -78,7 +78,7 @@ These all involve a third party (a KYC provider, the telecom regulator, Meta, Ra
 - **Documents you'll need:** company PAN/CIN, GSTIN, TAN, certificate of incorporation, settlement bank account details + a cancelled cheque, signed authorisation, and your business website/app address.
 - **Time & cost:** 1–2 weeks. The main KYC is ~2–7 business days, and **Razorpay X adds a separate bank-verification step** (~5–10 business days). ₹0 to activate; standard payment-gateway fees per transaction, plus a small per-payout fee on Razorpay X.
 - **What to do:**
-  1. Complete **business** (not individual) KYC on the Razorpay dashboard with the documents above. (If Outvers already has a live Razorpay account, just confirm it's active and capture the details.)
+  1. Complete **business** (not individual) KYC on the Razorpay dashboard with the documents above. (If Switchback already has a live Razorpay account, just confirm it's active and capture the details.)
   2. Enable **Razorpay X** for vendor payouts — this is a separate KYC/bank-verification layer, so start it as soon as the main account clears.
   3. Ask Razorpay to switch on **Smart Collect** (needed for the part-payment flow) and **international cards** (for overseas/NRI customers).
   4. Hand the account details to your tech side to connect.
@@ -87,15 +87,15 @@ These all involve a third party (a KYC provider, the telecom regulator, Meta, Ra
 ### 0.5 — Bokun partner outreach (channel manager)
 - [ ] **Bokun connectivity agreement + sandbox credentials**
 
-- **Why:** Many Indian adventure operators already manage their listings in Bokun. Connecting to Bokun lets Outvers pull in their inventory faster than signing each vendor up by hand. This only powers a later feature (the M5 channel-manager), but the agreement takes weeks, so start the conversation early.
+- **Why:** Many Indian adventure operators already manage their listings in Bokun. Connecting to Bokun lets Switchback pull in their inventory faster than signing each vendor up by hand. This only powers a later feature (the M5 channel-manager), but the agreement takes weeks, so start the conversation early.
 - **Where:** Bokun Partner / Connectivity team — partner@bokun.io
-- **Documents you'll need:** a short description of Outvers as a regional India OTA for adventure activities; nothing heavy.
+- **Documents you'll need:** a short description of Switchback as a regional India OTA for adventure activities; nothing heavy.
 - **Time & cost:** 4–8 weeks to a signed agreement + sandbox credentials; typically ₹0 (no fee on Bokun's side, but a connectivity/referral agreement is required).
 - **What to do:**
-  1. Reach out introducing Outvers as a regional India OTA focused on adventure activities; ask about their **read API + inbound webhook program** (not their consumer marketplace).
+  1. Reach out introducing Switchback as a regional India OTA focused on adventure activities; ask about their **read API + inbound webhook program** (not their consumer marketplace).
   2. Get sandbox API credentials issued.
   3. Confirm commercial terms and sign the connectivity/referral agreement.
-  4. (Optional) Line up 2–3 existing Outvers vendors already on Bokun as the first pilots.
+  4. (Optional) Line up 2–3 existing Switchback vendors already on Bokun as the first pilots.
 - **Gotcha:** This blocks only the M5 channel-manager feature, not launch — so it's lower urgency than 0.1–0.4. But the 4–8 week lead time means it's worth opening the conversation now rather than at M5.
 
 ---
@@ -119,11 +119,11 @@ These aren't one-time setup — they're ongoing duties that start once you have 
 | Duty | Cadence | What you actually do |
 |------|---------|----------------------|
 | **TDS filing (Form 26Q)** | Quarterly | Where Section 194-O applies, a 0.1% tax (cut from 1% in October 2024) is deducted from vendor payouts. (Small resident individual/HUF vendors are exempt if their yearly platform sales stay ≤ ₹5 lakh and they've furnished PAN/Aadhaar.) File the quarterly return on the Income Tax portal and issue each vendor their TDS certificate (Form 16A). |
-| **GST returns** | Monthly | Outvers charges 18% GST on its commission. File the monthly GST returns, remit the tax, and issue commission invoices. |
+| **GST returns** | Monthly | Switchback charges 18% GST on its commission. File the monthly GST returns, remit the tax, and issue commission invoices. |
 | **GST TCS + GSTR-8** | Monthly | As a marketplace that collects customers' payments on vendors' behalf, you must also collect **0.5% TCS** (GST Section 52) on the net value of vendors' sales and file **GSTR-8** by the 10th of each month. This is separate from the GST on your own commission above. |
 | **Approving a new vendor's first 3 payouts** | Per new vendor | For each newly identity-verified vendor, manually approve their first 3 payouts in the admin queue. After that it's automatic. (If you skip this, their payouts stay blocked.) |
 | **Business-tier verification calls** | Per applicant | For vendors applying to the top "Business verified" tier, run and record a ~30-minute video call (checking their premises, equipment, and guide certificates) and log it. |
-| **24/7 SOS on-call** | Always-on | You are the Outvers emergency contact in version 1. Your phone receives every live SOS WhatsApp alert until a rotating on-call list is set up later. |
+| **24/7 SOS on-call** | Always-on | You are the Switchback emergency contact in version 1. Your phone receives every live SOS WhatsApp alert until a rotating on-call list is set up later. |
 | **Reviewing monthly vendor statements** | Monthly (1st) | Statements are generated automatically — review them (gross, commission, commission GST, GST TCS, income-tax TDS, net payout) before they go out to vendors. |
 | **Booking reconciliation alerts** | As they come up | If a vendor uses an outside booking tool (Bokun/FareHarbor) and something doesn't sync, you'll get an alert to sort out the discrepancy. |
 | **Failed-payout queue** | As they come up | If a payout fails repeatedly, it lands in an admin queue for you to resolve manually. |

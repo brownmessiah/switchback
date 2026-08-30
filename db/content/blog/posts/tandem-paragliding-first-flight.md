@@ -61,4 +61,4 @@ An experienced pilot monitors conditions constantly and will cut the flight shor
 
 Most tandem gliders used at Indian sites have an upper passenger weight of roughly 90–100 kg, but this varies by operator and pilot. If you are near the limit, ask specifically — the operator needs to match you with a suitable glider and pilot combination for safe flying. Do not guess or understate your weight; this is a safety parameter, not a comfort one.
 
-When you are ready to move from reading about it to booking it, the Outvers [paragliding flights](/activities/paragliding) listings show verified operators with transparent pricing and cancellation terms so you know exactly what you are paying for before you step onto that hill.
+When you are ready to move from reading about it to booking it, the Switchback [paragliding flights](/activities/paragliding) listings show verified operators with transparent pricing and cancellation terms so you know exactly what you are paying for before you step onto that hill.

@@ -1,7 +1,7 @@
 /**
  * Organization JSON-LD per ADR-0013.
  *
- * Describes Outvers itself (the marketplace platform — Organization = Outvers,
+ * Describes Switchback itself (the marketplace platform — Organization = Switchback,
  * never a Vendor). Emitted on the home page alongside the WebSite node, and on
  * lower-tier Vendor profiles via the `vendorEntity` generator.
  *
@@ -31,7 +31,7 @@ interface ContactPointBlock {
 export interface OrganizationJsonLd {
   '@context': 'https://schema.org'
   '@type': 'Organization'
-  name: 'Outvers'
+  name: 'Switchback'
   url: string
   logo?: string
   description?: string
@@ -45,7 +45,7 @@ export function organization(args: OrganizationArgs): OrganizationJsonLd {
   const result: OrganizationJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'Outvers',
+    name: 'Switchback',
     url: args.url,
   }
 

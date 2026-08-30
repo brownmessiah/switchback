@@ -1,14 +1,14 @@
 /**
  * GST TCS u/s Section 52 of the CGST Act per ADR-0016.
  *
- * Outvers collects Customer payments on the Vendor's behalf, so it is an
+ * Switchback collects Customer payments on the Vendor's behalf, so it is an
  * "e-commerce operator" under Section 52 and must collect TCS on the net
  * taxable value of the Vendor's supplies through the platform. The rate is
  * 0.5% (0.25% CGST + 0.25% SGST intra-state, or 0.5% IGST inter-state),
  * reduced from 1% by Notification 15/2024 w.e.f. 10 Jul 2024. Collected
  * per Booking, remitted monthly via GSTR-8, and credited to the Vendor's
  * GSTIN ledger (the Vendor claims it on their own return). This is separate
- * from and additional to the 18% GST on Outvers' own commission.
+ * from and additional to the 18% GST on Switchback' own commission.
  *
  * The taxable base (`taxableValueRupees`) is supplied by the caller. The
  * exact base — the Vendor's supply value net of GST and returns — is

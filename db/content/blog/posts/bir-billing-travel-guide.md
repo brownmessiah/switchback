@@ -97,4 +97,4 @@ Yes. Several accredited paragliding schools in Bir run beginner courses that tak
 
 October is the single most recommended month by experienced visitors and local operators alike. Skies are clear after the monsoon, thermals are reliable, temperatures are comfortable at both Bir and Billing, and the valley is at its most visually striking. If October is not possible, mid-March to late April is a strong alternative.
 
-Whether you are chasing your first flight or simply want to spend a few days in one of Himachal Pradesh's most distinctive cultural corners, [Bir Billing](/destinations/bir-billing) rewards visitors who arrive informed and unhurried. Browse verified operators and current availability on Outvers to plan your trip with confidence.
+Whether you are chasing your first flight or simply want to spend a few days in one of Himachal Pradesh's most distinctive cultural corners, [Bir Billing](/destinations/bir-billing) rewards visitors who arrive informed and unhurried. Browse verified operators and current availability on Switchback to plan your trip with confidence.

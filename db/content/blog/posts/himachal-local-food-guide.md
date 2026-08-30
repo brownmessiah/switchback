@@ -58,4 +58,4 @@ Pack calorie-dense, lightweight snacks: trail mix, roasted chana, energy bars, p
 
 Expect a modest premium at higher altitudes due to supply logistics, but most Himachali dhabas remain genuinely affordable. A full meal of dal, rice, sabzi, and roti typically runs ₹150–₹350. Trout and specialty café dishes cost more. Always confirm current prices with the vendor — rates shift by season and in peak trekking months.
 
-The best way to plan eating well on an adventure trip is to build your base in a hub where food variety is high. Browse [Manali](/destinations/manali) experiences on Outvers to find verified operators whose packages can also point you toward the best local spots to eat before and after your activity.
+The best way to plan eating well on an adventure trip is to build your base in a hub where food variety is high. Browse [Manali](/destinations/manali) experiences on Switchback to find verified operators whose packages can also point you toward the best local spots to eat before and after your activity.

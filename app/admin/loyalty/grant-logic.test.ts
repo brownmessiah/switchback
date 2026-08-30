@@ -12,7 +12,7 @@ import { computeGrantExpiry, executeGrantCredit } from './grant-logic'
 // ── Tests ───────────────────────────────────────────────────────────
 //
 // adminGrantCredit (via the testable executeGrantCredit core) grants credit
-// to a Customer's wallet. Per ADR-0004 the Outvers credit bucket is closed-
+// to a Customer's wallet. Per ADR-0004 the Switchback credit bucket is closed-
 // loop promotional balance that EXPIRES 12–18 months from issue, while the
 // Refund balance is a real, cashable liability that never expires. These
 // tests pin the bucket + expiry behaviour the admin loyalty grant must honour.
@@ -69,10 +69,10 @@ describe('admin loyalty grant (executeGrantCredit)', () => {
     })
   })
 
-  // ── Outvers-credit grant ──────────────────────────────────────────
+  // ── Switchback-credit grant ──────────────────────────────────────────
 
   describe('executeGrantCredit → outvers_credit', () => {
-    it('credits the Outvers-credit bucket WITH an expiry + audit row', async () => {
+    it('credits the Switchback-credit bucket WITH an expiry + audit row', async () => {
       const result = await executeGrantCredit(db, ADMIN_ID, {
         userId: CUSTOMER_ID,
         amountRupees: 500,
@@ -91,8 +91,8 @@ describe('admin loyalty grant (executeGrantCredit)', () => {
       expect(txns[0]!.balanceType).toBe('outvers_credit')
       expect(Math.floor(Number(txns[0]!.amount))).toBe(500)
       expect(txns[0]!.source).toBe('admin')
-      // ── The defect this test guards: Outvers credit MUST expire (ADR-0004).
-      expect(txns[0]!.expiresAt, 'Outvers credit must carry an expiry').not.toBeNull()
+      // ── The defect this test guards: Switchback credit MUST expire (ADR-0004).
+      expect(txns[0]!.expiresAt, 'Switchback credit must carry an expiry').not.toBeNull()
       const expiry = txns[0]!.expiresAt!
       const created = txns[0]!.createdAt
       const monthsOut =

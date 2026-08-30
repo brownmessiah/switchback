@@ -2,23 +2,23 @@
 
 ## Context
 
-The plan committed to "SOS button (one-tap shares live location with platform + designated contact), check-in pings at trip start/end" and named it as a differentiator vs MakeMyTrip and Thrillophilia. It didn't address what SOS actually does, what trusted-contact data looks like, how check-in pings work, the geolocation permission flow, or — critically — the legal posture (positioning Outvers as a safety *service* implies liability when it fails; positioning it as a notification *feature* with clear disclaimers does not).
+The plan committed to "SOS button (one-tap shares live location with platform + designated contact), check-in pings at trip start/end" and named it as a differentiator vs MakeMyTrip and Thrillophilia. It didn't address what SOS actually does, what trusted-contact data looks like, how check-in pings work, the geolocation permission flow, or — critically — the legal posture (positioning Switchback as a safety *service* implies liability when it fails; positioning it as a notification *feature* with clear disclaimers does not).
 
 ## Decision
 
 ### Posture — notification, not response
 
-Outvers SOS is a notification tool. It does not dispatch emergency services and does not promise response. The legal disclaimer at Booking confirmation states explicitly: "Outvers SOS is a notification tool, not an emergency response service. In life-threatening emergencies dial 112."
+Switchback SOS is a notification tool. It does not dispatch emergency services and does not promise response. The legal disclaimer at Booking confirmation states explicitly: "Switchback SOS is a notification tool, not an emergency response service. In life-threatening emergencies dial 112."
 
 ### SOS event fan-out
 
-On SOS trigger during an active Booking, Outvers:
+On SOS trigger during an active Booking, Switchback:
 
 1. Writes an `sos_events` row (timestamp, Customer, Booking, location attempt).
 2. Captures browser geolocation (permission-requested at trigger if not already granted).
 3. Sends WhatsApp + SMS to the Customer's trusted contact.
 4. Sends WhatsApp to the Booking's Vendor.
-5. Sends WhatsApp to a 24/7 Outvers ops contact (v1: Shivam's number; v1.x: rotating list).
+5. Sends WhatsApp to a 24/7 Switchback ops contact (v1: Shivam's number; v1.x: rotating list).
 
 ### Trusted contact
 
@@ -33,7 +33,7 @@ On SOS trigger during an active Booking, Outvers:
 
 - Trip-start (slot `start_at` ± 30 min): WhatsApp "arrived safely?" with quick-reply yes/no.
 - Trip-end (slot `end_at + 2h`): similar.
-- No response → automated alert to Vendor and Outvers ops.
+- No response → automated alert to Vendor and Switchback ops.
 - Customer can disable per-Booking with confirmation modal noting loss of auto-notification fallback.
 
 ### Live location
@@ -54,7 +54,7 @@ Browser geolocation API; Customer opts in at Booking confirmation. Sampled every
 
 ## Why this posture
 
-- Positioning as an emergency *service* creates a duty of care Outvers cannot solo-staff to provide. The right framing is "we'll make sure people know" — which is achievable and honest.
+- Positioning as an emergency *service* creates a duty of care Switchback cannot solo-staff to provide. The right framing is "we'll make sure people know" — which is achievable and honest.
 - The 24/7 ops alert routes to a real human (Shivam at v1) because alerts without a recipient are theatre. Document the ops escalation playbook before SOS goes live.
 - Auto-delete of location snapshots after T+72h is a privacy default that pre-empts requests to delete; surveillance logs aren't a feature.
 

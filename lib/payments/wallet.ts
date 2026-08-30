@@ -19,7 +19,7 @@ import { createRefund, type RazorpaySdkLike } from './razorpay-client'
  *   refund_balance  — closed-loop by default, cashable to original
  *                     payment method on Customer request via Razorpay.
  *
- * Spend order on checkout is non-negotiable: Outvers credit first (it
+ * Spend order on checkout is non-negotiable: Switchback credit first (it
  * expires), then Refund balance (cashout-eligible), then Razorpay for
  * the remainder.
  *
@@ -202,7 +202,7 @@ export interface ApplyWalletToCheckoutResult {
 }
 
 /**
- * Spend order per ADR-0004: Outvers credit → Refund balance → Razorpay
+ * Spend order per ADR-0004: Switchback credit → Refund balance → Razorpay
  * remainder. The function DEBITS both balance buckets in the same tx
  * and returns the remainder the Server Action should charge via the
  * Razorpay order.
@@ -363,7 +363,7 @@ export interface CreditOutversBalanceArgs {
 }
 
 /**
- * Credit the Customer's Outvers credit bucket from a promotional source
+ * Credit the Customer's Switchback credit bucket from a promotional source
  * (referral, promo, loyalty). Never cashable per ADR-0004.
  */
 export async function creditOutversBalance(
@@ -425,7 +425,7 @@ export interface RequestCashoutOpts {
 /**
  * Customer-initiated cashout from Refund balance back to the original
  * payment method (5-7d Razorpay round-trip). Per ADR-0004, this is the
- * cashable path that distinguishes Refund balance from Outvers credit.
+ * cashable path that distinguishes Refund balance from Switchback credit.
  *
  * Flow (all DB work before the external Razorpay call):
  *  1. Look up the originating payment row joined to bookings — verifies

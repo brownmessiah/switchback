@@ -155,7 +155,7 @@ export function CartView({ initialCart, customerName, customerEmail }: CartViewP
       key: payment.keyId,
       amount: payment.amountRupees * 100,
       currency: 'INR',
-      name: 'Outvers',
+      name: 'Switchback',
       description:
         cart.items.length === 1 ? '1 experience' : `${cart.items.length} experiences`,
       order_id: payment.razorpayOrderId,

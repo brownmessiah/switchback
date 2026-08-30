@@ -64,7 +64,7 @@ Within Rishikesh, most activity operators are clustered along the riverbank betw
 
 A few things that make a real difference:
 
-1. **Book with verified operators.** The market is crowded and not everyone maintains equipment, runs proper briefings, or carries adequate rescue gear. On [Rishikesh](/destinations/rishikesh) listings at Outvers, operators are KYC-verified, so you can check credentials before committing.
+1. **Book with verified operators.** The market is crowded and not everyone maintains equipment, runs proper briefings, or carries adequate rescue gear. On [Rishikesh](/destinations/rishikesh) listings at Switchback, operators are KYC-verified, so you can check credentials before committing.
 2. **Carry river-appropriate clothing.** Quick-dry shorts and a synthetic T-shirt for rafting; leave the cotton at the hotel. Sandals that strap to your feet or old trainers work better on boats than flip-flops.
 3. **Leave valuables behind.** Waterproof dry bags are usually provided for rafting, but a submerged phone is a submerged phone. Leave your passport, extra cash, and anything irreplaceable at the hotel.
 4. **Declare medical conditions honestly.** Operators ask for a reason. A refused booking is inconvenient; an incident on the water or at altitude is far worse.
@@ -89,4 +89,4 @@ No prior experience is needed for standard rafting runs (Brahmpuri or Shivpuri r
 
 Most operators set a minimum age of around 14 for the longer rafting runs and 18 for bungee jumping, though exact limits vary. Shorter, calmer rafting routes can be appropriate for younger children with appropriate supervision. Always confirm age and weight requirements with the specific operator before booking, as these rules exist for safety and are not negotiable.
 
-Whether you are planning your first taste of the river or returning to tick off the longer Grade IV run, the breadth of adventure on offer makes [Rishikesh](/destinations/rishikesh) one of those rare destinations that delivers on its reputation. Browse verified operators and live availability on Outvers to build your itinerary with confidence.
+Whether you are planning your first taste of the river or returning to tick off the longer Grade IV run, the breadth of adventure on offer makes [Rishikesh](/destinations/rishikesh) one of those rare destinations that delivers on its reputation. Browse verified operators and live availability on Switchback to build your itinerary with confidence.

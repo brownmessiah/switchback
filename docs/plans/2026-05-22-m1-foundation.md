@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` to implement this plan task-by-task. TDD is mandatory — invoke `superpowers:test-driven-development` at the start of every task. Invoke `superpowers:verification-before-completion` before every commit.
 
-**Goal:** Build the Foundation milestone for the Outvers rebuild — Next.js 15 + Drizzle + Postgres + better-auth + service wiring + one green Playwright smoke test in CI. No domain features ship in M1; this milestone exists so M2 (money path) starts on solid floor.
+**Goal:** Build the Foundation milestone for the Switchback rebuild — Next.js 15 + Drizzle + Postgres + better-auth + service wiring + one green Playwright smoke test in CI. No domain features ship in M1; this milestone exists so M2 (money path) starts on solid floor.
 
 **Architecture:** Next.js 15 App Router with TypeScript and Tailwind v4. Drizzle ORM over Neon Postgres (ap-south-1 Mumbai). better-auth handles identity (Google OAuth + custom MSG91 phone provider). Vercel deploys with Sentry + PostHog observability. Cloudflare R2 for object storage. Upstash Redis for rate limiting / idempotency keys. Vitest + Playwright for tests; GitHub Actions for CI.
 
@@ -1161,7 +1161,7 @@ Use a service container for Postgres OR provision an ephemeral Neon branch via t
 **Step 2: README** with:
 
 ```markdown
-# Outvers
+# Switchback
 
 ## Quick start
 pnpm install

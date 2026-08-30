@@ -45,18 +45,18 @@ const notoDevanagari = Noto_Sans_Devanagari({
 });
 
 export const metadata: Metadata = {
-  title: "Outvers — book verified adventure experiences across India",
+  title: "Switchback — book verified adventure experiences across India",
   description:
     "Book rafting, paragliding, scuba, trekking and more across India. Vendor-verified Experiences with transparent refund policy.",
 };
 
 /**
  * No-flash theme bootstrap. Runs before first paint to set the `.dark` class on
- * <html> from the saved preference (localStorage `outvers-theme`) or the OS
+ * <html> from the saved preference (localStorage `switchback-theme`) or the OS
  * setting, so the dark palette (globals.css `.dark`) applies without a
  * light→dark flash. The ThemeToggle in the header flips + persists it.
  */
-const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem('outvers-theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
+const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem('switchback-theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
 
 export default async function RootLayout({
   children,

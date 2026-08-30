@@ -30,7 +30,7 @@ export interface ExperienceDisclosureProps {
 /**
  * Third-party Vendor disclosure — sits next to the Booking box and states, in
  * plain language, that Experiences are operated by independent third-party
- * Vendors and what Outvers verifies. The NOUN is always "Vendor" (CONTEXT.md);
+ * Vendors and what Switchback verifies. The NOUN is always "Vendor" (CONTEXT.md);
  * "operated by" is fine as a verb but never surfaces "operator" as a term.
  */
 export function ExperienceDisclosure({

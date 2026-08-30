@@ -93,7 +93,7 @@ export const CATEGORY_OPTIONS: readonly FacetOption[] = CATEGORY_SLUGS.map(
 
 /**
  * Destination=State facet options (issue 04 follow-up). The distinct Indian
- * states across the regions registry — Outvers is India-only, so there is no
+ * states across the regions registry — Switchback is India-only, so there is no
  * Country dropdown. The state name is BOTH the form-submitted value
  * (`state=Goa`, matching the derived `state` index attribute) and the display
  * label: state names are proper nouns kept as registry literals rather than

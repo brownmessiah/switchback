@@ -57,7 +57,7 @@ These should be non-negotiable deal-breakers:
 
 ## How a Verified Marketplace Reduces the Research Burden
 
-Using a platform like Outvers means the foundational verification work has already been done. Every operator listed has passed KYC verification, and the platform provides transparent pricing and free cancellation within policy. You can read [how Outvers verifies operators](/safety) to understand the specific checks applied.
+Using a platform like Switchback means the foundational verification work has already been done. Every operator listed has passed KYC verification, and the platform provides transparent pricing and free cancellation within policy. You can read [how Switchback verifies operators](/safety) to understand the specific checks applied.
 
 That said, verification is a baseline, not a guarantee. The checklist in this guide still applies. Read the recent reviews on the listing, confirm your specific activity's permits with the operator before you pay, and always do the safety briefing on the day. A good operator welcomes these questions.
 

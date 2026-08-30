@@ -37,7 +37,7 @@ describe('Site builder section value schemas', () => {
 
   it('hero schema accepts valid data', () => {
     const result = SECTION_VALUE_SCHEMAS.hero.safeParse({
-      title: 'Welcome to Outvers',
+      title: 'Welcome to Switchback',
       subtitle: 'Adventure awaits',
     })
     expect(result.success).toBe(true)
@@ -85,7 +85,7 @@ describe('Admin site builder actions', () => {
       const result = await executeSaveSection(db, adminId, {
         section: 'hero',
         key: 'default',
-        value: { title: 'Welcome to Outvers', subtitle: 'Book adventures' },
+        value: { title: 'Welcome to Switchback', subtitle: 'Book adventures' },
       })
 
       expect(result.ok).toBe(true)
@@ -100,7 +100,7 @@ describe('Admin site builder actions', () => {
       expect(rows[0]!.locale).toBe('en')
       expect(rows[0]!.version).toBe(1)
       expect(rows[0]!.updatedByAdminId).toBe(adminId)
-      expect((rows[0]!.value as Record<string, unknown>).title).toBe('Welcome to Outvers')
+      expect((rows[0]!.value as Record<string, unknown>).title).toBe('Welcome to Switchback')
     })
 
     it('writes audit log on creation', async () => {
@@ -109,7 +109,7 @@ describe('Admin site builder actions', () => {
       await executeSaveSection(db, adminId, {
         section: 'footer',
         key: 'default',
-        value: { companyName: 'Outvers' },
+        value: { companyName: 'Switchback' },
       })
 
       const logs = await db.select().from(auditLogs)
@@ -210,13 +210,13 @@ describe('Admin site builder actions', () => {
       await executeSaveSection(db, admin1, {
         section: 'branding',
         key: 'default',
-        value: { siteName: 'Outvers' },
+        value: { siteName: 'Switchback' },
       })
 
       await executeSaveSection(db, admin2, {
         section: 'branding',
         key: 'default',
-        value: { siteName: 'Outvers Updated' },
+        value: { siteName: 'Switchback Updated' },
       })
 
       const rows = await db.select().from(siteContent)
@@ -299,13 +299,13 @@ describe('Admin site builder actions', () => {
       await executeSaveSection(db, adminId, {
         section: 'footer',
         key: 'main',
-        value: { companyName: 'Outvers' },
+        value: { companyName: 'Switchback' },
       })
 
       await executeSaveSection(db, adminId, {
         section: 'footer',
         key: 'legal',
-        value: { copyrightText: '2026 Outvers' },
+        value: { copyrightText: '2026 Switchback' },
       })
 
       // Different section — should not appear

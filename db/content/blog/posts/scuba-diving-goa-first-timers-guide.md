@@ -63,7 +63,7 @@ Questions worth asking before you commit:
 
 Any serious operator will answer these without hesitation. Evasion or irritation at the questions is a red flag.
 
-On Outvers, operators offering [scuba diving](/activities/scuba-diving) go through KYC verification, which means the business identity and operator credentials are confirmed before they're listed. That's a useful baseline filter, though your own due diligence — reading reviews, asking the questions above — remains important.
+On Switchback, operators offering [scuba diving](/activities/scuba-diving) go through KYC verification, which means the business identity and operator credentials are confirmed before they're listed. That's a useful baseline filter, though your own due diligence — reading reviews, asking the questions above — remains important.
 
 ## Safety Rules That Are Non-Negotiable
 

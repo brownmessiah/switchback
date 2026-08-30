@@ -7,7 +7,7 @@
  * official name, issuing authority, official application URL, processing
  * time, indicative cost, validity, and a short description.
  *
- * Per ADR-0011 Outvers does NOT broker permits in v1 — the panel is purely
+ * Per ADR-0011 Switchback does NOT broker permits in v1 — the panel is purely
  * informational, paired with a mandatory acknowledgement at checkout
  * (enforced by `booking-create.ts` via `acknowledgedPermits`). Adding a
  * permit is a code change in v1, mirroring the regions registry (ADR-0013):

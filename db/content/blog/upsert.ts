@@ -39,7 +39,7 @@ const MIN_BODY_CHARS = 800
 export const EDITORIAL_AUTHOR = {
   id: 'u_content_editor',
   email: 'editorial@outvers.com',
-  name: 'Outvers Editorial Team',
+  name: 'Switchback Editorial Team',
 } as const
 
 export interface UpsertBlogPostsOptions {

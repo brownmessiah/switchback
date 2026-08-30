@@ -5,7 +5,7 @@ import { vendorEntity, type VendorEntityArgs } from './local-business'
 describe('Vendor entity JSON-LD (ADR-0013)', () => {
   const base: VendorEntityArgs = {
     name: 'Himalayan Rafting Co.',
-    url: 'https://outvers.com/vendor/himalayan-rafting-co',
+    url: 'https://switchback.com/vendor/himalayan-rafting-co',
     kycTier: 'business',
   }
 
@@ -14,7 +14,7 @@ describe('Vendor entity JSON-LD (ADR-0013)', () => {
     expect(result['@context']).toBe('https://schema.org')
     expect(result['@type']).toBe('LocalBusiness')
     expect(result.name).toBe('Himalayan Rafting Co.')
-    expect(result.url).toBe('https://outvers.com/vendor/himalayan-rafting-co')
+    expect(result.url).toBe('https://switchback.com/vendor/himalayan-rafting-co')
   })
 
   it('emits Organization for an identity-tier Vendor (lower tier)', () => {

@@ -46,9 +46,9 @@ function makeFakeStorage(opts: { deleteThrowsWithoutIgnore?: boolean } = {}) {
 describe('GcsAdapter', () => {
   describe('getUrl', () => {
     it('derives the public GCS object URL', () => {
-      const adapter = new GcsAdapter('outvers-uploads', makeFakeStorage().client)
+      const adapter = new GcsAdapter('switchback-uploads', makeFakeStorage().client)
       expect(adapter.getUrl('experiences/abc/photo.jpg')).toBe(
-        'https://storage.googleapis.com/outvers-uploads/experiences/abc/photo.jpg',
+        'https://storage.googleapis.com/switchback-uploads/experiences/abc/photo.jpg',
       )
     })
   })
@@ -56,18 +56,18 @@ describe('GcsAdapter', () => {
   describe('upload', () => {
     it('saves the file bytes to the bucket and returns the public url + key', async () => {
       const { client, saves } = makeFakeStorage()
-      const adapter = new GcsAdapter('outvers-uploads', client)
+      const adapter = new GcsAdapter('switchback-uploads', client)
       const bytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47]) // PNG magic
       const file = new File([bytes], 'p.png', { type: 'image/png' })
 
       const result = await adapter.upload(file, 'experiences/abc/p.png')
 
       expect(result).toEqual({
-        url: 'https://storage.googleapis.com/outvers-uploads/experiences/abc/p.png',
+        url: 'https://storage.googleapis.com/switchback-uploads/experiences/abc/p.png',
         storageKey: 'experiences/abc/p.png',
       })
       expect(saves).toHaveLength(1)
-      expect(saves[0]!.bucket).toBe('outvers-uploads')
+      expect(saves[0]!.bucket).toBe('switchback-uploads')
       expect(saves[0]!.key).toBe('experiences/abc/p.png')
       expect(saves[0]!.contentType).toBe('image/png')
       expect(saves[0]!.buffer[0]).toBe(0x89)
@@ -86,7 +86,7 @@ describe('GcsAdapter', () => {
   describe('delete', () => {
     it('deletes the object with ignoreNotFound and does not throw when missing', async () => {
       const { client, deletes } = makeFakeStorage({ deleteThrowsWithoutIgnore: true })
-      const adapter = new GcsAdapter('outvers-uploads', client)
+      const adapter = new GcsAdapter('switchback-uploads', client)
       await expect(adapter.delete('experiences/abc/p.png')).resolves.toBeUndefined()
       expect(deletes).toHaveLength(1)
       expect(deletes[0]!.key).toBe('experiences/abc/p.png')

@@ -78,7 +78,7 @@ export function BusinessDetailsForm({
             <Label htmlFor="slug">Profile URL</Label>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground whitespace-nowrap">
-                outvers.in/vendor/
+                switchback.in/vendor/
               </span>
               <Input
                 id="slug"

@@ -10,7 +10,7 @@ Triage label: needs-triage
 
 ## Problem Statement
 
-A customer who wants to do an adventure trip with others — friends, or strangers with shared intent ("anyone going to Rishikesh rafting in October?") — has nowhere on Switchback to convene, plan a shared itinerary, or coordinate. outvers.com markets traveller-to-traveller **Trip Groups** + a `/community` surface as its hero differentiator; outvers-next has only a vestigial `bookings.trip_group_id` column — the `docs/adr/0009` schema was **never migrated**, there is no `/community` route, and no logic. Solo and safety-conscious travellers (notably women travelling alone) have no way to find a verified group to travel with.
+A customer who wants to do an adventure trip with others — friends, or strangers with shared intent ("anyone going to Rishikesh rafting in October?") — has nowhere on Switchback to convene, plan a shared itinerary, or coordinate. switchback.com markets traveller-to-traveller **Trip Groups** + a `/community` surface as its hero differentiator; switchback-next has only a vestigial `bookings.trip_group_id` column — the `docs/adr/0009` schema was **never migrated**, there is no `/community` route, and no logic. Solo and safety-conscious travellers (notably women travelling alone) have no way to find a verified group to travel with.
 
 ## Solution
 

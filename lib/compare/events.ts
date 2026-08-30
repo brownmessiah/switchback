@@ -11,7 +11,7 @@
  */
 
 /** Custom DOM event name broadcast after any compare-selection mutation. */
-export const COMPARE_CHANGE_EVENT = 'outvers:compare-change'
+export const COMPARE_CHANGE_EVENT = 'switchback:compare-change'
 
 /** Broadcast that the compare selection changed (same-page listeners refresh). */
 export function emitCompareChange(): void {

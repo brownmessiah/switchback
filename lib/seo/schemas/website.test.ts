@@ -4,8 +4,8 @@ import { website, type WebSiteArgs } from './website'
 
 describe('WebSite JSON-LD (ADR-0013)', () => {
   const base: WebSiteArgs = {
-    url: 'https://outvers.com',
-    searchUrlTemplate: 'https://outvers.com/search?q={search_term_string}',
+    url: 'https://switchback.com',
+    searchUrlTemplate: 'https://switchback.com/search?q={search_term_string}',
   }
 
   it('generates a valid WebSite schema with the Switchback brand name', () => {
@@ -13,14 +13,14 @@ describe('WebSite JSON-LD (ADR-0013)', () => {
     expect(result['@context']).toBe('https://schema.org')
     expect(result['@type']).toBe('WebSite')
     expect(result.name).toBe('Switchback')
-    expect(result.url).toBe('https://outvers.com')
+    expect(result.url).toBe('https://switchback.com')
   })
 
   it('emits a SearchAction potentialAction targeting the search URL template', () => {
     const result = website(base)
     expect(result.potentialAction['@type']).toBe('SearchAction')
     expect(result.potentialAction.target).toBe(
-      'https://outvers.com/search?q={search_term_string}',
+      'https://switchback.com/search?q={search_term_string}',
     )
     expect(result.potentialAction['query-input']).toBe(
       'required name=search_term_string',
@@ -29,7 +29,7 @@ describe('WebSite JSON-LD (ADR-0013)', () => {
 
   it('requires the {search_term_string} placeholder in the target template', () => {
     expect(() =>
-      website({ ...base, searchUrlTemplate: 'https://outvers.com/search' }),
+      website({ ...base, searchUrlTemplate: 'https://switchback.com/search' }),
     ).toThrow(/search_term_string/)
   })
 

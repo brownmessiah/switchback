@@ -35,9 +35,9 @@ export async function seedTripGroups(db: DB = defaultDb): Promise<void> {
   await db
     .insert(users)
     .values([
-      { id: TG_HOST, email: 'tg-host@seed.outvers.dev', name: 'Aarav (host)' },
-      { id: TG_HOST_FEMALE, email: 'tg-host-f@seed.outvers.dev', name: 'Diya (host)' },
-      { id: TG_MEMBER, email: 'tg-member@seed.outvers.dev', name: 'Kabir' },
+      { id: TG_HOST, email: 'tg-host@seed.switchback.dev', name: 'Aarav (host)' },
+      { id: TG_HOST_FEMALE, email: 'tg-host-f@seed.switchback.dev', name: 'Diya (host)' },
+      { id: TG_MEMBER, email: 'tg-member@seed.switchback.dev', name: 'Kabir' },
     ])
     .onConflictDoNothing()
 

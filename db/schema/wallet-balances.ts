@@ -15,7 +15,7 @@ import { users } from './users'
  * Wallet balance buckets per ADR-0004. The single "wallet" Customer UI
  * is backed by TWO buckets with different accounting types:
  *
- *  - outvers_credit  — closed-loop promotional balance (referral
+ *  - switchback_credit  — closed-loop promotional balance (referral
  *                       credit, festive promo credit, loyalty rewards).
  *                       Never cashable. Expires 12–18 months from issue.
  *  - refund_balance  — closed-loop by default but cashable on Customer
@@ -23,12 +23,12 @@ import { users } from './users'
  *                       liability on the books.
  *
  * Spend order at Booking checkout (also per ADR-0004):
- *   1. outvers_credit (expires)
+ *   1. switchback_credit (expires)
  *   2. refund_balance (cashout optionality)
  *   3. Razorpay charge for the remainder
  */
 export const walletBalanceTypeEnum = pgEnum('wallet_balance_type', [
-  'outvers_credit',
+  'switchback_credit',
   'refund_balance',
 ])
 

@@ -47,7 +47,7 @@ export interface ExperienceCardData {
    */
   isWishlisted?: boolean
   /**
-   * Card tags (parity with outvers.com). All additive / nullable — a bare card
+   * Card tags (parity with switchback.com). All additive / nullable — a bare card
    * that passes none of these renders exactly as before (no empty badges).
    *
    *  - `difficulty`  — colour-coded operational-difficulty pill (a11y: the
@@ -81,7 +81,7 @@ interface ExperienceCardProps {
   /**
    * Results-grid layout (search view toggle). `'grid'` (default) is the compact
    * vertical A1 tile; `'list'` is a horizontal row (image left, content right)
-   * that additionally surfaces the short description — parity with outvers.com's
+   * that additionally surfaces the short description — parity with switchback.com's
    * list view. Any caller that omits this gets the unchanged grid card.
    */
   layout?: 'grid' | 'list'
@@ -300,7 +300,7 @@ export function ExperienceCard({
           ) : null}
         </div>
 
-        {/* List layout surfaces the short description (parity with outvers
+        {/* List layout surfaces the short description (parity with switchback
             list view); the compact grid tile keeps it hidden. */}
         {isList && experience.shortDescription ? (
           <p className="line-clamp-2 text-sm text-muted-foreground">

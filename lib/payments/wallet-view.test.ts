@@ -46,19 +46,19 @@ describe('loadWalletView', () => {
   it('returns both bucket balances as integer rupees', async () => {
     await db.insert(walletBalances).values([
       { userId: 'u_wv1', balanceType: 'refund_balance', amount: '500.00' },
-      { userId: 'u_wv1', balanceType: 'outvers_credit', amount: '200.00' },
+      { userId: 'u_wv1', balanceType: 'switchback_credit', amount: '200.00' },
     ])
 
     const view = await loadWalletView(db, 'u_wv1', { page: 1, pageSize: 10 })
 
     expect(view.balances.refundBalance).toBe(500)
-    expect(view.balances.outversCredit).toBe(200)
+    expect(view.balances.switchbackCredit).toBe(200)
   })
 
   it('returns zeros for a wallet with no balance rows', async () => {
     const view = await loadWalletView(db, 'u_wv1', { page: 1, pageSize: 10 })
 
-    expect(view.balances).toEqual({ outversCredit: 0, refundBalance: 0 })
+    expect(view.balances).toEqual({ switchbackCredit: 0, refundBalance: 0 })
     expect(view.transactions).toEqual([])
     expect(view.total).toBe(0)
     expect(view.page).toBe(1)
@@ -92,14 +92,14 @@ describe('loadWalletView', () => {
       },
       {
         userId: 'u_wv1',
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
         amount: '-50.00',
         source: 'checkout_deduction',
         createdAt: new Date('2026-03-01T00:00:00.000Z'),
       },
       {
         userId: 'u_wv1',
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
         amount: '200.00',
         source: 'promo',
         createdAt: new Date('2026-02-01T00:00:00.000Z'),
@@ -171,7 +171,7 @@ describe('loadWalletView', () => {
     await db.insert(walletTransactions).values([
       {
         userId: 'u_wv1',
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
         amount: '100.00',
         source: 'promo',
         expiresAt: later,
@@ -179,13 +179,13 @@ describe('loadWalletView', () => {
       },
       {
         userId: 'u_wv1',
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
         amount: '100.00',
         source: 'promo',
         expiresAt: soon,
         createdAt: new Date('2026-02-01T00:00:00.000Z'),
       },
-      // refund_balance expiry must be ignored — only outvers_credit expires.
+      // refund_balance expiry must be ignored — only switchback_credit expires.
       {
         userId: 'u_wv1',
         balanceType: 'refund_balance',
@@ -206,7 +206,7 @@ describe('loadWalletView', () => {
     await db.insert(walletTransactions).values([
       {
         userId: 'u_wv1',
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
         amount: '100.00',
         source: 'promo',
         expiresAt: null,

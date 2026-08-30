@@ -17,7 +17,7 @@ export const manualGrantSchema = z.object({
     .trim()
     .min(1, 'User ID is required.'),
   amountRupees: z.coerce.number().int().positive('Amount must be a positive integer.'),
-  balanceType: z.enum(['outvers_credit', 'refund_balance']),
+  balanceType: z.enum(['switchback_credit', 'refund_balance']),
   reason: z.string().trim().min(1, 'Reason is required.').max(500),
 })
 
@@ -33,20 +33,20 @@ export type ManualGrantInput = z.infer<typeof manualGrantSchema>
 //
 // The Refund balance is a real liability, cashable to the original payment
 // method — it never expires, so a refund_balance grant carries NO expiry.
-const OUTVERS_CREDIT_EXPIRY_MONTHS = 12
+const SWITCHBACK_CREDIT_EXPIRY_MONTHS = 12
 
 /**
  * Compute the expiry for a manual grant. Switchback credit expires
- * OUTVERS_CREDIT_EXPIRY_MONTHS from `issuedAt` (ADR-0004); the Refund balance
+ * SWITCHBACK_CREDIT_EXPIRY_MONTHS from `issuedAt` (ADR-0004); the Refund balance
  * has no expiry.
  */
 export function computeGrantExpiry(
-  balanceType: 'outvers_credit' | 'refund_balance',
+  balanceType: 'switchback_credit' | 'refund_balance',
   issuedAt: Date,
 ): Date | undefined {
-  if (balanceType !== 'outvers_credit') return undefined
+  if (balanceType !== 'switchback_credit') return undefined
   const expiry = new Date(issuedAt)
-  expiry.setMonth(expiry.getMonth() + OUTVERS_CREDIT_EXPIRY_MONTHS)
+  expiry.setMonth(expiry.getMonth() + SWITCHBACK_CREDIT_EXPIRY_MONTHS)
   return expiry
 }
 

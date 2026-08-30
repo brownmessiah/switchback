@@ -1,5 +1,5 @@
 # -*- mode: Python -*-
-# Tiltfile — local dev stack for outvers-next (Docker-free).
+# Tiltfile — local dev stack for switchback-next (Docker-free).
 #
 # `tilt up` brings the whole stack up and exposes the UI on the reserved ngrok
 # URL so you can view it from anywhere:
@@ -16,7 +16,7 @@
 # `tilt down` stops dev-server + ngrok; stop the backing services (Postgres +
 # Meilisearch) with `pnpm dev:stack:down`. Same primitives as `pnpm dev:stack`.
 
-NGROK_DOMAIN = os.getenv('OUTVERS_NGROK_DOMAIN', '2e99352b354d.ngrok.app')
+NGROK_DOMAIN = os.getenv('SWITCHBACK_NGROK_DOMAIN', '2e99352b354d.ngrok.app')
 
 # 1. Backing services + schema + seed + search index. One-shot and idempotent —
 #    safe to re-run; reuses an already-running Postgres/Meilisearch.
@@ -52,4 +52,4 @@ local_resource(
     labels=['app'],
 )
 
-print('outvers dev stack — once green, the UI is live at https://' + NGROK_DOMAIN)
+print('switchback dev stack — once green, the UI is live at https://' + NGROK_DOMAIN)

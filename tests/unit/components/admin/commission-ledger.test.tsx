@@ -31,7 +31,7 @@ const TIER: CommissionTierRow = {
   endAtLabel: '1 Nov 2026',
   scopeLabel: 'All',
   affectedBookings: 42,
-  adminLabel: 'admin@outvers.in',
+  adminLabel: 'admin@switchback.in',
 }
 
 describe('CommissionLedger split-view (rate + scope co-present with action)', () => {

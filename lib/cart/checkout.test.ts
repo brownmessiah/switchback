@@ -206,7 +206,7 @@ describe('cart checkout (PGlite)', () => {
     // Wallet credit that must NOT be debited on rollback.
     await db.insert(walletBalances).values({
       userId: 'u_cust',
-      balanceType: 'outvers_credit',
+      balanceType: 'switchback_credit',
       amount: '500.00',
     })
 
@@ -289,7 +289,7 @@ describe('cart checkout (PGlite)', () => {
     await cartUp([{ experienceId: cheapId, slotId: secondCheapSlot, count: 3 }]) // 3,000
 
     await db.insert(walletBalances).values([
-      { userId: 'u_cust', balanceType: 'outvers_credit', amount: '1500.00' },
+      { userId: 'u_cust', balanceType: 'switchback_credit', amount: '1500.00' },
       { userId: 'u_cust', balanceType: 'refund_balance', amount: '2000.00' },
     ])
 
@@ -302,7 +302,7 @@ describe('cart checkout (PGlite)', () => {
 
     // Total 5,000: credit 1,500 → refund 2,000 → remainder 1,500.
     expect(result.amountTotalRupees).toBe(5_000)
-    expect(result.walletApplied.outversCreditAppliedRupees).toBe(1_500)
+    expect(result.walletApplied.switchbackCreditAppliedRupees).toBe(1_500)
     expect(result.walletApplied.refundBalanceAppliedRupees).toBe(2_000)
     expect(result.razorpayRemainderRupees).toBe(1_500)
 
@@ -312,7 +312,7 @@ describe('cart checkout (PGlite)', () => {
       .from(walletBalances)
       .where(eq(walletBalances.userId, 'u_cust'))
     const byType = Object.fromEntries(balances.map((b) => [b.balanceType, b.amount]))
-    expect(byType.outvers_credit).toBe('0.00')
+    expect(byType.switchback_credit).toBe('0.00')
     expect(byType.refund_balance).toBe('0.00')
 
     // Per-booking attribution: one wallet audit row PER booking, allocations
@@ -323,11 +323,11 @@ describe('cart checkout (PGlite)', () => {
       .where(eq(auditLogs.action, 'wallet.apply_to_checkout'))
     expect(walletAudits).toHaveLength(2)
     const allocations = walletAudits.map(
-      (a) => a.payload as { bookingId: string; outversCreditAppliedRupees: number; refundBalanceAppliedRupees: number },
+      (a) => a.payload as { bookingId: string; switchbackCreditAppliedRupees: number; refundBalanceAppliedRupees: number },
     )
     expect(new Set(allocations.map((a) => a.bookingId)).size).toBe(2)
     expect(
-      allocations.reduce((s, a) => s + a.outversCreditAppliedRupees, 0),
+      allocations.reduce((s, a) => s + a.switchbackCreditAppliedRupees, 0),
     ).toBe(1_500)
     expect(
       allocations.reduce((s, a) => s + a.refundBalanceAppliedRupees, 0),
@@ -419,7 +419,7 @@ describe('cart checkout (PGlite)', () => {
     await cartUp([{ experienceId: cheapId, slotId: cheapSlot, count: 2 }]) // 2,000
     await db.insert(walletBalances).values({
       userId: 'u_cust',
-      balanceType: 'outvers_credit',
+      balanceType: 'switchback_credit',
       amount: '5000.00',
     })
     const result = await executeCartCheckout(db, {

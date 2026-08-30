@@ -79,9 +79,9 @@ const FIXTURE_SLUG = 'refund-queue-fixture-rishikesh'
  */
 async function seedMinimalBase(db: TestDB): Promise<{ rishiRaftingId: string }> {
   await db.insert(users).values([
-    { id: 'u_seed_admin', email: 'admin@seed.outvers.dev', name: 'Seed Admin' },
-    { id: 'u_seed_customer', email: 'customer@seed.outvers.dev', name: 'Seed Customer' },
-    { id: 'u_demo_vendor', email: 'demo-vendor@seed.outvers.dev', name: 'Demo Vendor' },
+    { id: 'u_seed_admin', email: 'admin@seed.switchback.dev', name: 'Seed Admin' },
+    { id: 'u_seed_customer', email: 'customer@seed.switchback.dev', name: 'Seed Customer' },
+    { id: 'u_demo_vendor', email: 'demo-vendor@seed.switchback.dev', name: 'Demo Vendor' },
   ])
   await db.insert(customerProfiles).values({ userId: 'u_seed_customer' })
   await db.insert(vendorProfiles).values({

@@ -51,7 +51,7 @@ describe('wallet ledger operations', () => {
         userId: 'u_c1',
         amountRupees: 500,
         source: 'admin',
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
       })
 
       expect(result.walletTransactionId).toMatch(/^[0-9a-f-]{36}$/)
@@ -63,7 +63,7 @@ describe('wallet ledger operations', () => {
 
       expect(txn).toBeDefined()
       expect(txn!.userId).toBe('u_c1')
-      expect(txn!.balanceType).toBe('outvers_credit')
+      expect(txn!.balanceType).toBe('switchback_credit')
       expect(txn!.amount).toBe('500.00')
       expect(txn!.source).toBe('admin')
       expect(txn!.referenceId).toBeNull()
@@ -75,7 +75,7 @@ describe('wallet ledger operations', () => {
         userId: 'u_c1',
         amountRupees: 300,
         source: 'referral',
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
       })
 
       const [bal] = await db
@@ -84,7 +84,7 @@ describe('wallet ledger operations', () => {
         .where(
           and(
             eq(walletBalances.userId, 'u_c1'),
-            eq(walletBalances.balanceType, 'outvers_credit'),
+            eq(walletBalances.balanceType, 'switchback_credit'),
           ),
         )
 
@@ -96,7 +96,7 @@ describe('wallet ledger operations', () => {
         userId: 'u_c1',
         amountRupees: 200,
         source: 'admin',
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
       })
 
       const [bal2] = await db
@@ -105,7 +105,7 @@ describe('wallet ledger operations', () => {
         .where(
           and(
             eq(walletBalances.userId, 'u_c1'),
-            eq(walletBalances.balanceType, 'outvers_credit'),
+            eq(walletBalances.balanceType, 'switchback_credit'),
           ),
         )
 
@@ -118,7 +118,7 @@ describe('wallet ledger operations', () => {
         userId: 'u_c1',
         amountRupees: 100,
         source: 'promo',
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
         expiresAt: expiry,
       })
 
@@ -160,7 +160,7 @@ describe('wallet ledger operations', () => {
           userId: 'u_c1',
           amountRupees: 0,
           source: 'admin',
-          balanceType: 'outvers_credit',
+          balanceType: 'switchback_credit',
         }),
       ).rejects.toThrow(/positive/i)
     })
@@ -171,7 +171,7 @@ describe('wallet ledger operations', () => {
           userId: 'u_c1',
           amountRupees: 99.5,
           source: 'admin',
-          balanceType: 'outvers_credit',
+          balanceType: 'switchback_credit',
         }),
       ).rejects.toThrow(/integer/i)
     })
@@ -216,7 +216,7 @@ describe('wallet ledger operations', () => {
       expect(txn).toBeDefined()
       expect(txn!.source).toBe('promo')
       expect(txn!.amount).toBe('500.00')
-      expect(txn!.balanceType).toBe('outvers_credit')
+      expect(txn!.balanceType).toBe('switchback_credit')
 
       // current_uses incremented
       const [updated] = await db
@@ -241,7 +241,7 @@ describe('wallet ledger operations', () => {
         .where(
           and(
             eq(walletBalances.userId, 'u_c1'),
-            eq(walletBalances.balanceType, 'outvers_credit'),
+            eq(walletBalances.balanceType, 'switchback_credit'),
           ),
         )
       expect(Number(bal!.amount)).toBe(500)
@@ -359,13 +359,13 @@ describe('wallet ledger operations', () => {
         userId: 'u_c1',
         amountRupees: 500,
         source: 'promo',
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
       })
       await grantCredit(db, {
         userId: 'u_c1',
         amountRupees: 300,
         source: 'admin',
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
       })
       await grantCredit(db, {
         userId: 'u_c1',
@@ -375,26 +375,26 @@ describe('wallet ledger operations', () => {
       })
 
       const balance = await balanceFromLedger(db, 'u_c1')
-      expect(balance.outversCredit).toBe(800)
+      expect(balance.switchbackCredit).toBe(800)
       expect(balance.refundBalance).toBe(1000)
     })
 
     it('returns zeros for a user with no transactions', async () => {
       const balance = await balanceFromLedger(db, 'u_c1')
-      expect(balance.outversCredit).toBe(0)
+      expect(balance.switchbackCredit).toBe(0)
       expect(balance.refundBalance).toBe(0)
     })
 
-    it('handles only outvers_credit transactions', async () => {
+    it('handles only switchback_credit transactions', async () => {
       await grantCredit(db, {
         userId: 'u_c1',
         amountRupees: 250,
         source: 'referral',
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
       })
 
       const balance = await balanceFromLedger(db, 'u_c1')
-      expect(balance.outversCredit).toBe(250)
+      expect(balance.switchbackCredit).toBe(250)
       expect(balance.refundBalance).toBe(0)
     })
 
@@ -403,20 +403,20 @@ describe('wallet ledger operations', () => {
         userId: 'u_c1',
         amountRupees: 100,
         source: 'admin',
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
       })
       await grantCredit(db, {
         userId: 'u_c2',
         amountRupees: 999,
         source: 'admin',
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
       })
 
       const balance1 = await balanceFromLedger(db, 'u_c1')
       const balance2 = await balanceFromLedger(db, 'u_c2')
 
-      expect(balance1.outversCredit).toBe(100)
-      expect(balance2.outversCredit).toBe(999)
+      expect(balance1.switchbackCredit).toBe(100)
+      expect(balance2.switchbackCredit).toBe(999)
     })
   })
 
@@ -446,7 +446,7 @@ describe('wallet ledger operations', () => {
       // 3. Simulate checkout deduction by inserting a negative ledger entry
       await db.insert(walletTransactions).values({
         userId: 'u_c1',
-        balanceType: 'outvers_credit',
+        balanceType: 'switchback_credit',
         amount: '-200.00',
         source: 'checkout_deduction',
         referenceId: 'booking-xyz',
@@ -454,7 +454,7 @@ describe('wallet ledger operations', () => {
 
       // 4. Verify ledger balance
       const balance = await balanceFromLedger(db, 'u_c1')
-      expect(balance.outversCredit).toBe(300) // 500 - 200
+      expect(balance.switchbackCredit).toBe(300) // 500 - 200
 
       // 5. Verify promo usage
       const [updatedPromo] = await db

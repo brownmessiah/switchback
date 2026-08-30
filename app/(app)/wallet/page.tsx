@@ -42,7 +42,7 @@ const SOURCE_LABEL_KEY: Record<string, string> = {
 // (never color alone — DESIGN.md §1.3 / WCAG 1.4.1).
 const BUCKET_BADGE: Record<string, { variant: 'success' | 'info'; key: string }> = {
   refund_balance: { variant: 'success', key: 'refundBalance' },
-  outvers_credit: { variant: 'info', key: 'outversCredit' },
+  switchback_credit: { variant: 'info', key: 'switchbackCredit' },
 }
 
 function formatRupees(amount: number): string {
@@ -163,22 +163,22 @@ export default async function WalletPage({ searchParams }: WalletPageProps) {
           (md); both decision-complete with tabular-nums balances, never blended. */}
       <div className="grid gap-4 md:grid-cols-2">
         {/* Switchback credit — closed-loop promo, never cashable, EXPIRES. */}
-        <Card data-testid="wallet-bucket-outvers_credit" className="border-credit/30">
+        <Card data-testid="wallet-bucket-switchback_credit" className="border-credit/30">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <WalletIcon className="size-4 text-credit" aria-hidden />
-              {t('outversCredit')}
+              {t('switchbackCredit')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p
-              data-testid="wallet-amount-outvers_credit"
+              data-testid="wallet-amount-switchback_credit"
               className="text-3xl font-semibold tabular-nums"
             >
-              {formatRupees(view.balances.outversCredit)}
+              {formatRupees(view.balances.switchbackCredit)}
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">{t('outversCreditHint')}</p>
-            {view.balances.outversCredit > 0 && view.soonestCreditExpiry ? (
+            <p className="mt-1 text-xs text-muted-foreground">{t('switchbackCreditHint')}</p>
+            {view.balances.switchbackCredit > 0 && view.soonestCreditExpiry ? (
               <span
                 data-testid="wallet-credit-expiry"
                 className="mt-3 inline-flex items-center gap-1 rounded-[var(--radius-pill)] bg-warning-subtle px-2 py-0.5 text-xs font-medium text-warning"

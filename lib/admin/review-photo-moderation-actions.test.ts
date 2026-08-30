@@ -34,7 +34,7 @@ describe('review photo moderation core', () => {
     teardown = setup.teardown
 
     await db.insert(users).values([
-      { id: 'u_admin', email: 'admin@outvers.com', name: 'Admin' },
+      { id: 'u_admin', email: 'admin@switchback.com', name: 'Admin' },
       { id: 'u_v', email: 'v@example.com', name: 'Vendor' },
       { id: 'u_c', email: 'c@example.com', name: 'Asha' },
     ])

@@ -9,7 +9,7 @@ import { serverActionAllowedOrigins } from './origins'
  */
 describe('serverActionAllowedOrigins', () => {
   it('derives the host from the app URL', () => {
-    expect(serverActionAllowedOrigins('https://outvers.com')).toEqual(['outvers.com'])
+    expect(serverActionAllowedOrigins('https://switchback.com')).toEqual(['switchback.com'])
   })
 
   it('keeps the port for a localhost URL', () => {
@@ -18,8 +18,8 @@ describe('serverActionAllowedOrigins', () => {
 
   it('merges extra comma-separated origins (URLs or bare hosts), deduped', () => {
     expect(
-      serverActionAllowedOrigins('https://outvers.com', 'https://www.outvers.com, staging.outvers.com, https://outvers.com'),
-    ).toEqual(['outvers.com', 'www.outvers.com', 'staging.outvers.com'])
+      serverActionAllowedOrigins('https://switchback.com', 'https://www.switchback.com, staging.switchback.com, https://switchback.com'),
+    ).toEqual(['switchback.com', 'www.switchback.com', 'staging.switchback.com'])
   })
 
   it('returns an empty list when nothing is configured', () => {

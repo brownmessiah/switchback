@@ -36,11 +36,11 @@ export default async function LoyaltyPage() {
       userId: row.userId,
       name: row.userName,
       email: row.userEmail,
-      outversCredit: 0,
+      switchbackCredit: 0,
       refundBalance: 0,
     }
-    if (row.balanceType === 'outvers_credit') {
-      existing.outversCredit = Math.floor(Number(row.amount))
+    if (row.balanceType === 'switchback_credit') {
+      existing.switchbackCredit = Math.floor(Number(row.amount))
     } else if (row.balanceType === 'refund_balance') {
       existing.refundBalance = Math.floor(Number(row.amount))
     }
@@ -48,7 +48,7 @@ export default async function LoyaltyPage() {
   }
 
   const userBalances = Array.from(userMap.values()).sort(
-    (a, b) => b.outversCredit + b.refundBalance - (a.outversCredit + a.refundBalance),
+    (a, b) => b.switchbackCredit + b.refundBalance - (a.switchbackCredit + a.refundBalance),
   )
 
   // Recent wallet transactions
@@ -81,7 +81,7 @@ export default async function LoyaltyPage() {
     userEmail: t.userEmail,
   }))
 
-  const totalOutversCredit = userBalances.reduce((s, u) => s + u.outversCredit, 0)
+  const totalSwitchbackCredit = userBalances.reduce((s, u) => s + u.switchbackCredit, 0)
   const totalRefundBalance = userBalances.reduce((s, u) => s + u.refundBalance, 0)
 
   return (
@@ -101,7 +101,7 @@ export default async function LoyaltyPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold tabular-nums">{formatRupees(totalOutversCredit)}</p>
+            <p className="text-2xl font-bold tabular-nums">{formatRupees(totalSwitchbackCredit)}</p>
           </CardContent>
         </Card>
         <Card>

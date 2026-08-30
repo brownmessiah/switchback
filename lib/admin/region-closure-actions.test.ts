@@ -22,7 +22,7 @@ describe('region closure CRUD', () => {
     teardown = setup.teardown
 
     await db.insert(users).values([
-      { id: 'u_admin', email: 'admin@outvers.com', name: 'Admin' },
+      { id: 'u_admin', email: 'admin@switchback.com', name: 'Admin' },
     ])
   })
 

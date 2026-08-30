@@ -22,8 +22,8 @@ import { mockRazorpayCheckout } from '../../helpers/razorpay-mock'
 
 // Seeded flagship rafting Experience with future open slots — see db/seed.ts.
 const RAFTING_SLUG = 'rishikesh-rafting-grade-iii'
-const DEMO_CUSTOMER_EMAIL = 'customer@seed.outvers.dev'
-const DEMO_PASSWORD = 'OutversDemo!2026'
+const DEMO_CUSTOMER_EMAIL = 'customer@seed.switchback.dev'
+const DEMO_PASSWORD = 'SwitchbackDemo!2026'
 
 async function signInAsDemoCustomer(page: Page): Promise<void> {
   await page.goto('/sign-in')

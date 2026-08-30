@@ -3,7 +3,7 @@
  * (`serverActions.allowedOrigins`, ADR-0019).
  *
  * Behind the External LB the browser Origin is the public host (e.g.
- * `outvers.com`) while the request Host may be forwarded, so the public host
+ * `switchback.com`) while the request Host may be forwarded, so the public host
  * must be explicitly trusted or every Server Action POST is rejected. Derived at
  * BUILD time from `NEXT_PUBLIC_APP_URL` plus an optional comma-separated extra
  * list (full URLs or bare hosts). Pure + dependency-free so `next.config.ts` can

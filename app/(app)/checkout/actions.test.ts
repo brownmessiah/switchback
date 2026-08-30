@@ -172,7 +172,7 @@ describe('executeStartCheckout (Task 20)', () => {
   // ---- Wallet applied: reduces Razorpay remainder ----
   it('applies wallet balances and reduces Razorpay remainder', async () => {
     await db.insert(walletBalances).values([
-      { userId: 'u_customer', balanceType: 'outvers_credit', amount: '500.00' },
+      { userId: 'u_customer', balanceType: 'switchback_credit', amount: '500.00' },
       { userId: 'u_customer', balanceType: 'refund_balance', amount: '300.00' },
     ])
 
@@ -181,14 +181,14 @@ describe('executeStartCheckout (Task 20)', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) throw new Error('unreachable')
     expect(result.amountRupees).toBe(3200)
-    expect(result.walletApplied.outversCreditAppliedRupees).toBe(500)
+    expect(result.walletApplied.switchbackCreditAppliedRupees).toBe(500)
     expect(result.walletApplied.refundBalanceAppliedRupees).toBe(300)
   })
 
   // ---- Wallet covers full gross → razorpay remainder = 0, no order created ----
   it('skips Razorpay order creation when wallet covers full gross', async () => {
     await db.insert(walletBalances).values([
-      { userId: 'u_customer', balanceType: 'outvers_credit', amount: '5000.00' },
+      { userId: 'u_customer', balanceType: 'switchback_credit', amount: '5000.00' },
     ])
 
     const result = await executeStartCheckout(db, makeInput())

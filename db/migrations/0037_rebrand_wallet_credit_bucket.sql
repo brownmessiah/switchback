@@ -1,0 +1,23 @@
+-- Rebrand the promotional wallet bucket: outvers_credit -> switchback_credit.
+--
+-- The value is stored in TWO places and they must move together, or wallet
+-- spend silently mis-buckets:
+--
+--   1. wallet_balances.balance_type IS the "wallet_balance_type" pg enum.
+--      RENAME VALUE relabels the type itself, so every existing row follows
+--      automatically — no data UPDATE needed or possible here.
+--   2. wallet_transactions.balance_type is a PLAIN TEXT column that reuses the
+--      same vocabulary (see db/schema/wallet-transactions.ts). The enum rename
+--      does NOT touch it, so it needs an explicit data UPDATE. Missing this
+--      would leave historical ledger rows unreadable by the new code path.
+--
+-- Spend order (ADR-0004) is unchanged: promo credit first, then refund
+-- balance, then the Razorpay charge. Only the label moves.
+--
+-- Hand-authored per the repo migration policy (never drizzle-kit generate).
+-- MUST stay in lockstep with db/schema/wallet-balances.ts and
+-- db/schema/wallet-transactions.ts (the drizzle definitions also drive the
+-- e2e DB via drizzle-kit push, which reaches the renamed state directly).
+ALTER TYPE "public"."wallet_balance_type" RENAME VALUE 'outvers_credit' TO 'switchback_credit';
+--> statement-breakpoint
+UPDATE "wallet_transactions" SET "balance_type" = 'switchback_credit' WHERE "balance_type" = 'outvers_credit';

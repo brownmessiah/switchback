@@ -15,7 +15,7 @@ import { test, expect } from '../../fixtures/devtools'
 import {
   countBookingCancelAuditRows,
   countBookingCreateAuditRows,
-  countOutversCreditAuditForBooking,
+  countSwitchbackCreditAuditForBooking,
   countRefundRequestsForBooking,
   getBooking,
   getBookingCreateAuditPayload,
@@ -145,7 +145,7 @@ test.describe('Customer dashboard', () => {
     await page.goto('/dashboard')
 
     // Two structurally distinct bucket cards, each tagged by balance type.
-    const creditCard = page.getByTestId('wallet-bucket-outvers_credit')
+    const creditCard = page.getByTestId('wallet-bucket-switchback_credit')
     const refundCard = page.getByTestId('wallet-bucket-refund_balance')
     await expect(creditCard).toBeVisible()
     await expect(refundCard).toBeVisible()
@@ -162,7 +162,7 @@ test.describe('Customer dashboard', () => {
     // current DB value. Assert that monotonic invariant instead of exact
     // equality (which would flake when a parallel cancel lands between the
     // render and this read).
-    const creditRupees = await getWalletBalanceRupees(SEED_CUSTOMER, 'outvers_credit')
+    const creditRupees = await getWalletBalanceRupees(SEED_CUSTOMER, 'switchback_credit')
     await expect(creditCard.getByTestId('wallet-amount')).toHaveText(
       `₹${creditRupees.toLocaleString('en-IN')}`,
     )
@@ -179,7 +179,7 @@ test.describe('Customer dashboard', () => {
   }) => {
     await page.goto('/dashboard')
 
-    const creditCard = page.getByTestId('wallet-bucket-outvers_credit')
+    const creditCard = page.getByTestId('wallet-bucket-switchback_credit')
     const refundCard = page.getByTestId('wallet-bucket-refund_balance')
 
     // ── Switchback credit EXPIRES (12–18mo from issue, ADR-0004). The card must
@@ -682,7 +682,7 @@ test.describe('Cancel booking', () => {
     expect(creditAudit!.amountRupees).toBe(grossRupees)
     expect(creditAudit!.userId).toBe(SEED_CUSTOMER)
     // The refund must NOT have been routed to the Switchback (promo) bucket.
-    expect(await countOutversCreditAuditForBooking(bookingId)).toBe(0)
+    expect(await countSwitchbackCreditAuditForBooking(bookingId)).toBe(0)
     // Live balance sanity: it reflects at least the credited amount.
     expect(
       await getWalletBalanceRupees(SEED_CUSTOMER, 'refund_balance'),
@@ -755,7 +755,7 @@ test.describe('Cancel booking', () => {
       await getRefundBalanceCreditAuditForBooking(bookingId),
       'outside-policy cancel must NOT credit the Refund balance',
     ).toBeNull()
-    expect(await countOutversCreditAuditForBooking(bookingId)).toBe(0)
+    expect(await countSwitchbackCreditAuditForBooking(bookingId)).toBe(0)
     expect(await countBookingCancelAuditRows(bookingId)).toBe(0)
 
     await page.screenshot({

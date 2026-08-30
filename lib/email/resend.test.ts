@@ -14,7 +14,7 @@ describe('getEmailSender', () => {
   it('returns a dev-stub sender when RESEND_API_KEY is unset', async () => {
     const sender = getEmailSender()
     const result = await sender.send({
-      from: 'hello@outvers.in',
+      from: 'hello@switchback.in',
       to: 'shivam@example.com',
       subject: 'Test',
       text: 'hi',

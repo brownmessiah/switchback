@@ -2,7 +2,7 @@
  * E2E — Razorpay X vendor-payout SEND loop (slices 04 + 06 + 07, ADR-0016
  * 2026-06-18 amendment).
  *
- * Exercises the full send path against the live dev server + outvers_e2e DB +
+ * Exercises the full send path against the live dev server + switchback_e2e DB +
  * the deterministic Razorpay X demo stub (RAZORPAY_TEST_MODE=true):
  *
  *   cron auth → cron sends a Payout Batch → at-most-once → webhook processed →
@@ -23,7 +23,7 @@
  *   3. open the first-3 gate (manual_payouts_remaining=0) so a `pending` Payout
  *      is batch-eligible.
  *
- * Each `pnpm e2e` invocation resets + reseeds outvers_e2e via globalSetup, so no
+ * Each `pnpm e2e` invocation resets + reseeds switchback_e2e via globalSetup, so no
  * cross-run state persists — all staging happens in this run's beforeAll.
  */
 

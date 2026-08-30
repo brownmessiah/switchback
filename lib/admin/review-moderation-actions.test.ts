@@ -29,7 +29,7 @@ describe('review moderation actions', () => {
     teardown = setup.teardown
 
     await db.insert(users).values([
-      { id: 'u_admin', email: 'admin@outvers.com', name: 'Admin' },
+      { id: 'u_admin', email: 'admin@switchback.com', name: 'Admin' },
       { id: 'u_vendor', email: 'vendor@test.com', name: 'Vendor' },
       { id: 'u_customer', email: 'customer@test.com', name: 'Customer' },
     ])

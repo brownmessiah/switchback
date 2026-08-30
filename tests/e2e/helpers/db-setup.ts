@@ -1,7 +1,7 @@
 /**
  * Fresh database setup for E2E tests.
  *
- * Drops and recreates the `outvers_e2e` database, runs Drizzle `db:push`
+ * Drops and recreates the `switchback_e2e` database, runs Drizzle `db:push`
  * to apply the schema, and seeds with demo data. With Postgres-native search
  * the seeded DB IS the search source — there is no separate index to ready.
  *
@@ -26,7 +26,7 @@ function maintenanceDbUrl(): string {
   return base.replace(/\/[^/?]+(\?|$)/, '/postgres$1')
 }
 
-const E2E_DB_NAME = 'outvers_e2e'
+const E2E_DB_NAME = 'switchback_e2e'
 
 /**
  * Drops and recreates the E2E database, applies the Drizzle schema,

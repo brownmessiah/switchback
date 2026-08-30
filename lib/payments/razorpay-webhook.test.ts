@@ -34,7 +34,7 @@ import {
  * the remaining race where a TTL has expired but the event is replayed
  * by Razorpay's 24-retry backoff window.
  */
-const WEBHOOK_SECRET = 'whsec_test_outvers'
+const WEBHOOK_SECRET = 'whsec_test_switchback'
 
 function sign(body: string): string {
   return createHmac('sha256', WEBHOOK_SECRET).update(body).digest('hex')

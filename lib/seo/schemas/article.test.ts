@@ -5,7 +5,7 @@ import { article, type ArticleArgs } from './article'
 describe('Article JSON-LD (ADR-0013)', () => {
   const base: ArticleArgs = {
     headline: 'Rishikesh Rafting Grades, Explained',
-    url: 'https://outvers.in/blog/rishikesh-rafting-grades-explained',
+    url: 'https://switchback.in/blog/rishikesh-rafting-grades-explained',
     datePublished: '2026-05-01',
     authorName: 'Switchback Editorial',
   }
@@ -15,7 +15,7 @@ describe('Article JSON-LD (ADR-0013)', () => {
     expect(result['@context']).toBe('https://schema.org')
     expect(result['@type']).toBe('Article')
     expect(result.headline).toBe('Rishikesh Rafting Grades, Explained')
-    expect(result.url).toBe('https://outvers.in/blog/rishikesh-rafting-grades-explained')
+    expect(result.url).toBe('https://switchback.in/blog/rishikesh-rafting-grades-explained')
     expect(result.datePublished).toBe('2026-05-01')
     expect(result.author).toEqual({ '@type': 'Person', name: 'Switchback Editorial' })
   })

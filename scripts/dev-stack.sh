@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# scripts/dev-stack.sh — self-contained local dev stack for outvers-next.
+# scripts/dev-stack.sh — self-contained local dev stack for switchback-next.
 #
 # Brings up an ISOLATED Postgres cluster, wires .env.local to it, applies the
 # schema, seeds the catalog, and starts the Next.js dev server — in one
@@ -21,8 +21,8 @@
 # Flags (for `up`): --prod --no-build --tunnel --no-dev --no-seed
 #                   --no-schema --demo --blog
 #
-# Overridable via env: OUTVERS_PG_PORT OUTVERS_PG_DB OUTVERS_APP_URL
-#                      OUTVERS_NGROK_DOMAIN
+# Overridable via env: SWITCHBACK_PG_PORT SWITCHBACK_PG_DB SWITCHBACK_APP_URL
+#                      SWITCHBACK_NGROK_DOMAIN
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
@@ -39,13 +39,13 @@ RUN_DIR="$STACK_DIR/run"
 
 # Dedicated dev port (distinct from system :5432 and the E2E :5433) so the
 # stack is fully isolated. You never type it — .env.local is wired for you.
-PG_PORT="${OUTVERS_PG_PORT:-5544}"
-PG_DB="${OUTVERS_PG_DB:-outvers_dev}"
+PG_PORT="${SWITCHBACK_PG_PORT:-5544}"
+PG_DB="${SWITCHBACK_PG_DB:-switchback_dev}"
 PG_USER="$(whoami)"
-APP_URL="${OUTVERS_APP_URL:-http://localhost:3000}"
+APP_URL="${SWITCHBACK_APP_URL:-http://localhost:3000}"
 # Reserved ngrok domain — the same public URL each run. Already trusted by
 # next.config.ts (allowedDevOrigins + serverActions) and lib/auth trustedOrigins.
-NGROK_DOMAIN="${OUTVERS_NGROK_DOMAIN:-2e99352b354d.ngrok.app}"
+NGROK_DOMAIN="${SWITCHBACK_NGROK_DOMAIN:-2e99352b354d.ngrok.app}"
 ENV_FILE="$ROOT/.env.local"
 DB_URL="postgresql://$PG_USER@localhost:$PG_PORT/$PG_DB"
 
@@ -138,7 +138,7 @@ ensure_pg() {
   if pg_running; then
     ok "Postgres already running (port $PG_PORT)"
   else
-    port_busy "$PG_PORT" && die "Port $PG_PORT is in use by another process. Set OUTVERS_PG_PORT to override."
+    port_busy "$PG_PORT" && die "Port $PG_PORT is in use by another process. Set SWITCHBACK_PG_PORT to override."
     log "Starting Postgres on port $PG_PORT"
     "$PG_BIN/pg_ctl" -D "$PGDATA" -l "$LOG_DIR/pg.log" \
       -o "-p $PG_PORT -c listen_addresses=localhost" -w start >/dev/null \
@@ -244,7 +244,7 @@ seed_db() {
 }
 
 print_summary() {
-  printf '\n%s━━━━━━━━ outvers dev stack ━━━━━━━━%s\n' "$BOLD" "$RST"
+  printf '\n%s━━━━━━━━ switchback dev stack ━━━━━━━━%s\n' "$BOLD" "$RST"
   printf '  Postgres     localhost:%s  (db %s · user %s)\n' "$PG_PORT" "$PG_DB" "$PG_USER"
   printf '  App          %s%s\n' "$APP_URL" "$([ "$WITH_PROD" = true ] && echo '  (production build · next start)')"
   [ "$WITH_TUNNEL" = true ] && printf '  Public URL   https://%s  (ngrok · view from anywhere)\n' "$NGROK_DOMAIN"
@@ -336,7 +336,7 @@ cmd_down() {
 }
 
 cmd_status() {
-  printf '%soutvers dev stack status%s\n' "$BOLD" "$RST"
+  printf '%sswitchback dev stack status%s\n' "$BOLD" "$RST"
   if pg_running; then ok "Postgres running (port $PG_PORT · db $PG_DB)"; else warn "Postgres stopped"; fi
   if port_busy 3000; then ok "Dev server listening on :3000"; else warn "Dev server not running"; fi
   if ngrok_api >/dev/null 2>&1; then

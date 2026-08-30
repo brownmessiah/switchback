@@ -24,7 +24,7 @@ describe('customer support tickets', () => {
     await db.insert(users).values([
       { id: 'u_owner', email: 'owner@test.com', name: 'Owner' },
       { id: 'u_other', email: 'other@test.com', name: 'Other' },
-      { id: 'u_admin', email: 'admin@outvers.com', name: 'Admin' },
+      { id: 'u_admin', email: 'admin@switchback.com', name: 'Admin' },
     ])
   })
 

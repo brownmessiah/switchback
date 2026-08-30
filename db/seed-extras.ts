@@ -134,14 +134,14 @@ interface CatalogVendor {
   vpa: string
 }
 const CATALOG_VENDORS: CatalogVendor[] = [
-  { userId: 'u_cat_apex', email: 'catalog+apex@seed.outvers.dev', businessName: 'Apex River Co.', slug: 'apex-river-co', pan: 'AAACA1111A', vpa: 'apexriver@upi' },
-  { userId: 'u_cat_summit', email: 'catalog+summit@seed.outvers.dev', businessName: 'Summit Seekers Himalaya', slug: 'summit-seekers-himalaya', pan: 'AAACS2222B', vpa: 'summitseekers@upi' },
-  { userId: 'u_cat_cloud', email: 'catalog+cloud@seed.outvers.dev', businessName: 'Cloudbase Paragliding', slug: 'cloudbase-paragliding', pan: 'AAACC3333C', vpa: 'cloudbase@upi' },
-  { userId: 'u_cat_coral', email: 'catalog+coral@seed.outvers.dev', businessName: 'Coral Coast Divers', slug: 'coral-coast-divers', pan: 'AAACR4444D', vpa: 'coralcoast@upi' },
-  { userId: 'u_cat_ladakh', email: 'catalog+ladakh@seed.outvers.dev', businessName: 'Ladakh Explorers', slug: 'ladakh-explorers', pan: 'AAACL5555E', vpa: 'ladakhexp@upi' },
-  { userId: 'u_cat_sahyadri', email: 'catalog+sahyadri@seed.outvers.dev', businessName: 'Sahyadri Outdoors', slug: 'sahyadri-outdoors', pan: 'AAACH6666F', vpa: 'sahyadri@upi' },
-  { userId: 'u_cat_parvati', email: 'catalog+parvati@seed.outvers.dev', businessName: 'Parvati Valley Treks', slug: 'parvati-valley-treks', pan: 'AAACP7777G', vpa: 'parvatitreks@upi' },
-  { userId: 'u_cat_island', email: 'catalog+island@seed.outvers.dev', businessName: 'Island Paddle Co.', slug: 'island-paddle-co', pan: 'AAACI8888H', vpa: 'islandpaddle@upi' },
+  { userId: 'u_cat_apex', email: 'catalog+apex@seed.switchback.dev', businessName: 'Apex River Co.', slug: 'apex-river-co', pan: 'AAACA1111A', vpa: 'apexriver@upi' },
+  { userId: 'u_cat_summit', email: 'catalog+summit@seed.switchback.dev', businessName: 'Summit Seekers Himalaya', slug: 'summit-seekers-himalaya', pan: 'AAACS2222B', vpa: 'summitseekers@upi' },
+  { userId: 'u_cat_cloud', email: 'catalog+cloud@seed.switchback.dev', businessName: 'Cloudbase Paragliding', slug: 'cloudbase-paragliding', pan: 'AAACC3333C', vpa: 'cloudbase@upi' },
+  { userId: 'u_cat_coral', email: 'catalog+coral@seed.switchback.dev', businessName: 'Coral Coast Divers', slug: 'coral-coast-divers', pan: 'AAACR4444D', vpa: 'coralcoast@upi' },
+  { userId: 'u_cat_ladakh', email: 'catalog+ladakh@seed.switchback.dev', businessName: 'Ladakh Explorers', slug: 'ladakh-explorers', pan: 'AAACL5555E', vpa: 'ladakhexp@upi' },
+  { userId: 'u_cat_sahyadri', email: 'catalog+sahyadri@seed.switchback.dev', businessName: 'Sahyadri Outdoors', slug: 'sahyadri-outdoors', pan: 'AAACH6666F', vpa: 'sahyadri@upi' },
+  { userId: 'u_cat_parvati', email: 'catalog+parvati@seed.switchback.dev', businessName: 'Parvati Valley Treks', slug: 'parvati-valley-treks', pan: 'AAACP7777G', vpa: 'parvatitreks@upi' },
+  { userId: 'u_cat_island', email: 'catalog+island@seed.switchback.dev', businessName: 'Island Paddle Co.', slug: 'island-paddle-co', pan: 'AAACI8888H', vpa: 'islandpaddle@upi' },
 ]
 
 // ── Catalog experiences (region-prefixed slugs, controlled vocab) ───────────
@@ -579,12 +579,12 @@ const STRUCTURED_BY_SLUG: Record<string, CatalogStructured> = {
 
 // Real customer names for review authors + booking/wallet spread.
 const PEOPLE: Array<{ id: string; name: string; email: string }> = [
-  { id: 'u_enr_cust_aanya', name: 'Aanya Kapoor', email: 'enrich+aanya@seed.outvers.dev' },
-  { id: 'u_enr_cust_rohan', name: 'Rohan Mehta', email: 'enrich+rohan@seed.outvers.dev' },
-  { id: 'u_enr_cust_ishaan', name: 'Ishaan Verma', email: 'enrich+ishaan@seed.outvers.dev' },
-  { id: 'u_enr_cust_diya', name: 'Diya Nair', email: 'enrich+diya@seed.outvers.dev' },
-  { id: 'u_enr_cust_kabir', name: 'Kabir Singh', email: 'enrich+kabir@seed.outvers.dev' },
-  { id: 'u_enr_cust_meera', name: 'Meera Iyer', email: 'enrich+meera@seed.outvers.dev' },
+  { id: 'u_enr_cust_aanya', name: 'Aanya Kapoor', email: 'enrich+aanya@seed.switchback.dev' },
+  { id: 'u_enr_cust_rohan', name: 'Rohan Mehta', email: 'enrich+rohan@seed.switchback.dev' },
+  { id: 'u_enr_cust_ishaan', name: 'Ishaan Verma', email: 'enrich+ishaan@seed.switchback.dev' },
+  { id: 'u_enr_cust_diya', name: 'Diya Nair', email: 'enrich+diya@seed.switchback.dev' },
+  { id: 'u_enr_cust_kabir', name: 'Kabir Singh', email: 'enrich+kabir@seed.switchback.dev' },
+  { id: 'u_enr_cust_meera', name: 'Meera Iyer', email: 'enrich+meera@seed.switchback.dev' },
 ]
 
 const REVIEW_BANK: Array<{ rating: number; title: string; body: string; resp?: string }> = [
@@ -1083,7 +1083,7 @@ async function main(db: SeedDb): Promise<void> {
     { section: 'homepage', value: { featuredSectionTitle: 'Featured experiences', featuredExperienceIds: featuredIds, showCategories: true, showTestimonials: true } },
     { section: 'branding', value: { siteName: 'Switchback', primaryColor: '#0f766e', logoUrl: IMG('photo-1557804506-669a67965ba0', 256), faviconUrl: IMG('photo-1557804506-669a67965ba0', 64) } },
     { section: 'seo', value: { defaultTitle: 'Switchback — India adventure marketplace', titleTemplate: '%s · Switchback', defaultDescription: 'Book rafting, paragliding, scuba, trekking and more from KYC-verified Indian adventure operators.', ogImageUrl: IMG('photo-1530866495561-507c9faab2ed', 1200), robots: 'index,follow' } },
-    { section: 'footer', value: { companyName: 'Switchback', copyrightText: '© 2026 Switchback. All rights reserved.', links: [{ label: 'Cancellation policy', url: '/cancellation-policy' }, { label: 'Search', url: '/search' }], socialLinks: [{ platform: 'instagram', url: 'https://instagram.com/outvers' }] } },
+    { section: 'footer', value: { companyName: 'Switchback', copyrightText: '© 2026 Switchback. All rights reserved.', links: [{ label: 'Cancellation policy', url: '/cancellation-policy' }, { label: 'Search', url: '/search' }], socialLinks: [{ platform: 'instagram', url: 'https://instagram.com/switchback' }] } },
   ]
   for (const s of SITE) {
     const exists = await db
@@ -1199,7 +1199,7 @@ async function main(db: SeedDb): Promise<void> {
       if (exists.length > 0) continue
       const [txn] = await db
         .insert(walletTransactions)
-        .values({ userId: person.id, balanceType: 'outvers_credit', amount: p.credit, source: 'promo', referenceId: pid, expiresAt: ahead(365) })
+        .values({ userId: person.id, balanceType: 'switchback_credit', amount: p.credit, source: 'promo', referenceId: pid, expiresAt: ahead(365) })
         .returning({ id: walletTransactions.id })
       await db.insert(promoRedemptions).values({ promoCodeId: pid, customerUserId: person.id, walletTransactionId: txn.id })
       await db.update(promoCodes).set({ currentUses: sql`${promoCodes.currentUses} + 1` }).where(eq(promoCodes.id, pid))
@@ -1293,7 +1293,7 @@ async function main(db: SeedDb): Promise<void> {
     { user: PEOPLE[5].id, credit: 0, refund: 900 },
   ]
   for (const w of walletPlan) {
-    for (const [bucket, amount] of [['outvers_credit', w.credit] as const, ['refund_balance', w.refund] as const]) {
+    for (const [bucket, amount] of [['switchback_credit', w.credit] as const, ['refund_balance', w.refund] as const]) {
       if (amount <= 0) continue
       const balRes = await db
         .insert(walletBalances)
@@ -1307,7 +1307,7 @@ async function main(db: SeedDb): Promise<void> {
           amount: amount.toFixed(2),
           source: bucket === 'refund_balance' ? 'refund' : 'promo',
           referenceId: bucket === 'refund_balance' ? 'catalog-refund-credit' : 'catalog-promo-grant',
-          ...(bucket === 'outvers_credit' ? { expiresAt: ahead(365) } : {}),
+          ...(bucket === 'switchback_credit' ? { expiresAt: ahead(365) } : {}),
         })
       }
     }

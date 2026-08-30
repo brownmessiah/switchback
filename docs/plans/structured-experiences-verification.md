@@ -13,7 +13,7 @@ Authoritative design: `structured-experiences-and-catalog-volume.md`. Fact-check
 | Lint | `pnpm lint` | red **only on pre-existing debt** (~21 errors / 78 warnings in files UNTOUCHED by this milestone; identical count on `main`). This milestone adds **zero** net lint problems. |
 | E2E | `pnpm e2e` (6 projects) | milestone specs green; see E2E analysis below |
 
-## Live data verification (fresh-reset `outvers_e2e`, Postgres :5433 + Meilisearch :7700)
+## Live data verification (fresh-reset `switchback_e2e`, Postgres :5433 + Meilisearch :7700)
 
 - `drizzle-kit push --force` (migration 0022 cols + `experience_itinerary_steps`) → applied.
 - `pnpm db:seed` + `pnpm db:seed:demo` → **81 experiences** (51 existing + 30 demo pilot), **71 published**, **70 structured**, **148 itinerary steps**, **20 `u_cat_*` vendors**.

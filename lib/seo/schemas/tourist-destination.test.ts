@@ -9,7 +9,7 @@ describe('TouristDestination JSON-LD (ADR-0013)', () => {
   const base: TouristDestinationArgs = {
     name: 'Rishikesh',
     description: 'Adventure capital of India on the Ganges.',
-    url: 'https://outvers.com/destinations/rishikesh',
+    url: 'https://switchback.com/destinations/rishikesh',
     state: 'Uttarakhand',
     geo: { lat: 30.0869, lng: 78.2676 },
   }
@@ -20,7 +20,7 @@ describe('TouristDestination JSON-LD (ADR-0013)', () => {
     expect(result['@type']).toBe('TouristDestination')
     expect(result.name).toBe('Rishikesh')
     expect(result.description).toBe('Adventure capital of India on the Ganges.')
-    expect(result.url).toBe('https://outvers.com/destinations/rishikesh')
+    expect(result.url).toBe('https://switchback.com/destinations/rishikesh')
   })
 
   it('sets containedInPlace to the Indian state', () => {

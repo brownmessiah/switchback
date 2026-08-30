@@ -35,7 +35,7 @@ const STEPS: { id: Step; label: string }[] = [
 // Client-side draft persistence (variant C's Save-draft, fold-in). Restored
 // in useEffect (never at render) to avoid a hydration mismatch. No backend
 // draft storage exists — this is purely localStorage convenience.
-const DRAFT_KEY = 'outvers:vendor-onboarding-draft'
+const DRAFT_KEY = 'switchback:vendor-onboarding-draft'
 
 interface DraftState {
   businessName: string
@@ -241,10 +241,10 @@ export function OnboardingForm({ userId: _userId }: OnboardingFormProps) {
               <div className="space-y-2">
                 <Label htmlFor="slug">Profile URL</Label>
                 {/* min-w-0 lets the input shrink inside its grid cell so the
-                    "outvers.in/vendor/" prefix never pushes past 360px. */}
+                    "switchback.in/vendor/" prefix never pushes past 360px. */}
                 <div className="flex items-center gap-2">
                   <span className="shrink-0 text-sm text-muted-foreground">
-                    outvers.in/vendor/
+                    switchback.in/vendor/
                   </span>
                   <Input
                     id="slug"

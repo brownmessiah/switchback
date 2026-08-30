@@ -27,7 +27,7 @@
  */
 
 /** localStorage key holding the JSON array of compare-selected slugs. */
-export const COMPARE_STORAGE_KEY = 'outvers-compare'
+export const COMPARE_STORAGE_KEY = 'switchback-compare'
 
 /**
  * Maximum slugs that can be compared at once (DECISION D10). A side-by-side

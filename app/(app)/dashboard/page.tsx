@@ -99,8 +99,8 @@ export default async function CustomerDashboardPage() {
   const refundBalance = Math.floor(
     Number(walletRows.find((r) => r.balanceType === 'refund_balance')?.amount ?? 0),
   )
-  const outversCredit = Math.floor(
-    Number(walletRows.find((r) => r.balanceType === 'outvers_credit')?.amount ?? 0),
+  const switchbackCredit = Math.floor(
+    Number(walletRows.find((r) => r.balanceType === 'switchback_credit')?.amount ?? 0),
   )
 
   // Switchback credit expires 12–18mo from issue (ADR-0004). The aggregate
@@ -113,7 +113,7 @@ export default async function CustomerDashboardPage() {
     .where(
       and(
         eq(walletTransactions.userId, userId),
-        eq(walletTransactions.balanceType, 'outvers_credit'),
+        eq(walletTransactions.balanceType, 'switchback_credit'),
         isNotNull(walletTransactions.expiresAt),
         gt(walletTransactions.expiresAt, new Date()),
       ),
@@ -122,7 +122,7 @@ export default async function CustomerDashboardPage() {
     .limit(1)
 
   const creditExpiresAt =
-    outversCredit > 0 ? (nextCreditExpiry?.expiresAt ?? null) : null
+    switchbackCredit > 0 ? (nextCreditExpiry?.expiresAt ?? null) : null
 
   return (
     <main
@@ -289,11 +289,11 @@ export default async function CustomerDashboardPage() {
           </Card>
 
           {/* Switchback credit — credit tone; closed-loop, never cashable, EXPIRES */}
-          <Card data-testid="wallet-bucket-outvers_credit" className="border-credit/30">
+          <Card data-testid="wallet-bucket-switchback_credit" className="border-credit/30">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <Wallet className="size-4 text-credit" aria-hidden />
-                {t('wallet.outversCredit')}
+                {t('wallet.switchbackCredit')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -301,7 +301,7 @@ export default async function CustomerDashboardPage() {
                 data-testid="wallet-amount"
                 className="text-2xl font-semibold tabular-nums"
               >
-                ₹{outversCredit.toLocaleString('en-IN')}
+                ₹{switchbackCredit.toLocaleString('en-IN')}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {t('wallet.creditHint')}

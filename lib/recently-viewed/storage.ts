@@ -22,7 +22,7 @@
  */
 
 /** localStorage key holding the JSON array of recently-viewed slugs. */
-export const RECENTLY_VIEWED_STORAGE_KEY = 'outvers-recently-viewed'
+export const RECENTLY_VIEWED_STORAGE_KEY = 'switchback-recently-viewed'
 
 /**
  * Maximum slugs retained. Recording past the cap drops the oldest. Sized to

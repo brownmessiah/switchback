@@ -81,7 +81,7 @@ The app had never been deployed. The code carried Vercel-isms (`vercel.json` cro
 ### Ingress
 
 - **Global External Application Load Balancer** with a **Serverless NEG** to the public Cloud Run service. Managed TLS, anycast IP, apex + www.
-- **Domain: `outvers.com`** (registered at **GoDaddy**, DNS stays at GoDaddy), **configured last**. The agent reserves a global static IP + creates the Google-managed cert resources itself; the final step — apex `A` (+ `www`) records pointing at the LB IP and cert domain-authorization — is a **manual GoDaddy edit** (agent has no GoDaddy API access) unless GoDaddy API creds are provided. Until DNS is live, the E2E validation loop runs against the **LB IP / Cloud Run URL**. **Build-time sequencing:** `NEXT_PUBLIC_APP_URL` is baked into the image, so pre-DNS builds carry the temp URL and the image is **rebuilt/redeployed with `https://outvers.com`** at the domain step (when the Google OAuth redirect URI and better-auth `trustedOrigins` also flip to the real domain).
+- **Domain: `switchback.com`** (registered at **GoDaddy**, DNS stays at GoDaddy), **configured last**. The agent reserves a global static IP + creates the Google-managed cert resources itself; the final step — apex `A` (+ `www`) records pointing at the LB IP and cert domain-authorization — is a **manual GoDaddy edit** (agent has no GoDaddy API access) unless GoDaddy API creds are provided. Until DNS is live, the E2E validation loop runs against the **LB IP / Cloud Run URL**. **Build-time sequencing:** `NEXT_PUBLIC_APP_URL` is baked into the image, so pre-DNS builds carry the temp URL and the image is **rebuilt/redeployed with `https://switchback.com`** at the domain step (when the Google OAuth redirect URI and better-auth `trustedOrigins` also flip to the real domain).
 - **Cloud CDN** edge-caches `/_next/static`, `/_next/image`, and public/ISR pages. Cache rules **must never cache** authenticated responses, Server Actions, or API routes (driven by app `Cache-Control`).
 - **Cloud Armor** (WAF / rate-limiting / DDoS in front of auth + payment surfaces) is **deferred to the real-money cutover** — the demo runs in Razorpay TEST mode, so the LB + CDN go up now and the Armor policy is attached at go-live. When attached, rules **must not block Razorpay inbound webhooks**.
 
@@ -146,9 +146,9 @@ This plan is executed in a later session **after `/to-prd` + `/to-issues`**. Tha
 
 ### Accounts & project (verified 2026-06-20)
 
-- **GCP:** account **`aishwarye@outvers.com`** (already the active `gcloud` account), project **`outvers-adventure`** (already the active project). All GCP/Terraform work targets this account+project.
-- **GitHub:** account **`aishwarye-creator`** (active `gh` login; token has `repo` + `workflow` scopes). Create a **private** repo **`aishwarye-creator/outvers-next`**, add it as `origin`, push. (No `origin` remote exists yet.)
-- **WIF trust:** scoped to **`aishwarye-creator/outvers-next` @ `refs/heads/main`** (see *CI/CD*).
+- **GCP:** account **`aishwarye@switchback.com`** (already the active `gcloud` account), project **`switchback-adventure`** (already the active project). All GCP/Terraform work targets this account+project.
+- **GitHub:** account **`aishwarye-creator`** (active `gh` login; token has `repo` + `workflow` scopes). Create a **private** repo **`aishwarye-creator/switchback-next`**, add it as `origin`, push. (No `origin` remote exists yet.)
+- **WIF trust:** scoped to **`aishwarye-creator/switchback-next` @ `refs/heads/main`** (see *CI/CD*).
 
 ### Agent does it all via CLI
 
@@ -158,8 +158,8 @@ This plan is executed in a later session **after `/to-prd` + `/to-issues`**. Tha
 
 ### Ping the human ONLY for (genuinely un-automatable)
 
-- **Billing account linkage** to `outvers-adventure`, if not already enabled (agent checks first; flags only if missing).
-- **GoDaddy DNS record edits** for `outvers.com` (apex `A` + `www` → LB static IP, + cert domain-authorization), done **last**. The agent has no GoDaddy API access, so either the human adds the records or provides GoDaddy API creds. Everything else (static IP, managed cert resource, rebuild with `https://outvers.com`) the agent does itself.
+- **Billing account linkage** to `switchback-adventure`, if not already enabled (agent checks first; flags only if missing).
+- **GoDaddy DNS record edits** for `switchback.com` (apex `A` + `www` → LB static IP, + cert domain-authorization), done **last**. The agent has no GoDaddy API access, so either the human adds the records or provides GoDaddy API creds. Everything else (static IP, managed cert resource, rebuild with `https://switchback.com`) the agent does itself.
 - Any secret value **not** present in `.env.local` (e.g. live keys — N/A in the TEST-mode demo).
 
 ### Definition of done — post-deploy E2E validation loop

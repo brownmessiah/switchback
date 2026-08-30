@@ -17,7 +17,7 @@ export interface WalletBalanceRow {
   userId: string
   name: string | null
   email: string | null
-  outversCredit: number
+  switchbackCredit: number
   refundBalance: number
 }
 
@@ -38,10 +38,10 @@ const COLUMNS: ResponsiveTableColumn<WalletBalanceRow>[] = [
     ),
   },
   {
-    key: 'outversCredit',
+    key: 'switchbackCredit',
     header: 'Switchback credit',
     align: 'right',
-    cell: (u) => formatRupees(u.outversCredit),
+    cell: (u) => formatRupees(u.switchbackCredit),
   },
   {
     key: 'refundBalance',
@@ -55,7 +55,7 @@ const COLUMNS: ResponsiveTableColumn<WalletBalanceRow>[] = [
     align: 'right',
     cell: (u) => (
       <span className="font-medium">
-        {formatRupees(u.outversCredit + u.refundBalance)}
+        {formatRupees(u.switchbackCredit + u.refundBalance)}
       </span>
     ),
   },

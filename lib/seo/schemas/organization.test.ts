@@ -4,7 +4,7 @@ import { organization, type OrganizationArgs } from './organization'
 
 describe('Organization JSON-LD (ADR-0013)', () => {
   const base: OrganizationArgs = {
-    url: 'https://outvers.com',
+    url: 'https://switchback.com',
   }
 
   it('generates a valid Organization schema with the Switchback brand name', () => {
@@ -12,18 +12,18 @@ describe('Organization JSON-LD (ADR-0013)', () => {
     expect(result['@context']).toBe('https://schema.org')
     expect(result['@type']).toBe('Organization')
     expect(result.name).toBe('Switchback')
-    expect(result.url).toBe('https://outvers.com')
+    expect(result.url).toBe('https://switchback.com')
   })
 
   it('includes a contactPoint with the real support email', () => {
     const result = organization({
       ...base,
-      contactEmail: 'support@outvers.com',
+      contactEmail: 'support@switchback.com',
     })
     expect(result.contactPoint).toEqual({
       '@type': 'ContactPoint',
       contactType: 'customer support',
-      email: 'support@outvers.com',
+      email: 'support@switchback.com',
     })
   })
 
@@ -35,9 +35,9 @@ describe('Organization JSON-LD (ADR-0013)', () => {
   it('includes the logo when a real logo URL is provided', () => {
     const result = organization({
       ...base,
-      logo: 'https://outvers.com/favicon.ico',
+      logo: 'https://switchback.com/favicon.ico',
     })
-    expect(result.logo).toBe('https://outvers.com/favicon.ico')
+    expect(result.logo).toBe('https://switchback.com/favicon.ico')
   })
 
   it('omits logo when none is provided', () => {
@@ -48,11 +48,11 @@ describe('Organization JSON-LD (ADR-0013)', () => {
   it('includes sameAs only when real social links are provided', () => {
     const result = organization({
       ...base,
-      sameAs: ['https://instagram.com/outvers', 'https://youtube.com/@outvers'],
+      sameAs: ['https://instagram.com/switchback', 'https://youtube.com/@switchback'],
     })
     expect(result.sameAs).toEqual([
-      'https://instagram.com/outvers',
-      'https://youtube.com/@outvers',
+      'https://instagram.com/switchback',
+      'https://youtube.com/@switchback',
     ])
   })
 

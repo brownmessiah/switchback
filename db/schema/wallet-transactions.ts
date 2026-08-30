@@ -39,7 +39,7 @@ export const walletTransactions = pgTable(
     userId: text('user_id')
       .references(() => users.id, { onDelete: 'cascade' })
       .notNull(),
-    balanceType: text('balance_type').notNull(), // reuses 'outvers_credit' | 'refund_balance'
+    balanceType: text('balance_type').notNull(), // reuses 'switchback_credit' | 'refund_balance'
     amount: numeric('amount', { precision: 14, scale: 2 }).notNull(),
     source: walletTransactionSourceEnum('source').notNull(),
     referenceId: text('reference_id'),

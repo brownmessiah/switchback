@@ -1104,11 +1104,11 @@ git commit -m "feat(webhooks): idempotent Razorpay webhook with Redis dedup (ADR
 - Create: `lib/payments/wallet.test.ts`
 
 **Step 1: Failing tests** (ADR-0004 spend order):
-- `applyWalletToCheckout({ userId, grossRupees })` returns `{ outversCreditApplied, refundBalanceApplied, razorpayRemainder }` with spend order: Switchback credit → Refund balance → Razorpay charge
+- `applyWalletToCheckout({ userId, grossRupees })` returns `{ switchbackCreditApplied, refundBalanceApplied, razorpayRemainder }` with spend order: Switchback credit → Refund balance → Razorpay charge
 - Wallet bucket amounts ≥ gross → razorpayRemainder=0
 - Wallet bucket amounts < gross → razorpayRemainder=gross-applied
 - `creditRefundBalance({ userId, amount, refundRequestId })` increments `wallet_balances.refund_balance` and writes an `audit_logs` row with source=refund
-- `creditOutversBalance({ userId, amount, source })` enforces `source ∈ ['referral', 'promo', 'loyalty']`
+- `creditSwitchbackBalance({ userId, amount, source })` enforces `source ∈ ['referral', 'promo', 'loyalty']`
 - Cashout request: `requestCashout({ userId, amount, originalPaymentId })` creates a refund_request row + Razorpay refund call + audit row
 - Negative amounts rejected at boundary
 
@@ -1468,7 +1468,7 @@ pnpm e2e
 
 **Step 3: Update memory:**
 
-Write to `~/.claude/projects/-Users-aishwaryechauhan-Personal-outvers-next/memory/project_m2_complete.md` with:
+Write to `~/.claude/projects/-Users-aishwaryechauhan-Personal-switchback-next/memory/project_m2_complete.md` with:
 - Date M2 landed
 - Final test count + coverage
 - Items deferred to M3 (channel manager seat-block, full WhatsApp templates, Aadhaar tier-2 verification)

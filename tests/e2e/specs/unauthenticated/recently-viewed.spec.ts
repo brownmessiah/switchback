@@ -18,7 +18,7 @@
 import { test, expect } from '../../fixtures/devtools'
 
 const RAIL = 'recently-viewed-rail'
-const STORAGE_KEY = 'outvers-recently-viewed'
+const STORAGE_KEY = 'switchback-recently-viewed'
 
 /**
  * Collect two distinct published Experience slugs from the /search results

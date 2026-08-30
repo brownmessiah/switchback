@@ -1,6 +1,6 @@
 # Switchback
 
-Indian adventure-activity marketplace — rafting, paragliding, scuba, trekking, multi-day expeditions. Ground-up rebuild of the legacy app at `/Users/aishwaryechauhan/Personal/travel-app/` on a portable, owned stack.
+Indian adventure-activity marketplace — rafting, paragliding, scuba, trekking, multi-day expeditions.
 
 Status: **M2 Money-path backend complete** (Tasks 1–18, 22 of `docs/plans/2026-05-23-m2-money-path.md`). UI tasks (Experience detail, Razorpay Checkout.js, confirmation page, faceted search) + E2E pending — see `docs/plans/m2-verification.md`. See `PLAN.md` for the milestone schedule.
 
